@@ -35,6 +35,12 @@ export default function AuthenticatedLayout({ header, children }: Props) {
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    href={route('todos.index')}
+                                    active={route().current('todos.index')}
+                                >
+                                    To-Do List
+                                </NavLink>
                             </div>
                         </div>
 
@@ -132,6 +138,12 @@ export default function AuthenticatedLayout({ header, children }: Props) {
                             active={route().current('dashboard')}
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('todos.index')}
+                            active={route().current('todos.index')}
+                        >
+                            To-Do List
                         </ResponsiveNavLink>
                     </div>
 
