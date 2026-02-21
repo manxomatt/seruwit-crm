@@ -8,6 +8,7 @@ interface Page {
     title: string;
     slug: string;
     is_published: boolean;
+    is_homepage: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -27,6 +28,12 @@ export default function Index({ pages }: Props): JSX.Element {
         router.patch(route('pages.update', page.id), {
             is_published: !page.is_published,
         });
+    };
+
+    const setAsHomepage = (page: Page) => {
+        if (confirm('Set this page as the homepage? This will replace the current homepage.')) {
+            router.patch(route('pages.set-homepage', page.id));
+        }
     };
 
     return (
@@ -99,8 +106,15 @@ export default function Index({ pages }: Props): JSX.Element {
                                             {pages.map((page) => (
                                                 <tr key={page.id}>
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {page.title}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-medium text-gray-900">
+                                                                {page.title}
+                                                            </span>
+                                                            {page.is_homepage && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                                    Homepage
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -136,6 +150,14 @@ export default function Index({ pages }: Props): JSX.Element {
                                                         >
                                                             Preview
                                                         </Link>
+                                                        {!page.is_homepage && (
+                                                            <button
+                                                                onClick={() => setAsHomepage(page)}
+                                                                className="text-blue-600 hover:text-blue-900"
+                                                            >
+                                                                Set as Homepage
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={() => deletePage(page)}
                                                             className="text-red-600 hover:text-red-900"

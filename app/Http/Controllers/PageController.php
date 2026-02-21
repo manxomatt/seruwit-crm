@@ -127,4 +127,47 @@ class PageController extends Controller
 
         return response()->view('pages.render', ['page' => $page]);
     }
+
+    /**
+     * Set a page as the homepage.
+     */
+    public function setHomepage(Page $page): RedirectResponse
+    {
+        if ($page->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Remove homepage status from all other pages
+        Page::query()
+            ->where('user_id', Auth::id())
+            ->where('is_homepage', true)
+            ->update(['is_homepage' => false]);
+
+        // Set this page as homepage
+        $page->update(['is_homepage' => true, 'is_published' => true]);
+
+        return redirect()->route('pages.index')->with('success', 'Page set as homepage successfully.');
+    }
+
+    /**
+     * Render the homepage.
+     */
+    public function homepage(): Response|\Illuminate\Http\Response
+    {
+        $page = Page::query()
+            ->where('is_homepage', true)
+            ->where('is_published', true)
+            ->first();
+
+        if (! $page) {
+            return Inertia::render('Welcome', [
+                'canLogin' => \Illuminate\Support\Facades\Route::has('login'),
+                'canRegister' => \Illuminate\Support\Facades\Route::has('register'),
+                'laravelVersion' => \Illuminate\Foundation\Application::VERSION,
+                'phpVersion' => PHP_VERSION,
+            ]);
+        }
+
+        return response()->view('pages.render', ['page' => $page]);
+    }
 }

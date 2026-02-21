@@ -4,18 +4,10 @@ use App\Http\Controllers\LiveUpdateController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TodoController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [PageController::class, 'homepage'])->name('home');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -47,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pages/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
     Route::patch('/pages/{page}', [PageController::class, 'update'])->name('pages.update');
     Route::patch('/pages/{page}/save-content', [PageController::class, 'saveContent'])->name('pages.save-content');
+    Route::patch('/pages/{page}/set-homepage', [PageController::class, 'setHomepage'])->name('pages.set-homepage');
     Route::delete('/pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
 });
 

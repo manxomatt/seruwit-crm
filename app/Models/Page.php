@@ -21,6 +21,7 @@ class Page extends Model
         'css',
         'gjs_data',
         'is_published',
+        'is_homepage',
     ];
 
     /**
@@ -31,6 +32,7 @@ class Page extends Model
         return [
             'gjs_data' => 'array',
             'is_published' => 'boolean',
+            'is_homepage' => 'boolean',
         ];
     }
 

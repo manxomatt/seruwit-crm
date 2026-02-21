@@ -23,7 +23,7 @@ interface Props {
 
 export default function Editor({ page }: Props): JSX.Element {
     const editorRef = useRef<HTMLDivElement>(null);
-    const [editor, setEditor] = useState<GrapesEditor | null>(null);
+    const [editor, setEditor] = useState<GrapesEditor | null>(null); 
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -73,10 +73,10 @@ export default function Editor({ page }: Props): JSX.Element {
                     flexGrid: true,
                 },
                 [gjsPresetWebpage as unknown as string]: {
-                    blocksBasicOpts: false,
-                    navbarOpts: false,
-                    countdownOpts: false,
-                    formsOpts: false,
+                    blocksBasicOpts: true,
+                    navbarOpts: true,
+                    countdownOpts: true,
+                    formsOpts: true,
                 },
             },
             canvas: {
@@ -134,11 +134,49 @@ export default function Editor({ page }: Props): JSX.Element {
             label: 'Hero Section',
             category: 'Sections',
             content: `
-                <section class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-20">
-                    <div class="container mx-auto px-4 text-center">
-                        <h1 class="text-5xl font-bold mb-6">Welcome to Your Website</h1>
-                        <p class="text-xl mb-8 max-w-2xl mx-auto">Create beautiful, responsive websites with our drag-and-drop page builder.</p>
-                        <a href="#" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">Get Started</a>
+                <section class="relative pt-16 pb-24 lg:pt-32 lg:pb-40 overflow-hidden bg-gradient-to-b from-green-50/50 to-white">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left">
+                            <div class="z-10">
+                                <div class="inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold bg-accent/10 text-accent ring-1 ring-inset ring-accent/20 mb-8 mx-auto lg:mx-0">
+                                    ✨ New: Tracking Joy V3 is Live!
+                                </div>
+                                <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-8 leading-[1.1] font-display">
+                                    Track with Joy, <span class="text-primary">Live with Peace</span>
+                                </h1>
+                                <p class="text-xl text-slate-600 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                                    Keep what you love close. Experience real-time freedom with the world's most vibrant and reliable GPS tracking community.
+                                </p>
+                                <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-5">
+                                    <button class="bg-accent text-white px-10 py-5 rounded-full font-extrabold text-xl hover:scale-105 transition-all accent-glow">
+                                        Unlock Your Freedom
+                                    </button>
+                                    <button class="border-2 border-slate-200 bg-white text-slate-700 px-10 py-5 rounded-full font-extrabold text-xl hover:bg-slate-50 transition-all">
+                                        See the Magic
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-12 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 text-base font-medium text-slate-500">
+                                    <div class="flex -space-x-3">
+                                        <img class="h-10 w-10 rounded-full border-4 border-white bg-slate-200" src="https://picsum.photos/id/64/100/100" alt="User 1" />
+                                        <img class="h-10 w-10 rounded-full border-4 border-white bg-slate-200" src="https://picsum.photos/id/65/100/100" alt="User 2" />
+                                        <img class="h-10 w-10 rounded-full border-4 border-white bg-slate-200" src="https://picsum.photos/id/103/100/100" alt="User 3" />
+                                    </div>
+                                    <p>Trusted by <span class="text-primary font-bold">50,000+</span> happy adventurers</p>
+                                </div>
+                            </div>
+                            
+                            <div class="relative lg:h-[600px] flex items-center justify-center">
+                                <div class="absolute inset-0 bg-primary/10 blur-[120px] rounded-full"></div>
+                                <div class="relative w-full aspect-square max-w-[550px] rounded-3xl border-8 border-white bg-white overflow-hidden shadow-2xl rotate-2">
+                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDIzBb5ZOm_bTTu1uujtT-GBf3GrZYHMuBm8oEY5xS7naVi1drint605b-XPYCyAmLQxuTTT-jvaO0U_xWQTtsa9-sSY2F3jTj-_KAn4E5OPz7oIEkRKWqIKltpbTPA78Ufn-h1jDGeQ_NcIAH_NaXX2Eh8x1rF4ssvTYNGahjajPkaXqQeZRyiBupYIs1-zXfKXoSfCZjDBtucE6_fuRv_9eW9waaEeFAw1IAgm1ZpUpSX9gSl4lEumPo9X6Il_kI4fIM-IZYUUEA')"></div>
+                                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                        <div class="h-6 w-6 bg-accent rounded-full animate-ping opacity-75"></div>
+                                        <div class="absolute top-0 left-0 h-6 w-6 bg-accent rounded-full border-4 border-white"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             `,
