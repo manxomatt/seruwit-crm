@@ -130,55 +130,74 @@ export default function Editor({ page }: Props): JSX.Element {
         // Add custom blocks
         const blockManager = gjsEditor.BlockManager;
 
+        blockManager.add('navbar-section', {
+            label: 'Navbar',
+            category: 'Sections',
+            content: `
+                <nav class="bg-white shadow-lg sticky top-0 z-50">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between h-16">
+                            <div class="flex items-center">
+                                <a href="#" class="flex-shrink-0 flex items-center">
+                                    <span class="text-2xl font-bold text-blue-600">Logo</span>
+                                </a>
+                                <div class="hidden md:ml-10 md:flex md:space-x-8">
+                                    <a href="#" class="text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium transition">Home</a>
+                                    <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition">Features</a>
+                                    <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition">Pricing</a>
+                                    <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition">About</a>
+                                    <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition">Contact</a>
+                                </div>
+                            </div>
+                            <div class="hidden md:flex md:items-center md:space-x-4">
+                                <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition">Sign In</a>
+                                <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Get Started</a>
+                            </div>
+                            <div class="flex items-center md:hidden">
+                                <button class="text-gray-500 hover:text-gray-700 p-2">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            `,
+        });
+        
         blockManager.add('hero-section', {
             label: 'Hero Section',
             category: 'Sections',
             content: `
                 <section class="relative pt-16 pb-24 lg:pt-32 lg:pb-40 overflow-hidden bg-gradient-to-b from-green-50/50 to-white">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left">
-                            <div class="z-10">
-                                <div class="inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold bg-accent/10 text-accent ring-1 ring-inset ring-accent/20 mb-8 mx-auto lg:mx-0">
-                                    ✨ New: Tracking Joy V3 is Live!
-                                </div>
-                                <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-8 leading-[1.1] font-display">
-                                    Track with Joy, <span class="text-primary">Live with Peace</span>
-                                </h1>
-                                <p class="text-xl text-slate-600 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                                    Keep what you love close. Experience real-time freedom with the world's most vibrant and reliable GPS tracking community.
-                                </p>
-                                <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-5">
-                                    <button class="bg-accent text-white px-10 py-5 rounded-full font-extrabold text-xl hover:scale-105 transition-all accent-glow">
-                                        Unlock Your Freedom
-                                    </button>
-                                    <button class="border-2 border-slate-200 bg-white text-slate-700 px-10 py-5 rounded-full font-extrabold text-xl hover:bg-slate-50 transition-all">
-                                        See the Magic
-                                    </button>
-                                </div>
-                                
-                                <div class="mt-12 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 text-base font-medium text-slate-500">
-                                    <div class="flex -space-x-3">
-                                        <img class="h-10 w-10 rounded-full border-4 border-white bg-slate-200" src="https://picsum.photos/id/64/100/100" alt="User 1" />
-                                        <img class="h-10 w-10 rounded-full border-4 border-white bg-slate-200" src="https://picsum.photos/id/65/100/100" alt="User 2" />
-                                        <img class="h-10 w-10 rounded-full border-4 border-white bg-slate-200" src="https://picsum.photos/id/103/100/100" alt="User 3" />
-                                    </div>
-                                    <p>Trusted by <span class="text-primary font-bold">50,000+</span> happy adventurers</p>
-                                </div>
-                            </div>
-                            
-                            <div class="relative lg:h-[600px] flex items-center justify-center">
-                                <div class="absolute inset-0 bg-primary/10 blur-[120px] rounded-full"></div>
-                                <div class="relative w-full aspect-square max-w-[550px] rounded-3xl border-8 border-white bg-white overflow-hidden shadow-2xl rotate-2">
-                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDIzBb5ZOm_bTTu1uujtT-GBf3GrZYHMuBm8oEY5xS7naVi1drint605b-XPYCyAmLQxuTTT-jvaO0U_xWQTtsa9-sSY2F3jTj-_KAn4E5OPz7oIEkRKWqIKltpbTPA78Ufn-h1jDGeQ_NcIAH_NaXX2Eh8x1rF4ssvTYNGahjajPkaXqQeZRyiBupYIs1-zXfKXoSfCZjDBtucE6_fuRv_9eW9waaEeFAw1IAgm1ZpUpSX9gSl4lEumPo9X6Il_kI4fIM-IZYUUEA')"></div>
-                                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                        <div class="h-6 w-6 bg-accent rounded-full animate-ping opacity-75"></div>
-                                        <div class="absolute top-0 left-0 h-6 w-6 bg-accent rounded-full border-4 border-white"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    <div class="z-10">
+                      <div class="inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold bg-orange-500/10 text-orange-500 ring-1 ring-inset ring-orange-500/20 mb-8">
+                        ✨ New: Tracking Joy V3 is Live!
+                      </div>
+                      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-8 leading-[1.1] font-display">
+                        Track with Joy, <span class="text-green-500">Live with Peace</span>
+                      </h1>
+                      <p class="text-xl text-slate-600 mb-10 max-w-xl leading-relaxed">
+                        Keep what you love close. Experience real-time freedom with the world's most vibrant and reliable GPS tracking community.
+                      </p>
+                      <div class="flex flex-col sm:flex-row gap-5">
+                        <button class="bg-orange-500 text-white px-10 py-5 rounded-full font-extrabold text-xl hover:scale-105 transition-all">
+                          Unlock Your Freedom
+                        </button>
+                        <button class="border-2 border-slate-200 bg-white text-slate-700 px-10 py-5 rounded-full font-extrabold text-xl hover:bg-slate-50 transition-all">
+                          See the Magic
+                        </button>
+                      </div>
                     </div>
-                </section>
+                    <div class="relative lg:h-[600px] flex items-center justify-center">
+                      <img src="https://picsum.photos/seed/map/800/800" class="rounded-3xl shadow-2xl rotate-2 border-8 border-white" alt="Map" />
+                    </div>
+                  </div>
+                </div>
+              </section>
             `,
         });
 
