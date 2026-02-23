@@ -70,6 +70,7 @@ export default function Show({ page }: Props): JSX.Element {
                         <div className="p-0">
                             {page.html ? (
                                 <div className="preview-container">
+                                    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
                                     <style dangerouslySetInnerHTML={{ __html: page.css || '' }} />
                                     <div dangerouslySetInnerHTML={{ __html: page.html }} />
                                 </div>
