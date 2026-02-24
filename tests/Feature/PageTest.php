@@ -17,14 +17,14 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get('/pages');
+            ->get('/admin/pages');
 
         $response->assertOk();
     }
 
     public function test_pages_index_requires_authentication(): void
     {
-        $response = $this->get('/pages');
+        $response = $this->get('/admin/pages');
 
         $response->assertRedirect('/login');
     }
@@ -35,7 +35,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get('/pages/create');
+            ->get('/admin/pages/create');
 
         $response->assertOk();
     }
@@ -46,7 +46,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->post('/pages', [
+            ->post('/admin/pages', [
                 'title' => 'Test Page',
                 'slug' => 'test-page',
             ]);
@@ -66,7 +66,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->post('/pages', [
+            ->post('/admin/pages', [
                 'title' => '',
                 'slug' => 'test-page',
             ]);
@@ -80,7 +80,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->post('/pages', [
+            ->post('/admin/pages', [
                 'title' => 'Test Page',
                 'slug' => '',
             ]);
@@ -95,7 +95,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->post('/pages', [
+            ->post('/admin/pages', [
                 'title' => 'Test Page',
                 'slug' => 'existing-slug',
             ]);
@@ -110,7 +110,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get("/pages/{$page->id}/edit");
+            ->get("/admin/pages/{$page->id}/edit");
 
         $response->assertOk();
     }
@@ -123,7 +123,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get("/pages/{$page->id}/edit");
+            ->get("/admin/pages/{$page->id}/edit");
 
         $response->assertForbidden();
     }
@@ -135,7 +135,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch("/pages/{$page->id}", [
+            ->patch("/admin/pages/{$page->id}", [
                 'title' => 'Updated Title',
                 'html' => '<div>Updated Content</div>',
                 'css' => '.test { color: red; }',
@@ -159,7 +159,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch("/pages/{$page->id}", [
+            ->patch("/admin/pages/{$page->id}", [
                 'title' => 'Updated Title',
             ]);
 
@@ -173,9 +173,9 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->delete("/pages/{$page->id}");
+            ->delete("/admin/pages/{$page->id}");
 
-        $response->assertRedirect('/pages');
+        $response->assertRedirect('/admin/pages');
 
         $this->assertDatabaseMissing('pages', [
             'id' => $page->id,
@@ -190,7 +190,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->delete("/pages/{$page->id}");
+            ->delete("/admin/pages/{$page->id}");
 
         $response->assertForbidden();
 
@@ -206,7 +206,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patchJson("/pages/{$page->id}/save-content", [
+            ->patchJson("/admin/pages/{$page->id}/save-content", [
                 'html' => '<div>New Content</div>',
                 'css' => '.new { color: blue; }',
                 'gjs_data' => ['components' => [], 'styles' => []],
@@ -257,7 +257,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch("/pages/{$page->id}", [
+            ->patch("/admin/pages/{$page->id}", [
                 'is_published' => true,
             ]);
 
@@ -276,7 +276,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get("/pages/{$page->id}");
+            ->get("/admin/pages/{$page->id}");
 
         $response->assertOk();
     }
@@ -289,7 +289,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get("/pages/{$page->id}");
+            ->get("/admin/pages/{$page->id}");
 
         $response->assertForbidden();
     }
@@ -312,7 +312,7 @@ class PageTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get('/pages');
+            ->get('/admin/pages');
 
         $response->assertOk();
         $response->assertSeeInOrder(['Newer Page', 'Older Page']);
