@@ -3,7 +3,9 @@
 use App\Http\Controllers\Admin\CarouselController;
 use App\Http\Controllers\Admin\CarouselImageController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\LiveUpdateController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
@@ -51,6 +53,27 @@ Route::middleware('auth')->group(function () {
         Route::patch('/carousels/{carousel}/images/{image}', [CarouselImageController::class, 'update'])->name('carousels.images.update');
         Route::delete('/carousels/{carousel}/images/{image}', [CarouselImageController::class, 'destroy'])->name('carousels.images.destroy');
         Route::post('/carousels/{carousel}/images/reorder', [CarouselImageController::class, 'reorder'])->name('carousels.images.reorder');
+
+        // Media Library Routes
+        Route::get('/media', [MediaController::class, 'index'])->name('media.index');
+        Route::get('/media/create', [MediaController::class, 'create'])->name('media.create');
+        Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+        Route::post('/media/upload', [MediaController::class, 'upload'])->name('media.upload');
+        Route::get('/media/picker', [MediaController::class, 'picker'])->name('media.picker');
+        Route::post('/media/bulk-destroy', [MediaController::class, 'bulkDestroy'])->name('media.bulk-destroy');
+        Route::get('/media/{medium}', [MediaController::class, 'show'])->name('media.show');
+        Route::get('/media/{medium}/edit', [MediaController::class, 'edit'])->name('media.edit');
+        Route::patch('/media/{medium}', [MediaController::class, 'update'])->name('media.update');
+        Route::delete('/media/{medium}', [MediaController::class, 'destroy'])->name('media.destroy');
+
+        // User Management Routes
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
     Route::get('/todos', [TodoController::class, 'index'])->name('todos.index');

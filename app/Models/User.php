@@ -70,4 +70,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Carousel::class);
     }
+
+    /**
+     * @return HasMany<Media, $this>
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(Media::class);
+    }
 }
