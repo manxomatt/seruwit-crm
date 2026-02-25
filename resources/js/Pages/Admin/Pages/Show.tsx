@@ -111,7 +111,7 @@ export default function Show({ page }: Props): JSX.Element {
                 {/* Preview Content */}
                 <div className="p-0">
                     {page.html ? (
-                        <div className="preview-container">
+                        <div className="preview-container h-[600px] overflow-y-auto">
                             <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
                             <style dangerouslySetInnerHTML={{ __html: page.css || '' }} />
                             <div dangerouslySetInnerHTML={{ __html: page.html }} />

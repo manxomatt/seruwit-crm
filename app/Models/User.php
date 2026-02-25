@@ -62,4 +62,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Page::class);
     }
+
+    /**
+     * @return HasMany<Carousel, $this>
+     */
+    public function carousels(): HasMany
+    {
+        return $this->hasMany(Carousel::class);
+    }
 }

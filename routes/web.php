@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\CarouselController;
+use App\Http\Controllers\Admin\CarouselImageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\LiveUpdateController;
@@ -34,6 +36,21 @@ Route::middleware('auth')->group(function () {
         Route::patch('/pages/{page}/save-content', [AdminPageController::class, 'saveContent'])->name('pages.save-content');
         Route::patch('/pages/{page}/set-homepage', [AdminPageController::class, 'setHomepage'])->name('pages.set-homepage');
         Route::delete('/pages/{page}', [AdminPageController::class, 'destroy'])->name('pages.destroy');
+
+        // Carousel Routes
+        Route::get('/carousels', [CarouselController::class, 'index'])->name('carousels.index');
+        Route::get('/carousels/create', [CarouselController::class, 'create'])->name('carousels.create');
+        Route::post('/carousels', [CarouselController::class, 'store'])->name('carousels.store');
+        Route::get('/carousels/{carousel}', [CarouselController::class, 'show'])->name('carousels.show');
+        Route::get('/carousels/{carousel}/edit', [CarouselController::class, 'edit'])->name('carousels.edit');
+        Route::patch('/carousels/{carousel}', [CarouselController::class, 'update'])->name('carousels.update');
+        Route::delete('/carousels/{carousel}', [CarouselController::class, 'destroy'])->name('carousels.destroy');
+
+        // Carousel Image Routes
+        Route::post('/carousels/{carousel}/images', [CarouselImageController::class, 'store'])->name('carousels.images.store');
+        Route::patch('/carousels/{carousel}/images/{image}', [CarouselImageController::class, 'update'])->name('carousels.images.update');
+        Route::delete('/carousels/{carousel}/images/{image}', [CarouselImageController::class, 'destroy'])->name('carousels.images.destroy');
+        Route::post('/carousels/{carousel}/images/reorder', [CarouselImageController::class, 'reorder'])->name('carousels.images.reorder');
     });
 
     Route::get('/todos', [TodoController::class, 'index'])->name('todos.index');

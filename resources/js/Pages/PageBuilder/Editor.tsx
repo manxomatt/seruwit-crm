@@ -83,6 +83,11 @@ export default function Editor({ page }: Props): JSX.Element {
                 styles: [
                     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
                 ],
+                scripts: [],
+                frameStyle: `
+                    body { background-color: #fff; }
+                    * { box-sizing: border-box; }
+                `,
             },
             deviceManager: {
                 devices: [
