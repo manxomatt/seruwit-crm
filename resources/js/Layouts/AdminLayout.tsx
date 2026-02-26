@@ -81,7 +81,7 @@ export default function AdminLayout({ header, children }: Props) {
         { name: 'Media', href: route('admin.media.index'), icon: <MediaIcon />, current: route().current('admin.media.*') },
         { name: 'Users', href: route('admin.users.index'), icon: <UsersIcon />, current: route().current('admin.users.*') },
         { name: 'Analytics', href: '#', icon: <AnalyticsIcon />, current: false },
-        { name: 'Settings', href: '#', icon: <SettingsIcon />, current: false },
+        { name: 'Settings', href: route('admin.settings.index'), icon: <SettingsIcon />, current: route().current('admin.settings.*') },
     ];
 
     return (

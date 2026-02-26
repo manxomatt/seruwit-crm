@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CarouselImageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\LiveUpdateController;
 use App\Http\Controllers\PageController;
@@ -74,6 +75,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        // Settings Routes
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::get('/settings/create', [SettingController::class, 'create'])->name('settings.create');
+        Route::post('/settings', [SettingController::class, 'store'])->name('settings.store');
+        Route::post('/settings/bulk-update', [SettingController::class, 'bulkUpdate'])->name('settings.bulk-update');
+        Route::get('/settings/{setting}', [SettingController::class, 'show'])->name('settings.show');
+        Route::get('/settings/{setting}/edit', [SettingController::class, 'edit'])->name('settings.edit');
+        Route::patch('/settings/{setting}', [SettingController::class, 'update'])->name('settings.update');
+        Route::delete('/settings/{setting}', [SettingController::class, 'destroy'])->name('settings.destroy');
     });
 
     Route::get('/todos', [TodoController::class, 'index'])->name('todos.index');
