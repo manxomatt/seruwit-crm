@@ -80,7 +80,7 @@ export default function AdminLayout({ header, children }: Props) {
         { name: 'Carousels', href: route('admin.carousels.index'), icon: <CarouselIcon />, current: route().current('admin.carousels.*') },
         { name: 'Media', href: route('admin.media.index'), icon: <MediaIcon />, current: route().current('admin.media.*') },
         { name: 'Users', href: route('admin.users.index'), icon: <UsersIcon />, current: route().current('admin.users.*') },
-        { name: 'Analytics', href: '#', icon: <AnalyticsIcon />, current: false },
+        { name: 'Analytics', href: route('admin.analytics.index'), icon: <AnalyticsIcon />, current: route().current('admin.analytics.*') },
         { name: 'Settings', href: route('admin.settings.index'), icon: <SettingsIcon />, current: route().current('admin.settings.*') },
     ];
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CarouselController;
 use App\Http\Controllers\Admin\CarouselImageController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -85,6 +86,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings/{setting}/edit', [SettingController::class, 'edit'])->name('settings.edit');
         Route::patch('/settings/{setting}', [SettingController::class, 'update'])->name('settings.update');
         Route::delete('/settings/{setting}', [SettingController::class, 'destroy'])->name('settings.destroy');
+
+        // Analytics Routes
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
     });
 
     Route::get('/todos', [TodoController::class, 'index'])->name('todos.index');
