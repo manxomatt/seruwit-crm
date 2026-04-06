@@ -30,6 +30,65 @@ Route::middleware('auth')->group(function () {
     // User Dashboard Routes
     Route::prefix('user')->name('user.')->group(function () {
         Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
+
+        // User Page Routes (reuse Admin controllers with permission middleware)
+        Route::get('/pages', [AdminPageController::class, 'index'])->middleware('permission:pages,view')->name('pages.index');
+        Route::get('/pages/create', [AdminPageController::class, 'create'])->middleware('permission:pages,create')->name('pages.create');
+        Route::post('/pages', [AdminPageController::class, 'store'])->middleware('permission:pages,create')->name('pages.store');
+        Route::get('/pages/{page}', [AdminPageController::class, 'show'])->middleware('permission:pages,view')->name('pages.show');
+        Route::get('/pages/{page}/edit', [AdminPageController::class, 'edit'])->middleware('permission:pages,update')->name('pages.edit');
+        Route::patch('/pages/{page}', [AdminPageController::class, 'update'])->middleware('permission:pages,update')->name('pages.update');
+        Route::patch('/pages/{page}/save-content', [AdminPageController::class, 'saveContent'])->middleware('permission:pages,update')->name('pages.save-content');
+        Route::patch('/pages/{page}/set-homepage', [AdminPageController::class, 'setHomepage'])->middleware('permission:pages,update')->name('pages.set-homepage');
+        Route::delete('/pages/{page}', [AdminPageController::class, 'destroy'])->middleware('permission:pages,delete')->name('pages.destroy');
+
+        // User Post Routes
+        Route::get('/posts', [PostController::class, 'index'])->middleware('permission:posts,view')->name('posts.index');
+        Route::get('/posts/create', [PostController::class, 'create'])->middleware('permission:posts,create')->name('posts.create');
+        Route::post('/posts', [PostController::class, 'store'])->middleware('permission:posts,create')->name('posts.store');
+        Route::get('/posts/{post}', [PostController::class, 'show'])->middleware('permission:posts,view')->name('posts.show');
+        Route::get('/posts/{post}/edit', [PostController::class, 'edit'])->middleware('permission:posts,update')->name('posts.edit');
+        Route::patch('/posts/{post}', [PostController::class, 'update'])->middleware('permission:posts,update')->name('posts.update');
+        Route::patch('/posts/{post}/toggle-publish', [PostController::class, 'togglePublish'])->middleware('permission:posts,update')->name('posts.toggle-publish');
+        Route::delete('/posts/{post}', [PostController::class, 'destroy'])->middleware('permission:posts,delete')->name('posts.destroy');
+
+        // User Carousel Routes
+        Route::get('/carousels', [CarouselController::class, 'index'])->middleware('permission:carousels,view')->name('carousels.index');
+        Route::get('/carousels/create', [CarouselController::class, 'create'])->middleware('permission:carousels,create')->name('carousels.create');
+        Route::post('/carousels', [CarouselController::class, 'store'])->middleware('permission:carousels,create')->name('carousels.store');
+        Route::get('/carousels/{carousel}', [CarouselController::class, 'show'])->middleware('permission:carousels,view')->name('carousels.show');
+        Route::get('/carousels/{carousel}/edit', [CarouselController::class, 'edit'])->middleware('permission:carousels,update')->name('carousels.edit');
+        Route::patch('/carousels/{carousel}', [CarouselController::class, 'update'])->middleware('permission:carousels,update')->name('carousels.update');
+        Route::delete('/carousels/{carousel}', [CarouselController::class, 'destroy'])->middleware('permission:carousels,delete')->name('carousels.destroy');
+        Route::post('/carousels/{carousel}/images', [CarouselImageController::class, 'store'])->middleware('permission:carousels,create')->name('carousels.images.store');
+        Route::patch('/carousels/{carousel}/images/{image}', [CarouselImageController::class, 'update'])->middleware('permission:carousels,update')->name('carousels.images.update');
+        Route::delete('/carousels/{carousel}/images/{image}', [CarouselImageController::class, 'destroy'])->middleware('permission:carousels,delete')->name('carousels.images.destroy');
+        Route::post('/carousels/{carousel}/images/reorder', [CarouselImageController::class, 'reorder'])->middleware('permission:carousels,update')->name('carousels.images.reorder');
+
+        // User Media Routes
+        Route::get('/media', [MediaController::class, 'index'])->middleware('permission:media,view')->name('media.index');
+        Route::get('/media/create', [MediaController::class, 'create'])->middleware('permission:media,create')->name('media.create');
+        Route::post('/media', [MediaController::class, 'store'])->middleware('permission:media,create')->name('media.store');
+        Route::post('/media/upload', [MediaController::class, 'upload'])->middleware('permission:media,create')->name('media.upload');
+        Route::get('/media/picker', [MediaController::class, 'picker'])->middleware('permission:media,view')->name('media.picker');
+        Route::post('/media/bulk-destroy', [MediaController::class, 'bulkDestroy'])->middleware('permission:media,delete')->name('media.bulk-destroy');
+        Route::get('/media/{medium}', [MediaController::class, 'show'])->middleware('permission:media,view')->name('media.show');
+        Route::get('/media/{medium}/edit', [MediaController::class, 'edit'])->middleware('permission:media,update')->name('media.edit');
+        Route::patch('/media/{medium}', [MediaController::class, 'update'])->middleware('permission:media,update')->name('media.update');
+        Route::delete('/media/{medium}', [MediaController::class, 'destroy'])->middleware('permission:media,delete')->name('media.destroy');
+
+        // User Analytics Routes
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->middleware('permission:analytics,view')->name('analytics.index');
+
+        // User Settings Routes
+        Route::get('/settings', [SettingController::class, 'index'])->middleware('permission:settings,view')->name('settings.index');
+        Route::get('/settings/create', [SettingController::class, 'create'])->middleware('permission:settings,create')->name('settings.create');
+        Route::post('/settings', [SettingController::class, 'store'])->middleware('permission:settings,create')->name('settings.store');
+        Route::post('/settings/bulk-update', [SettingController::class, 'bulkUpdate'])->middleware('permission:settings,update')->name('settings.bulk-update');
+        Route::get('/settings/{setting}', [SettingController::class, 'show'])->middleware('permission:settings,view')->name('settings.show');
+        Route::get('/settings/{setting}/edit', [SettingController::class, 'edit'])->middleware('permission:settings,update')->name('settings.edit');
+        Route::patch('/settings/{setting}', [SettingController::class, 'update'])->middleware('permission:settings,update')->name('settings.update');
+        Route::delete('/settings/{setting}', [SettingController::class, 'destroy'])->middleware('permission:settings,delete')->name('settings.destroy');
     });
 
     // Custom Role Dashboard Routes

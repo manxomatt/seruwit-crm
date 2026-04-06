@@ -31,9 +31,9 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
-        // Eager load profile to avoid N+1 query
+        // Eager load profile and roles with permissions to avoid N+1 query
         if ($user) {
-            $user->load('profile');
+            $user->load(['profile', 'roles.permissions']);
         }
 
         return [
@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->name,
                     'email' => $user->email,
                     'email_verified_at' => $user->email_verified_at,
+                    'is_admin' => $user->isAdmin(),
                     'profile' => $user->profile ? [
                         'id' => $user->profile->id,
                         'first_name' => $user->profile->first_name,
@@ -51,8 +52,29 @@ class HandleInertiaRequests extends Middleware
                         'phone_number' => $user->profile->phone_number,
                         'avatar_url' => $user->profile->avatar_url,
                     ] : null,
+                    'permissions' => $this->getUserPermissions($user),
                 ] : null,
             ],
         ];
+    }
+
+    /**
+     * Get the user's permissions grouped by module.
+     *
+     * @return array<string, array<string>>
+     */
+    private function getUserPermissions(\App\Models\User $user): array
+    {
+        $permissions = $user->getAllPermissions();
+
+        $grouped = [];
+        foreach ($permissions as $permission) {
+            if (! isset($grouped[$permission->module])) {
+                $grouped[$permission->module] = [];
+            }
+            $grouped[$permission->module][] = $permission->action;
+        }
+
+        return $grouped;
     }
 }
