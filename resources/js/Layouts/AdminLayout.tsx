@@ -4,6 +4,22 @@ import GlobalSearch from '@/Components/GlobalSearch';
 import { Link, usePage } from '@inertiajs/react';
 import { useState, ReactNode } from 'react';
 
+interface UserProfile {
+    id: number;
+    first_name: string | null;
+    last_name: string | null;
+    phone_number: string | null;
+    avatar_url: string | null;
+}
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+    email_verified_at: string | null;
+    profile: UserProfile | null;
+}
+
 interface Props {
     header?: ReactNode;
     children?: ReactNode;
@@ -83,8 +99,37 @@ const CloseIcon = () => (
     </svg>
 );
 
+// Avatar component that shows image or initials
+const UserAvatar = ({ user, size = 'md' }: { user: User | null; size?: 'sm' | 'md' | 'lg' }) => {
+    const sizeClasses = {
+        sm: 'h-8 w-8 text-sm',
+        md: 'h-9 w-9 text-sm',
+        lg: 'h-10 w-10 text-base',
+    };
+
+    const avatarUrl = user?.profile?.avatar_url;
+
+    if (avatarUrl) {
+        return (
+            <img
+                src={avatarUrl}
+                alt={user?.name || 'User'}
+                className={`${sizeClasses[size]} rounded-full object-cover`}
+            />
+        );
+    }
+
+    return (
+        <div className={`${sizeClasses[size]} rounded-full bg-indigo-500 flex items-center justify-center`}>
+            <span className="font-medium text-white">
+                {user?.name?.charAt(0).toUpperCase() || 'A'}
+            </span>
+        </div>
+    );
+};
+
 export default function AdminLayout({ header, children }: Props) {
-    const user = (usePage().props as any).auth.user;
+    const user = (usePage().props as any).auth.user as User | null;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navigation: MenuItem[] = [
@@ -140,6 +185,16 @@ export default function AdminLayout({ header, children }: Props) {
                                 </Link>
                             ))}
                         </nav>
+                        {/* Mobile sidebar user section */}
+                        <div className="border-t border-indigo-600 p-4">
+                            <Link href={route('profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
+                                <UserAvatar user={user} size="md" />
+                                <div className="ml-3">
+                                    <p className="text-sm font-medium text-white">{user?.name || 'Admin'}</p>
+                                    <p className="text-xs text-indigo-200">{user?.email || 'admin@example.com'}</p>
+                                </div>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             )}
@@ -171,18 +226,15 @@ export default function AdminLayout({ header, children }: Props) {
                             </Link>
                         ))}
                     </nav>
+                    {/* Desktop sidebar user section (kiri bawah) */}
                     <div className="border-t border-indigo-600 p-4">
-                        <div className="flex items-center">
-                            <div className="h-9 w-9 rounded-full bg-indigo-500 flex items-center justify-center">
-                                <span className="text-sm font-medium text-white">
-                                    {user?.name?.charAt(0).toUpperCase() || 'A'}
-                                </span>
-                            </div>
+                        <Link href={route('profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
+                            <UserAvatar user={user} size="md" />
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-white">{user?.name || 'Admin'}</p>
                                 <p className="text-xs text-indigo-200">{user?.email || 'admin@example.com'}</p>
                             </div>
-                        </div>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -219,15 +271,11 @@ export default function AdminLayout({ header, children }: Props) {
                             {/* Separator */}
                             <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
 
-                            {/* Profile dropdown */}
+                            {/* Profile dropdown (kanan atas) */}
                             <Dropdown>
                                 <Dropdown.Trigger>
                                     <button type="button" className="-m-1.5 flex items-center p-1.5">
-                                        <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
-                                            <span className="text-sm font-medium text-white">
-                                                {user?.name?.charAt(0).toUpperCase() || 'A'}
-                                            </span>
-                                        </div>
+                                        <UserAvatar user={user} size="sm" />
                                         <span className="hidden lg:flex lg:items-center">
                                             <span className="ml-4 text-sm font-semibold leading-6 text-gray-900">
                                                 {user?.name || 'Admin'}

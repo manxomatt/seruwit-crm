@@ -4,7 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import DangerButton from '@/Components/DangerButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, FormEventHandler } from 'react';
+import { useState, FormEventHandler, useEffect } from 'react';
 
 interface MediaItem {
     id: number;
@@ -44,6 +44,8 @@ interface Props {
     filters: Filters;
 }
 
+type ViewMode = 'grid' | 'list';
+
 export default function Index({ media, filters }: Props): JSX.Element {
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [search, setSearch] = useState(filters.search || '');
@@ -52,6 +54,16 @@ export default function Index({ media, filters }: Props): JSX.Element {
     const [mediaToDelete, setMediaToDelete] = useState<MediaItem | null>(null);
     const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [viewMode, setViewMode] = useState<ViewMode>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('mediaViewMode') as ViewMode) || 'list';
+        }
+        return 'list';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('mediaViewMode', viewMode);
+    }, [viewMode]);
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -245,91 +257,253 @@ export default function Index({ media, filters }: Props): JSX.Element {
                         </div>
                     ) : (
                         <>
-                            {/* Select All */}
-                            <div className="mb-4 flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedItems.length === media.data.length && media.data.length > 0}
-                                    onChange={toggleSelectAll}
-                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                />
-                                <span className="ml-2 text-sm text-gray-600">Select all</span>
-                            </div>
-
-                            {/* Media Grid */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {media.data.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className={`relative group border rounded-lg overflow-hidden ${
-                                            selectedItems.includes(item.id) ? 'ring-2 ring-indigo-500' : ''
+                            {/* View Mode Toggle & Select All */}
+                            <div className="mb-4 flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems.length === media.data.length && media.data.length > 0}
+                                        onChange={toggleSelectAll}
+                                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <span className="ml-2 text-sm text-gray-600">Select all</span>
+                                </div>
+                                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={`p-2 rounded ${
+                                            viewMode === 'grid'
+                                                ? 'bg-white shadow text-indigo-600'
+                                                : 'text-gray-500 hover:text-gray-700'
                                         }`}
+                                        title="Grid View"
                                     >
-                                        {/* Checkbox */}
-                                        <div className="absolute top-2 left-2 z-10">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedItems.includes(item.id)}
-                                                onChange={() => toggleSelectItem(item.id)}
-                                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 bg-white"
-                                            />
-                                        </div>
-
-                                        {/* Preview */}
-                                        <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                                            {item.type === 'image' ? (
-                                                <img
-                                                    src={item.url}
-                                                    alt={item.alt_text || item.original_name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                getFileIcon(item.type, item.mime_type)
-                                            )}
-                                        </div>
-
-                                        {/* Info */}
-                                        <div className="p-2">
-                                            <p className="text-xs font-medium text-gray-900 truncate" title={item.original_name}>
-                                                {item.original_name}
-                                            </p>
-                                            <p className="text-xs text-gray-500">{item.human_size}</p>
-                                        </div>
-
-                                        {/* Hover Actions */}
-                                        <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                            <Link
-                                                href={route('admin.media.show', item.id)}
-                                                className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
-                                                title="View"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                            </Link>
-                                            <Link
-                                                href={route('admin.media.edit', item.id)}
-                                                className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
-                                                title="Edit"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </Link>
-                                            <button
-                                                onClick={() => openDeleteDialog(item)}
-                                                className="p-2 bg-white rounded-full text-gray-700 hover:text-red-600"
-                                                title="Delete"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`p-2 rounded ${
+                                            viewMode === 'list'
+                                                ? 'bg-white shadow text-indigo-600'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                        title="List View"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* Grid View */}
+                            {viewMode === 'grid' && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                    {media.data.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className={`relative group border rounded-lg overflow-hidden ${
+                                                selectedItems.includes(item.id) ? 'ring-2 ring-indigo-500' : ''
+                                            }`}
+                                        >
+                                            {/* Checkbox */}
+                                            <div className="absolute top-2 left-2 z-10">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedItems.includes(item.id)}
+                                                    onChange={() => toggleSelectItem(item.id)}
+                                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 bg-white"
+                                                />
+                                            </div>
+
+                                            {/* Preview */}
+                                            <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                                                {item.type === 'image' ? (
+                                                    <img
+                                                        src={item.url}
+                                                        alt={item.alt_text || item.original_name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    getFileIcon(item.type, item.mime_type)
+                                                )}
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="p-2">
+                                                <p className="text-xs font-medium text-gray-900 truncate" title={item.original_name}>
+                                                    {item.original_name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">{item.human_size}</p>
+                                            </div>
+
+                                            {/* Hover Actions */}
+                                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                <Link
+                                                    href={route('admin.media.show', item.id)}
+                                                    className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
+                                                    title="View"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                </Link>
+                                                <Link
+                                                    href={route('admin.media.edit', item.id)}
+                                                    className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
+                                                    title="Edit"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </Link>
+                                                <button
+                                                    onClick={() => openDeleteDialog(item)}
+                                                    className="p-2 bg-white rounded-full text-gray-700 hover:text-red-600"
+                                                    title="Delete"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* List View */}
+                            {viewMode === 'list' && (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" className="w-12 px-6 py-3">
+                                                    <span className="sr-only">Select</span>
+                                                </th>
+                                                <th scope="col" className="w-16 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Preview
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Name
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Type
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Size
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Uploaded
+                                                </th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {media.data.map((item) => (
+                                                <tr
+                                                    key={item.id}
+                                                    className={`hover:bg-gray-50 ${
+                                                        selectedItems.includes(item.id) ? 'bg-indigo-50' : ''
+                                                    }`}
+                                                >
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedItems.includes(item.id)}
+                                                            onChange={() => toggleSelectItem(item.id)}
+                                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                        />
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                                                            {item.type === 'image' ? (
+                                                                <img
+                                                                    src={item.url}
+                                                                    alt={item.alt_text || item.original_name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                getFileIcon(item.type, item.mime_type)
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-medium text-gray-900 truncate max-w-xs" title={item.original_name}>
+                                                                {item.original_name}
+                                                            </span>
+                                                            {item.alt_text && (
+                                                                <span className="text-xs text-gray-500 truncate max-w-xs" title={item.alt_text}>
+                                                                    {item.alt_text}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                            item.type === 'image'
+                                                                ? 'bg-blue-100 text-blue-800'
+                                                                : item.type === 'video'
+                                                                ? 'bg-purple-100 text-purple-800'
+                                                                : 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                            {item.type}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {item.human_size}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {new Date(item.created_at).toLocaleDateString('id-ID', {
+                                                            day: 'numeric',
+                                                            month: 'short',
+                                                            year: 'numeric',
+                                                        })}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <Link
+                                                                href={route('admin.media.show', item.id)}
+                                                                className="text-gray-600 hover:text-gray-900"
+                                                                title="Preview"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                </svg>
+                                                            </Link>
+                                                            <Link
+                                                                href={route('admin.media.edit', item.id)}
+                                                                className="text-indigo-600 hover:text-indigo-900"
+                                                                title="Edit"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                </svg>
+                                                            </Link>
+                                                            <button
+                                                                onClick={() => openDeleteDialog(item)}
+                                                                className="text-red-600 hover:text-red-900"
+                                                                title="Delete"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
 
                             {/* Pagination */}
                             {media.last_page > 1 && (

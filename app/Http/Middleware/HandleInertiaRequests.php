@@ -29,10 +29,29 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        // Eager load profile to avoid N+1 query
+        if ($user) {
+            $user->load('profile');
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'email_verified_at' => $user->email_verified_at,
+                    'profile' => $user->profile ? [
+                        'id' => $user->profile->id,
+                        'first_name' => $user->profile->first_name,
+                        'last_name' => $user->profile->last_name,
+                        'phone_number' => $user->profile->phone_number,
+                        'avatar_url' => $user->profile->avatar_url,
+                    ] : null,
+                ] : null,
             ],
         ];
     }

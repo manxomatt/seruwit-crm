@@ -36,7 +36,20 @@ class MediaController extends Controller
             });
         }
 
-        $media = $query->paginate(24)->withQueryString();
+        $media = $query->paginate(24)->withQueryString()->through(fn ($item) => [
+            'id' => $item->id,
+            'name' => $item->name,
+            'original_name' => $item->original_name,
+            'url' => $item->url,
+            'mime_type' => $item->mime_type,
+            'size' => $item->size,
+            'human_size' => $item->human_size,
+            'type' => $item->type,
+            'alt_text' => $item->alt_text,
+            'description' => $item->description,
+            'created_at' => $item->created_at,
+            'updated_at' => $item->updated_at,
+        ]);
 
         return Inertia::render('Admin/Media/Index', [
             'media' => $media,
