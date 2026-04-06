@@ -1,4 +1,4 @@
-import CustomLayout from '@/Layouts/CustomLayout';
+import ModuleLayout from '@/Layouts/ModuleLayout';
 import { Head, usePage } from '@inertiajs/react';
 
 interface Props {
@@ -19,15 +19,14 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
     const permissionModules = Object.keys(permissions);
 
     return (
-        <CustomLayout
+        <ModuleLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {primaryRole ? `${primaryRole.name} Dashboard` : 'Custom Dashboard'}
+                    {primaryRole ? `${primaryRole.name} Dashboard` : 'Module Dashboard'}
                 </h2>
             }
-            roleName={primaryRole?.name || 'Custom'}
         >
-            <Head title={primaryRole ? `${primaryRole.name} Dashboard` : 'Custom Dashboard'} />
+            <Head title={primaryRole ? `${primaryRole.name} Dashboard` : 'Module Dashboard'} />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {/* Welcome Card */}
@@ -67,7 +66,7 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
                                             {permissions[module].map((action: string) => (
                                                 <span
                                                     key={action}
-                                                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
+                                                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800"
                                                 >
                                                     {action}
                                                 </span>
@@ -84,6 +83,6 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
                     </div>
                 </div>
             </div>
-        </CustomLayout>
+        </ModuleLayout>
     );
 }
