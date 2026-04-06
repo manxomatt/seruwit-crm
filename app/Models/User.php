@@ -228,4 +228,47 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserProfile::class);
     }
+
+    /**
+     * Get the primary role for the user.
+     * Priority: admin > user > first custom role
+     */
+    public function getPrimaryRole(): ?Role
+    {
+        $roles = $this->roles()->get();
+
+        if ($roles->isEmpty()) {
+            return null;
+        }
+
+        // Check for admin role first (highest priority)
+        $adminRole = $roles->firstWhere('slug', 'admin');
+        if ($adminRole) {
+            return $adminRole;
+        }
+
+        // Check for user role second
+        $userRole = $roles->firstWhere('slug', 'user');
+        if ($userRole) {
+            return $userRole;
+        }
+
+        // Return the first custom role
+        return $roles->first();
+    }
+
+    /**
+     * Get the dashboard path for the user based on their primary role.
+     */
+    public function getDashboardPath(): string
+    {
+        $primaryRole = $this->getPrimaryRole();
+
+        if ($primaryRole) {
+            return $primaryRole->getDashboardPath();
+        }
+
+        // Default fallback if user has no roles
+        return Role::DEFAULT_DASHBOARD_PATHS['user'] ?? '/user/dashboard';
+    }
 }

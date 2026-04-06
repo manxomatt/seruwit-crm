@@ -19,7 +19,9 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+
+        $user = User::factory()->withUserRole()->create();
 
         $response = $this->post('/login', [
             'email' => $user->email,
@@ -27,11 +29,13 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect('/user/dashboard');
     }
 
     public function test_admin_users_are_redirected_to_admin_dashboard_after_login(): void
     {
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+
         $admin = User::factory()->admin()->create();
 
         $response = $this->post('/login', [
@@ -40,7 +44,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('admin.dashboard', absolute: false));
+        $response->assertRedirect('/admin/dashboard');
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

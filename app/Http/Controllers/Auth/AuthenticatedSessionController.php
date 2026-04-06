@@ -33,11 +33,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $defaultRoute = $request->user()->isAdmin()
-            ? route('admin.dashboard', absolute: false)
-            : route('dashboard', absolute: false);
+        // Get the dashboard path based on user's primary role
+        $dashboardPath = $request->user()->getDashboardPath();
 
-        return redirect()->intended($defaultRoute);
+        return redirect()->intended($dashboardPath);
     }
 
     /**

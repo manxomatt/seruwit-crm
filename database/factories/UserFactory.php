@@ -68,4 +68,17 @@ class UserFactory extends Factory
             }
         });
     }
+
+    /**
+     * Assign a custom role to the user after creation.
+     */
+    public function withRole(string $roleSlug): static
+    {
+        return $this->afterCreating(function ($user) use ($roleSlug) {
+            $role = Role::where('slug', $roleSlug)->first();
+            if ($role) {
+                $user->roles()->attach($role);
+            }
+        });
+    }
 }

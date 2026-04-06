@@ -11,6 +11,19 @@ class Role extends Model
     use HasFactory;
 
     /**
+     * Default dashboard paths for system roles.
+     */
+    public const DEFAULT_DASHBOARD_PATHS = [
+        'admin' => '/admin/dashboard',
+        'user' => '/user/dashboard',
+    ];
+
+    /**
+     * Default dashboard path for custom roles.
+     */
+    public const DEFAULT_CUSTOM_DASHBOARD_PATH = '/custom/dashboard';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -19,6 +32,7 @@ class Role extends Model
         'name',
         'slug',
         'description',
+        'dashboard_path',
         'is_system',
     ];
 
@@ -113,5 +127,20 @@ class Role extends Model
     public function isSystemRole(): bool
     {
         return $this->is_system;
+    }
+
+    /**
+     * Get the dashboard path for this role.
+     * Returns the custom dashboard_path if set, otherwise returns the default path based on role type.
+     */
+    public function getDashboardPath(): string
+    {
+        // If a custom dashboard path is set, use it
+        if ($this->dashboard_path) {
+            return $this->dashboard_path;
+        }
+
+        // Return default path based on role slug
+        return self::DEFAULT_DASHBOARD_PATHS[$this->slug] ?? self::DEFAULT_CUSTOM_DASHBOARD_PATH;
     }
 }
