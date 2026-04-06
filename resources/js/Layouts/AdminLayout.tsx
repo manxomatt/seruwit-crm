@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import GlobalSearch from '@/Components/GlobalSearch';
 import { Link, usePage } from '@inertiajs/react';
 import { useState, ReactNode } from 'react';
 
@@ -202,16 +203,9 @@ export default function AdminLayout({ header, children }: Props) {
                     <div className="h-6 w-px bg-gray-200 lg:hidden" />
 
                     <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                        {/* Search */}
+                        {/* Global Search */}
                         <div className="relative flex flex-1 items-center">
-                            <svg className="pointer-events-none absolute left-0 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
-                            <input
-                                type="search"
-                                placeholder="Search..."
-                                className="block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
-                            />
+                            <GlobalSearch />
                         </div>
 
                         <div className="flex items-center gap-x-4 lg:gap-x-6">

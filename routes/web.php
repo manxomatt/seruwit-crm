@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CarouselController;
 use App\Http\Controllers\Admin\CarouselImageController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\GlobalSearchController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\PostController;
@@ -31,6 +32,9 @@ Route::middleware('auth')->group(function () {
     // Admin Routes
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Global Search
+        Route::get('/search', [GlobalSearchController::class, 'search'])->name('search');
 
         // Page Builder Routes
         Route::get('/pages', [AdminPageController::class, 'index'])->middleware('permission:pages,view')->name('pages.index');

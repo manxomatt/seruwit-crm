@@ -6,6 +6,15 @@ import DangerButton from '@/Components/DangerButton';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
+interface UserProfile {
+    id: number;
+    user_id: number;
+    first_name: string | null;
+    last_name: string | null;
+    phone_number: string | null;
+    avatar_url: string | null;
+}
+
 interface User {
     id: number;
     name: string;
@@ -13,6 +22,7 @@ interface User {
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
+    profile: UserProfile | null;
 }
 
 interface Props {
@@ -71,17 +81,37 @@ export default function Show({ user }: Props): JSX.Element {
                     <div className="flex items-start gap-6">
                         {/* Avatar */}
                         <div className="flex-shrink-0">
-                            <div className="h-24 w-24 rounded-full bg-indigo-600 flex items-center justify-center">
-                                <span className="text-3xl font-bold text-white">
-                                    {user.name.charAt(0).toUpperCase()}
-                                </span>
-                            </div>
+                            {user.profile?.avatar_url ? (
+                                <img
+                                    src={user.profile.avatar_url}
+                                    alt={user.name}
+                                    className="h-24 w-24 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="h-24 w-24 rounded-full bg-indigo-600 flex items-center justify-center">
+                                    <span className="text-3xl font-bold text-white">
+                                        {user.profile?.first_name?.charAt(0)?.toUpperCase() || user.name.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* User Info */}
                         <div className="flex-1">
-                            <h3 className="text-2xl font-bold text-gray-900">{user.name}</h3>
+                            <h3 className="text-2xl font-bold text-gray-900">
+                                {user.profile?.first_name && user.profile?.last_name
+                                    ? `${user.profile.first_name} ${user.profile.last_name}`
+                                    : user.name}
+                            </h3>
                             <p className="text-gray-600">{user.email}</p>
+                            {user.profile?.phone_number && (
+                                <p className="text-gray-500 text-sm mt-1">
+                                    <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                    {user.profile.phone_number}
+                                </p>
+                            )}
                             <div className="mt-2">
                                 {user.email_verified_at ? (
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -102,12 +132,42 @@ export default function Show({ user }: Props): JSX.Element {
                         </div>
                     </div>
 
-                    {/* Details Grid */}
+                    {/* Profile Information */}
+                    {user.profile && (
+                        <div className="mt-8 border-t border-gray-200 pt-6">
+                            <h4 className="text-lg font-medium text-gray-900 mb-4">Profile Information</h4>
+                            <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">First Name</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{user.profile.first_name || '-'}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Last Name</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{user.profile.last_name || '-'}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{user.profile.phone_number || '-'}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Avatar URL</dt>
+                                    <dd className="mt-1 text-sm text-gray-900 break-all">{user.profile.avatar_url || '-'}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    )}
+
+                    {/* Account Details Grid */}
                     <div className="mt-8 border-t border-gray-200 pt-6">
+                        <h4 className="text-lg font-medium text-gray-900 mb-4">Account Details</h4>
                         <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">User ID</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{user.id}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-gray-500">Username</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{user.name}</dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Email Address</dt>

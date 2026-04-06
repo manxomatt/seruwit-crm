@@ -11,6 +11,15 @@ interface Role {
     slug: string;
 }
 
+interface UserProfile {
+    id: number;
+    user_id: number;
+    first_name: string | null;
+    last_name: string | null;
+    phone_number: string | null;
+    avatar_url: string | null;
+}
+
 interface User {
     id: number;
     name: string;
@@ -19,6 +28,7 @@ interface User {
     created_at: string;
     updated_at: string;
     roles: Role[];
+    profile: UserProfile | null;
 }
 
 interface PaginatedUsers {
@@ -201,16 +211,31 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center">
                                                         <div className="h-10 w-10 flex-shrink-0">
-                                                            <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                                                                <span className="text-sm font-medium text-white">
-                                                                    {user.name.charAt(0).toUpperCase()}
-                                                                </span>
-                                                            </div>
+                                                            {user.profile?.avatar_url ? (
+                                                                <img
+                                                                    src={user.profile.avatar_url}
+                                                                    alt={user.name}
+                                                                    className="h-10 w-10 rounded-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center">
+                                                                    <span className="text-sm font-medium text-white">
+                                                                        {user.profile?.first_name?.charAt(0)?.toUpperCase() || user.name.charAt(0).toUpperCase()}
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <div className="ml-4">
                                                             <div className="text-sm font-medium text-gray-900">
-                                                                {user.name}
+                                                                {user.profile?.first_name && user.profile?.last_name
+                                                                    ? `${user.profile.first_name} ${user.profile.last_name}`
+                                                                    : user.name}
                                                             </div>
+                                                            {user.profile?.phone_number && (
+                                                                <div className="text-xs text-gray-500">
+                                                                    {user.profile.phone_number}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>

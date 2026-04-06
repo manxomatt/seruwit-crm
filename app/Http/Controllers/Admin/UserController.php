@@ -20,11 +20,16 @@ class UserController extends Controller
     public function index(): Response
     {
         $users = User::query()
-            ->with('roles')
+            ->with(['roles', 'profile'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhereHas('profile', function ($profileQuery) use ($search) {
+                            $profileQuery->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('phone_number', 'like', "%{$search}%");
+                        });
                 });
             })
             ->latest()
@@ -78,7 +83,7 @@ class UserController extends Controller
      */
     public function show(User $user): Response
     {
-        $user->load(['roles.permissions']);
+        $user->load(['roles.permissions', 'profile']);
 
         return Inertia::render('Admin/Users/Show', [
             'user' => $user,
@@ -90,7 +95,7 @@ class UserController extends Controller
      */
     public function edit(User $user): Response
     {
-        $user->load('roles');
+        $user->load(['roles', 'profile']);
         $roles = Role::query()->orderBy('name')->get();
 
         return Inertia::render('Admin/Users/Edit', [
@@ -122,6 +127,17 @@ class UserController extends Controller
         if (isset($validated['roles'])) {
             $user->syncRoles($validated['roles']);
         }
+
+        // Update or create user profile
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'first_name' => $validated['first_name'] ?? null,
+                'last_name' => $validated['last_name'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
+                'avatar_url' => $validated['avatar_url'] ?? null,
+            ]
+        );
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');
