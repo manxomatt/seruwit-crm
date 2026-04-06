@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CarouselImageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
+use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\LiveUpdateController;
@@ -89,6 +90,16 @@ Route::middleware('auth')->group(function () {
 
         // Analytics Routes
         Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+        // Post/Blog Routes
+        Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
+        Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
+        Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
+        Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+        Route::get('/posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
+        Route::patch('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
+        Route::patch('/posts/{post}/toggle-publish', [PostController::class, 'togglePublish'])->name('posts.toggle-publish');
+        Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     });
 
     Route::get('/todos', [TodoController::class, 'index'])->name('todos.index');
