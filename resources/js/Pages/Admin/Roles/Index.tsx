@@ -9,20 +9,16 @@ interface Role {
     id: number;
     name: string;
     slug: string;
-}
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    email_verified_at: string | null;
+    description: string | null;
+    is_system: boolean;
+    users_count: number;
+    permissions_count: number;
     created_at: string;
     updated_at: string;
-    roles: Role[];
 }
 
-interface PaginatedUsers {
-    data: User[];
+interface PaginatedRoles {
+    data: Role[];
     current_page: number;
     last_page: number;
     per_page: number;
@@ -39,19 +35,19 @@ interface Filters {
 }
 
 interface Props {
-    users: PaginatedUsers;
+    roles: PaginatedRoles;
     filters: Filters;
 }
 
-export default function Index({ users, filters }: Props): JSX.Element {
+export default function Index({ roles, filters }: Props): JSX.Element {
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
     const [processing, setProcessing] = useState(false);
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(route('admin.users.index'), {
+        router.get(route('admin.roles.index'), {
             search: search || undefined,
         }, {
             preserveState: true,
@@ -61,24 +57,24 @@ export default function Index({ users, filters }: Props): JSX.Element {
 
     const clearFilters = () => {
         setSearch('');
-        router.get(route('admin.users.index'));
+        router.get(route('admin.roles.index'));
     };
 
-    const openDeleteDialog = (user: User) => {
-        setUserToDelete(user);
+    const openDeleteDialog = (role: Role) => {
+        setRoleToDelete(role);
         setShowDeleteDialog(true);
     };
 
     const closeDeleteDialog = () => {
         setShowDeleteDialog(false);
-        setUserToDelete(null);
+        setRoleToDelete(null);
     };
 
     const confirmDelete = () => {
-        if (!userToDelete) return;
+        if (!roleToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.users.destroy', userToDelete.id), {
+        router.delete(route('admin.roles.destroy', roleToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -92,31 +88,20 @@ export default function Index({ users, filters }: Props): JSX.Element {
         });
     };
 
-    const getRoleBadgeColor = (slug: string) => {
-        switch (slug) {
-            case 'admin':
-                return 'bg-red-100 text-red-800';
-            case 'user':
-                return 'bg-blue-100 text-blue-800';
-            default:
-                return 'bg-green-100 text-green-800';
-        }
-    };
-
     return (
         <AdminLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        User Management
+                        Role Management
                     </h2>
-                    <Link href={route('admin.users.create')}>
-                        <PrimaryButton>Add User</PrimaryButton>
+                    <Link href={route('admin.roles.create')}>
+                        <PrimaryButton>Add Role</PrimaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title="User Management" />
+            <Head title="Role Management" />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -125,7 +110,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                         <div className="flex-1 min-w-[200px]">
                             <TextInput
                                 type="text"
-                                placeholder="Search users by name or email..."
+                                placeholder="Search roles by name or description..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -143,7 +128,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                         )}
                     </form>
 
-                    {users.data.length === 0 ? (
+                    {roles.data.length === 0 ? (
                         <div className="text-center py-12">
                             <svg
                                 className="mx-auto h-12 w-12 text-gray-400"
@@ -155,37 +140,40 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                                 />
                             </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900">No roles found</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                Get started by creating a new user.
+                                Get started by creating a new role.
                             </p>
                             <div className="mt-6">
-                                <Link href={route('admin.users.create')}>
-                                    <PrimaryButton>Add User</PrimaryButton>
+                                <Link href={route('admin.roles.create')}>
+                                    <PrimaryButton>Add Role</PrimaryButton>
                                 </Link>
                             </div>
                         </div>
                     ) : (
                         <>
-                            {/* Users Table */}
+                            {/* Roles Table */}
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                User
+                                                Role
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Email
+                                                Description
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Roles
+                                                Users
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Status
+                                                Permissions
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Type
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Created
@@ -196,61 +184,63 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {users.data.map((user) => (
-                                            <tr key={user.id} className="hover:bg-gray-50">
+                                        {roles.data.map((role) => (
+                                            <tr key={role.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center">
                                                         <div className="h-10 w-10 flex-shrink-0">
-                                                            <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                                                                <span className="text-sm font-medium text-white">
-                                                                    {user.name.charAt(0).toUpperCase()}
-                                                                </span>
+                                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                                                                role.slug === 'admin' ? 'bg-red-600' : 
+                                                                role.slug === 'user' ? 'bg-blue-600' : 'bg-green-600'
+                                                            }`}>
+                                                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                                </svg>
                                                             </div>
                                                         </div>
                                                         <div className="ml-4">
                                                             <div className="text-sm font-medium text-gray-900">
-                                                                {user.name}
+                                                                {role.name}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {role.slug}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">{user.email}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {user.roles.length > 0 ? (
-                                                            user.roles.map((role) => (
-                                                                <span
-                                                                    key={role.id}
-                                                                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRoleBadgeColor(role.slug)}`}
-                                                                >
-                                                                    {role.name}
-                                                                </span>
-                                                            ))
-                                                        ) : (
-                                                            <span className="text-sm text-gray-400">No roles</span>
-                                                        )}
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm text-gray-900 max-w-xs truncate">
+                                                        {role.description || '-'}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    {user.email_verified_at ? (
-                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                            Verified
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        {role.users_count} users
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                        {role.permissions_count} permissions
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {role.is_system ? (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                            System
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                            Unverified
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            Custom
                                                         </span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {formatDate(user.created_at)}
+                                                    {formatDate(role.created_at)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Link
-                                                            href={route('admin.users.show', user.id)}
+                                                            href={route('admin.roles.show', role.id)}
                                                             className="text-gray-600 hover:text-gray-900"
                                                             title="View"
                                                         >
@@ -259,24 +249,29 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                             </svg>
                                                         </Link>
-                                                        <Link
-                                                            href={route('admin.users.edit', user.id)}
-                                                            className="text-indigo-600 hover:text-indigo-900"
-                                                            title="Edit"
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                            </svg>
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => openDeleteDialog(user)}
-                                                            className="text-red-600 hover:text-red-900"
-                                                            title="Delete"
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                        </button>
+                                                        {!role.is_system && (
+                                                            <>
+                                                                <Link
+                                                                    href={route('admin.roles.edit', role.id)}
+                                                                    className="text-indigo-600 hover:text-indigo-900"
+                                                                    title="Edit"
+                                                                >
+                                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                    </svg>
+                                                                </Link>
+                                                                <button
+                                                                    onClick={() => openDeleteDialog(role)}
+                                                                    className="text-red-600 hover:text-red-900"
+                                                                    title="Delete"
+                                                                    disabled={role.users_count > 0}
+                                                                >
+                                                                    <svg className={`w-5 h-5 ${role.users_count > 0 ? 'opacity-50 cursor-not-allowed' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -286,15 +281,15 @@ export default function Index({ users, filters }: Props): JSX.Element {
                             </div>
 
                             {/* Pagination */}
-                            {users.last_page > 1 && (
+                            {roles.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(users.current_page - 1) * users.per_page + 1} to{' '}
-                                        {Math.min(users.current_page * users.per_page, users.total)} of{' '}
-                                        {users.total} results
+                                        Showing {(roles.current_page - 1) * roles.per_page + 1} to{' '}
+                                        {Math.min(roles.current_page * roles.per_page, roles.total)} of{' '}
+                                        {roles.total} results
                                     </p>
                                     <div className="flex gap-1">
-                                        {users.links.map((link, index) => (
+                                        {roles.links.map((link, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => link.url && router.get(link.url)}
@@ -322,17 +317,15 @@ export default function Index({ users, filters }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus User"
+                title="Delete Role"
                 message={
-                    userToDelete ? (
+                    roleToDelete ? (
                         <>
-                            Apakah Anda yakin ingin menghapus user{' '}
-                            <strong>"{userToDelete.name}"</strong> ({userToDelete.email})? Semua
-                            data terkait user ini juga akan dihapus. Tindakan ini tidak dapat
-                            dibatalkan.
+                            Are you sure you want to delete the role{' '}
+                            <strong>"{roleToDelete.name}"</strong>? This action cannot be undone.
                         </>
                     ) : (
-                        'Apakah Anda yakin ingin menghapus user ini?'
+                        'Are you sure you want to delete this role?'
                     )
                 }
             />

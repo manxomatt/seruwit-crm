@@ -7,6 +7,14 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
+interface Role {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    is_system: boolean;
+}
+
 interface User {
     id: number;
     name: string;
@@ -18,19 +26,30 @@ interface User {
 
 interface Props {
     user: User;
+    userRoles: number[];
+    roles: Role[];
 }
 
-export default function Edit({ user }: Props): JSX.Element {
+export default function Edit({ user, userRoles, roles }: Props): JSX.Element {
     const { data, setData, patch, processing, errors } = useForm({
         name: user.name,
         email: user.email,
         password: '',
         password_confirmation: '',
+        roles: userRoles,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         patch(route('admin.users.update', user.id));
+    };
+
+    const toggleRole = (roleId: number) => {
+        if (data.roles.includes(roleId)) {
+            setData('roles', data.roles.filter(id => id !== roleId));
+        } else {
+            setData('roles', [...data.roles, roleId]);
+        }
     };
 
     return (
@@ -47,65 +66,111 @@ export default function Edit({ user }: Props): JSX.Element {
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
-                    <form onSubmit={submit} className="max-w-xl">
-                        <div className="mb-4">
-                            <InputLabel htmlFor="name" value="Name" />
-                            <TextInput
-                                id="name"
-                                type="text"
-                                name="name"
-                                value={data.name}
-                                className="mt-1 block w-full"
-                                autoComplete="name"
-                                isFocused={true}
-                                onChange={(e) => setData('name', e.target.value)}
-                            />
-                            <InputError message={errors.name} className="mt-2" />
+                    <form onSubmit={submit} className="max-w-2xl">
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            {/* Left Column - User Details */}
+                            <div className="space-y-4">
+                                <div>
+                                    <InputLabel htmlFor="name" value="Name" />
+                                    <TextInput
+                                        id="name"
+                                        type="text"
+                                        name="name"
+                                        value={data.name}
+                                        className="mt-1 block w-full"
+                                        autoComplete="name"
+                                        isFocused={true}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                    />
+                                    <InputError message={errors.name} className="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="email" value="Email" />
+                                    <TextInput
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        value={data.email}
+                                        className="mt-1 block w-full"
+                                        autoComplete="email"
+                                        onChange={(e) => setData('email', e.target.value)}
+                                    />
+                                    <InputError message={errors.email} className="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="password" value="Password (leave blank to keep current)" />
+                                    <TextInput
+                                        id="password"
+                                        type="password"
+                                        name="password"
+                                        value={data.password}
+                                        className="mt-1 block w-full"
+                                        autoComplete="new-password"
+                                        onChange={(e) => setData('password', e.target.value)}
+                                    />
+                                    <InputError message={errors.password} className="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="password_confirmation" value="Confirm Password" />
+                                    <TextInput
+                                        id="password_confirmation"
+                                        type="password"
+                                        name="password_confirmation"
+                                        value={data.password_confirmation}
+                                        className="mt-1 block w-full"
+                                        autoComplete="new-password"
+                                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                                    />
+                                    <InputError message={errors.password_confirmation} className="mt-2" />
+                                </div>
+                            </div>
+
+                            {/* Right Column - Roles */}
+                            <div>
+                                <InputLabel value="Roles" />
+                                <div className="mt-2 border rounded-lg divide-y max-h-[300px] overflow-y-auto">
+                                    {roles.map((role) => (
+                                        <label
+                                            key={role.id}
+                                            className="flex items-start p-3 cursor-pointer hover:bg-gray-50"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={data.roles.includes(role.id)}
+                                                onChange={() => toggleRole(role.id)}
+                                                className="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                            />
+                                            <div className="ml-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium text-gray-900">
+                                                        {role.name}
+                                                    </span>
+                                                    {role.is_system && (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                                            System
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {role.description && (
+                                                    <p className="text-xs text-gray-500 mt-0.5">
+                                                        {role.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                                <InputError message={errors.roles} className="mt-2" />
+                                <p className="mt-2 text-sm text-gray-500">
+                                    Selected: {data.roles.length} role(s)
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="mb-4">
-                            <InputLabel htmlFor="email" value="Email" />
-                            <TextInput
-                                id="email"
-                                type="email"
-                                name="email"
-                                value={data.email}
-                                className="mt-1 block w-full"
-                                autoComplete="email"
-                                onChange={(e) => setData('email', e.target.value)}
-                            />
-                            <InputError message={errors.email} className="mt-2" />
-                        </div>
-
-                        <div className="mb-4">
-                            <InputLabel htmlFor="password" value="Password (leave blank to keep current)" />
-                            <TextInput
-                                id="password"
-                                type="password"
-                                name="password"
-                                value={data.password}
-                                className="mt-1 block w-full"
-                                autoComplete="new-password"
-                                onChange={(e) => setData('password', e.target.value)}
-                            />
-                            <InputError message={errors.password} className="mt-2" />
-                        </div>
-
-                        <div className="mb-6">
-                            <InputLabel htmlFor="password_confirmation" value="Confirm Password" />
-                            <TextInput
-                                id="password_confirmation"
-                                type="password"
-                                name="password_confirmation"
-                                value={data.password_confirmation}
-                                className="mt-1 block w-full"
-                                autoComplete="new-password"
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
-                            />
-                            <InputError message={errors.password_confirmation} className="mt-2" />
-                        </div>
-
-                        <div className="flex items-center gap-4">
+                        <div className="mt-6 flex items-center gap-4">
                             <PrimaryButton disabled={processing}>
                                 Update User
                             </PrimaryButton>

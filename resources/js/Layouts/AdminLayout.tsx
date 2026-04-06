@@ -64,6 +64,12 @@ const PostsIcon = () => (
     </svg>
 );
 
+const RolesIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+);
+
 const MenuIcon = () => (
     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -87,6 +93,7 @@ export default function AdminLayout({ header, children }: Props) {
         { name: 'Carousels', href: route('admin.carousels.index'), icon: <CarouselIcon />, current: route().current('admin.carousels.*') },
         { name: 'Media', href: route('admin.media.index'), icon: <MediaIcon />, current: route().current('admin.media.*') },
         { name: 'Users', href: route('admin.users.index'), icon: <UsersIcon />, current: route().current('admin.users.*') },
+        { name: 'Roles', href: route('admin.roles.index'), icon: <RolesIcon />, current: route().current('admin.roles.*') },
         { name: 'Analytics', href: route('admin.analytics.index'), icon: <AnalyticsIcon />, current: route().current('admin.analytics.*') },
         { name: 'Settings', href: route('admin.settings.index'), icon: <SettingsIcon />, current: route().current('admin.settings.*') },
     ];

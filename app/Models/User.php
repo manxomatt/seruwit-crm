@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,17 +22,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'role',
         'password',
     ];
-
-    /**
-     * Check if the user has admin role.
-     */
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -54,6 +46,136 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * The roles that belong to the user.
+     *
+     * @return BelongsToMany<Role, $this>
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class)->withTimestamps();
+    }
+
+    /**
+     * Check if the user has admin role.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->roles()->where('slug', 'admin')->exists();
+    }
+
+    /**
+     * Check if the user has a specific role.
+     */
+    public function hasRole(string $roleSlug): bool
+    {
+        return $this->roles()->where('slug', $roleSlug)->exists();
+    }
+
+    /**
+     * Check if the user has any of the given roles.
+     *
+     * @param  array<string>  $roleSlugs
+     */
+    public function hasAnyRole(array $roleSlugs): bool
+    {
+        return $this->roles()->whereIn('slug', $roleSlugs)->exists();
+    }
+
+    /**
+     * Check if the user has a specific permission.
+     */
+    public function hasPermission(string $permissionSlug): bool
+    {
+        // Admin has all permissions
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($permissionSlug) {
+                $query->where('slug', $permissionSlug);
+            })
+            ->exists();
+    }
+
+    /**
+     * Check if the user has permission for a specific module and action.
+     */
+    public function hasPermissionFor(string $module, string $action): bool
+    {
+        // Admin has all permissions
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($module, $action) {
+                $query->where('module', $module)->where('action', $action);
+            })
+            ->exists();
+    }
+
+    /**
+     * Check if the user can perform an action on a module.
+     */
+    public function can($ability, $arguments = []): bool
+    {
+        // Check if it's a module.action format
+        if (is_string($ability) && str_contains($ability, '.')) {
+            [$module, $action] = explode('.', $ability, 2);
+
+            return $this->hasPermissionFor($module, $action);
+        }
+
+        return parent::can($ability, $arguments);
+    }
+
+    /**
+     * Get all permissions for the user through their roles.
+     *
+     * @return \Illuminate\Support\Collection<int, Permission>
+     */
+    public function getAllPermissions(): \Illuminate\Support\Collection
+    {
+        if ($this->isAdmin()) {
+            return Permission::all();
+        }
+
+        return $this->roles()
+            ->with('permissions')
+            ->get()
+            ->pluck('permissions')
+            ->flatten()
+            ->unique('id');
+    }
+
+    /**
+     * Assign a role to the user.
+     */
+    public function assignRole(Role $role): void
+    {
+        $this->roles()->syncWithoutDetaching([$role->id]);
+    }
+
+    /**
+     * Remove a role from the user.
+     */
+    public function removeRole(Role $role): void
+    {
+        $this->roles()->detach($role->id);
+    }
+
+    /**
+     * Sync roles for the user.
+     *
+     * @param  array<int>  $roleIds
+     */
+    public function syncRoles(array $roleIds): void
+    {
+        $this->roles()->sync($roleIds);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +20,7 @@ class UserController extends Controller
     public function index(): Response
     {
         $users = User::query()
+            ->with('roles')
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -42,7 +44,11 @@ class UserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Admin/Users/Create');
+        $roles = Role::query()->orderBy('name')->get();
+
+        return Inertia::render('Admin/Users/Create', [
+            'roles' => $roles,
+        ]);
     }
 
     /**
@@ -53,7 +59,15 @@ class UserController extends Controller
         $validated = $request->validated();
         $validated['password'] = Hash::make($validated['password']);
 
-        User::create($validated);
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+        ]);
+
+        if (isset($validated['roles'])) {
+            $user->syncRoles($validated['roles']);
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
@@ -64,6 +78,8 @@ class UserController extends Controller
      */
     public function show(User $user): Response
     {
+        $user->load(['roles.permissions']);
+
         return Inertia::render('Admin/Users/Show', [
             'user' => $user,
         ]);
@@ -74,8 +90,13 @@ class UserController extends Controller
      */
     public function edit(User $user): Response
     {
+        $user->load('roles');
+        $roles = Role::query()->orderBy('name')->get();
+
         return Inertia::render('Admin/Users/Edit', [
             'user' => $user,
+            'userRoles' => $user->roles->pluck('id')->toArray(),
+            'roles' => $roles,
         ]);
     }
 
@@ -92,7 +113,15 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'] ?? $user->password,
+        ]);
+
+        if (isset($validated['roles'])) {
+            $user->syncRoles($validated['roles']);
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -26,7 +27,6 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'role' => 'user',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -44,12 +44,28 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the user is an admin.
+     * Assign the admin role to the user after creation.
      */
     public function admin(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'admin',
-        ]);
+        return $this->afterCreating(function ($user) {
+            $adminRole = Role::where('slug', 'admin')->first();
+            if ($adminRole) {
+                $user->roles()->attach($adminRole);
+            }
+        });
+    }
+
+    /**
+     * Assign the user role to the user after creation.
+     */
+    public function withUserRole(): static
+    {
+        return $this->afterCreating(function ($user) {
+            $userRole = Role::where('slug', 'user')->first();
+            if ($userRole) {
+                $user->roles()->attach($userRole);
+            }
+        });
     }
 }

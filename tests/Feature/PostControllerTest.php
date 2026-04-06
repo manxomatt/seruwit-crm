@@ -6,14 +6,22 @@ use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Traits\WithRoles;
 
 class PostControllerTest extends TestCase
 {
     use RefreshDatabase;
+    use WithRoles;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpRoles();
+    }
 
     public function test_posts_index_page_is_displayed(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
 
         $response = $this
             ->actingAs($user)
@@ -24,7 +32,7 @@ class PostControllerTest extends TestCase
 
     public function test_posts_create_page_is_displayed(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
 
         $response = $this
             ->actingAs($user)
@@ -35,7 +43,7 @@ class PostControllerTest extends TestCase
 
     public function test_user_can_create_post(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
 
         $response = $this
             ->actingAs($user)
@@ -58,7 +66,7 @@ class PostControllerTest extends TestCase
 
     public function test_user_can_view_own_post(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
         $post = Post::factory()->for($user)->create();
 
         $response = $this
@@ -70,7 +78,7 @@ class PostControllerTest extends TestCase
 
     public function test_user_can_edit_own_post(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
         $post = Post::factory()->for($user)->create();
 
         $response = $this
@@ -82,7 +90,7 @@ class PostControllerTest extends TestCase
 
     public function test_user_can_update_own_post(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
         $post = Post::factory()->for($user)->create();
 
         $response = $this
@@ -103,7 +111,7 @@ class PostControllerTest extends TestCase
 
     public function test_user_can_delete_own_post(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
         $post = Post::factory()->for($user)->create();
 
         $response = $this
@@ -119,7 +127,7 @@ class PostControllerTest extends TestCase
 
     public function test_user_can_toggle_publish_status(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
         $post = Post::factory()->for($user)->draft()->create();
 
         $this->assertFalse($post->is_published);
@@ -137,8 +145,8 @@ class PostControllerTest extends TestCase
 
     public function test_user_cannot_edit_other_users_post(): void
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $user = $this->createAdminUser();
+        $otherUser = $this->createAdminUser();
         $post = Post::factory()->for($otherUser)->create();
 
         $response = $this
@@ -150,8 +158,8 @@ class PostControllerTest extends TestCase
 
     public function test_user_cannot_delete_other_users_post(): void
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $user = $this->createAdminUser();
+        $otherUser = $this->createAdminUser();
         $post = Post::factory()->for($otherUser)->create();
 
         $response = $this
