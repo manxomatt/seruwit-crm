@@ -26,6 +26,10 @@ export default function Create({ roles }: Props): JSX.Element {
         password: '',
         password_confirmation: '',
         roles: [] as number[],
+        first_name: '',
+        last_name: '',
+        phone_number: '',
+        avatar_url: '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -114,6 +118,66 @@ export default function Create({ roles }: Props): JSX.Element {
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
                                     />
                                     <InputError message={errors.password_confirmation} className="mt-2" />
+                                </div>
+
+                                {/* Profile Fields */}
+                                <div className="border-t pt-4 mt-4">
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Profile Information</h4>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <InputLabel htmlFor="first_name" value="First Name" />
+                                            <TextInput
+                                                id="first_name"
+                                                type="text"
+                                                name="first_name"
+                                                value={data.first_name}
+                                                className="mt-1 block w-full"
+                                                onChange={(e) => setData('first_name', e.target.value)}
+                                            />
+                                            <InputError message={errors.first_name} className="mt-2" />
+                                        </div>
+
+                                        <div>
+                                            <InputLabel htmlFor="last_name" value="Last Name" />
+                                            <TextInput
+                                                id="last_name"
+                                                type="text"
+                                                name="last_name"
+                                                value={data.last_name}
+                                                className="mt-1 block w-full"
+                                                onChange={(e) => setData('last_name', e.target.value)}
+                                            />
+                                            <InputError message={errors.last_name} className="mt-2" />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <InputLabel htmlFor="phone_number" value="Phone Number" />
+                                        <TextInput
+                                            id="phone_number"
+                                            type="text"
+                                            name="phone_number"
+                                            value={data.phone_number}
+                                            className="mt-1 block w-full"
+                                            onChange={(e) => setData('phone_number', e.target.value)}
+                                        />
+                                        <InputError message={errors.phone_number} className="mt-2" />
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <InputLabel htmlFor="avatar_url" value="Avatar URL" />
+                                        <TextInput
+                                            id="avatar_url"
+                                            type="text"
+                                            name="avatar_url"
+                                            value={data.avatar_url}
+                                            className="mt-1 block w-full"
+                                            placeholder="https://example.com/avatar.jpg"
+                                            onChange={(e) => setData('avatar_url', e.target.value)}
+                                        />
+                                        <InputError message={errors.avatar_url} className="mt-2" />
+                                    </div>
                                 </div>
                             </div>
 

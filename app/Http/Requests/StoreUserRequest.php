@@ -28,6 +28,10 @@ class StoreUserRequest extends FormRequest
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['integer', 'exists:roles,id'],
+            'first_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
+            'phone_number' => ['nullable', 'string', 'max:50'],
+            'avatar_url' => ['nullable', 'string', 'max:2048'],
         ];
     }
 

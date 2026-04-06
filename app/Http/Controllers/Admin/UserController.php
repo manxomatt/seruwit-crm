@@ -74,6 +74,21 @@ class UserController extends Controller
             $user->syncRoles($validated['roles']);
         }
 
+        // Create user profile if any profile data is provided
+        if (
+            ! empty($validated['first_name']) ||
+            ! empty($validated['last_name']) ||
+            ! empty($validated['phone_number']) ||
+            ! empty($validated['avatar_url'])
+        ) {
+            $user->profile()->create([
+                'first_name' => $validated['first_name'] ?? null,
+                'last_name' => $validated['last_name'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
+                'avatar_url' => $validated['avatar_url'] ?? null,
+            ]);
+        }
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
     }
