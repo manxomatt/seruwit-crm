@@ -1,4 +1,5 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import DangerButton from '@/Components/DangerButton';
 import TextInput from '@/Components/TextInput';
@@ -38,6 +39,9 @@ interface Props {
 
 export default function Index({ users, filters }: Props): JSX.Element {
     const [search, setSearch] = useState(filters.search || '');
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [processing, setProcessing] = useState(false);
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -54,10 +58,24 @@ export default function Index({ users, filters }: Props): JSX.Element {
         router.get(route('admin.users.index'));
     };
 
-    const deleteUser = (user: User) => {
-        if (confirm(`Are you sure you want to delete "${user.name}"?`)) {
-            router.delete(route('admin.users.destroy', user.id));
-        }
+    const openDeleteDialog = (user: User) => {
+        setUserToDelete(user);
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setUserToDelete(null);
+    };
+
+    const confirmDelete = () => {
+        if (!userToDelete) return;
+
+        setProcessing(true);
+        router.delete(route('admin.users.destroy', userToDelete.id), {
+            onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const formatDate = (dateString: string) => {
@@ -215,7 +233,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                             </svg>
                                                         </Link>
                                                         <button
-                                                            onClick={() => deleteUser(user)}
+                                                            onClick={() => openDeleteDialog(user)}
                                                             className="text-red-600 hover:text-red-900"
                                                             title="Delete"
                                                         >
@@ -262,6 +280,26 @@ export default function Index({ users, filters }: Props): JSX.Element {
                     )}
                 </div>
             </div>
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus User"
+                message={
+                    userToDelete ? (
+                        <>
+                            Apakah Anda yakin ingin menghapus user{' '}
+                            <strong>"{userToDelete.name}"</strong> ({userToDelete.email})? Semua
+                            data terkait user ini juga akan dihapus. Tindakan ini tidak dapat
+                            dibatalkan.
+                        </>
+                    ) : (
+                        'Apakah Anda yakin ingin menghapus user ini?'
+                    )
+                }
+            />
         </AdminLayout>
     );
 }

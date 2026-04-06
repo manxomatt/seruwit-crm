@@ -1,8 +1,10 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface User {
     id: number;
@@ -18,6 +20,9 @@ interface Props {
 }
 
 export default function Show({ user }: Props): JSX.Element {
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [processing, setProcessing] = useState(false);
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -28,10 +33,19 @@ export default function Show({ user }: Props): JSX.Element {
         });
     };
 
-    const deleteUser = () => {
-        if (confirm(`Are you sure you want to delete "${user.name}"?`)) {
-            router.delete(route('admin.users.destroy', user.id));
-        }
+    const openDeleteDialog = () => {
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+    };
+
+    const confirmDelete = () => {
+        setProcessing(true);
+        router.delete(route('admin.users.destroy', user.id), {
+            onFinish: () => setProcessing(false),
+        });
     };
 
     return (
@@ -45,7 +59,7 @@ export default function Show({ user }: Props): JSX.Element {
                         <Link href={route('admin.users.edit', user.id)}>
                             <PrimaryButton>Edit User</PrimaryButton>
                         </Link>
-                        <DangerButton onClick={deleteUser}>Delete User</DangerButton>
+                        <DangerButton onClick={openDeleteDialog}>Delete User</DangerButton>
                     </div>
                 </div>
             }
@@ -124,6 +138,21 @@ export default function Show({ user }: Props): JSX.Element {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus User"
+                message={
+                    <>
+                        Apakah Anda yakin ingin menghapus user{' '}
+                        <strong>"{user.name}"</strong> ({user.email})? Semua data terkait user
+                        ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.
+                    </>
+                }
+            />
         </AdminLayout>
     );
 }

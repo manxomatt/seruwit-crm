@@ -1,8 +1,10 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Setting {
     id: number;
@@ -23,10 +25,22 @@ interface Props {
 }
 
 export default function Show({ setting }: Props): JSX.Element {
-    const deleteSetting = () => {
-        if (confirm(`Are you sure you want to delete "${setting.label}"?`)) {
-            router.delete(route('admin.settings.destroy', setting.id));
-        }
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [processing, setProcessing] = useState(false);
+
+    const openDeleteDialog = () => {
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+    };
+
+    const confirmDelete = () => {
+        setProcessing(true);
+        router.delete(route('admin.settings.destroy', setting.id), {
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const formatDate = (dateString: string) => {
@@ -129,7 +143,7 @@ export default function Show({ setting }: Props): JSX.Element {
                         <Link href={route('admin.settings.edit', setting.id)}>
                             <PrimaryButton>Edit</PrimaryButton>
                         </Link>
-                        <DangerButton onClick={deleteSetting}>Delete</DangerButton>
+                        <DangerButton onClick={openDeleteDialog}>Delete</DangerButton>
                     </div>
                 </div>
             }
@@ -219,6 +233,22 @@ export default function Show({ setting }: Props): JSX.Element {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus Setting"
+                message={
+                    <>
+                        Apakah Anda yakin ingin menghapus setting{' '}
+                        <strong>"{setting.label}"</strong> (key:{' '}
+                        <code className="bg-gray-100 px-1 rounded">{setting.key}</code>
+                        )? Tindakan ini tidak dapat dibatalkan.
+                    </>
+                }
+            />
         </AdminLayout>
     );
 }

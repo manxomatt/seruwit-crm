@@ -1,4 +1,5 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import DangerButton from '@/Components/DangerButton';
 import TextInput from '@/Components/TextInput';
@@ -47,6 +48,10 @@ export default function Index({ media, filters }: Props): JSX.Element {
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [mediaToDelete, setMediaToDelete] = useState<MediaItem | null>(null);
+    const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -79,21 +84,46 @@ export default function Index({ media, filters }: Props): JSX.Element {
         }
     };
 
-    const deleteMedia = (item: MediaItem) => {
-        if (confirm(`Are you sure you want to delete "${item.original_name}"?`)) {
-            router.delete(route('admin.media.destroy', item.id));
-        }
+    const openDeleteDialog = (item: MediaItem) => {
+        setMediaToDelete(item);
+        setShowDeleteDialog(true);
     };
 
-    const bulkDelete = () => {
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setMediaToDelete(null);
+    };
+
+    const confirmDelete = () => {
+        if (!mediaToDelete) return;
+
+        setProcessing(true);
+        router.delete(route('admin.media.destroy', mediaToDelete.id), {
+            onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessing(false),
+        });
+    };
+
+    const openBulkDeleteDialog = () => {
         if (selectedItems.length === 0) return;
-        if (confirm(`Are you sure you want to delete ${selectedItems.length} selected items?`)) {
-            router.post(route('admin.media.bulk-destroy'), {
-                ids: selectedItems,
-            }, {
-                onSuccess: () => setSelectedItems([]),
-            });
-        }
+        setShowBulkDeleteDialog(true);
+    };
+
+    const closeBulkDeleteDialog = () => {
+        setShowBulkDeleteDialog(false);
+    };
+
+    const confirmBulkDelete = () => {
+        setProcessing(true);
+        router.post(route('admin.media.bulk-destroy'), {
+            ids: selectedItems,
+        }, {
+            onSuccess: () => {
+                setSelectedItems([]);
+                closeBulkDeleteDialog();
+            },
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const getFileIcon = (type: string, mimeType: string) => {
@@ -176,7 +206,7 @@ export default function Index({ media, filters }: Props): JSX.Element {
                             <span className="text-sm text-gray-600">
                                 {selectedItems.length} item(s) selected
                             </span>
-                            <DangerButton onClick={bulkDelete}>
+                            <DangerButton onClick={openBulkDeleteDialog}>
                                 Delete Selected
                             </DangerButton>
                             <button
@@ -288,7 +318,7 @@ export default function Index({ media, filters }: Props): JSX.Element {
                                                 </svg>
                                             </Link>
                                             <button
-                                                onClick={() => deleteMedia(item)}
+                                                onClick={() => openDeleteDialog(item)}
                                                 className="p-2 bg-white rounded-full text-gray-700 hover:text-red-600"
                                                 title="Delete"
                                             >
@@ -332,6 +362,42 @@ export default function Index({ media, filters }: Props): JSX.Element {
                     )}
                 </div>
             </div>
+
+            {/* Single Delete Dialog */}
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus Media"
+                message={
+                    mediaToDelete ? (
+                        <>
+                            Apakah Anda yakin ingin menghapus file{' '}
+                            <strong>"{mediaToDelete.original_name}"</strong>? Tindakan ini tidak
+                            dapat dibatalkan.
+                        </>
+                    ) : (
+                        'Apakah Anda yakin ingin menghapus file ini?'
+                    )
+                }
+            />
+
+            {/* Bulk Delete Dialog */}
+            <ConfirmDeleteDialog
+                show={showBulkDeleteDialog}
+                onClose={closeBulkDeleteDialog}
+                onConfirm={confirmBulkDelete}
+                processing={processing}
+                title="Hapus Media Terpilih"
+                message={
+                    <>
+                        Apakah Anda yakin ingin menghapus{' '}
+                        <strong>{selectedItems.length} file</strong> yang dipilih? Tindakan ini
+                        tidak dapat dibatalkan.
+                    </>
+                }
+            />
         </AdminLayout>
     );
 }

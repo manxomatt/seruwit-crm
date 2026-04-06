@@ -1,4 +1,5 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
@@ -26,6 +27,8 @@ interface Props {
 
 export default function Show({ media }: Props): JSX.Element {
     const [copied, setCopied] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     const copyUrl = () => {
         navigator.clipboard.writeText(media.url);
@@ -33,10 +36,19 @@ export default function Show({ media }: Props): JSX.Element {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const deleteMedia = () => {
-        if (confirm(`Are you sure you want to delete "${media.original_name}"?`)) {
-            router.delete(route('admin.media.destroy', media.id));
-        }
+    const openDeleteDialog = () => {
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+    };
+
+    const confirmDelete = () => {
+        setProcessing(true);
+        router.delete(route('admin.media.destroy', media.id), {
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const formatDate = (dateString: string) => {
@@ -54,7 +66,7 @@ export default function Show({ media }: Props): JSX.Element {
                         <Link href={route('admin.media.edit', media.id)}>
                             <PrimaryButton>Edit</PrimaryButton>
                         </Link>
-                        <DangerButton onClick={deleteMedia}>Delete</DangerButton>
+                        <DangerButton onClick={openDeleteDialog}>Delete</DangerButton>
                     </div>
                 </div>
             }
@@ -215,6 +227,21 @@ export default function Show({ media }: Props): JSX.Element {
                     <SecondaryButton>Back to Library</SecondaryButton>
                 </Link>
             </div>
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus Media"
+                message={
+                    <>
+                        Apakah Anda yakin ingin menghapus media{' '}
+                        <strong>"{media.original_name}"</strong>? File akan dihapus secara permanen.
+                        Tindakan ini tidak dapat dibatalkan.
+                    </>
+                }
+            />
         </AdminLayout>
     );
 }

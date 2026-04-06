@@ -1,4 +1,5 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
@@ -45,6 +46,9 @@ interface Props {
 export default function Index({ settings, groups, filters }: Props): JSX.Element {
     const [search, setSearch] = useState(filters.search || '');
     const [group, setGroup] = useState(filters.group || '');
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
+    const [processing, setProcessing] = useState(false);
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -63,10 +67,24 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
         router.get(route('admin.settings.index'));
     };
 
-    const deleteSetting = (setting: Setting) => {
-        if (confirm(`Are you sure you want to delete "${setting.label}"?`)) {
-            router.delete(route('admin.settings.destroy', setting.id));
-        }
+    const openDeleteDialog = (setting: Setting) => {
+        setSettingToDelete(setting);
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setSettingToDelete(null);
+    };
+
+    const confirmDelete = () => {
+        if (!settingToDelete) return;
+
+        setProcessing(true);
+        router.delete(route('admin.settings.destroy', settingToDelete.id), {
+            onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const getTypeColor = (type: string) => {
@@ -272,7 +290,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                                                             </svg>
                                                         </Link>
                                                         <button
-                                                            onClick={() => deleteSetting(setting)}
+                                                            onClick={() => openDeleteDialog(setting)}
                                                             className="text-red-600 hover:text-red-900"
                                                             title="Delete"
                                                         >
@@ -319,6 +337,26 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                     )}
                 </div>
             </div>
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus Setting"
+                message={
+                    settingToDelete ? (
+                        <>
+                            Apakah Anda yakin ingin menghapus setting{' '}
+                            <strong>"{settingToDelete.label}"</strong> (key:{' '}
+                            <code className="bg-gray-100 px-1 rounded">{settingToDelete.key}</code>
+                            )? Tindakan ini tidak dapat dibatalkan.
+                        </>
+                    ) : (
+                        'Apakah Anda yakin ingin menghapus setting ini?'
+                    )
+                }
+            />
         </AdminLayout>
     );
 }

@@ -1,4 +1,5 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -39,6 +40,9 @@ interface Props {
 export default function Edit({ carousel }: Props): JSX.Element {
     const [editingImage, setEditingImage] = useState<CarouselImage | null>(null);
     const [showImageModal, setShowImageModal] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [imageToDelete, setImageToDelete] = useState<CarouselImage | null>(null);
+    const [deleteProcessing, setDeleteProcessing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, patch, processing, errors } = useForm({
@@ -109,10 +113,26 @@ export default function Edit({ carousel }: Props): JSX.Element {
         }
     };
 
-    const deleteImage = (image: CarouselImage) => {
-        if (confirm('Are you sure you want to delete this image?')) {
-            router.delete(route('admin.carousels.images.destroy', [carousel.id, image.id]));
-        }
+    const openDeleteDialog = (image: CarouselImage) => {
+        setImageToDelete(image);
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setImageToDelete(null);
+    };
+
+    const confirmDeleteImage = () => {
+        if (!imageToDelete) return;
+        
+        setDeleteProcessing(true);
+        router.delete(route('admin.carousels.images.destroy', [carousel.id, imageToDelete.id]), {
+            onFinish: () => {
+                setDeleteProcessing(false);
+                closeDeleteDialog();
+            },
+        });
     };
 
     const moveImage = (image: CarouselImage, direction: 'up' | 'down') => {
@@ -357,7 +377,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                                         Edit
                                                     </button>
                                                     <button
-                                                        onClick={() => deleteImage(image)}
+                                                        onClick={() => openDeleteDialog(image)}
                                                         className="text-red-600 hover:text-red-900 text-sm"
                                                     >
                                                         Delete
@@ -372,6 +392,26 @@ export default function Edit({ carousel }: Props): JSX.Element {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDeleteImage}
+                processing={deleteProcessing}
+                title="Hapus Gambar"
+                message={
+                    <>
+                        Apakah Anda yakin ingin menghapus gambar
+                        {imageToDelete?.title && (
+                            <>
+                                {' '}<strong>"{imageToDelete.title}"</strong>
+                            </>
+                        )}
+                        ? Gambar akan dihapus secara permanen dari carousel.
+                        Tindakan ini tidak dapat dibatalkan.
+                    </>
+                }
+            />
 
             {/* Image Modal */}
             {showImageModal && (

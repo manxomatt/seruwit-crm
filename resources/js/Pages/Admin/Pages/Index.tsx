@@ -1,5 +1,7 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Page {
     id: number;
@@ -53,10 +55,28 @@ const DocumentIcon = () => (
 );
 
 export default function Index({ pages }: Props): JSX.Element {
-    const deletePage = (page: Page) => {
-        if (confirm('Are you sure you want to delete this page?')) {
-            router.delete(route('admin.pages.destroy', page.id));
-        }
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [pageToDelete, setPageToDelete] = useState<Page | null>(null);
+    const [processing, setProcessing] = useState(false);
+
+    const openDeleteDialog = (page: Page) => {
+        setPageToDelete(page);
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setPageToDelete(null);
+    };
+
+    const confirmDelete = () => {
+        if (!pageToDelete) return;
+
+        setProcessing(true);
+        router.delete(route('admin.pages.destroy', pageToDelete.id), {
+            onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const togglePublish = (page: Page) => {
@@ -193,7 +213,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                                 </button>
                                             )}
                                             <button
-                                                onClick={() => deletePage(page)}
+                                                onClick={() => openDeleteDialog(page)}
                                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                                             >
                                                 <TrashIcon />
@@ -207,6 +227,25 @@ export default function Index({ pages }: Props): JSX.Element {
                     </table>
                 </div>
             )}
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus Halaman"
+                message={
+                    pageToDelete ? (
+                        <>
+                            Apakah Anda yakin ingin menghapus halaman{' '}
+                            <strong>"{pageToDelete.title}"</strong>? Tindakan ini tidak dapat
+                            dibatalkan.
+                        </>
+                    ) : (
+                        'Apakah Anda yakin ingin menghapus halaman ini?'
+                    )
+                }
+            />
         </AdminLayout>
     );
 }

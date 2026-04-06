@@ -1,6 +1,8 @@
 import AdminLayout from '@/Layouts/AdminLayout';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Carousel {
     id: number;
@@ -18,10 +20,28 @@ interface Props {
 }
 
 export default function Index({ carousels }: Props): JSX.Element {
-    const deleteCarousel = (carousel: Carousel) => {
-        if (confirm('Are you sure you want to delete this carousel? All images will be deleted.')) {
-            router.delete(route('admin.carousels.destroy', carousel.id));
-        }
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [carouselToDelete, setCarouselToDelete] = useState<Carousel | null>(null);
+    const [processing, setProcessing] = useState(false);
+
+    const openDeleteDialog = (carousel: Carousel) => {
+        setCarouselToDelete(carousel);
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setCarouselToDelete(null);
+    };
+
+    const confirmDelete = () => {
+        if (!carouselToDelete) return;
+
+        setProcessing(true);
+        router.delete(route('admin.carousels.destroy', carouselToDelete.id), {
+            onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const toggleActive = (carousel: Carousel) => {
@@ -144,7 +164,7 @@ export default function Index({ carousels }: Props): JSX.Element {
                                                     Preview
                                                 </Link>
                                                 <button
-                                                    onClick={() => deleteCarousel(carousel)}
+                                                    onClick={() => openDeleteDialog(carousel)}
                                                     className="text-red-600 hover:text-red-900"
                                                 >
                                                     Delete
@@ -158,6 +178,25 @@ export default function Index({ carousels }: Props): JSX.Element {
                     )}
                 </div>
             </div>
+
+            <ConfirmDeleteDialog
+                show={showDeleteDialog}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+                title="Hapus Carousel"
+                message={
+                    carouselToDelete ? (
+                        <>
+                            Apakah Anda yakin ingin menghapus carousel{' '}
+                            <strong>"{carouselToDelete.name}"</strong>? Semua gambar dalam
+                            carousel ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.
+                        </>
+                    ) : (
+                        'Apakah Anda yakin ingin menghapus carousel ini?'
+                    )
+                }
+            />
         </AdminLayout>
     );
 }
