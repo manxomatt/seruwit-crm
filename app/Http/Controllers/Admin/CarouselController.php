@@ -24,7 +24,7 @@ class CarouselController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Admin/Carousels/Index', [
+        return Inertia::render('Modules/Carousels/Index', [
             'carousels' => $carousels,
         ]);
     }
@@ -34,7 +34,7 @@ class CarouselController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Admin/Carousels/Create');
+        return Inertia::render('Modules/Carousels/Create');
     }
 
     /**
@@ -59,7 +59,7 @@ class CarouselController extends Controller
 
         $carousel->load('images');
 
-        return Inertia::render('Admin/Carousels/Show', [
+        return Inertia::render('Modules/Carousels/Show', [
             'carousel' => $carousel,
         ]);
     }
@@ -75,7 +75,7 @@ class CarouselController extends Controller
 
         $carousel->load('images');
 
-        return Inertia::render('Admin/Carousels/Edit', [
+        return Inertia::render('Modules/Carousels/Edit', [
             'carousel' => $carousel,
         ]);
     }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -10,6 +11,13 @@ use Tests\TestCase;
 class UserControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Create admin role for tests
+        Role::factory()->admin()->create();
+    }
 
     public function test_users_index_requires_authentication(): void
     {
@@ -20,13 +28,13 @@ class UserControllerTest extends TestCase
 
     public function test_authenticated_user_can_access_users_index(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.users.index'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Index')
+            ->component('Modules/Users/Index')
             ->has('users')
             ->has('filters')
         );
@@ -34,28 +42,28 @@ class UserControllerTest extends TestCase
 
     public function test_users_index_shows_all_users(): void
     {
-        $user = User::factory()->create(['name' => 'Admin User']);
+        $user = User::factory()->admin()->create(['name' => 'Admin User']);
         User::factory()->create(['name' => 'Test User 1']);
         User::factory()->create(['name' => 'Test User 2']);
 
         $response = $this->actingAs($user)->get(route('admin.users.index'));
 
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Index')
+            ->component('Modules/Users/Index')
             ->has('users.data', 3)
         );
     }
 
     public function test_users_index_can_search_by_name(): void
     {
-        $user = User::factory()->create(['name' => 'Admin User']);
+        $user = User::factory()->admin()->create(['name' => 'Admin User']);
         User::factory()->create(['name' => 'John Doe']);
         User::factory()->create(['name' => 'Jane Smith']);
 
         $response = $this->actingAs($user)->get(route('admin.users.index', ['search' => 'John']));
 
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Index')
+            ->component('Modules/Users/Index')
             ->has('users.data', 1)
             ->where('users.data.0.name', 'John Doe')
         );
@@ -63,14 +71,14 @@ class UserControllerTest extends TestCase
 
     public function test_users_index_can_search_by_email(): void
     {
-        $user = User::factory()->create(['email' => 'admin@example.com']);
+        $user = User::factory()->admin()->create(['email' => 'admin@example.com']);
         User::factory()->create(['email' => 'john@test.com']);
         User::factory()->create(['email' => 'jane@example.com']);
 
         $response = $this->actingAs($user)->get(route('admin.users.index', ['search' => 'test.com']));
 
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Index')
+            ->component('Modules/Users/Index')
             ->has('users.data', 1)
             ->where('users.data.0.email', 'john@test.com')
         );
@@ -78,19 +86,19 @@ class UserControllerTest extends TestCase
 
     public function test_authenticated_user_can_access_create_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.users.create'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Create')
+            ->component('Modules/Users/Create')
         );
     }
 
     public function test_authenticated_user_can_store_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->post(route('admin.users.store'), [
             'name' => 'New User',
@@ -111,7 +119,7 @@ class UserControllerTest extends TestCase
 
     public function test_store_user_validates_required_fields(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->post(route('admin.users.store'), []);
 
@@ -120,7 +128,7 @@ class UserControllerTest extends TestCase
 
     public function test_store_user_validates_unique_email(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         User::factory()->create(['email' => 'existing@example.com']);
 
         $response = $this->actingAs($user)->post(route('admin.users.store'), [
@@ -135,7 +143,7 @@ class UserControllerTest extends TestCase
 
     public function test_store_user_validates_password_confirmation(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->post(route('admin.users.store'), [
             'name' => 'Test User',
@@ -149,14 +157,14 @@ class UserControllerTest extends TestCase
 
     public function test_authenticated_user_can_view_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create(['name' => 'Target User']);
 
         $response = $this->actingAs($user)->get(route('admin.users.show', $targetUser));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Show')
+            ->component('Modules/Users/Show')
             ->has('user')
             ->where('user.id', $targetUser->id)
             ->where('user.name', 'Target User')
@@ -165,14 +173,14 @@ class UserControllerTest extends TestCase
 
     public function test_authenticated_user_can_edit_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create(['name' => 'Target User']);
 
         $response = $this->actingAs($user)->get(route('admin.users.edit', $targetUser));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Edit')
+            ->component('Modules/Users/Edit')
             ->has('user')
             ->where('user.id', $targetUser->id)
         );
@@ -180,7 +188,7 @@ class UserControllerTest extends TestCase
 
     public function test_authenticated_user_can_update_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create();
 
         $response = $this->actingAs($user)->patch(route('admin.users.update', $targetUser), [
@@ -198,7 +206,7 @@ class UserControllerTest extends TestCase
 
     public function test_update_user_can_change_password(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create();
 
         $response = $this->actingAs($user)->patch(route('admin.users.update', $targetUser), [
@@ -215,7 +223,7 @@ class UserControllerTest extends TestCase
 
     public function test_update_user_without_password_keeps_existing_password(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create([
             'password' => Hash::make('originalpassword'),
         ]);
@@ -232,7 +240,7 @@ class UserControllerTest extends TestCase
 
     public function test_update_user_validates_unique_email_except_self(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create(['email' => 'target@example.com']);
         User::factory()->create(['email' => 'existing@example.com']);
 
@@ -246,7 +254,7 @@ class UserControllerTest extends TestCase
 
     public function test_update_user_allows_same_email(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create(['email' => 'target@example.com']);
 
         $response = $this->actingAs($user)->patch(route('admin.users.update', $targetUser), [
@@ -264,7 +272,7 @@ class UserControllerTest extends TestCase
 
     public function test_authenticated_user_can_delete_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $targetUser = User::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('admin.users.destroy', $targetUser));
@@ -275,13 +283,13 @@ class UserControllerTest extends TestCase
 
     public function test_users_index_is_paginated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         User::factory()->count(20)->create();
 
         $response = $this->actingAs($user)->get(route('admin.users.index'));
 
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Users/Index')
+            ->component('Modules/Users/Index')
             ->has('users.data', 15)
             ->has('users.links')
             ->where('users.total', 21)

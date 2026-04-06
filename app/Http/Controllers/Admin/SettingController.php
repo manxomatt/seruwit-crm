@@ -39,7 +39,7 @@ class SettingController extends Controller
             ->orderBy('group')
             ->pluck('group');
 
-        return Inertia::render('Admin/Settings/Index', [
+        return Inertia::render('Modules/Settings/Index', [
             'settings' => $settings,
             'groups' => $groups,
             'filters' => [
@@ -60,7 +60,7 @@ class SettingController extends Controller
             ->orderBy('group')
             ->pluck('group');
 
-        return Inertia::render('Admin/Settings/Create', [
+        return Inertia::render('Modules/Settings/Create', [
             'groups' => $groups,
         ]);
     }
@@ -81,7 +81,7 @@ class SettingController extends Controller
      */
     public function show(Setting $setting): Response
     {
-        return Inertia::render('Admin/Settings/Show', [
+        return Inertia::render('Modules/Settings/Show', [
             'setting' => $setting,
         ]);
     }
@@ -97,7 +97,7 @@ class SettingController extends Controller
             ->orderBy('group')
             ->pluck('group');
 
-        return Inertia::render('Admin/Settings/Edit', [
+        return Inertia::render('Modules/Settings/Edit', [
             'setting' => $setting,
             'groups' => $groups,
         ]);

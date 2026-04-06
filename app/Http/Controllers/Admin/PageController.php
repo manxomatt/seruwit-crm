@@ -24,7 +24,7 @@ class PageController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Admin/Pages/Index', [
+        return Inertia::render('Modules/Pages/Index', [
             'pages' => $pages,
         ]);
     }
@@ -34,7 +34,7 @@ class PageController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Admin/Pages/Create');
+        return Inertia::render('Modules/Pages/Create');
     }
 
     /**
@@ -56,7 +56,7 @@ class PageController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Admin/Pages/Show', [
+        return Inertia::render('Modules/Pages/Show', [
             'page' => $page,
         ]);
     }
@@ -70,7 +70,7 @@ class PageController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Admin/Pages/Editor', [
+        return Inertia::render('Modules/Pages/Editor', [
             'page' => $page,
         ]);
     }

@@ -2,7 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import GlobalSearch from '@/Components/GlobalSearch';
 import { Link, usePage } from '@inertiajs/react';
-import { useState, ReactNode } from 'react';
+import { useState, ReactNode, useMemo } from 'react';
 
 interface UserProfile {
     id: number;
@@ -12,12 +12,18 @@ interface UserProfile {
     avatar_url: string | null;
 }
 
+interface UserPermissions {
+    [module: string]: string[];
+}
+
 interface User {
     id: number;
     name: string;
     email: string;
     email_verified_at: string | null;
+    is_admin: boolean;
     profile: UserProfile | null;
+    permissions: UserPermissions;
 }
 
 interface Props {
@@ -30,6 +36,7 @@ interface MenuItem {
     href: string;
     icon: ReactNode;
     current: boolean;
+    module?: string; // Module name for permission check
 }
 
 const DashboardIcon = () => (
@@ -132,17 +139,34 @@ export default function AdminLayout({ header, children }: Props) {
     const user = (usePage().props as any).auth.user as User | null;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const navigation: MenuItem[] = [
+    // Helper function to check if user has permission for a module
+    const hasModulePermission = (module: string): boolean => {
+        if (!user) return false;
+        if (user.is_admin) return true;
+        return user.permissions && module in user.permissions && user.permissions[module].includes('view');
+    };
+
+    const allNavigation: MenuItem[] = [
         { name: 'Dashboard', href: route('admin.dashboard'), icon: <DashboardIcon />, current: route().current('admin.dashboard') },
-        { name: 'Pages', href: route('admin.pages.index'), icon: <PagesIcon />, current: route().current('admin.pages.*') },
-        { name: 'Posts', href: route('admin.posts.index'), icon: <PostsIcon />, current: route().current('admin.posts.*') },
-        { name: 'Carousels', href: route('admin.carousels.index'), icon: <CarouselIcon />, current: route().current('admin.carousels.*') },
-        { name: 'Media', href: route('admin.media.index'), icon: <MediaIcon />, current: route().current('admin.media.*') },
-        { name: 'Users', href: route('admin.users.index'), icon: <UsersIcon />, current: route().current('admin.users.*') },
-        { name: 'Roles', href: route('admin.roles.index'), icon: <RolesIcon />, current: route().current('admin.roles.*') },
-        { name: 'Analytics', href: route('admin.analytics.index'), icon: <AnalyticsIcon />, current: route().current('admin.analytics.*') },
-        { name: 'Settings', href: route('admin.settings.index'), icon: <SettingsIcon />, current: route().current('admin.settings.*') },
+        { name: 'Pages', href: route('admin.pages.index'), icon: <PagesIcon />, current: route().current('admin.pages.*'), module: 'pages' },
+        { name: 'Posts', href: route('admin.posts.index'), icon: <PostsIcon />, current: route().current('admin.posts.*'), module: 'posts' },
+        { name: 'Carousels', href: route('admin.carousels.index'), icon: <CarouselIcon />, current: route().current('admin.carousels.*'), module: 'carousels' },
+        { name: 'Media', href: route('admin.media.index'), icon: <MediaIcon />, current: route().current('admin.media.*'), module: 'media' },
+        { name: 'Users', href: route('admin.users.index'), icon: <UsersIcon />, current: route().current('admin.users.*'), module: 'users' },
+        { name: 'Roles', href: route('admin.roles.index'), icon: <RolesIcon />, current: route().current('admin.roles.*'), module: 'roles' },
+        { name: 'Analytics', href: route('admin.analytics.index'), icon: <AnalyticsIcon />, current: route().current('admin.analytics.*'), module: 'analytics' },
+        { name: 'Settings', href: route('admin.settings.index'), icon: <SettingsIcon />, current: route().current('admin.settings.*'), module: 'settings' },
     ];
+
+    // Filter navigation based on user permissions
+    const navigation = useMemo(() => {
+        return allNavigation.filter(item => {
+            // Dashboard is always visible
+            if (!item.module) return true;
+            // Check if user has permission for this module
+            return hasModulePermission(item.module);
+        });
+    }, [user]);
 
     return (
         <div className="min-h-screen bg-gray-50">

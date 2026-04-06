@@ -20,7 +20,7 @@ class AnalyticsController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Admin/Analytics/Index', [
+        return Inertia::render('Modules/Analytics/Index', [
             'overview' => $this->getOverviewStats(),
             'contentStats' => $this->getContentStats(),
             'mediaStats' => $this->getMediaStats(),

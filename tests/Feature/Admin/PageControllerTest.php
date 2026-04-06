@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Page;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -10,6 +11,13 @@ use Tests\TestCase;
 class PageControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Create admin role for tests
+        Role::factory()->admin()->create();
+    }
 
     public function test_pages_index_requires_authentication(): void
     {
@@ -20,20 +28,20 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_access_pages_index(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.pages.index'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Pages/Index')
+            ->component('Modules/Pages/Index')
             ->has('pages')
         );
     }
 
     public function test_pages_index_shows_only_user_pages(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
 
         $userPage = Page::factory()->for($user)->create(['title' => 'My Page']);
@@ -42,7 +50,7 @@ class PageControllerTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.index'));
 
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Pages/Index')
+            ->component('Modules/Pages/Index')
             ->has('pages', 1)
             ->where('pages.0.title', 'My Page')
         );
@@ -50,19 +58,19 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_access_create_page(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.pages.create'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Pages/Create')
+            ->component('Modules/Pages/Create')
         );
     }
 
     public function test_authenticated_user_can_store_page(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->post(route('admin.pages.store'), [
             'title' => 'Test Page',
@@ -81,14 +89,14 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_view_own_page(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $page = Page::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->get(route('admin.pages.show', $page));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($inertiaPage) => $inertiaPage
-            ->component('Admin/Pages/Show')
+            ->component('Modules/Pages/Show')
             ->has('page')
             ->where('page.id', $page->id)
         );
@@ -96,7 +104,7 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_cannot_view_unpublished_page_of_other_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $page = Page::factory()->for($otherUser)->draft()->create();
 
@@ -107,14 +115,14 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_edit_own_page(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $page = Page::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($inertiaPage) => $inertiaPage
-            ->component('Admin/Pages/Editor')
+            ->component('Modules/Pages/Editor')
             ->has('page')
             ->where('page.id', $page->id)
         );
@@ -122,7 +130,7 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_cannot_edit_page_of_other_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $page = Page::factory()->for($otherUser)->create();
 
@@ -133,7 +141,7 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_update_own_page(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $page = Page::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->patch(route('admin.pages.update', $page), [
@@ -151,7 +159,7 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_delete_own_page(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $page = Page::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->delete(route('admin.pages.destroy', $page));
@@ -162,7 +170,7 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_cannot_delete_page_of_other_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $page = Page::factory()->for($otherUser)->create();
 
@@ -174,7 +182,7 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_set_page_as_homepage(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $page = Page::factory()->for($user)->draft()->create(['is_homepage' => false]);
 
         $response = $this->actingAs($user)->patch(route('admin.pages.set-homepage', $page));
@@ -189,7 +197,7 @@ class PageControllerTest extends TestCase
 
     public function test_setting_homepage_removes_previous_homepage(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $oldHomepage = Page::factory()->for($user)->create(['is_homepage' => true]);
         $newHomepage = Page::factory()->for($user)->create(['is_homepage' => false]);
 
@@ -207,7 +215,7 @@ class PageControllerTest extends TestCase
 
     public function test_authenticated_user_can_save_page_content(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $page = Page::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->patchJson(route('admin.pages.save-content', $page), [

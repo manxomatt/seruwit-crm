@@ -23,7 +23,7 @@ class PostController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Admin/Posts/Index', [
+        return Inertia::render('Modules/Posts/Index', [
             'posts' => $posts,
         ]);
     }
@@ -33,7 +33,7 @@ class PostController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Admin/Posts/Create');
+        return Inertia::render('Modules/Posts/Create');
     }
 
     /**
@@ -61,7 +61,7 @@ class PostController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Admin/Posts/Show', [
+        return Inertia::render('Modules/Posts/Show', [
             'post' => $post,
         ]);
     }
@@ -75,7 +75,7 @@ class PostController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Admin/Posts/Edit', [
+        return Inertia::render('Modules/Posts/Edit', [
             'post' => $post,
         ]);
     }

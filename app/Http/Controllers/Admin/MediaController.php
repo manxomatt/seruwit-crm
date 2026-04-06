@@ -51,7 +51,7 @@ class MediaController extends Controller
             'updated_at' => $item->updated_at,
         ]);
 
-        return Inertia::render('Admin/Media/Index', [
+        return Inertia::render('Modules/Media/Index', [
             'media' => $media,
             'filters' => [
                 'type' => $request->input('type'),
@@ -65,7 +65,7 @@ class MediaController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Admin/Media/Create');
+        return Inertia::render('Modules/Media/Create');
     }
 
     /**
@@ -154,7 +154,7 @@ class MediaController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Admin/Media/Show', [
+        return Inertia::render('Modules/Media/Show', [
             'media' => [
                 'id' => $medium->id,
                 'name' => $medium->name,
@@ -181,7 +181,7 @@ class MediaController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Admin/Media/Edit', [
+        return Inertia::render('Modules/Media/Edit', [
             'media' => [
                 'id' => $medium->id,
                 'name' => $medium->name,

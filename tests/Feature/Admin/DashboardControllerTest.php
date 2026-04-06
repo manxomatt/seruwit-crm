@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Carousel;
 use App\Models\Media;
 use App\Models\Page;
+use App\Models\Role;
 use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,13 @@ use Tests\TestCase;
 class DashboardControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Create admin role for tests
+        Role::factory()->admin()->create();
+    }
 
     public function test_admin_dashboard_requires_authentication(): void
     {

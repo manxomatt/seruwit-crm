@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Carousel;
 use App\Models\CarouselImage;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -14,6 +15,13 @@ class CarouselControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Create admin role for tests
+        Role::factory()->admin()->create();
+    }
+
     public function test_carousels_index_requires_authentication(): void
     {
         $response = $this->get(route('admin.carousels.index'));
@@ -23,20 +31,20 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_can_access_carousels_index(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.carousels.index'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Carousels/Index')
+            ->component('Modules/Carousels/Index')
             ->has('carousels')
         );
     }
 
     public function test_carousels_index_shows_only_user_carousels(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
 
         $userCarousel = Carousel::factory()->for($user)->create(['name' => 'My Carousel']);
@@ -45,7 +53,7 @@ class CarouselControllerTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.carousels.index'));
 
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Carousels/Index')
+            ->component('Modules/Carousels/Index')
             ->has('carousels', 1)
             ->where('carousels.0.name', 'My Carousel')
         );
@@ -53,19 +61,19 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_can_access_create_carousel(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.carousels.create'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Carousels/Create')
+            ->component('Modules/Carousels/Create')
         );
     }
 
     public function test_authenticated_user_can_store_carousel(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->post(route('admin.carousels.store'), [
             'name' => 'Test Carousel',
@@ -89,7 +97,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_store_carousel_validates_required_fields(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->post(route('admin.carousels.store'), []);
 
@@ -98,7 +106,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_store_carousel_validates_unique_slug(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         Carousel::factory()->for($user)->create(['slug' => 'existing-slug']);
 
         $response = $this->actingAs($user)->post(route('admin.carousels.store'), [
@@ -111,14 +119,14 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_can_view_own_carousel(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->get(route('admin.carousels.show', $carousel));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Carousels/Show')
+            ->component('Modules/Carousels/Show')
             ->has('carousel')
             ->where('carousel.id', $carousel->id)
         );
@@ -126,7 +134,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_cannot_view_carousel_of_other_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $carousel = Carousel::factory()->for($otherUser)->create();
 
@@ -137,14 +145,14 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_can_edit_own_carousel(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->get(route('admin.carousels.edit', $carousel));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Carousels/Edit')
+            ->component('Modules/Carousels/Edit')
             ->has('carousel')
             ->where('carousel.id', $carousel->id)
         );
@@ -152,7 +160,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_cannot_edit_carousel_of_other_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $carousel = Carousel::factory()->for($otherUser)->create();
 
@@ -163,7 +171,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_can_update_own_carousel(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->patch(route('admin.carousels.update', $carousel), [
@@ -181,7 +189,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_cannot_update_carousel_of_other_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $carousel = Carousel::factory()->for($otherUser)->create();
 
@@ -194,7 +202,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_can_delete_own_carousel(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->delete(route('admin.carousels.destroy', $carousel));
@@ -205,7 +213,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_cannot_delete_carousel_of_other_user(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $carousel = Carousel::factory()->for($otherUser)->create();
 
@@ -219,7 +227,7 @@ class CarouselControllerTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
         $image = CarouselImage::factory()->for($carousel)->create([
             'image_path' => 'carousels/test.jpg',
@@ -234,7 +242,7 @@ class CarouselControllerTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
 
         $response = $this->actingAs($user)->post(route('admin.carousels.images.store', $carousel), [
@@ -256,7 +264,7 @@ class CarouselControllerTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $otherUser = User::factory()->create();
         $carousel = Carousel::factory()->for($otherUser)->create();
 
@@ -271,7 +279,7 @@ class CarouselControllerTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
         $image = CarouselImage::factory()->for($carousel)->create([
             'image_path' => 'carousels/test.jpg',
@@ -287,7 +295,7 @@ class CarouselControllerTest extends TestCase
 
     public function test_authenticated_user_can_reorder_carousel_images(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
         $image1 = CarouselImage::factory()->for($carousel)->create(['sort_order' => 0]);
         $image2 = CarouselImage::factory()->for($carousel)->create(['sort_order' => 1]);
@@ -309,14 +317,14 @@ class CarouselControllerTest extends TestCase
 
     public function test_carousel_index_includes_images_count(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $carousel = Carousel::factory()->for($user)->create();
         CarouselImage::factory()->for($carousel)->count(3)->create();
 
         $response = $this->actingAs($user)->get(route('admin.carousels.index'));
 
         $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Carousels/Index')
+            ->component('Modules/Carousels/Index')
             ->where('carousels.0.images_count', 3)
         );
     }

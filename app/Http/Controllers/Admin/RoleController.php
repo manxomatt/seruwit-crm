@@ -31,7 +31,7 @@ class RoleController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('Admin/Roles/Index', [
+        return Inertia::render('Modules/Roles/Index', [
             'roles' => $roles,
             'filters' => [
                 'search' => request('search'),
@@ -50,7 +50,7 @@ class RoleController extends Controller
             ->get()
             ->groupBy('module');
 
-        return Inertia::render('Admin/Roles/Create', [
+        return Inertia::render('Modules/Roles/Create', [
             'permissions' => $permissions,
             'modules' => Permission::getModules(),
             'actions' => Permission::getActions(),
@@ -89,7 +89,7 @@ class RoleController extends Controller
 
         $permissionsByModule = $role->permissions->groupBy('module');
 
-        return Inertia::render('Admin/Roles/Show', [
+        return Inertia::render('Modules/Roles/Show', [
             'role' => $role,
             'permissionsByModule' => $permissionsByModule,
             'modules' => Permission::getModules(),
@@ -110,7 +110,7 @@ class RoleController extends Controller
             ->get()
             ->groupBy('module');
 
-        return Inertia::render('Admin/Roles/Edit', [
+        return Inertia::render('Modules/Roles/Edit', [
             'role' => $role,
             'rolePermissions' => $role->permissions->pluck('id')->toArray(),
             'permissions' => $permissions,

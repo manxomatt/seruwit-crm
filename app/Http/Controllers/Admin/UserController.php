@@ -36,7 +36,7 @@ class UserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('Admin/Users/Index', [
+        return Inertia::render('Modules/Users/Index', [
             'users' => $users,
             'filters' => [
                 'search' => request('search'),
@@ -51,7 +51,7 @@ class UserController extends Controller
     {
         $roles = Role::query()->orderBy('name')->get();
 
-        return Inertia::render('Admin/Users/Create', [
+        return Inertia::render('Modules/Users/Create', [
             'roles' => $roles,
         ]);
     }
@@ -100,7 +100,7 @@ class UserController extends Controller
     {
         $user->load(['roles.permissions', 'profile']);
 
-        return Inertia::render('Admin/Users/Show', [
+        return Inertia::render('Modules/Users/Show', [
             'user' => $user,
         ]);
     }
@@ -113,7 +113,7 @@ class UserController extends Controller
         $user->load(['roles', 'profile']);
         $roles = Role::query()->orderBy('name')->get();
 
-        return Inertia::render('Admin/Users/Edit', [
+        return Inertia::render('Modules/Users/Edit', [
             'user' => $user,
             'userRoles' => $user->roles->pluck('id')->toArray(),
             'roles' => $roles,

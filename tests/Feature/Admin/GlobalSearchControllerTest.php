@@ -17,6 +17,12 @@ class GlobalSearchControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Admin role is created in createAdminUser() method
+    }
+
     public function test_search_requires_authentication(): void
     {
         $response = $this->getJson(route('admin.search', ['q' => 'test']));
