@@ -22,27 +22,27 @@ const Features: React.FC = () => {
     <section className="py-32 bg-background-light" id="features">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-24">
-          <h2 className="text-lg font-black text-accent uppercase tracking-widest mb-4">Amazing Features</h2>
-          <p className="text-4xl sm:text-5xl font-black text-slate-900 font-display mb-6">Everything you need to stay connected</p>
-          <p className="max-w-2xl mx-auto text-xl text-slate-500">Simple, powerful tools designed for families, pet lovers, and growing teams.</p>
+          <h2 className="text-lg font-black text-accent uppercase tracking-widest mb-4">Fitur Unggulan</h2>
+          <p className="text-4xl sm:text-5xl font-black text-slate-900 font-display mb-6">Semua yang Anda butuhkan untuk tetap terhubung</p>
+          <p className="max-w-2xl mx-auto text-xl text-slate-500">Alat sederhana dan canggih yang dirancang untuk keluarga, pecinta hewan peliharaan, dan tim yang berkembang.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <FeatureCard 
             icon="my_location" 
-            title="Live-Action View" 
-            description="Watch life move in real-time with 1-second updates. Never miss a heartbeat of your most precious assets."
+            title="Tampilan Real-Time" 
+            description="Pantau pergerakan secara real-time dengan pembaruan setiap detik. Jangan lewatkan setiap momen dari aset berharga Anda."
           />
           <FeatureCard 
             icon="notifications_active" 
-            title="Happy Alerts" 
-            description="Stay informed with cheerful notifications when goals are met or boundaries are crossed. Safety made friendly."
+            title="Notifikasi Cerdas" 
+            description="Tetap terinformasi dengan notifikasi saat target tercapai atau batas wilayah dilanggar. Keamanan yang ramah pengguna."
             accent
           />
           <FeatureCard 
             icon="auto_graph" 
-            title="Visual Journeys" 
-            description="Relive your best adventures with beautiful path summaries and activity heatmaps that tell your story."
+            title="Riwayat Perjalanan" 
+            description="Lihat kembali perjalanan terbaik Anda dengan ringkasan rute yang indah dan peta aktivitas yang menceritakan kisah Anda."
           />
         </div>
       </div>

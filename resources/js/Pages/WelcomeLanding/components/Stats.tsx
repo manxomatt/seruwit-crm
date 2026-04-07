@@ -2,10 +2,10 @@ import React from 'react';
 
 const Stats: React.FC = () => {
   const stats = [
-    { value: '99.9%', label: 'Always On' },
-    { value: '120+', label: 'Global Reach' },
-    { value: '<1s', label: 'Swift Sync' },
-    { value: '24/7', label: 'Here for You' },
+    { value: '99.9%', label: 'Uptime Server' },
+    { value: '120+', label: 'Kota Terjangkau' },
+    { value: '<1 dtk', label: 'Sinkronisasi Cepat' },
+    { value: '24/7', label: 'Siap Melayani' },
   ];
 
   return (

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Page;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -322,5 +323,53 @@ class PageTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder(['Newer Page', 'Older Page']);
+    }
+
+    public function test_homepage_returns_welcome_page_with_settings_when_no_homepage_set(): void
+    {
+        // Create public settings
+        Setting::factory()->create([
+            'key' => 'general.site_name',
+            'value' => 'Sky Track',
+            'is_public' => true,
+        ]);
+        Setting::factory()->create([
+            'key' => 'site.logo',
+            'value' => '/storage/media/logo.svg',
+            'is_public' => true,
+        ]);
+        Setting::factory()->create([
+            'key' => 'site.copyright',
+            'value' => '© 2026 Sky Track. All rights reserved.',
+            'is_public' => true,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Welcome')
+            ->has('settings', fn ($settings) => $settings
+                ->where('general.site_name', 'Sky Track')
+                ->where('site.logo', '/storage/media/logo.svg')
+                ->where('site.copyright', '© 2026 Sky Track. All rights reserved.')
+                ->etc()
+            )
+        );
+    }
+
+    public function test_homepage_returns_custom_page_when_homepage_is_set(): void
+    {
+        $user = User::factory()->admin()->create();
+        $page = Page::factory()->published()->create([
+            'user_id' => $user->id,
+            'is_homepage' => true,
+            'html' => '<h1>Custom Homepage</h1>',
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Custom Homepage');
     }
 }

@@ -7,10 +7,29 @@ import Pricing from './components/Pricing';
 import CTA from './components/CTA';
 import Footer from './components/Footer';
 
-const App: React.FC = () => {
+interface Settings {
+  'general.site_name'?: string;
+  'general.site_tagline'?: string;
+  'general.site_description'?: string;
+  'general.date_format'?: string;
+  'site.logo'?: string;
+  'site.favicon'?: string;
+  'site.copyright'?: string;
+  'site.phone'?: string;
+  'site.address'?: string;
+  'site.contact_email'?: string;
+  'site.working_hours'?: string;
+  [key: string]: string | undefined;
+}
+
+interface AppProps {
+  settings?: Settings;
+}
+
+const App: React.FC<AppProps> = ({ settings }) => {
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
+      <Navbar settings={settings} />
       <main>
         <Hero />
         <Stats />
@@ -18,7 +37,7 @@ const App: React.FC = () => {
         <Pricing />
         <CTA />
       </main>
-      <Footer />
+      <Footer settings={settings} />
     </div>
   );
 };

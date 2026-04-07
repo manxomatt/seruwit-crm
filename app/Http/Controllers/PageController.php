@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePageRequest;
 use App\Http\Requests\UpdatePageRequest;
 use App\Models\Page;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -160,11 +161,17 @@ class PageController extends Controller
             ->first();
 
         if (! $page) {
+            // Get public settings for the landing page
+            $settings = Setting::getPublic()
+                ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
+                ->toArray();
+
             return Inertia::render('Welcome', [
                 'canLogin' => \Illuminate\Support\Facades\Route::has('login'),
                 'canRegister' => \Illuminate\Support\Facades\Route::has('register'),
                 'laravelVersion' => \Illuminate\Foundation\Application::VERSION,
                 'phpVersion' => PHP_VERSION,
+                'settings' => $settings,
             ]);
         }
 
