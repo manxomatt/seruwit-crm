@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Post;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -25,7 +24,7 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get(route('admin.posts.index'));
+            ->get(route('module.posts.index'));
 
         $response->assertOk();
     }
@@ -36,7 +35,7 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get(route('admin.posts.create'));
+            ->get(route('module.posts.create'));
 
         $response->assertOk();
     }
@@ -47,7 +46,7 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->post(route('admin.posts.store'), [
+            ->post(route('module.posts.store'), [
                 'title' => 'Test Post',
                 'slug' => 'test-post',
                 'excerpt' => 'This is a test excerpt',
@@ -71,7 +70,7 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get(route('admin.posts.show', $post));
+            ->get(route('module.posts.show', $post));
 
         $response->assertOk();
     }
@@ -83,7 +82,7 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get(route('admin.posts.edit', $post));
+            ->get(route('module.posts.edit', $post));
 
         $response->assertOk();
     }
@@ -95,12 +94,12 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch(route('admin.posts.update', $post), [
+            ->patch(route('module.posts.update', $post), [
                 'title' => 'Updated Title',
                 'slug' => 'updated-slug',
             ]);
 
-        $response->assertRedirect(route('admin.posts.index'));
+        $response->assertRedirect(route('module.posts.index'));
 
         $this->assertDatabaseHas('posts', [
             'id' => $post->id,
@@ -116,9 +115,9 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->delete(route('admin.posts.destroy', $post));
+            ->delete(route('module.posts.destroy', $post));
 
-        $response->assertRedirect(route('admin.posts.index'));
+        $response->assertRedirect(route('module.posts.index'));
 
         $this->assertDatabaseMissing('posts', [
             'id' => $post->id,
@@ -134,9 +133,9 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch(route('admin.posts.toggle-publish', $post));
+            ->patch(route('module.posts.toggle-publish', $post));
 
-        $response->assertRedirect(route('admin.posts.index'));
+        $response->assertRedirect(route('module.posts.index'));
 
         $post->refresh();
         $this->assertTrue($post->is_published);
@@ -151,7 +150,7 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get(route('admin.posts.edit', $post));
+            ->get(route('module.posts.edit', $post));
 
         $response->assertForbidden();
     }
@@ -164,7 +163,7 @@ class PostControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->delete(route('admin.posts.destroy', $post));
+            ->delete(route('module.posts.destroy', $post));
 
         $response->assertForbidden();
 
@@ -175,7 +174,7 @@ class PostControllerTest extends TestCase
 
     public function test_guest_cannot_access_posts(): void
     {
-        $response = $this->get(route('admin.posts.index'));
+        $response = $this->get(route('module.posts.index'));
 
         $response->assertRedirect(route('login'));
     }

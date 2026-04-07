@@ -13,6 +13,14 @@ use Inertia\Response;
 class SettingController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Display a listing of the settings.
      */
     public function index(): Response
@@ -72,7 +80,7 @@ class SettingController extends Controller
     {
         Setting::create($request->validated());
 
-        return redirect()->route('admin.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.index')
             ->with('success', 'Setting created successfully.');
     }
 
@@ -110,7 +118,7 @@ class SettingController extends Controller
     {
         $setting->update($request->validated());
 
-        return redirect()->route('admin.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.index')
             ->with('success', 'Setting updated successfully.');
     }
 
@@ -121,7 +129,7 @@ class SettingController extends Controller
     {
         $setting->delete();
 
-        return redirect()->route('admin.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.index')
             ->with('success', 'Setting deleted successfully.');
     }
 
@@ -140,7 +148,7 @@ class SettingController extends Controller
             Setting::where('id', $settingData['id'])->update(['value' => $settingData['value']]);
         }
 
-        return redirect()->route('admin.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.index')
             ->with('success', 'Settings updated successfully.');
     }
 }

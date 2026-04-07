@@ -69,15 +69,15 @@ class RbacTest extends TestCase
         $user->roles()->attach($adminRole);
 
         // Test access to pages module
-        $response = $this->actingAs($user)->get(route('admin.pages.index'));
+        $response = $this->actingAs($user)->get(route('module.pages.index'));
         $response->assertOk();
 
         // Test access to users module
-        $response = $this->actingAs($user)->get(route('admin.users.index'));
+        $response = $this->actingAs($user)->get(route('module.users.index'));
         $response->assertOk();
 
         // Test access to roles module
-        $response = $this->actingAs($user)->get(route('admin.roles.index'));
+        $response = $this->actingAs($user)->get(route('module.roles.index'));
         $response->assertOk();
     }
 
@@ -88,11 +88,11 @@ class RbacTest extends TestCase
         $user->roles()->attach($userRole);
 
         // Test view access - should work
-        $response = $this->actingAs($user)->get(route('admin.pages.index'));
+        $response = $this->actingAs($user)->get(route('module.pages.index'));
         $response->assertOk();
 
         // Test create access - should be forbidden
-        $response = $this->actingAs($user)->get(route('admin.pages.create'));
+        $response = $this->actingAs($user)->get(route('module.pages.create'));
         $response->assertForbidden();
     }
 
@@ -101,7 +101,7 @@ class RbacTest extends TestCase
         $user = User::factory()->create();
 
         // User without any role should be forbidden
-        $response = $this->actingAs($user)->get(route('admin.pages.index'));
+        $response = $this->actingAs($user)->get(route('module.pages.index'));
         $response->assertForbidden();
     }
 
@@ -158,7 +158,7 @@ class RbacTest extends TestCase
 
         $userRole = Role::where('slug', 'user')->first();
 
-        $response = $this->actingAs($user)->delete(route('admin.roles.destroy', $userRole));
+        $response = $this->actingAs($user)->delete(route('module.roles.destroy', $userRole));
 
         // System roles should not be deletable
         $response->assertRedirect();
@@ -177,9 +177,9 @@ class RbacTest extends TestCase
             'is_system' => false,
         ]);
 
-        $response = $this->actingAs($user)->delete(route('admin.roles.destroy', $customRole));
+        $response = $this->actingAs($user)->delete(route('module.roles.destroy', $customRole));
 
-        $response->assertRedirect(route('admin.roles.index'));
+        $response->assertRedirect(route('module.roles.index'));
         $this->assertDatabaseMissing('roles', ['id' => $customRole->id]);
     }
 
@@ -189,7 +189,7 @@ class RbacTest extends TestCase
         $adminRole = Role::where('slug', 'admin')->first();
         $user->roles()->attach($adminRole);
 
-        $response = $this->actingAs($user)->get(route('admin.roles.index'));
+        $response = $this->actingAs($user)->get(route('module.roles.index'));
 
         $response->assertOk();
     }
@@ -200,7 +200,7 @@ class RbacTest extends TestCase
         $adminRole = Role::where('slug', 'admin')->first();
         $user->roles()->attach($adminRole);
 
-        $response = $this->actingAs($user)->get(route('admin.roles.create'));
+        $response = $this->actingAs($user)->get(route('module.roles.create'));
 
         $response->assertOk();
     }
@@ -213,14 +213,14 @@ class RbacTest extends TestCase
 
         $permissions = Permission::where('module', 'pages')->pluck('id')->toArray();
 
-        $response = $this->actingAs($user)->post(route('admin.roles.store'), [
+        $response = $this->actingAs($user)->post(route('module.roles.store'), [
             'name' => 'Content Manager',
             'slug' => 'content-manager',
             'description' => 'Can manage content',
             'permissions' => $permissions,
         ]);
 
-        $response->assertRedirect(route('admin.roles.index'));
+        $response->assertRedirect(route('module.roles.index'));
 
         $this->assertDatabaseHas('roles', [
             'name' => 'Content Manager',
@@ -241,14 +241,14 @@ class RbacTest extends TestCase
             'is_system' => false,
         ]);
 
-        $response = $this->actingAs($user)->patch(route('admin.roles.update', $customRole), [
+        $response = $this->actingAs($user)->patch(route('module.roles.update', $customRole), [
             'name' => 'New Name',
             'slug' => 'new-name',
             'description' => 'Updated description',
             'permissions' => [],
         ]);
 
-        $response->assertRedirect(route('admin.roles.index'));
+        $response->assertRedirect(route('module.roles.index'));
 
         $this->assertDatabaseHas('roles', [
             'id' => $customRole->id,

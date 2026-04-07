@@ -17,6 +17,14 @@ use Inertia\Response;
 class MediaController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Display a listing of the media files.
      */
     public function index(Request $request): Response
@@ -97,7 +105,7 @@ class MediaController extends Controller
             'description' => $request->input('description'),
         ]);
 
-        return redirect()->route('admin.media.index')
+        return redirect()->route($this->getRoutePrefix().'.media.index')
             ->with('success', 'Media uploaded successfully.');
     }
 
@@ -208,7 +216,7 @@ class MediaController extends Controller
 
         $medium->update($request->validated());
 
-        return redirect()->route('admin.media.index')
+        return redirect()->route($this->getRoutePrefix().'.media.index')
             ->with('success', 'Media updated successfully.');
     }
 
@@ -223,7 +231,7 @@ class MediaController extends Controller
 
         $medium->delete();
 
-        return redirect()->route('admin.media.index')
+        return redirect()->route($this->getRoutePrefix().'.media.index')
             ->with('success', 'Media deleted successfully.');
     }
 
@@ -245,7 +253,7 @@ class MediaController extends Controller
             $item->delete();
         }
 
-        return redirect()->route('admin.media.index')
+        return redirect()->route($this->getRoutePrefix().'.media.index')
             ->with('success', count($media).' media files deleted successfully.');
     }
 

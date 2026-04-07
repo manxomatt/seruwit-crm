@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
 use App\Models\Carousel;
@@ -15,14 +15,6 @@ use Illuminate\Http\Request;
 
 class GlobalSearchController extends Controller
 {
-    /**
-     * Get the route prefix for this controller.
-     */
-    protected function getRoutePrefix(): string
-    {
-        return 'module';
-    }
-
     /**
      * Search across multiple models.
      */
@@ -51,7 +43,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => $user->email,
                     'type' => 'user',
                     'icon' => 'user',
-                    'url' => route($this->getRoutePrefix().'.users.show', $user),
+                    'url' => route('module.users.show', $user),
                 ]);
 
             $results = array_merge($results, $users->toArray());
@@ -70,7 +62,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => $post->is_published ? 'Published' : 'Draft',
                     'type' => 'post',
                     'icon' => 'post',
-                    'url' => route($this->getRoutePrefix().'.posts.show', $post),
+                    'url' => route('module.posts.show', $post),
                 ]);
 
             $results = array_merge($results, $posts->toArray());
@@ -89,7 +81,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => '/'.$page->slug,
                     'type' => 'page',
                     'icon' => 'page',
-                    'url' => route($this->getRoutePrefix().'.pages.show', $page),
+                    'url' => route('module.pages.show', $page),
                 ]);
 
             $results = array_merge($results, $pages->toArray());
@@ -109,7 +101,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => $medium->type.' • '.$medium->human_size,
                     'type' => 'media',
                     'icon' => 'media',
-                    'url' => route($this->getRoutePrefix().'.media.show', $medium),
+                    'url' => route('module.media.show', $medium),
                     'thumbnail' => $medium->isImage() ? $medium->url : null,
                 ]);
 
@@ -129,7 +121,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => $carousel->is_active ? 'Active' : 'Inactive',
                     'type' => 'carousel',
                     'icon' => 'carousel',
-                    'url' => route($this->getRoutePrefix().'.carousels.show', $carousel),
+                    'url' => route('module.carousels.show', $carousel),
                 ]);
 
             $results = array_merge($results, $carousels->toArray());
@@ -148,7 +140,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => $role->description ?? 'No description',
                     'type' => 'role',
                     'icon' => 'role',
-                    'url' => route($this->getRoutePrefix().'.roles.show', $role),
+                    'url' => route('module.roles.show', $role),
                 ]);
 
             $results = array_merge($results, $roles->toArray());
@@ -169,7 +161,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => ucfirst($setting->group).' • '.$setting->key,
                     'type' => 'setting',
                     'icon' => 'setting',
-                    'url' => route($this->getRoutePrefix().'.settings.show', $setting),
+                    'url' => route('module.settings.show', $setting),
                 ]);
 
             $results = array_merge($results, $settings->toArray());

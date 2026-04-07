@@ -15,6 +15,14 @@ use Inertia\Response;
 class UserController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Display a listing of the users.
      */
     public function index(): Response
@@ -89,7 +97,7 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route($this->getRoutePrefix().'.users.index')
             ->with('success', 'User created successfully.');
     }
 
@@ -154,7 +162,7 @@ class UserController extends Controller
             ]
         );
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route($this->getRoutePrefix().'.users.index')
             ->with('success', 'User updated successfully.');
     }
 
@@ -165,7 +173,7 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route($this->getRoutePrefix().'.users.index')
             ->with('success', 'User deleted successfully.');
     }
 }

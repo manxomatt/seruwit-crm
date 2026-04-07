@@ -14,6 +14,14 @@ use Inertia\Response;
 class CarouselController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Display a listing of the carousels.
      */
     public function index(): Response
@@ -44,7 +52,7 @@ class CarouselController extends Controller
     {
         $carousel = Auth::user()->carousels()->create($request->validated());
 
-        return redirect()->route('admin.carousels.edit', $carousel)
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
             ->with('success', 'Carousel created successfully.');
     }
 
@@ -91,7 +99,7 @@ class CarouselController extends Controller
 
         $carousel->update($request->validated());
 
-        return redirect()->route('admin.carousels.edit', $carousel)
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
             ->with('success', 'Carousel updated successfully.');
     }
 
@@ -106,7 +114,7 @@ class CarouselController extends Controller
 
         $carousel->delete();
 
-        return redirect()->route('admin.carousels.index')
+        return redirect()->route($this->getRoutePrefix().'.carousels.index')
             ->with('success', 'Carousel deleted successfully.');
     }
 }

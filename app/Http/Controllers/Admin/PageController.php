@@ -15,6 +15,14 @@ use Inertia\Response;
 class PageController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Display a listing of the pages.
      */
     public function index(): Response
@@ -44,7 +52,7 @@ class PageController extends Controller
     {
         $page = Auth::user()->pages()->create($request->validated());
 
-        return redirect()->route('admin.pages.edit', $page);
+        return redirect()->route($this->getRoutePrefix().'.pages.edit', $page);
     }
 
     /**
@@ -86,7 +94,7 @@ class PageController extends Controller
 
         $page->update($request->validated());
 
-        return redirect()->route('admin.pages.edit', $page);
+        return redirect()->route($this->getRoutePrefix().'.pages.edit', $page);
     }
 
     /**
@@ -114,7 +122,7 @@ class PageController extends Controller
 
         $page->delete();
 
-        return redirect()->route('admin.pages.index');
+        return redirect()->route($this->getRoutePrefix().'.pages.index');
     }
 
     /**
@@ -135,6 +143,6 @@ class PageController extends Controller
         // Set this page as homepage
         $page->update(['is_homepage' => true, 'is_published' => true]);
 
-        return redirect()->route('admin.pages.index')->with('success', 'Page set as homepage successfully.');
+        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', 'Page set as homepage successfully.');
     }
 }

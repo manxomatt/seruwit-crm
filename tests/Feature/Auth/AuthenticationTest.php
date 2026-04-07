@@ -29,7 +29,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/user/dashboard');
+        $response->assertRedirect('/module/dashboard');
     }
 
     public function test_admin_users_are_redirected_to_admin_dashboard_after_login(): void
@@ -44,7 +44,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/module/dashboard');
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

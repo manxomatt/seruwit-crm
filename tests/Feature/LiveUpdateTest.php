@@ -11,9 +11,15 @@ class LiveUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+    }
+
     public function test_live_updates_page_is_displayed(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this
             ->actingAs($user)
@@ -31,7 +37,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_user_can_create_a_live_update(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this
             ->actingAs($user)
@@ -55,7 +61,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_live_update_title_is_required(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this
             ->actingAs($user)
@@ -70,7 +76,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_live_update_content_is_required(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this
             ->actingAs($user)
@@ -85,7 +91,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_live_update_type_must_be_valid(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this
             ->actingAs($user)
@@ -100,7 +106,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_user_can_update_a_live_update(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $liveUpdate = LiveUpdate::factory()->create();
 
         $response = $this
@@ -121,7 +127,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_user_can_delete_a_live_update(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $liveUpdate = LiveUpdate::factory()->create();
 
         $response = $this
@@ -137,7 +143,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_only_active_and_published_updates_are_shown(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $activePublished = LiveUpdate::factory()->create([
             'title' => 'Active Published',
@@ -173,7 +179,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_live_updates_are_ordered_by_published_date_descending(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $olderUpdate = LiveUpdate::factory()->create([
             'title' => 'Older Update',
@@ -195,7 +201,7 @@ class LiveUpdateTest extends TestCase
 
     public function test_live_update_types_are_validated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         foreach (['info', 'success', 'warning', 'error'] as $type) {
             $response = $this

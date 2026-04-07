@@ -14,6 +14,14 @@ use Inertia\Response;
 class PostController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Display a listing of the posts.
      */
     public function index(): Response
@@ -49,7 +57,7 @@ class PostController extends Controller
 
         $post = Auth::user()->posts()->create($data);
 
-        return redirect()->route('admin.posts.edit', $post);
+        return redirect()->route($this->getRoutePrefix().'.posts.edit', $post);
     }
 
     /**
@@ -97,7 +105,7 @@ class PostController extends Controller
 
         $post->update($data);
 
-        return redirect()->route('admin.posts.index')->with('success', 'Post updated successfully.');
+        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', 'Post updated successfully.');
     }
 
     /**
@@ -111,7 +119,7 @@ class PostController extends Controller
 
         $post->delete();
 
-        return redirect()->route('admin.posts.index')->with('success', 'Post deleted successfully.');
+        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', 'Post deleted successfully.');
     }
 
     /**
@@ -128,6 +136,6 @@ class PostController extends Controller
             'published_at' => ! $post->is_published ? now() : $post->published_at,
         ]);
 
-        return redirect()->route('admin.posts.index');
+        return redirect()->route($this->getRoutePrefix().'.posts.index');
     }
 }

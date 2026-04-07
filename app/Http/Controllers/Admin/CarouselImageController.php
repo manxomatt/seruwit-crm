@@ -16,6 +16,14 @@ use Illuminate\Support\Facades\Storage;
 class CarouselImageController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Store a newly created carousel image in storage.
      */
     public function store(StoreCarouselImageRequest $request, Carousel $carousel): RedirectResponse
@@ -39,7 +47,7 @@ class CarouselImageController extends Controller
             'is_active' => $request->validated('is_active', true),
         ]);
 
-        return redirect()->route('admin.carousels.edit', $carousel)
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
             ->with('success', 'Image added successfully.');
     }
 
@@ -69,7 +77,7 @@ class CarouselImageController extends Controller
         unset($data['image']);
         $image->update($data);
 
-        return redirect()->route('admin.carousels.edit', $carousel)
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
             ->with('success', 'Image updated successfully.');
     }
 
@@ -93,7 +101,7 @@ class CarouselImageController extends Controller
 
         $image->delete();
 
-        return redirect()->route('admin.carousels.edit', $carousel)
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
             ->with('success', 'Image deleted successfully.');
     }
 

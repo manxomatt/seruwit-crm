@@ -15,6 +15,14 @@ use Inertia\Response;
 class RoleController extends Controller
 {
     /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
      * Display a listing of the roles.
      */
     public function index(): Response
@@ -76,7 +84,7 @@ class RoleController extends Controller
             $role->syncPermissions($validated['permissions']);
         }
 
-        return redirect()->route('admin.roles.index')
+        return redirect()->route($this->getRoutePrefix().'.roles.index')
             ->with('success', 'Role created successfully.');
     }
 
@@ -141,7 +149,7 @@ class RoleController extends Controller
             $role->syncPermissions($validated['permissions']);
         }
 
-        return redirect()->route('admin.roles.index')
+        return redirect()->route($this->getRoutePrefix().'.roles.index')
             ->with('success', 'Role updated successfully.');
     }
 
@@ -162,7 +170,7 @@ class RoleController extends Controller
 
         $role->delete();
 
-        return redirect()->route('admin.roles.index')
+        return redirect()->route($this->getRoutePrefix().'.roles.index')
             ->with('success', 'Role deleted successfully.');
     }
 }
