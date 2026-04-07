@@ -5,7 +5,12 @@
 .env.production
 .phpactor.json
 .phpunit.result.cache
+/.agents
+/.claude
+/.cursor
 /.fleet
+/.gemini
+/.github
 /.idea
 /.nova
 /.phpunit.cache
