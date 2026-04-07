@@ -39,12 +39,12 @@ interface Filters {
 }
 
 interface Props {
-    settings: PaginatedSettings;
+    settingsList: PaginatedSettings;
     groups: string[];
     filters: Filters;
 }
 
-export default function Index({ settings, groups, filters }: Props): JSX.Element {
+export default function Index({ settingsList, groups, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [search, setSearch] = useState(filters.search || '');
     const [group, setGroup] = useState(filters.group || '');
@@ -165,7 +165,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                         )}
                     </form>
 
-                    {settings.data.length === 0 ? (
+                    {settingsList.data.length === 0 ? (
                         <div className="text-center py-12">
                             <svg
                                 className="mx-auto h-12 w-12 text-gray-400"
@@ -224,7 +224,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {settings.data.map((setting) => (
+                                        {settingsList.data.map((setting) => (
                                             <tr key={setting.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm font-medium text-gray-900">
@@ -309,15 +309,15 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                             </div>
 
                             {/* Pagination */}
-                            {settings.last_page > 1 && (
+                            {settingsList.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(settings.current_page - 1) * settings.per_page + 1} to{' '}
-                                        {Math.min(settings.current_page * settings.per_page, settings.total)} of{' '}
-                                        {settings.total} results
+                                        Showing {(settingsList.current_page - 1) * settingsList.per_page + 1} to{' '}
+                                        {Math.min(settingsList.current_page * settingsList.per_page, settingsList.total)} of{' '}
+                                        {settingsList.total} results
                                     </p>
                                     <div className="flex gap-1">
-                                        {settings.links.map((link, index) => (
+                                        {settingsList.links.map((link, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => link.url && router.get(link.url)}

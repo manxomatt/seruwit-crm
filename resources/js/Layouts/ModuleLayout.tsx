@@ -277,7 +277,7 @@ export default function ModuleLayout({ header, children }: Props) {
                     />
                     <div className={`fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b ${theme.gradient}`}>
                         <div className="flex h-16 items-center justify-between px-4">
-                            <Link href="/" className="flex items-center">
+                            <Link href={getDashboardRoute(user)} className="flex items-center">
                                 {siteLogo ? (
                                     <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
                                 ) : (
@@ -329,7 +329,7 @@ export default function ModuleLayout({ header, children }: Props) {
             <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
                 <div className={`flex min-h-0 flex-1 flex-col bg-gradient-to-b ${theme.gradient}`}>
                     <div className={`flex h-16 items-center px-4 border-b ${theme.border}`}>
-                        <Link href="/" className="flex items-center">
+                        <Link href={getDashboardRoute(user)} className="flex items-center">
                             {siteLogo ? (
                                 <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
                             ) : (

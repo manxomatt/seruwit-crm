@@ -48,7 +48,7 @@ class SettingController extends Controller
             ->pluck('group');
 
         return Inertia::render('Modules/Settings/Index', [
-            'settings' => $settings,
+            'settingsList' => $settings,
             'groups' => $groups,
             'filters' => [
                 'search' => request('search'),
