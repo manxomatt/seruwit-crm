@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -55,6 +56,7 @@ const DocumentIcon = () => (
 );
 
 export default function Index({ pages }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<Page | null>(null);
     const [processing, setProcessing] = useState(false);
@@ -73,21 +75,21 @@ export default function Index({ pages }: Props): JSX.Element {
         if (!pageToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.pages.destroy', pageToDelete.id), {
+        router.delete(prefixedRoute('pages.destroy', pageToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
     };
 
     const togglePublish = (page: Page) => {
-        router.patch(route('admin.pages.update', page.id), {
+        router.patch(prefixedRoute('pages.update', page.id), {
             is_published: !page.is_published,
         });
     };
 
     const setAsHomepage = (page: Page) => {
         if (confirm('Set this page as the homepage? This will replace the current homepage.')) {
-            router.patch(route('admin.pages.set-homepage', page.id));
+            router.patch(prefixedRoute('pages.set-homepage', page.id));
         }
     };
 
@@ -99,7 +101,7 @@ export default function Index({ pages }: Props): JSX.Element {
                         Pages
                     </h1>
                     <Link
-                        href={route('admin.pages.create')}
+                        href={prefixedRoute('pages.create')}
                         className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PlusIcon />
@@ -120,7 +122,7 @@ export default function Index({ pages }: Props): JSX.Element {
                         </p>
                         <div className="mt-6">
                             <Link
-                                href={route('admin.pages.create')}
+                                href={prefixedRoute('pages.create')}
                                 className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 <PlusIcon />
@@ -190,14 +192,14 @@ export default function Index({ pages }: Props): JSX.Element {
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Link
-                                                href={route('admin.pages.show', page.id)}
+                                                href={prefixedRoute('pages.show', page.id)}
                                                 className="text-gray-600 hover:text-gray-900"
                                                 title="Preview"
                                             >
                                                 <EyeIcon />
                                             </Link>
                                             <Link
-                                                href={route('admin.pages.edit', page.id)}
+                                                href={prefixedRoute('pages.edit', page.id)}
                                                 className="text-indigo-600 hover:text-indigo-900"
                                                 title="Edit"
                                             >

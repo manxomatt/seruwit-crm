@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function Create({ roles }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -34,7 +36,7 @@ export default function Create({ roles }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('admin.users.store'));
+        post(prefixedRoute('users.store'));
     };
 
     const toggleRole = (roleId: number) => {
@@ -227,7 +229,7 @@ export default function Create({ roles }: Props): JSX.Element {
                             <PrimaryButton disabled={processing}>
                                 Create User
                             </PrimaryButton>
-                            <Link href={route('admin.users.index')}>
+                            <Link href={prefixedRoute('users.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

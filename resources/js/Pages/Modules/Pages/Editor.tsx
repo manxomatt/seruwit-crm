@@ -22,6 +22,7 @@ interface Props {
 }
 
 export default function Editor({ page }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const editorRef = useRef<HTMLDivElement>(null);
     const [editor, setEditor] = useState<GrapesEditor | null>(null); 
     const [isSaving, setIsSaving] = useState(false);
@@ -36,7 +37,7 @@ export default function Editor({ page }: Props): JSX.Element {
             const css = editor.getCss();
             const gjsData = editor.getProjectData();
 
-            await fetch(route('admin.pages.save-content', page.id), {
+            await fetch(prefixedRoute('pages.save-content', page.id), {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1349,7 +1350,7 @@ export default function Editor({ page }: Props): JSX.Element {
     }, [saveContent]);
 
     const handlePublishToggle = () => {
-        router.patch(route('admin.pages.update', page.id), {
+        router.patch(prefixedRoute('pages.update', page.id), {
             is_published: !page.is_published,
         }, {
             preserveScroll: true,
@@ -1365,7 +1366,7 @@ export default function Editor({ page }: Props): JSX.Element {
                 <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white px-4 py-2 flex items-center justify-between shadow-lg">
                     <div className="flex items-center gap-4">
                         <Link
-                            href={route('admin.pages.index')}
+                            href={prefixedRoute('pages.index')}
                             className="text-indigo-200 hover:text-white transition flex items-center gap-2"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1403,7 +1404,7 @@ export default function Editor({ page }: Props): JSX.Element {
                             {page.is_published ? 'Unpublish' : 'Publish'}
                         </button>
                         <Link
-                            href={route('admin.pages.show', page.id)}
+                            href={prefixedRoute('pages.show', page.id)}
                             target="_blank"
                             className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition border border-white/20"
                         >

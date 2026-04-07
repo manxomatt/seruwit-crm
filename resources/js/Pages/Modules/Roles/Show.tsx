@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link } from '@inertiajs/react';
@@ -38,6 +39,7 @@ interface Props {
 }
 
 export default function Show({ role, permissionsByModule, modules, actions }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -57,11 +59,11 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                     </h2>
                     <div className="flex gap-2">
                         {!role.is_system && (
-                            <Link href={route('admin.roles.edit', role.id)}>
+                            <Link href={prefixedRoute('roles.edit', role.id)}>
                                 <PrimaryButton>Edit Role</PrimaryButton>
                             </Link>
                         )}
-                        <Link href={route('admin.roles.index')}>
+                        <Link href={prefixedRoute('roles.index')}>
                             <SecondaryButton>Back to Roles</SecondaryButton>
                         </Link>
                     </div>
@@ -207,7 +209,7 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <Link
-                                                        href={route('admin.users.show', user.id)}
+                                                        href={prefixedRoute('users.show', user.id)}
                                                         className="text-indigo-600 hover:text-indigo-900"
                                                     >
                                                         View User

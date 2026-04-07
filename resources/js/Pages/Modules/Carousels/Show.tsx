@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function Show({ carousel }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [currentIndex, setCurrentIndex] = useState(0);
     const activeImages = carousel.images.filter((img) => img.is_active);
 
@@ -64,10 +66,10 @@ export default function Show({ carousel }: Props): JSX.Element {
                         Preview: {carousel.name}
                     </h2>
                     <div className="flex gap-2">
-                        <Link href={route('admin.carousels.edit', carousel.id)}>
+                        <Link href={prefixedRoute('carousels.edit', carousel.id)}>
                             <SecondaryButton>Edit Carousel</SecondaryButton>
                         </Link>
-                        <Link href={route('admin.carousels.index')}>
+                        <Link href={prefixedRoute('carousels.index')}>
                             <SecondaryButton>Back to List</SecondaryButton>
                         </Link>
                     </div>

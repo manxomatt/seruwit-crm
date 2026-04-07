@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Head, Link } from '@inertiajs/react';
 
 interface MediaByType {
@@ -221,6 +222,7 @@ export default function Index({
     recentActivity,
     trendsData,
 }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     return (
         <DynamicLayout
             header={
@@ -232,7 +234,7 @@ export default function Index({
                         </p>
                     </div>
                     <Link
-                        href={route('admin.dashboard')}
+                        href={prefixedRoute('dashboard')}
                         className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
                     >
                         <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -559,7 +561,7 @@ export default function Index({
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-gray-900">Media Library</h2>
                             <Link
-                                href={route('admin.media.index')}
+                                href={prefixedRoute('media.index')}
                                 className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
                             >
                                 View all →
@@ -644,7 +646,7 @@ export default function Index({
                                             </svg>
                                             <p className="mt-2 text-sm text-gray-500">No media uploaded yet</p>
                                             <Link
-                                                href={route('admin.media.create')}
+                                                href={prefixedRoute('media.create')}
                                                 className="mt-3 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
                                             >
                                                 Upload your first file →

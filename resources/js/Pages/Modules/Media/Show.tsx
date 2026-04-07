@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function Show({ media }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [copied, setCopied] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -46,7 +48,7 @@ export default function Show({ media }: Props): JSX.Element {
 
     const confirmDelete = () => {
         setProcessing(true);
-        router.delete(route('admin.media.destroy', media.id), {
+        router.delete(prefixedRoute('media.destroy', media.id), {
             onFinish: () => setProcessing(false),
         });
     };
@@ -63,7 +65,7 @@ export default function Show({ media }: Props): JSX.Element {
                         Media Details
                     </h2>
                     <div className="flex gap-2">
-                        <Link href={route('admin.media.edit', media.id)}>
+                        <Link href={prefixedRoute('media.edit', media.id)}>
                             <PrimaryButton>Edit</PrimaryButton>
                         </Link>
                         <DangerButton onClick={openDeleteDialog}>Delete</DangerButton>
@@ -223,7 +225,7 @@ export default function Show({ media }: Props): JSX.Element {
 
             {/* Actions */}
             <div className="mt-6">
-                <Link href={route('admin.media.index')}>
+                <Link href={prefixedRoute('media.index')}>
                     <SecondaryButton>Back to Library</SecondaryButton>
                 </Link>
             </div>

@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -17,6 +18,7 @@ interface UploadingFile {
 }
 
 export default function Create(): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [files, setFiles] = useState<UploadingFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +89,7 @@ export default function Create(): JSX.Element {
         formData.append('file', uploadFile.file);
 
         try {
-            const response = await fetch(route('admin.media.upload'), {
+            const response = await fetch(prefixedRoute('media.upload'), {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -356,7 +358,7 @@ export default function Create(): JSX.Element {
 
                     {/* Actions */}
                     <div className="mt-6 flex items-center gap-4">
-                        <Link href={route('admin.media.index')}>
+                        <Link href={prefixedRoute('media.index')}>
                             <SecondaryButton>Back to Library</SecondaryButton>
                         </Link>
                     </div>

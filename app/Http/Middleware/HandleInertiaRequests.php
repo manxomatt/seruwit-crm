@@ -55,7 +55,30 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $this->getUserPermissions($user),
                 ] : null,
             ],
+            'route_prefix' => $this->getRoutePrefix($request),
         ];
+    }
+
+    /**
+     * Get the current route prefix (admin, user, or module).
+     */
+    private function getRoutePrefix(Request $request): string
+    {
+        $routeName = $request->route()?->getName() ?? '';
+
+        if (str_starts_with($routeName, 'admin.')) {
+            return 'admin';
+        }
+
+        if (str_starts_with($routeName, 'user.')) {
+            return 'user';
+        }
+
+        if (str_starts_with($routeName, 'module.')) {
+            return 'module';
+        }
+
+        return 'admin'; // Default fallback
     }
 
     /**

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -50,6 +51,7 @@ const DocumentIcon = () => (
 );
 
 export default function Index({ posts }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
     const [processing, setProcessing] = useState(false);
@@ -68,14 +70,14 @@ export default function Index({ posts }: Props): JSX.Element {
         if (!postToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.posts.destroy', postToDelete.id), {
+        router.delete(prefixedRoute('posts.destroy', postToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
     };
 
     const togglePublish = (post: Post) => {
-        router.patch(route('admin.posts.toggle-publish', post.id));
+        router.patch(prefixedRoute('posts.toggle-publish', post.id));
     };
 
     const formatDate = (dateString: string | null) => {
@@ -95,7 +97,7 @@ export default function Index({ posts }: Props): JSX.Element {
                         Posts
                     </h1>
                     <Link
-                        href={route('admin.posts.create')}
+                        href={prefixedRoute('posts.create')}
                         className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PlusIcon />
@@ -116,7 +118,7 @@ export default function Index({ posts }: Props): JSX.Element {
                         </p>
                         <div className="mt-6">
                             <Link
-                                href={route('admin.posts.create')}
+                                href={prefixedRoute('posts.create')}
                                 className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 <PlusIcon />
@@ -185,14 +187,14 @@ export default function Index({ posts }: Props): JSX.Element {
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Link
-                                                href={route('admin.posts.show', post.id)}
+                                                href={prefixedRoute('posts.show', post.id)}
                                                 className="text-gray-600 hover:text-gray-900"
                                                 title="Preview"
                                             >
                                                 <EyeIcon />
                                             </Link>
                                             <Link
-                                                href={route('admin.posts.edit', post.id)}
+                                                href={prefixedRoute('posts.edit', post.id)}
                                                 className="text-indigo-600 hover:text-indigo-900"
                                                 title="Edit"
                                             >

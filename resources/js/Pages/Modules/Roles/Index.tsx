@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export default function Index({ roles, filters }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
@@ -47,7 +49,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(route('admin.roles.index'), {
+        router.get(prefixedRoute('roles.index'), {
             search: search || undefined,
         }, {
             preserveState: true,
@@ -57,7 +59,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
 
     const clearFilters = () => {
         setSearch('');
-        router.get(route('admin.roles.index'));
+        router.get(prefixedRoute('roles.index'));
     };
 
     const openDeleteDialog = (role: Role) => {
@@ -74,7 +76,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
         if (!roleToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.roles.destroy', roleToDelete.id), {
+        router.delete(prefixedRoute('roles.destroy', roleToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -95,7 +97,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
                         Role Management
                     </h2>
-                    <Link href={route('admin.roles.create')}>
+                    <Link href={prefixedRoute('roles.create')}>
                         <PrimaryButton>Add Role</PrimaryButton>
                     </Link>
                 </div>
@@ -148,7 +150,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                 Get started by creating a new role.
                             </p>
                             <div className="mt-6">
-                                <Link href={route('admin.roles.create')}>
+                                <Link href={prefixedRoute('roles.create')}>
                                     <PrimaryButton>Add Role</PrimaryButton>
                                 </Link>
                             </div>
@@ -240,7 +242,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Link
-                                                            href={route('admin.roles.show', role.id)}
+                                                            href={prefixedRoute('roles.show', role.id)}
                                                             className="text-gray-600 hover:text-gray-900"
                                                             title="View"
                                                         >
@@ -252,7 +254,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                         {!role.is_system && (
                                                             <>
                                                                 <Link
-                                                                    href={route('admin.roles.edit', role.id)}
+                                                                    href={prefixedRoute('roles.edit', role.id)}
                                                                     className="text-indigo-600 hover:text-indigo-900"
                                                                     title="Edit"
                                                                 >

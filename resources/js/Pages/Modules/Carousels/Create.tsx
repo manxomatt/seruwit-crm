@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -8,6 +9,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 export default function Create(): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         slug: '',
@@ -36,7 +38,7 @@ export default function Create(): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('admin.carousels.store'));
+        post(prefixedRoute('carousels.store'));
     };
 
     return (
@@ -156,7 +158,7 @@ export default function Create(): JSX.Element {
                             <PrimaryButton disabled={processing}>
                                 Create Carousel
                             </PrimaryButton>
-                            <Link href={route('admin.carousels.index')}>
+                            <Link href={prefixedRoute('carousels.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

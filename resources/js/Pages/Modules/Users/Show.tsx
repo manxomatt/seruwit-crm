@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export default function Show({ user }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -53,7 +55,7 @@ export default function Show({ user }: Props): JSX.Element {
 
     const confirmDelete = () => {
         setProcessing(true);
-        router.delete(route('admin.users.destroy', user.id), {
+        router.delete(prefixedRoute('users.destroy', user.id), {
             onFinish: () => setProcessing(false),
         });
     };
@@ -66,7 +68,7 @@ export default function Show({ user }: Props): JSX.Element {
                         User Details
                     </h2>
                     <div className="flex items-center gap-2">
-                        <Link href={route('admin.users.edit', user.id)}>
+                        <Link href={prefixedRoute('users.edit', user.id)}>
                             <PrimaryButton>Edit User</PrimaryButton>
                         </Link>
                         <DangerButton onClick={openDeleteDialog}>Delete User</DangerButton>
@@ -192,7 +194,7 @@ export default function Show({ user }: Props): JSX.Element {
 
                     {/* Back Button */}
                     <div className="mt-8 border-t border-gray-200 pt-6">
-                        <Link href={route('admin.users.index')}>
+                        <Link href={prefixedRoute('users.index')}>
                             <SecondaryButton>Back to Users</SecondaryButton>
                         </Link>
                     </div>

@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function Edit({ setting, groups }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors } = useForm({
         key: setting.key,
         group: setting.group,
@@ -40,7 +42,7 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(route('admin.settings.update', setting.id));
+        patch(prefixedRoute('settings.update', setting.id));
     };
 
     const settingTypes = [
@@ -228,7 +230,7 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                             <PrimaryButton disabled={processing}>
                                 Update Setting
                             </PrimaryButton>
-                            <Link href={route('admin.settings.index')}>
+                            <Link href={prefixedRoute('settings.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

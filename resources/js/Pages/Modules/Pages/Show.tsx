@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Head, Link } from '@inertiajs/react';
 
 interface Page {
@@ -41,13 +42,14 @@ const DocumentIcon = () => (
 );
 
 export default function Show({ page }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href={route('admin.pages.index')}
+                            href={prefixedRoute('pages.index')}
                             className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
                         >
                             <ArrowLeftIcon />
@@ -72,7 +74,7 @@ export default function Show({ page }: Props): JSX.Element {
                             {page.is_published ? 'Published' : 'Draft'}
                         </span>
                         <Link
-                            href={route('admin.pages.edit', page.id)}
+                            href={prefixedRoute('pages.edit', page.id)}
                             className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         >
                             <PencilIcon />
@@ -125,7 +127,7 @@ export default function Show({ page }: Props): JSX.Element {
                             </p>
                             <div className="mt-6">
                                 <Link
-                                    href={route('admin.pages.edit', page.id)}
+                                    href={prefixedRoute('pages.edit', page.id)}
                                     className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                 >
                                     <PencilIcon />

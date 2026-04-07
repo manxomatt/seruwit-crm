@@ -136,7 +136,9 @@ const UserAvatar = ({ user, size = 'md' }: { user: User | null; size?: 'sm' | 'm
 };
 
 export default function AdminLayout({ header, children }: Props) {
-    const user = (usePage().props as any).auth.user as User | null;
+    const props = usePage().props as any;
+    const user = props.auth.user as User | null;
+    const routePrefix: 'admin' | 'user' | 'module' = props.route_prefix || 'admin';
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Helper function to check if user has permission for a module
@@ -146,16 +148,27 @@ export default function AdminLayout({ header, children }: Props) {
         return user.permissions && module in user.permissions && user.permissions[module].includes('view');
     };
 
+    // Helper function to generate route with correct prefix
+    const prefixedRoute = (routeName: string, params?: any) => {
+        const fullRouteName = `${routePrefix}.${routeName}`;
+        return params ? route(fullRouteName, params) : route(fullRouteName);
+    };
+
+    // Helper function to check if current route matches
+    const isCurrentRoute = (routePattern: string) => {
+        return route().current(`${routePrefix}.${routePattern}`);
+    };
+
     const allNavigation: MenuItem[] = [
-        { name: 'Dashboard', href: route('admin.dashboard'), icon: <DashboardIcon />, current: route().current('admin.dashboard') },
-        { name: 'Pages', href: route('admin.pages.index'), icon: <PagesIcon />, current: route().current('admin.pages.*'), module: 'pages' },
-        { name: 'Posts', href: route('admin.posts.index'), icon: <PostsIcon />, current: route().current('admin.posts.*'), module: 'posts' },
-        { name: 'Carousels', href: route('admin.carousels.index'), icon: <CarouselIcon />, current: route().current('admin.carousels.*'), module: 'carousels' },
-        { name: 'Media', href: route('admin.media.index'), icon: <MediaIcon />, current: route().current('admin.media.*'), module: 'media' },
-        { name: 'Users', href: route('admin.users.index'), icon: <UsersIcon />, current: route().current('admin.users.*'), module: 'users' },
-        { name: 'Roles', href: route('admin.roles.index'), icon: <RolesIcon />, current: route().current('admin.roles.*'), module: 'roles' },
-        { name: 'Analytics', href: route('admin.analytics.index'), icon: <AnalyticsIcon />, current: route().current('admin.analytics.*'), module: 'analytics' },
-        { name: 'Settings', href: route('admin.settings.index'), icon: <SettingsIcon />, current: route().current('admin.settings.*'), module: 'settings' },
+        { name: 'Dashboard', href: prefixedRoute('dashboard'), icon: <DashboardIcon />, current: isCurrentRoute('dashboard') },
+        { name: 'Pages', href: prefixedRoute('pages.index'), icon: <PagesIcon />, current: isCurrentRoute('pages.*'), module: 'pages' },
+        { name: 'Posts', href: prefixedRoute('posts.index'), icon: <PostsIcon />, current: isCurrentRoute('posts.*'), module: 'posts' },
+        { name: 'Carousels', href: prefixedRoute('carousels.index'), icon: <CarouselIcon />, current: isCurrentRoute('carousels.*'), module: 'carousels' },
+        { name: 'Media', href: prefixedRoute('media.index'), icon: <MediaIcon />, current: isCurrentRoute('media.*'), module: 'media' },
+        { name: 'Users', href: prefixedRoute('users.index'), icon: <UsersIcon />, current: isCurrentRoute('users.*'), module: 'users' },
+        { name: 'Roles', href: prefixedRoute('roles.index'), icon: <RolesIcon />, current: isCurrentRoute('roles.*'), module: 'roles' },
+        { name: 'Analytics', href: prefixedRoute('analytics.index'), icon: <AnalyticsIcon />, current: isCurrentRoute('analytics.*'), module: 'analytics' },
+        { name: 'Settings', href: prefixedRoute('settings.index'), icon: <SettingsIcon />, current: isCurrentRoute('settings.*'), module: 'settings' },
     ];
 
     // Filter navigation based on user permissions
@@ -166,7 +179,7 @@ export default function AdminLayout({ header, children }: Props) {
             // Check if user has permission for this module
             return hasModulePermission(item.module);
         });
-    }, [user]);
+    }, [user, routePrefix]);
 
     return (
         <div className="min-h-screen bg-gray-50">

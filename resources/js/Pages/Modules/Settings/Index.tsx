@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
@@ -44,6 +45,7 @@ interface Props {
 }
 
 export default function Index({ settings, groups, filters }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [search, setSearch] = useState(filters.search || '');
     const [group, setGroup] = useState(filters.group || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -52,7 +54,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(route('admin.settings.index'), {
+        router.get(prefixedRoute('settings.index'), {
             search: search || undefined,
             group: group || undefined,
         }, {
@@ -64,7 +66,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
     const clearFilters = () => {
         setSearch('');
         setGroup('');
-        router.get(route('admin.settings.index'));
+        router.get(prefixedRoute('settings.index'));
     };
 
     const openDeleteDialog = (setting: Setting) => {
@@ -81,7 +83,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
         if (!settingToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.settings.destroy', settingToDelete.id), {
+        router.delete(prefixedRoute('settings.destroy', settingToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -118,7 +120,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
                         Settings
                     </h2>
-                    <Link href={route('admin.settings.create')}>
+                    <Link href={prefixedRoute('settings.create')}>
                         <PrimaryButton>Add Setting</PrimaryButton>
                     </Link>
                 </div>
@@ -189,7 +191,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                                 Get started by creating a new setting.
                             </p>
                             <div className="mt-6">
-                                <Link href={route('admin.settings.create')}>
+                                <Link href={prefixedRoute('settings.create')}>
                                     <PrimaryButton>Add Setting</PrimaryButton>
                                 </Link>
                             </div>
@@ -271,7 +273,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Link
-                                                            href={route('admin.settings.show', setting.id)}
+                                                            href={prefixedRoute('settings.show', setting.id)}
                                                             className="text-gray-600 hover:text-gray-900"
                                                             title="View"
                                                         >
@@ -281,7 +283,7 @@ export default function Index({ settings, groups, filters }: Props): JSX.Element
                                                             </svg>
                                                         </Link>
                                                         <Link
-                                                            href={route('admin.settings.edit', setting.id)}
+                                                            href={prefixedRoute('settings.edit', setting.id)}
                                                             className="text-indigo-600 hover:text-indigo-900"
                                                             title="Edit"
                                                         >

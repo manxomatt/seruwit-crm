@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
@@ -54,6 +55,7 @@ interface Props {
 }
 
 export default function Index({ users, filters }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -61,7 +63,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(route('admin.users.index'), {
+        router.get(prefixedRoute('users.index'), {
             search: search || undefined,
         }, {
             preserveState: true,
@@ -71,7 +73,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
 
     const clearFilters = () => {
         setSearch('');
-        router.get(route('admin.users.index'));
+        router.get(prefixedRoute('users.index'));
     };
 
     const openDeleteDialog = (user: User) => {
@@ -88,7 +90,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
         if (!userToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.users.destroy', userToDelete.id), {
+        router.delete(prefixedRoute('users.destroy', userToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -120,7 +122,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
                         User Management
                     </h2>
-                    <Link href={route('admin.users.create')}>
+                    <Link href={prefixedRoute('users.create')}>
                         <PrimaryButton>Add User</PrimaryButton>
                     </Link>
                 </div>
@@ -173,7 +175,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                 Get started by creating a new user.
                             </p>
                             <div className="mt-6">
-                                <Link href={route('admin.users.create')}>
+                                <Link href={prefixedRoute('users.create')}>
                                     <PrimaryButton>Add User</PrimaryButton>
                                 </Link>
                             </div>
@@ -275,7 +277,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Link
-                                                            href={route('admin.users.show', user.id)}
+                                                            href={prefixedRoute('users.show', user.id)}
                                                             className="text-gray-600 hover:text-gray-900"
                                                             title="View"
                                                         >
@@ -285,7 +287,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                             </svg>
                                                         </Link>
                                                         <Link
-                                                            href={route('admin.users.edit', user.id)}
+                                                            href={prefixedRoute('users.edit', user.id)}
                                                             className="text-indigo-600 hover:text-indigo-900"
                                                             title="Edit"
                                                         >

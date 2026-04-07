@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import DangerButton from '@/Components/DangerButton';
@@ -52,6 +53,7 @@ interface Props {
 type ViewMode = 'grid' | 'list';
 
 export default function Index({ media, filters, can }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const canCreate = can?.create ?? true;
     const canUpdate = can?.update ?? true;
     const canDelete = can?.delete ?? true;
@@ -75,7 +77,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(route('admin.media.index'), {
+        router.get(prefixedRoute('media.index'), {
             search: search || undefined,
             type: typeFilter || undefined,
         }, {
@@ -87,7 +89,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
     const clearFilters = () => {
         setSearch('');
         setTypeFilter('');
-        router.get(route('admin.media.index'));
+        router.get(prefixedRoute('media.index'));
     };
 
     const toggleSelectItem = (id: number) => {
@@ -118,7 +120,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
         if (!mediaToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.media.destroy', mediaToDelete.id), {
+        router.delete(prefixedRoute('media.destroy', mediaToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -135,7 +137,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
 
     const confirmBulkDelete = () => {
         setProcessing(true);
-        router.post(route('admin.media.bulk-destroy'), {
+        router.post(prefixedRoute('media.bulk-destroy'), {
             ids: selectedItems,
         }, {
             onSuccess: () => {
@@ -176,7 +178,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                         Media Library
                     </h2>
                     {canCreate && (
-                        <Link href={route('admin.media.create')}>
+                        <Link href={prefixedRoute('media.create')}>
                             <PrimaryButton>Upload Media</PrimaryButton>
                         </Link>
                     )}
@@ -261,7 +263,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                             </p>
                             {canCreate && (
                                 <div className="mt-6">
-                                    <Link href={route('admin.media.create')}>
+                                    <Link href={prefixedRoute('media.create')}>
                                         <PrimaryButton>Upload Media</PrimaryButton>
                                     </Link>
                                 </div>
@@ -354,7 +356,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                             {/* Hover Actions */}
                                             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                                 <Link
-                                                    href={route('admin.media.show', item.id)}
+                                                    href={prefixedRoute('media.show', item.id)}
                                                     className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
                                                     title="View"
                                                 >
@@ -365,7 +367,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                 </Link>
                                                 {canUpdate && (
                                                     <Link
-                                                        href={route('admin.media.edit', item.id)}
+                                                        href={prefixedRoute('media.edit', item.id)}
                                                         className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
                                                         title="Edit"
                                                     >
@@ -485,7 +487,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                         <div className="flex items-center justify-end gap-2">
                                                             <Link
-                                                                href={route('admin.media.show', item.id)}
+                                                                href={prefixedRoute('media.show', item.id)}
                                                                 className="text-gray-600 hover:text-gray-900"
                                                                 title="Preview"
                                                             >
@@ -496,7 +498,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                             </Link>
                                                             {canUpdate && (
                                                                 <Link
-                                                                    href={route('admin.media.edit', item.id)}
+                                                                    href={prefixedRoute('media.edit', item.id)}
                                                                     className="text-indigo-600 hover:text-indigo-900"
                                                                     title="Edit"
                                                                 >

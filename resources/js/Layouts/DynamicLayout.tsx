@@ -1,15 +1,5 @@
-import { usePage } from '@inertiajs/react';
 import { ReactNode } from 'react';
 import AdminLayout from './AdminLayout';
-import UserLayout from './UserLayout';
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    email_verified_at: string | null;
-    is_admin: boolean;
-}
 
 interface Props {
     header?: ReactNode;
@@ -17,28 +7,20 @@ interface Props {
 }
 
 /**
- * DynamicLayout component that automatically selects the appropriate layout
- * based on the user's role:
- * - Admin users: AdminLayout (indigo theme)
- * - Non-admin users (e.g., content-manager): UserLayout (emerald theme)
+ * DynamicLayout component that provides a unified layout for all user levels.
+ * 
+ * The AdminLayout component now handles dynamic route prefixes internally,
+ * so all users (admin, user, module) see the same layout structure.
+ * The menu links are automatically adjusted based on the current route prefix
+ * (admin, user, or module) which is shared via HandleInertiaRequests middleware.
+ * 
+ * Content and menu visibility are controlled by user permissions,
+ * not by different layout components.
  */
 export default function DynamicLayout({ header, children }: Props) {
-    const user = (usePage().props as any).auth.user as User | null;
-    
-    // Use AdminLayout for admin users, UserLayout for non-admin users
-    const isAdmin = user?.is_admin || false;
-    
-    if (isAdmin) {
-        return (
-            <AdminLayout header={header}>
-                {children}
-            </AdminLayout>
-        );
-    }
-    
     return (
-        <UserLayout header={header}>
+        <AdminLayout header={header}>
             {children}
-        </UserLayout>
+        </AdminLayout>
     );
 }

@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router } from '@inertiajs/react';
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function Index({ carousels, can }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const canCreate = can?.create ?? true;
     const canUpdate = can?.update ?? true;
     const canDelete = can?.delete ?? true;
@@ -46,14 +48,14 @@ export default function Index({ carousels, can }: Props): JSX.Element {
         if (!carouselToDelete) return;
 
         setProcessing(true);
-        router.delete(route('admin.carousels.destroy', carouselToDelete.id), {
+        router.delete(prefixedRoute('carousels.destroy', carouselToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
     };
 
     const toggleActive = (carousel: Carousel) => {
-        router.patch(route('admin.carousels.update', carousel.id), {
+        router.patch(prefixedRoute('carousels.update', carousel.id), {
             is_active: !carousel.is_active,
         });
     };
@@ -66,7 +68,7 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                         Image Carousels
                     </h2>
                     {canCreate && (
-                        <Link href={route('admin.carousels.create')}>
+                        <Link href={prefixedRoute('carousels.create')}>
                             <PrimaryButton>Create New Carousel</PrimaryButton>
                         </Link>
                     )}
@@ -98,7 +100,7 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                             </p>
                             {canCreate && (
                                 <div className="mt-6">
-                                    <Link href={route('admin.carousels.create')}>
+                                    <Link href={prefixedRoute('carousels.create')}>
                                         <PrimaryButton>Create New Carousel</PrimaryButton>
                                     </Link>
                                 </div>
@@ -165,7 +167,7 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
-                                                        href={route('admin.carousels.show', carousel.id)}
+                                                        href={prefixedRoute('carousels.show', carousel.id)}
                                                         className="text-gray-600 hover:text-gray-900"
                                                         title="Preview"
                                                     >
@@ -176,7 +178,7 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                                                     </Link>
                                                     {canUpdate && (
                                                         <Link
-                                                            href={route('admin.carousels.edit', carousel.id)}
+                                                            href={prefixedRoute('carousels.edit', carousel.id)}
                                                             className="text-indigo-600 hover:text-indigo-900"
                                                             title="Edit"
                                                         >

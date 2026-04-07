@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -38,6 +39,7 @@ interface Props {
 }
 
 export default function Edit({ carousel }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const [editingImage, setEditingImage] = useState<CarouselImage | null>(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -67,7 +69,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(route('admin.carousels.update', carousel.id));
+        patch(prefixedRoute('carousels.update', carousel.id));
     };
 
     const openAddImageModal = () => {
@@ -100,13 +102,13 @@ export default function Edit({ carousel }: Props): JSX.Element {
         e.preventDefault();
         
         if (editingImage) {
-            imageForm.post(route('admin.carousels.images.update', [carousel.id, editingImage.id]), {
+            imageForm.post(prefixedRoute('carousels.images.update', [carousel.id, editingImage.id]), {
                 method: 'patch',
                 forceFormData: true,
                 onSuccess: () => closeImageModal(),
             });
         } else {
-            imageForm.post(route('admin.carousels.images.store', carousel.id), {
+            imageForm.post(prefixedRoute('carousels.images.store', carousel.id), {
                 forceFormData: true,
                 onSuccess: () => closeImageModal(),
             });
@@ -127,7 +129,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
         if (!imageToDelete) return;
         
         setDeleteProcessing(true);
-        router.delete(route('admin.carousels.images.destroy', [carousel.id, imageToDelete.id]), {
+        router.delete(prefixedRoute('carousels.images.destroy', [carousel.id, imageToDelete.id]), {
             onFinish: () => {
                 setDeleteProcessing(false);
                 closeDeleteDialog();
@@ -148,7 +150,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
             return { id: img.id, sort_order: index };
         });
 
-        router.post(route('admin.carousels.images.reorder', carousel.id), {
+        router.post(prefixedRoute('carousels.images.reorder', carousel.id), {
             images: reorderedImages,
         }, {
             preserveScroll: true,
@@ -271,7 +273,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                 <PrimaryButton disabled={processing}>
                                     Save Settings
                                 </PrimaryButton>
-                                <Link href={route('admin.carousels.index')}>
+                                <Link href={prefixedRoute('carousels.index')}>
                                     <SecondaryButton type="button">Back to List</SecondaryButton>
                                 </Link>
                             </div>

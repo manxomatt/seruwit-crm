@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function Edit({ user, userRoles, roles }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors } = useForm({
         name: user.name,
         email: user.email,
@@ -55,7 +57,7 @@ export default function Edit({ user, userRoles, roles }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(route('admin.users.update', user.id));
+        patch(prefixedRoute('users.update', user.id));
     };
 
     const toggleRole = (roleId: number) => {
@@ -248,7 +250,7 @@ export default function Edit({ user, userRoles, roles }: Props): JSX.Element {
                             <PrimaryButton disabled={processing}>
                                 Update User
                             </PrimaryButton>
-                            <Link href={route('admin.users.index')}>
+                            <Link href={prefixedRoute('users.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

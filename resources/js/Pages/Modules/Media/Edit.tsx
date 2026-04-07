@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function Edit({ media }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors } = useForm({
         alt_text: media.alt_text || '',
         description: media.description || '',
@@ -32,7 +34,7 @@ export default function Edit({ media }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(route('admin.media.update', media.id));
+        patch(prefixedRoute('media.update', media.id));
     };
 
     return (
@@ -143,7 +145,7 @@ export default function Edit({ media }: Props): JSX.Element {
                                 <PrimaryButton disabled={processing}>
                                     Save Changes
                                 </PrimaryButton>
-                                <Link href={route('admin.media.show', media.id)}>
+                                <Link href={prefixedRoute('media.show', media.id)}>
                                     <SecondaryButton type="button">Cancel</SecondaryButton>
                                 </Link>
                             </div>
@@ -154,7 +156,7 @@ export default function Edit({ media }: Props): JSX.Element {
 
             {/* Back Link */}
             <div className="mt-6">
-                <Link href={route('admin.media.index')}>
+                <Link href={prefixedRoute('media.index')}>
                     <SecondaryButton>Back to Library</SecondaryButton>
                 </Link>
             </div>

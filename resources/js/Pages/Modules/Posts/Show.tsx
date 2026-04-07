@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Head, Link } from '@inertiajs/react';
 
 interface Post {
@@ -31,6 +32,7 @@ const PencilIcon = () => (
 );
 
 export default function Show({ post }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '-';
         return new Date(dateString).toLocaleDateString('id-ID', {
@@ -48,7 +50,7 @@ export default function Show({ post }: Props): JSX.Element {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href={route('admin.posts.index')}
+                            href={prefixedRoute('posts.index')}
                             className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
                         >
                             <ArrowLeftIcon />
@@ -63,7 +65,7 @@ export default function Show({ post }: Props): JSX.Element {
                         </div>
                     </div>
                     <Link
-                        href={route('admin.posts.edit', post.id)}
+                        href={prefixedRoute('posts.edit', post.id)}
                         className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PencilIcon />
@@ -144,7 +146,7 @@ export default function Show({ post }: Props): JSX.Element {
                             <div className="text-center py-12 text-gray-500">
                                 <p>No content yet.</p>
                                 <Link
-                                    href={route('admin.posts.edit', post.id)}
+                                    href={prefixedRoute('posts.edit', post.id)}
                                     className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500"
                                 >
                                     Add content →
@@ -157,13 +159,13 @@ export default function Show({ post }: Props): JSX.Element {
                 {/* Actions */}
                 <div className="mt-6 flex items-center justify-end gap-4">
                     <Link
-                        href={route('admin.posts.index')}
+                        href={prefixedRoute('posts.index')}
                         className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         Back to Posts
                     </Link>
                     <Link
-                        href={route('admin.posts.edit', post.id)}
+                        href={prefixedRoute('posts.edit', post.id)}
                         className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PencilIcon />

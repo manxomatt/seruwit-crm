@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import TextInput from '@/Components/TextInput';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Transition } from '@headlessui/react';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef, ChangeEvent } from 'react';
@@ -50,6 +51,7 @@ const CameraIcon = () => (
 );
 
 export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const user = (usePage().props as any).auth.user;
     const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'delete'>('profile');
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
@@ -152,7 +154,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                         </p>
                     </div>
                     <Link
-                        href={route('admin.dashboard')}
+                        href={prefixedRoute('dashboard')}
                         className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

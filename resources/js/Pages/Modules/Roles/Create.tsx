@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function Create({ permissions, modules, actions }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
@@ -31,7 +33,7 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('admin.roles.store'));
+        post(prefixedRoute('roles.store'));
     };
 
     const togglePermission = (permissionId: number) => {
@@ -75,7 +77,7 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
                         Create Role
                     </h2>
-                    <Link href={route('admin.roles.index')}>
+                    <Link href={prefixedRoute('roles.index')}>
                         <SecondaryButton>Back to Roles</SecondaryButton>
                     </Link>
                 </div>
@@ -197,7 +199,7 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                     </div>
 
                     <div className="mt-6 flex items-center justify-end gap-4">
-                        <Link href={route('admin.roles.index')}>
+                        <Link href={prefixedRoute('roles.index')}>
                             <SecondaryButton type="button">Cancel</SecondaryButton>
                         </Link>
                         <PrimaryButton disabled={processing}>

@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function Create({ groups }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
         key: '',
         group: 'general',
@@ -25,7 +27,7 @@ export default function Create({ groups }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('admin.settings.store'));
+        post(prefixedRoute('settings.store'));
     };
 
     const settingTypes = [
@@ -213,7 +215,7 @@ export default function Create({ groups }: Props): JSX.Element {
                             <PrimaryButton disabled={processing}>
                                 Create Setting
                             </PrimaryButton>
-                            <Link href={route('admin.settings.index')}>
+                            <Link href={prefixedRoute('settings.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>
