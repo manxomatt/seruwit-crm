@@ -5,22 +5,21 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "baseUrl": ".",
     "types": ["vite/client"],
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./resources/js/*"]
+      "@/*": ["./resources/js/*"],
+      "ziggy-js": ["./vendor/tightenco/ziggy"]
     }
   },
-  "include": ["resources/js", "resources/css", "types"],
-  "references": []
+  "include": ["resources/js", "resources/css", "types"]
 }

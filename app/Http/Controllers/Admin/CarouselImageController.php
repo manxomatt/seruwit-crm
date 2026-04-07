@@ -1,0 +1,132 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCarouselImageRequest;
+use App\Http\Requests\UpdateCarouselImageRequest;
+use App\Models\Carousel;
+use App\Models\CarouselImage;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+
+class CarouselImageController extends Controller
+{
+    /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
+    /**
+     * Store a newly created carousel image in storage.
+     */
+    public function store(StoreCarouselImageRequest $request, Carousel $carousel): RedirectResponse
+    {
+        if ($carousel->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $imagePath = $request->file('image')->store('carousels', 'public');
+
+        $maxSortOrder = $carousel->images()->max('sort_order') ?? -1;
+
+        $carousel->images()->create([
+            'image_path' => $imagePath,
+            'title' => $request->validated('title'),
+            'description' => $request->validated('description'),
+            'link_url' => $request->validated('link_url'),
+            'link_target' => $request->validated('link_target', '_self'),
+            'button_text' => $request->validated('button_text'),
+            'sort_order' => $maxSortOrder + 1,
+            'is_active' => $request->validated('is_active', true),
+        ]);
+
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
+            ->with('success', 'Image added successfully.');
+    }
+
+    /**
+     * Update the specified carousel image in storage.
+     */
+    public function update(UpdateCarouselImageRequest $request, Carousel $carousel, CarouselImage $image): RedirectResponse
+    {
+        if ($carousel->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($image->carousel_id !== $carousel->id) {
+            abort(404);
+        }
+
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            // Delete old image
+            if ($image->image_path) {
+                Storage::disk('public')->delete($image->image_path);
+            }
+            $data['image_path'] = $request->file('image')->store('carousels', 'public');
+        }
+
+        unset($data['image']);
+        $image->update($data);
+
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
+            ->with('success', 'Image updated successfully.');
+    }
+
+    /**
+     * Remove the specified carousel image from storage.
+     */
+    public function destroy(Carousel $carousel, CarouselImage $image): RedirectResponse
+    {
+        if ($carousel->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($image->carousel_id !== $carousel->id) {
+            abort(404);
+        }
+
+        // Delete the image file
+        if ($image->image_path) {
+            Storage::disk('public')->delete($image->image_path);
+        }
+
+        $image->delete();
+
+        return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
+            ->with('success', 'Image deleted successfully.');
+    }
+
+    /**
+     * Reorder carousel images.
+     */
+    public function reorder(Request $request, Carousel $carousel): JsonResponse
+    {
+        if ($carousel->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'images' => ['required', 'array'],
+            'images.*.id' => ['required', 'integer', 'exists:carousel_images,id'],
+            'images.*.sort_order' => ['required', 'integer', 'min:0'],
+        ]);
+
+        foreach ($request->input('images') as $imageData) {
+            CarouselImage::query()
+                ->where('id', $imageData['id'])
+                ->where('carousel_id', $carousel->id)
+                ->update(['sort_order' => $imageData['sort_order']]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Images reordered successfully.']);
+    }
+}

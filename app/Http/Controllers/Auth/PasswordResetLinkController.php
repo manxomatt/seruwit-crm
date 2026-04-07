@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -17,8 +18,13 @@ class PasswordResetLinkController extends Controller
      */
     public function create(): Response
     {
+        $settings = Setting::getPublic()
+            ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
+            ->toArray();
+
         return Inertia::render('Auth/ForgotPassword', [
             'status' => session('status'),
+            'settings' => $settings,
         ]);
     }
 

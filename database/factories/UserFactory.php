@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -40,5 +41,44 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Assign the admin role to the user after creation.
+     */
+    public function admin(): static
+    {
+        return $this->afterCreating(function ($user) {
+            $adminRole = Role::where('slug', 'admin')->first();
+            if ($adminRole) {
+                $user->roles()->attach($adminRole);
+            }
+        });
+    }
+
+    /**
+     * Assign the user role to the user after creation.
+     */
+    public function withUserRole(): static
+    {
+        return $this->afterCreating(function ($user) {
+            $userRole = Role::where('slug', 'user')->first();
+            if ($userRole) {
+                $user->roles()->attach($userRole);
+            }
+        });
+    }
+
+    /**
+     * Assign a custom role to the user after creation.
+     */
+    public function withRole(string $roleSlug): static
+    {
+        return $this->afterCreating(function ($user) use ($roleSlug) {
+            $role = Role::where('slug', $roleSlug)->first();
+            if ($role) {
+                $user->roles()->attach($role);
+            }
+        });
     }
 }

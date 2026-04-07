@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class UpdatePostRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'title' => ['sometimes', 'string', 'max:255'],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('posts')->ignore($this->route('post'))],
+            'excerpt' => ['nullable', 'string', 'max:500'],
+            'content' => ['nullable', 'string'],
+            'featured_image' => ['nullable', 'string', 'max:255'],
+            'is_published' => ['sometimes', 'boolean'],
+            'published_at' => ['nullable', 'date'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'title.max' => 'The post title must not exceed 255 characters.',
+            'slug.unique' => 'This slug is already in use.',
+            'excerpt.max' => 'The excerpt must not exceed 500 characters.',
+        ];
+    }
+}

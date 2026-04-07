@@ -36,6 +36,12 @@ export default function AuthenticatedLayout({ header, children }: Props) {
                                     Dashboard
                                 </NavLink>
                                 <NavLink
+                                    href={route('admin.pages.index')}
+                                    active={route().current('admin.pages.*')}
+                                >
+                                    Page Builder
+                                </NavLink>
+                                <NavLink
                                     href={route('todos.index')}
                                     active={route().current('todos.index')}
                                 >
@@ -138,6 +144,12 @@ export default function AuthenticatedLayout({ header, children }: Props) {
                             active={route().current('dashboard')}
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.pages.index')}
+                            active={route().current('admin.pages.*')}
+                        >
+                            Page Builder
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('todos.index')}
