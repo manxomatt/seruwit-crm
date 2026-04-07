@@ -31,13 +31,13 @@ const Navbar: React.FC<NavbarProps> = ({ settings }) => {
           
           <nav className="hidden md:flex space-x-10">
             <a className="text-base font-semibold text-slate-600 hover:text-primary transition-colors" href="#features">Fitur</a>
+            <a className="text-base font-semibold text-slate-600 hover:text-primary transition-colors" href="#resources">Sumber Daya</a>
             <a className="text-base font-semibold text-slate-600 hover:text-primary transition-colors" href="#pricing">Harga</a>
-            <a className="text-base font-semibold text-slate-600 hover:text-primary transition-colors" href="#">Sumber Daya</a>
           </nav>
           
           <div className="flex items-center gap-4 sm:gap-6">
             <a className="hidden sm:block text-base font-semibold text-slate-600 hover:text-primary transition-colors" href="/login">Masuk</a>
-            <a href="/register" className="bg-primary text-white px-6 py-2.5 rounded-full font-bold text-sm sm:text-base hover:scale-105 transition-all vibrant-glow whitespace-nowrap">
+            <a href="https://app.sky-track.net/#register" target="_blank" rel="noopener noreferrer" className="bg-primary text-white px-6 py-2.5 rounded-full font-bold text-sm sm:text-base hover:scale-105 transition-all vibrant-glow whitespace-nowrap">
               Daftar Sekarang
             </a>
             <button 
@@ -54,8 +54,8 @@ const Navbar: React.FC<NavbarProps> = ({ settings }) => {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-b border-slate-100 p-4 space-y-4 animate-in slide-in-from-top duration-300">
           <a className="block text-lg font-semibold text-slate-600 hover:text-primary" href="#features" onClick={() => setIsMenuOpen(false)}>Fitur</a>
+          <a className="block text-lg font-semibold text-slate-600 hover:text-primary" href="#resources" onClick={() => setIsMenuOpen(false)}>Sumber Daya</a>
           <a className="block text-lg font-semibold text-slate-600 hover:text-primary" href="#pricing" onClick={() => setIsMenuOpen(false)}>Harga</a>
-          <a className="block text-lg font-semibold text-slate-600 hover:text-primary" href="#" onClick={() => setIsMenuOpen(false)}>Sumber Daya</a>
           <a className="block text-lg font-semibold text-slate-600 hover:text-primary" href="/login" onClick={() => setIsMenuOpen(false)}>Masuk</a>
         </div>
       )}

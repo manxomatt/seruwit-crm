@@ -50,7 +50,9 @@ const Pricing: React.FC = () => {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a 
-                href="/register" 
+                href="https://app.sky-track.net/#register" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-10 py-5 rounded-full font-black text-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105"
               >
                 <span className="material-symbols-outlined">rocket_launch</span>

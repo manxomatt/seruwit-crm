@@ -10,9 +10,9 @@ const CTA: React.FC = () => {
           Bergabunglah dengan ribuan keluarga dan bisnis yang menemukan ketenangan pikiran dengan teknologi GPS kami yang canggih dan mudah digunakan.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-6">
-          <button className="bg-primary text-white px-12 py-5 rounded-full font-black text-xl hover:scale-105 transition-all vibrant-glow">
+          <a href="https://app.sky-track.net/#register" target="_blank" rel="noopener noreferrer" className="bg-primary text-white px-12 py-5 rounded-full font-black text-xl hover:scale-105 transition-all vibrant-glow">
             Mulai Sekarang!
-          </button>
+          </a>
           <button className="bg-white border-2 border-slate-200 text-slate-700 px-12 py-5 rounded-full font-black text-xl hover:bg-slate-50 transition-all">
             Hubungi Tim Kami
           </button>
