@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import GlobalSearch from '@/Components/GlobalSearch';
 import { Link, usePage } from '@inertiajs/react';
 import { useState, ReactNode, useMemo } from 'react';
 
@@ -190,21 +191,13 @@ const routeExists = (routeName: string): boolean => {
 
 // Helper function to get dashboard route based on user role
 const getDashboardRoute = (user: User | null): string => {
-    if (!user) {
-        return route('dashboard');
-    }
-    
-    if (user.is_admin) {
-        return route('admin.dashboard');
-    }
-    
-    // Check if user has any custom role (not admin or user)
-    // For now, we'll use module.dashboard as the default
+    // All users now use module.dashboard
     if (routeExists('module.dashboard')) {
         return route('module.dashboard');
     }
     
-    return route('user.dashboard');
+    // Fallback to generic dashboard
+    return route('dashboard');
 };
 
 // Get theme colors based on user role
@@ -243,7 +236,7 @@ export default function ModuleLayout({ header, children }: Props) {
                 name: 'Dashboard',
                 href: dashboardRoute,
                 icon: <DashboardIcon />,
-                current: route().current('module.dashboard') || route().current('admin.dashboard') || route().current('user.dashboard'),
+                current: route().current('module.dashboard') || route().current('dashboard'),
                 module: 'dashboard',
             },
         ];
@@ -384,9 +377,9 @@ export default function ModuleLayout({ header, children }: Props) {
                     <div className="h-6 w-px bg-gray-200 lg:hidden" />
 
                     <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                        {/* Spacer */}
+                        {/* Global Search */}
                         <div className="relative flex flex-1 items-center">
-                            {/* Can add search or other elements here */}
+                            <GlobalSearch />
                         </div>
 
                         <div className="flex items-center gap-x-4 lg:gap-x-6">

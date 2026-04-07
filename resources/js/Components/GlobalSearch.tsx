@@ -148,7 +148,7 @@ export default function GlobalSearch() {
         const timeoutId = setTimeout(async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`/admin/search?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`/module/search?q=${encodeURIComponent(query)}`);
                 const data: SearchResponse = await response.json();
                 setResults(data.results);
             } catch (error) {
