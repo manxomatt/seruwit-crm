@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('description')->nullable();
             $table->boolean('is_system')->default(false);
+            $table->string('dashboard_path')->nullable();
             $table->timestamps();
         });
     }

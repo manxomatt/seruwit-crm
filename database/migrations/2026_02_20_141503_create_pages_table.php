@@ -20,6 +20,7 @@ return new class extends Migration
             $table->longText('css')->nullable();
             $table->json('gjs_data')->nullable();
             $table->boolean('is_published')->default(false);
+            $table->boolean('is_homepage')->default(false);
             $table->timestamps();
         });
     }

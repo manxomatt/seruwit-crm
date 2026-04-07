@@ -28,6 +28,7 @@ class PageFactory extends Factory
             'css' => '.container { max-width: 1200px; margin: 0 auto; padding: 20px; }',
             'gjs_data' => null,
             'is_published' => fake()->boolean(30),
+            'is_homepage' => false,
         ];
     }
 
@@ -48,6 +49,17 @@ class PageFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'is_published' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the page is the homepage.
+     */
+    public function homepage(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_homepage' => true,
+            'is_published' => true,
         ]);
     }
 }

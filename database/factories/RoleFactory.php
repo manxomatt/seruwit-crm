@@ -27,6 +27,7 @@ class RoleFactory extends Factory
             'slug' => Str::slug($name),
             'description' => fake()->sentence(),
             'is_system' => false,
+            'dashboard_path' => '/module/dashboard',
         ];
     }
 
@@ -50,6 +51,7 @@ class RoleFactory extends Factory
             'slug' => 'admin',
             'description' => 'Full access to all system features',
             'is_system' => true,
+            'dashboard_path' => '/module/dashboard',
         ]);
     }
 
@@ -63,6 +65,17 @@ class RoleFactory extends Factory
             'slug' => 'user',
             'description' => 'Read-only access to system features',
             'is_system' => true,
+            'dashboard_path' => '/module/dashboard',
+        ]);
+    }
+
+    /**
+     * Set a custom dashboard path.
+     */
+    public function withDashboardPath(string $path): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'dashboard_path' => $path,
         ]);
     }
 }
