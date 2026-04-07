@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { Head, Link } from '@inertiajs/react';
 
 interface Activity {
@@ -183,7 +183,7 @@ const SimpleBarChart = ({ data, labels, color }: { data: number[]; labels: strin
 
 export default function Dashboard({ stats, recentActivity, quickStats }: Props): JSX.Element {
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -534,6 +534,6 @@ export default function Dashboard({ stats, recentActivity, quickStats }: Props):
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

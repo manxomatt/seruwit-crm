@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
@@ -35,7 +35,7 @@ export default function Create(): JSX.Element {
     };
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center gap-4">
                     <Link
@@ -174,6 +174,6 @@ export default function Create(): JSX.Element {
                     </form>
                 </div>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

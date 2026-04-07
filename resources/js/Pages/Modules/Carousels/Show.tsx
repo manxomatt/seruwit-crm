@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
@@ -57,7 +57,7 @@ export default function Show({ carousel }: Props): JSX.Element {
     }, [activeImages.length, carousel.autoplay_interval, goToNext]);
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
@@ -239,6 +239,6 @@ export default function Show({ carousel }: Props): JSX.Element {
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

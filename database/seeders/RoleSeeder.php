@@ -20,6 +20,7 @@ class RoleSeeder extends Seeder
                 'name' => 'Administrator',
                 'description' => 'Full access to all system features',
                 'is_system' => true,
+                'dashboard_path' => '/dashboard',
             ]
         );
 
@@ -34,6 +35,7 @@ class RoleSeeder extends Seeder
                 'name' => 'User',
                 'description' => 'Read-only access to system features',
                 'is_system' => true,
+                'dashboard_path' => '/dashboard',
             ]
         );
 

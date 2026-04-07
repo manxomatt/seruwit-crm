@@ -269,6 +269,6 @@ class User extends Authenticatable
         }
 
         // Default fallback if user has no roles
-        return Role::DEFAULT_DASHBOARD_PATHS['user'] ?? '/user/dashboard';
+        return Role::DEFAULT_DASHBOARD_PATHS['user'] ?? '/dashboard';
     }
 }

@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { Head, Link } from '@inertiajs/react';
 
 interface MediaByType {
@@ -222,7 +222,7 @@ export default function Index({
     trendsData,
 }: Props): JSX.Element {
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <div>
@@ -657,6 +657,6 @@ export default function Index({
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

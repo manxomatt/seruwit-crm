@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -140,7 +140,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
     ];
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <div>
@@ -491,6 +491,6 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                     )}
                 </div>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

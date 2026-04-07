@@ -118,14 +118,14 @@ const UserAvatar = ({ user, size = 'md' }: { user: User | null; size?: 'sm' | 'm
     );
 };
 
-// Module to route mapping - use user routes for user panel
+// Module to route mapping - use module routes for user panel
 const moduleRouteMap: Record<string, { route: string; routePattern: string }> = {
-    'pages': { route: 'user.pages.index', routePattern: 'user.pages.*' },
-    'posts': { route: 'user.posts.index', routePattern: 'user.posts.*' },
-    'carousels': { route: 'user.carousels.index', routePattern: 'user.carousels.*' },
-    'media': { route: 'user.media.index', routePattern: 'user.media.*' },
-    'analytics': { route: 'user.analytics.index', routePattern: 'user.analytics.*' },
-    'settings': { route: 'user.settings.index', routePattern: 'user.settings.*' },
+    'pages': { route: 'module.pages.index', routePattern: 'module.pages.*' },
+    'posts': { route: 'module.posts.index', routePattern: 'module.posts.*' },
+    'carousels': { route: 'module.carousels.index', routePattern: 'module.carousels.*' },
+    'media': { route: 'module.media.index', routePattern: 'module.media.*' },
+    'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
+    'settings': { route: 'module.settings.index', routePattern: 'module.settings.*' },
 };
 
 // Module to icon mapping
@@ -167,9 +167,9 @@ export default function UserLayout({ header, children }: Props) {
         const items: MenuItem[] = [
             {
                 name: 'Dashboard',
-                href: route('user.dashboard'),
+                href: route('dashboard'),
                 icon: <DashboardIcon />,
-                current: route().current('user.dashboard'),
+                current: route().current('dashboard') || route().current('user.dashboard'),
                 module: 'dashboard',
             },
         ];

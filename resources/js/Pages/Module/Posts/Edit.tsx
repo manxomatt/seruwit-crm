@@ -1,4 +1,4 @@
-import ModuleLayout from '@/Layouts/ModuleLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
@@ -44,7 +44,7 @@ export default function Edit({ post }: Props): JSX.Element {
     };
 
     return (
-        <ModuleLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center gap-4">
                     <Link
@@ -211,6 +211,6 @@ export default function Edit({ post }: Props): JSX.Element {
                     </form>
                 </div>
             </div>
-        </ModuleLayout>
+        </DynamicLayout>
     );
 }

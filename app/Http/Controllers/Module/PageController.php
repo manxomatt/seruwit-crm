@@ -40,8 +40,15 @@ class PageController extends AdminPageController
             ->latest()
             ->get();
 
+        $user = Auth::user();
+
         return Inertia::render($this->getPagePrefix().'/Pages/Index', [
             'pages' => $pages,
+            'can' => [
+                'create' => $user->hasPermissionFor('pages', 'create'),
+                'update' => $user->hasPermissionFor('pages', 'update'),
+                'delete' => $user->hasPermissionFor('pages', 'delete'),
+            ],
         ]);
     }
 
@@ -86,7 +93,7 @@ class PageController extends AdminPageController
             abort(403);
         }
 
-        return Inertia::render($this->getPagePrefix().'/Pages/Edit', [
+        return Inertia::render($this->getPagePrefix().'/Pages/Editor', [
             'page' => $page,
         ]);
     }

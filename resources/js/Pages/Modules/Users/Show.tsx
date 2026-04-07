@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -59,7 +59,7 @@ export default function Show({ user }: Props): JSX.Element {
     };
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
@@ -213,6 +213,6 @@ export default function Show({ user }: Props): JSX.Element {
                     </>
                 }
             />
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

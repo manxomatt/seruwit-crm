@@ -23,8 +23,15 @@ class PostController extends Controller
             ->latest()
             ->get();
 
+        $user = Auth::user();
+
         return Inertia::render('Module/Posts/Index', [
             'posts' => $posts,
+            'can' => [
+                'create' => $user->hasPermissionFor('posts', 'create'),
+                'update' => $user->hasPermissionFor('posts', 'update'),
+                'delete' => $user->hasPermissionFor('posts', 'delete'),
+            ],
         ]);
     }
 

@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -92,7 +92,7 @@ export default function Index({ pages }: Props): JSX.Element {
     };
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -246,6 +246,6 @@ export default function Index({ pages }: Props): JSX.Element {
                     )
                 }
             />
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

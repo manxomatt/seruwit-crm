@@ -19,7 +19,7 @@ class RoleBasedRedirectTest extends TestCase
         $this->seed(\Database\Seeders\RoleSeeder::class);
     }
 
-    public function test_admin_user_is_redirected_to_admin_dashboard_after_login(): void
+    public function test_admin_user_is_redirected_to_dashboard_after_login(): void
     {
         $admin = User::factory()->admin()->create();
 
@@ -29,10 +29,10 @@ class RoleBasedRedirectTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/dashboard');
     }
 
-    public function test_user_role_is_redirected_to_user_dashboard_after_login(): void
+    public function test_user_role_is_redirected_to_dashboard_after_login(): void
     {
         $user = User::factory()->withUserRole()->create();
 
@@ -42,10 +42,10 @@ class RoleBasedRedirectTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/user/dashboard');
+        $response->assertRedirect('/dashboard');
     }
 
-    public function test_custom_role_user_is_redirected_to_custom_dashboard_after_login(): void
+    public function test_custom_role_user_is_redirected_to_dashboard_after_login(): void
     {
         // Create a custom role
         $customRole = Role::create([
@@ -64,7 +64,7 @@ class RoleBasedRedirectTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/custom/dashboard');
+        $response->assertRedirect('/dashboard');
     }
 
     public function test_custom_role_with_custom_dashboard_path_redirects_correctly(): void
@@ -90,7 +90,7 @@ class RoleBasedRedirectTest extends TestCase
         $response->assertRedirect('/editor/dashboard');
     }
 
-    public function test_user_with_no_roles_is_redirected_to_user_dashboard(): void
+    public function test_user_with_no_roles_is_redirected_to_dashboard(): void
     {
         $user = User::factory()->create();
 
@@ -100,12 +100,12 @@ class RoleBasedRedirectTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/user/dashboard');
+        $response->assertRedirect('/dashboard');
     }
 
     public function test_user_with_multiple_roles_is_redirected_based_on_priority(): void
     {
-        // User with both admin and user roles should be redirected to admin dashboard
+        // User with both admin and user roles should be redirected to dashboard
         $user = User::factory()->admin()->withUserRole()->create();
 
         $response = $this->post('/login', [
@@ -114,31 +114,14 @@ class RoleBasedRedirectTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/dashboard');
     }
 
-    public function test_user_dashboard_page_can_be_rendered(): void
+    public function test_dashboard_page_can_be_rendered(): void
     {
         $user = User::factory()->withUserRole()->create();
 
-        $response = $this->actingAs($user)->get('/user/dashboard');
-
-        $response->assertStatus(200);
-    }
-
-    public function test_custom_dashboard_page_can_be_rendered(): void
-    {
-        $customRole = Role::create([
-            'name' => 'Content Manager',
-            'slug' => 'content-manager',
-            'description' => 'Manages content',
-            'is_system' => false,
-        ]);
-
-        $user = User::factory()->create();
-        $user->roles()->attach($customRole);
-
-        $response = $this->actingAs($user)->get('/custom/dashboard');
+        $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertStatus(200);
     }
@@ -147,14 +130,14 @@ class RoleBasedRedirectTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->assertEquals('/admin/dashboard', $admin->getDashboardPath());
+        $this->assertEquals('/dashboard', $admin->getDashboardPath());
     }
 
     public function test_get_dashboard_path_returns_correct_path_for_user_role(): void
     {
         $user = User::factory()->withUserRole()->create();
 
-        $this->assertEquals('/user/dashboard', $user->getDashboardPath());
+        $this->assertEquals('/dashboard', $user->getDashboardPath());
     }
 
     public function test_get_dashboard_path_returns_custom_path_for_custom_role(): void
@@ -173,7 +156,7 @@ class RoleBasedRedirectTest extends TestCase
         $this->assertEquals('/editor/dashboard', $user->getDashboardPath());
     }
 
-    public function test_get_dashboard_path_returns_default_custom_path_for_custom_role_without_dashboard_path(): void
+    public function test_get_dashboard_path_returns_default_path_for_custom_role_without_dashboard_path(): void
     {
         $customRole = Role::create([
             'name' => 'Moderator',
@@ -185,6 +168,6 @@ class RoleBasedRedirectTest extends TestCase
         $user = User::factory()->create();
         $user->roles()->attach($customRole);
 
-        $this->assertEquals('/custom/dashboard', $user->getDashboardPath());
+        $this->assertEquals('/dashboard', $user->getDashboardPath());
     }
 }

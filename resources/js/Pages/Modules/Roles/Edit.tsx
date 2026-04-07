@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -79,7 +79,7 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
     };
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
@@ -253,6 +253,6 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                     </div>
                 </form>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

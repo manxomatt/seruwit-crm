@@ -1,4 +1,4 @@
-import ModuleLayout from '@/Layouts/ModuleLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { Head, usePage } from '@inertiajs/react';
 
 interface Props {
@@ -19,7 +19,7 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
     const permissionModules = Object.keys(permissions);
 
     return (
-        <ModuleLayout
+        <DynamicLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
                     {primaryRole ? `${primaryRole.name} Dashboard` : 'Module Dashboard'}
@@ -83,6 +83,6 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
                     </div>
                 </div>
             </div>
-        </ModuleLayout>
+        </DynamicLayout>
     );
 }

@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link } from '@inertiajs/react';
@@ -49,7 +49,7 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
     };
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
@@ -222,6 +222,6 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

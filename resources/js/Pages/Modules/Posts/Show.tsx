@@ -1,4 +1,4 @@
-import AdminLayout from '@/Layouts/AdminLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { Head, Link } from '@inertiajs/react';
 
 interface Post {
@@ -43,7 +43,7 @@ export default function Show({ post }: Props): JSX.Element {
     };
 
     return (
-        <AdminLayout
+        <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -171,6 +171,6 @@ export default function Show({ post }: Props): JSX.Element {
                     </Link>
                 </div>
             </div>
-        </AdminLayout>
+        </DynamicLayout>
     );
 }

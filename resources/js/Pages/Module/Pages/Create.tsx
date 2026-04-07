@@ -27,7 +27,7 @@ export default function Create(): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('admin.pages.store'));
+        post(route('module.pages.store'));
     };
 
     return (
@@ -35,7 +35,7 @@ export default function Create(): JSX.Element {
             header={
                 <div className="flex items-center gap-4">
                     <Link
-                        href={route('admin.pages.index')}
+                        href={route('module.pages.index')}
                         className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
                     >
                         <ArrowLeftIcon />
@@ -92,7 +92,7 @@ export default function Create(): JSX.Element {
 
                         <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
                             <Link
-                                href={route('admin.pages.index')}
+                                href={route('module.pages.index')}
                                 className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 Cancel
