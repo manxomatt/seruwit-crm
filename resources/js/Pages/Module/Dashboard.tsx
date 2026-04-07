@@ -115,17 +115,17 @@ interface StatCardProps {
     value: number;
     subtitle: string;
     icon: React.ReactNode;
-    color: 'indigo' | 'emerald' | 'amber' | 'rose';
+    color: 'cyan' | 'emerald' | 'amber' | 'rose';
     href: string;
 }
 
 const StatCard = ({ title, value, subtitle, icon, color, href }: StatCardProps) => {
     const colorClasses = {
-        indigo: {
-            bg: 'bg-indigo-50',
-            icon: 'text-indigo-600',
-            ring: 'ring-indigo-500/10',
-            hover: 'hover:bg-indigo-100',
+        cyan: {
+            bg: 'bg-cyan-50',
+            icon: 'text-cyan-600',
+            ring: 'ring-cyan-500/10',
+            hover: 'hover:bg-cyan-100',
         },
         emerald: {
             bg: 'bg-emerald-50',
@@ -203,15 +203,15 @@ interface RecentItemProps {
     href: string;
 }
 
-const RecentItem = ({ title, slug, isPublished, createdAt, href }: RecentItemProps) => {
+const RecentItem = ({ title, isPublished, createdAt, href }: RecentItemProps) => {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
         const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-        if (diffInHours < 1) return 'Just now';
-        if (diffInHours < 24) return `${diffInHours}h ago`;
-        if (diffInHours < 48) return 'Yesterday';
+        if (diffInHours < 1) return 'Baru saja';
+        if (diffInHours < 24) return `${diffInHours} jam lalu`;
+        if (diffInHours < 48) return 'Kemarin';
         return date.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
     };
 
@@ -221,7 +221,7 @@ const RecentItem = ({ title, slug, isPublished, createdAt, href }: RecentItemPro
             className="group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-gray-50"
         >
             <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-gray-900 group-hover:text-indigo-600">
+                <p className="truncate font-medium text-gray-900 group-hover:text-cyan-600">
                     {title}
                 </p>
                 <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
@@ -236,7 +236,7 @@ const RecentItem = ({ title, slug, isPublished, createdAt, href }: RecentItemPro
                         : 'bg-yellow-100 text-yellow-800'
                 }`}
             >
-                {isPublished ? 'Published' : 'Draft'}
+                {isPublished ? 'Terbit' : 'Draft'}
             </span>
         </Link>
     );
@@ -250,9 +250,9 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
 
     const getGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Good morning';
-        if (hour < 18) return 'Good afternoon';
-        return 'Good evening';
+        if (hour < 12) return 'Selamat Pagi';
+        if (hour < 18) return 'Selamat Siang';
+        return 'Selamat Malam';
     };
 
     const getFirstName = (name: string) => name.split(' ')[0];
@@ -262,46 +262,46 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {primaryRole ? `${primaryRole.name} Dashboard` : 'Module Dashboard'}
+                        {primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard Modul'}
                     </h2>
                 </div>
             }
         >
-            <Head title={primaryRole ? `${primaryRole.name} Dashboard` : 'Module Dashboard'} />
+            <Head title={primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard Modul'} />
 
             <div className="space-y-8">
-                {/* Welcome Section */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8 text-white shadow-xl">
-                    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-                    <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+                {/* Welcome Section - Sky Track Theme */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 text-white shadow-xl">
+                    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl" />
+                    <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl" />
                     <div className="relative flex items-center gap-6">
                         <div className="hidden sm:block">
-                            <div className="rounded-full bg-white/20 p-2 backdrop-blur-sm">
+                            <div className="rounded-full bg-white/10 p-2 backdrop-blur-sm border border-white/20">
                                 <UserCircleIcon />
                             </div>
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-2">
                                 <SparklesIcon />
-                                <span className="text-sm font-medium text-white/80">
+                                <span className="text-sm font-medium text-white/70">
                                     {getGreeting()}
                                 </span>
                             </div>
-                            <h1 className="mt-1 text-3xl font-bold">
-                                Welcome back, {getFirstName(user.name)}!
+                            <h1 className="mt-1 text-3xl font-bold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
+                                Selamat Datang, {getFirstName(user.name)}!
                             </h1>
-                            <p className="mt-2 text-white/80">
+                            <p className="mt-2 text-white/70">
                                 {primaryRole ? (
-                                    <>You're logged in as <span className="font-semibold text-white">{primaryRole.name}</span></>
+                                    <>Anda masuk sebagai <span className="font-semibold text-cyan-400">{primaryRole.name}</span></>
                                 ) : (
-                                    <>Ready to manage your content?</>
+                                    <>Siap mengelola konten Anda?</>
                                 )}
                             </p>
                         </div>
                         <div className="hidden lg:block">
-                            <div className="rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm">
-                                <p className="text-sm text-white/80">Roles</p>
-                                <p className="font-semibold">{user.roles.join(', ')}</p>
+                            <div className="rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/20">
+                                <p className="text-sm text-white/70">Peran</p>
+                                <p className="font-semibold text-white">{user.roles.join(', ')}</p>
                             </div>
                         </div>
                     </div>
@@ -310,33 +310,33 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                 {/* Stats Grid */}
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard
-                        title="Total Posts"
+                        title="Total Postingan"
                         value={stats.posts.total}
-                        subtitle={`${stats.posts.published} published, ${stats.posts.draft} drafts`}
+                        subtitle={`${stats.posts.published} terbit, ${stats.posts.draft} draft`}
                         icon={<NewspaperIcon />}
-                        color="indigo"
+                        color="cyan"
                         href={route('module.posts.index')}
                     />
                     <StatCard
-                        title="Total Pages"
+                        title="Total Halaman"
                         value={stats.pages.total}
-                        subtitle={`${stats.pages.published} published, ${stats.pages.draft} drafts`}
+                        subtitle={`${stats.pages.published} terbit, ${stats.pages.draft} draft`}
                         icon={<DocumentTextIcon />}
                         color="emerald"
                         href={route('module.pages.index')}
                     />
                     <StatCard
-                        title="Media Files"
+                        title="File Media"
                         value={stats.media.total}
-                        subtitle={`${stats.media.images} images, ${stats.media.documents} docs`}
+                        subtitle={`${stats.media.images} gambar, ${stats.media.documents} dokumen`}
                         icon={<PhotoIcon />}
                         color="amber"
                         href={route('module.media.index')}
                     />
                     <StatCard
-                        title="Carousels"
+                        title="Carousel"
                         value={stats.carousels.total}
-                        subtitle={`${stats.carousels.active} active`}
+                        subtitle={`${stats.carousels.active} aktif`}
                         icon={<RectangleStackIcon />}
                         color="rose"
                         href={route('module.carousels.index')}
@@ -350,36 +350,36 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
                             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
                                 <PlusIcon />
-                                Quick Actions
+                                Aksi Cepat
                             </h3>
                             <div className="mt-4 space-y-3">
                                 <QuickAction
-                                    title="New Post"
-                                    description="Create a blog post"
+                                    title="Postingan Baru"
+                                    description="Buat postingan blog"
                                     href={route('module.posts.create')}
                                     icon={<NewspaperIcon />}
-                                    color="bg-indigo-600"
+                                    color="bg-gradient-to-r from-cyan-500 to-blue-600"
                                 />
                                 <QuickAction
-                                    title="New Page"
-                                    description="Build a new page"
+                                    title="Halaman Baru"
+                                    description="Buat halaman baru"
                                     href={route('module.pages.create')}
                                     icon={<DocumentTextIcon />}
-                                    color="bg-emerald-600"
+                                    color="bg-gradient-to-r from-emerald-500 to-teal-600"
                                 />
                                 <QuickAction
                                     title="Upload Media"
-                                    description="Add images or files"
+                                    description="Tambah gambar atau file"
                                     href={route('module.media.create')}
                                     icon={<PhotoIcon />}
-                                    color="bg-amber-600"
+                                    color="bg-gradient-to-r from-amber-500 to-orange-600"
                                 />
                                 <QuickAction
-                                    title="New Carousel"
-                                    description="Create a slideshow"
+                                    title="Carousel Baru"
+                                    description="Buat slideshow"
                                     href={route('module.carousels.create')}
                                     icon={<RectangleStackIcon />}
-                                    color="bg-rose-600"
+                                    color="bg-gradient-to-r from-rose-500 to-pink-600"
                                 />
                             </div>
                         </div>
@@ -390,7 +390,7 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    Recent Activity
+                                    Aktivitas Terbaru
                                 </h3>
                                 <div className="flex rounded-lg bg-gray-100 p-1">
                                     <button
@@ -401,7 +401,7 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                                 : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                     >
-                                        Posts
+                                        Postingan
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('pages')}
@@ -411,7 +411,7 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                                 : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                     >
-                                        Pages
+                                        Halaman
                                     </button>
                                 </div>
                             </div>
@@ -435,14 +435,14 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                         <div className="py-8 text-center">
                                             <NewspaperIcon />
                                             <p className="mt-2 text-sm text-gray-500">
-                                                No posts yet. Create your first post!
+                                                Belum ada postingan. Buat postingan pertama Anda!
                                             </p>
                                             <Link
                                                 href={route('module.posts.create')}
-                                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:from-cyan-400 hover:to-blue-500"
                                             >
                                                 <PlusIcon />
-                                                Create Post
+                                                Buat Postingan
                                             </Link>
                                         </div>
                                     )
@@ -463,14 +463,14 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                     <div className="py-8 text-center">
                                         <DocumentTextIcon />
                                         <p className="mt-2 text-sm text-gray-500">
-                                            No pages yet. Create your first page!
+                                            Belum ada halaman. Buat halaman pertama Anda!
                                         </p>
                                         <Link
                                             href={route('module.pages.create')}
-                                            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                                            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-medium text-white hover:from-emerald-400 hover:to-teal-500"
                                         >
                                             <PlusIcon />
-                                            Create Page
+                                            Buat Halaman
                                         </Link>
                                     </div>
                                 )}
@@ -481,9 +481,9 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                 <div className="mt-4 border-t border-gray-100 pt-4">
                                     <Link
                                         href={activeTab === 'posts' ? route('module.posts.index') : route('module.pages.index')}
-                                        className="flex items-center justify-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                                        className="flex items-center justify-center gap-2 text-sm font-medium text-cyan-600 hover:text-cyan-700"
                                     >
-                                        View all {activeTab}
+                                        Lihat semua {activeTab === 'posts' ? 'postingan' : 'halaman'}
                                         <ArrowRightIcon />
                                     </Link>
                                 </div>
@@ -496,16 +496,16 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                 {permissionModules.length > 0 && (
                     <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
                         <h3 className="text-lg font-semibold text-gray-900">
-                            Your Permissions
+                            Izin Akses Anda
                         </h3>
                         <p className="mt-1 text-sm text-gray-500">
-                            Here's what you can do in this system
+                            Berikut adalah akses yang Anda miliki dalam sistem ini
                         </p>
                         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {permissionModules.map((module) => (
                                 <div
                                     key={module}
-                                    className="rounded-xl border border-gray-200 p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50"
+                                    className="rounded-xl border border-gray-200 p-4 transition-colors hover:border-cyan-200 hover:bg-cyan-50/50"
                                 >
                                     <h4 className="font-medium capitalize text-gray-800">
                                         {module.replace('-', ' ')}
@@ -514,7 +514,7 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                         {permissions[module].map((action: string) => (
                                             <span
                                                 key={action}
-                                                className="inline-flex items-center rounded-md bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
+                                                className="inline-flex items-center rounded-md bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-700"
                                             >
                                                 {action}
                                             </span>

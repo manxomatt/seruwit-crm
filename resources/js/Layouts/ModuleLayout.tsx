@@ -200,33 +200,33 @@ const getDashboardRoute = (user: User | null): string => {
     return route('dashboard');
 };
 
-// Get theme colors based on user role
+// Get theme colors based on user role - using Sky Track theme (dark blue gradient)
 const getThemeColors = (isAdmin: boolean) => {
-    if (isAdmin) {
-        return {
-            gradient: 'from-indigo-700 to-indigo-900',
-            border: 'border-indigo-600',
-            text: 'text-indigo-100',
-            textHover: 'text-indigo-300',
-            bg: 'bg-indigo-500',
-        };
-    }
+    // Both admin and module users use the same Sky Track theme
     return {
-        gradient: 'from-purple-700 to-purple-900',
-        border: 'border-purple-600',
-        text: 'text-purple-100',
-        textHover: 'text-purple-300',
-        bg: 'bg-purple-500',
+        gradient: 'from-slate-900 via-blue-900 to-slate-900',
+        border: 'border-blue-700/50',
+        text: 'text-blue-100',
+        textHover: 'text-cyan-300',
+        bg: 'bg-blue-600',
+        activeItem: 'bg-cyan-500/20 text-white border-l-4 border-cyan-400',
+        hoverItem: 'hover:bg-white/5 hover:text-white',
     };
 };
 
 export default function ModuleLayout({ header, children }: Props) {
-    const user = (usePage().props as any).auth.user as User | null;
+    const pageProps = usePage().props as any;
+    const user = pageProps.auth.user as User | null;
+    const settings = pageProps.settings as Record<string, string> | undefined;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     
     const isAdmin = user?.is_admin || false;
     const theme = getThemeColors(isAdmin);
     const panelName = isAdmin ? 'Admin' : 'Module';
+    
+    // Get logo and site name from settings
+    const siteLogo = settings?.['site.logo'];
+    const siteName = settings?.['general.site_name'] || 'Sky Track';
 
     // Build navigation based on user permissions
     const navigation = useMemo(() => {
@@ -278,8 +278,12 @@ export default function ModuleLayout({ header, children }: Props) {
                     <div className={`fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b ${theme.gradient}`}>
                         <div className="flex h-16 items-center justify-between px-4">
                             <Link href="/" className="flex items-center">
-                                <ApplicationLogo className="h-8 w-auto text-white" />
-                                <span className="ml-2 text-xl font-bold text-white">{panelName} Panel</span>
+                                {siteLogo ? (
+                                    <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
+                                ) : (
+                                    <ApplicationLogo className="h-8 w-auto text-white" />
+                                )}
+                                <span className="ml-2 text-xl font-bold text-white">{siteName}</span>
                             </Link>
                             <button
                                 type="button"
@@ -326,8 +330,12 @@ export default function ModuleLayout({ header, children }: Props) {
                 <div className={`flex min-h-0 flex-1 flex-col bg-gradient-to-b ${theme.gradient}`}>
                     <div className={`flex h-16 items-center px-4 border-b ${theme.border}`}>
                         <Link href="/" className="flex items-center">
-                            <ApplicationLogo className="h-8 w-auto text-white" />
-                            <span className="ml-2 text-xl font-bold text-white">{panelName} Panel</span>
+                            {siteLogo ? (
+                                <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
+                            ) : (
+                                <ApplicationLogo className="h-8 w-auto text-white" />
+                            )}
+                            <span className="ml-2 text-xl font-bold text-white">{siteName}</span>
                         </Link>
                     </div>
                     <nav className="flex-1 space-y-1 px-3 py-4">

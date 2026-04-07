@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Menu;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,6 +39,11 @@ class HandleInertiaRequests extends Middleware
             $user->load(['profile', 'roles.permissions']);
         }
 
+        // Get public settings for logo and site name
+        $settings = Setting::getPublic()
+            ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
+            ->toArray();
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -59,6 +65,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'route_prefix' => $routePrefix,
             'menus' => $user ? Menu::getMenusForUser($user, $routePrefix)->toArray() : [],
+            'settings' => $settings,
         ];
     }
 
