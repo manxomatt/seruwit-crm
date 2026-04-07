@@ -26,19 +26,24 @@ interface User {
     permissions: UserPermissions;
 }
 
+interface MenuItemFromDB {
+    id: number;
+    name: string;
+    slug: string;
+    icon: string | null;
+    href: string | null;
+    route_name: string | null;
+    permission_module: string | null;
+    target: string;
+    children?: MenuItemFromDB[];
+}
+
 interface Props {
     header?: ReactNode;
     children?: ReactNode;
 }
 
-interface MenuItem {
-    name: string;
-    href: string;
-    icon: ReactNode;
-    current: boolean;
-    module?: string; // Module name for permission check
-}
-
+// Icon components
 const DashboardIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
@@ -94,6 +99,12 @@ const RolesIcon = () => (
     </svg>
 );
 
+const DefaultIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+);
+
 const MenuIcon = () => (
     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -105,6 +116,25 @@ const CloseIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
 );
+
+// Icon mapping from database icon names to React components
+const iconMap: Record<string, () => JSX.Element> = {
+    dashboard: DashboardIcon,
+    pages: PagesIcon,
+    posts: PostsIcon,
+    carousels: CarouselIcon,
+    media: MediaIcon,
+    users: UsersIcon,
+    roles: RolesIcon,
+    analytics: AnalyticsIcon,
+    settings: SettingsIcon,
+};
+
+// Get icon component by name
+const getIconComponent = (iconName: string | null): (() => JSX.Element) => {
+    if (!iconName) return DefaultIcon;
+    return iconMap[iconName] || DefaultIcon;
+};
 
 // Avatar component that shows image or initials
 const UserAvatar = ({ user, size = 'md' }: { user: User | null; size?: 'sm' | 'md' | 'lg' }) => {
@@ -139,47 +169,33 @@ export default function AdminLayout({ header, children }: Props) {
     const props = usePage().props as any;
     const user = props.auth.user as User | null;
     const routePrefix: 'admin' | 'user' | 'module' = props.route_prefix || 'admin';
+    const menusFromDB = (props.menus || []) as MenuItemFromDB[];
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // Helper function to check if user has permission for a module
-    const hasModulePermission = (module: string): boolean => {
-        if (!user) return false;
-        if (user.is_admin) return true;
-        return user.permissions && module in user.permissions && user.permissions[module].includes('view');
-    };
-
-    // Helper function to generate route with correct prefix
-    const prefixedRoute = (routeName: string, params?: any) => {
+    // Check if current route matches the menu item
+    const isCurrentRoute = (routeName: string | null): boolean => {
+        if (!routeName) return false;
         const fullRouteName = `${routePrefix}.${routeName}`;
-        return params ? route(fullRouteName, params) : route(fullRouteName);
+        // Check exact match or wildcard match (e.g., pages.* for pages.index, pages.create, etc.)
+        const baseRouteName = routeName.replace('.index', '');
+        return route().current(fullRouteName) || route().current(`${routePrefix}.${baseRouteName}.*`);
     };
 
-    // Helper function to check if current route matches
-    const isCurrentRoute = (routePattern: string) => {
-        return route().current(`${routePrefix}.${routePattern}`);
-    };
-
-    const allNavigation: MenuItem[] = [
-        { name: 'Dashboard', href: prefixedRoute('dashboard'), icon: <DashboardIcon />, current: isCurrentRoute('dashboard') },
-        { name: 'Pages', href: prefixedRoute('pages.index'), icon: <PagesIcon />, current: isCurrentRoute('pages.*'), module: 'pages' },
-        { name: 'Posts', href: prefixedRoute('posts.index'), icon: <PostsIcon />, current: isCurrentRoute('posts.*'), module: 'posts' },
-        { name: 'Carousels', href: prefixedRoute('carousels.index'), icon: <CarouselIcon />, current: isCurrentRoute('carousels.*'), module: 'carousels' },
-        { name: 'Media', href: prefixedRoute('media.index'), icon: <MediaIcon />, current: isCurrentRoute('media.*'), module: 'media' },
-        { name: 'Users', href: prefixedRoute('users.index'), icon: <UsersIcon />, current: isCurrentRoute('users.*'), module: 'users' },
-        { name: 'Roles', href: prefixedRoute('roles.index'), icon: <RolesIcon />, current: isCurrentRoute('roles.*'), module: 'roles' },
-        { name: 'Analytics', href: prefixedRoute('analytics.index'), icon: <AnalyticsIcon />, current: isCurrentRoute('analytics.*'), module: 'analytics' },
-        { name: 'Settings', href: prefixedRoute('settings.index'), icon: <SettingsIcon />, current: isCurrentRoute('settings.*'), module: 'settings' },
-    ];
-
-    // Filter navigation based on user permissions
+    // Transform database menus to navigation items
     const navigation = useMemo(() => {
-        return allNavigation.filter(item => {
-            // Dashboard is always visible
-            if (!item.module) return true;
-            // Check if user has permission for this module
-            return hasModulePermission(item.module);
-        });
-    }, [user, routePrefix]);
+        return menusFromDB.map((menu) => ({
+            name: menu.name,
+            href: menu.href || '#',
+            icon: getIconComponent(menu.icon),
+            current: isCurrentRoute(menu.route_name),
+            children: menu.children?.map((child) => ({
+                name: child.name,
+                href: child.href || '#',
+                icon: getIconComponent(child.icon),
+                current: isCurrentRoute(child.route_name),
+            })),
+        }));
+    }, [menusFromDB, routePrefix]);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -216,7 +232,7 @@ export default function AdminLayout({ header, children }: Props) {
                                     }`}
                                 >
                                     <span className={`mr-3 ${item.current ? 'text-white' : 'text-indigo-300 group-hover:text-white'}`}>
-                                        {item.icon}
+                                        <item.icon />
                                     </span>
                                     {item.name}
                                 </Link>
@@ -257,7 +273,7 @@ export default function AdminLayout({ header, children }: Props) {
                                 }`}
                             >
                                 <span className={`mr-3 ${item.current ? 'text-white' : 'text-indigo-300 group-hover:text-white'}`}>
-                                    {item.icon}
+                                    <item.icon />
                                 </span>
                                 {item.name}
                             </Link>

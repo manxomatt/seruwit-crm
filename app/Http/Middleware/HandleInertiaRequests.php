@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Menu;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -30,6 +31,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $routePrefix = $this->getRoutePrefix($request);
 
         // Eager load profile and roles with permissions to avoid N+1 query
         if ($user) {
@@ -55,7 +57,8 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $this->getUserPermissions($user),
                 ] : null,
             ],
-            'route_prefix' => $this->getRoutePrefix($request),
+            'route_prefix' => $routePrefix,
+            'menus' => $user ? Menu::getMenusForUser($user, $routePrefix)->toArray() : [],
         ];
     }
 
@@ -78,7 +81,7 @@ class HandleInertiaRequests extends Middleware
             return 'module';
         }
 
-        return 'admin'; // Default fallback
+        return 'module'; // Default fallback
     }
 
     /**

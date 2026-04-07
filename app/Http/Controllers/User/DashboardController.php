@@ -15,13 +15,18 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $primaryRole = $user->getPrimaryRole();
 
-        return Inertia::render('User/Dashboard', [
+        return Inertia::render('Dashboard', [
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
                 'roles' => $user->roles->pluck('name'),
             ],
+            'primaryRole' => $primaryRole ? [
+                'name' => $primaryRole->name,
+                'slug' => $primaryRole->slug,
+            ] : null,
         ]);
     }
 }

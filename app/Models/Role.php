@@ -14,14 +14,14 @@ class Role extends Model
      * Default dashboard paths for system roles.
      */
     public const DEFAULT_DASHBOARD_PATHS = [
-        'admin' => '/dashboard',
-        'user' => '/dashboard',
+        'admin' => '/module/dashboard',
+        'user' => '/module/dashboard',
     ];
 
     /**
      * Default dashboard path for custom roles.
      */
-    public const DEFAULT_CUSTOM_DASHBOARD_PATH = '/dashboard';
+    public const DEFAULT_CUSTOM_DASHBOARD_PATH = '/module/dashboard';
 
     /**
      * The attributes that are mass assignable.
