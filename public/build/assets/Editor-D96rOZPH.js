@@ -1,91 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import grapesjs, { Editor as GrapesEditor } from 'grapesjs';
-import 'grapesjs/dist/css/grapes.min.css';
-import gjsBlocksBasic from 'grapesjs-blocks-basic';
-import gjsPresetWebpage from 'grapesjs-preset-webpage';
-import axios from 'axios';
-
-interface Page {
-    id: number;
-    title: string;
-    slug: string;
-    html: string | null;
-    css: string | null;
-    gjs_data: Record<string, unknown> | null;
-    is_published: boolean;
-    created_at: string;
-    updated_at: string;
-}
-
-interface Props {
-    page: Page;
-}
-
-export default function Editor({ page }: Props): JSX.Element {
-    const editorRef = useRef<HTMLDivElement>(null);
-    const [editor, setEditor] = useState<GrapesEditor | null>(null); 
-    const [isSaving, setIsSaving] = useState(false);
-    const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-    const saveContent = useCallback(async () => {
-        if (!editor) return;
-
-        setIsSaving(true);
-        try {
-            const html = editor.getHtml();
-            const css = editor.getCss();
-            const gjsData = editor.getProjectData();
-
-            await fetch(route('module.pages.save-content', page.id), {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    html,
-                    css,
-                    gjs_data: gjsData,
-                }),
-            });
-
-            setLastSaved(new Date());
-        } catch (error) {
-            console.error('Failed to save:', error);
-        } finally {
-            setIsSaving(false);
-        }
-    }, [editor, page.id]);
-
-    useEffect(() => {
-        if (!editorRef.current) return;
-
-        const gjsEditor = grapesjs.init({
-            container: editorRef.current,
-            height: '100%',
-            width: 'auto',
-            storageManager: false,
-            plugins: [gjsBlocksBasic, gjsPresetWebpage],
-            pluginsOpts: {
-                [gjsBlocksBasic as unknown as string]: {
-                    blocks: ['column1', 'column2', 'column3', 'column3-7', 'text', 'link', 'image', 'video', 'map'],
-                    flexGrid: true,
-                },
-                [gjsPresetWebpage as unknown as string]: {
-                    blocksBasicOpts: true,
-                    navbarOpts: true,
-                    countdownOpts: true,
-                    formsOpts: true,
-                },
-            },
-            canvas: {
-                styles: [
-                    'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                ],
-                scripts: [],
-                frameStyle: `
+import{r,j as t,H as y,L as c,c as m}from"./app-wqu9vk3g.js";import{_ as w,g as x,a as h}from"./index-CXxC2r89.js";/* empty css            */function C({page:o}){const s=r.useRef(null),[n,f]=r.useState(null),[d,p]=r.useState(!1),[g,v]=r.useState(null),l=r.useCallback(async()=>{if(n){p(!0);try{const i=n.getHtml(),e=n.getCss(),a=n.getProjectData();await fetch(route("module.pages.save-content",o.id),{method:"PATCH",headers:{"Content-Type":"application/json","X-CSRF-TOKEN":document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")||"",Accept:"application/json"},body:JSON.stringify({html:i,css:e,gjs_data:a})}),v(new Date)}catch(i){console.error("Failed to save:",i)}finally{p(!1)}}},[n,o.id]);r.useEffect(()=>{if(!s.current)return;const i=w.init({container:s.current,height:"100%",width:"auto",storageManager:!1,plugins:[x,h],pluginsOpts:{[x]:{blocks:["column1","column2","column3","column3-7","text","link","image","video","map"],flexGrid:!0},[h]:{blocksBasicOpts:!0,navbarOpts:!0,countdownOpts:!0,formsOpts:!0}},canvas:{styles:["https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"],scripts:[],frameStyle:`
                     html, body {
                         background-color: #fff;
                         margin: 0;
@@ -95,58 +8,7 @@ export default function Editor({ page }: Props): JSX.Element {
                     }
                     * { box-sizing: border-box; }
                     body > * { margin: 0; }
-                `,
-            },
-            deviceManager: {
-                devices: [
-                    { name: 'Desktop', width: '' },
-                    { name: 'Tablet', width: '768px', widthMedia: '992px' },
-                    { name: 'Mobile', width: '320px', widthMedia: '480px' },
-                ],
-            },
-            panels: {
-                defaults: [
-                    {
-                        id: 'panel-devices',
-                        el: '.panel__devices',
-                        buttons: [
-                            { id: 'device-desktop', label: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>', command: 'set-device-desktop', active: true, togglable: false },
-                            { id: 'device-tablet', label: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,18H5V6H19M21,4H3C1.89,4 1,4.89 1,6V18A2,2 0 0,0 3,20H21A2,2 0 0,0 23,18V6C23,4.89 22.1,4 21,4Z"/></svg>', command: 'set-device-tablet', togglable: false },
-                            { id: 'device-mobile', label: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/></svg>', command: 'set-device-mobile', togglable: false },
-                        ],
-                    },
-                ],
-            },
-        });
-
-        // Add device commands
-        gjsEditor.Commands.add('set-device-desktop', {
-            run: (editor) => editor.setDevice('Desktop'),
-        });
-        gjsEditor.Commands.add('set-device-tablet', {
-            run: (editor) => editor.setDevice('Tablet'),
-        });
-        gjsEditor.Commands.add('set-device-mobile', {
-            run: (editor) => editor.setDevice('Mobile'),
-        });
-
-        // Load existing content
-        if (page.gjs_data) {
-            gjsEditor.loadProjectData(page.gjs_data);
-        } else if (page.html) {
-            gjsEditor.setComponents(page.html);
-            if (page.css) {
-                gjsEditor.setStyle(page.css);
-            }
-        }
-
-        // Add custom blocks
-        const blockManager = gjsEditor.BlockManager;
-
-        blockManager.add('navbar-section', {
-            label: 'Navbar',
-            category: 'Sections',
-            content: `
+                `},deviceManager:{devices:[{name:"Desktop",width:""},{name:"Tablet",width:"768px",widthMedia:"992px"},{name:"Mobile",width:"320px",widthMedia:"480px"}]},panels:{defaults:[{id:"panel-devices",el:".panel__devices",buttons:[{id:"device-desktop",label:'<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>',command:"set-device-desktop",active:!0,togglable:!1},{id:"device-tablet",label:'<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,18H5V6H19M21,4H3C1.89,4 1,4.89 1,6V18A2,2 0 0,0 3,20H21A2,2 0 0,0 23,18V6C23,4.89 22.1,4 21,4Z"/></svg>',command:"set-device-tablet",togglable:!1},{id:"device-mobile",label:'<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/></svg>',command:"set-device-mobile",togglable:!1}]}]}});i.Commands.add("set-device-desktop",{run:a=>a.setDevice("Desktop")}),i.Commands.add("set-device-tablet",{run:a=>a.setDevice("Tablet")}),i.Commands.add("set-device-mobile",{run:a=>a.setDevice("Mobile")}),o.gjs_data?i.loadProjectData(o.gjs_data):o.html&&(i.setComponents(o.html),o.css&&i.setStyle(o.css));const e=i.BlockManager;return e.add("navbar-section",{label:"Navbar",category:"Sections",content:`
                 <header class="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/90 backdrop-blur-md">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="flex justify-between items-center h-20">
@@ -181,13 +43,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         <a class="block text-lg font-semibold text-slate-600 hover:text-primary" href="#">Login</a>
                     </div>
                 </header>
-            `,
-        });
-
-        blockManager.add('navbar-modern-gray', {
-            label: 'Navbar Modern Gray',
-            category: 'Sections',
-            content: `
+            `}),e.add("navbar-modern-gray",{label:"Navbar Modern Gray",category:"Sections",content:`
                 <header class="fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 shadow-sm" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50;">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="flex justify-between items-center h-16 lg:h-20">
@@ -246,13 +102,7 @@ export default function Editor({ page }: Props): JSX.Element {
                 </header>
                 <!-- Spacer for fixed navbar -->
                 <div style="height: 80px;"></div>
-            `,
-        });
-        
-        blockManager.add('hero-section', {
-            label: 'Hero Section',
-            category: 'Sections',
-            content: `
+            `}),e.add("hero-section",{label:"Hero Section",category:"Sections",content:`
                 <section class="relative pt-16 pb-24 lg:pt-32 lg:pb-40 overflow-hidden bg-gradient-to-b from-green-50/50 to-white">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -281,13 +131,7 @@ export default function Editor({ page }: Props): JSX.Element {
                   </div>
                 </div>
               </section>
-            `,
-        });
-
-        blockManager.add('hero-gps-tracking-indonesia', {
-            label: 'Hero GPS Tracking ID',
-            category: 'Sections',
-            content: `
+            `}),e.add("hero-gps-tracking-indonesia",{label:"Hero GPS Tracking ID",category:"Sections",content:`
                 <section style="position: relative; min-height: 100vh; overflow: hidden; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);">
                     <!-- Animated Background Elements -->
                     <div style="position: absolute; inset: 0; overflow: hidden;">
@@ -528,13 +372,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </svg>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('feature-cards', {
-            label: 'Feature Cards',
-            category: 'Sections',
-            content: `
+            `}),e.add("feature-cards",{label:"Feature Cards",category:"Sections",content:`
                 <section class="py-16 bg-gray-50">
                     <div class="container mx-auto px-4">
                         <h2 class="text-3xl font-bold text-center mb-12">Our Features</h2>
@@ -569,13 +407,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('cta-section', {
-            label: 'CTA Section',
-            category: 'Sections',
-            content: `
+            `}),e.add("cta-section",{label:"CTA Section",category:"Sections",content:`
                 <section class="bg-blue-600 py-16">
                     <div class="container mx-auto px-4 text-center">
                         <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
@@ -583,13 +415,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         <a href="#" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-block">Start Free Trial</a>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('social-proof-logo-bar', {
-            label: 'Social Proof / Logo Bar',
-            category: 'Sections',
-            content: `
+            `}),e.add("social-proof-logo-bar",{label:"Social Proof / Logo Bar",category:"Sections",content:`
                 <section style="padding: 48px 0; background: linear-gradient(to bottom, #f8fafc, #ffffff);">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Header -->
@@ -674,13 +500,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('social-proof-logo-bar-dark', {
-            label: 'Logo Bar (Dark)',
-            category: 'Sections',
-            content: `
+            `}),e.add("social-proof-logo-bar-dark",{label:"Logo Bar (Dark)",category:"Sections",content:`
                 <section style="padding: 64px 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Header -->
@@ -780,13 +600,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('social-proof-minimal', {
-            label: 'Logo Bar (Minimal)',
-            category: 'Sections',
-            content: `
+            `}),e.add("social-proof-minimal",{label:"Logo Bar (Minimal)",category:"Sections",content:`
                 <section style="padding: 32px 0; background: #ffffff; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;">
@@ -803,13 +617,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('benefits-features', {
-            label: 'Benefits & Features (The Why)',
-            category: 'Sections',
-            content: `
+            `}),e.add("benefits-features",{label:"Benefits & Features (The Why)",category:"Sections",content:`
                 <section style="padding: 80px 0; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Section Header -->
@@ -936,13 +744,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('how-it-works', {
-            label: 'How It Works (The Process)',
-            category: 'Sections',
-            content: `
+            `}),e.add("how-it-works",{label:"How It Works (The Process)",category:"Sections",content:`
                 <section style="padding: 80px 0; background: #ffffff;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Section Header -->
@@ -1086,13 +888,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('footer', {
-            label: 'Footer',
-            category: 'Sections',
-            content: `
+            `}),e.add("footer",{label:"Footer",category:"Sections",content:`
                 <footer class="bg-gray-900 text-gray-300 py-12">
                     <div class="container mx-auto px-4">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -1133,14 +929,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </footer>
-            `,
-        });
-
-        // Footer with Dynamic Settings - uses {{setting:key}} placeholders
-        blockManager.add('footer-dynamic', {
-            label: 'Footer (Dynamic)',
-            category: 'Sections',
-            content: `
+            `}),e.add("footer-dynamic",{label:"Footer (Dynamic)",category:"Sections",content:`
                 <footer style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #94a3b8; padding: 64px 0 32px;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Top Section -->
@@ -1257,17 +1046,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </footer>
-            `,
-        });
-
-        // ==========================================
-        // WelcomeLanding Section Components
-        // ==========================================
-
-        blockManager.add('wl-navbar', {
-            label: 'WL Navbar',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-navbar",{label:"WL Navbar",category:"WelcomeLanding",content:`
                 <header class="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/90 backdrop-blur-md" style="position: sticky; top: 0; z-index: 50; width: 100%; border-bottom: 1px solid #f1f5f9; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; height: 80px;">
@@ -1293,13 +1072,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </header>
-            `,
-        });
-
-        blockManager.add('wl-hero', {
-            label: 'WL Hero',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-hero",{label:"WL Hero",category:"WelcomeLanding",content:`
                 <section style="position: relative; min-height: 100vh; overflow: hidden; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);">
                     <!-- Background Elements -->
                     <div style="position: absolute; inset: 0; overflow: hidden;">
@@ -1522,13 +1295,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </svg>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('wl-stats', {
-            label: 'WL Stats',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-stats",{label:"WL Stats",category:"WelcomeLanding",content:`
                 <section style="padding: 64px 0; background: white;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px; background: #f8fafc; border-radius: 40px; padding: 48px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -1551,13 +1318,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('wl-features', {
-            label: 'WL Features',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-features",{label:"WL Features",category:"WelcomeLanding",content:`
                 <section style="padding: 128px 0; background: #f8fafc;" id="features">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <div style="text-align: center; margin-bottom: 96px;">
@@ -1603,13 +1364,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('wl-resources', {
-            label: 'WL Resources',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-resources",{label:"WL Resources",category:"WelcomeLanding",content:`
                 <section style="padding: 96px 0; background: white;" id="resources">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Section Header -->
@@ -1726,13 +1481,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('wl-pricing', {
-            label: 'WL Pricing',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-pricing",{label:"WL Pricing",category:"WelcomeLanding",content:`
                 <section style="padding: 128px 0; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);" id="pricing">
                     <div style="max-width: 64rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Main Trial Card -->
@@ -1863,13 +1612,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('wl-cta', {
-            label: 'WL CTA',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-cta",{label:"WL CTA",category:"WelcomeLanding",content:`
                 <section style="padding: 128px 0; position: relative; overflow: hidden;">
                     <div style="position: absolute; inset: 0; background: rgba(59,130,246,0.05);"></div>
                     <div style="max-width: 56rem; margin: 0 auto; padding: 0 24px; text-align: center; position: relative; z-index: 10;">
@@ -1887,13 +1630,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('wl-footer', {
-            label: 'WL Footer',
-            category: 'WelcomeLanding',
-            content: `
+            `}),e.add("wl-footer",{label:"WL Footer",category:"WelcomeLanding",content:`
                 <footer style="background: #0f172a; color: white; padding: 96px 0 48px; border-radius: 48px 48px 0 0; margin-top: 48px;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 80px;">
@@ -1981,169 +1718,24 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </footer>
-            `,
-        });
-
-        blockManager.add('carousel-component', {
-            label: 'Carousel',
-            category: 'Components',
-            content: `
+            `}),e.add("carousel-component",{label:"Carousel",category:"Components",content:`
                 <div data-gjs-type="carousel-component" class="carousel-wrapper" style="width: 100%; padding: 20px 0;">
                     <Carousel slug="test-carousel" />
                 </div>
-            `,
-            attributes: { class: 'fa fa-images' },
-        });
-
-        // Add custom component type for Carousel
-        gjsEditor.DomComponents.addType('carousel-component', {
-            isComponent: (el: HTMLElement) => el.tagName === 'DIV' && el.classList.contains('carousel-wrapper'),
-            model: {
-                defaults: {
-                    tagName: 'div',
-                    droppable: false,
-                    attributes: { class: 'carousel-wrapper' },
-                    traits: [
-                        {
-                            type: 'text',
-                            name: 'slug',
-                            label: 'Carousel Slug',
-                            placeholder: 'Enter carousel slug',
-                        },
-                    ],
-                },
-                init() {
-                    this.on('change:attributes:slug', this.updateCarouselSlug);
-                },
-                updateCarouselSlug() {
-                    const slug = this.getAttributes().slug || 'test-carousel';
-                    const content = `<Carousel slug="${slug}" />`;
-                    this.components(content);
-                },
-            },
-            view: {
-                onRender() {
-                    const slug = this.model.getAttributes().slug || 'test-carousel';
-                    this.el.innerHTML = `
+            `,attributes:{class:"fa fa-images"}}),i.DomComponents.addType("carousel-component",{isComponent:a=>a.tagName==="DIV"&&a.classList.contains("carousel-wrapper"),model:{defaults:{tagName:"div",droppable:!1,attributes:{class:"carousel-wrapper"},traits:[{type:"text",name:"slug",label:"Carousel Slug",placeholder:"Enter carousel slug"}]},init(){this.on("change:attributes:slug",this.updateCarouselSlug)},updateCarouselSlug(){const u=`<Carousel slug="${this.getAttributes().slug||"test-carousel"}" />`;this.components(u)}},view:{onRender(){const a=this.model.getAttributes().slug||"test-carousel";this.el.innerHTML=`
                         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 40px; text-align: center; color: white; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                             <svg style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.9;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Carousel Component</div>
                             <div style="font-size: 14px; opacity: 0.8; font-family: monospace; background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 6px;">
-                                &lt;Carousel slug="${slug}" /&gt;
+                                &lt;Carousel slug="${a}" /&gt;
                             </div>
                             <div style="font-size: 12px; margin-top: 12px; opacity: 0.7;">
                                 This carousel will be rendered dynamically on the frontend
                             </div>
                         </div>
-                    `;
-                },
-            },
-        });
-
-        setEditor(gjsEditor);
-
-        return () => {
-            gjsEditor.destroy();
-        };
-    }, [page]);
-
-    // Auto-save every 30 seconds
-    useEffect(() => {
-        if (!editor) return;
-
-        const interval = setInterval(() => {
-            saveContent();
-        }, 30000);
-
-        return () => clearInterval(interval);
-    }, [editor, saveContent]);
-
-    // Keyboard shortcut for save (Ctrl+S / Cmd+S)
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                saveContent();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [saveContent]);
-
-    const handlePublishToggle = () => {
-        router.patch(route('module.pages.update', page.id), {
-            is_published: !page.is_published,
-        }, {
-            preserveScroll: true,
-        });
-    };
-
-    return (
-        <>
-            <Head title={`Edit: ${page.title}`} />
-
-            <div className="h-screen flex flex-col">
-                {/* Top Toolbar */}
-                <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white px-4 py-2 flex items-center justify-between shadow-lg">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href={route('module.pages.index')}
-                            className="text-indigo-200 hover:text-white transition flex items-center gap-2"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Pages
-                        </Link>
-                        <span className="text-indigo-400">|</span>
-                        <span className="font-medium">{page.title}</span>
-                    </div>
-
-                    <div className="panel__devices flex items-center gap-2"></div>
-
-                    <div className="flex items-center gap-4">
-                        {lastSaved && (
-                            <span className="text-indigo-200 text-sm">
-                                Last saved: {lastSaved.toLocaleTimeString()}
-                            </span>
-                        )}
-                        <button
-                            onClick={saveContent}
-                            disabled={isSaving}
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50 border border-white/20"
-                        >
-                            {isSaving ? 'Saving...' : 'Save'}
-                        </button>
-                        <button
-                            onClick={handlePublishToggle}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                                page.is_published
-                                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                                    : 'bg-green-500 hover:bg-green-600 text-white'
-                            }`}
-                        >
-                            {page.is_published ? 'Unpublish' : 'Publish'}
-                        </button>
-                        <Link
-                            href={route('module.pages.show', page.id)}
-                            target="_blank"
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition border border-white/20"
-                        >
-                            Preview
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Editor Container */}
-                <div className="flex-1 overflow-hidden">
-                    <div ref={editorRef} className="h-full" />
-                </div>
-            </div>
-
-            <style>{`
+                    `}}}),f(i),()=>{i.destroy()}},[o]),r.useEffect(()=>{if(!n)return;const i=setInterval(()=>{l()},3e4);return()=>clearInterval(i)},[n,l]),r.useEffect(()=>{const i=e=>{(e.ctrlKey||e.metaKey)&&e.key==="s"&&(e.preventDefault(),l())};return window.addEventListener("keydown",i),()=>window.removeEventListener("keydown",i)},[l]);const b=()=>{m.patch(route("module.pages.update",o.id),{is_published:!o.is_published},{preserveScroll:!0})};return t.jsxs(t.Fragment,{children:[t.jsx(y,{title:`Edit: ${o.title}`}),t.jsxs("div",{className:"h-screen flex flex-col",children:[t.jsxs("div",{className:"bg-gradient-to-r from-indigo-700 to-indigo-900 text-white px-4 py-2 flex items-center justify-between shadow-lg",children:[t.jsxs("div",{className:"flex items-center gap-4",children:[t.jsxs(c,{href:route("module.pages.index"),className:"text-indigo-200 hover:text-white transition flex items-center gap-2",children:[t.jsx("svg",{className:"w-5 h-5",fill:"none",stroke:"currentColor",viewBox:"0 0 24 24",children:t.jsx("path",{strokeLinecap:"round",strokeLinejoin:"round",strokeWidth:2,d:"M10 19l-7-7m0 0l7-7m-7 7h18"})}),"Back to Pages"]}),t.jsx("span",{className:"text-indigo-400",children:"|"}),t.jsx("span",{className:"font-medium",children:o.title})]}),t.jsx("div",{className:"panel__devices flex items-center gap-2"}),t.jsxs("div",{className:"flex items-center gap-4",children:[g&&t.jsxs("span",{className:"text-indigo-200 text-sm",children:["Last saved: ",g.toLocaleTimeString()]}),t.jsx("button",{onClick:l,disabled:d,className:"bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50 border border-white/20",children:d?"Saving...":"Save"}),t.jsx("button",{onClick:b,className:`px-4 py-1.5 rounded-lg text-sm font-medium transition ${o.is_published?"bg-yellow-500 hover:bg-yellow-600 text-white":"bg-green-500 hover:bg-green-600 text-white"}`,children:o.is_published?"Unpublish":"Publish"}),t.jsx(c,{href:route("module.pages.show",o.id),target:"_blank",className:"bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition border border-white/20",children:"Preview"})]})]}),t.jsx("div",{className:"flex-1 overflow-hidden",children:t.jsx("div",{ref:s,className:"h-full"})})]}),t.jsx("style",{children:`
                 .gjs-one-bg {
                     background-color: #1f2937;
                 }
@@ -2174,8 +1766,4 @@ export default function Editor({ page }: Props): JSX.Element {
                 .gjs-cv-canvas {
                     background-color: #e5e7eb;
                 }
-            `}</style>
-        </>
-    );
-}
-
+            `})]})}export{C as default};

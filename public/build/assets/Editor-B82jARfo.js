@@ -1,91 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import grapesjs, { Editor as GrapesEditor } from 'grapesjs';
-import 'grapesjs/dist/css/grapes.min.css';
-import gjsBlocksBasic from 'grapesjs-blocks-basic';
-import gjsPresetWebpage from 'grapesjs-preset-webpage';
-import axios from 'axios';
-
-interface Page {
-    id: number;
-    title: string;
-    slug: string;
-    html: string | null;
-    css: string | null;
-    gjs_data: Record<string, unknown> | null;
-    is_published: boolean;
-    created_at: string;
-    updated_at: string;
-}
-
-interface Props {
-    page: Page;
-}
-
-export default function Editor({ page }: Props): JSX.Element {
-    const editorRef = useRef<HTMLDivElement>(null);
-    const [editor, setEditor] = useState<GrapesEditor | null>(null); 
-    const [isSaving, setIsSaving] = useState(false);
-    const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-    const saveContent = useCallback(async () => {
-        if (!editor) return;
-
-        setIsSaving(true);
-        try {
-            const html = editor.getHtml();
-            const css = editor.getCss();
-            const gjsData = editor.getProjectData();
-
-            await fetch(route('module.pages.save-content', page.id), {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    html,
-                    css,
-                    gjs_data: gjsData,
-                }),
-            });
-
-            setLastSaved(new Date());
-        } catch (error) {
-            console.error('Failed to save:', error);
-        } finally {
-            setIsSaving(false);
-        }
-    }, [editor, page.id]);
-
-    useEffect(() => {
-        if (!editorRef.current) return;
-
-        const gjsEditor = grapesjs.init({
-            container: editorRef.current,
-            height: '100%',
-            width: 'auto',
-            storageManager: false,
-            plugins: [gjsBlocksBasic, gjsPresetWebpage],
-            pluginsOpts: {
-                [gjsBlocksBasic as unknown as string]: {
-                    blocks: ['column1', 'column2', 'column3', 'column3-7', 'text', 'link', 'image', 'video', 'map'],
-                    flexGrid: true,
-                },
-                [gjsPresetWebpage as unknown as string]: {
-                    blocksBasicOpts: true,
-                    navbarOpts: true,
-                    countdownOpts: true,
-                    formsOpts: true,
-                },
-            },
-            canvas: {
-                styles: [
-                    'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                ],
-                scripts: [],
-                frameStyle: `
+import{r as a,j as t,H as m,L as x,c as w}from"./app-wqu9vk3g.js";import{_ as k,g as h,a as f}from"./index-CXxC2r89.js";/* empty css            */function M({page:o}){const{prefixedRoute:l}=useRoutePrefix(),d=a.useRef(null),[n,b]=a.useState(null),[p,c]=a.useState(!1),[g,v]=a.useState(null),s=a.useCallback(async()=>{if(n){c(!0);try{const i=n.getHtml(),e=n.getCss(),r=n.getProjectData();await fetch(l("pages.save-content",o.id),{method:"PATCH",headers:{"Content-Type":"application/json","X-CSRF-TOKEN":document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")||"",Accept:"application/json"},body:JSON.stringify({html:i,css:e,gjs_data:r})}),v(new Date)}catch(i){console.error("Failed to save:",i)}finally{c(!1)}}},[n,o.id]);a.useEffect(()=>{if(!d.current)return;const i=k.init({container:d.current,height:"100%",width:"auto",storageManager:!1,plugins:[h,f],pluginsOpts:{[h]:{blocks:["column1","column2","column3","column3-7","text","link","image","video","map"],flexGrid:!0},[f]:{blocksBasicOpts:!0,navbarOpts:!0,countdownOpts:!0,formsOpts:!0}},canvas:{styles:["https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"],scripts:[],frameStyle:`
                     html, body {
                         background-color: #fff;
                         margin: 0;
@@ -95,58 +8,7 @@ export default function Editor({ page }: Props): JSX.Element {
                     }
                     * { box-sizing: border-box; }
                     body > * { margin: 0; }
-                `,
-            },
-            deviceManager: {
-                devices: [
-                    { name: 'Desktop', width: '' },
-                    { name: 'Tablet', width: '768px', widthMedia: '992px' },
-                    { name: 'Mobile', width: '320px', widthMedia: '480px' },
-                ],
-            },
-            panels: {
-                defaults: [
-                    {
-                        id: 'panel-devices',
-                        el: '.panel__devices',
-                        buttons: [
-                            { id: 'device-desktop', label: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>', command: 'set-device-desktop', active: true, togglable: false },
-                            { id: 'device-tablet', label: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,18H5V6H19M21,4H3C1.89,4 1,4.89 1,6V18A2,2 0 0,0 3,20H21A2,2 0 0,0 23,18V6C23,4.89 22.1,4 21,4Z"/></svg>', command: 'set-device-tablet', togglable: false },
-                            { id: 'device-mobile', label: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/></svg>', command: 'set-device-mobile', togglable: false },
-                        ],
-                    },
-                ],
-            },
-        });
-
-        // Add device commands
-        gjsEditor.Commands.add('set-device-desktop', {
-            run: (editor) => editor.setDevice('Desktop'),
-        });
-        gjsEditor.Commands.add('set-device-tablet', {
-            run: (editor) => editor.setDevice('Tablet'),
-        });
-        gjsEditor.Commands.add('set-device-mobile', {
-            run: (editor) => editor.setDevice('Mobile'),
-        });
-
-        // Load existing content
-        if (page.gjs_data) {
-            gjsEditor.loadProjectData(page.gjs_data);
-        } else if (page.html) {
-            gjsEditor.setComponents(page.html);
-            if (page.css) {
-                gjsEditor.setStyle(page.css);
-            }
-        }
-
-        // Add custom blocks
-        const blockManager = gjsEditor.BlockManager;
-
-        blockManager.add('navbar-section', {
-            label: 'Navbar',
-            category: 'Sections',
-            content: `
+                `},deviceManager:{devices:[{name:"Desktop",width:""},{name:"Tablet",width:"768px",widthMedia:"992px"},{name:"Mobile",width:"320px",widthMedia:"480px"}]},panels:{defaults:[{id:"panel-devices",el:".panel__devices",buttons:[{id:"device-desktop",label:'<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>',command:"set-device-desktop",active:!0,togglable:!1},{id:"device-tablet",label:'<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19,18H5V6H19M21,4H3C1.89,4 1,4.89 1,6V18A2,2 0 0,0 3,20H21A2,2 0 0,0 23,18V6C23,4.89 22.1,4 21,4Z"/></svg>',command:"set-device-tablet",togglable:!1},{id:"device-mobile",label:'<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/></svg>',command:"set-device-mobile",togglable:!1}]}]}});i.Commands.add("set-device-desktop",{run:r=>r.setDevice("Desktop")}),i.Commands.add("set-device-tablet",{run:r=>r.setDevice("Tablet")}),i.Commands.add("set-device-mobile",{run:r=>r.setDevice("Mobile")}),o.gjs_data?i.loadProjectData(o.gjs_data):o.html&&(i.setComponents(o.html),o.css&&i.setStyle(o.css));const e=i.BlockManager;return e.add("navbar-section",{label:"Navbar",category:"Sections",content:`
                 <header class="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/90 backdrop-blur-md">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="flex justify-between items-center h-20">
@@ -181,13 +43,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         <a class="block text-lg font-semibold text-slate-600 hover:text-primary" href="#">Login</a>
                     </div>
                 </header>
-            `,
-        });
-
-        blockManager.add('navbar-modern-gray', {
-            label: 'Navbar Modern Gray',
-            category: 'Sections',
-            content: `
+            `}),e.add("navbar-modern-gray",{label:"Navbar Modern Gray",category:"Sections",content:`
                 <header class="fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 shadow-sm" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50;">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="flex justify-between items-center h-16 lg:h-20">
@@ -246,13 +102,7 @@ export default function Editor({ page }: Props): JSX.Element {
                 </header>
                 <!-- Spacer for fixed navbar -->
                 <div style="height: 80px;"></div>
-            `,
-        });
-        
-        blockManager.add('hero-section', {
-            label: 'Hero Section',
-            category: 'Sections',
-            content: `
+            `}),e.add("hero-section",{label:"Hero Section",category:"Sections",content:`
                 <section class="relative pt-16 pb-24 lg:pt-32 lg:pb-40 overflow-hidden bg-gradient-to-b from-green-50/50 to-white">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -281,13 +131,7 @@ export default function Editor({ page }: Props): JSX.Element {
                   </div>
                 </div>
               </section>
-            `,
-        });
-
-        blockManager.add('hero-gps-tracking-indonesia', {
-            label: 'Hero GPS Tracking ID',
-            category: 'Sections',
-            content: `
+            `}),e.add("hero-gps-tracking-indonesia",{label:"Hero GPS Tracking ID",category:"Sections",content:`
                 <section style="position: relative; min-height: 100vh; overflow: hidden; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);">
                     <!-- Animated Background Elements -->
                     <div style="position: absolute; inset: 0; overflow: hidden;">
@@ -528,13 +372,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </svg>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('feature-cards', {
-            label: 'Feature Cards',
-            category: 'Sections',
-            content: `
+            `}),e.add("feature-cards",{label:"Feature Cards",category:"Sections",content:`
                 <section class="py-16 bg-gray-50">
                     <div class="container mx-auto px-4">
                         <h2 class="text-3xl font-bold text-center mb-12">Our Features</h2>
@@ -569,13 +407,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('cta-section', {
-            label: 'CTA Section',
-            category: 'Sections',
-            content: `
+            `}),e.add("cta-section",{label:"CTA Section",category:"Sections",content:`
                 <section class="bg-blue-600 py-16">
                     <div class="container mx-auto px-4 text-center">
                         <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
@@ -583,13 +415,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         <a href="#" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-block">Start Free Trial</a>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('social-proof-logo-bar', {
-            label: 'Social Proof / Logo Bar',
-            category: 'Sections',
-            content: `
+            `}),e.add("social-proof-logo-bar",{label:"Social Proof / Logo Bar",category:"Sections",content:`
                 <section style="padding: 48px 0; background: linear-gradient(to bottom, #f8fafc, #ffffff);">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Header -->
@@ -674,13 +500,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('social-proof-logo-bar-dark', {
-            label: 'Logo Bar (Dark)',
-            category: 'Sections',
-            content: `
+            `}),e.add("social-proof-logo-bar-dark",{label:"Logo Bar (Dark)",category:"Sections",content:`
                 <section style="padding: 64px 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Header -->
@@ -780,13 +600,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('social-proof-minimal', {
-            label: 'Logo Bar (Minimal)',
-            category: 'Sections',
-            content: `
+            `}),e.add("social-proof-minimal",{label:"Logo Bar (Minimal)",category:"Sections",content:`
                 <section style="padding: 32px 0; background: #ffffff; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;">
@@ -803,13 +617,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('benefits-features', {
-            label: 'Benefits & Features (The Why)',
-            category: 'Sections',
-            content: `
+            `}),e.add("benefits-features",{label:"Benefits & Features (The Why)",category:"Sections",content:`
                 <section style="padding: 80px 0; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Section Header -->
@@ -936,13 +744,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('how-it-works', {
-            label: 'How It Works (The Process)',
-            category: 'Sections',
-            content: `
+            `}),e.add("how-it-works",{label:"How It Works (The Process)",category:"Sections",content:`
                 <section style="padding: 80px 0; background: #ffffff;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Section Header -->
@@ -1086,13 +888,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </section>
-            `,
-        });
-
-        blockManager.add('footer', {
-            label: 'Footer',
-            category: 'Sections',
-            content: `
+            `}),e.add("footer",{label:"Footer",category:"Sections",content:`
                 <footer class="bg-gray-900 text-gray-300 py-12">
                     <div class="container mx-auto px-4">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -1133,14 +929,7 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </footer>
-            `,
-        });
-
-        // Footer with Dynamic Settings - uses {{setting:key}} placeholders
-        blockManager.add('footer-dynamic', {
-            label: 'Footer (Dynamic)',
-            category: 'Sections',
-            content: `
+            `}),e.add("footer-dynamic",{label:"Footer (Dynamic)",category:"Sections",content:`
                 <footer style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #94a3b8; padding: 64px 0 32px;">
                     <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
                         <!-- Top Section -->
@@ -1257,893 +1046,24 @@ export default function Editor({ page }: Props): JSX.Element {
                         </div>
                     </div>
                 </footer>
-            `,
-        });
-
-        // ==========================================
-        // WelcomeLanding Section Components
-        // ==========================================
-
-        blockManager.add('wl-navbar', {
-            label: 'WL Navbar',
-            category: 'WelcomeLanding',
-            content: `
-                <header class="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/90 backdrop-blur-md" style="position: sticky; top: 0; z-index: 50; width: 100%; border-bottom: 1px solid #f1f5f9; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);">
-                    <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; height: 80px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <svg style="width: 40px; height: 40px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span style="font-size: 1.5rem; font-weight: 900; letter-spacing: -0.025em; color: #0f172a;">Sky Track</span>
-                            </div>
-                            
-                            <nav style="display: flex; gap: 40px;">
-                                <a style="font-size: 1rem; font-weight: 600; color: #475569; text-decoration: none;" href="#features">Fitur</a>
-                                <a style="font-size: 1rem; font-weight: 600; color: #475569; text-decoration: none;" href="#resources">Sumber Daya</a>
-                                <a style="font-size: 1rem; font-weight: 600; color: #475569; text-decoration: none;" href="#pricing">Harga</a>
-                            </nav>
-                            
-                            <div style="display: flex; align-items: center; gap: 24px;">
-                                <a style="font-size: 1rem; font-weight: 600; color: #475569; text-decoration: none;" href="/login">Masuk</a>
-                                <a href="#register" style="background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; padding: 10px 24px; border-radius: 9999px; font-weight: 700; font-size: 0.875rem; text-decoration: none; box-shadow: 0 4px 14px rgba(59,130,246,0.4);">
-                                    Daftar Sekarang
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-            `,
-        });
-
-        blockManager.add('wl-hero', {
-            label: 'WL Hero',
-            category: 'WelcomeLanding',
-            content: `
-                <section style="position: relative; min-height: 100vh; overflow: hidden; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);">
-                    <!-- Background Elements -->
-                    <div style="position: absolute; inset: 0; overflow: hidden;">
-                        <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px); background-size: 60px 60px;"></div>
-                        <div style="position: absolute; top: 80px; left: 40px; width: 288px; height: 288px; background: rgba(59,130,246,0.2); border-radius: 50%; filter: blur(100px);"></div>
-                        <div style="position: absolute; bottom: 80px; right: 40px; width: 384px; height: 384px; background: rgba(34,211,238,0.2); border-radius: 50%; filter: blur(120px);"></div>
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; background: rgba(99,102,241,0.1); border-radius: 50%; filter: blur(150px);"></div>
-                    </div>
-
-                    <div style="position: relative; max-width: 80rem; margin: 0 auto; padding: 96px 24px 80px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;">
-                            <!-- Left Content -->
-                            <div style="text-align: left; position: relative; z-index: 10;">
-                                <!-- Badge -->
-                                <div style="display: inline-flex; align-items: center; gap: 8px; border-radius: 9999px; padding: 8px 16px; font-size: 14px; font-weight: 600; background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 32px;">
-                                    <span style="position: relative; display: flex; height: 8px; width: 8px;">
-                                        <span style="position: absolute; display: inline-flex; height: 100%; width: 100%; border-radius: 50%; background: #4ade80; opacity: 0.75;"></span>
-                                        <span style="position: relative; display: inline-flex; border-radius: 50%; height: 8px; width: 8px; background: #22c55e;"></span>
-                                    </span>
-                                    🇮🇩 Solusi GPS Tracking #1 di Indonesia
-                                </div>
-
-                                <!-- Headline -->
-                                <h1 style="font-size: 3.75rem; font-weight: 900; letter-spacing: -0.025em; color: white; margin-bottom: 24px; line-height: 1.1;">
-                                    Pantau Aset Anda
-                                    <span style="display: block; background: linear-gradient(to right, #60a5fa, #22d3ee, #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                                        Kapan Saja
-                                    </span>
-                                    <span style="color: #cbd5e1;">Dimana Saja</span>
-                                </h1>
-
-                                <!-- Description -->
-                                <p style="font-size: 1.25rem; color: #94a3b8; margin-bottom: 40px; max-width: 560px; line-height: 1.75;">
-                                    Lindungi kendaraan, armada, dan aset berharga Anda dengan teknologi GPS tracking real-time terdepan.
-                                    <span style="color: white; font-weight: 500;"> Akurat, handal, dan terpercaya.</span>
-                                </p>
-
-                                <!-- CTA Buttons -->
-                                <div style="display: flex; gap: 16px; margin-bottom: 48px;">
-                                    <a href="#" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; padding: 16px 32px; border-radius: 12px; font-weight: 700; font-size: 1.125rem; text-decoration: none; box-shadow: 0 8px 30px rgba(59,130,246,0.3);">
-                                        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
-                                        Mulai Tracking Sekarang
-                                    </a>
-                                    <a href="#" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255,255,255,0.05); backdrop-filter: blur(4px); color: white; padding: 16px 32px; border-radius: 12px; font-weight: 700; font-size: 1.125rem; border: 1px solid rgba(255,255,255,0.1); text-decoration: none;">
-                                        <svg style="width: 20px; height: 20px; color: #60a5fa;" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8 5v14l11-7z"></path>
-                                        </svg>
-                                        Lihat Demo
-                                    </a>
-                                </div>
-
-                                <!-- Trust Indicators -->
-                                <div style="display: flex; align-items: center; gap: 24px; font-size: 14px;">
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div style="display: flex;">
-                                            <img style="height: 32px; width: 32px; border-radius: 50%; border: 2px solid #1e293b; margin-right: -8px; object-fit: cover;" src="https://i.pravatar.cc/100?img=1" alt="User">
-                                            <img style="height: 32px; width: 32px; border-radius: 50%; border: 2px solid #1e293b; margin-right: -8px; object-fit: cover;" src="https://i.pravatar.cc/100?img=2" alt="User">
-                                            <img style="height: 32px; width: 32px; border-radius: 50%; border: 2px solid #1e293b; margin-right: -8px; object-fit: cover;" src="https://i.pravatar.cc/100?img=3" alt="User">
-                                            <img style="height: 32px; width: 32px; border-radius: 50%; border: 2px solid #1e293b; object-fit: cover;" src="https://i.pravatar.cc/100?img=4" alt="User">
-                                        </div>
-                                        <span style="color: #94a3b8;">
-                                            <span style="color: white; font-weight: 600;">10,000+</span> Pengguna Aktif
-                                        </span>
-                                    </div>
-                                    <div style="width: 1px; height: 24px; background: #334155;"></div>
-                                    <div style="display: flex; align-items: center; gap: 4px;">
-                                        <svg style="width: 16px; height: 16px; color: #facc15;" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                        <svg style="width: 16px; height: 16px; color: #facc15;" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                        <svg style="width: 16px; height: 16px; color: #facc15;" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                        <svg style="width: 16px; height: 16px; color: #facc15;" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                        <svg style="width: 16px; height: 16px; color: #facc15;" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                        <span style="color: #94a3b8; margin-left: 4px;">4.9/5 Rating</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Right Content - Map Preview -->
-                            <div style="position: relative; display: flex; align-items: center; justify-content: center;">
-                                <div style="position: absolute; inset: -20px; background: linear-gradient(to right, rgba(59,130,246,0.15), rgba(34,211,238,0.15)); filter: blur(60px); border-radius: 50%;"></div>
-                                
-                                <div style="position: relative; width: 100%; max-width: 480px;">
-                                    <div style="position: relative; border-radius: 24px; background: rgba(30,41,59,0.6); backdrop-filter: blur(16px); border: 1px solid rgba(51,65,85,0.5); overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); aspect-ratio: 1;">
-                                        <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #1e293b, #0f172a);">
-                                            <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px); background-size: 30px 30px;"></div>
-                                        </div>
-
-                                        <!-- Tracking Points -->
-                                        <div style="position: absolute; top: 25%; left: 25%;">
-                                            <div style="width: 14px; height: 14px; background: #22c55e; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>
-                                            <div style="position: absolute; top: 20px; left: 20px; background: rgba(15,23,42,0.95); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: white; border: 1px solid #334155; white-space: nowrap;">
-                                                <div style="font-weight: 600; color: #4ade80;">Truk A - B 1234 XY</div>
-                                                <div style="color: #94a3b8;">Jakarta → Surabaya</div>
-                                            </div>
-                                        </div>
-
-                                        <div style="position: absolute; top: 50%; right: 25%;">
-                                            <div style="width: 14px; height: 14px; background: #3b82f6; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>
-                                            <div style="position: absolute; top: 20px; left: -70px; background: rgba(15,23,42,0.95); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: white; border: 1px solid #334155; white-space: nowrap;">
-                                                <div style="font-weight: 600; color: #60a5fa;">Motor B - D 5678 AB</div>
-                                                <div style="color: #94a3b8;">Bandung • 45 km/h</div>
-                                            </div>
-                                        </div>
-
-                                        <div style="position: absolute; bottom: 35%; left: 50%;">
-                                            <div style="width: 14px; height: 14px; background: #06b6d4; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>
-                                        </div>
-
-                                        <!-- Status Bar -->
-                                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.9); border-top: 1px solid rgba(51,65,85,0.5); padding: 14px 16px;">
-                                            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                                                <div style="display: flex; align-items: center; gap: 16px;">
-                                                    <div style="display: flex; align-items: center; gap: 6px;">
-                                                        <div style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></div>
-                                                        <span style="color: #94a3b8;">Online: <span style="color: white; font-weight: 600;">127</span></span>
-                                                    </div>
-                                                    <div style="display: flex; align-items: center; gap: 6px;">
-                                                        <div style="width: 8px; height: 8px; background: #eab308; border-radius: 50%;"></div>
-                                                        <span style="color: #94a3b8;">Idle: <span style="color: white; font-weight: 600;">23</span></span>
-                                                    </div>
-                                                </div>
-                                                <div style="color: #94a3b8;">
-                                                    <span style="color: #22d3ee; font-family: monospace; font-size: 12px;">● Real-time</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Floating Stats -->
-                                    <div style="position: absolute; top: -12px; right: -12px; background: rgba(30,41,59,0.95); border-radius: 14px; padding: 14px; border: 1px solid rgba(51,65,85,0.5); box-shadow: 0 15px 30px -5px rgba(0,0,0,0.4);">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #22c55e, #10b981); display: flex; align-items: center; justify-content: center;">
-                                                <svg style="width: 18px; height: 18px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <div style="font-size: 1.25rem; font-weight: 700; color: white;">99.9%</div>
-                                                <div style="font-size: 11px; color: #94a3b8;">Uptime</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div style="position: absolute; bottom: -12px; left: -12px; background: rgba(30,41,59,0.95); border-radius: 14px; padding: 14px; border: 1px solid rgba(51,65,85,0.5); box-shadow: 0 15px 30px -5px rgba(0,0,0,0.4);">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #3b82f6, #6366f1); display: flex; align-items: center; justify-content: center;">
-                                                <svg style="width: 18px; height: 18px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <div style="font-size: 1.25rem; font-weight: 700; color: white;">&lt;1 dtk</div>
-                                                <div style="font-size: 11px; color: #94a3b8;">Update</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bottom Features Strip -->
-                        <div style="margin-top: 64px; padding-top: 32px; border-top: 1px solid rgba(30,41,59,0.8);">
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(59,130,246,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <svg style="width: 24px; height: 24px; color: #60a5fa;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div style="color: white; font-weight: 600; font-size: 14px;">Real-time Tracking</div>
-                                        <div style="font-size: 12px; color: #64748b;">Lokasi akurat 24/7</div>
-                                    </div>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(34,211,238,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <svg style="width: 24px; height: 24px; color: #22d3ee;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div style="color: white; font-weight: 600; font-size: 14px;">Laporan Lengkap</div>
-                                        <div style="font-size: 12px; color: #64748b;">Riwayat perjalanan</div>
-                                    </div>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(34,197,94,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <svg style="width: 24px; height: 24px; color: #4ade80;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div style="color: white; font-weight: 600; font-size: 14px;">Notifikasi Instan</div>
-                                        <div style="font-size: 12px; color: #64748b;">Alert SMS & App</div>
-                                    </div>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(168,85,247,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <svg style="width: 24px; height: 24px; color: #c084fc;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div style="color: white; font-weight: 600; font-size: 14px;">Keamanan Terjamin</div>
-                                        <div style="font-size: 12px; color: #64748b;">Enkripsi end-to-end</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Scroll Indicator -->
-                    <div style="position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <span style="font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: 0.1em;">Scroll</span>
-                        <svg style="width: 20px; height: 20px; color: #475569;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                        </svg>
-                    </div>
-                </section>
-            `,
-        });
-
-        blockManager.add('wl-stats', {
-            label: 'WL Stats',
-            category: 'WelcomeLanding',
-            content: `
-                <section style="padding: 64px 0; background: white;">
-                    <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px; background: #f8fafc; border-radius: 40px; padding: 48px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                            <div style="text-align: center;">
-                                <p style="font-size: 2.25rem; font-weight: 900; color: #3b82f6; margin: 0;">99.9%</p>
-                                <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.1em;">Uptime Server</p>
-                            </div>
-                            <div style="text-align: center;">
-                                <p style="font-size: 2.25rem; font-weight: 900; color: #3b82f6; margin: 0;">120+</p>
-                                <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.1em;">Kota Terjangkau</p>
-                            </div>
-                            <div style="text-align: center;">
-                                <p style="font-size: 2.25rem; font-weight: 900; color: #3b82f6; margin: 0;">&lt;1 dtk</p>
-                                <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.1em;">Sinkronisasi Cepat</p>
-                            </div>
-                            <div style="text-align: center;">
-                                <p style="font-size: 2.25rem; font-weight: 900; color: #3b82f6; margin: 0;">24/7</p>
-                                <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.1em;">Siap Melayani</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            `,
-        });
-
-        blockManager.add('wl-features', {
-            label: 'WL Features',
-            category: 'WelcomeLanding',
-            content: `
-                <section style="padding: 128px 0; background: #f8fafc;" id="features">
-                    <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
-                        <div style="text-align: center; margin-bottom: 96px;">
-                            <h2 style="font-size: 1.125rem; font-weight: 900; color: #f97316; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">Fitur Unggulan</h2>
-                            <p style="font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 24px;">Semua yang Anda butuhkan untuk tetap terhubung</p>
-                            <p style="max-width: 672px; margin: 0 auto; font-size: 1.25rem; color: #64748b;">Alat sederhana dan canggih yang dirancang untuk keluarga, pecinta hewan peliharaan, dan tim yang berkembang.</p>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;">
-                            <!-- Feature 1 -->
-                            <div style="padding: 40px; border-radius: 24px; background: white; border: 1px solid #f1f5f9; transition: all 0.3s;">
-                                <div style="margin-bottom: 32px; display: inline-block; padding: 16px; border-radius: 16px; background: rgba(59,130,246,0.1);">
-                                    <svg style="width: 40px; height: 40px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                </div>
-                                <h3 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-bottom: 16px;">Tampilan Real-Time</h3>
-                                <p style="color: #64748b; font-size: 1.125rem; line-height: 1.75;">Pantau pergerakan secara real-time dengan pembaruan setiap detik. Jangan lewatkan setiap momen dari aset berharga Anda.</p>
-                            </div>
-                            
-                            <!-- Feature 2 -->
-                            <div style="padding: 40px; border-radius: 24px; background: white; border: 1px solid #f1f5f9; transition: all 0.3s;">
-                                <div style="margin-bottom: 32px; display: inline-block; padding: 16px; border-radius: 16px; background: rgba(249,115,22,0.1);">
-                                    <svg style="width: 40px; height: 40px; color: #f97316;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                                    </svg>
-                                </div>
-                                <h3 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-bottom: 16px;">Notifikasi Cerdas</h3>
-                                <p style="color: #64748b; font-size: 1.125rem; line-height: 1.75;">Tetap terinformasi dengan notifikasi saat target tercapai atau batas wilayah dilanggar. Keamanan yang ramah pengguna.</p>
-                            </div>
-                            
-                            <!-- Feature 3 -->
-                            <div style="padding: 40px; border-radius: 24px; background: white; border: 1px solid #f1f5f9; transition: all 0.3s;">
-                                <div style="margin-bottom: 32px; display: inline-block; padding: 16px; border-radius: 16px; background: rgba(59,130,246,0.1);">
-                                    <svg style="width: 40px; height: 40px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                    </svg>
-                                </div>
-                                <h3 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-bottom: 16px;">Riwayat Perjalanan</h3>
-                                <p style="color: #64748b; font-size: 1.125rem; line-height: 1.75;">Lihat kembali perjalanan terbaik Anda dengan ringkasan rute yang indah dan peta aktivitas yang menceritakan kisah Anda.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            `,
-        });
-
-        blockManager.add('wl-resources', {
-            label: 'WL Resources',
-            category: 'WelcomeLanding',
-            content: `
-                <section style="padding: 96px 0; background: white;" id="resources">
-                    <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
-                        <!-- Section Header -->
-                        <div style="text-align: center; margin-bottom: 64px;">
-                            <div style="display: inline-flex; align-items: center; gap: 8px; border-radius: 9999px; padding: 8px 16px; font-size: 14px; font-weight: 600; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; margin-bottom: 24px;">
-                                <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                </svg>
-                                Sumber Daya
-                            </div>
-                            <h2 style="font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 24px;">
-                                Semua yang Anda Butuhkan untuk
-                                <span style="background: linear-gradient(135deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sukses</span>
-                            </h2>
-                            <p style="font-size: 1.25rem; color: #475569; max-width: 768px; margin: 0 auto; line-height: 1.75;">
-                                Akses berbagai sumber daya untuk membantu Anda memaksimalkan penggunaan Sky Track.
-                                Dari panduan pemula hingga dokumentasi teknis lengkap.
-                            </p>
-                        </div>
-
-                        <!-- Resources Grid -->
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; max-width: 896px; margin: 0 auto;">
-                            <!-- Resource 1 -->
-                            <div style="position: relative; background: white; border-radius: 16px; padding: 32px; border: 1px solid #e2e8f0; transition: all 0.3s;">
-                                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(59,130,246,0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
-                                    <svg style="width: 28px; height: 28px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                    </svg>
-                                </div>
-                                <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Panduan Pengguna</h3>
-                                <p style="color: #475569; margin-bottom: 24px; line-height: 1.75;">Pelajari cara menggunakan Sky Track dari dasar hingga fitur lanjutan dengan panduan lengkap kami.</p>
-                                <a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #3b82f6; text-decoration: none;">
-                                    Baca Panduan
-                                    <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                    </svg>
-                                </a>
-                            </div>
-
-                            <!-- Resource 2 -->
-                            <div style="position: relative; background: white; border-radius: 16px; padding: 32px; border: 1px solid #e2e8f0; transition: all 0.3s;">
-                                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(34,197,94,0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
-                                    <svg style="width: 28px; height: 28px; color: #22c55e;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Video Tutorial</h3>
-                                <p style="color: #475569; margin-bottom: 24px; line-height: 1.75;">Tonton video tutorial step-by-step untuk memaksimalkan penggunaan platform Sky Track.</p>
-                                <a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #22c55e; text-decoration: none;">
-                                    Tonton Video
-                                    <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                    </svg>
-                                </a>
-                            </div>
-
-                            <!-- Resource 3 -->
-                            <div style="position: relative; background: white; border-radius: 16px; padding: 32px; border: 1px solid #e2e8f0; transition: all 0.3s;">
-                                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(168,85,247,0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
-                                    <svg style="width: 28px; height: 28px; color: #a855f7;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Pusat Bantuan</h3>
-                                <p style="color: #475569; margin-bottom: 24px; line-height: 1.75;">Temukan jawaban untuk pertanyaan umum dan solusi untuk masalah yang sering dihadapi.</p>
-                                <a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #a855f7; text-decoration: none;">
-                                    Cari Bantuan
-                                    <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                    </svg>
-                                </a>
-                            </div>
-
-                            <!-- Resource 4 -->
-                            <div style="position: relative; background: white; border-radius: 16px; padding: 32px; border: 1px solid #e2e8f0; transition: all 0.3s;">
-                                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(239,68,68,0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
-                                    <svg style="width: 28px; height: 28px; color: #ef4444;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                    </svg>
-                                </div>
-                                <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Dukungan Teknis</h3>
-                                <p style="color: #475569; margin-bottom: 24px; line-height: 1.75;">Tim support kami siap membantu Anda 24/7 untuk menyelesaikan masalah teknis.</p>
-                                <a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #ef4444; text-decoration: none;">
-                                    Hubungi Support
-                                    <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Bottom CTA -->
-                        <div style="margin-top: 64px; text-align: center;">
-                            <div style="display: inline-flex; flex-direction: row; align-items: center; gap: 16px; padding: 24px; background: linear-gradient(to right, #f8fafc, #f1f5f9); border-radius: 16px; border: 1px solid #e2e8f0;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(59,130,246,0.1); display: flex; align-items: center; justify-content: center;">
-                                        <svg style="width: 24px; height: 24px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                        </svg>
-                                    </div>
-                                    <div style="text-align: left;">
-                                        <p style="font-weight: 700; color: #0f172a; margin: 0;">Butuh bantuan lebih lanjut?</p>
-                                        <p style="font-size: 14px; color: #475569; margin: 0;">Tim kami siap membantu Anda</p>
-                                    </div>
-                                </div>
-                                <a href="#" style="display: inline-flex; align-items: center; gap: 8px; background: #0f172a; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 700; text-decoration: none;">
-                                    <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                    </svg>
-                                    Hubungi Kami
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            `,
-        });
-
-        blockManager.add('wl-pricing', {
-            label: 'WL Pricing',
-            category: 'WelcomeLanding',
-            content: `
-                <section style="padding: 128px 0; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);" id="pricing">
-                    <div style="max-width: 64rem; margin: 0 auto; padding: 0 24px;">
-                        <!-- Main Trial Card -->
-                        <div style="position: relative; overflow: hidden; border-radius: 48px; background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.2); padding: 64px;">
-                            <!-- Background Glow -->
-                            <div style="position: absolute; top: 0; right: 0; width: 384px; height: 384px; background: rgba(59,130,246,0.2); border-radius: 50%; filter: blur(100px);"></div>
-                            <div style="position: absolute; bottom: 0; left: 0; width: 288px; height: 288px; background: rgba(34,211,238,0.2); border-radius: 50%; filter: blur(80px);"></div>
-                            
-                            <div style="position: relative; z-index: 10; text-align: center;">
-                                <!-- Badge -->
-                                <div style="display: inline-flex; align-items: center; gap: 8px; border-radius: 9999px; padding: 10px 20px; font-size: 14px; font-weight: 700; background: linear-gradient(to right, rgba(59,130,246,0.2), rgba(34,211,238,0.2)); color: #67e8f9; border: 1px solid rgba(34,211,238,0.3); margin-bottom: 32px;">
-                                    <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                                    </svg>
-                                    Penawaran Terbatas
-                                </div>
-                                
-                                <!-- Headline -->
-                                <h2 style="font-size: 3rem; font-weight: 900; color: white; margin-bottom: 24px; line-height: 1.2;">
-                                    Coba Gratis
-                                    <span style="background: linear-gradient(to right, #60a5fa, #22d3ee, #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">14 Hari</span>
-                                </h2>
-                                
-                                <p style="font-size: 1.25rem; color: #cbd5e1; margin-bottom: 48px; max-width: 672px; margin-left: auto; margin-right: auto; line-height: 1.75;">
-                                    Rasakan semua fitur premium tanpa batasan. Tidak perlu kartu kredit, tidak ada komitmen.
-                                    Batalkan kapan saja.
-                                </p>
-                                
-                                <!-- Features Grid -->
-                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 48px;">
-                                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.1);">
-                                        <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #06b6d4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <svg style="width: 20px; height: 20px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                            </svg>
-                                        </div>
-                                        <span style="color: white; font-weight: 600; text-align: left;">Unlimited Perangkat</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.1);">
-                                        <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #06b6d4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <svg style="width: 20px; height: 20px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                            </svg>
-                                        </div>
-                                        <span style="color: white; font-weight: 600; text-align: left;">Tracking Real-time</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.1);">
-                                        <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #06b6d4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <svg style="width: 20px; height: 20px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <span style="color: white; font-weight: 600; text-align: left;">Riwayat Lengkap</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.1);">
-                                        <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #06b6d4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <svg style="width: 20px; height: 20px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <span style="color: white; font-weight: 600; text-align: left;">Dukungan 24/7</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- CTA Buttons -->
-                                <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 48px;">
-                                    <a href="#" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; padding: 20px 40px; border-radius: 9999px; font-weight: 900; font-size: 1.125rem; text-decoration: none; box-shadow: 0 8px 30px rgba(59,130,246,0.4);">
-                                        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                        </svg>
-                                        Mulai Trial Gratis
-                                        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                        </svg>
-                                    </a>
-                                    <a href="#features" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255,255,255,0.1); backdrop-filter: blur(4px); color: white; padding: 20px 40px; border-radius: 9999px; font-weight: 700; font-size: 1.125rem; border: 1px solid rgba(255,255,255,0.2); text-decoration: none;">
-                                        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Pelajari Lebih Lanjut
-                                    </a>
-                                </div>
-                                
-                                <!-- Trust Indicators -->
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 24px; font-size: 14px; color: #94a3b8;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <svg style="width: 20px; height: 20px; color: #4ade80;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <span>Tanpa kartu kredit</span>
-                                    </div>
-                                    <div style="width: 1px; height: 16px; background: #475569;"></div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <svg style="width: 20px; height: 20px; color: #4ade80;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <span>Setup dalam 5 menit</span>
-                                    </div>
-                                    <div style="width: 1px; height: 16px; background: #475569;"></div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <svg style="width: 20px; height: 20px; color: #4ade80;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <span>Batalkan kapan saja</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Bottom Stats -->
-                        <div style="margin-top: 64px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; text-align: center;">
-                            <div>
-                                <p style="font-size: 2.25rem; font-weight: 900; color: white; margin: 0;">10,000+</p>
-                                <p style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Pengguna Aktif</p>
-                            </div>
-                            <div>
-                                <p style="font-size: 2.25rem; font-weight: 900; color: white; margin: 0;">4.9/5</p>
-                                <p style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Rating Pengguna</p>
-                            </div>
-                            <div>
-                                <p style="font-size: 2.25rem; font-weight: 900; color: white; margin: 0;">99.9%</p>
-                                <p style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Uptime Server</p>
-                            </div>
-                            <div>
-                                <p style="font-size: 2.25rem; font-weight: 900; color: white; margin: 0;">24/7</p>
-                                <p style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Dukungan Teknis</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            `,
-        });
-
-        blockManager.add('wl-cta', {
-            label: 'WL CTA',
-            category: 'WelcomeLanding',
-            content: `
-                <section style="padding: 128px 0; position: relative; overflow: hidden;">
-                    <div style="position: absolute; inset: 0; background: rgba(59,130,246,0.05);"></div>
-                    <div style="max-width: 56rem; margin: 0 auto; padding: 0 24px; text-align: center; position: relative; z-index: 10;">
-                        <h2 style="font-size: 3rem; font-weight: 900; color: #0f172a; margin-bottom: 32px;">Siap Memulai Perjalanan Anda?</h2>
-                        <p style="font-size: 1.5rem; color: #475569; margin-bottom: 48px; line-height: 1.75;">
-                            Bergabunglah dengan ribuan keluarga dan bisnis yang menemukan ketenangan pikiran dengan teknologi GPS kami yang canggih dan mudah digunakan.
-                        </p>
-                        <div style="display: flex; justify-content: center; gap: 24px;">
-                            <a href="#" style="background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; padding: 20px 48px; border-radius: 9999px; font-weight: 900; font-size: 1.25rem; text-decoration: none; box-shadow: 0 8px 30px rgba(59,130,246,0.4);">
-                                Mulai Sekarang!
-                            </a>
-                            <a href="#" style="background: white; border: 2px solid #e2e8f0; color: #475569; padding: 20px 48px; border-radius: 9999px; font-weight: 900; font-size: 1.25rem; text-decoration: none;">
-                                Hubungi Tim Kami
-                            </a>
-                        </div>
-                    </div>
-                </section>
-            `,
-        });
-
-        blockManager.add('wl-footer', {
-            label: 'WL Footer',
-            category: 'WelcomeLanding',
-            content: `
-                <footer style="background: #0f172a; color: white; padding: 96px 0 48px; border-radius: 48px 48px 0 0; margin-top: 48px;">
-                    <div style="max-width: 80rem; margin: 0 auto; padding: 0 24px;">
-                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 80px;">
-                            <!-- Brand Column -->
-                            <div>
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 32px;">
-                                    <svg style="width: 40px; height: 40px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    <span style="font-size: 1.875rem; font-weight: 900; letter-spacing: -0.025em;">Sky Track</span>
-                                </div>
-                                <p style="color: #94a3b8; font-size: 1.125rem; max-width: 320px; line-height: 1.75;">
-                                    Platform GPS tracking paling canggih di Indonesia. Membuat pelacakan menjadi mudah dan keamanan menjadi sederhana untuk semua orang.
-                                </p>
-                            </div>
-                            
-                            <!-- Learn Column -->
-                            <div>
-                                <h4 style="color: white; font-weight: 900; font-size: 1.25rem; margin-bottom: 24px;">Pelajari</h4>
-                                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; font-size: 1rem; color: #94a3b8;">
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Panduan Memulai</a></li>
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Dokumentasi API</a></li>
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Pusat Bantuan</a></li>
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Komunitas</a></li>
-                                </ul>
-                            </div>
-                            
-                            <!-- Contact Column -->
-                            <div>
-                                <h4 style="color: white; font-weight: 900; font-size: 1.25rem; margin-bottom: 24px;">Kontak</h4>
-                                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; font-size: 1rem; color: #94a3b8;">
-                                    <li style="display: flex; align-items: center; gap: 8px;">
-                                        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                                        </svg>
-                                        +62 812 3456 7890
-                                    </li>
-                                    <li style="display: flex; align-items: center; gap: 8px;">
-                                        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                        </svg>
-                                        <a style="color: #94a3b8; text-decoration: none;" href="mailto:info@skytrack.id">info@skytrack.id</a>
-                                    </li>
-                                    <li style="display: flex; align-items: center; gap: 8px;">
-                                        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Senin - Jumat, 09:00 - 17:00
-                                    </li>
-                                </ul>
-                            </div>
-                            
-                            <!-- Legal Column -->
-                            <div>
-                                <h4 style="color: white; font-weight: 900; font-size: 1.25rem; margin-bottom: 24px;">Legal</h4>
-                                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; font-size: 1rem; color: #94a3b8;">
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Kebijakan Privasi</a></li>
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Syarat & Ketentuan</a></li>
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Kebijakan Cookie</a></li>
-                                    <li><a style="color: #94a3b8; text-decoration: none;" href="#">Keamanan</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <!-- Bottom Section -->
-                        <div style="border-top: 1px solid #1e293b; padding-top: 48px; display: flex; justify-content: space-between; align-items: center;">
-                            <p style="font-size: 14px; color: #64748b; margin: 0;">© 2024 Sky Track. All rights reserved.</p>
-                            <div style="display: flex; gap: 32px;">
-                                <a style="color: #64748b; text-decoration: none;" href="#">
-                                    <svg style="width: 24px; height: 24px;" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                    </svg>
-                                </a>
-                                <a style="color: #64748b; text-decoration: none;" href="#">
-                                    <svg style="width: 24px; height: 24px;" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                                    </svg>
-                                </a>
-                                <a style="color: #64748b; text-decoration: none;" href="#">
-                                    <svg style="width: 24px; height: 24px;" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
-            `,
-        });
-
-        blockManager.add('carousel-component', {
-            label: 'Carousel',
-            category: 'Components',
-            content: `
+            `}),e.add("carousel-component",{label:"Carousel",category:"Components",content:`
                 <div data-gjs-type="carousel-component" class="carousel-wrapper" style="width: 100%; padding: 20px 0;">
                     <Carousel slug="test-carousel" />
                 </div>
-            `,
-            attributes: { class: 'fa fa-images' },
-        });
-
-        // Add custom component type for Carousel
-        gjsEditor.DomComponents.addType('carousel-component', {
-            isComponent: (el: HTMLElement) => el.tagName === 'DIV' && el.classList.contains('carousel-wrapper'),
-            model: {
-                defaults: {
-                    tagName: 'div',
-                    droppable: false,
-                    attributes: { class: 'carousel-wrapper' },
-                    traits: [
-                        {
-                            type: 'text',
-                            name: 'slug',
-                            label: 'Carousel Slug',
-                            placeholder: 'Enter carousel slug',
-                        },
-                    ],
-                },
-                init() {
-                    this.on('change:attributes:slug', this.updateCarouselSlug);
-                },
-                updateCarouselSlug() {
-                    const slug = this.getAttributes().slug || 'test-carousel';
-                    const content = `<Carousel slug="${slug}" />`;
-                    this.components(content);
-                },
-            },
-            view: {
-                onRender() {
-                    const slug = this.model.getAttributes().slug || 'test-carousel';
-                    this.el.innerHTML = `
+            `,attributes:{class:"fa fa-images"}}),i.DomComponents.addType("carousel-component",{isComponent:r=>r.tagName==="DIV"&&r.classList.contains("carousel-wrapper"),model:{defaults:{tagName:"div",droppable:!1,attributes:{class:"carousel-wrapper"},traits:[{type:"text",name:"slug",label:"Carousel Slug",placeholder:"Enter carousel slug"}]},init(){this.on("change:attributes:slug",this.updateCarouselSlug)},updateCarouselSlug(){const y=`<Carousel slug="${this.getAttributes().slug||"test-carousel"}" />`;this.components(y)}},view:{onRender(){const r=this.model.getAttributes().slug||"test-carousel";this.el.innerHTML=`
                         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 40px; text-align: center; color: white; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                             <svg style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.9;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                             <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Carousel Component</div>
                             <div style="font-size: 14px; opacity: 0.8; font-family: monospace; background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 6px;">
-                                &lt;Carousel slug="${slug}" /&gt;
+                                &lt;Carousel slug="${r}" /&gt;
                             </div>
                             <div style="font-size: 12px; margin-top: 12px; opacity: 0.7;">
                                 This carousel will be rendered dynamically on the frontend
                             </div>
                         </div>
-                    `;
-                },
-            },
-        });
-
-        setEditor(gjsEditor);
-
-        return () => {
-            gjsEditor.destroy();
-        };
-    }, [page]);
-
-    // Auto-save every 30 seconds
-    useEffect(() => {
-        if (!editor) return;
-
-        const interval = setInterval(() => {
-            saveContent();
-        }, 30000);
-
-        return () => clearInterval(interval);
-    }, [editor, saveContent]);
-
-    // Keyboard shortcut for save (Ctrl+S / Cmd+S)
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                saveContent();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [saveContent]);
-
-    const handlePublishToggle = () => {
-        router.patch(route('module.pages.update', page.id), {
-            is_published: !page.is_published,
-        }, {
-            preserveScroll: true,
-        });
-    };
-
-    return (
-        <>
-            <Head title={`Edit: ${page.title}`} />
-
-            <div className="h-screen flex flex-col">
-                {/* Top Toolbar */}
-                <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white px-4 py-2 flex items-center justify-between shadow-lg">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href={route('module.pages.index')}
-                            className="text-indigo-200 hover:text-white transition flex items-center gap-2"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Pages
-                        </Link>
-                        <span className="text-indigo-400">|</span>
-                        <span className="font-medium">{page.title}</span>
-                    </div>
-
-                    <div className="panel__devices flex items-center gap-2"></div>
-
-                    <div className="flex items-center gap-4">
-                        {lastSaved && (
-                            <span className="text-indigo-200 text-sm">
-                                Last saved: {lastSaved.toLocaleTimeString()}
-                            </span>
-                        )}
-                        <button
-                            onClick={saveContent}
-                            disabled={isSaving}
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50 border border-white/20"
-                        >
-                            {isSaving ? 'Saving...' : 'Save'}
-                        </button>
-                        <button
-                            onClick={handlePublishToggle}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                                page.is_published
-                                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                                    : 'bg-green-500 hover:bg-green-600 text-white'
-                            }`}
-                        >
-                            {page.is_published ? 'Unpublish' : 'Publish'}
-                        </button>
-                        <Link
-                            href={route('module.pages.show', page.id)}
-                            target="_blank"
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition border border-white/20"
-                        >
-                            Preview
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Editor Container */}
-                <div className="flex-1 overflow-hidden">
-                    <div ref={editorRef} className="h-full" />
-                </div>
-            </div>
-
-            <style>{`
+                    `}}}),b(i),()=>{i.destroy()}},[o]),a.useEffect(()=>{if(!n)return;const i=setInterval(()=>{s()},3e4);return()=>clearInterval(i)},[n,s]),a.useEffect(()=>{const i=e=>{(e.ctrlKey||e.metaKey)&&e.key==="s"&&(e.preventDefault(),s())};return window.addEventListener("keydown",i),()=>window.removeEventListener("keydown",i)},[s]);const u=()=>{w.patch(l("pages.update",o.id),{is_published:!o.is_published},{preserveScroll:!0})};return t.jsxs(t.Fragment,{children:[t.jsx(m,{title:`Edit: ${o.title}`}),t.jsxs("div",{className:"h-screen flex flex-col",children:[t.jsxs("div",{className:"bg-gradient-to-r from-indigo-700 to-indigo-900 text-white px-4 py-2 flex items-center justify-between shadow-lg",children:[t.jsxs("div",{className:"flex items-center gap-4",children:[t.jsxs(x,{href:l("pages.index"),className:"text-indigo-200 hover:text-white transition flex items-center gap-2",children:[t.jsx("svg",{className:"w-5 h-5",fill:"none",stroke:"currentColor",viewBox:"0 0 24 24",children:t.jsx("path",{strokeLinecap:"round",strokeLinejoin:"round",strokeWidth:2,d:"M10 19l-7-7m0 0l7-7m-7 7h18"})}),"Back to Pages"]}),t.jsx("span",{className:"text-indigo-400",children:"|"}),t.jsx("span",{className:"font-medium",children:o.title})]}),t.jsx("div",{className:"panel__devices flex items-center gap-2"}),t.jsxs("div",{className:"flex items-center gap-4",children:[g&&t.jsxs("span",{className:"text-indigo-200 text-sm",children:["Last saved: ",g.toLocaleTimeString()]}),t.jsx("button",{onClick:s,disabled:p,className:"bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50 border border-white/20",children:p?"Saving...":"Save"}),t.jsx("button",{onClick:u,className:`px-4 py-1.5 rounded-lg text-sm font-medium transition ${o.is_published?"bg-yellow-500 hover:bg-yellow-600 text-white":"bg-green-500 hover:bg-green-600 text-white"}`,children:o.is_published?"Unpublish":"Publish"}),t.jsx(x,{href:l("pages.show",o.id),target:"_blank",className:"bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition border border-white/20",children:"Preview"})]})]}),t.jsx("div",{className:"flex-1 overflow-hidden",children:t.jsx("div",{ref:d,className:"h-full"})})]}),t.jsx("style",{children:`
                 .gjs-one-bg {
                     background-color: #1f2937;
                 }
@@ -2174,8 +1094,4 @@ export default function Editor({ page }: Props): JSX.Element {
                 .gjs-cv-canvas {
                     background-color: #e5e7eb;
                 }
-            `}</style>
-        </>
-    );
-}
-
+            `})]})}export{M as default};
