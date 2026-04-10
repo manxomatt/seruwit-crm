@@ -49,17 +49,17 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
                 <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/90 backdrop-blur-md">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-20">
-                            <Link href="/" className="flex items-center gap-2">
+                            <a href="/" className="flex items-center gap-2">
                                 {siteLogo ? (
                                     <img src={siteLogo} alt={siteName} className="h-10 w-auto" />
                                 ) : (
                                     <span className="material-symbols-outlined text-indigo-600 text-4xl font-bold">article</span>
                                 )}
                                 <span className="text-2xl font-black tracking-tight text-slate-900">{siteName}</span>
-                            </Link>
+                            </a>
                             
                             <nav className="hidden md:flex space-x-10">
-                                <Link className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/">Beranda</Link>
+                                <a className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/">Beranda</a>
                                 <Link className="text-base font-semibold text-indigo-600" href="/blog">Blog</Link>
                             </nav>
                             

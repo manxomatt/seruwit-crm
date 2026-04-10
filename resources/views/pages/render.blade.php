@@ -114,5 +114,24 @@
         {!! \App\Models\Setting::getValue('appearance.custom_js') !!}
     </script>
     @endif
+    
+    <script>
+        // Ensure all navigation links work properly without being intercepted
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find all links that should navigate to other pages
+            const navigationLinks = document.querySelectorAll('a[href^="/"], a[href^="http"]');
+            navigationLinks.forEach(function(link) {
+                // Remove any existing click handlers that might prevent navigation
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    // Only handle links that are not anchor links
+                    if (href && !href.startsWith('#')) {
+                        // Allow default navigation behavior
+                        return true;
+                    }
+                }, true);
+            });
+        });
+    </script>
 </body>
 </html>

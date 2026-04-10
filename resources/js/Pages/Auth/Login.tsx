@@ -250,7 +250,7 @@ export default function Login({ status, canResetPassword, settings }: Props) {
 
                             {/* Back to Home Link */}
                             <div className="mt-6 text-center">
-                                <Link
+                                <a
                                     href="/"
                                     className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white/80 transition-colors"
                                 >
@@ -258,7 +258,7 @@ export default function Login({ status, canResetPassword, settings }: Props) {
                                         arrow_back
                                     </span>
                                     Kembali ke Beranda
-                                </Link>
+                                </a>
                             </div>
                         </div>
 
