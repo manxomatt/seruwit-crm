@@ -22,7 +22,8 @@ class StoreCarouselImageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
+            'image' => ['required_without:image_url', 'nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
+            'image_url' => ['required_without:image', 'nullable', 'url', 'max:500'],
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'link_url' => ['nullable', 'url', 'max:500'],
@@ -41,10 +42,12 @@ class StoreCarouselImageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'image.required' => 'An image is required.',
+            'image.required_without' => 'An image file or image URL is required.',
+            'image_url.required_without' => 'An image file or image URL is required.',
             'image.image' => 'The file must be an image.',
             'image.mimes' => 'The image must be a JPEG, PNG, JPG, GIF, or WebP file.',
             'image.max' => 'The image must not exceed 5MB.',
+            'image_url.url' => 'The image URL must be a valid URL.',
             'link_url.url' => 'The link URL must be a valid URL.',
             'link_target.in' => 'The link target must be either _self or _blank.',
         ];

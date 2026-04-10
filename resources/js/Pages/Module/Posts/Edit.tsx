@@ -2,6 +2,8 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import HtmlEditor from '@/Components/HtmlEditor';
+import ImageUploader from '@/Components/ImageUploader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -115,14 +117,12 @@ export default function Edit({ post }: Props): JSX.Element {
 
                         <div>
                             <InputLabel htmlFor="excerpt" value="Excerpt" />
-                            <textarea
-                                id="excerpt"
-                                name="excerpt"
+                            <HtmlEditor
                                 value={data.excerpt}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                rows={3}
+                                onChange={(value) => setData('excerpt', value)}
                                 placeholder="Brief description of the post..."
-                                onChange={(e) => setData('excerpt', e.target.value)}
+                                minHeight="120px"
+                                className="mt-1"
                             />
                             <p className="mt-2 text-sm text-gray-500">
                                 A short summary that appears in post listings.
@@ -132,33 +132,23 @@ export default function Edit({ post }: Props): JSX.Element {
 
                         <div>
                             <InputLabel htmlFor="content" value="Content" />
-                            <textarea
-                                id="content"
-                                name="content"
+                            <HtmlEditor
                                 value={data.content}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                rows={12}
+                                onChange={(value) => setData('content', value)}
                                 placeholder="Write your post content here..."
-                                onChange={(e) => setData('content', e.target.value)}
+                                minHeight="300px"
+                                className="mt-1"
                             />
                             <InputError message={errors.content} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="featured_image" value="Featured Image URL" />
-                            <TextInput
-                                id="featured_image"
-                                type="text"
-                                name="featured_image"
+                            <InputLabel htmlFor="featured_image" value="Featured Image" />
+                            <ImageUploader
                                 value={data.featured_image}
-                                className="mt-1 block w-full"
-                                autoComplete="off"
-                                placeholder="https://example.com/image.jpg"
-                                onChange={(e) => setData('featured_image', e.target.value)}
+                                onChange={(value) => setData('featured_image', value)}
+                                className="mt-1"
                             />
-                            <p className="mt-2 text-sm text-gray-500">
-                                URL to the featured image for this post.
-                            </p>
                             <InputError message={errors.featured_image} className="mt-2" />
                         </div>
 

@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import TextInput from '@/Components/TextInput';
+import CarouselImageUploader from '@/Components/CarouselImageUploader';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef } from 'react';
 
@@ -59,6 +60,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
 
     const imageForm = useForm({
         image: null as File | null,
+        image_url: '',
         title: '',
         description: '',
         link_url: '',
@@ -82,6 +84,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
         setEditingImage(image);
         imageForm.setData({
             image: null,
+            image_url: '',
             title: image.title || '',
             description: image.description || '',
             link_url: image.link_url || '',
@@ -324,7 +327,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         }`}
                                     >
                                         <img
-                                            src={`/storage/${image.image_path}`}
+                                            src={image.image_path.startsWith('http') ? image.image_path : `/storage/${image.image_path}`}
                                             alt={image.title || 'Carousel image'}
                                             className="w-full h-48 object-cover"
                                         />
@@ -432,14 +435,12 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                     <div className="space-y-4">
                                         <div>
                                             <InputLabel htmlFor="image" value={editingImage ? 'Replace Image (optional)' : 'Image'} />
-                                            <input
-                                                ref={fileInputRef}
-                                                id="image"
-                                                type="file"
-                                                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                                onChange={(e) => imageForm.setData('image', e.target.files?.[0] || null)}
-                                                required={!editingImage}
+                                            <CarouselImageUploader
+                                                onFileSelect={(file) => imageForm.setData('image', file)}
+                                                onUrlSelect={(url) => imageForm.setData('image_url', url)}
+                                                currentImageUrl={editingImage ? (editingImage.image_path.startsWith('http') ? editingImage.image_path : `/storage/${editingImage.image_path}`) : ''}
+                                                isEditing={!!editingImage}
+                                                className="mt-1"
                                             />
                                             <InputError message={imageForm.errors.image} className="mt-2" />
                                         </div>

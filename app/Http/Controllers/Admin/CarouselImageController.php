@@ -32,7 +32,13 @@ class CarouselImageController extends Controller
             abort(403);
         }
 
-        $imagePath = $request->file('image')->store('carousels', 'public');
+        $imagePath = null;
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('carousels', 'public');
+        } elseif ($request->filled('image_url')) {
+            $imagePath = $request->validated('image_url');
+        }
 
         $maxSortOrder = $carousel->images()->max('sort_order') ?? -1;
 
@@ -67,14 +73,20 @@ class CarouselImageController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            // Delete old image
-            if ($image->image_path) {
+            // Delete old image if it's a local file
+            if ($image->image_path && ! str_starts_with($image->image_path, 'http')) {
                 Storage::disk('public')->delete($image->image_path);
             }
             $data['image_path'] = $request->file('image')->store('carousels', 'public');
+        } elseif ($request->filled('image_url')) {
+            // Delete old image if it's a local file
+            if ($image->image_path && ! str_starts_with($image->image_path, 'http')) {
+                Storage::disk('public')->delete($image->image_path);
+            }
+            $data['image_path'] = $request->validated('image_url');
         }
 
-        unset($data['image']);
+        unset($data['image'], $data['image_url']);
         $image->update($data);
 
         return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
@@ -94,8 +106,8 @@ class CarouselImageController extends Controller
             abort(404);
         }
 
-        // Delete the image file
-        if ($image->image_path) {
+        // Delete the image file only if it's a local file
+        if ($image->image_path && ! str_starts_with($image->image_path, 'http')) {
             Storage::disk('public')->delete($image->image_path);
         }
 
