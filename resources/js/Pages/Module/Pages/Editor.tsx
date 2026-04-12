@@ -75,7 +75,10 @@ export default function Editor({ page }: Props): JSX.Element {
             canvas: {
                 styles: [
                     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                    '/builder/css/custom-builder.css'
+                    '/builder/css/custom-builder.css',
+                    'href="https://fonts.bunny.net',
+                    'https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap',
+                    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
                 ],
                 scripts: [],
                 frameStyle: `
@@ -174,6 +177,75 @@ export default function Editor({ page }: Props): JSX.Element {
     <a class="block text-lg font-semibold text-slate-600 hover:text-primary" href="/login">Masuk</a>
   </div>
 </header>
+            `,
+        });
+
+        blockManager.add('stats-section', {
+            label: 'Stats Section',
+            category: 'WelcomeLanding',
+            content: `
+<section class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-12 bg-background-soft rounded-[2.5rem] p-12 border border-slate-100 shadow-sm">
+      <div class="text-center">
+        <p class="text-3xl sm:text-4xl font-black text-primary font-display">99.9%</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Uptime Server</p>
+      </div>
+      <div class="text-center">
+        <p class="text-3xl sm:text-4xl font-black text-primary font-display">120+</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Kota Terjangkau</p>
+      </div>
+      <div class="text-center">
+        <p class="text-3xl sm:text-4xl font-black text-primary font-display">&lt;1 dtk</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Sinkronisasi Cepat</p>
+      </div>
+      <div class="text-center">
+        <p class="text-3xl sm:text-4xl font-black text-primary font-display">24/7</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Siap Melayani</p>
+      </div>
+    </div>
+  </div>
+</section>
+            `,
+        });
+
+        blockManager.add('features-section', {
+            label: 'Features Section',
+            category: 'WelcomeLanding',
+            content: `
+<section class="py-32 bg-background-light" id="features">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-24">
+      <h2 class="text-lg font-black text-accent uppercase tracking-widest mb-4">Fitur Unggulan</h2>
+      <p class="text-4xl sm:text-5xl font-black text-slate-900 font-display mb-6">Semua yang Anda butuhkan untuk tetap terhubung</p>
+      <p class="max-w-2xl mx-auto text-xl text-slate-500">Alat sederhana dan canggih yang dirancang untuk keluarga, pecinta hewan peliharaan, dan tim yang berkembang.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div class="group p-10 rounded-3xl bg-white border border-slate-100 transition-all duration-300 hover:shadow-xl hover:border-primary/30">
+        <div class="mb-8 inline-block p-4 rounded-2xl transition-all transform group-hover:scale-110 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white">
+          <span class="material-symbols-outlined text-4xl">my_location</span>
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 mb-4 font-display">Tampilan Real-Time</h3>
+        <p class="text-slate-500 text-lg leading-relaxed">Pantau pergerakan secara real-time dengan pembaruan setiap detik. Jangan lewatkan setiap momen dari aset berharga Anda.</p>
+      </div>
+      <div class="group p-10 rounded-3xl bg-white border border-slate-100 transition-all duration-300 hover:shadow-xl hover:border-accent/30">
+        <div class="mb-8 inline-block p-4 rounded-2xl transition-all transform group-hover:scale-110 bg-accent/10 text-accent group-hover:bg-accent group-hover:text-white">
+          <span class="material-symbols-outlined text-4xl">notifications_active</span>
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 mb-4 font-display">Notifikasi Cerdas</h3>
+        <p class="text-slate-500 text-lg leading-relaxed">Tetap terinformasi dengan notifikasi saat target tercapai atau batas wilayah dilanggar. Keamanan yang ramah pengguna.</p>
+      </div>
+      <div class="group p-10 rounded-3xl bg-white border border-slate-100 transition-all duration-300 hover:shadow-xl hover:border-primary/30">
+        <div class="mb-8 inline-block p-4 rounded-2xl transition-all transform group-hover:scale-110 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white">
+          <span class="material-symbols-outlined text-4xl">auto_graph</span>
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 mb-4 font-display">Riwayat Perjalanan</h3>
+        <p class="text-slate-500 text-lg leading-relaxed">Lihat kembali perjalanan terbaik Anda dengan ringkasan rute yang indah dan peta aktivitas yang menceritakan kisah Anda.</p>
+      </div>
+    </div>
+  </div>
+</section>
             `,
         });
 
