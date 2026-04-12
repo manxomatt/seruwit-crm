@@ -16,6 +16,7 @@
     <link rel="icon" href="{{ \App\Models\Setting::getValue('site.favicon', '/favicon.ico') }}">
     
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/builder/css/custom-builder.css">
     <style>
         html {
             height: 100%;
