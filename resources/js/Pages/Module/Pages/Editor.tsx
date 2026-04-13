@@ -249,6 +249,442 @@ export default function Editor({ page }: Props): JSX.Element {
             `,
         });
 
+        blockManager.add('resources-section', {
+            label: 'Resources Section',
+            category: 'WelcomeLanding',
+            content: `
+<section class="py-24 bg-white" id="resources">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="text-center mb-16">
+      <div class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200 mb-6">
+        <span class="material-symbols-outlined text-lg">library_books</span>
+        Sumber Daya
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-black text-slate-900 mb-6 font-display">
+        Semua yang Anda Butuhkan untuk 
+        <span class="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+          Sukses
+        </span>
+      </h2>
+      <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+        Akses berbagai sumber daya untuk membantu Anda memaksimalkan penggunaan Sky Track. 
+        Dari panduan pemula hingga dokumentasi teknis lengkap.
+      </p>
+    </div>
+
+    <!-- Resources Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <!-- Resource 1 -->
+      <div class="group relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-slate-300 hover:shadow-xl transition-all duration-300">
+        <!-- Icon -->
+        <div class="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-2xl text-blue-400">
+            menu_book
+          </span>
+        </div>
+
+        <!-- Content -->
+        <h3 class="text-xl font-bold text-slate-900 mb-3 font-display">
+          Panduan Pengguna
+        </h3>
+        <p class="text-slate-600 mb-6 leading-relaxed">
+          Pelajari cara menggunakan Sky Track dari dasar hingga fitur lanjutan dengan panduan lengkap kami.
+        </p>
+
+        <!-- Link -->
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 font-semibold text-blue-400 hover:gap-3 transition-all duration-300"
+        >
+          Baca Panduan
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </a>
+
+        <!-- Hover Effect -->
+        <div class="absolute inset-0 rounded-2xl bg-blue-500/10 opacity-0 group-hover:opacity-50 transition-opacity duration-300 -z-10"></div>
+      </div>
+
+      <!-- Resource 2 -->
+      <div class="group relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-slate-300 hover:shadow-xl transition-all duration-300">
+        <!-- Icon -->
+        <div class="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-2xl text-green-400">
+            play_circle
+          </span>
+        </div>
+
+        <!-- Content -->
+        <h3 class="text-xl font-bold text-slate-900 mb-3 font-display">
+          Video Tutorial
+        </h3>
+        <p class="text-slate-600 mb-6 leading-relaxed">
+          Tonton video tutorial step-by-step untuk memaksimalkan penggunaan platform Sky Track.
+        </p>
+
+        <!-- Link -->
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 font-semibold text-green-400 hover:gap-3 transition-all duration-300"
+        >
+          Tonton Video
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </a>
+
+        <!-- Hover Effect -->
+        <div class="absolute inset-0 rounded-2xl bg-green-500/10 opacity-0 group-hover:opacity-50 transition-opacity duration-300 -z-10"></div>
+      </div>
+
+      <!-- Resource 3 -->
+      <div class="group relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-slate-300 hover:shadow-xl transition-all duration-300">
+        <!-- Icon -->
+        <div class="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-2xl text-purple-400">
+            help_center
+          </span>
+        </div>
+
+        <!-- Content -->
+        <h3 class="text-xl font-bold text-slate-900 mb-3 font-display">
+          Pusat Bantuan
+        </h3>
+        <p class="text-slate-600 mb-6 leading-relaxed">
+          Temukan jawaban untuk pertanyaan umum dan solusi untuk masalah yang sering dihadapi.
+        </p>
+
+        <!-- Link -->
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 font-semibold text-purple-400 hover:gap-3 transition-all duration-300"
+        >
+          Cari Bantuan
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </a>
+
+        <!-- Hover Effect -->
+        <div class="absolute inset-0 rounded-2xl bg-purple-500/10 opacity-0 group-hover:opacity-50 transition-opacity duration-300 -z-10"></div>
+      </div>
+
+      <!-- Resource 4 -->
+      <div class="group relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-slate-300 hover:shadow-xl transition-all duration-300">
+        <!-- Icon -->
+        <div class="w-14 h-14 rounded-xl bg-red-500/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-2xl text-red-400">
+            support_agent
+          </span>
+        </div>
+
+        <!-- Content -->
+        <h3 class="text-xl font-bold text-slate-900 mb-3 font-display">
+          Dukungan Teknis
+        </h3>
+        <p class="text-slate-600 mb-6 leading-relaxed">
+          Tim support kami siap membantu Anda 24/7 untuk menyelesaikan masalah teknis.
+        </p>
+
+        <!-- Link -->
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 font-semibold text-red-400 hover:gap-3 transition-all duration-300"
+        >
+          Hubungi Support
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </a>
+
+        <!-- Hover Effect -->
+        <div class="absolute inset-0 rounded-2xl bg-red-500/10 opacity-0 group-hover:opacity-50 transition-opacity duration-300 -z-10"></div>
+      </div>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="mt-16 text-center">
+      <div class="inline-flex flex-col sm:flex-row items-center gap-4 p-6 bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl border border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-2xl text-blue-500">contact_support</span>
+          </div>
+          <div class="text-left">
+            <p class="font-bold text-slate-900">Butuh bantuan lebih lanjut?</p>
+            <p class="text-sm text-slate-600">Tim kami siap membantu Anda</p>
+          </div>
+        </div>
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors"
+        >
+          <span class="material-symbols-outlined">chat</span>
+          Hubungi Kami
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+            `,
+        });
+
+        blockManager.add('pricing-section', {
+            label: 'Pricing Section',
+            category: 'WelcomeLanding',
+            content: `
+<section class="py-32 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" id="pricing">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Main Trial Card -->
+    <div class="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 p-12 md:p-16">
+      <!-- Background Glow -->
+      <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]"></div>
+      <div class="absolute bottom-0 left-0 w-72 h-72 bg-cyan-500/20 rounded-full blur-[80px]"></div>
+      
+      <div class="relative z-10 text-center">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-300 ring-1 ring-inset ring-cyan-500/30 mb-8">
+          <span class="material-symbols-outlined text-lg">verified</span>
+          Penawaran Terbatas
+        </div>
+        
+        <!-- Headline -->
+        <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 font-display leading-tight">
+          Coba Gratis 
+          <span class="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+            14 Hari
+          </span>
+        </h2>
+        
+        <p class="text-xl text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+          Rasakan semua fitur premium tanpa batasan. Tidak perlu kartu kredit, tidak ada komitmen. 
+          Batalkan kapan saja.
+        </p>
+        
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <!-- Feature 1 -->
+          <div class="flex items-center gap-3 bg-white/5 rounded-2xl p-4 border border-white/10">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-xl">devices</span>
+            </div>
+            <span class="text-white font-semibold text-left">Unlimited Perangkat</span>
+          </div>
+          
+          <!-- Feature 2 -->
+          <div class="flex items-center gap-3 bg-white/5 rounded-2xl p-4 border border-white/10">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-xl">speed</span>
+            </div>
+            <span class="text-white font-semibold text-left">Tracking Real-time</span>
+          </div>
+          
+          <!-- Feature 3 -->
+          <div class="flex items-center gap-3 bg-white/5 rounded-2xl p-4 border border-white/10">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-xl">history</span>
+            </div>
+            <span class="text-white font-semibold text-left">Riwayat Lengkap</span>
+          </div>
+          
+          <!-- Feature 4 -->
+          <div class="flex items-center gap-3 bg-white/5 rounded-2xl p-4 border border-white/10">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-xl">support_agent</span>
+            </div>
+            <span class="text-white font-semibold text-left">Dukungan 24/7</span>
+          </div>
+        </div>
+        
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <a 
+            href="https://app.sky-track.net/#register" 
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-10 py-5 rounded-full font-black text-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105"
+          >
+            <span class="material-symbols-outlined">rocket_launch</span>
+            Mulai Trial Gratis
+            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </a>
+          <a 
+            href="#features" 
+            class="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white px-10 py-5 rounded-full font-bold text-lg border border-white/20 hover:bg-white/20 transition-all duration-300"
+          >
+            <span class="material-symbols-outlined">info</span>
+            Pelajari Lebih Lanjut
+          </a>
+        </div>
+        
+        <!-- Trust Indicators -->
+        <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-slate-400">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-green-400">check_circle</span>
+            <span>Tanpa kartu kredit</span>
+          </div>
+          <div class="hidden sm:block w-px h-4 bg-slate-600"></div>
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-green-400">check_circle</span>
+            <span>Setup dalam 5 menit</span>
+          </div>
+          <div class="hidden sm:block w-px h-4 bg-slate-600"></div>
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-green-400">check_circle</span>
+            <span>Batalkan kapan saja</span>
+          </div>
+        </div>
+        
+        <!-- App Store Badges -->
+        <div class="mt-12 pt-12 border-t border-white/10">
+          <p class="text-slate-400 text-sm font-medium mb-6">Tersedia di</p>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <!-- Google Play Store -->
+            <a 
+              href="#" 
+              class="group flex items-center gap-3 bg-black/50 hover:bg-black/70 border border-white/20 rounded-xl px-6 py-3 transition-all duration-300 hover:scale-105"
+            >
+              <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 9.99l-2.302 2.302-8.634-8.634z" fill="white"/>
+              </svg>
+              <div class="text-left">
+                <p class="text-[10px] text-slate-400 uppercase tracking-wider">Dapatkan di</p>
+                <p class="text-white font-bold text-lg -mt-1">Google Play</p>
+              </div>
+            </a>
+            
+            <!-- Apple App Store -->
+            <a 
+              href="#" 
+              class="group flex items-center gap-3 bg-black/50 hover:bg-black/70 border border-white/20 rounded-xl px-6 py-3 transition-all duration-300 hover:scale-105"
+            >
+              <svg class="w-8 h-8" viewBox="0 0 24 24" fill="white">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+              <div class="text-left">
+                <p class="text-[10px] text-slate-400 uppercase tracking-wider">Unduh di</p>
+                <p class="text-white font-bold text-lg -mt-1">App Store</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bottom Stats -->
+    <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <div>
+        <p class="text-3xl sm:text-4xl font-black text-white font-display">10,000+</p>
+        <p class="text-sm font-semibold text-slate-400 mt-2 uppercase tracking-wider">Pengguna Aktif</p>
+      </div>
+      <div>
+        <p class="text-3xl sm:text-4xl font-black text-white font-display">4.9/5</p>
+        <p class="text-sm font-semibold text-slate-400 mt-2 uppercase tracking-wider">Rating Pengguna</p>
+      </div>
+      <div>
+        <p class="text-3xl sm:text-4xl font-black text-white font-display">99.9%</p>
+        <p class="text-sm font-semibold text-slate-400 mt-2 uppercase tracking-wider">Uptime Server</p>
+      </div>
+      <div>
+        <p class="text-3xl sm:text-4xl font-black text-white font-display">24/7</p>
+        <p class="text-sm font-semibold text-slate-400 mt-2 uppercase tracking-wider">Dukungan Teknis</p>
+      </div>
+    </div>
+  </div>
+</section>
+            `,
+        });
+
+        blockManager.add('cta-section', {
+            label: 'CTA Section',
+            category: 'WelcomeLanding',
+            content: `
+<section class="py-32 relative overflow-hidden">
+  <div class="absolute inset-0 bg-primary/5"></div>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+    <h2 class="text-5xl font-black text-slate-900 mb-8 font-display">Siap Memulai Perjalanan Anda?</h2>
+    <p class="text-2xl text-slate-600 mb-12 leading-relaxed">
+      Bergabunglah dengan ribuan keluarga dan bisnis yang menemukan ketenangan pikiran dengan teknologi GPS kami yang canggih dan mudah digunakan.
+    </p>
+    <div class="flex flex-col sm:flex-row justify-center gap-6">
+      <a href="https://app.sky-track.net/#register" target="_blank" rel="noopener noreferrer" class="bg-primary text-white px-12 py-5 rounded-full font-black text-xl hover:scale-105 transition-all">
+        Mulai Sekarang!
+      </a>
+      <button class="bg-white border-2 border-slate-200 text-slate-700 px-12 py-5 rounded-full font-black text-xl hover:bg-slate-50 transition-all">
+        Hubungi Tim Kami
+      </button>
+    </div>
+  </div>
+</section>
+            `,
+        });
+
+        blockManager.add('footer-section', {
+            label: 'Footer Section',
+            category: 'WelcomeLanding',
+            content: `
+<footer class="bg-slate-900 text-white pt-24 pb-12 rounded-t-[3rem] mt-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20">
+      <div class="col-span-2 lg:col-span-2">
+        <div class="flex items-center gap-2 mb-8">
+          <span class="material-symbols-outlined text-primary text-4xl">explore</span>
+          <span class="text-3xl font-black tracking-tight font-display">Sky Track</span>
+        </div>
+        <p class="text-slate-400 text-lg max-w-sm leading-relaxed">
+          The world's most vibrant GPS tracking platform. Making precision fun and security simple for everyone.
+        </p>
+      </div>
+      
+      <div>
+        <h4 class="text-white font-black text-xl mb-6 font-display">Pelajari</h4>
+        <ul class="space-y-4 text-base text-slate-400">
+          <li><a class="hover:text-primary transition-colors" href="#">Panduan Memulai</a></li>
+          <li><a class="hover:text-primary transition-colors" href="#">Dokumentasi API</a></li>
+          <li><a class="hover:text-primary transition-colors" href="#">Pusat Bantuan</a></li>
+          <li><a class="hover:text-primary transition-colors" href="#">Komunitas</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <h4 class="text-white font-black text-xl mb-6 font-display">Kontak</h4>
+        <ul class="space-y-4 text-base text-slate-400">
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">phone</span>+62 812 3456 7890</li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">mail</span><a class="hover:text-primary transition-colors" href="mailto:contact@sky-track.net">contact@sky-track.net</a></li>
+          <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">schedule</span>Senin - Jumat: 9:00 - 18:00</li>
+        </ul>
+      </div>
+      
+      <div>
+        <h4 class="text-white font-black text-xl mb-6 font-display">Legal</h4>
+        <ul class="space-y-4 text-base text-slate-400">
+          <li><a class="hover:text-primary transition-colors" href="#">Kebijakan Privasi</a></li>
+          <li><a class="hover:text-primary transition-colors" href="#">Syarat & Ketentuan</a></li>
+          <li><a class="hover:text-primary transition-colors" href="#">Kebijakan Cookie</a></li>
+          <li><a class="hover:text-primary transition-colors" href="#">Keamanan</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-800 pt-8 pb-8">
+      <p class="text-slate-400 text-sm flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">location_on</span>
+        Jl. Techno No. 123, Jakarta Selatan 12345, Indonesia
+      </p>
+    </div>
+    
+    <div class="border-t border-slate-800 pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
+      <p class="text-sm text-slate-500 font-medium">© ${new Date().getFullYear()} Sky Track. All rights reserved.</p>
+      <div class="flex gap-8">
+        <a class="text-slate-500 hover:text-primary transition-colors transform hover:scale-125" href="#">
+          <span class="material-symbols-outlined text-2xl">favorite</span>
+        </a>
+        <a class="text-slate-500 hover:text-primary transition-colors transform hover:scale-125" href="#">
+          <span class="material-symbols-outlined text-2xl">rocket_launch</span>
+        </a>
+        <a class="text-slate-500 hover:text-primary transition-colors transform hover:scale-125" href="#">
+          <span class="material-symbols-outlined text-2xl">language</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+            `,
+        });
+
         // blockManager.add('navbar-modern-gray', {
         //     label: 'Navbar Modern Gray',
         //     category: 'Sections',
