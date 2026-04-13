@@ -76,7 +76,7 @@ export default function Editor({ page }: Props): JSX.Element {
                 styles: [
                     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
                     '/builder/css/custom-builder.css',
-                    'href="https://fonts.bunny.net',
+                    'href="//https://fonts.bunny.net',
                     'https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap',
                     'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
                 ],
