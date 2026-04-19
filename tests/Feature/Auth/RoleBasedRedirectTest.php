@@ -24,7 +24,7 @@ class RoleBasedRedirectTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $response = $this->post('/login', [
-            'email' => $admin->email,
+            'login' => $admin->email,
             'password' => 'password',
         ]);
 
@@ -37,7 +37,7 @@ class RoleBasedRedirectTest extends TestCase
         $user = User::factory()->withUserRole()->create();
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'password',
         ]);
 
@@ -59,7 +59,7 @@ class RoleBasedRedirectTest extends TestCase
         $user->roles()->attach($customRole);
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'password',
         ]);
 
@@ -82,7 +82,7 @@ class RoleBasedRedirectTest extends TestCase
         $user->roles()->attach($customRole);
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'password',
         ]);
 
@@ -95,7 +95,7 @@ class RoleBasedRedirectTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'password',
         ]);
 
@@ -109,7 +109,7 @@ class RoleBasedRedirectTest extends TestCase
         $user = User::factory()->admin()->withUserRole()->create();
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'password',
         ]);
 

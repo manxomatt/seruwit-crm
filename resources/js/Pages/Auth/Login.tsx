@@ -9,13 +9,13 @@ interface Props {
 
 export default function Login({ status, canResetPassword, settings }: Props) {
     interface LoginForm {
-        email: string;
+        login: string;
         password: string;
         remember: boolean;
     }
 
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
-        email: '',
+        login: '',
         password: '',
         remember: false,
     });
@@ -149,30 +149,30 @@ export default function Login({ status, canResetPassword, settings }: Props) {
 
                             {/* Login Form */}
                             <form onSubmit={submit} className="space-y-6">
-                                {/* Email Field */}
+                                {/* Login Field */}
                                 <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
-                                        Alamat Email
+                                    <label htmlFor="login" className="block text-sm font-medium text-white/80 mb-2">
+                                        Email atau Username
                                     </label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <span className="material-symbols-outlined text-white/40">
-                                                mail
+                                                person
                                             </span>
                                         </div>
                                         <input
-                                            id="email"
-                                            type="email"
-                                            name="email"
-                                            value={data.email}
+                                            id="login"
+                                            type="text"
+                                            name="login"
+                                            value={data.login}
                                             autoComplete="username"
                                             autoFocus
-                                            onChange={(e) => setData('email', e.target.value)}
+                                            onChange={(e) => setData('login', e.target.value)}
                                             className="block w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-                                            placeholder="anda@contoh.com"
+                                            placeholder="email@contoh.com atau username"
                                         />
                                     </div>
-                                    <InputError message={errors.email} className="mt-2" />
+                                    <InputError message={errors.login} className="mt-2" />
                                 </div>
 
                                 {/* Password Field */}

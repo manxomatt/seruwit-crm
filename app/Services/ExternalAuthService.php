@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Services;
+
+use App\DTOs\ExternalUserData;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class ExternalAuthService
+{
+    /**
+     * Attempt authentication against the external REST API.
+     *
+     * Returns a populated DTO on success, or null when authentication
+     * fails or the external system is unreachable.
+     */
+    public function authenticate(string $email, string $password): ?ExternalUserData
+    {
+        try {
+            $response = Http::timeout($this->timeout())
+                ->post($this->loginUrl(), [
+                    'email' => $email,
+                    'password' => $password,
+                ]);
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            /** @var array<string, mixed> $data */
+            $data = $response->json();
+
+            if (! $this->hasRequiredFields($data)) {
+                Log::warning('External API response missing required fields', [
+                    'keys' => array_keys($data),
+                ]);
+
+                return null;
+            }
+
+            return ExternalUserData::fromApiResponse($data);
+        } catch (ConnectionException $e) {
+            Log::warning('External API unreachable', ['error' => $e->getMessage()]);
+
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('External API authentication error', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    private function loginUrl(): string
+    {
+        return rtrim((string) config('services.external_api.url'), '/').'/auth/login';
+    }
+
+    private function timeout(): int
+    {
+        return (int) config('services.external_api.timeout', 10);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function hasRequiredFields(array $data): bool
+    {
+        if (! isset($data['user']) || ! is_array($data['user'])) {
+            return false;
+        }
+
+        /** @var array<string, mixed> $user */
+        $user = $data['user'];
+
+        foreach (['id', 'name', 'email'] as $field) {
+            if (empty($user[$field])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

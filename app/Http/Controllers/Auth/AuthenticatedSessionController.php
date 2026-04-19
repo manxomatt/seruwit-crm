@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\Auth\LoginAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Setting;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    public function __construct(private readonly LoginAction $loginAction) {}
+
     /**
      * Display the login view.
      */
@@ -32,14 +35,23 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     *
+     * Executes the dual authentication flow:
+     * Local DB → on failure → External API → sync user → Laravel session.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        $request->ensureIsNotRateLimited();
+
+        $this->loginAction->execute(
+            login: $request->string('login')->value(),
+            password: $request->string('password')->value(),
+            throttleKey: $request->throttleKey(),
+            remember: $request->boolean('remember'),
+        );
 
         $request->session()->regenerate();
 
-        // Get the dashboard path based on user's primary role
         $dashboardPath = $request->user()->getDashboardPath();
 
         return redirect()->intended($dashboardPath);
