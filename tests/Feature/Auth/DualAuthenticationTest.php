@@ -534,4 +534,28 @@ class DualAuthenticationTest extends TestCase
 
         $response->assertSessionHasErrors('login');
     }
+
+    public function test_external_user_is_redirected_away_from_module_dashboard(): void
+    {
+        $this->seed(RoleSeeder::class);
+
+        $externalRole = \App\Models\Role::query()->where('slug', 'external_user')->firstOrFail();
+        $user = User::factory()->create(['status' => 'active']);
+        $user->roles()->sync([$externalRole->id]);
+
+        $response = $this->actingAs($user)->get('/module/dashboard');
+
+        $response->assertRedirect(route('external.dashboard'));
+    }
+
+    public function test_local_user_can_access_module_dashboard(): void
+    {
+        $this->seed(RoleSeeder::class);
+
+        $user = User::factory()->withUserRole()->create(['status' => 'active']);
+
+        $response = $this->actingAs($user)->get('/module/dashboard');
+
+        $response->assertStatus(200);
+    }
 }

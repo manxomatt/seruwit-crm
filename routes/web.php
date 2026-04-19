@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\External\DashboardController as ExternalDashboardController;
 use App\Http\Controllers\LiveUpdateController;
 use App\Http\Controllers\Module\AnalyticsController as ModuleAnalyticsController;
 use App\Http\Controllers\Module\CarouselController as ModuleCarouselController;
@@ -28,9 +29,14 @@ Route::get('/dashboard', [ModuleDashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// External API user dashboard
+Route::get('/external/dashboard', [ExternalDashboardController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('external.dashboard');
+
 Route::middleware('auth')->group(function () {
-    // Module Routes - Universal routes accessible by any user with proper permissions
-    Route::prefix('module')->name('module.')->group(function () {
+    // Module Routes - Local CMS users only; external API users are redirected.
+    Route::prefix('module')->name('module.')->middleware('not.external')->group(function () {
         Route::get('/dashboard', [ModuleDashboardController::class, 'index'])->name('dashboard');
 
         // Global Search

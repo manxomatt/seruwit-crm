@@ -60,13 +60,13 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($externalRoles as $slug => $name) {
-            Role::query()->firstOrCreate(
+            Role::query()->updateOrCreate(
                 ['slug' => $slug],
                 [
                     'name' => $name,
                     'description' => "Role for {$name} authenticated via the external API",
                     'is_system' => true,
-                    'dashboard_path' => '/module/dashboard',
+                    'dashboard_path' => '/external/dashboard',
                 ]
             );
         }

@@ -18,6 +18,7 @@ interface User {
     email: string;
     email_verified_at: string | null;
     is_admin: boolean;
+    dashboard_path: string;
     profile: UserProfile | null;
     permissions: Record<string, string[]>;
 }
@@ -191,12 +192,14 @@ const routeExists = (routeName: string): boolean => {
 
 // Helper function to get dashboard route based on user role
 const getDashboardRoute = (user: User | null): string => {
-    // All users now use module.dashboard
+    if (user?.dashboard_path) {
+        return user.dashboard_path;
+    }
+
     if (routeExists('module.dashboard')) {
         return route('module.dashboard');
     }
-    
-    // Fallback to generic dashboard
+
     return route('dashboard');
 };
 
