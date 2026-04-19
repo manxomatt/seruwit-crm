@@ -34,7 +34,7 @@ class DualAuthenticationTest extends TestCase
             ],
             'user' => [
                 'id' => 16,
-                'name' => 'Test User',
+                'username' => 'testuser',
                 'email' => 'test@example.com',
                 'role' => 'user',
                 'status' => 'true',
@@ -96,11 +96,16 @@ class DualAuthenticationTest extends TestCase
     {
         $this->seed(RoleSeeder::class);
 
-        $user = User::factory()->create(['password' => 'not-this-password']);
+        // User exists locally with a known username – email login can resolve
+        // the username to pass to the external API.
+        $user = User::factory()->create([
+            'username' => 'localuser',
+            'password' => 'not-this-password',
+        ]);
 
         Http::fake([
             '*/auth/login' => Http::response($this->apiResponse([
-                'user' => ['id' => 1, 'name' => $user->name, 'email' => $user->email],
+                'user' => ['id' => 1, 'username' => 'localuser', 'email' => $user->email],
             ]), 200),
         ]);
 
@@ -115,13 +120,15 @@ class DualAuthenticationTest extends TestCase
 
     public function test_external_authentication_creates_new_user_when_not_in_local_db(): void
     {
+        // New user (never synced) must login with username so the external API
+        // can be reached – email login alone cannot resolve to a username.
         $this->seed(RoleSeeder::class);
 
         Http::fake([
             '*/auth/login' => Http::response($this->apiResponse([
                 'user' => [
                     'id' => 999,
-                    'name' => 'New External User',
+                    'username' => 'newexternaluser',
                     'email' => 'newexternal@example.com',
                     'role' => 'user',
                     'status' => 'true',
@@ -130,7 +137,7 @@ class DualAuthenticationTest extends TestCase
         ]);
 
         $this->post('/login', [
-            'login' => 'newexternal@example.com',
+            'login' => 'newexternaluser',   // username login for first-time sync
             'password' => 'any-password',
         ]);
 
@@ -138,28 +145,42 @@ class DualAuthenticationTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'newexternal@example.com',
             'external_id' => '999',
-            'name' => 'New External User',
+            'username' => 'newexternaluser',
             'status' => 'active',
         ]);
     }
 
-    public function test_external_authentication_syncs_role_to_local_db(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function externalRoleProvider(): array
+    {
+        return [
+            'user maps to external_user' => ['user', 'external_user'],
+            'manager maps to external_manager' => ['manager', 'external_manager'],
+            'admin maps to external_admin' => ['admin', 'external_admin'],
+            'super_admin maps to external_super_admin' => ['super_admin', 'external_super_admin'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('externalRoleProvider')]
+    public function test_external_authentication_syncs_role_to_local_db(string $apiRole, string $expectedSlug): void
     {
         $this->seed(RoleSeeder::class);
 
         Http::fake([
             '*/auth/login' => Http::response($this->apiResponse([
-                'user' => ['id' => 123, 'name' => 'Role Sync User', 'email' => 'rolesync@example.com', 'role' => 'user'],
+                'user' => ['id' => 123, 'username' => 'rolesyncuser', 'email' => 'rolesync@example.com', 'role' => $apiRole],
             ]), 200),
         ]);
 
         $this->post('/login', [
-            'login' => 'rolesync@example.com',
+            'login' => 'rolesyncuser',
             'password' => 'any-password',
         ]);
 
         $user = User::query()->where('email', 'rolesync@example.com')->firstOrFail();
-        $this->assertTrue($user->hasRole('user'));
+        $this->assertTrue($user->hasRole($expectedSlug));
     }
 
     public function test_external_authentication_does_not_overwrite_existing_password(): void
@@ -167,6 +188,7 @@ class DualAuthenticationTest extends TestCase
         $this->seed(RoleSeeder::class);
 
         $existingUser = User::factory()->withUserRole()->create([
+            'username' => 'existinguser',
             'email' => 'existing@example.com',
             'external_id' => null,
         ]);
@@ -175,7 +197,7 @@ class DualAuthenticationTest extends TestCase
 
         Http::fake([
             '*/auth/login' => Http::response($this->apiResponse([
-                'user' => ['id' => 456, 'name' => $existingUser->name, 'email' => 'existing@example.com'],
+                'user' => ['id' => 456, 'username' => 'existinguser', 'email' => 'existing@example.com'],
             ]), 200),
         ]);
 
@@ -194,12 +216,12 @@ class DualAuthenticationTest extends TestCase
 
         Http::fake([
             '*/auth/login' => Http::response($this->apiResponse([
-                'user' => ['id' => 789, 'name' => 'External Sync', 'email' => 'extsync@example.com'],
+                'user' => ['id' => 789, 'username' => 'externalsync', 'email' => 'extsync@example.com'],
             ]), 200),
         ]);
 
         $this->post('/login', [
-            'login' => 'extsync@example.com',
+            'login' => 'externalsync',   // username login
             'password' => 'any-password',
         ]);
 
@@ -257,7 +279,7 @@ class DualAuthenticationTest extends TestCase
             '*/auth/login' => Http::response($this->apiResponse([
                 'user' => [
                     'id' => 55,
-                    'name' => 'Inactive User',
+                    'username' => 'inactiveuser',
                     'email' => 'inactive@example.com',
                     'status' => 'false',
                 ],
@@ -265,7 +287,7 @@ class DualAuthenticationTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'login' => 'inactive@example.com',
+            'login' => 'inactiveuser',   // username login
             'password' => 'any-password',
         ]);
 
@@ -296,7 +318,7 @@ class DualAuthenticationTest extends TestCase
             ],
             'user' => [
                 'id' => 16,
-                'name' => 'andito',
+                'username' => 'andito',
                 'email' => 'anditowilly2@gmail.com',
                 'role' => 'manager',
                 'status' => 'true',
@@ -306,6 +328,7 @@ class DualAuthenticationTest extends TestCase
 
         $this->assertSame('16', $dto->externalId);
         $this->assertSame('andito', $dto->name);
+        $this->assertSame('andito', $dto->username);
         $this->assertSame('anditowilly2@gmail.com', $dto->email);
         $this->assertSame('manager', $dto->role);
         $this->assertSame('active', $dto->status);
@@ -320,7 +343,7 @@ class DualAuthenticationTest extends TestCase
             'authorization' => [],
             'user' => [
                 'id' => 1,
-                'name' => 'Inactive',
+                'username' => 'inactive',
                 'email' => 'inactive@example.com',
                 'status' => 'false',
             ],
@@ -336,7 +359,7 @@ class DualAuthenticationTest extends TestCase
             'authorization' => [],
             'user' => [
                 'id' => 2,
-                'name' => 'No Role',
+                'username' => 'norole',
                 'email' => 'norole@example.com',
             ],
         ]);
@@ -358,12 +381,12 @@ class DualAuthenticationTest extends TestCase
                     'access_token' => 'access.jwt.here',
                     'refresh_token' => 'refresh.jwt.here',
                 ],
-                'user' => ['id' => 77, 'email' => 'tokenuser@example.com', 'name' => 'Token User'],
+                'user' => ['id' => 77, 'username' => 'tokenuser', 'email' => 'tokenuser@example.com'],
             ]), 200),
         ]);
 
         $this->post('/login', [
-            'login' => 'tokenuser@example.com',
+            'login' => 'tokenuser',   // username login
             'password' => 'any-password',
         ]);
 
@@ -381,7 +404,7 @@ class DualAuthenticationTest extends TestCase
                 'success' => true,
                 'user' => [
                     'id' => 88,
-                    'name' => 'No Token User',
+                    'username' => 'notokenuser',
                     'email' => 'notoken@example.com',
                     'role' => 'user',
                     'status' => 'true',
@@ -390,7 +413,7 @@ class DualAuthenticationTest extends TestCase
         ]);
 
         $this->post('/login', [
-            'login' => 'notoken@example.com',
+            'login' => 'notokenuser',   // username login
             'password' => 'any-password',
         ]);
 
@@ -444,7 +467,7 @@ class DualAuthenticationTest extends TestCase
 
         Http::fake([
             '*/auth/login' => Http::response($this->apiResponse([
-                'user' => ['id' => $user->id, 'name' => $user->name, 'email' => 'andito@example.com'],
+                'user' => ['id' => $user->id, 'username' => $user->username ?? $user->name, 'email' => 'andito@example.com'],
             ]), 200),
         ]);
 
@@ -459,15 +482,47 @@ class DualAuthenticationTest extends TestCase
 
     public function test_username_login_fails_when_username_not_found_locally(): void
     {
-        Http::fake(); // ensure no external calls made
+        // Email not in local DB → cannot resolve username → login fails without API call.
+        Http::fake(); // ensure NO external call is made
 
         $response = $this->post('/login', [
-            'login' => 'unknown_user',
+            'login' => 'unknown@example.com',
             'password' => 'any-password',
         ]);
 
         $this->assertGuest();
         $response->assertSessionHasErrors('login');
+    }
+
+    public function test_username_login_succeeds_via_external_api_when_not_in_local_db(): void
+    {
+        // Username login: sent directly to external API as the 'username' field.
+        $this->seed(RoleSeeder::class);
+
+        Http::fake([
+            '*/auth/login' => Http::response($this->apiResponse([
+                'user' => [
+                    'id' => 200,
+                    'username' => 'firsttimer',
+                    'email' => 'firsttimer@example.com',
+                    'role' => 'user',
+                    'status' => 'true',
+                ],
+            ]), 200),
+        ]);
+
+        $response = $this->post('/login', [
+            'login' => 'firsttimer',   // username – not in local DB
+            'password' => 'correct-password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect();
+        $this->assertDatabaseHas('users', [
+            'username' => 'firsttimer',
+            'email' => 'firsttimer@example.com',
+            'external_id' => '200',
+        ]);
     }
 
     public function test_validation_rejects_login_shorter_than_three_chars(): void

@@ -58,13 +58,20 @@ class LoginAction
             return;
         }
 
-        // Strategy 2 – external REST API (requires email)
-        // For username logins, resolve the email from the local database first.
-        $emailForApi = $isEmail
-            ? $login
-            : \App\Models\User::query()->where('username', $login)->value('email');
+        // Strategy 2 – external REST API accepts {"username": "...", "password": "..."}.
+        // Determine which username to send:
+        // - Login with username  → use directly.
+        // - Login with email     → look up username from local DB first;
+        //                          fall back to the name column for users synced
+        //                          before the username column was added.
+        $usernameForApi = $isEmail
+            ? (
+                \App\Models\User::query()->where('email', $login)->value('username')
+                ?? \App\Models\User::query()->where('email', $login)->value('name')
+            )
+            : $login;
 
-        if ($emailForApi === null) {
+        if ($usernameForApi === null) {
             RateLimiter::hit($throttleKey);
 
             throw ValidationException::withMessages([
@@ -72,7 +79,7 @@ class LoginAction
             ]);
         }
 
-        $externalUserData = $this->externalAuthService->authenticate($emailForApi, $password);
+        $externalUserData = $this->externalAuthService->authenticate($usernameForApi, $password, 'username');
 
         if ($externalUserData === null) {
             RateLimiter::hit($throttleKey);

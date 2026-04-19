@@ -25,6 +25,7 @@ class UserRepository implements UserRepositoryInterface
 
             $updateValues = [
                 'name' => $data->name,
+                'username' => $data->username,
                 'external_id' => $data->externalId,
                 'status' => $data->status,
                 'last_login_at' => now(),
@@ -56,11 +57,17 @@ class UserRepository implements UserRepositoryInterface
 
     /**
      * Synchronize the user's role based on the role slug from the external system.
-     * If the role does not exist locally, the user's existing roles are left unchanged.
+     *
+     * External API role slugs are prefixed with "external_" before lookup so they
+     * map to dedicated local roles (e.g. "manager" → "external_manager").
+     * Falls back to "external_user" if the prefixed role does not exist locally.
      */
     private function syncRole(User $user, string $roleSlug): void
     {
-        $role = Role::query()->where('slug', $roleSlug)->first();
+        $prefixedSlug = 'external_'.$roleSlug;
+
+        $role = Role::query()->where('slug', $prefixedSlug)->first()
+            ?? Role::query()->where('slug', 'external_user')->first();
 
         if ($role !== null) {
             $user->roles()->sync([$role->id]);

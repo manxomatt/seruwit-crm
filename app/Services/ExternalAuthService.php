@@ -15,12 +15,15 @@ class ExternalAuthService
      * Returns a populated DTO on success, or null when authentication
      * fails or the external system is unreachable.
      */
-    public function authenticate(string $email, string $password): ?ExternalUserData
+    /**
+     * @param  'email'|'username'  $loginField  The field name sent in the API payload.
+     */
+    public function authenticate(string $login, string $password, string $loginField = 'email'): ?ExternalUserData
     {
         try {
             $response = Http::timeout($this->timeout())
                 ->post($this->loginUrl(), [
-                    'email' => $email,
+                    $loginField => $login,
                     'password' => $password,
                 ]);
 
@@ -73,7 +76,7 @@ class ExternalAuthService
         /** @var array<string, mixed> $user */
         $user = $data['user'];
 
-        foreach (['id', 'name', 'email'] as $field) {
+        foreach (['id', 'username', 'email'] as $field) {
             if (empty($user[$field])) {
                 return false;
             }

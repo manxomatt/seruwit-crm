@@ -6,6 +6,7 @@ readonly class ExternalUserData
 {
     public function __construct(
         public string $name,
+        public string $username,
         public string $email,
         public string $externalId,
         public string $role,
@@ -28,7 +29,7 @@ readonly class ExternalUserData
      *   },
      *   "user": {
      *     "id": 16,
-     *     "name": "string",
+     *     "username": "string",
      *     "email": "string",
      *     "role": "string",    // role slug, e.g. "admin", "manager", "user"
      *     "status": "true",   // string boolean — normalized to "active"/"inactive"
@@ -47,7 +48,8 @@ readonly class ExternalUserData
         $authorization = $data['authorization'] ?? [];
 
         return new self(
-            name: (string) $user['name'],
+            name: (string) $user['username'],
+            username: (string) $user['username'],
             email: (string) $user['email'],
             externalId: (string) $user['id'],
             role: (string) ($user['role'] ?? 'user'),
