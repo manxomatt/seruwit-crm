@@ -35,9 +35,6 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
-     *
-     * Executes the dual authentication flow:
-     * Local DB → on failure → External API → sync user → Laravel session.
      */
     public function store(LoginRequest $request): RedirectResponse
     {

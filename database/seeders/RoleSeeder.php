@@ -44,31 +44,5 @@ class RoleSeeder extends Seeder
             ->where('action', 'view')
             ->get();
         $userRole->permissions()->sync($viewPermissions->pluck('id')->toArray());
-
-        // -----------------------------------------------------------------------
-        // External roles – assigned automatically to users authenticated via the
-        // external API. Prefixed with "external_" to distinguish from local roles.
-        // These roles carry no local CMS permissions; access is governed entirely
-        // by the external API and displayed in the user's dashboard.
-        // -----------------------------------------------------------------------
-
-        $externalRoles = [
-            'external_super_admin' => 'External Super Admin',
-            'external_admin' => 'External Admin',
-            'external_manager' => 'External Manager',
-            'external_user' => 'External User',
-        ];
-
-        foreach ($externalRoles as $slug => $name) {
-            Role::query()->updateOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => $name,
-                    'description' => "Role for {$name} authenticated via the external API",
-                    'is_system' => true,
-                    'dashboard_path' => '/external/dashboard',
-                ]
-            );
-        }
     }
 }

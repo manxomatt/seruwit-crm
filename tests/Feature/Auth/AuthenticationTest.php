@@ -59,6 +59,42 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_users_can_authenticate_with_username(): void
+    {
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+
+        $user = User::factory()->withUserRole()->create(['username' => 'andito']);
+
+        $response = $this->post('/login', [
+            'login' => 'andito',
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect();
+    }
+
+    public function test_authentication_updates_last_login_at(): void
+    {
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+
+        $user = User::factory()->withUserRole()->create(['last_login_at' => null]);
+
+        $this->post('/login', [
+            'login' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertNotNull($user->fresh()->last_login_at);
+    }
+
+    public function test_validation_requires_login_and_password(): void
+    {
+        $response = $this->post('/login', []);
+
+        $response->assertSessionHasErrors(['login', 'password']);
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();

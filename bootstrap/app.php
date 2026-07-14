@@ -18,7 +18,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
-            'not.external' => \App\Http\Middleware\EnsureNotExternalUser::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
