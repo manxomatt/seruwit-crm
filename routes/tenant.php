@@ -22,6 +22,7 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    \App\Http\Middleware\EnsureTenantIsActive::class,
 ])->group(function () {
     Route::get('/impersonate/{token}', function (string $token) {
         return UserImpersonation::makeResponse($token);

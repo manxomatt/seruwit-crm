@@ -107,6 +107,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/settings/{setting}', [ModuleSettingController::class, 'destroy'])->middleware('permission:settings,delete')->name('settings.destroy');
 
         // Module User Management Routes
+        Route::post('/users/invite', [\App\Http\Controllers\Module\UserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');
         Route::get('/users', [ModuleUserController::class, 'index'])->middleware('permission:users,view')->name('users.index');
         Route::get('/users/create', [ModuleUserController::class, 'create'])->middleware('permission:users,create')->name('users.create');
         Route::post('/users', [ModuleUserController::class, 'store'])->middleware('permission:users,create')->name('users.store');

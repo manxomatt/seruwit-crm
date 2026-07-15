@@ -11,6 +11,8 @@ export default function Register() {
         email: string;
         password: string;
         password_confirmation: string;
+        company_name: string;
+        subdomain: string;
     }
 
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
@@ -18,6 +20,8 @@ export default function Register() {
         email: '',
         password: '',
         password_confirmation: '',
+        company_name: '',
+        subdomain: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -107,6 +111,45 @@ export default function Register() {
                         message={errors.password_confirmation}
                         className="mt-2"
                     />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="company_name" value="Nama Perusahaan" />
+
+                    <TextInput
+                        id="company_name"
+                        name="company_name"
+                        value={data.company_name}
+                        className="mt-1 block w-full"
+                        autoComplete="organization"
+                        onChange={(e: any) => setData('company_name', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.company_name} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="subdomain" value="Subdomain Workspace" />
+
+                    <div className="mt-1 flex items-center">
+                        <TextInput
+                            id="subdomain"
+                            name="subdomain"
+                            value={data.subdomain}
+                            className="block w-full"
+                            placeholder="perusahaan-anda"
+                            onChange={(e: any) =>
+                                setData('subdomain', e.target.value.toLowerCase())
+                            }
+                            required
+                        />
+                        <span className="ms-2 whitespace-nowrap text-sm text-gray-500">
+                            .{window.location.hostname}
+                        </span>
+                    </div>
+
+                    <InputError message={errors.subdomain} className="mt-2" />
                 </div>
 
                 <div className="mt-4 flex items-center justify-end">
