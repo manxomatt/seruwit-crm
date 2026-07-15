@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Carousel;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Carousels\Models\Carousel;
 
 class GlobalSearchController extends Controller
 {
@@ -117,7 +118,7 @@ class GlobalSearchController extends Controller
         }
 
         // Search Carousels
-        if ($user->hasPermissionFor('carousels', 'view')) {
+        if (Modules::installed('carousels') && $user->hasPermissionFor('carousels', 'view')) {
             $carousels = Carousel::query()
                 ->where('name', 'like', "%{$query}%")
                 ->orWhere('description', 'like', "%{$query}%")

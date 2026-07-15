@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
-use App\Models\Carousel;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Post;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Carousels\Models\Carousel;
 
 class DashboardController extends Controller
 {
@@ -38,11 +39,14 @@ class DashboardController extends Controller
                 'images' => Media::query()->where('type', 'image')->count(),
                 'documents' => Media::query()->where('type', 'document')->count(),
             ],
-            'carousels' => [
+        ];
+
+        if (Modules::installed('carousels')) {
+            $stats['carousels'] = [
                 'total' => Carousel::query()->count(),
                 'active' => Carousel::query()->where('is_active', true)->count(),
-            ],
-        ];
+            ];
+        }
 
         // Get recent posts
         $recentPosts = Post::query()

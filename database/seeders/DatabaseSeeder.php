@@ -16,9 +16,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed permissions first, then roles, menus, and settings
+        // Permissions first — including every registered module's, since RoleSeeder
+        // syncs whatever exists at that moment onto the roles — then roles, menus
+        // and settings.
         $this->call([
             PermissionSeeder::class,
+            ModuleRegistrySeeder::class,
             RoleSeeder::class,
             MenuSeeder::class,
             SettingSeeder::class,

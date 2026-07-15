@@ -6,7 +6,16 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/js/app.tsx', 'resources/css/app.css'],
-            refresh: true,
+            // Spelled out rather than `refresh: true`, whose built-in path list
+            // is fixed and knows nothing about modules/ — module views and routes
+            // would never trigger a reload.
+            refresh: [
+                'app/View/Components/**',
+                'resources/views/**',
+                'routes/**',
+                'modules/*/View/Components/**',
+                'modules/*/resources/views/**',
+            ],
         }),
         react(),
     ],

@@ -24,6 +24,7 @@ interface TopContributor {
     email: string;
     pagesCount: number;
     mediaCount: number;
+    // Reported as 0 when the tenant has not installed the Carousels module.
     carouselsCount: number;
 }
 
@@ -48,7 +49,8 @@ interface Props {
         totalPages: number;
         publishedPages: number;
         totalMedia: number;
-        totalCarousels: number;
+        // Absent when the tenant has not installed the Carousels module.
+        totalCarousels?: number;
         totalTodos: number;
         completedTodos: number;
         totalSettings: number;
@@ -60,7 +62,8 @@ interface Props {
             total: number;
             hasHomepage: boolean;
         };
-        carousels: {
+        // Absent when the tenant has not installed the Carousels module.
+        carousels?: {
             active: number;
             inactive: number;
             total: number;
@@ -282,17 +285,19 @@ export default function Index({
                     }
                     color="bg-gradient-to-br from-purple-500 to-purple-600"
                 />
-                <StatCard
-                    title="Carousels"
-                    value={overview.totalCarousels}
-                    subtitle={`${contentStats.carousels.totalImages} images`}
-                    icon={
-                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122" />
-                        </svg>
-                    }
-                    color="bg-gradient-to-br from-indigo-500 to-indigo-600"
-                />
+                {overview.totalCarousels !== undefined && contentStats.carousels && (
+                    <StatCard
+                        title="Carousels"
+                        value={overview.totalCarousels}
+                        subtitle={`${contentStats.carousels.totalImages} images`}
+                        icon={
+                            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122" />
+                            </svg>
+                        }
+                        color="bg-gradient-to-br from-indigo-500 to-indigo-600"
+                    />
+                )}
             </div>
 
             {/* Content & Activity Grid */}
@@ -334,27 +339,29 @@ export default function Index({
                                 </div>
 
                                 {/* Carousels */}
-                                <div className="rounded-lg border border-gray-200 p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-sm font-medium text-gray-900">Carousels</h3>
-                                        <span className="text-2xl font-bold text-gray-900">{contentStats.carousels.total}</span>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Active</span>
-                                            <span className="font-medium text-green-600">{contentStats.carousels.active}</span>
+                                {contentStats.carousels && (
+                                    <div className="rounded-lg border border-gray-200 p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-sm font-medium text-gray-900">Carousels</h3>
+                                            <span className="text-2xl font-bold text-gray-900">{contentStats.carousels.total}</span>
                                         </div>
-                                        <ProgressBar value={contentStats.carousels.active} max={contentStats.carousels.total} color="bg-green-500" />
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Inactive</span>
-                                            <span className="font-medium text-gray-600">{contentStats.carousels.inactive}</span>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Active</span>
+                                                <span className="font-medium text-green-600">{contentStats.carousels.active}</span>
+                                            </div>
+                                            <ProgressBar value={contentStats.carousels.active} max={contentStats.carousels.total} color="bg-green-500" />
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Inactive</span>
+                                                <span className="font-medium text-gray-600">{contentStats.carousels.inactive}</span>
+                                            </div>
+                                            <ProgressBar value={contentStats.carousels.inactive} max={contentStats.carousels.total} color="bg-gray-400" />
                                         </div>
-                                        <ProgressBar value={contentStats.carousels.inactive} max={contentStats.carousels.total} color="bg-gray-400" />
+                                        <div className="mt-3 text-xs text-gray-500">
+                                            {contentStats.carousels.totalImages} total images
+                                        </div>
                                     </div>
-                                    <div className="mt-3 text-xs text-gray-500">
-                                        {contentStats.carousels.totalImages} total images
-                                    </div>
-                                </div>
+                                )}
 
                                 {/* Todos */}
                                 <div className="rounded-lg border border-gray-200 p-4">

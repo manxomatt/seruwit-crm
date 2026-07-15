@@ -4,29 +4,13 @@ namespace Tests\Feature\Tenancy;
 
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
+use Tests\Traits\WithTenant;
 
 class TenantProvisioningTest extends TestCase
 {
-    /**
-     * DatabaseMigrations (not RefreshDatabase) on purpose: tenant provisioning
-     * issues DDL (CREATE/DROP SCHEMA) that must commit, which deadlocks inside
-     * the transaction RefreshDatabase wraps around each test.
-     */
-    use DatabaseMigrations;
-
-    protected function tearDown(): void
-    {
-        // End tenancy first so the default connection points back at the
-        // central database, then delete tenants to trigger the DeleteDatabase
-        // pipeline that drops the schemas created during the test.
-        tenancy()->end();
-        Tenant::query()->get()->each->delete();
-
-        parent::tearDown();
-    }
+    use WithTenant;
 
     public function test_creating_a_tenant_provisions_and_migrates_its_database(): void
     {
@@ -40,6 +24,7 @@ class TenantProvisioningTest extends TestCase
             $this->assertTrue(Schema::hasTable('posts'));
             $this->assertTrue(Schema::hasTable('settings'));
             $this->assertTrue(Schema::hasTable('media'));
+            $this->assertTrue(Schema::hasTable('installed_modules'));
         });
     }
 

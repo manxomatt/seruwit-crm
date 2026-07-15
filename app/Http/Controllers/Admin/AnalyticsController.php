@@ -3,18 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Carousel;
-use App\Models\CarouselImage;
 use App\Models\LiveUpdate;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Setting;
 use App\Models\Todo;
 use App\Models\User;
+use App\Modules\Facades\Modules;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Carousels\Models\Carousel;
+use Modules\Carousels\Models\CarouselImage;
 
 class AnalyticsController extends Controller
 {
@@ -37,16 +38,21 @@ class AnalyticsController extends Controller
      */
     private function getOverviewStats(): array
     {
-        return [
+        $stats = [
             'totalUsers' => User::query()->count(),
             'totalPages' => Page::query()->count(),
             'publishedPages' => Page::query()->where('is_published', true)->count(),
             'totalMedia' => Media::query()->count(),
-            'totalCarousels' => Carousel::query()->count(),
             'totalTodos' => Todo::query()->count(),
             'completedTodos' => Todo::query()->where('is_completed', true)->count(),
             'totalSettings' => Setting::query()->count(),
         ];
+
+        if (Modules::installed('carousels')) {
+            $stats['totalCarousels'] = Carousel::query()->count();
+        }
+
+        return $stats;
     }
 
     /**
@@ -65,15 +71,6 @@ class AnalyticsController extends Controller
             ])
             ->toArray();
 
-        $carousels = Carousel::query()
-            ->select('is_active', DB::raw('count(*) as count'))
-            ->groupBy('is_active')
-            ->get()
-            ->mapWithKeys(fn ($item) => [
-                $item->is_active ? 'active' : 'inactive' => $item->count,
-            ])
-            ->toArray();
-
         $liveUpdates = LiveUpdate::query()
             ->select('is_active', DB::raw('count(*) as count'))
             ->groupBy('is_active')
@@ -83,18 +80,12 @@ class AnalyticsController extends Controller
             ])
             ->toArray();
 
-        return [
+        $stats = [
             'pages' => [
                 'published' => $pages['published'] ?? 0,
                 'draft' => $pages['draft'] ?? 0,
                 'total' => Page::query()->count(),
                 'hasHomepage' => Page::query()->where('is_homepage', true)->exists(),
-            ],
-            'carousels' => [
-                'active' => $carousels['active'] ?? 0,
-                'inactive' => $carousels['inactive'] ?? 0,
-                'total' => Carousel::query()->count(),
-                'totalImages' => CarouselImage::query()->count(),
             ],
             'liveUpdates' => [
                 'active' => $liveUpdates['active'] ?? 0,
@@ -108,6 +99,26 @@ class AnalyticsController extends Controller
                 'completionRate' => $this->calculateCompletionRate(),
             ],
         ];
+
+        if (Modules::installed('carousels')) {
+            $carousels = Carousel::query()
+                ->select('is_active', DB::raw('count(*) as count'))
+                ->groupBy('is_active')
+                ->get()
+                ->mapWithKeys(fn ($item) => [
+                    $item->is_active ? 'active' : 'inactive' => $item->count,
+                ])
+                ->toArray();
+
+            $stats['carousels'] = [
+                'active' => $carousels['active'] ?? 0,
+                'inactive' => $carousels['inactive'] ?? 0,
+                'total' => Carousel::query()->count(),
+                'totalImages' => CarouselImage::query()->count(),
+            ];
+        }
+
+        return $stats;
     }
 
     /**
@@ -174,8 +185,10 @@ class AnalyticsController extends Controller
             ? round((($usersThisMonth - $usersLastMonth) / $usersLastMonth) * 100, 1)
             : ($usersThisMonth > 0 ? 100 : 0);
 
+        $carouselsInstalled = Modules::installed('carousels');
+
         $topContributors = User::query()
-            ->withCount(['pages', 'media', 'carousels'])
+            ->withCount(array_filter(['pages', 'media', $carouselsInstalled ? 'carousels' : null]))
             ->orderByDesc('pages_count')
             ->take(5)
             ->get()
@@ -185,7 +198,7 @@ class AnalyticsController extends Controller
                 'email' => $user->email,
                 'pagesCount' => $user->pages_count,
                 'mediaCount' => $user->media_count,
-                'carouselsCount' => $user->carousels_count,
+                'carouselsCount' => $carouselsInstalled ? $user->carousels_count : 0,
             ])
             ->toArray();
 
@@ -268,21 +281,23 @@ class AnalyticsController extends Controller
             });
 
         // Recent carousels
-        Carousel::query()
-            ->latest('updated_at')
-            ->take(5)
-            ->get()
-            ->each(function ($carousel) use ($activities) {
-                $activities->push([
-                    'id' => 'carousel_'.$carousel->id,
-                    'type' => $carousel->created_at->eq($carousel->updated_at) ? 'carousel_created' : 'carousel_updated',
-                    'description' => $carousel->created_at->eq($carousel->updated_at)
-                        ? "Carousel \"{$carousel->name}\" was created"
-                        : "Carousel \"{$carousel->name}\" was updated",
-                    'time' => $carousel->updated_at,
-                    'timeForHumans' => $carousel->updated_at->diffForHumans(),
-                ]);
-            });
+        if (Modules::installed('carousels')) {
+            Carousel::query()
+                ->latest('updated_at')
+                ->take(5)
+                ->get()
+                ->each(function ($carousel) use ($activities) {
+                    $activities->push([
+                        'id' => 'carousel_'.$carousel->id,
+                        'type' => $carousel->created_at->eq($carousel->updated_at) ? 'carousel_created' : 'carousel_updated',
+                        'description' => $carousel->created_at->eq($carousel->updated_at)
+                            ? "Carousel \"{$carousel->name}\" was created"
+                            : "Carousel \"{$carousel->name}\" was updated",
+                        'time' => $carousel->updated_at,
+                        'timeForHumans' => $carousel->updated_at->diffForHumans(),
+                    ]);
+                });
+        }
 
         return $activities
             ->sortByDesc('time')

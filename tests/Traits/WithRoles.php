@@ -4,6 +4,7 @@ namespace Tests\Traits;
 
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\ModuleRegistrySeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 
@@ -11,10 +12,14 @@ trait WithRoles
 {
     /**
      * Set up roles and permissions for testing.
+     *
+     * Module permissions are seeded before RoleSeeder, which syncs whatever is in
+     * the table onto the roles — seed them after and no role would ever hold them.
      */
     protected function setUpRoles(): void
     {
         $this->seed(PermissionSeeder::class);
+        $this->seed(ModuleRegistrySeeder::class);
         $this->seed(RoleSeeder::class);
     }
 

@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Carousel;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Todo;
 use App\Models\User;
+use App\Modules\Facades\Modules;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Carousels\Models\Carousel;
 
 class DashboardController extends Controller
 {
@@ -78,7 +79,7 @@ class DashboardController extends Controller
 
         $totalStorageBytes = Media::query()->sum('size');
 
-        return [
+        $stats = [
             'totalUsers' => User::query()->count(),
             'userGrowth' => $userGrowth,
             'totalPages' => Page::query()->count(),
@@ -87,9 +88,14 @@ class DashboardController extends Controller
             'totalMedia' => Media::query()->count(),
             'mediaGrowth' => $mediaGrowth,
             'totalStorage' => $this->formatBytes($totalStorageBytes),
-            'totalCarousels' => Carousel::query()->count(),
-            'activeCarousels' => Carousel::query()->where('is_active', true)->count(),
         ];
+
+        if (Modules::installed('carousels')) {
+            $stats['totalCarousels'] = Carousel::query()->count();
+            $stats['activeCarousels'] = Carousel::query()->where('is_active', true)->count();
+        }
+
+        return $stats;
     }
 
     /**
@@ -149,21 +155,23 @@ class DashboardController extends Controller
             });
 
         // Recent carousels
-        Carousel::query()
-            ->latest('updated_at')
-            ->take(2)
-            ->get()
-            ->each(function ($carousel) use ($activities) {
-                $activities->push([
-                    'id' => 'carousel_'.$carousel->id,
-                    'type' => $carousel->created_at->eq($carousel->updated_at) ? 'carousel_created' : 'carousel_updated',
-                    'description' => $carousel->created_at->eq($carousel->updated_at)
-                        ? "Carousel \"{$carousel->name}\" was created"
-                        : "Carousel \"{$carousel->name}\" was updated",
-                    'time' => $carousel->updated_at,
-                    'timeForHumans' => $carousel->updated_at->diffForHumans(),
-                ]);
-            });
+        if (Modules::installed('carousels')) {
+            Carousel::query()
+                ->latest('updated_at')
+                ->take(2)
+                ->get()
+                ->each(function ($carousel) use ($activities) {
+                    $activities->push([
+                        'id' => 'carousel_'.$carousel->id,
+                        'type' => $carousel->created_at->eq($carousel->updated_at) ? 'carousel_created' : 'carousel_updated',
+                        'description' => $carousel->created_at->eq($carousel->updated_at)
+                            ? "Carousel \"{$carousel->name}\" was created"
+                            : "Carousel \"{$carousel->name}\" was updated",
+                        'time' => $carousel->updated_at,
+                        'timeForHumans' => $carousel->updated_at->diffForHumans(),
+                    ]);
+                });
+        }
 
         // Recent todos
         Todo::query()

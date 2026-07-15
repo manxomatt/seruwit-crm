@@ -90,12 +90,22 @@
             $html = $bodyMatch[1];
         }
         
-        // Parse and replace <carousel> tags with Blade component
+        // Parse and replace <carousel> tags with Blade component. Legacy page HTML
+        // can still carry these tags after the Carousels module is uninstalled and
+        // its tables purged, so the lookup must not run unless the module is there —
+        // this is a public, unauthenticated render and a QueryException here would
+        // take down the tenant's whole website.
+        $carouselsInstalled = \App\Modules\Facades\Modules::installed('carousels');
+
         $html = preg_replace_callback(
             '/<carousel\s+slug=["\']([^"\']+)["\']\s*(?:\/>|><\/carousel>|>[\s\S]*?<\/carousel>)/i',
-            function ($matches) {
+            function ($matches) use ($carouselsInstalled) {
+                if (! $carouselsInstalled) {
+                    return '';
+                }
+
                 $slug = $matches[1];
-                return view('components.carousel', ['slug' => $slug, 'carousel' => \App\Models\Carousel::query()
+                return view('carousels::carousel', ['slug' => $slug, 'carousel' => \Modules\Carousels\Models\Carousel::query()
                     ->where('slug', $slug)
                     ->where('is_active', true)
                     ->with('activeImages')

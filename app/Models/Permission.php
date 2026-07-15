@@ -28,10 +28,14 @@ class Permission extends Model
      *
      * @var array<string, string>
      */
+    /**
+     * Core modules, seeded for every tenant. Optional modules declare their own
+     * permissions via App\Modules\ModuleContract and are seeded on install, so
+     * they are deliberately absent here.
+     */
     public const MODULES = [
         'pages' => 'Pages',
         'posts' => 'Posts',
-        'carousels' => 'Carousels',
         'media' => 'Media',
         'users' => 'Users',
         'settings' => 'Settings',

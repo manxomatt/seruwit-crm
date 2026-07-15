@@ -13,9 +13,23 @@ createInertiaApp({
         const pages = {
             ...(import.meta.glob('./Pages/**/*.tsx') as Record<string, () => Promise<any>>),
             ...(import.meta.glob('./Pages/**/*.jsx') as Record<string, () => Promise<any>>),
+            ...(import.meta.glob('../../modules/*/resources/js/Pages/**/*.tsx') as Record<
+                string,
+                () => Promise<any>
+            >),
         };
 
-        return resolvePageComponent(`./Pages/${name}.tsx`, pages as any);
+        // A module's Pages directory overlays resources/js/Pages: same internal
+        // layout, so a page keeps its name when it moves into a module. For
+        // "Modules/<Module>/<Page>", the module's own copy wins and core is the
+        // fallback — modules are extracted one at a time, so both are live at once.
+        const owned = name.match(/^Modules\/([^/]+)\//);
+
+        const candidates = owned
+            ? [`../../modules/${owned[1]}/resources/js/Pages/${name}.tsx`, `./Pages/${name}.tsx`]
+            : [`./Pages/${name}.tsx`];
+
+        return resolvePageComponent(candidates, pages as any);
     },
     setup({ el, App, props }) {
         const root = createRoot(el as Element);

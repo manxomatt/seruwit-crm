@@ -34,7 +34,8 @@ interface Stats {
         images: number;
         documents: number;
     };
-    carousels: {
+    // Absent when the tenant has not installed the Carousels module.
+    carousels?: {
         total: number;
         active: number;
     };
@@ -333,14 +334,16 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                         color="amber"
                         href={route('module.media.index')}
                     />
-                    <StatCard
-                        title="Carousel"
-                        value={stats.carousels.total}
-                        subtitle={`${stats.carousels.active} aktif`}
-                        icon={<RectangleStackIcon />}
-                        color="rose"
-                        href={route('module.carousels.index')}
-                    />
+                    {stats.carousels && (
+                        <StatCard
+                            title="Carousel"
+                            value={stats.carousels.total}
+                            subtitle={`${stats.carousels.active} aktif`}
+                            icon={<RectangleStackIcon />}
+                            color="rose"
+                            href={route('module.carousels.index')}
+                        />
+                    )}
                 </div>
 
                 {/* Quick Actions & Recent Activity */}
@@ -374,13 +377,15 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                     icon={<PhotoIcon />}
                                     color="bg-gradient-to-r from-amber-500 to-orange-600"
                                 />
-                                <QuickAction
-                                    title="Carousel Baru"
-                                    description="Buat slideshow"
-                                    href={route('module.carousels.create')}
-                                    icon={<RectangleStackIcon />}
-                                    color="bg-gradient-to-r from-rose-500 to-pink-600"
-                                />
+                                {stats.carousels && (
+                                    <QuickAction
+                                        title="Carousel Baru"
+                                        description="Buat slideshow"
+                                        href={route('module.carousels.create')}
+                                        icon={<RectangleStackIcon />}
+                                        color="bg-gradient-to-r from-rose-500 to-pink-600"
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>

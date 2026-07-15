@@ -3,8 +3,6 @@
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\LiveUpdateController;
 use App\Http\Controllers\Module\AnalyticsController as ModuleAnalyticsController;
-use App\Http\Controllers\Module\CarouselController as ModuleCarouselController;
-use App\Http\Controllers\Module\CarouselImageController as ModuleCarouselImageController;
 use App\Http\Controllers\Module\DashboardController as ModuleDashboardController;
 use App\Http\Controllers\Module\GlobalSearchController as ModuleGlobalSearchController;
 use App\Http\Controllers\Module\MediaController as ModuleMediaController;
@@ -16,6 +14,7 @@ use App\Http\Controllers\Module\UserController as ModuleUserController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TodoController;
+use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -68,19 +67,6 @@ Route::middleware('auth')->group(function () {
         Route::patch('/posts/{post}/toggle-publish', [ModulePostController::class, 'togglePublish'])->middleware('permission:posts,update')->name('posts.toggle-publish');
         Route::delete('/posts/{post}', [ModulePostController::class, 'destroy'])->middleware('permission:posts,delete')->name('posts.destroy');
 
-        // Module Carousel Routes
-        Route::get('/carousels', [ModuleCarouselController::class, 'index'])->middleware('permission:carousels,view')->name('carousels.index');
-        Route::get('/carousels/create', [ModuleCarouselController::class, 'create'])->middleware('permission:carousels,create')->name('carousels.create');
-        Route::post('/carousels', [ModuleCarouselController::class, 'store'])->middleware('permission:carousels,create')->name('carousels.store');
-        Route::get('/carousels/{carousel}', [ModuleCarouselController::class, 'show'])->middleware('permission:carousels,view')->name('carousels.show');
-        Route::get('/carousels/{carousel}/edit', [ModuleCarouselController::class, 'edit'])->middleware('permission:carousels,update')->name('carousels.edit');
-        Route::patch('/carousels/{carousel}', [ModuleCarouselController::class, 'update'])->middleware('permission:carousels,update')->name('carousels.update');
-        Route::delete('/carousels/{carousel}', [ModuleCarouselController::class, 'destroy'])->middleware('permission:carousels,delete')->name('carousels.destroy');
-        Route::post('/carousels/{carousel}/images', [ModuleCarouselImageController::class, 'store'])->middleware('permission:carousels,create')->name('carousels.images.store');
-        Route::patch('/carousels/{carousel}/images/{image}', [ModuleCarouselImageController::class, 'update'])->middleware('permission:carousels,update')->name('carousels.images.update');
-        Route::delete('/carousels/{carousel}/images/{image}', [ModuleCarouselImageController::class, 'destroy'])->middleware('permission:carousels,delete')->name('carousels.images.destroy');
-        Route::post('/carousels/{carousel}/images/reorder', [ModuleCarouselImageController::class, 'reorder'])->middleware('permission:carousels,update')->name('carousels.images.reorder');
-
         // Module Media Routes
         Route::get('/media', [ModuleMediaController::class, 'index'])->middleware('permission:media,view')->name('media.index');
         Route::get('/media/create', [ModuleMediaController::class, 'create'])->middleware('permission:media,create')->name('media.create');
@@ -124,6 +110,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/roles/{role}/edit', [ModuleRoleController::class, 'edit'])->middleware('permission:roles,update')->name('roles.edit');
         Route::patch('/roles/{role}', [ModuleRoleController::class, 'update'])->middleware('permission:roles,update')->name('roles.update');
         Route::delete('/roles/{role}', [ModuleRoleController::class, 'destroy'])->middleware('permission:roles,delete')->name('roles.destroy');
+
+        // Routes contributed by installed-per-tenant modules. Registered
+        // unconditionally: enforcement is the requires-module middleware's job,
+        // since conditional registration would bake one tenant's install state
+        // into route:cache and break route() for everyone else.
+        Modules::registerRoutes();
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

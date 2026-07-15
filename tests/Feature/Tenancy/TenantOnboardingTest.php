@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Tenancy;
 
-use App\Actions\Tenancy\CreateTenantAction;
 use App\Models\CentralUser;
 use App\Models\Invitation;
 use App\Models\Role;
@@ -10,38 +9,14 @@ use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\TenantInvitationNotification;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Traits\WithTenant;
 
 class TenantOnboardingTest extends TestCase
 {
-    /**
-     * DatabaseMigrations (not RefreshDatabase) on purpose: tenant provisioning
-     * issues DDL (CREATE/DROP SCHEMA) that must commit, which deadlocks inside
-     * the transaction RefreshDatabase wraps around each test.
-     */
-    use DatabaseMigrations;
-
-    protected function tearDown(): void
-    {
-        tenancy()->end();
-        Tenant::query()->get()->each->delete();
-
-        parent::tearDown();
-    }
-
-    private function provisionTenant(string $company, string $subdomain, string $ownerEmail): Tenant
-    {
-        User::factory()->create(['email' => $ownerEmail]);
-
-        return app(CreateTenantAction::class)->execute(
-            companyName: $company,
-            subdomain: $subdomain,
-            owner: CentralUser::query()->firstWhere('email', $ownerEmail),
-        );
-    }
+    use WithTenant;
 
     public function test_new_tenant_schema_is_seeded_with_roles_and_settings(): void
     {
