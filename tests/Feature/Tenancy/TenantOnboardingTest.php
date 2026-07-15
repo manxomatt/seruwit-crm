@@ -128,7 +128,14 @@ class TenantOnboardingTest extends TestCase
         $admin = $this->makeCentralAdmin();
         $tenant = $this->provisionTenant('Detail Co', 'detail-co', 'owner@detail.test');
 
-        $this->actingAs($admin)->get('/module/tenants/'.$tenant->id)->assertOk();
+        // The page's tenant record must not collide with the shared currentTenant
+        // domain context (null on central) — otherwise the sidebar hides its menu.
+        $this->actingAs($admin)->get('/module/tenants/'.$tenant->id)
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Module/Tenants/Show')
+                ->where('currentTenant', null)
+                ->where('tenant.id', $tenant->id)
+            );
 
         $this->actingAs($admin)->patch('/module/tenants/'.$tenant->id, [
             'name' => 'Detail Co Renamed',

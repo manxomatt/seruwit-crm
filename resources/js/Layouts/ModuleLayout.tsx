@@ -229,8 +229,8 @@ export default function ModuleLayout({ header, children }: Props) {
     const settings = pageProps.settings as Record<string, string> | undefined;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // No tenant prop means we are on the central domain (the SaaS control plane).
-    const isCentral = !pageProps.tenant;
+    // No current-tenant domain context means we are on the central domain (the SaaS control plane).
+    const isCentral = !pageProps.currentTenant;
     const isAdmin = user?.is_admin || false;
     const theme = getThemeColors(isAdmin);
     const panelName = isAdmin ? 'Admin' : 'Module';

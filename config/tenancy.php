@@ -129,8 +129,13 @@ return [
          * packages that use asset() calls inside the tenant app. To avoid such issues, you can
          * disable asset() helper tenancy and explicitly use tenant_asset() calls in places
          * where you want to use tenant-specific assets (product images, avatars, etc).
+         *
+         * Disabled: the @vite directive resolves build assets via asset(), and on tenant
+         * domains a tenant-aware asset() rewrites them to /tenancy/assets/build/... (served
+         * from tenant storage) → 404. Build assets are shared/public, so asset() stays global.
+         * Tenant-specific files use the tenancy asset route explicitly (see App\Models\Media).
          */
-        'asset_helper_tenancy' => true,
+        'asset_helper_tenancy' => false,
     ],
 
     /**

@@ -67,7 +67,10 @@ class HandleInertiaRequests extends Middleware
             'route_prefix' => $routePrefix,
             'menus' => $this->getMenus($user, $routePrefix),
             'settings' => $settings,
-            'tenant' => tenancy()->initialized ? [
+            // The tenant *domain* we're currently on (null on the central domain).
+            // Named distinctly so it never collides with page props that carry a
+            // tenant record (e.g. the tenant management detail page).
+            'currentTenant' => tenancy()->initialized ? [
                 'id' => tenant('id'),
                 'name' => tenant('name'),
             ] : null,
