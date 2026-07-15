@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Stancl\Tenancy\Features\UserImpersonation;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -11,10 +12,9 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 | Tenant Routes
 |--------------------------------------------------------------------------
 |
-| Here you can register the tenant routes for your application.
-| These routes are loaded by the TenantRouteServiceProvider.
-|
-| Feel free to customize them however you want. Good luck!
+| Served on tenant domains. Tenancy is initialized from the request domain,
+| after which the full CRM application (routes/app.php) runs against the
+| tenant's own PostgreSQL schema.
 |
 */
 
@@ -23,11 +23,9 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-    Route::get('/', function () {
-        return response()->json([
-            'tenant_id' => tenant('id'),
-            'tenant_name' => tenant('name'),
-            'users_in_tenant_schema' => \App\Models\User::query()->count(),
-        ]);
-    });
+    Route::get('/impersonate/{token}', function (string $token) {
+        return UserImpersonation::makeResponse($token);
+    })->name('tenant.impersonate');
+
+    require __DIR__.'/app.php';
 });

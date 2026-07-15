@@ -58,8 +58,11 @@ class TenantProvisioningTest extends TestCase
             $this->assertFalse(User::query()->where('email', 'central@example.com')->exists());
         });
 
-        $this->assertFalse(User::query()->where('email', 'tenant@example.com')->exists());
+        // The central user never leaks into the tenant schema. The tenant user
+        // does get a synced identity copy in central (resource syncing), but
+        // the tenant schema itself only ever contains its own single user.
         $this->assertTrue(User::query()->where('email', 'central@example.com')->exists());
+        $this->assertSame(1, $tenant->run(fn (): int => User::query()->count()));
     }
 
     public function test_tenant_domain_serves_the_tenant_application(): void
@@ -70,11 +73,7 @@ class TenantProvisioningTest extends TestCase
         $response = $this->get('http://demo.localhost/');
 
         $response->assertOk();
-        $response->assertJson([
-            'tenant_id' => $tenant->id,
-            'tenant_name' => 'Demo Company',
-            'users_in_tenant_schema' => 0,
-        ]);
+        $response->assertInertia(fn ($page) => $page->component('Welcome'));
     }
 
     public function test_tenant_routes_are_not_accessible_from_central_domains(): void

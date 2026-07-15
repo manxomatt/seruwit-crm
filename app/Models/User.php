@@ -9,11 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+use Stancl\Tenancy\Contracts\Syncable;
+use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
 
-class User extends Authenticatable
+class User extends Authenticatable implements Syncable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, ResourceSyncing;
 
     /**
      * The attributes that are mass assignable.
@@ -21,12 +24,62 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'global_id',
         'name',
         'username',
         'email',
         'password',
         'last_login_at',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $user): void {
+            if ($user->global_id === null) {
+                $user->global_id = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getGlobalIdentifierKey(): string
+    {
+        return (string) $this->getAttribute($this->getGlobalIdentifierKeyName());
+    }
+
+    public function getGlobalIdentifierKeyName(): string
+    {
+        return 'global_id';
+    }
+
+    public function getCentralModelName(): string
+    {
+        return CentralUser::class;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getSyncedAttributeNames(): array
+    {
+        return [
+            'name',
+            'username',
+            'email',
+            'password',
+        ];
+    }
+
+    /**
+     * Only fire the sync event inside tenant context. In the central context
+     * this model is not a SyncMaster (CentralUser is), so syncing from central
+     * saves would make the UpdateSyncedResource listener throw.
+     */
+    public function triggerSyncEvent(): void
+    {
+        if (tenancy()->initialized) {
+            event(new \Stancl\Tenancy\Events\SyncedResourceSaved($this, tenant()));
+        }
+    }
 
     /**
      * The attributes that should be hidden for serialization.

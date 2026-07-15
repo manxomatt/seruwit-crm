@@ -67,6 +67,10 @@ class HandleInertiaRequests extends Middleware
             'route_prefix' => $routePrefix,
             'menus' => $user ? Menu::getMenusForUser($user, $routePrefix)->toArray() : [],
             'settings' => $settings,
+            'tenant' => tenancy()->initialized ? [
+                'id' => tenant('id'),
+                'name' => tenant('name'),
+            ] : null,
         ];
     }
 
