@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Central\InvitationController;
-use App\Http\Controllers\Central\TenantAdminController;
 use App\Http\Controllers\Central\WorkspaceController;
+use App\Http\Controllers\Module\TenantController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,19 +22,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::domain(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost')
+$centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost';
+
+Route::domain($centralDomain)
     ->name('central.')
     ->group(function () {
         Route::middleware('auth')->group(function () {
             Route::get('/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
             Route::get('/workspaces/{tenant}/enter', [WorkspaceController::class, 'enter'])->name('workspaces.enter');
-        });
-
-        // Platform super admin — tenant management
-        Route::middleware(['auth', 'can:manage-tenants'])->prefix('admin')->group(function () {
-            Route::get('/tenants', [TenantAdminController::class, 'index'])->name('tenants.index');
-            Route::post('/tenants', [TenantAdminController::class, 'store'])->name('tenants.store');
-            Route::patch('/tenants/{tenant}/status', [TenantAdminController::class, 'toggleStatus'])->name('tenants.toggle-status');
         });
 
         // Invitation acceptance (guest-accessible; account may not exist yet)
@@ -48,4 +43,29 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost')
 
             require __DIR__.'/auth.php';
         }
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Tenant Management (SaaS control plane)
+|--------------------------------------------------------------------------
+|
+| The tenants/domains tables live only in the central schema, so this feature
+| runs on the central domain exclusively. It is exposed under /module/tenants
+| (name module.tenants.*) so it looks and behaves like any other CRM module,
+| but it is gated to platform super admins via the manage-tenants ability.
+|
+*/
+
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-tenants'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
+        Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
+        Route::get('/tenants/{tenant}', [TenantController::class, 'show'])->name('tenants.show');
+        Route::patch('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
+        Route::patch('/tenants/{tenant}/status', [TenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+        Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
     });

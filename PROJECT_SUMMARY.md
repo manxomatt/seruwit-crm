@@ -61,7 +61,7 @@ Konsep kunci:
 - Tenant switcher lintas domain tanpa login ulang
 
 ### Onboarding & Administrasi Platform
-- **Dua pintu pembuatan tenant**: registrasi mandiri (SaaS) dan panel super admin (`/admin/tenants`: list, buat untuk pelanggan, tangguhkan/aktifkan) — gate `manage-tenants`
+- **Dua pintu pembuatan tenant**: registrasi mandiri (SaaS) dan panel super admin (`/module/tenants`: list, buat untuk pelanggan, tangguhkan/aktifkan) — gate `manage-tenants`, tampil sebagai modul "Kelola Tenant" di sidebar central
 - **Penangguhan tenant**: seluruh request ke tenant suspended diblokir (403)
 - **Sistem undangan**: admin workspace mengundang via email + pilihan peran; undangan berlaku 7 hari; penerima baru cukup set nama+password, penerima lama tinggal menerima — keduanya berakhir SSO langsung masuk workspace
 

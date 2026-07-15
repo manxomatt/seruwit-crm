@@ -190,6 +190,12 @@ const routeExists = (routeName: string): boolean => {
     }
 };
 
+const BuildingIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+    </svg>
+);
+
 // Helper function to get dashboard route based on user role
 const getDashboardRoute = (user: User | null): string => {
     if (user?.dashboard_path) {
@@ -222,16 +228,18 @@ export default function ModuleLayout({ header, children }: Props) {
     const user = pageProps.auth.user as User | null;
     const settings = pageProps.settings as Record<string, string> | undefined;
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    
+
+    // No tenant prop means we are on the central domain (the SaaS control plane).
+    const isCentral = !pageProps.tenant;
     const isAdmin = user?.is_admin || false;
     const theme = getThemeColors(isAdmin);
     const panelName = isAdmin ? 'Admin' : 'Module';
-    
+
     // Get logo and site name from settings
     const siteLogo = settings?.['site.logo'];
     const siteName = settings?.['general.site_name'] || 'Sky Track';
 
-    // Build navigation based on user permissions
+    // Build navigation from the user's permissions in the active schema.
     const navigation = useMemo(() => {
         const dashboardRoute = getDashboardRoute(user);
         const items: MenuItem[] = [
@@ -266,8 +274,19 @@ export default function ModuleLayout({ header, children }: Props) {
             }
         });
 
+        // On the central domain, super admins also manage tenants (SaaS control plane).
+        if (isCentral && isAdmin && routeExists('module.tenants.index')) {
+            items.push({
+                name: 'Kelola Tenant',
+                href: route('module.tenants.index'),
+                icon: <BuildingIcon />,
+                current: route().current('module.tenants.*'),
+                module: 'tenants',
+            });
+        }
+
         return items;
-    }, [user]);
+    }, [user, isCentral, isAdmin]);
 
     return (
         <div className="min-h-screen bg-gray-50">

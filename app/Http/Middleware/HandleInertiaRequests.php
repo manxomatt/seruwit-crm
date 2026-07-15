@@ -65,7 +65,7 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'route_prefix' => $routePrefix,
-            'menus' => $user ? Menu::getMenusForUser($user, $routePrefix)->toArray() : [],
+            'menus' => $this->getMenus($user, $routePrefix),
             'settings' => $settings,
             'tenant' => tenancy()->initialized ? [
                 'id' => tenant('id'),
@@ -76,10 +76,14 @@ class HandleInertiaRequests extends Middleware
 
     /**
      * Get the current route prefix (admin, user, or module).
+     *
+     * Routes served on the central domain carry a "central." name prefix
+     * (see routes/web.php); it is stripped here so the inner prefix is
+     * detected identically on central and tenant domains.
      */
     private function getRoutePrefix(Request $request): string
     {
-        $routeName = $request->route()?->getName() ?? '';
+        $routeName = str_replace('central.', '', $request->route()?->getName() ?? '');
 
         if (str_starts_with($routeName, 'admin.')) {
             return 'admin';
@@ -89,15 +93,25 @@ class HandleInertiaRequests extends Middleware
             return 'user';
         }
 
-        if (str_starts_with($routeName, 'module.')) {
-            return 'module';
-        }
-
-        return 'module'; // Default fallback
+        return 'module';
     }
 
     /**
-     * Get the user's permissions grouped by module.
+     * Get menus for the current user from the active schema.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getMenus(?\App\Models\User $user, string $routePrefix): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        return Menu::getMenusForUser($user, $routePrefix)->toArray();
+    }
+
+    /**
+     * Get the user's permissions grouped by module from the active schema.
      *
      * @return array<string, array<string>>
      */
@@ -110,6 +124,7 @@ class HandleInertiaRequests extends Middleware
             if (! isset($grouped[$permission->module])) {
                 $grouped[$permission->module] = [];
             }
+
             $grouped[$permission->module][] = $permission->action;
         }
 

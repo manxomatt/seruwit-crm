@@ -25,6 +25,11 @@ class ValidSubdomain implements ValidationRule
         'static',
     ];
 
+    /**
+     * @param  string|null  $ignoreDomain  Existing full domain to exclude from the uniqueness check (for edits).
+     */
+    public function __construct(private readonly ?string $ignoreDomain = null) {}
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value) || ! preg_match('/^[a-z0-9]([a-z0-9-]{1,28}[a-z0-9])?$/', $value)) {
@@ -39,7 +44,13 @@ class ValidSubdomain implements ValidationRule
             return;
         }
 
-        if (Domain::query()->where('domain', CreateTenantAction::fullDomain($value))->exists()) {
+        $fullDomain = CreateTenantAction::fullDomain($value);
+
+        if ($fullDomain === $this->ignoreDomain) {
+            return;
+        }
+
+        if (Domain::query()->where('domain', $fullDomain)->exists()) {
             $fail('Subdomain ini sudah digunakan.');
         }
     }

@@ -95,9 +95,9 @@ class TenantOnboardingTest extends TestCase
     {
         $admin = $this->makeCentralAdmin();
 
-        $this->actingAs($admin)->get('/admin/tenants')->assertOk();
+        $this->actingAs($admin)->get('/module/tenants')->assertOk();
 
-        $response = $this->actingAs($admin)->post('/admin/tenants', [
+        $response = $this->actingAs($admin)->post('/module/tenants', [
             'company_name' => 'Managed Co',
             'subdomain' => 'managed-co',
             'owner_name' => 'Managed Owner',
@@ -120,7 +120,61 @@ class TenantOnboardingTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->get('/admin/tenants')->assertForbidden();
+        $this->actingAs($user)->get('/module/tenants')->assertForbidden();
+    }
+
+    public function test_super_admin_can_view_and_update_tenant_detail(): void
+    {
+        $admin = $this->makeCentralAdmin();
+        $tenant = $this->provisionTenant('Detail Co', 'detail-co', 'owner@detail.test');
+
+        $this->actingAs($admin)->get('/module/tenants/'.$tenant->id)->assertOk();
+
+        $this->actingAs($admin)->patch('/module/tenants/'.$tenant->id, [
+            'name' => 'Detail Co Renamed',
+            'subdomain' => 'detail-co-2',
+            'status' => 'suspended',
+        ])->assertSessionHasNoErrors();
+
+        $tenant->refresh();
+        $this->assertSame('Detail Co Renamed', $tenant->name);
+        $this->assertSame('suspended', $tenant->status);
+        $this->assertSame('detail-co-2.localhost', $tenant->domains()->first()->domain);
+    }
+
+    public function test_super_admin_can_delete_a_tenant(): void
+    {
+        $admin = $this->makeCentralAdmin();
+        $tenant = $this->provisionTenant('Doomed Co', 'doomed-co', 'owner@doomed.test');
+        $tenantId = $tenant->id;
+
+        // Wrong confirmation name is rejected.
+        $this->actingAs($admin)->delete('/module/tenants/'.$tenantId, [
+            'confirm_name' => 'Wrong Name',
+        ])->assertSessionHasErrors('confirm_name');
+
+        $this->assertNotNull(Tenant::query()->find($tenantId));
+
+        // Correct confirmation deletes the tenant and drops its schema.
+        $this->actingAs($admin)->delete('/module/tenants/'.$tenantId, [
+            'confirm_name' => 'Doomed Co',
+        ])->assertRedirect(route('module.tenants.index', absolute: false));
+
+        $this->assertNull(Tenant::query()->find($tenantId));
+        $this->assertDatabaseMissing('domains', ['tenant_id' => $tenantId]);
+    }
+
+    public function test_saas_customer_is_redirected_from_central_module_to_workspaces(): void
+    {
+        $this->provisionTenant('Portal Co', 'portal-co', 'member@portal.test');
+
+        // The owner belongs to a tenant but has no role in the central schema,
+        // so on the central domain they belong in the workspace portal, not the CRM.
+        $member = User::query()->firstWhere('email', 'member@portal.test');
+
+        $this->actingAs($member)
+            ->get('/module/dashboard')
+            ->assertRedirect(route('central.workspaces.index', absolute: false));
     }
 
     public function test_suspended_tenant_is_blocked_on_its_domain(): void
