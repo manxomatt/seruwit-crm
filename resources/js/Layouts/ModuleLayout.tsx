@@ -141,6 +141,22 @@ const UserAvatar = ({ user, size = 'md' }: { user: User | null; size?: 'sm' | 'm
     );
 };
 
+const ChevronDownIcon = () => (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </svg>
+);
+
+// Sidebar menu groups: modules are shown under these collapsible sections in
+// this order. Items still appear only when the user has permission for them,
+// and a group with no accessible items is hidden entirely.
+const MENU_GROUPS: { title: string; modules: string[] }[] = [
+    { title: 'Konten', modules: ['pages', 'posts', 'carousels', 'media'] },
+    { title: 'Wawasan', modules: ['analytics', 'live-updates'] },
+    { title: 'Administrasi', modules: ['users', 'roles', 'settings'] },
+    { title: 'Platform', modules: ['tenants'] },
+];
+
 // Module to route mapping - use module routes
 const moduleRouteMap: Record<string, { route: string; routePattern: string }> = {
     'pages': { route: 'module.pages.index', routePattern: 'module.pages.*' },
@@ -288,6 +304,83 @@ export default function ModuleLayout({ header, children }: Props) {
         return items;
     }, [user, isCentral, isAdmin]);
 
+    // Split the flat navigation into the standalone Dashboard plus collapsible
+    // groups, preserving the module order defined in MENU_GROUPS.
+    const dashboardItem = navigation.find((item) => item.module === 'dashboard');
+    const menuGroups = useMemo(() => {
+        return MENU_GROUPS.map((group) => ({
+            title: group.title,
+            items: group.modules
+                .map((module) => navigation.find((item) => item.module === module))
+                .filter((item): item is MenuItem => Boolean(item)),
+        })).filter((group) => group.items.length > 0);
+    }, [navigation]);
+
+    // Collapsible group state, persisted so it survives page navigations.
+    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+        try {
+            return JSON.parse(localStorage.getItem('sidebarGroups') || '{}');
+        } catch {
+            return {};
+        }
+    });
+    const isGroupOpen = (title: string) => openGroups[title] ?? true;
+    const toggleGroup = (title: string) =>
+        setOpenGroups((prev) => {
+            const next = { ...prev, [title]: !(prev[title] ?? true) };
+            try {
+                localStorage.setItem('sidebarGroups', JSON.stringify(next));
+            } catch {
+                // ignore storage failures (e.g. private mode)
+            }
+            return next;
+        });
+
+    const renderNavLink = (item: MenuItem) => (
+        <Link
+            key={item.name}
+            href={item.href}
+            className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                item.current
+                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                    : `${theme.text} hover:bg-white/10 hover:text-white`
+            }`}
+        >
+            <span className={`mr-3 ${item.current ? 'text-white' : `${theme.textHover} group-hover:text-white`}`}>
+                {item.icon}
+            </span>
+            {item.name}
+        </Link>
+    );
+
+    const renderNavigation = () => (
+        <>
+            {dashboardItem && renderNavLink(dashboardItem)}
+            {menuGroups.map((group) => {
+                const open = isGroupOpen(group.title);
+                const hasActive = group.items.some((item) => item.current);
+                return (
+                    <div key={group.title} className="pt-3">
+                        <button
+                            type="button"
+                            onClick={() => toggleGroup(group.title)}
+                            aria-expanded={open}
+                            className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                                hasActive && !open ? 'text-white' : `${theme.text} hover:text-white`
+                            }`}
+                        >
+                            <span>{group.title}</span>
+                            <span className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`}>
+                                <ChevronDownIcon />
+                            </span>
+                        </button>
+                        {open && <div className="mt-1 space-y-1">{group.items.map(renderNavLink)}</div>}
+                    </div>
+                );
+            })}
+        </>
+    );
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Mobile sidebar overlay */}
@@ -315,23 +408,8 @@ export default function ModuleLayout({ header, children }: Props) {
                                 <CloseIcon />
                             </button>
                         </div>
-                        <nav className="flex-1 space-y-1 px-2 py-4">
-                            {navigation.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                                        item.current
-                                            ? 'bg-white/20 text-white shadow-lg'
-                                            : `${theme.text} hover:bg-white/10 hover:text-white`
-                                    }`}
-                                >
-                                    <span className={`mr-3 ${item.current ? 'text-white' : `${theme.textHover} group-hover:text-white`}`}>
-                                        {item.icon}
-                                    </span>
-                                    {item.name}
-                                </Link>
-                            ))}
+                        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
+                            {renderNavigation()}
                         </nav>
                         {/* Mobile sidebar user section */}
                         <div className={`border-t ${theme.border} p-4`}>
@@ -360,23 +438,8 @@ export default function ModuleLayout({ header, children }: Props) {
                             <span className="ml-2 text-xl font-bold text-white">{siteName}</span>
                         </Link>
                     </div>
-                    <nav className="flex-1 space-y-1 px-3 py-4">
-                        {navigation.map((item) => (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                                    item.current
-                                        ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
-                                        : `${theme.text} hover:bg-white/10 hover:text-white`
-                                }`}
-                            >
-                                <span className={`mr-3 ${item.current ? 'text-white' : `${theme.textHover} group-hover:text-white`}`}>
-                                    {item.icon}
-                                </span>
-                                {item.name}
-                            </Link>
-                        ))}
+                    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+                        {renderNavigation()}
                     </nav>
                     {/* Desktop sidebar user section (kiri bawah) */}
                     <div className={`border-t ${theme.border} p-4`}>

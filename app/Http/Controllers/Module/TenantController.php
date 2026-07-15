@@ -105,6 +105,11 @@ class TenantController extends Controller
                 'subdomain' => $domain ? explode('.', $domain)[0] : null,
                 'members' => $tenant->users_count,
                 'created_at' => $tenant->created_at?->toDateString(),
+                'billing_email' => $tenant->billing_email,
+                'phone' => $tenant->phone,
+                'address' => $tenant->address,
+                'tax_id' => $tenant->tax_id,
+                'notes' => $tenant->notes,
             ],
             'members' => $members,
         ]);
@@ -117,15 +122,27 @@ class TenantController extends Controller
     {
         $currentDomain = $tenant->domains()->first();
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain($currentDomain?->domain)],
             'status' => 'required|in:active,suspended',
+            'billing_email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'tax_id' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:2000',
         ]);
 
+        // billing_email/phone/address/tax_id/notes are stored in the tenant's
+        // data JSON column (virtual columns), no migration required.
         $tenant->update([
-            'name' => $request->string('name')->value(),
-            'status' => $request->string('status')->value(),
+            'name' => $validated['name'],
+            'status' => $validated['status'],
+            'billing_email' => $validated['billing_email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'tax_id' => $validated['tax_id'] ?? null,
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         $newDomain = CreateTenantAction::fullDomain($request->string('subdomain')->value());

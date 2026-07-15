@@ -9,6 +9,17 @@ use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 use Stancl\Tenancy\Database\Models\TenantPivot;
 
+/**
+ * Platform-level tenant profile & contact fields are stored as virtual columns
+ * in the `data` JSON column (no migration needed). In-app branding/config lives
+ * in each tenant's own Settings, not here.
+ *
+ * @property string|null $billing_email
+ * @property string|null $phone
+ * @property string|null $address
+ * @property string|null $tax_id
+ * @property string|null $notes
+ */
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;

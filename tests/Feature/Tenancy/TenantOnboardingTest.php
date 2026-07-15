@@ -141,12 +141,23 @@ class TenantOnboardingTest extends TestCase
             'name' => 'Detail Co Renamed',
             'subdomain' => 'detail-co-2',
             'status' => 'suspended',
+            'billing_email' => 'billing@detail.test',
+            'phone' => '+62 812 0000',
+            'address' => 'Jl. Contoh No. 1',
+            'tax_id' => '01.234.567.8-901.000',
+            'notes' => 'Pelanggan enterprise, kontak via WhatsApp.',
         ])->assertSessionHasNoErrors();
 
         $tenant->refresh();
         $this->assertSame('Detail Co Renamed', $tenant->name);
         $this->assertSame('suspended', $tenant->status);
         $this->assertSame('detail-co-2.localhost', $tenant->domains()->first()->domain);
+
+        // Profile/contact fields persist as virtual columns in the data JSON.
+        $this->assertSame('billing@detail.test', $tenant->billing_email);
+        $this->assertSame('+62 812 0000', $tenant->phone);
+        $this->assertSame('01.234.567.8-901.000', $tenant->tax_id);
+        $this->assertSame('Pelanggan enterprise, kontak via WhatsApp.', $tenant->notes);
     }
 
     public function test_super_admin_can_delete_a_tenant(): void

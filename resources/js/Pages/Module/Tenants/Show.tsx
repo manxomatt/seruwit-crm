@@ -16,6 +16,11 @@ interface TenantDetail {
     subdomain: string | null;
     members: number;
     created_at: string | null;
+    billing_email: string | null;
+    phone: string | null;
+    address: string | null;
+    tax_id: string | null;
+    notes: string | null;
 }
 
 interface Props {
@@ -34,6 +39,11 @@ export default function Show({ tenant, members }: Props): JSX.Element {
         name: tenant.name,
         subdomain: tenant.subdomain ?? '',
         status: tenant.status,
+        billing_email: tenant.billing_email ?? '',
+        phone: tenant.phone ?? '',
+        address: tenant.address ?? '',
+        tax_id: tenant.tax_id ?? '',
+        notes: tenant.notes ?? '',
     });
 
     const deleteForm = useForm({ confirm_name: '' });
@@ -141,20 +151,70 @@ export default function Show({ tenant, members }: Props): JSX.Element {
                             <input className={inputClass} value={data.subdomain} onChange={(e) => setData('subdomain', e.target.value.toLowerCase())} required />
                             {errors.subdomain && <p className="mt-1 text-xs text-red-500">{errors.subdomain}</p>}
                         </label>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <div className="block text-sm font-medium text-gray-700">
                             Status
-                            <select className={inputClass} value={data.status} onChange={(e) => setData('status', e.target.value)}>
-                                <option value="active">Aktif</option>
-                                <option value="suspended">Ditangguhkan</option>
-                            </select>
+                            <div className="mt-1 grid grid-cols-2 gap-2">
+                                {[
+                                    { value: 'active', label: 'Aktif', dot: 'bg-green-500', selected: 'border-green-500 bg-green-50 text-green-700 ring-1 ring-green-500' },
+                                    { value: 'suspended', label: 'Ditangguhkan', dot: 'bg-amber-500', selected: 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500' },
+                                ].map((opt) => {
+                                    const isSelected = data.status === opt.value;
+                                    return (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setData('status', opt.value)}
+                                            aria-pressed={isSelected}
+                                            className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
+                                                isSelected ? opt.selected : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <span className={`h-2 w-2 rounded-full transition-colors ${isSelected ? opt.dot : 'bg-gray-300'}`} />
+                                            {opt.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                             {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
-                        </label>
+                        </div>
                     </div>
                     {data.subdomain !== (tenant.subdomain ?? '') && (
                         <p className="mt-3 text-xs text-amber-600">
                             Mengubah subdomain akan mengganti URL workspace ini — tautan lama akan berhenti bekerja.
                         </p>
                     )}
+
+                    <h3 className="mb-4 mt-8 border-t border-gray-100 pt-6 text-sm font-semibold uppercase tracking-wider text-gray-500">
+                        Profil &amp; Kontak
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Email Billing
+                            <input type="email" className={inputClass} value={data.billing_email} onChange={(e) => setData('billing_email', e.target.value)} placeholder="billing@perusahaan.com" />
+                            {errors.billing_email && <p className="mt-1 text-xs text-red-500">{errors.billing_email}</p>}
+                        </label>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Telepon
+                            <input className={inputClass} value={data.phone} onChange={(e) => setData('phone', e.target.value)} placeholder="+62 ..." />
+                            {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
+                        </label>
+                        <label className="block text-sm font-medium text-gray-700">
+                            NPWP / Tax ID
+                            <input className={inputClass} value={data.tax_id} onChange={(e) => setData('tax_id', e.target.value)} />
+                            {errors.tax_id && <p className="mt-1 text-xs text-red-500">{errors.tax_id}</p>}
+                        </label>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Alamat
+                            <input className={inputClass} value={data.address} onChange={(e) => setData('address', e.target.value)} />
+                            {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
+                        </label>
+                        <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
+                            Catatan Internal <span className="font-normal text-gray-400">(hanya terlihat admin platform)</span>
+                            <textarea className={inputClass} rows={3} value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
+                            {errors.notes && <p className="mt-1 text-xs text-red-500">{errors.notes}</p>}
+                        </label>
+                    </div>
+
                     <button
                         type="submit"
                         disabled={processing}
