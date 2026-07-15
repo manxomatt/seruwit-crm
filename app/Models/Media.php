@@ -53,6 +53,12 @@ class Media extends Model
      */
     public function getUrlAttribute(): string
     {
+        // Tenant files live in per-tenant storage without a public symlink,
+        // so they are served through the tenancy asset route instead.
+        if (tenancy()->initialized) {
+            return route('stancl.tenancy.asset', ['path' => $this->path], false);
+        }
+
         // Use relative URL to work regardless of APP_URL setting
         return '/storage/'.$this->path;
     }

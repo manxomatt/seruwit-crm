@@ -17,6 +17,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Serve The CRM On The Central Domain
+    |--------------------------------------------------------------------------
+    |
+    | Convenient during local development so the app works on localhost
+    | without a tenant. Set CENTRAL_SERVES_APP=false in production: tenant
+    | data belongs on tenant domains, and the central domain then only
+    | serves the landing page, auth, the workspace portal, and admin.
+    |
+    */
+
+    'central_serves_app' => (bool) env('CENTRAL_SERVES_APP', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
