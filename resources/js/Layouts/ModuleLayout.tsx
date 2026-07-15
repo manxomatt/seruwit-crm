@@ -153,7 +153,7 @@ const ChevronDownIcon = () => (
 const MENU_GROUPS: { title: string; modules: string[] }[] = [
     { title: 'Konten', modules: ['pages', 'posts', 'carousels', 'media'] },
     { title: 'Wawasan', modules: ['analytics', 'live-updates'] },
-    { title: 'Administrasi', modules: ['users', 'roles', 'settings'] },
+    { title: 'Administrasi', modules: ['users', 'roles', 'settings', 'modules'] },
     { title: 'Platform', modules: ['tenants'] },
 ];
 
@@ -209,6 +209,12 @@ const routeExists = (routeName: string): boolean => {
 const BuildingIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+    </svg>
+);
+
+const ModulesIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.007-1.875 2.25-1.875s2.25.84 2.25 1.875c0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.369 0 .713.128 1.003.349.283.215.604.401.959.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" />
     </svg>
 );
 
@@ -298,6 +304,19 @@ export default function ModuleLayout({ header, children }: Props) {
                 icon: <BuildingIcon />,
                 current: route().current('module.tenants.*'),
                 module: 'tenants',
+            });
+        }
+
+        // Inside a workspace, its admin picks which modules the plan covers.
+        // Gated by an ability rather than a permission, so it is injected here
+        // instead of being seeded as a menu row.
+        if (!isCentral && isAdmin && routeExists('module.modules.index')) {
+            items.push({
+                name: 'Modul',
+                href: route('module.modules.index'),
+                icon: <ModulesIcon />,
+                current: route().current('module.modules.*'),
+                module: 'modules',
             });
         }
 

@@ -68,7 +68,7 @@ class CarouselsModule implements ModuleContract
     /**
      * Attaches the module's relation to the core User model, so that App\Models\User
      * needs no knowledge of Carousels. Callers must still gate on
-     * Modules::installed('carousels') — the relation is registered for every
+     * Modules::available('carousels') — the relation is registered for every
      * process, but the table only exists where the module is installed.
      */
     public function boot(): void

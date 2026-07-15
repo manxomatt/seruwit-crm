@@ -41,7 +41,7 @@ class DashboardController extends Controller
             ],
         ];
 
-        if (Modules::installed('carousels')) {
+        if (Modules::available('carousels')) {
             $stats['carousels'] = [
                 'total' => Carousel::query()->count(),
                 'active' => Carousel::query()->where('is_active', true)->count(),

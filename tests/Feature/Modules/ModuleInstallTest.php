@@ -204,6 +204,19 @@ class ModuleInstallTest extends TestCase
             ->assertSuccessful();
     }
 
+    public function test_list_command_reports_a_module_locked_by_the_plan(): void
+    {
+        $tenant = $this->provisionTenant('Locked Co', 'locked-co', 'owner@locked.test');
+        $this->installer()->install($tenant, $this->module());
+        $tenant->update(['plan' => 'free']);
+
+        // Installed but out of plan: the CLI must say the same thing the catalog
+        // UI does, rather than reporting a bare "installed".
+        $this->artisan('modules:list', ['tenant' => $tenant->id])
+            ->expectsOutputToContain('locked by plan (installed, data kept)')
+            ->assertSuccessful();
+    }
+
     public function test_list_command_reports_an_unknown_tenant(): void
     {
         $this->artisan('modules:list', ['tenant' => 'nope'])

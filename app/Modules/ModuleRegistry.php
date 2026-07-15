@@ -56,10 +56,30 @@ class ModuleRegistry
     }
 
     /**
-     * Whether the feature is available in the current context.
+     * Whether the current tenant's plan permits this module.
+     *
+     * Entitlement is the plan's answer to "may you have it", independent of
+     * whether the tenant took it. Resolved from the tenant record already loaded
+     * by tenancy, so it costs no query.
+     */
+    public function entitled(string $key): bool
+    {
+        if (! $this->has($key)) {
+            return true;
+        }
+
+        if (! tenancy()->initialized) {
+            return true;
+        }
+
+        return tenant()->isEntitledTo($key);
+    }
+
+    /**
+     * Whether the module's tables exist in the current tenant's schema.
      *
      * Fails open by design. Anything that is not a registered module is core and
-     * always available — that is what keeps the guards correct while modules are
+     * always present — that is what keeps the guards correct while modules are
      * still being extracted one by one. The central domain runs every module, and
      * a schema without the installed_modules table yet (mid-migration) is treated
      * as having everything, so a half-migrated deploy never dark-fires a guard.
@@ -75,6 +95,19 @@ class ModuleRegistry
         }
 
         return in_array($key, $this->installedKeysForCurrentTenant(), true);
+    }
+
+    /**
+     * Whether the module should actually be reachable right now.
+     *
+     * This is what guards, middleware and menus ask — never installed() alone.
+     * A downgrade revokes entitlement without uninstalling, so a module can be
+     * installed yet unreachable; its data sits untouched and an upgrade brings it
+     * straight back.
+     */
+    public function available(string $key): bool
+    {
+        return $this->entitled($key) && $this->installed($key);
     }
 
     /**

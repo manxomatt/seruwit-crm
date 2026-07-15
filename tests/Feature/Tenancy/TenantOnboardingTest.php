@@ -116,6 +116,7 @@ class TenantOnboardingTest extends TestCase
             'name' => 'Detail Co Renamed',
             'subdomain' => 'detail-co-2',
             'status' => 'suspended',
+            'plan' => 'pro',
             'billing_email' => 'billing@detail.test',
             'phone' => '+62 812 0000',
             'address' => 'Jl. Contoh No. 1',
@@ -126,6 +127,7 @@ class TenantOnboardingTest extends TestCase
         $tenant->refresh();
         $this->assertSame('Detail Co Renamed', $tenant->name);
         $this->assertSame('suspended', $tenant->status);
+        $this->assertSame('pro', $tenant->planKey());
         $this->assertSame('detail-co-2.localhost', $tenant->domains()->first()->domain);
 
         // Profile/contact fields persist as virtual columns in the data JSON.

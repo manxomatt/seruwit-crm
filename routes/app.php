@@ -6,6 +6,7 @@ use App\Http\Controllers\Module\AnalyticsController as ModuleAnalyticsController
 use App\Http\Controllers\Module\DashboardController as ModuleDashboardController;
 use App\Http\Controllers\Module\GlobalSearchController as ModuleGlobalSearchController;
 use App\Http\Controllers\Module\MediaController as ModuleMediaController;
+use App\Http\Controllers\Module\ModuleController as ModuleCatalogController;
 use App\Http\Controllers\Module\PageController as ModulePageController;
 use App\Http\Controllers\Module\PostController as ModulePostController;
 use App\Http\Controllers\Module\RoleController as ModuleRoleController;
@@ -110,6 +111,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/roles/{role}/edit', [ModuleRoleController::class, 'edit'])->middleware('permission:roles,update')->name('roles.edit');
         Route::patch('/roles/{role}', [ModuleRoleController::class, 'update'])->middleware('permission:roles,update')->name('roles.update');
         Route::delete('/roles/{role}', [ModuleRoleController::class, 'destroy'])->middleware('permission:roles,delete')->name('roles.destroy');
+
+        // The workspace's own module catalog. Tenant-domain only, which the
+        // controller enforces — this file is shared with the central domain.
+        Route::get('/modules', [ModuleCatalogController::class, 'index'])->name('modules.index');
+        Route::post('/modules/{module}/install', [ModuleCatalogController::class, 'install'])->name('modules.install');
+        Route::delete('/modules/{module}', [ModuleCatalogController::class, 'uninstall'])->name('modules.uninstall');
 
         // Routes contributed by installed-per-tenant modules. Registered
         // unconditionally: enforcement is the requires-module middleware's job,

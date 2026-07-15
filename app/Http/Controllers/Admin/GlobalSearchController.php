@@ -118,7 +118,7 @@ class GlobalSearchController extends Controller
         }
 
         // Search Carousels
-        if (Modules::installed('carousels') && $user->hasPermissionFor('carousels', 'view')) {
+        if (Modules::available('carousels') && $user->hasPermissionFor('carousels', 'view')) {
             $carousels = Carousel::query()
                 ->where('name', 'like', "%{$query}%")
                 ->orWhere('description', 'like', "%{$query}%")

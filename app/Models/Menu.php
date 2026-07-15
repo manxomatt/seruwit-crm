@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Facades\Modules;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -128,6 +129,22 @@ class Menu extends Model
     }
 
     /**
+     * Whether the module behind this menu is reachable right now.
+     *
+     * Checked apart from permissions because admins bypass those entirely, and
+     * because a downgrade revokes a module without ever touching is_active —
+     * otherwise the sidebar would keep offering a link that 404s.
+     */
+    public function isVisibleInCurrentContext(): bool
+    {
+        if (empty($this->permission_module)) {
+            return true;
+        }
+
+        return Modules::available($this->permission_module);
+    }
+
+    /**
      * Get the URL for this menu item.
      */
     public function getUrl(string $routePrefix = 'admin'): ?string
@@ -163,10 +180,10 @@ class Menu extends Model
             ->get();
 
         return $menus
-            ->filter(fn (Menu $menu) => $menu->userHasPermission($user))
+            ->filter(fn (Menu $menu) => $menu->isVisibleInCurrentContext() && $menu->userHasPermission($user))
             ->map(function (Menu $menu) use ($user, $routePrefix) {
                 $children = $menu->activeChildren
-                    ->filter(fn (Menu $child) => $child->userHasPermission($user))
+                    ->filter(fn (Menu $child) => $child->isVisibleInCurrentContext() && $child->userHasPermission($user))
                     ->map(fn (Menu $child) => $child->toMenuArray($routePrefix))
                     ->values();
 

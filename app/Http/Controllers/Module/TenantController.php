@@ -7,17 +7,25 @@ use App\Http\Controllers\Controller;
 use App\Models\CentralUser;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Modules\Facades\Modules;
+use App\Modules\ModuleCatalog;
+use App\Modules\ModuleInstaller;
 use App\Rules\ValidSubdomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class TenantController extends Controller
 {
-    public function __construct(private readonly CreateTenantAction $createTenant) {}
+    public function __construct(
+        private readonly CreateTenantAction $createTenant,
+        private readonly ModuleCatalog $catalog,
+    ) {}
 
     /**
      * List all tenants for the platform super admin.
@@ -110,8 +118,12 @@ class TenantController extends Controller
                 'address' => $tenant->address,
                 'tax_id' => $tenant->tax_id,
                 'notes' => $tenant->notes,
+                'plan' => $tenant->planKey(),
             ],
             'members' => $members,
+            'modules' => $this->catalog->forTenant($tenant),
+            'plans' => $this->catalog->allPlans(),
+            'graceDays' => config('modules.purge_after_days'),
         ]);
     }
 
@@ -126,6 +138,7 @@ class TenantController extends Controller
             'name' => 'required|string|max:255',
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain($currentDomain?->domain)],
             'status' => 'required|in:active,suspended',
+            'plan' => ['required', 'string', Rule::in(array_keys(config('modules.plans')))],
             'billing_email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
@@ -133,11 +146,16 @@ class TenantController extends Controller
             'notes' => 'nullable|string|max:2000',
         ]);
 
-        // billing_email/phone/address/tax_id/notes are stored in the tenant's
+        // billing_email/phone/address/tax_id/notes/plan are stored in the tenant's
         // data JSON column (virtual columns), no migration required.
+        //
+        // Changing the plan is never destructive: a downgrade only revokes access,
+        // leaving installed modules and their data in place, so an upgrade brings
+        // them straight back.
         $tenant->update([
             'name' => $validated['name'],
             'status' => $validated['status'],
+            'plan' => $validated['plan'],
             'billing_email' => $validated['billing_email'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
@@ -189,5 +207,51 @@ class TenantController extends Controller
         return redirect()
             ->route('module.tenants.index')
             ->with('success', 'Tenant beserta seluruh datanya telah dihapus.');
+    }
+
+    /**
+     * Install a module into a tenant on their behalf.
+     *
+     * The same installer the tenant's own admin drives, including the plan check —
+     * a super admin who wants to hand over a module moves the tenant's plan rather
+     * than working around it, so entitlement stays the single source of truth.
+     */
+    public function installModule(Tenant $tenant, string $module, ModuleInstaller $installer): RedirectResponse
+    {
+        $registered = Modules::find($module);
+
+        if (! $registered) {
+            abort(404);
+        }
+
+        try {
+            $installer->install($tenant, $registered);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "Modul {$registered->label()} dipasang untuk {$tenant->name}.");
+    }
+
+    public function uninstallModule(Tenant $tenant, string $module, ModuleInstaller $installer): RedirectResponse
+    {
+        $registered = Modules::find($module);
+
+        if (! $registered) {
+            abort(404);
+        }
+
+        try {
+            $installer->uninstall($tenant, $registered);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $days = config('modules.purge_after_days');
+
+        return back()->with(
+            'success',
+            "Modul {$registered->label()} dicopot dari {$tenant->name}. Datanya disimpan {$days} hari.",
+        );
     }
 }

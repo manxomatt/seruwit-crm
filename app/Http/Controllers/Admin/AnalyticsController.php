@@ -48,7 +48,7 @@ class AnalyticsController extends Controller
             'totalSettings' => Setting::query()->count(),
         ];
 
-        if (Modules::installed('carousels')) {
+        if (Modules::available('carousels')) {
             $stats['totalCarousels'] = Carousel::query()->count();
         }
 
@@ -100,7 +100,7 @@ class AnalyticsController extends Controller
             ],
         ];
 
-        if (Modules::installed('carousels')) {
+        if (Modules::available('carousels')) {
             $carousels = Carousel::query()
                 ->select('is_active', DB::raw('count(*) as count'))
                 ->groupBy('is_active')
@@ -185,7 +185,7 @@ class AnalyticsController extends Controller
             ? round((($usersThisMonth - $usersLastMonth) / $usersLastMonth) * 100, 1)
             : ($usersThisMonth > 0 ? 100 : 0);
 
-        $carouselsInstalled = Modules::installed('carousels');
+        $carouselsInstalled = Modules::available('carousels');
 
         $topContributors = User::query()
             ->withCount(array_filter(['pages', 'media', $carouselsInstalled ? 'carousels' : null]))
@@ -281,7 +281,7 @@ class AnalyticsController extends Controller
             });
 
         // Recent carousels
-        if (Modules::installed('carousels')) {
+        if (Modules::available('carousels')) {
             Carousel::query()
                 ->latest('updated_at')
                 ->take(5)

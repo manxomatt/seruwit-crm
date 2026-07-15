@@ -19,10 +19,47 @@ use Stancl\Tenancy\Database\Models\TenantPivot;
  * @property string|null $address
  * @property string|null $tax_id
  * @property string|null $notes
+ * @property string|null $plan
  */
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
+
+    /**
+     * The subscription plan this tenant is on.
+     *
+     * Stored as a virtual column so it rides along with the tenant record that
+     * tenancy already loads on every request — resolving entitlement then costs
+     * nothing. Falls back to the default plan for tenants created before plans
+     * existed.
+     */
+    public function planKey(): string
+    {
+        return $this->plan ?? config('modules.default_plan');
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function planConfig(): ?array
+    {
+        return config('modules.plans.'.$this->planKey());
+    }
+
+    /**
+     * Module keys this tenant's plan permits it to install.
+     *
+     * @return list<string>
+     */
+    public function entitledModuleKeys(): array
+    {
+        return $this->planConfig()['modules'] ?? [];
+    }
+
+    public function isEntitledTo(string $moduleKey): bool
+    {
+        return in_array($moduleKey, $this->entitledModuleKeys(), true);
+    }
 
     /**
      * The central user identities that are members of this tenant.

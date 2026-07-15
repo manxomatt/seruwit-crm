@@ -95,7 +95,7 @@
         // its tables purged, so the lookup must not run unless the module is there —
         // this is a public, unauthenticated render and a QueryException here would
         // take down the tenant's whole website.
-        $carouselsInstalled = \App\Modules\Facades\Modules::installed('carousels');
+        $carouselsInstalled = \App\Modules\Facades\Modules::available('carousels');
 
         $html = preg_replace_callback(
             '/<carousel\s+slug=["\']([^"\']+)["\']\s*(?:\/>|><\/carousel>|>[\s\S]*?<\/carousel>)/i',

@@ -23,10 +23,17 @@ class ModuleInstaller
     /**
      * Create the module's tables, permissions and menu inside $tenant.
      *
-     * @throws RuntimeException when a required module is missing
+     * @throws RuntimeException when the tenant's plan does not cover the module,
+     *                          or a required module is missing
      */
     public function install(Tenant $tenant, ModuleContract $module): void
     {
+        if (! $tenant->isEntitledTo($module->key())) {
+            throw new RuntimeException(
+                "Plan [{$tenant->planKey()}] does not include module [{$module->key()}].",
+            );
+        }
+
         $tenant->run(function () use ($module): void {
             $this->guardRequirements($module);
 

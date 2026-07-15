@@ -65,6 +65,12 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'route_prefix' => $routePrefix,
+            // Controllers already redirect with these; lazily resolved so a page
+            // that never reads them does not touch the session.
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
             'menus' => $this->getMenus($user, $routePrefix),
             'settings' => $settings,
             // The tenant *domain* we're currently on (null on the central domain).

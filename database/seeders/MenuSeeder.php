@@ -88,6 +88,10 @@ class MenuSeeder extends Seeder
             ],
         ];
 
+        // The module catalog is deliberately absent: like "Kelola Tenant", it is
+        // gated by an ability rather than a permission, so ModuleLayout injects it
+        // client-side from auth.user.is_admin.
+
         foreach ($menus as $menuData) {
             Menu::updateOrCreate(
                 ['slug' => $menuData['slug']],

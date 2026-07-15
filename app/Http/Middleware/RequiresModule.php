@@ -22,7 +22,7 @@ class RequiresModule
      */
     public function handle(Request $request, Closure $next, string $module): Response
     {
-        if (! Modules::installed($module)) {
+        if (! Modules::available($module)) {
             abort(404);
         }
 

@@ -90,7 +90,7 @@ class DashboardController extends Controller
             'totalStorage' => $this->formatBytes($totalStorageBytes),
         ];
 
-        if (Modules::installed('carousels')) {
+        if (Modules::available('carousels')) {
             $stats['totalCarousels'] = Carousel::query()->count();
             $stats['activeCarousels'] = Carousel::query()->where('is_active', true)->count();
         }
@@ -155,7 +155,7 @@ class DashboardController extends Controller
             });
 
         // Recent carousels
-        if (Modules::installed('carousels')) {
+        if (Modules::available('carousels')) {
             Carousel::query()
                 ->latest('updated_at')
                 ->take(2)

@@ -1,5 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 interface Member {
     id: number;
@@ -7,6 +7,35 @@ interface Member {
     email: string;
     roles: string[];
 }
+
+type ModuleState = 'installed' | 'available' | 'uninstalled' | 'locked' | 'locked_with_data';
+
+interface ModuleEntry {
+    key: string;
+    label: string;
+    description: string;
+    requires: string[];
+    entitled: boolean;
+    installed: boolean;
+    state: ModuleState;
+    purges_at: string | null;
+    plans_offering: string[];
+}
+
+interface Plan {
+    key: string;
+    label: string;
+    description: string;
+    modules: string[];
+}
+
+const STATE_BADGE: Record<ModuleState, { label: string; className: string }> = {
+    installed: { label: 'Terpasang', className: 'bg-green-100 text-green-800' },
+    available: { label: 'Tersedia', className: 'bg-sky-100 text-sky-800' },
+    uninstalled: { label: 'Dicopot', className: 'bg-amber-100 text-amber-800' },
+    locked: { label: 'Di luar paket', className: 'bg-gray-100 text-gray-600' },
+    locked_with_data: { label: 'Terkunci, data tersimpan', className: 'bg-gray-100 text-gray-600' },
+};
 
 interface TenantDetail {
     id: string;
@@ -21,11 +50,15 @@ interface TenantDetail {
     address: string | null;
     tax_id: string | null;
     notes: string | null;
+    plan: string;
 }
 
 interface Props {
     tenant: TenantDetail;
     members: Member[];
+    modules: ModuleEntry[];
+    plans: Plan[];
+    graceDays: number;
 }
 
 const ArrowLeftIcon = () => (
@@ -34,11 +67,14 @@ const ArrowLeftIcon = () => (
     </svg>
 );
 
-export default function Show({ tenant, members }: Props): JSX.Element {
+export default function Show({ tenant, members, modules, plans, graceDays }: Props): JSX.Element {
+    const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
+
     const { data, setData, patch, processing, errors } = useForm({
         name: tenant.name,
         subdomain: tenant.subdomain ?? '',
         status: tenant.status,
+        plan: tenant.plan,
         billing_email: tenant.billing_email ?? '',
         phone: tenant.phone ?? '',
         address: tenant.address ?? '',
@@ -47,6 +83,14 @@ export default function Show({ tenant, members }: Props): JSX.Element {
     });
 
     const deleteForm = useForm({ confirm_name: '' });
+
+    const installModule = (key: string): void => {
+        router.post(route('module.tenants.modules.install', [tenant.id, key]), {}, { preserveScroll: true });
+    };
+
+    const uninstallModule = (key: string): void => {
+        router.delete(route('module.tenants.modules.uninstall', [tenant.id, key]), { preserveScroll: true });
+    };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,11 +124,23 @@ export default function Show({ tenant, members }: Props): JSX.Element {
             <Head title={`Tenant: ${tenant.name}`} />
 
             <div className="space-y-6">
+                {flash?.success && (
+                    <div className="rounded-lg bg-green-50 p-4 text-sm text-green-800 ring-1 ring-green-200">
+                        {flash.success}
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800 ring-1 ring-red-200">
+                        {flash.error}
+                    </div>
+                )}
+
                 {/* Overview */}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     {[
                         { label: 'Status', value: tenant.status === 'active' ? 'Aktif' : 'Ditangguhkan' },
                         { label: 'Anggota', value: String(tenant.members) },
+                        { label: 'Paket', value: plans.find((p) => p.key === tenant.plan)?.label ?? tenant.plan },
                         { label: 'Subdomain', value: tenant.subdomain ?? '—' },
                         { label: 'Dibuat', value: tenant.created_at ?? '—' },
                     ].map((item) => (
@@ -177,6 +233,25 @@ export default function Show({ tenant, members }: Props): JSX.Element {
                             </div>
                             {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                         </div>
+                        <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
+                            Paket langganan
+                            <select
+                                className={inputClass}
+                                value={data.plan}
+                                onChange={(e) => setData('plan', e.target.value)}
+                            >
+                                {plans.map((plan) => (
+                                    <option key={plan.key} value={plan.key}>
+                                        {plan.label} — {plan.description}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.plan && <p className="mt-1 text-xs text-red-500">{errors.plan}</p>}
+                            <p className="mt-1 text-xs text-gray-500">
+                                Menurunkan paket hanya mencabut akses — modul yang sudah terpasang beserta datanya tetap
+                                utuh dan kembali begitu paketnya dinaikkan lagi.
+                            </p>
+                        </label>
                     </div>
                     {data.subdomain !== (tenant.subdomain ?? '') && (
                         <p className="mt-3 text-xs text-amber-600">
@@ -223,6 +298,76 @@ export default function Show({ tenant, members }: Props): JSX.Element {
                         Simpan Perubahan
                     </button>
                 </form>
+
+                {/* Modules */}
+                <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
+                    <div className="border-b border-gray-100 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900">Modul</h2>
+                        <p className="mt-1 text-sm text-gray-600">
+                            Apa yang boleh dipasang ditentukan paket di atas. Mencopot modul tidak menghapus datanya —
+                            data disimpan {graceDays} hari sebelum dihapus permanen.
+                        </p>
+                    </div>
+
+                    {modules.length === 0 ? (
+                        <p className="p-6 text-sm text-gray-500">Belum ada modul opsional yang terdaftar.</p>
+                    ) : (
+                        <ul className="divide-y divide-gray-100">
+                            {modules.map((module) => {
+                                const badge = STATE_BADGE[module.state];
+
+                                return (
+                                    <li key={module.key} className="flex flex-wrap items-center gap-4 p-6">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-medium text-gray-900">{module.label}</h4>
+                                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
+                                                    {badge.label}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-sm text-gray-500">{module.description}</p>
+
+                                            {module.state === 'uninstalled' && module.purges_at && (
+                                                <p className="mt-2 text-xs text-amber-700">
+                                                    Data dihapus permanen pada {module.purges_at}.
+                                                </p>
+                                            )}
+
+                                            {!module.entitled && module.plans_offering.length > 0 && (
+                                                <p className="mt-2 text-xs text-gray-500">
+                                                    Ada di paket {module.plans_offering.join(', ')} — pindahkan paketnya
+                                                    untuk membuka.
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="shrink-0">
+                                            {!module.entitled ? (
+                                                <span className="text-sm text-gray-400">Di luar paket</span>
+                                            ) : module.installed ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => uninstallModule(module.key)}
+                                                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    Copot
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => installModule(module.key)}
+                                                    className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                                                >
+                                                    Pasang
+                                                </button>
+                                            )}
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </div>
 
                 {/* Danger zone */}
                 <form onSubmit={destroy} className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-red-200">
