@@ -1,10 +1,7 @@
 import React from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import Stats from './components/Stats';
 import Features from './components/Features';
-import Resources from './components/Resources';
-import Pricing from './components/Pricing';
 import CTA from './components/CTA';
 import Footer from './components/Footer';
 
@@ -29,15 +26,12 @@ interface AppProps {
 
 const App: React.FC<AppProps> = ({ settings }) => {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-white text-slate-900 antialiased">
       <Navbar settings={settings} />
       <main>
-        <Hero />
-        <Stats />
+        <Hero settings={settings} />
         <Features />
-        <Resources />
-        <Pricing />
-        <CTA />
+        <CTA settings={settings} />
       </main>
       <Footer settings={settings} />
     </div>

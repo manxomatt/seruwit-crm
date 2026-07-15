@@ -2,7 +2,6 @@ import React from 'react';
 
 interface Settings {
   'general.site_name'?: string;
-  'general.site_tagline'?: string;
   'general.site_description'?: string;
   'site.logo'?: string;
   'site.copyright'?: string;
@@ -18,8 +17,9 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ settings }) => {
-  const siteName = settings?.['general.site_name'] || 'Sky Track';
-  const siteDescription = settings?.['general.site_description'] || 'The world\'s most vibrant GPS tracking platform. Making precision fun and security simple for everyone.';
+  const siteName = settings?.['general.site_name'] || 'Seruwit CRM';
+  const siteDescription = settings?.['general.site_description']
+    || 'Platform CRM sederhana untuk membantu bisnis Anda membangun hubungan pelanggan yang lebih baik.';
   const siteLogo = settings?.['site.logo'];
   const copyright = settings?.['site.copyright'] || `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`;
   const phone = settings?.['site.phone'];
@@ -28,73 +28,54 @@ const Footer: React.FC<FooterProps> = ({ settings }) => {
   const workingHours = settings?.['site.working_hours'];
 
   return (
-    <footer className="bg-slate-900 text-white pt-24 pb-12 rounded-t-[3rem] mt-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20">
-          <div className="col-span-2 lg:col-span-2">
-            <div className="flex items-center gap-2 mb-8">
+    <footer className="border-t border-slate-100 bg-slate-50" id="kontak">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
+          <div className="md:col-span-2">
+            <div className="mb-4 flex items-center gap-2.5">
               {siteLogo ? (
-                <img src={siteLogo} alt={siteName} className="h-10 w-auto" />
+                <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
               ) : (
-                <span className="material-symbols-outlined text-primary text-4xl">explore</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-white">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-6.13a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </span>
               )}
-              <span className="text-3xl font-black tracking-tight font-display">{siteName}</span>
+              <span className="text-lg font-bold tracking-tight text-slate-900">{siteName}</span>
             </div>
-            <p className="text-slate-400 text-lg max-w-sm leading-relaxed">
-              {siteDescription}
-            </p>
+            <p className="max-w-sm leading-relaxed text-slate-500">{siteDescription}</p>
           </div>
-          
+
           <div>
-            <h4 className="text-white font-black text-xl mb-6 font-display">Pelajari</h4>
-            <ul className="space-y-4 text-base text-slate-400">
-              {['Panduan Memulai', 'Dokumentasi API', 'Pusat Bantuan', 'Komunitas'].map((link, i) => (
-                <li key={i}><a className="hover:text-primary transition-colors" href="#">{link}</a></li>
-              ))}
+            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-900">Produk</h4>
+            <ul className="space-y-3 text-slate-500">
+              <li><a className="transition-colors hover:text-sky-500" href="#fitur">Fitur</a></li>
+              <li><a className="transition-colors hover:text-sky-500" href="#keunggulan">Keunggulan</a></li>
+              <li><a className="transition-colors hover:text-sky-500" href="/blog">Blog</a></li>
+              <li><a className="transition-colors hover:text-sky-500" href="/login">Masuk</a></li>
             </ul>
           </div>
-          
+
           <div>
-            <h4 className="text-white font-black text-xl mb-6 font-display">Kontak</h4>
-            <ul className="space-y-4 text-base text-slate-400">
-              {phone && <li className="flex items-center gap-2"><span className="material-symbols-outlined text-sm">phone</span>{phone}</li>}
-              {contactEmail && <li className="flex items-center gap-2"><span className="material-symbols-outlined text-sm">mail</span><a className="hover:text-primary transition-colors" href={`mailto:${contactEmail}`}>{contactEmail}</a></li>}
-              {workingHours && <li className="flex items-center gap-2"><span className="material-symbols-outlined text-sm">schedule</span>{workingHours}</li>}
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-white font-black text-xl mb-6 font-display">Legal</h4>
-            <ul className="space-y-4 text-base text-slate-400">
-              {['Kebijakan Privasi', 'Syarat & Ketentuan', 'Kebijakan Cookie', 'Keamanan'].map((link, i) => (
-                <li key={i}><a className="hover:text-primary transition-colors" href="#">{link}</a></li>
-              ))}
+            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-900">Kontak</h4>
+            <ul className="space-y-3 text-slate-500">
+              {contactEmail && (
+                <li>
+                  <a className="transition-colors hover:text-sky-500" href={`mailto:${contactEmail}`}>
+                    {contactEmail}
+                  </a>
+                </li>
+              )}
+              {phone && <li>{phone}</li>}
+              {workingHours && <li>{workingHours}</li>}
+              {address && <li className="max-w-xs">{address}</li>}
             </ul>
           </div>
         </div>
 
-        {address && (
-          <div className="border-t border-slate-800 pt-8 pb-8">
-            <p className="text-slate-400 text-sm flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">location_on</span>
-              {address}
-            </p>
-          </div>
-        )}
-        
-        <div className="border-t border-slate-800 pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
-          <p className="text-sm text-slate-500 font-medium">{copyright}</p>
-          <div className="flex gap-8">
-            <a className="text-slate-500 hover:text-primary transition-colors transform hover:scale-125" href="#">
-              <span className="material-symbols-outlined text-2xl">favorite</span>
-            </a>
-            <a className="text-slate-500 hover:text-primary transition-colors transform hover:scale-125" href="#">
-              <span className="material-symbols-outlined text-2xl">rocket_launch</span>
-            </a>
-            <a className="text-slate-500 hover:text-primary transition-colors transform hover:scale-125" href="#">
-              <span className="material-symbols-outlined text-2xl">language</span>
-            </a>
-          </div>
+        <div className="mt-12 border-t border-slate-200 pt-8 text-center text-sm text-slate-400 md:text-left">
+          {copyright}
         </div>
       </div>
     </footer>
