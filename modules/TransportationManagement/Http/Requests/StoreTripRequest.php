@@ -35,24 +35,24 @@ class StoreTripRequest extends FormRequest
     }
 
     /**
-     * A vehicle or driver already tied to a scheduled or in-progress trip
-     * cannot be double-booked onto another one. Checked against Trip directly
-     * (Transportation's own table) rather than a method on the Fleet models,
-     * since Fleet has no concept of a "trip".
+     * A vehicle or driver already tied to a scheduled or in-progress trip on
+     * the same calendar date cannot be double-booked onto another one.
+     * Checked against Trip directly (Transportation's own table) rather than
+     * a method on the Fleet models, since Fleet has no concept of a "trip".
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
             $vehicleId = $this->input('vehicle_id');
             $driverId = $this->input('driver_id');
-            $activeStatuses = [Trip::STATUS_SCHEDULED, Trip::STATUS_IN_PROGRESS];
+            $date = $this->input('scheduled_at');
 
-            if ($vehicleId && Trip::where('vehicle_id', $vehicleId)->whereIn('status', $activeStatuses)->exists()) {
-                $validator->errors()->add('vehicle_id', 'This vehicle is already assigned to an active trip.');
+            if ($vehicleId && $date && Trip::hasActiveTripOn('vehicle_id', $vehicleId, $date)) {
+                $validator->errors()->add('vehicle_id', 'This vehicle is already assigned to an active trip on this date.');
             }
 
-            if ($driverId && Trip::where('driver_id', $driverId)->whereIn('status', $activeStatuses)->exists()) {
-                $validator->errors()->add('driver_id', 'This driver is already assigned to an active trip.');
+            if ($driverId && $date && Trip::hasActiveTripOn('driver_id', $driverId, $date)) {
+                $validator->errors()->add('driver_id', 'This driver is already assigned to an active trip on this date.');
             }
         });
     }

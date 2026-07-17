@@ -38,6 +38,7 @@ class Trip extends Model
      */
     protected $fillable = [
         'code',
+        'trip_schedule_id',
         'vehicle_id',
         'driver_id',
         'origin',
@@ -89,6 +90,17 @@ class Trip extends Model
     }
 
     /**
+     * The recurring template this trip was generated from, if any. Null for
+     * trips dispatched one-off.
+     *
+     * @return BelongsTo<TripSchedule, $this>
+     */
+    public function tripSchedule(): BelongsTo
+    {
+        return $this->belongsTo(TripSchedule::class);
+    }
+
+    /**
      * Generates the next sequential human-readable trip code, e.g. TRIP-000001.
      * Not safe against a race between two simultaneous store requests, but
      * dispatch creation is a low-frequency, single-operator action here.
@@ -100,5 +112,23 @@ class Trip extends Model
             ->value('id');
 
         return sprintf('TRIP-%06d', $lastNumber + 1);
+    }
+
+    /**
+     * Whether $column (vehicle_id or driver_id) already has an active trip on
+     * $date. Trip has no duration/end time, so "conflict" is scoped to the
+     * calendar date rather than a true time-overlap check — a vehicle/driver
+     * can be dispatched again on a different day, just not twice on the same
+     * one. Shared by StoreTripRequest/UpdateTripRequest and
+     * TripSchedule::generateTripsBetween() so the rule has one definition.
+     */
+    public static function hasActiveTripOn(string $column, int $id, string|\DateTimeInterface $date, ?int $excludingTripId = null): bool
+    {
+        return static::query()
+            ->where($column, $id)
+            ->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS])
+            ->whereDate('scheduled_at', $date)
+            ->when($excludingTripId, fn ($query) => $query->where('id', '!=', $excludingTripId))
+            ->exists();
     }
 }

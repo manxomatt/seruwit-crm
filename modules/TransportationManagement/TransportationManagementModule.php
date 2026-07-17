@@ -4,9 +4,11 @@ namespace Modules\TransportationManagement;
 
 use App\Modules\ModuleContract;
 use Illuminate\Support\Facades\Route;
+use Modules\TransportationManagement\Http\Controllers\CalendarController;
 use Modules\TransportationManagement\Http\Controllers\ReportController;
 use Modules\TransportationManagement\Http\Controllers\TripCheckpointController;
 use Modules\TransportationManagement\Http\Controllers\TripController;
+use Modules\TransportationManagement\Http\Controllers\TripScheduleController;
 
 class TransportationManagementModule implements ModuleContract
 {
@@ -91,5 +93,16 @@ class TransportationManagementModule implements ModuleContract
         Route::delete('/transportation/trips/{trip}/checkpoints/{checkpoint}', [TripCheckpointController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.trips.checkpoints.destroy');
 
         Route::get('/transportation/reports', [ReportController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.reports.index');
+
+        Route::get('/transportation/calendar', [CalendarController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.calendar.index');
+
+        Route::get('/transportation/schedules', [TripScheduleController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.schedules.index');
+        Route::get('/transportation/schedules/create', [TripScheduleController::class, 'create'])->middleware('permission:transportation,create')->name('transportation.schedules.create');
+        Route::post('/transportation/schedules', [TripScheduleController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.schedules.store');
+        Route::post('/transportation/schedules/generate', [TripScheduleController::class, 'generate'])->middleware('permission:transportation,create')->name('transportation.schedules.generate');
+        Route::get('/transportation/schedules/{schedule}', [TripScheduleController::class, 'show'])->middleware('permission:transportation,view')->name('transportation.schedules.show');
+        Route::get('/transportation/schedules/{schedule}/edit', [TripScheduleController::class, 'edit'])->middleware('permission:transportation,update')->name('transportation.schedules.edit');
+        Route::patch('/transportation/schedules/{schedule}', [TripScheduleController::class, 'update'])->middleware('permission:transportation,update')->name('transportation.schedules.update');
+        Route::delete('/transportation/schedules/{schedule}', [TripScheduleController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.schedules.destroy');
     }
 }

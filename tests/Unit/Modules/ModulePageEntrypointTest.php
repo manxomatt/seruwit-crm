@@ -83,6 +83,11 @@ class ModulePageEntrypointTest extends TestCase
             'Modules/TransportationManagement/Trips/Create',
             'Modules/TransportationManagement/Trips/Show',
             'Modules/TransportationManagement/Reports/Index',
+            'Modules/TransportationManagement/Schedules/Index',
+            'Modules/TransportationManagement/Schedules/Create',
+            'Modules/TransportationManagement/Schedules/Edit',
+            'Modules/TransportationManagement/Schedules/Show',
+            'Modules/TransportationManagement/Calendar/Index',
         ];
 
         foreach ($components as $component) {

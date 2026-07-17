@@ -48,36 +48,59 @@ class TripTest extends TestCase
         $this->assertNotEmpty($trip->code);
     }
 
-    public function test_a_vehicle_already_on_an_active_trip_cannot_be_double_booked(): void
+    public function test_a_vehicle_already_on_an_active_trip_the_same_date_cannot_be_double_booked(): void
     {
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED]);
+        $date = now()->addDay();
+        Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED, 'scheduled_at' => $date]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
-            'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+            'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
         ])->assertSessionHasErrors('vehicle_id');
     }
 
-    public function test_a_driver_already_on_an_active_trip_cannot_be_double_booked(): void
+    public function test_a_driver_already_on_an_active_trip_the_same_date_cannot_be_double_booked(): void
     {
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        Trip::factory()->create(['driver_id' => $driver->id, 'status' => Trip::STATUS_IN_PROGRESS]);
+        $date = now()->addDay();
+        Trip::factory()->create(['driver_id' => $driver->id, 'status' => Trip::STATUS_IN_PROGRESS, 'scheduled_at' => $date]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
-            'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+            'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
         ])->assertSessionHasErrors('driver_id');
+    }
+
+    /**
+     * Trip has no duration/end time, so the double-booking rule is scoped to
+     * the calendar date rather than "ever" — the same vehicle can be
+     * dispatched again on a different day.
+     */
+    public function test_a_vehicle_can_be_booked_again_on_a_different_date(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+        $driver = Driver::factory()->create();
+        Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED, 'scheduled_at' => now()->addDay()]);
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), [
+            'vehicle_id' => $vehicle->id,
+            'driver_id' => $driver->id,
+            'origin' => 'Jakarta',
+            'destination' => 'Bandung',
+            'scheduled_at' => now()->addDays(5)->format('Y-m-d H:i:s'),
+        ])->assertSessionHasNoErrors();
     }
 
     public function test_starting_a_scheduled_trip_moves_it_to_in_progress(): void

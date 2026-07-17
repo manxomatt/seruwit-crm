@@ -3,6 +3,8 @@ import { Link } from '@inertiajs/react';
 
 const TABS = [
     { label: 'Trips', route: 'transportation.trips.index', pattern: 'transportation.trips.*' },
+    { label: 'Schedules', route: 'transportation.schedules.index', pattern: 'transportation.schedules.*' },
+    { label: 'Calendar', route: 'transportation.calendar.index', pattern: 'transportation.calendar.*' },
     { label: 'Reports', route: 'transportation.reports.index', pattern: 'transportation.reports.*' },
 ];
 
