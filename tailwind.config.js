@@ -11,6 +11,11 @@ export default {
         './resources/js/**/*.jsx',
         './resources/js/**/*.ts',
         './resources/js/**/*.tsx',
+        './modules/*/resources/views/**/*.blade.php',
+        './modules/*/resources/js/**/*.js',
+        './modules/*/resources/js/**/*.jsx',
+        './modules/*/resources/js/**/*.ts',
+        './modules/*/resources/js/**/*.tsx',
     ],
 
     theme: {

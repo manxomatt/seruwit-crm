@@ -1,11 +1,13 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Head, router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import TransportationNav from '../../../../TransportationNav';
+import DayTripsPanel from './Partials/DayTripsPanel';
 import MonthView from './Partials/MonthView';
 import WeekView from './Partials/WeekView';
 import YearView from './Partials/YearView';
-import { CalendarView, ChevronLeftIcon, ChevronRightIcon, STATUS_CONFIG, Trip, parseDateKey, startOfWeek, toDateKey } from './Partials/shared';
+import { CalendarView, ChevronLeftIcon, ChevronRightIcon, STATUS_CONFIG, Trip, isSameWeek, parseDateKey, startOfWeek, toDateKey } from './Partials/shared';
 
 interface Props {
     view: CalendarView;
@@ -55,6 +57,22 @@ export default function Index({ view, date: dateKey, tripsByDate }: Props): JSX.
     const date = parseDateKey(dateKey);
     const today = toDateKey(new Date());
     const totalTrips = Object.values(tripsByDate).reduce((sum, trips) => sum + trips.length, 0);
+
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+    // Auto-highlight today when it falls within the visible period; otherwise
+    // wait for the user to tap a tile rather than guessing which date to show.
+    useEffect(() => {
+        const now = new Date();
+        const todayVisible =
+            view === 'month'
+                ? now.getFullYear() === date.getFullYear() && now.getMonth() === date.getMonth()
+                : view === 'week'
+                  ? isSameWeek(date, now)
+                  : false;
+        setSelectedDate(todayVisible ? today : null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [view, dateKey]);
 
     const navigate = (nextView: CalendarView, nextDate: Date) => {
         router.get(prefixedRoute('transportation.calendar.index'), { view: nextView, date: toDateKey(nextDate) });
@@ -128,9 +146,15 @@ export default function Index({ view, date: dateKey, tripsByDate }: Props): JSX.
                 ))}
             </div>
 
-            {view === 'week' && <WeekView date={date} tripsByDate={tripsByDate} today={today} prefixedRoute={prefixedRoute} />}
-            {view === 'month' && <MonthView date={date} tripsByDate={tripsByDate} today={today} prefixedRoute={prefixedRoute} />}
+            {view === 'week' && (
+                <WeekView date={date} tripsByDate={tripsByDate} today={today} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+            )}
+            {view === 'month' && (
+                <MonthView date={date} tripsByDate={tripsByDate} today={today} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+            )}
             {view === 'year' && <YearView date={date} tripsByDate={tripsByDate} today={today} prefixedRoute={prefixedRoute} />}
+
+            {view !== 'year' && <DayTripsPanel dateKey={selectedDate} trips={selectedDate ? tripsByDate[selectedDate] || [] : []} prefixedRoute={prefixedRoute} />}
         </DynamicLayout>
     );
 }

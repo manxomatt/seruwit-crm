@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { Trip, toDateKey } from './shared';
+import { Trip, statusConfig, toDateKey } from './shared';
 
 interface Props {
     date: Date;
@@ -62,23 +62,24 @@ export default function YearView({ date, tripsByDate, today, prefixedRoute }: Pr
                                 }
 
                                 const dateKey = toDateKey(cellDate);
-                                const hasTrips = (tripsByDate[dateKey]?.length ?? 0) > 0;
+                                const dayTrips = tripsByDate[dateKey] ?? [];
                                 const isToday = dateKey === today;
 
                                 return (
                                     <button
                                         key={index}
                                         onClick={() => goToMonth(monthNum)}
-                                        title={hasTrips ? `${tripsByDate[dateKey].length} trip` : undefined}
-                                        className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[11px] transition-colors ${
-                                            isToday
-                                                ? 'bg-indigo-600 font-semibold text-white'
-                                                : hasTrips
-                                                  ? 'font-medium text-indigo-700 hover:bg-indigo-50'
-                                                  : 'text-gray-500 hover:bg-gray-50'
-                                        }`}
+                                        title={dayTrips.length > 0 ? `${dayTrips.length} trip` : undefined}
+                                        className="mx-auto flex flex-col items-center gap-0.5 rounded-md py-0.5 hover:bg-gray-50"
                                     >
-                                        {cellDate.getDate()}
+                                        <span
+                                            className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] transition-colors ${
+                                                isToday ? 'bg-indigo-600 font-semibold text-white' : 'text-gray-600'
+                                            }`}
+                                        >
+                                            {cellDate.getDate()}
+                                        </span>
+                                        <span className={`h-1 w-1 rounded-full ${dayTrips.length > 0 ? statusConfig(dayTrips[0].status).dot : ''}`} />
                                     </button>
                                 );
                             })}

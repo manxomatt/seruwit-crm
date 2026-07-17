@@ -10,7 +10,6 @@ export interface Trip {
 export type CalendarView = 'week' | 'month' | 'year';
 
 export const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-export const MAX_VISIBLE_TRIPS = 3;
 
 export const STATUS_CONFIG: Record<string, { label: string; dot: string; chip: string }> = {
     scheduled: { label: 'Scheduled', dot: 'bg-gray-400', chip: 'bg-gray-50 text-gray-700 hover:bg-gray-100' },
@@ -50,4 +49,26 @@ export function startOfWeek(date: Date): Date {
 
 export function formatTime(dateTime: string): string {
     return new Date(dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+export function isSameWeek(a: Date, b: Date): boolean {
+    const start = startOfWeek(a);
+    const diffDays = Math.round((b.getTime() - start.getTime()) / 86_400_000);
+    return diffDays >= 0 && diffDays < 7;
+}
+
+/** Distinct statuses present among a day's trips, used to render a compact dot summary instead of listing every trip. */
+export function TripDots({ trips }: { trips: Trip[] }): JSX.Element | null {
+    if (trips.length === 0) {
+        return null;
+    }
+    const statuses = Array.from(new Set(trips.map((trip) => trip.status)));
+
+    return (
+        <div className="flex items-center justify-center gap-1">
+            {statuses.slice(0, 4).map((status) => (
+                <span key={status} className={`h-1.5 w-1.5 rounded-full ${statusConfig(status).dot}`} />
+            ))}
+        </div>
+    );
 }
