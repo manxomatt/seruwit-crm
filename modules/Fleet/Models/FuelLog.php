@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\TransportationManagement\Models;
+namespace Modules\Fleet\Models;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\TransportationManagement\Database\Factories\FuelLogFactory;
+use Modules\Fleet\Database\Factories\FuelLogFactory;
 
 class FuelLog extends Model
 {
@@ -27,7 +27,6 @@ class FuelLog extends Model
      */
     protected $fillable = [
         'vehicle_id',
-        'trip_id',
         'filled_at',
         'liters',
         'cost',
@@ -53,13 +52,5 @@ class FuelLog extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
-    }
-
-    /**
-     * @return BelongsTo<Trip, $this>
-     */
-    public function trip(): BelongsTo
-    {
-        return $this->belongsTo(Trip::class);
     }
 }

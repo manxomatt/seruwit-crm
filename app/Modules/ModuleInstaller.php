@@ -21,12 +21,26 @@ use RuntimeException;
 class ModuleInstaller
 {
     /**
-     * Create the module's tables, permissions and menu inside $tenant.
+     * Create the module's tables, permissions and menu inside $tenant. Any
+     * registered module it requires but does not yet have is installed first,
+     * recursively — so installing Transportation alone also brings in Fleet.
      *
-     * @throws RuntimeException when the tenant's plan does not cover the module,
-     *                          or a required module is missing
+     * @throws RuntimeException when the tenant's plan does not cover the module
+     *                          or any module it transitively requires
      */
     public function install(Tenant $tenant, ModuleContract $module): void
+    {
+        $tenant->run(function () use ($tenant, $module): void {
+            $this->installWithinTenant($tenant, $module);
+        });
+    }
+
+    /**
+     * Does the actual install work, assuming tenant context is already active.
+     * Recursion for a missing requirement calls back into this directly rather
+     * than through install(), since Tenant::run() is not meant to be re-entered.
+     */
+    private function installWithinTenant(Tenant $tenant, ModuleContract $module): void
     {
         if (! $tenant->isEntitledTo($module->key())) {
             throw new RuntimeException(
@@ -34,25 +48,38 @@ class ModuleInstaller
             );
         }
 
-        $tenant->run(function () use ($module): void {
-            $this->guardRequirements($module);
+        foreach ($module->requires() as $requiredKey) {
+            // Unregistered dependencies are core features that ship with every
+            // tenant, so only registered ones need installing.
+            if (! Modules::has($requiredKey)) {
+                continue;
+            }
 
-            Artisan::call('migrate', [
-                '--path' => $module->migrationsPath(),
-                '--realpath' => true,
-                '--force' => true,
-            ]);
+            $satisfied = InstalledModule::query()
+                ->where('key', $requiredKey)
+                ->installed()
+                ->exists();
 
-            $this->seedPermissions($module);
-            $this->seedMenu($module);
+            if (! $satisfied) {
+                $this->installWithinTenant($tenant, Modules::find($requiredKey));
+            }
+        }
 
-            InstalledModule::query()->updateOrCreate(
-                ['key' => $module->key()],
-                ['installed_at' => now(), 'uninstalled_at' => null],
-            );
+        Artisan::call('migrate', [
+            '--path' => $module->migrationsPath(),
+            '--realpath' => true,
+            '--force' => true,
+        ]);
 
-            Modules::flushInstalledState();
-        });
+        $this->seedPermissions($module);
+        $this->seedMenu($module);
+
+        InstalledModule::query()->updateOrCreate(
+            ['key' => $module->key()],
+            ['installed_at' => now(), 'uninstalled_at' => null],
+        );
+
+        Modules::flushInstalledState();
     }
 
     /**
@@ -162,28 +189,6 @@ class ModuleInstaller
         );
 
         Modules::flushInstalledState();
-    }
-
-    private function guardRequirements(ModuleContract $module): void
-    {
-        foreach ($module->requires() as $requiredKey) {
-            // Unregistered dependencies are core features that ship with every
-            // tenant, so only registered ones need an install check.
-            if (! Modules::has($requiredKey)) {
-                continue;
-            }
-
-            $satisfied = InstalledModule::query()
-                ->where('key', $requiredKey)
-                ->installed()
-                ->exists();
-
-            if (! $satisfied) {
-                throw new RuntimeException(
-                    "Module [{$module->key()}] requires [{$requiredKey}], which is not installed.",
-                );
-            }
-        }
     }
 
     private function guardDependents(ModuleContract $module): void

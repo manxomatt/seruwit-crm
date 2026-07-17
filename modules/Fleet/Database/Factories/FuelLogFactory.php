@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\TransportationManagement\Database\Factories;
+namespace Modules\Fleet\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\TransportationManagement\Models\FuelLog;
-use Modules\TransportationManagement\Models\Vehicle;
+use Modules\Fleet\Models\FuelLog;
+use Modules\Fleet\Models\Vehicle;
 
 /**
  * @extends Factory<FuelLog>
@@ -30,7 +30,6 @@ class FuelLogFactory extends Factory
 
         return [
             'vehicle_id' => Vehicle::factory(),
-            'trip_id' => null,
             'filled_at' => fake()->dateTimeBetween('-1 month', 'now'),
             'liters' => $liters,
             'cost' => $liters * fake()->randomFloat(2, 10000, 15000),

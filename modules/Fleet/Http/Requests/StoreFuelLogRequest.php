@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\TransportationManagement\Http\Requests;
+namespace Modules\Fleet\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,7 +22,6 @@ class StoreFuelLogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'trip_id' => ['nullable', 'integer', 'exists:trips,id'],
             'filled_at' => ['required', 'date'],
             'liters' => ['required', 'numeric', 'min:0.01'],
             'cost' => ['required', 'numeric', 'min:0'],

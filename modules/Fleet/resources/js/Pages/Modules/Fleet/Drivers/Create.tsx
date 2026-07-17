@@ -8,7 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import TransportationNav from '../../../../TransportationNav';
+import FleetNav from '../../../../FleetNav';
 
 export default function Create(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -26,7 +26,7 @@ export default function Create(): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(prefixedRoute('transportation.drivers.store'));
+        post(prefixedRoute('fleet.drivers.store'));
     };
 
     return (
@@ -35,7 +35,7 @@ export default function Create(): JSX.Element {
         >
             <Head title="Add Driver" />
 
-            <TransportationNav />
+            <FleetNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -97,7 +97,7 @@ export default function Create(): JSX.Element {
 
                         <div className="flex items-center gap-4">
                             <PrimaryButton disabled={processing}>Add Driver</PrimaryButton>
-                            <Link href={prefixedRoute('transportation.drivers.index')}>
+                            <Link href={prefixedRoute('fleet.drivers.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

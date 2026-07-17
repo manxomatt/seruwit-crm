@@ -4,8 +4,7 @@ namespace Modules\TransportationManagement\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\TransportationManagement\Models\Driver;
-use Modules\TransportationManagement\Models\Vehicle;
+use Modules\TransportationManagement\Models\Trip;
 
 class StoreTripRequest extends FormRequest
 {
@@ -37,19 +36,22 @@ class StoreTripRequest extends FormRequest
 
     /**
      * A vehicle or driver already tied to a scheduled or in-progress trip
-     * cannot be double-booked onto another one.
+     * cannot be double-booked onto another one. Checked against Trip directly
+     * (Transportation's own table) rather than a method on the Fleet models,
+     * since Fleet has no concept of a "trip".
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
             $vehicleId = $this->input('vehicle_id');
             $driverId = $this->input('driver_id');
+            $activeStatuses = [Trip::STATUS_SCHEDULED, Trip::STATUS_IN_PROGRESS];
 
-            if ($vehicleId && Vehicle::find($vehicleId)?->hasActiveTrip()) {
+            if ($vehicleId && Trip::where('vehicle_id', $vehicleId)->whereIn('status', $activeStatuses)->exists()) {
                 $validator->errors()->add('vehicle_id', 'This vehicle is already assigned to an active trip.');
             }
 
-            if ($driverId && Driver::find($driverId)?->hasActiveTrip()) {
+            if ($driverId && Trip::where('driver_id', $driverId)->whereIn('status', $activeStatuses)->exists()) {
                 $validator->errors()->add('driver_id', 'This driver is already assigned to an active trip.');
             }
         });

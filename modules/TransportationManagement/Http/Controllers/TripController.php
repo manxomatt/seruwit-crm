@@ -8,11 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Http\Requests\StoreTripRequest;
 use Modules\TransportationManagement\Http\Requests\UpdateTripRequest;
-use Modules\TransportationManagement\Models\Driver;
 use Modules\TransportationManagement\Models\Trip;
-use Modules\TransportationManagement\Models\Vehicle;
 
 class TripController extends Controller
 {
@@ -91,7 +91,7 @@ class TripController extends Controller
     {
         $user = Auth::user();
 
-        $trip->load(['vehicle', 'driver', 'checkpoints', 'fuelLogs']);
+        $trip->load(['vehicle', 'driver', 'checkpoints']);
 
         return Inertia::render('Modules/TransportationManagement/Trips/Show', [
             'trip' => $trip,

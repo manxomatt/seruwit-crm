@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\TransportationManagement\Database\Factories;
+namespace Modules\Fleet\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\TransportationManagement\Models\Driver;
+use Modules\Fleet\Models\Driver;
 
 /**
  * @extends Factory<Driver>

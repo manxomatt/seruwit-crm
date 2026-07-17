@@ -4,13 +4,9 @@ namespace Modules\TransportationManagement;
 
 use App\Modules\ModuleContract;
 use Illuminate\Support\Facades\Route;
-use Modules\TransportationManagement\Http\Controllers\DriverController;
-use Modules\TransportationManagement\Http\Controllers\FuelLogController;
 use Modules\TransportationManagement\Http\Controllers\ReportController;
 use Modules\TransportationManagement\Http\Controllers\TripCheckpointController;
 use Modules\TransportationManagement\Http\Controllers\TripController;
-use Modules\TransportationManagement\Http\Controllers\VehicleController;
-use Modules\TransportationManagement\Http\Controllers\VehicleMaintenanceLogController;
 
 class TransportationManagementModule implements ModuleContract
 {
@@ -26,7 +22,7 @@ class TransportationManagementModule implements ModuleContract
 
     public function description(): string
     {
-        return 'Fleet, driver, and trip dispatch management with checkpoint tracking and cost reports.';
+        return 'Trip dispatch, checkpoint tracking, and cost/utilization reports for the Fleet module\'s vehicles and drivers.';
     }
 
     public function permissions(): array
@@ -35,13 +31,13 @@ class TransportationManagementModule implements ModuleContract
     }
 
     /**
-     * Vehicle/driver photos go through the Media picker in the shared
-     * ImageUploader component, so Transportation cannot stand on its own
-     * without Media.
+     * Trips are dispatched for a Fleet vehicle and driver, and Reports
+     * aggregate across Fleet's own tables — Transportation cannot stand on
+     * its own without it.
      */
     public function requires(): array
     {
-        return ['media'];
+        return ['fleet'];
     }
 
     public function menu(): ?array
@@ -50,10 +46,10 @@ class TransportationManagementModule implements ModuleContract
             'name' => 'Transportation',
             'slug' => 'transportation',
             'icon' => 'transportation',
-            'route_name' => 'transportation.vehicles.index',
+            'route_name' => 'transportation.trips.index',
             'permission_module' => 'transportation',
             'permission_action' => 'view',
-            'sort_order' => 5,
+            'sort_order' => 6,
         ];
     }
 
@@ -79,30 +75,7 @@ class TransportationManagementModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/transportation', '/transportation/vehicles');
-
-        Route::get('/transportation/vehicles', [VehicleController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.vehicles.index');
-        Route::get('/transportation/vehicles/create', [VehicleController::class, 'create'])->middleware('permission:transportation,create')->name('transportation.vehicles.create');
-        Route::post('/transportation/vehicles', [VehicleController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.vehicles.store');
-        Route::get('/transportation/vehicles/{vehicle}', [VehicleController::class, 'show'])->middleware('permission:transportation,view')->name('transportation.vehicles.show');
-        Route::get('/transportation/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->middleware('permission:transportation,update')->name('transportation.vehicles.edit');
-        Route::patch('/transportation/vehicles/{vehicle}', [VehicleController::class, 'update'])->middleware('permission:transportation,update')->name('transportation.vehicles.update');
-        Route::delete('/transportation/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.vehicles.destroy');
-
-        Route::post('/transportation/vehicles/{vehicle}/maintenance-logs', [VehicleMaintenanceLogController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.vehicles.maintenance-logs.store');
-        Route::patch('/transportation/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'update'])->middleware('permission:transportation,update')->name('transportation.vehicles.maintenance-logs.update');
-        Route::delete('/transportation/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.vehicles.maintenance-logs.destroy');
-
-        Route::post('/transportation/vehicles/{vehicle}/fuel-logs', [FuelLogController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.vehicles.fuel-logs.store');
-        Route::delete('/transportation/vehicles/{vehicle}/fuel-logs/{fuelLog}', [FuelLogController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.vehicles.fuel-logs.destroy');
-
-        Route::get('/transportation/drivers', [DriverController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.drivers.index');
-        Route::get('/transportation/drivers/create', [DriverController::class, 'create'])->middleware('permission:transportation,create')->name('transportation.drivers.create');
-        Route::post('/transportation/drivers', [DriverController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.drivers.store');
-        Route::get('/transportation/drivers/{driver}', [DriverController::class, 'show'])->middleware('permission:transportation,view')->name('transportation.drivers.show');
-        Route::get('/transportation/drivers/{driver}/edit', [DriverController::class, 'edit'])->middleware('permission:transportation,update')->name('transportation.drivers.edit');
-        Route::patch('/transportation/drivers/{driver}', [DriverController::class, 'update'])->middleware('permission:transportation,update')->name('transportation.drivers.update');
-        Route::delete('/transportation/drivers/{driver}', [DriverController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.drivers.destroy');
+        Route::redirect('/transportation', '/transportation/trips');
 
         Route::get('/transportation/trips', [TripController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.trips.index');
         Route::get('/transportation/trips/create', [TripController::class, 'create'])->middleware('permission:transportation,create')->name('transportation.trips.create');

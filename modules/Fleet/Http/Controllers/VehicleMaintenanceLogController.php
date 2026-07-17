@@ -1,13 +1,13 @@
 <?php
 
-namespace Modules\TransportationManagement\Http\Controllers;
+namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Modules\TransportationManagement\Http\Requests\StoreMaintenanceLogRequest;
-use Modules\TransportationManagement\Http\Requests\UpdateMaintenanceLogRequest;
-use Modules\TransportationManagement\Models\Vehicle;
-use Modules\TransportationManagement\Models\VehicleMaintenanceLog;
+use Modules\Fleet\Http\Requests\StoreMaintenanceLogRequest;
+use Modules\Fleet\Http\Requests\UpdateMaintenanceLogRequest;
+use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Models\VehicleMaintenanceLog;
 
 class VehicleMaintenanceLogController extends Controller
 {
@@ -26,7 +26,7 @@ class VehicleMaintenanceLogController extends Controller
     {
         $vehicle->maintenanceLogs()->create($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.show', $vehicle)
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', 'Maintenance log added.');
     }
 
@@ -41,7 +41,7 @@ class VehicleMaintenanceLogController extends Controller
 
         $maintenanceLog->update($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.show', $vehicle)
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', 'Maintenance log updated.');
     }
 
@@ -56,7 +56,7 @@ class VehicleMaintenanceLogController extends Controller
 
         $maintenanceLog->delete();
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.show', $vehicle)
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', 'Maintenance log deleted.');
     }
 }

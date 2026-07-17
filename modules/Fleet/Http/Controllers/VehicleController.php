@@ -1,15 +1,17 @@
 <?php
 
-namespace Modules\TransportationManagement\Http\Controllers;
+namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\TransportationManagement\Http\Requests\StoreVehicleRequest;
-use Modules\TransportationManagement\Http\Requests\UpdateVehicleRequest;
-use Modules\TransportationManagement\Models\Vehicle;
+use Modules\Fleet\Http\Requests\StoreVehicleRequest;
+use Modules\Fleet\Http\Requests\UpdateVehicleRequest;
+use Modules\Fleet\Models\Vehicle;
 
 class VehicleController extends Controller
 {
@@ -41,16 +43,16 @@ class VehicleController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('Modules/TransportationManagement/Vehicles/Index', [
+        return Inertia::render('Modules/Fleet/Vehicles/Index', [
             'vehicles' => $vehicles,
             'filters' => [
                 'search' => request('search'),
                 'status' => request('status'),
             ],
             'can' => [
-                'create' => $user->hasPermissionFor('transportation', 'create'),
-                'update' => $user->hasPermissionFor('transportation', 'update'),
-                'delete' => $user->hasPermissionFor('transportation', 'delete'),
+                'create' => $user->hasPermissionFor('fleet', 'create'),
+                'update' => $user->hasPermissionFor('fleet', 'update'),
+                'delete' => $user->hasPermissionFor('fleet', 'delete'),
             ],
         ]);
     }
@@ -60,7 +62,7 @@ class VehicleController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Modules/TransportationManagement/Vehicles/Create');
+        return Inertia::render('Modules/Fleet/Vehicles/Create');
     }
 
     /**
@@ -70,7 +72,7 @@ class VehicleController extends Controller
     {
         $vehicle = Vehicle::create($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.show', $vehicle)
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', 'Vehicle created successfully.');
     }
 
@@ -83,12 +85,12 @@ class VehicleController extends Controller
 
         $vehicle->load(['maintenanceLogs', 'fuelLogs']);
 
-        return Inertia::render('Modules/TransportationManagement/Vehicles/Show', [
+        return Inertia::render('Modules/Fleet/Vehicles/Show', [
             'vehicle' => $vehicle,
             'can' => [
-                'update' => $user->hasPermissionFor('transportation', 'update'),
-                'delete' => $user->hasPermissionFor('transportation', 'delete'),
-                'create' => $user->hasPermissionFor('transportation', 'create'),
+                'update' => $user->hasPermissionFor('fleet', 'update'),
+                'delete' => $user->hasPermissionFor('fleet', 'delete'),
+                'create' => $user->hasPermissionFor('fleet', 'create'),
             ],
         ]);
     }
@@ -98,7 +100,7 @@ class VehicleController extends Controller
      */
     public function edit(Vehicle $vehicle): Response
     {
-        return Inertia::render('Modules/TransportationManagement/Vehicles/Edit', [
+        return Inertia::render('Modules/Fleet/Vehicles/Edit', [
             'vehicle' => $vehicle,
         ]);
     }
@@ -110,22 +112,29 @@ class VehicleController extends Controller
     {
         $vehicle->update($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.show', $vehicle)
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', 'Vehicle updated successfully.');
     }
 
     /**
      * Remove the specified vehicle from storage.
+     *
+     * Fleet has no knowledge of Trip or any other module that might reference
+     * this vehicle, so it cannot check "is this vehicle busy" itself — the
+     * database's own foreign key constraint is what stops the delete, and this
+     * just turns that into a readable message instead of a 500. The delete is
+     * wrapped in its own transaction so a constraint violation only rolls back
+     * this statement (via a savepoint) instead of poisoning an outer one.
      */
     public function destroy(Vehicle $vehicle): RedirectResponse
     {
-        if ($vehicle->hasActiveTrip()) {
-            return back()->with('error', 'This vehicle has an active trip and cannot be deleted.');
+        try {
+            DB::transaction(fn () => $vehicle->delete());
+        } catch (QueryException) {
+            return back()->with('error', 'This vehicle is still referenced by other records and cannot be deleted.');
         }
 
-        $vehicle->delete();
-
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.index')
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.index')
             ->with('success', 'Vehicle deleted successfully.');
     }
 }

@@ -14,8 +14,13 @@ return new class extends Migration
         Schema::create('trips', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('driver_id')->constrained()->cascadeOnDelete();
+            // No cascadeOnDelete: Vehicle/Driver belong to the separate Fleet
+            // module, which must stay free of any knowledge of Trip. Deleting a
+            // vehicle or driver still tied to a trip is refused at the database
+            // level instead (restrict is the default), and Fleet's controllers
+            // turn that into a friendly error.
+            $table->foreignId('vehicle_id')->constrained();
+            $table->foreignId('driver_id')->constrained();
             $table->string('origin');
             $table->string('destination');
             $table->text('cargo_notes')->nullable();

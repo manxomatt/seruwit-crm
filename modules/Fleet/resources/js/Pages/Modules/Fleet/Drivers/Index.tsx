@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
-import TransportationNav from '../../../../TransportationNav';
+import FleetNav from '../../../../FleetNav';
 
 interface Driver {
     id: number;
@@ -59,14 +59,14 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(prefixedRoute('transportation.drivers.index'), {
+        router.get(prefixedRoute('fleet.drivers.index'), {
             search: search || undefined,
             status: filters.status || undefined,
         }, { preserveState: true, replace: true });
     };
 
     const handleStatusFilter = (status: string) => {
-        router.get(prefixedRoute('transportation.drivers.index'), {
+        router.get(prefixedRoute('fleet.drivers.index'), {
             search: search || undefined,
             status: status || undefined,
         }, { preserveState: true, replace: true });
@@ -85,7 +85,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
     const confirmDelete = () => {
         if (!driverToDelete) return;
         setProcessing(true);
-        router.delete(prefixedRoute('transportation.drivers.destroy', driverToDelete.id), {
+        router.delete(prefixedRoute('fleet.drivers.destroy', driverToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -97,7 +97,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">Transportation</h2>
                     {can.create && (
-                        <Link href={prefixedRoute('transportation.drivers.create')}>
+                        <Link href={prefixedRoute('fleet.drivers.create')}>
                             <PrimaryButton>Add Driver</PrimaryButton>
                         </Link>
                     )}
@@ -106,7 +106,7 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
         >
             <Head title="Drivers" />
 
-            <TransportationNav />
+            <FleetNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -166,11 +166,11 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-3">
-                                                        <Link href={prefixedRoute('transportation.drivers.show', driver.id)} className="text-gray-600 hover:text-gray-900">
+                                                        <Link href={prefixedRoute('fleet.drivers.show', driver.id)} className="text-gray-600 hover:text-gray-900">
                                                             View
                                                         </Link>
                                                         {can.update && (
-                                                            <Link href={prefixedRoute('transportation.drivers.edit', driver.id)} className="text-indigo-600 hover:text-indigo-900">
+                                                            <Link href={prefixedRoute('fleet.drivers.edit', driver.id)} className="text-indigo-600 hover:text-indigo-900">
                                                                 Edit
                                                             </Link>
                                                         )}

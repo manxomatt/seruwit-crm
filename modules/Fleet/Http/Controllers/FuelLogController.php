@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\TransportationManagement\Http\Controllers;
+namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Modules\TransportationManagement\Http\Requests\StoreFuelLogRequest;
-use Modules\TransportationManagement\Models\FuelLog;
-use Modules\TransportationManagement\Models\Vehicle;
+use Modules\Fleet\Http\Requests\StoreFuelLogRequest;
+use Modules\Fleet\Models\FuelLog;
+use Modules\Fleet\Models\Vehicle;
 
 class FuelLogController extends Controller
 {
@@ -25,7 +25,7 @@ class FuelLogController extends Controller
     {
         $vehicle->fuelLogs()->create($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.show', $vehicle)
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', 'Fuel log added.');
     }
 
@@ -40,7 +40,7 @@ class FuelLogController extends Controller
 
         $fuelLog->delete();
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.vehicles.show', $vehicle)
+        return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with('success', 'Fuel log deleted.');
     }
 }

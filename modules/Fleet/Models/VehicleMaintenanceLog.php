@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\TransportationManagement\Models;
+namespace Modules\Fleet\Models;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\TransportationManagement\Database\Factories\VehicleMaintenanceLogFactory;
+use Modules\Fleet\Database\Factories\VehicleMaintenanceLogFactory;
 
 class VehicleMaintenanceLog extends Model
 {

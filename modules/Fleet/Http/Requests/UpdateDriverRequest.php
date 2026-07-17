@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\TransportationManagement\Http\Requests;
+namespace Modules\Fleet\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

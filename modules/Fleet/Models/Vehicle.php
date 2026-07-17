@@ -1,13 +1,19 @@
 <?php
 
-namespace Modules\TransportationManagement\Models;
+namespace Modules\Fleet\Models;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\TransportationManagement\Database\Factories\VehicleFactory;
+use Modules\Fleet\Database\Factories\VehicleFactory;
 
+/**
+ * Deliberately has no knowledge of Trip or any other consumer's booking
+ * concept — Fleet exists so Transportation, Rental, or any future module can
+ * reference the same vehicle records via `requires(): ['fleet']` without this
+ * module depending back on any of them.
+ */
 class Vehicle extends Model
 {
     /** @use HasFactory<VehicleFactory> */
@@ -55,14 +61,6 @@ class Vehicle extends Model
     }
 
     /**
-     * @return HasMany<Trip, $this>
-     */
-    public function trips(): HasMany
-    {
-        return $this->hasMany(Trip::class);
-    }
-
-    /**
      * @return HasMany<VehicleMaintenanceLog, $this>
      */
     public function maintenanceLogs(): HasMany
@@ -76,17 +74,5 @@ class Vehicle extends Model
     public function fuelLogs(): HasMany
     {
         return $this->hasMany(FuelLog::class)->latest('filled_at');
-    }
-
-    /**
-     * A vehicle already committed to a scheduled or in-progress trip cannot
-     * take on another one until that trip finishes or is cancelled.
-     */
-    public function hasActiveTrip(?int $excludingTripId = null): bool
-    {
-        return $this->trips()
-            ->whereIn('status', [Trip::STATUS_SCHEDULED, Trip::STATUS_IN_PROGRESS])
-            ->when($excludingTripId, fn ($query) => $query->where('id', '!=', $excludingTripId))
-            ->exists();
     }
 }

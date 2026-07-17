@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\TransportationManagement\Database\Factories;
+namespace Modules\Fleet\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\TransportationManagement\Models\Vehicle;
-use Modules\TransportationManagement\Models\VehicleMaintenanceLog;
+use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Models\VehicleMaintenanceLog;
 
 /**
  * @extends Factory<VehicleMaintenanceLog>

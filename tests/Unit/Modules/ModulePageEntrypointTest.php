@@ -32,11 +32,11 @@ class ModulePageEntrypointTest extends TestCase
         );
     }
 
-    public function test_a_page_owned_by_the_transportation_module_resolves_to_the_modules_copy(): void
+    public function test_a_page_owned_by_the_fleet_module_resolves_to_the_modules_copy(): void
     {
         $this->assertSame(
-            'modules/TransportationManagement/resources/js/Pages/Modules/TransportationManagement/Vehicles/Index.tsx',
-            $this->registry->pageEntrypoint('Modules/TransportationManagement/Vehicles/Index'),
+            'modules/Fleet/resources/js/Pages/Modules/Fleet/Vehicles/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/Fleet/Vehicles/Index'),
         );
     }
 
@@ -71,14 +71,14 @@ class ModulePageEntrypointTest extends TestCase
             'Modules/Users/Index',
             'Module/Dashboard',
             'Module/Plans/Index',
-            'Modules/TransportationManagement/Vehicles/Index',
-            'Modules/TransportationManagement/Vehicles/Create',
-            'Modules/TransportationManagement/Vehicles/Edit',
-            'Modules/TransportationManagement/Vehicles/Show',
-            'Modules/TransportationManagement/Drivers/Index',
-            'Modules/TransportationManagement/Drivers/Create',
-            'Modules/TransportationManagement/Drivers/Edit',
-            'Modules/TransportationManagement/Drivers/Show',
+            'Modules/Fleet/Vehicles/Index',
+            'Modules/Fleet/Vehicles/Create',
+            'Modules/Fleet/Vehicles/Edit',
+            'Modules/Fleet/Vehicles/Show',
+            'Modules/Fleet/Drivers/Index',
+            'Modules/Fleet/Drivers/Create',
+            'Modules/Fleet/Drivers/Edit',
+            'Modules/Fleet/Drivers/Show',
             'Modules/TransportationManagement/Trips/Index',
             'Modules/TransportationManagement/Trips/Create',
             'Modules/TransportationManagement/Trips/Show',

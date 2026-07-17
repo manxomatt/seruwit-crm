@@ -9,7 +9,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import TransportationNav from '../../../../TransportationNav';
+import FleetNav from '../../../../FleetNav';
 
 interface MaintenanceLog {
     id: number;
@@ -93,7 +93,7 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
 
     const submitMaintenance: FormEventHandler = (e) => {
         e.preventDefault();
-        maintenanceForm.post(prefixedRoute('transportation.vehicles.maintenance-logs.store', vehicle.id), {
+        maintenanceForm.post(prefixedRoute('fleet.vehicles.maintenance-logs.store', vehicle.id), {
             onSuccess: () => {
                 setShowMaintenanceModal(false);
                 maintenanceForm.reset();
@@ -103,7 +103,7 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
 
     const submitFuel: FormEventHandler = (e) => {
         e.preventDefault();
-        fuelForm.post(prefixedRoute('transportation.vehicles.fuel-logs.store', vehicle.id), {
+        fuelForm.post(prefixedRoute('fleet.vehicles.fuel-logs.store', vehicle.id), {
             onSuccess: () => {
                 setShowFuelModal(false);
                 fuelForm.reset();
@@ -112,16 +112,16 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
     };
 
     const deleteMaintenance = (id: number) => {
-        router.delete(prefixedRoute('transportation.vehicles.maintenance-logs.destroy', [vehicle.id, id]), { preserveScroll: true });
+        router.delete(prefixedRoute('fleet.vehicles.maintenance-logs.destroy', [vehicle.id, id]), { preserveScroll: true });
     };
 
     const deleteFuel = (id: number) => {
-        router.delete(prefixedRoute('transportation.vehicles.fuel-logs.destroy', [vehicle.id, id]), { preserveScroll: true });
+        router.delete(prefixedRoute('fleet.vehicles.fuel-logs.destroy', [vehicle.id, id]), { preserveScroll: true });
     };
 
     const confirmDelete = () => {
         setProcessing(true);
-        router.delete(prefixedRoute('transportation.vehicles.destroy', vehicle.id), {
+        router.delete(prefixedRoute('fleet.vehicles.destroy', vehicle.id), {
             onFinish: () => setProcessing(false),
         });
     };
@@ -133,11 +133,11 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">{vehicle.name}</h2>
                     <div className="flex gap-2">
                         {can.update && (
-                            <Link href={prefixedRoute('transportation.vehicles.edit', vehicle.id)}>
+                            <Link href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}>
                                 <SecondaryButton>Edit</SecondaryButton>
                             </Link>
                         )}
-                        <Link href={prefixedRoute('transportation.vehicles.index')}>
+                        <Link href={prefixedRoute('fleet.vehicles.index')}>
                             <SecondaryButton>Back to List</SecondaryButton>
                         </Link>
                     </div>
@@ -146,7 +146,7 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
         >
             <Head title={vehicle.name} />
 
-            <TransportationNav />
+            <FleetNav />
 
             <div className="space-y-6">
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">

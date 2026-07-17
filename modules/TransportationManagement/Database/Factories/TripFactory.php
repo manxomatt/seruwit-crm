@@ -3,9 +3,9 @@
 namespace Modules\TransportationManagement\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\TransportationManagement\Models\Driver;
+use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Models\Trip;
-use Modules\TransportationManagement\Models\Vehicle;
 
 /**
  * @extends Factory<Trip>

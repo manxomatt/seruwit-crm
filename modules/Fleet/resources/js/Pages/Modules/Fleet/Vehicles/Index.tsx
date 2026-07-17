@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
-import TransportationNav from '../../../../TransportationNav';
+import FleetNav from '../../../../FleetNav';
 
 interface Vehicle {
     id: number;
@@ -61,14 +61,14 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(prefixedRoute('transportation.vehicles.index'), {
+        router.get(prefixedRoute('fleet.vehicles.index'), {
             search: search || undefined,
             status: filters.status || undefined,
         }, { preserveState: true, replace: true });
     };
 
     const handleStatusFilter = (status: string) => {
-        router.get(prefixedRoute('transportation.vehicles.index'), {
+        router.get(prefixedRoute('fleet.vehicles.index'), {
             search: search || undefined,
             status: status || undefined,
         }, { preserveState: true, replace: true });
@@ -87,7 +87,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
     const confirmDelete = () => {
         if (!vehicleToDelete) return;
         setProcessing(true);
-        router.delete(prefixedRoute('transportation.vehicles.destroy', vehicleToDelete.id), {
+        router.delete(prefixedRoute('fleet.vehicles.destroy', vehicleToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
@@ -99,7 +99,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">Transportation</h2>
                     {can.create && (
-                        <Link href={prefixedRoute('transportation.vehicles.create')}>
+                        <Link href={prefixedRoute('fleet.vehicles.create')}>
                             <PrimaryButton>Add Vehicle</PrimaryButton>
                         </Link>
                     )}
@@ -108,7 +108,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
         >
             <Head title="Vehicles" />
 
-            <TransportationNav />
+            <FleetNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -173,11 +173,11 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-3">
-                                                        <Link href={prefixedRoute('transportation.vehicles.show', vehicle.id)} className="text-gray-600 hover:text-gray-900">
+                                                        <Link href={prefixedRoute('fleet.vehicles.show', vehicle.id)} className="text-gray-600 hover:text-gray-900">
                                                             View
                                                         </Link>
                                                         {can.update && (
-                                                            <Link href={prefixedRoute('transportation.vehicles.edit', vehicle.id)} className="text-indigo-600 hover:text-indigo-900">
+                                                            <Link href={prefixedRoute('fleet.vehicles.edit', vehicle.id)} className="text-indigo-600 hover:text-indigo-900">
                                                                 Edit
                                                             </Link>
                                                         )}

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Database\Factories\TripFactory;
 
 class Trip extends Model
@@ -84,14 +86,6 @@ class Trip extends Model
     public function checkpoints(): HasMany
     {
         return $this->hasMany(TripCheckpoint::class)->orderBy('recorded_at');
-    }
-
-    /**
-     * @return HasMany<FuelLog, $this>
-     */
-    public function fuelLogs(): HasMany
-    {
-        return $this->hasMany(FuelLog::class);
     }
 
     /**

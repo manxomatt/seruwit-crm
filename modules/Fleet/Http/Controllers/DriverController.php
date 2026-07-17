@@ -1,15 +1,17 @@
 <?php
 
-namespace Modules\TransportationManagement\Http\Controllers;
+namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\TransportationManagement\Http\Requests\StoreDriverRequest;
-use Modules\TransportationManagement\Http\Requests\UpdateDriverRequest;
-use Modules\TransportationManagement\Models\Driver;
+use Modules\Fleet\Http\Requests\StoreDriverRequest;
+use Modules\Fleet\Http\Requests\UpdateDriverRequest;
+use Modules\Fleet\Models\Driver;
 
 class DriverController extends Controller
 {
@@ -41,16 +43,16 @@ class DriverController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('Modules/TransportationManagement/Drivers/Index', [
+        return Inertia::render('Modules/Fleet/Drivers/Index', [
             'drivers' => $drivers,
             'filters' => [
                 'search' => request('search'),
                 'status' => request('status'),
             ],
             'can' => [
-                'create' => $user->hasPermissionFor('transportation', 'create'),
-                'update' => $user->hasPermissionFor('transportation', 'update'),
-                'delete' => $user->hasPermissionFor('transportation', 'delete'),
+                'create' => $user->hasPermissionFor('fleet', 'create'),
+                'update' => $user->hasPermissionFor('fleet', 'update'),
+                'delete' => $user->hasPermissionFor('fleet', 'delete'),
             ],
         ]);
     }
@@ -60,7 +62,7 @@ class DriverController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Modules/TransportationManagement/Drivers/Create');
+        return Inertia::render('Modules/Fleet/Drivers/Create');
     }
 
     /**
@@ -70,7 +72,7 @@ class DriverController extends Controller
     {
         $driver = Driver::create($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.drivers.show', $driver)
+        return redirect()->route($this->getRoutePrefix().'.fleet.drivers.show', $driver)
             ->with('success', 'Driver created successfully.');
     }
 
@@ -81,13 +83,11 @@ class DriverController extends Controller
     {
         $user = Auth::user();
 
-        $driver->load(['trips' => fn ($query) => $query->latest()->with('vehicle')]);
-
-        return Inertia::render('Modules/TransportationManagement/Drivers/Show', [
+        return Inertia::render('Modules/Fleet/Drivers/Show', [
             'driver' => $driver,
             'can' => [
-                'update' => $user->hasPermissionFor('transportation', 'update'),
-                'delete' => $user->hasPermissionFor('transportation', 'delete'),
+                'update' => $user->hasPermissionFor('fleet', 'update'),
+                'delete' => $user->hasPermissionFor('fleet', 'delete'),
             ],
         ]);
     }
@@ -97,7 +97,7 @@ class DriverController extends Controller
      */
     public function edit(Driver $driver): Response
     {
-        return Inertia::render('Modules/TransportationManagement/Drivers/Edit', [
+        return Inertia::render('Modules/Fleet/Drivers/Edit', [
             'driver' => $driver,
         ]);
     }
@@ -109,22 +109,29 @@ class DriverController extends Controller
     {
         $driver->update($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.transportation.drivers.show', $driver)
+        return redirect()->route($this->getRoutePrefix().'.fleet.drivers.show', $driver)
             ->with('success', 'Driver updated successfully.');
     }
 
     /**
      * Remove the specified driver from storage.
+     *
+     * Fleet has no knowledge of Trip or any other module that might reference
+     * this driver, so it cannot check "is this driver busy" itself — the
+     * database's own foreign key constraint is what stops the delete, and this
+     * just turns that into a readable message instead of a 500. The delete is
+     * wrapped in its own transaction so a constraint violation only rolls back
+     * this statement (via a savepoint) instead of poisoning an outer one.
      */
     public function destroy(Driver $driver): RedirectResponse
     {
-        if ($driver->hasActiveTrip()) {
-            return back()->with('error', 'This driver has an active trip and cannot be deleted.');
+        try {
+            DB::transaction(fn () => $driver->delete());
+        } catch (QueryException) {
+            return back()->with('error', 'This driver is still referenced by other records and cannot be deleted.');
         }
 
-        $driver->delete();
-
-        return redirect()->route($this->getRoutePrefix().'.transportation.drivers.index')
+        return redirect()->route($this->getRoutePrefix().'.fleet.drivers.index')
             ->with('success', 'Driver deleted successfully.');
     }
 }

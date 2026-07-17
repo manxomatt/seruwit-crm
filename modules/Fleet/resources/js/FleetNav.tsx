@@ -2,11 +2,11 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Trips', route: 'transportation.trips.index', pattern: 'transportation.trips.*' },
-    { label: 'Reports', route: 'transportation.reports.index', pattern: 'transportation.reports.*' },
+    { label: 'Vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
+    { label: 'Drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
 ];
 
-export default function TransportationNav(): JSX.Element {
+export default function FleetNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
 
     return (

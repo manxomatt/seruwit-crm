@@ -8,7 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import TransportationNav from '../../../../TransportationNav';
+import FleetNav from '../../../../FleetNav';
 
 interface Driver {
     id: number;
@@ -43,7 +43,7 @@ export default function Edit({ driver }: Props): JSX.Element {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(prefixedRoute('transportation.drivers.update', driver.id));
+        patch(prefixedRoute('fleet.drivers.update', driver.id));
     };
 
     return (
@@ -52,7 +52,7 @@ export default function Edit({ driver }: Props): JSX.Element {
         >
             <Head title={`Edit: ${driver.name}`} />
 
-            <TransportationNav />
+            <FleetNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -114,7 +114,7 @@ export default function Edit({ driver }: Props): JSX.Element {
 
                         <div className="flex items-center gap-4">
                             <PrimaryButton disabled={processing}>Save Changes</PrimaryButton>
-                            <Link href={prefixedRoute('transportation.drivers.show', driver.id)}>
+                            <Link href={prefixedRoute('fleet.drivers.show', driver.id)}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

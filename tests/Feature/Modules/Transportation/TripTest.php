@@ -3,9 +3,9 @@
 namespace Tests\Feature\Modules\Transportation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\TransportationManagement\Models\Driver;
+use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Models\Trip;
-use Modules\TransportationManagement\Models\Vehicle;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 

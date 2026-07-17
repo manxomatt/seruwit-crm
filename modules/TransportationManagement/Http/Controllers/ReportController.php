@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\TransportationManagement\Models\FuelLog;
+use Modules\Fleet\Models\FuelLog;
+use Modules\Fleet\Models\VehicleMaintenanceLog;
 use Modules\TransportationManagement\Models\Trip;
-use Modules\TransportationManagement\Models\VehicleMaintenanceLog;
 
 class ReportController extends Controller
 {

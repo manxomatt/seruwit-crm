@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('fuel_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('trip_id')->nullable()->constrained()->nullOnDelete();
             $table->date('filled_at');
             $table->decimal('liters', 8, 2);
             $table->decimal('cost', 12, 2);

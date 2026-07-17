@@ -4,17 +4,7 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import TransportationNav from '../../../../TransportationNav';
-
-interface Trip {
-    id: number;
-    code: string;
-    origin: string;
-    destination: string;
-    status: string;
-    scheduled_at: string;
-    vehicle: { id: number; name: string; plate_number: string };
-}
+import FleetNav from '../../../../FleetNav';
 
 interface Driver {
     id: number;
@@ -27,7 +17,6 @@ interface Driver {
     status: string;
     photo_url: string | null;
     notes: string | null;
-    trips: Trip[];
 }
 
 interface Props {
@@ -48,19 +37,6 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-const getTripStatusBadgeColor = (status: string) => {
-    switch (status) {
-        case 'scheduled':
-            return 'bg-gray-100 text-gray-800';
-        case 'in_progress':
-            return 'bg-blue-100 text-blue-800';
-        case 'completed':
-            return 'bg-green-100 text-green-800';
-        default:
-            return 'bg-red-100 text-red-800';
-    }
-};
-
 export default function Show({ driver, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -68,7 +44,7 @@ export default function Show({ driver, can }: Props): JSX.Element {
 
     const confirmDelete = () => {
         setProcessing(true);
-        router.delete(prefixedRoute('transportation.drivers.destroy', driver.id), {
+        router.delete(prefixedRoute('fleet.drivers.destroy', driver.id), {
             onFinish: () => setProcessing(false),
         });
     };
@@ -80,11 +56,11 @@ export default function Show({ driver, can }: Props): JSX.Element {
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">{driver.name}</h2>
                     <div className="flex gap-2">
                         {can.update && (
-                            <Link href={prefixedRoute('transportation.drivers.edit', driver.id)}>
+                            <Link href={prefixedRoute('fleet.drivers.edit', driver.id)}>
                                 <SecondaryButton>Edit</SecondaryButton>
                             </Link>
                         )}
-                        <Link href={prefixedRoute('transportation.drivers.index')}>
+                        <Link href={prefixedRoute('fleet.drivers.index')}>
                             <SecondaryButton>Back to List</SecondaryButton>
                         </Link>
                     </div>
@@ -93,7 +69,7 @@ export default function Show({ driver, can }: Props): JSX.Element {
         >
             <Head title={driver.name} />
 
-            <TransportationNav />
+            <FleetNav />
 
             <div className="space-y-6">
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -137,46 +113,6 @@ export default function Show({ driver, can }: Props): JSX.Element {
                                 </div>
                             )}
                         </dl>
-                    </div>
-                </div>
-
-                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div className="p-6">
-                        <h3 className="mb-4 text-lg font-medium text-gray-900">Trip History</h3>
-                        {driver.trips.length === 0 ? (
-                            <p className="text-sm text-gray-500">No trips assigned yet.</p>
-                        ) : (
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead>
-                                    <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Code</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Route</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Vehicle</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Scheduled</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {driver.trips.map((trip) => (
-                                        <tr key={trip.id}>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm">
-                                                <Link href={prefixedRoute('transportation.trips.show', trip.id)} className="text-indigo-600 hover:text-indigo-900">
-                                                    {trip.code}
-                                                </Link>
-                                            </td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{trip.origin} → {trip.destination}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{trip.vehicle.name} ({trip.vehicle.plate_number})</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{trip.scheduled_at}</td>
-                                            <td className="whitespace-nowrap px-3 py-2">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTripStatusBadgeColor(trip.status)}`}>
-                                                    {trip.status.replace('_', ' ')}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
                     </div>
                 </div>
 

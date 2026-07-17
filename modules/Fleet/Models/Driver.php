@@ -1,13 +1,18 @@
 <?php
 
-namespace Modules\TransportationManagement\Models;
+namespace Modules\Fleet\Models;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\TransportationManagement\Database\Factories\DriverFactory;
+use Modules\Fleet\Database\Factories\DriverFactory;
 
+/**
+ * Deliberately has no knowledge of Trip or any other consumer's booking
+ * concept — Fleet exists so Transportation, Rental, or any future module can
+ * reference the same driver records via `requires(): ['fleet']` without this
+ * module depending back on any of them.
+ */
 class Driver extends Model
 {
     /** @use HasFactory<DriverFactory> */
@@ -45,25 +50,5 @@ class Driver extends Model
         return [
             'license_expires_at' => 'date',
         ];
-    }
-
-    /**
-     * @return HasMany<Trip, $this>
-     */
-    public function trips(): HasMany
-    {
-        return $this->hasMany(Trip::class);
-    }
-
-    /**
-     * A driver already committed to a scheduled or in-progress trip cannot
-     * take on another one until that trip finishes or is cancelled.
-     */
-    public function hasActiveTrip(?int $excludingTripId = null): bool
-    {
-        return $this->trips()
-            ->whereIn('status', [Trip::STATUS_SCHEDULED, Trip::STATUS_IN_PROGRESS])
-            ->when($excludingTripId, fn ($query) => $query->where('id', '!=', $excludingTripId))
-            ->exists();
     }
 }

@@ -145,7 +145,7 @@ export default function Show({ trip, can }: Props): JSX.Element {
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Vehicle</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    <Link href={prefixedRoute('transportation.vehicles.show', trip.vehicle.id)} className="text-indigo-600 hover:text-indigo-900">
+                                    <Link href={prefixedRoute('fleet.vehicles.show', trip.vehicle.id)} className="text-indigo-600 hover:text-indigo-900">
                                         {trip.vehicle.name} ({trip.vehicle.plate_number})
                                     </Link>
                                 </dd>
@@ -153,7 +153,7 @@ export default function Show({ trip, can }: Props): JSX.Element {
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Driver</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    <Link href={prefixedRoute('transportation.drivers.show', trip.driver.id)} className="text-indigo-600 hover:text-indigo-900">
+                                    <Link href={prefixedRoute('fleet.drivers.show', trip.driver.id)} className="text-indigo-600 hover:text-indigo-900">
                                         {trip.driver.name}
                                     </Link>{' '}
                                     ({trip.driver.phone})
