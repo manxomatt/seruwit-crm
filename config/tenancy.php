@@ -29,7 +29,7 @@ return [
      */
     'bootstrappers' => [
         Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
-        // Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class, // Requires a taggable cache store (Redis/Memcached); enable in phase 4.
+        Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class, // Redis (phpredis) is now the default cache store, which supports tagging.
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
