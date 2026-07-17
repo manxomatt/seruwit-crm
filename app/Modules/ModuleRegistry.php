@@ -141,6 +141,28 @@ class ModuleRegistry
     }
 
     /**
+     * The Vite entrypoint for an Inertia page, so the root view can preload it.
+     *
+     * Mirrors the resolution order in resources/js/app.tsx: for a page under
+     * Modules/<Name>/, the module's own copy wins and core is the fallback, since
+     * modules are extracted one at a time and both may be live at once. The lookup
+     * is by directory name rather than module key — the page namespace is what
+     * app.tsx matches on, and a module is free to render pages it does not own.
+     */
+    public function pageEntrypoint(string $component): string
+    {
+        $core = "resources/js/Pages/{$component}.tsx";
+
+        if (! preg_match('#^Modules/([^/]+)/#', $component, $matches)) {
+            return $core;
+        }
+
+        $owned = "modules/{$matches[1]}/resources/js/Pages/{$component}.tsx";
+
+        return file_exists(base_path($owned)) ? $owned : $core;
+    }
+
+    /**
      * Register every module's routes inside the caller's route group, each behind
      * its own requires-module gate so an individual module never has to remember.
      */

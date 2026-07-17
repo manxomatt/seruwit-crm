@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool entitled(string $key)
  * @method static bool installed(string $key)
  * @method static bool available(string $key)
+ * @method static string pageEntrypoint(string $component)
  * @method static void flushInstalledState()
  * @method static void registerRoutes()
  *
