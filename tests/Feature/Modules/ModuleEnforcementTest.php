@@ -92,19 +92,28 @@ class ModuleEnforcementTest extends TestCase
         tenancy()->end();
 
         $this->actingAs($owner)->get('http://menu-co.localhost/module/dashboard')
-            ->assertInertia(fn ($page) => $page->where(
-                'menus',
-                fn ($menus) => collect($menus)->contains('slug', 'carousels'),
-            ));
+            ->assertInertia(fn ($page) => $page
+                ->where(
+                    'menus',
+                    fn ($menus) => collect($menus)->contains('slug', 'carousels'),
+                )
+                // This is the prop ModuleLayout.tsx actually builds the sidebar
+                // from — `menus` is fetched but never read client-side, so an
+                // assertion against it alone would not catch a leak here.
+                ->has('auth.user.permissions.carousels')
+            );
 
         $this->installer()->uninstall($tenant, $this->module());
         tenancy()->end();
 
         $this->actingAs($owner)->get('http://menu-co.localhost/module/dashboard')
-            ->assertInertia(fn ($page) => $page->where(
-                'menus',
-                fn ($menus) => ! collect($menus)->contains('slug', 'carousels'),
-            ));
+            ->assertInertia(fn ($page) => $page
+                ->where(
+                    'menus',
+                    fn ($menus) => ! collect($menus)->contains('slug', 'carousels'),
+                )
+                ->missing('auth.user.permissions.carousels')
+            );
     }
 
     public function test_the_rest_of_the_app_survives_a_missing_module(): void

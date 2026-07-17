@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Menu;
 use App\Models\Setting;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -122,6 +123,12 @@ class HandleInertiaRequests extends Middleware
     /**
      * Get the user's permissions grouped by module from the active schema.
      *
+     * An admin's permission rows survive a module uninstall on purpose (see
+     * ModuleInstaller::uninstall()), so this is what actually keeps an
+     * uninstalled module's sidebar entry from leaking back in for them — the
+     * `permission` route middleware alone would not catch it, since it never
+     * runs before `requires-module`.
+     *
      * @return array<string, array<string>>
      */
     private function getUserPermissions(\App\Models\User $user): array
@@ -130,6 +137,10 @@ class HandleInertiaRequests extends Middleware
 
         $grouped = [];
         foreach ($permissions as $permission) {
+            if (! Modules::available($permission->module)) {
+                continue;
+            }
+
             if (! isset($grouped[$permission->module])) {
                 $grouped[$permission->module] = [];
             }
