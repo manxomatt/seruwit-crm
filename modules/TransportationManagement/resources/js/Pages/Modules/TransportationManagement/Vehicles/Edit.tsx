@@ -1,0 +1,165 @@
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import ImageUploader from '@/Components/ImageUploader';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { FormEventHandler } from 'react';
+import TransportationNav from '../../../../TransportationNav';
+
+interface Vehicle {
+    id: number;
+    name: string;
+    plate_number: string;
+    type: string;
+    brand: string | null;
+    model_year: number | null;
+    capacity: string | null;
+    fuel_type: string;
+    status: string;
+    odometer_km: number;
+    stnk_expires_at: string | null;
+    kir_expires_at: string | null;
+    photo_url: string | null;
+    notes: string | null;
+}
+
+interface Props {
+    vehicle: Vehicle;
+}
+
+export default function Edit({ vehicle }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
+    const { data, setData, patch, processing, errors } = useForm({
+        name: vehicle.name,
+        plate_number: vehicle.plate_number,
+        type: vehicle.type,
+        brand: vehicle.brand || '',
+        model_year: vehicle.model_year ?? '',
+        capacity: vehicle.capacity || '',
+        fuel_type: vehicle.fuel_type,
+        status: vehicle.status,
+        odometer_km: vehicle.odometer_km,
+        stnk_expires_at: vehicle.stnk_expires_at || '',
+        kir_expires_at: vehicle.kir_expires_at || '',
+        photo_url: vehicle.photo_url || '',
+        notes: vehicle.notes || '',
+    });
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        patch(prefixedRoute('transportation.vehicles.update', vehicle.id));
+    };
+
+    return (
+        <DynamicLayout
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Vehicle</h2>}
+        >
+            <Head title={`Edit: ${vehicle.name}`} />
+
+            <TransportationNav />
+
+            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div className="p-6">
+                    <form onSubmit={submit} className="max-w-3xl space-y-6">
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div>
+                                <InputLabel htmlFor="name" value="Name" />
+                                <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required autoFocus />
+                                <InputError message={errors.name} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="plate_number" value="Plate Number" />
+                                <TextInput id="plate_number" className="mt-1 block w-full" value={data.plate_number} onChange={(e) => setData('plate_number', e.target.value)} required />
+                                <InputError message={errors.plate_number} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="type" value="Type" />
+                                <select id="type" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.type} onChange={(e) => setData('type', e.target.value)}>
+                                    <option value="car">Car</option>
+                                    <option value="truck">Truck</option>
+                                    <option value="van">Van</option>
+                                    <option value="motorcycle">Motorcycle</option>
+                                    <option value="bus">Bus</option>
+                                </select>
+                                <InputError message={errors.type} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="fuel_type" value="Fuel Type" />
+                                <select id="fuel_type" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.fuel_type} onChange={(e) => setData('fuel_type', e.target.value)}>
+                                    <option value="petrol">Petrol</option>
+                                    <option value="diesel">Diesel</option>
+                                    <option value="electric">Electric</option>
+                                    <option value="hybrid">Hybrid</option>
+                                </select>
+                                <InputError message={errors.fuel_type} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="brand" value="Brand (optional)" />
+                                <TextInput id="brand" className="mt-1 block w-full" value={data.brand} onChange={(e) => setData('brand', e.target.value)} />
+                                <InputError message={errors.brand} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="model_year" value="Model Year (optional)" />
+                                <TextInput id="model_year" type="number" className="mt-1 block w-full" value={data.model_year} onChange={(e) => setData('model_year', e.target.value)} />
+                                <InputError message={errors.model_year} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="capacity" value="Capacity (optional)" />
+                                <TextInput id="capacity" placeholder="e.g. 1200 kg or 12 seats" className="mt-1 block w-full" value={data.capacity} onChange={(e) => setData('capacity', e.target.value)} />
+                                <InputError message={errors.capacity} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="odometer_km" value="Odometer (km)" />
+                                <TextInput id="odometer_km" type="number" min={0} className="mt-1 block w-full" value={data.odometer_km} onChange={(e) => setData('odometer_km', parseInt(e.target.value) || 0)} />
+                                <InputError message={errors.odometer_km} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="status" value="Status" />
+                                <select id="status" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.status} onChange={(e) => setData('status', e.target.value)}>
+                                    <option value="active">Active</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="retired">Retired</option>
+                                    <option value="out_of_service">Out of Service</option>
+                                </select>
+                                <InputError message={errors.status} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="stnk_expires_at" value="STNK Expiry (optional)" />
+                                <TextInput id="stnk_expires_at" type="date" className="mt-1 block w-full" value={data.stnk_expires_at} onChange={(e) => setData('stnk_expires_at', e.target.value)} />
+                                <InputError message={errors.stnk_expires_at} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="kir_expires_at" value="KIR Expiry (optional)" />
+                                <TextInput id="kir_expires_at" type="date" className="mt-1 block w-full" value={data.kir_expires_at} onChange={(e) => setData('kir_expires_at', e.target.value)} />
+                                <InputError message={errors.kir_expires_at} className="mt-2" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <InputLabel value="Photo (optional)" />
+                            <ImageUploader value={data.photo_url} onChange={(value) => setData('photo_url', value)} className="mt-1" />
+                            <InputError message={errors.photo_url} className="mt-2" />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="notes" value="Notes (optional)" />
+                            <textarea id="notes" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
+                            <InputError message={errors.notes} className="mt-2" />
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <PrimaryButton disabled={processing}>Save Changes</PrimaryButton>
+                            <Link href={prefixedRoute('transportation.vehicles.show', vehicle.id)}>
+                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                            </Link>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </DynamicLayout>
+    );
+}

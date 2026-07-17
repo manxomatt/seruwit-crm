@@ -17,6 +17,7 @@ return [
 
     'registered' => [
         Modules\Carousels\CarouselsModule::class,
+        Modules\TransportationManagement\TransportationManagementModule::class,
     ],
 
     /*

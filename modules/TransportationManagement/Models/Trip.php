@@ -1,0 +1,110 @@
+<?php
+
+namespace Modules\TransportationManagement\Models;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\TransportationManagement\Database\Factories\TripFactory;
+
+class Trip extends Model
+{
+    /** @use HasFactory<TripFactory> */
+    use HasFactory;
+
+    public const STATUS_SCHEDULED = 'scheduled';
+
+    public const STATUS_IN_PROGRESS = 'in_progress';
+
+    public const STATUS_COMPLETED = 'completed';
+
+    public const STATUS_CANCELLED = 'cancelled';
+
+    /**
+     * Factory resolution assumes App\Models, so a module's models must point at
+     * their own factory explicitly.
+     */
+    protected static function newFactory(): Factory
+    {
+        return TripFactory::new();
+    }
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'code',
+        'vehicle_id',
+        'driver_id',
+        'origin',
+        'destination',
+        'cargo_notes',
+        'scheduled_at',
+        'started_at',
+        'completed_at',
+        'distance_km',
+        'status',
+        'cancelled_reason',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'scheduled_at' => 'datetime',
+            'started_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'distance_km' => 'decimal:2',
+        ];
+    }
+
+    /**
+     * @return BelongsTo<Vehicle, $this>
+     */
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    /**
+     * @return BelongsTo<Driver, $this>
+     */
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class);
+    }
+
+    /**
+     * @return HasMany<TripCheckpoint, $this>
+     */
+    public function checkpoints(): HasMany
+    {
+        return $this->hasMany(TripCheckpoint::class)->orderBy('recorded_at');
+    }
+
+    /**
+     * @return HasMany<FuelLog, $this>
+     */
+    public function fuelLogs(): HasMany
+    {
+        return $this->hasMany(FuelLog::class);
+    }
+
+    /**
+     * Generates the next sequential human-readable trip code, e.g. TRIP-000001.
+     * Not safe against a race between two simultaneous store requests, but
+     * dispatch creation is a low-frequency, single-operator action here.
+     */
+    public static function nextCode(): string
+    {
+        $lastNumber = (int) static::query()
+            ->orderByDesc('id')
+            ->value('id');
+
+        return sprintf('TRIP-%06d', $lastNumber + 1);
+    }
+}

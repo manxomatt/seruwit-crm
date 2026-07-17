@@ -32,6 +32,14 @@ class ModulePageEntrypointTest extends TestCase
         );
     }
 
+    public function test_a_page_owned_by_the_transportation_module_resolves_to_the_modules_copy(): void
+    {
+        $this->assertSame(
+            'modules/TransportationManagement/resources/js/Pages/Modules/TransportationManagement/Vehicles/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/TransportationManagement/Vehicles/Index'),
+        );
+    }
+
     public function test_a_core_page_resolves_to_core(): void
     {
         $this->assertSame(
@@ -63,6 +71,18 @@ class ModulePageEntrypointTest extends TestCase
             'Modules/Users/Index',
             'Module/Dashboard',
             'Module/Plans/Index',
+            'Modules/TransportationManagement/Vehicles/Index',
+            'Modules/TransportationManagement/Vehicles/Create',
+            'Modules/TransportationManagement/Vehicles/Edit',
+            'Modules/TransportationManagement/Vehicles/Show',
+            'Modules/TransportationManagement/Drivers/Index',
+            'Modules/TransportationManagement/Drivers/Create',
+            'Modules/TransportationManagement/Drivers/Edit',
+            'Modules/TransportationManagement/Drivers/Show',
+            'Modules/TransportationManagement/Trips/Index',
+            'Modules/TransportationManagement/Trips/Create',
+            'Modules/TransportationManagement/Trips/Show',
+            'Modules/TransportationManagement/Reports/Index',
         ];
 
         foreach ($components as $component) {

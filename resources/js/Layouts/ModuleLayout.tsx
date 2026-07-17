@@ -91,6 +91,12 @@ const RolesIcon = () => (
     </svg>
 );
 
+const TransportationIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h5.083c.621 0 1.191.354 1.409.923.156.406.301.816.436 1.228M14.25 7.5v11.25m0-11.25h-3.75m3.75 0V4.875c0-.621-.504-1.125-1.125-1.125h-7.5C6.879 3.75 6 4.629 6 5.652v9.848m0 0a1.5 1.5 0 013 0M6 15.5h3.75" />
+    </svg>
+);
+
 const LiveUpdatesIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -152,6 +158,7 @@ const ChevronDownIcon = () => (
 // and a group with no accessible items is hidden entirely.
 const MENU_GROUPS: { title: string; modules: string[] }[] = [
     { title: 'Konten', modules: ['pages', 'posts', 'carousels', 'media'] },
+    { title: 'Transportasi', modules: ['transportation'] },
     { title: 'Wawasan', modules: ['analytics', 'live-updates'] },
     { title: 'Administrasi', modules: ['users', 'roles', 'settings', 'modules'] },
     { title: 'Platform', modules: ['tenants', 'plans'] },
@@ -163,6 +170,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'posts': { route: 'module.posts.index', routePattern: 'module.posts.*' },
     'carousels': { route: 'module.carousels.index', routePattern: 'module.carousels.*' },
     'media': { route: 'module.media.index', routePattern: 'module.media.*' },
+    'transportation': { route: 'module.transportation.vehicles.index', routePattern: 'module.transportation.*' },
     'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
     'settings': { route: 'module.settings.index', routePattern: 'module.settings.*' },
     'users': { route: 'module.users.index', routePattern: 'module.users.*' },
@@ -176,6 +184,7 @@ const moduleIconMap: Record<string, ReactNode> = {
     'posts': <PostsIcon />,
     'carousels': <CarouselIcon />,
     'media': <MediaIcon />,
+    'transportation': <TransportationIcon />,
     'analytics': <AnalyticsIcon />,
     'settings': <SettingsIcon />,
     'users': <UsersIcon />,
@@ -189,6 +198,7 @@ const moduleDisplayNames: Record<string, string> = {
     'posts': 'Posts',
     'carousels': 'Carousels',
     'media': 'Media',
+    'transportation': 'Transportation',
     'analytics': 'Analytics',
     'settings': 'Settings',
     'users': 'Users',
