@@ -138,7 +138,7 @@ class TenantController extends Controller
             'name' => 'required|string|max:255',
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain($currentDomain?->domain)],
             'status' => 'required|in:active,suspended',
-            'plan' => ['required', 'string', Rule::in(array_keys(config('modules.plans')))],
+            'plan' => ['required', 'string', Rule::exists('plans', 'key')],
             'billing_email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',

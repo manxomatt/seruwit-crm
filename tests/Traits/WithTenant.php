@@ -6,6 +6,7 @@ use App\Actions\Tenancy\CreateTenantAction;
 use App\Models\CentralUser;
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 /**
@@ -23,6 +24,18 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 trait WithTenant
 {
     use DatabaseMigrations;
+
+    /**
+     * Called by Laravel after the database is migrated.
+     *
+     * Plans are a platform prerequisite now: without a default plan a tenant is
+     * entitled to nothing, so provisioning one would produce a workspace that
+     * cannot install a single module.
+     */
+    protected function setUpWithTenant(): void
+    {
+        $this->seed(PlanSeeder::class);
+    }
 
     protected function tearDown(): void
     {

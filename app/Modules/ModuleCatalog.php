@@ -3,17 +3,21 @@
 namespace App\Modules;
 
 use App\Models\InstalledModule;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 
 /**
  * Builds the module catalog view-model.
  *
- * Shared by the workspace admin's own catalog and the super admin's per-tenant
- * panel so the two can never disagree about what state a module is in.
+ * Shared by the workspace admin's own catalog, the super admin's per-tenant panel
+ * and modules:list, so the three can never disagree about what state a module is
+ * in.
  */
 class ModuleCatalog
 {
+    public function __construct(private readonly PlanRepository $plans) {}
+
     /**
      * @return list<array<string, mixed>>
      */
@@ -76,10 +80,12 @@ class ModuleCatalog
      */
     public function planFor(Tenant $tenant): array
     {
+        $plan = $tenant->planModel();
+
         return [
-            'key' => $tenant->planKey(),
-            'label' => $tenant->planConfig()['label'] ?? $tenant->planKey(),
-            'description' => $tenant->planConfig()['description'] ?? '',
+            'key' => $plan?->key ?? $tenant->planKey(),
+            'label' => $plan?->name ?? $tenant->planKey(),
+            'description' => $plan?->description ?? '',
         ];
     }
 
@@ -90,18 +96,14 @@ class ModuleCatalog
      */
     public function allPlans(): array
     {
-        $plans = [];
-
-        foreach (config('modules.plans', []) as $key => $plan) {
-            $plans[] = [
-                'key' => $key,
-                'label' => $plan['label'] ?? $key,
-                'description' => $plan['description'] ?? '',
-                'modules' => $plan['modules'] ?? [],
-            ];
-        }
-
-        return $plans;
+        return $this->plans->all()
+            ->map(fn (Plan $plan): array => [
+                'key' => $plan->key,
+                'label' => $plan->name,
+                'description' => $plan->description ?? '',
+                'modules' => $plan->modules ?? [],
+            ])
+            ->all();
     }
 
     /**
@@ -112,15 +114,7 @@ class ModuleCatalog
      */
     private function plansOffering(string $key): array
     {
-        $labels = [];
-
-        foreach (config('modules.plans', []) as $planKey => $plan) {
-            if (in_array($key, $plan['modules'] ?? [], true)) {
-                $labels[] = $plan['label'] ?? $planKey;
-            }
-        }
-
-        return $labels;
+        return $this->plans->offering($key)->pluck('name')->all();
     }
 
     /**

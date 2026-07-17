@@ -24,45 +24,17 @@ return [
     | Subscription Plans
     |--------------------------------------------------------------------------
     |
-    | Which modules each plan entitles a tenant to install. Entitlement ("may I
-    | have it") and installation ("did I take it") are separate: a plan opens the
-    | door, the tenant's own admin decides whether to walk through.
+    | Plans are not configured here — they live in the central `plans` table and
+    | are edited from the super admin UI, since which modules a plan sells is a
+    | commercial decision that moves faster than releases do.
     |
-    | Plans live in config rather than a table on purpose. A tenant's plan is a
-    | virtual column on its `data` JSON, so it is already loaded with the tenant
-    | on every request — resolving entitlement costs no query at all, where a
-    | central table would mean a cross-schema lookup per request. Plan contents
-    | are a product decision that changes on release, not at runtime.
+    | Read them through App\Modules\PlanRepository, never with a bare query:
+    | entitlement is resolved from tenant context, where the connection points at
+    | the tenant's schema and the central table is out of reach.
     |
-    | The default is what every tenant without an explicit plan falls back to,
-    | including every tenant that existed before plans did — so it must cover what
-    | they already have, or introducing plans would quietly take modules away.
+    | Which modules *exist* is still code, below — that is the part a plan sells.
     |
     */
-
-    'default_plan' => 'basic',
-
-    'plans' => [
-
-        'free' => [
-            'label' => 'Free',
-            'description' => 'CMS inti saja, tanpa modul tambahan.',
-            'modules' => [],
-        ],
-
-        'basic' => [
-            'label' => 'Basic',
-            'description' => 'CMS inti plus carousel untuk halaman publik.',
-            'modules' => ['carousels'],
-        ],
-
-        'pro' => [
-            'label' => 'Pro',
-            'description' => 'Seluruh modul yang tersedia.',
-            'modules' => ['carousels'],
-        ],
-
-    ],
 
     /*
     |--------------------------------------------------------------------------

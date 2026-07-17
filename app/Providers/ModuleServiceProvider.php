@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleRegistry;
+use App\Modules\PlanRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -17,6 +18,7 @@ class ModuleServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ModuleRegistry::class);
+        $this->app->singleton(PlanRepository::class);
     }
 
     public function boot(): void

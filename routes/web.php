@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\WorkspaceController;
+use App\Http\Controllers\Module\PlanController;
 use App\Http\Controllers\Module\TenantController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
@@ -70,4 +71,20 @@ Route::domain($centralDomain)
         Route::post('/tenants/{tenant}/modules/{module}', [TenantController::class, 'installModule'])->name('tenants.modules.install');
         Route::delete('/tenants/{tenant}/modules/{module}', [TenantController::class, 'uninstallModule'])->name('tenants.modules.uninstall');
         Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
+    });
+
+/*
+| Subscription plans: which modules each plan lets a tenant install. Central only
+| and gated to platform super admins — a plan is a platform-wide definition, not
+| something a workspace configures for itself.
+*/
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-plans'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
+        Route::patch('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
     });

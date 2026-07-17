@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\PlanRepository;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
@@ -28,22 +29,21 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     /**
      * The subscription plan this tenant is on.
      *
-     * Stored as a virtual column so it rides along with the tenant record that
-     * tenancy already loads on every request — resolving entitlement then costs
-     * nothing. Falls back to the default plan for tenants created before plans
-     * existed.
+     * The key is a virtual column, so it rides along with the tenant record that
+     * tenancy already loads — no join to resolve a tenant's plan. Falls back to
+     * the default plan, which is what every tenant created before plans existed
+     * lands on.
      */
-    public function planKey(): string
+    public function planKey(): ?string
     {
-        return $this->plan ?? config('modules.default_plan');
+        return $this->plan ?? app(PlanRepository::class)->defaultKey();
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    public function planConfig(): ?array
+    public function planModel(): ?Plan
     {
-        return config('modules.plans.'.$this->planKey());
+        $key = $this->planKey();
+
+        return $key ? app(PlanRepository::class)->find($key) : null;
     }
 
     /**
@@ -53,7 +53,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      */
     public function entitledModuleKeys(): array
     {
-        return $this->planConfig()['modules'] ?? [];
+        return $this->planModel()?->modules ?? [];
     }
 
     public function isEntitledTo(string $moduleKey): bool

@@ -31,5 +31,8 @@ class AppServiceProvider extends ServiceProvider
         // Installing a module reshapes the whole workspace, so it stays with the
         // workspace admin rather than becoming another view/create/update subject.
         Gate::define('manage-modules', fn (User $user): bool => $user->isAdmin());
+
+        // Plans define what every tenant may buy — platform staff, not tenants.
+        Gate::define('manage-plans', fn (User $user): bool => $user->isAdmin());
     }
 }

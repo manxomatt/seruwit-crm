@@ -25,6 +25,9 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             MenuSeeder::class,
             SettingSeeder::class,
+            // Central only: plans are a platform definition, and tenant schemas
+            // carry nothing but the plan key.
+            PlanSeeder::class,
         ]);
 
         // Create admin user
