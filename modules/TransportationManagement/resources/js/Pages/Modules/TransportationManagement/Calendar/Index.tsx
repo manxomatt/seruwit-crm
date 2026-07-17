@@ -1,85 +1,115 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import TransportationNav from '../../../../TransportationNav';
-
-interface Trip {
-    id: number;
-    code: string;
-    scheduled_at: string;
-    status: string;
-    vehicle: { id: number; name: string; plate_number: string };
-    driver: { id: number; name: string };
-}
+import MonthView from './Partials/MonthView';
+import WeekView from './Partials/WeekView';
+import YearView from './Partials/YearView';
+import { CalendarView, ChevronLeftIcon, ChevronRightIcon, STATUS_CONFIG, Trip, parseDateKey, startOfWeek, toDateKey } from './Partials/shared';
 
 interface Props {
-    month: string; // "YYYY-MM"
+    view: CalendarView;
+    date: string; // "YYYY-MM-DD"
     tripsByDate: Record<string, Trip[]>;
 }
 
-const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const VIEW_TABS: { key: CalendarView; label: string }[] = [
+    { key: 'week', label: 'Week' },
+    { key: 'month', label: 'Month' },
+    { key: 'year', label: 'Year' },
+];
 
-const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-        case 'scheduled':
-            return 'bg-gray-100 text-gray-800';
-        case 'in_progress':
-            return 'bg-blue-100 text-blue-800';
-        case 'completed':
-            return 'bg-green-100 text-green-800';
-        default:
-            return 'bg-red-100 text-red-800';
-    }
+const PERIOD_LABEL: Record<CalendarView, string> = {
+    week: 'minggu ini',
+    month: 'bulan ini',
+    year: 'tahun ini',
 };
 
-function buildMonthGrid(month: string): (Date | null)[] {
-    const [year, monthNum] = month.split('-').map(Number);
-    const firstOfMonth = new Date(year, monthNum - 1, 1);
-    const daysInMonth = new Date(year, monthNum, 0).getDate();
-
-    const cells: (Date | null)[] = [];
-    for (let i = 0; i < firstOfMonth.getDay(); i++) {
-        cells.push(null);
+function periodLabel(view: CalendarView, date: Date): string {
+    if (view === 'year') {
+        return `${date.getFullYear()}`;
     }
-    for (let day = 1; day <= daysInMonth; day++) {
-        cells.push(new Date(year, monthNum - 1, day));
+    if (view === 'month') {
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
-    while (cells.length % 7 !== 0) {
-        cells.push(null);
-    }
-    return cells;
+    const start = startOfWeek(date);
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+    const sameMonth = start.getMonth() === end.getMonth();
+    const startLabel = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const endLabel = end.toLocaleDateString('en-US', sameMonth ? { day: 'numeric', year: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${startLabel} – ${endLabel}`;
 }
 
-function toDateKey(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+function shiftDate(view: CalendarView, date: Date, offset: number): Date {
+    if (view === 'year') {
+        return new Date(date.getFullYear() + offset, date.getMonth(), 1);
+    }
+    if (view === 'month') {
+        return new Date(date.getFullYear(), date.getMonth() + offset, 1);
+    }
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + offset * 7);
 }
 
-export default function Index({ month, tripsByDate }: Props): JSX.Element {
+export default function Index({ view, date: dateKey, tripsByDate }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
-    const cells = buildMonthGrid(month);
-    const [year, monthNum] = month.split('-').map(Number);
-    const monthLabel = new Date(year, monthNum - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const date = parseDateKey(dateKey);
+    const today = toDateKey(new Date());
+    const totalTrips = Object.values(tripsByDate).reduce((sum, trips) => sum + trips.length, 0);
 
-    const goToMonth = (offset: number) => {
-        const next = new Date(year, monthNum - 1 + offset, 1);
-        const nextMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
-        router.get(prefixedRoute('transportation.calendar.index'), { month: nextMonth });
+    const navigate = (nextView: CalendarView, nextDate: Date) => {
+        router.get(prefixedRoute('transportation.calendar.index'), { view: nextView, date: toDateKey(nextDate) });
     };
 
-    const today = toDateKey(new Date());
+    const goToPeriod = (offset: number) => navigate(view, shiftDate(view, date, offset));
+    const goToToday = () => navigate(view, new Date());
+    const switchView = (nextView: CalendarView) => navigate(nextView, date);
 
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{monthLabel}</h2>
-                    <div className="flex gap-2">
-                        <button onClick={() => goToMonth(-1)} className="rounded-md border bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
-                            ← Prev
-                        </button>
-                        <button onClick={() => goToMonth(1)} className="rounded-md border bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
-                            Next →
-                        </button>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{periodLabel(view, date)}</h2>
+                        <p className="mt-0.5 text-sm text-gray-500">
+                            {totalTrips} trip terjadwal {PERIOD_LABEL[view]}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1">
+                            {VIEW_TABS.map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => switchView(tab.key)}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                                        view === tab.key ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="inline-flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                            <button
+                                onClick={() => goToPeriod(-1)}
+                                aria-label="Previous"
+                                className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                            >
+                                <ChevronLeftIcon />
+                            </button>
+                            <button
+                                onClick={goToToday}
+                                className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                            >
+                                Today
+                            </button>
+                            <button
+                                onClick={() => goToPeriod(1)}
+                                aria-label="Next"
+                                className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                            >
+                                <ChevronRightIcon />
+                            </button>
+                        </div>
                     </div>
                 </div>
             }
@@ -88,46 +118,19 @@ export default function Index({ month, tripsByDate }: Props): JSX.Element {
 
             <TransportationNav />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="grid grid-cols-7 border-b border-gray-200">
-                    {WEEKDAY_LABELS.map((label) => (
-                        <div key={label} className="px-2 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
-                            {label}
-                        </div>
-                    ))}
-                </div>
-                <div className="grid grid-cols-7">
-                    {cells.map((date, index) => {
-                        if (!date) {
-                            return <div key={index} className="min-h-[110px] border-b border-r border-gray-100 bg-gray-50" />;
-                        }
-
-                        const dateKey = toDateKey(date);
-                        const trips = tripsByDate[dateKey] || [];
-                        const isToday = dateKey === today;
-
-                        return (
-                            <div key={index} className="min-h-[110px] border-b border-r border-gray-100 p-1.5">
-                                <div className={`mb-1 text-xs font-medium ${isToday ? 'inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white' : 'text-gray-500'}`}>
-                                    {date.getDate()}
-                                </div>
-                                <div className="space-y-1">
-                                    {trips.map((trip) => (
-                                        <Link
-                                            key={trip.id}
-                                            href={prefixedRoute('transportation.trips.show', trip.id)}
-                                            className={`block truncate rounded px-1.5 py-0.5 text-xs ${getStatusBadgeColor(trip.status)}`}
-                                            title={`${trip.code} — ${trip.vehicle.name} / ${trip.driver.name}`}
-                                        >
-                                            {new Date(trip.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} {trip.vehicle.plate_number}
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+            {/* Legend */}
+            <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-500">
+                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                    <div key={key} className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 rounded-full ${config.dot}`} />
+                        {config.label}
+                    </div>
+                ))}
             </div>
+
+            {view === 'week' && <WeekView date={date} tripsByDate={tripsByDate} today={today} prefixedRoute={prefixedRoute} />}
+            {view === 'month' && <MonthView date={date} tripsByDate={tripsByDate} today={today} prefixedRoute={prefixedRoute} />}
+            {view === 'year' && <YearView date={date} tripsByDate={tripsByDate} today={today} prefixedRoute={prefixedRoute} />}
         </DynamicLayout>
     );
 }
