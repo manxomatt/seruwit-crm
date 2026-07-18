@@ -23,7 +23,8 @@ interface Props {
     settings: Setting[];
     groups: string[];
     currentGroup: string;
-    canManage: boolean;
+    canEditValues: boolean;
+    canManageStructure: boolean;
 }
 
 const formatGroupLabel = (group: string): string => group.charAt(0).toUpperCase() + group.slice(1);
@@ -35,7 +36,7 @@ const formatDisplayValue = (setting: Setting): string => {
     return setting.value || '—';
 };
 
-export default function Group({ settings, groups, currentGroup, canManage }: Props): JSX.Element {
+export default function Group({ settings, groups, currentGroup, canEditValues, canManageStructure }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
@@ -88,7 +89,7 @@ export default function Group({ settings, groups, currentGroup, canManage }: Pro
                         </Link>
                     ))}
                 </nav>
-                {canManage && (
+                {canManageStructure && (
                     <Link href={`${prefixedRoute('settings.create')}?new_group=1`} className="whitespace-nowrap pb-3 text-sm font-medium text-indigo-600 hover:text-indigo-900">
                         + New Group
                     </Link>
@@ -99,7 +100,7 @@ export default function Group({ settings, groups, currentGroup, canManage }: Pro
                 <div className="p-6">
                     <div className="mb-6 flex items-center justify-between">
                         <h3 className="text-lg font-medium text-gray-900">{formatGroupLabel(currentGroup)}</h3>
-                        {canManage && (
+                        {canManageStructure && (
                             <Link href={`${prefixedRoute('settings.create')}?group=${currentGroup}`}>
                                 <PrimaryButton type="button">Add Setting</PrimaryButton>
                             </Link>
@@ -109,9 +110,9 @@ export default function Group({ settings, groups, currentGroup, canManage }: Pro
                     {settings.length === 0 ? (
                         <div className="py-12 text-center">
                             <h3 className="text-sm font-medium text-gray-900">No settings in this group yet</h3>
-                            {canManage && <p className="mt-1 text-sm text-gray-500">Add one to get started.</p>}
+                            {canManageStructure && <p className="mt-1 text-sm text-gray-500">Add one to get started.</p>}
                         </div>
-                    ) : !canManage ? (
+                    ) : !canEditValues ? (
                         <div className="space-y-6">
                             {settings.map((setting) => (
                                 <div key={setting.id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
@@ -168,14 +169,16 @@ export default function Group({ settings, groups, currentGroup, canManage }: Pro
                                             )}
                                         </div>
 
-                                        <div className="flex shrink-0 items-center gap-3 pt-6 text-sm">
-                                            <Link href={prefixedRoute('settings.edit', setting.id)} className="text-indigo-600 hover:text-indigo-900">
-                                                Edit
-                                            </Link>
-                                            <button type="button" onClick={() => setSettingToDelete(setting)} className="text-red-600 hover:text-red-900">
-                                                Delete
-                                            </button>
-                                        </div>
+                                        {canManageStructure && (
+                                            <div className="flex shrink-0 items-center gap-3 pt-6 text-sm">
+                                                <Link href={prefixedRoute('settings.edit', setting.id)} className="text-indigo-600 hover:text-indigo-900">
+                                                    Edit
+                                                </Link>
+                                                <button type="button" onClick={() => setSettingToDelete(setting)} className="text-red-600 hover:text-red-900">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}

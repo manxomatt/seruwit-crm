@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSettingRequest;
 use App\Http\Requests\UpdateSettingRequest;
 use App\Models\Setting;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -50,13 +51,18 @@ class SettingController extends Controller
             ->orderBy('group')
             ->pluck('group');
 
+        $user = Auth::user();
+
         return Inertia::render('Modules/Settings/Group', [
             'settings' => $settings,
             'groups' => $groups,
             'currentGroup' => $group,
-            // Mirrors the actual routing: adding/editing settings only exists
-            // as a route on the central domain (see routes/web.php).
-            'canManage' => ! tenancy()->initialized && Auth::user()->can('manage-settings'),
+            // A tenant with the ordinary settings:update permission can edit
+            // the *values* of its own settings (settings.bulk-update exists on
+            // every domain). Defining, renaming, or deleting a setting stays a
+            // central-only route (see routes/web.php).
+            'canEditValues' => $user->hasPermissionFor('settings', 'update'),
+            'canManageStructure' => ! tenancy()->initialized && $user->can('manage-settings'),
         ]);
     }
 
@@ -79,11 +85,19 @@ class SettingController extends Controller
     }
 
     /**
-     * Store a newly created setting in storage.
+     * Store a newly created setting in storage, then propagate the same
+     * definition to every tenant so it's immediately available there too —
+     * each tenant starts with the value entered here but can then edit its
+     * own copy independently (e.g. its own social media links).
      */
     public function store(StoreSettingRequest $request): RedirectResponse
     {
-        $setting = Setting::create($request->validated());
+        $data = $request->validated();
+        $setting = Setting::create($data);
+
+        Tenant::query()->get()->each(function (Tenant $tenant) use ($data) {
+            $tenant->run(fn () => Setting::firstOrCreate(['key' => $data['key']], $data));
+        });
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $setting->group)
             ->with('success', 'Setting created successfully.');

@@ -83,11 +83,13 @@ Route::middleware('auth')->group(function () {
         // Module Analytics Routes
         Route::get('/analytics', [ModuleAnalyticsController::class, 'index'])->middleware('permission:analytics,view')->name('analytics.index');
 
-        // Module Settings Routes — view only. Adding/editing settings is a
-        // central-only capability (see routes/web.php); a tenant may browse
-        // but not manage them.
+        // Module Settings Routes — a tenant may view and edit the *values* of
+        // its own settings (e.g. its own social media links), but defining,
+        // renaming, or deleting a setting is a central-only capability (see
+        // routes/web.php).
         Route::get('/settings', [ModuleSettingController::class, 'index'])->middleware('permission:settings,view')->name('settings.index');
         Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
+        Route::post('/settings/bulk-update', [ModuleSettingController::class, 'bulkUpdate'])->middleware('permission:settings,update')->name('settings.bulk-update');
 
         // Module User Management Routes
         Route::post('/users/invite', [\App\Http\Controllers\Module\UserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');
