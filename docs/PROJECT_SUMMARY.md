@@ -6,12 +6,13 @@ CRM multi-tenant berbasis SaaS: setiap perusahaan (tenant) mendapatkan workspace
 
 | Lapisan | Teknologi |
 |---|---|
-| Backend | Laravel 12, PHP 8.5 |
-| Frontend | React 18 + Inertia.js v2 + TypeScript, Tailwind CSS v3, Vite |
+| Backend | Laravel 12, PHP 8.4 |
+| Frontend | React 18 + Inertia.js v2 + TypeScript, Tailwind CSS v3, Headless UI v2, Vite |
 | Autentikasi | Laravel Breeze (login email/username), Sanctum |
 | Database | PostgreSQL — **satu database, satu schema per tenant** |
+| Cache | Redis — tenant-aware via `CacheTenancyBootstrapper` (tiap tenant punya namespace cache sendiri) |
 | Multi-tenancy | `stancl/tenancy` v3.10 (`PostgreSQLSchemaManager`) |
-| Testing | PHPUnit 11 — 277 test, berjalan di PostgreSQL (database `seruwit_crm_testing`) |
+| Testing | PHPUnit 11 — 379 test, berjalan di PostgreSQL (database `seruwit_crm_testing`) |
 
 ## Arsitektur Multi-Tenant
 
