@@ -83,15 +83,11 @@ Route::middleware('auth')->group(function () {
         // Module Analytics Routes
         Route::get('/analytics', [ModuleAnalyticsController::class, 'index'])->middleware('permission:analytics,view')->name('analytics.index');
 
-        // Module Settings Routes
+        // Module Settings Routes — view only. Adding/editing settings is a
+        // central-only capability (see routes/web.php); a tenant may browse
+        // but not manage them.
         Route::get('/settings', [ModuleSettingController::class, 'index'])->middleware('permission:settings,view')->name('settings.index');
-        Route::get('/settings/create', [ModuleSettingController::class, 'create'])->middleware('permission:settings,create')->name('settings.create');
-        Route::post('/settings', [ModuleSettingController::class, 'store'])->middleware('permission:settings,create')->name('settings.store');
-        Route::post('/settings/bulk-update', [ModuleSettingController::class, 'bulkUpdate'])->middleware('permission:settings,update')->name('settings.bulk-update');
-        Route::get('/settings/{setting}', [ModuleSettingController::class, 'show'])->middleware('permission:settings,view')->name('settings.show');
-        Route::get('/settings/{setting}/edit', [ModuleSettingController::class, 'edit'])->middleware('permission:settings,update')->name('settings.edit');
-        Route::patch('/settings/{setting}', [ModuleSettingController::class, 'update'])->middleware('permission:settings,update')->name('settings.update');
-        Route::delete('/settings/{setting}', [ModuleSettingController::class, 'destroy'])->middleware('permission:settings,delete')->name('settings.destroy');
+        Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
 
         // Module User Management Routes
         Route::post('/users/invite', [\App\Http\Controllers\Module\UserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');

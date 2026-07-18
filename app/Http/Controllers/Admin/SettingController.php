@@ -7,6 +7,7 @@ use App\Http\Requests\StoreSettingRequest;
 use App\Http\Requests\UpdateSettingRequest;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,25 +22,27 @@ class SettingController extends Controller
     }
 
     /**
-     * Display a listing of the settings.
+     * Redirect to the first group's page — settings are now browsed and
+     * edited one group at a time rather than as a flat table.
      */
-    public function index(): Response
+    public function index(): RedirectResponse
+    {
+        $firstGroup = Setting::query()->orderBy('group')->value('group') ?? 'general';
+
+        return redirect()->route($this->getRoutePrefix().'.settings.group', $firstGroup);
+    }
+
+    /**
+     * Display the settings belonging to a single group as an editable form.
+     * A group with no settings yet still renders, so a brand-new group can
+     * be bootstrapped from here via "Add Setting".
+     */
+    public function group(string $group): Response
     {
         $settings = Setting::query()
-            ->when(request('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('key', 'like', "%{$search}%")
-                        ->orWhere('label', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
-                });
-            })
-            ->when(request('group'), function ($query, $group) {
-                $query->where('group', $group);
-            })
-            ->orderBy('group')
+            ->where('group', $group)
             ->orderBy('sort_order')
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         $groups = Setting::query()
             ->select('group')
@@ -47,13 +50,13 @@ class SettingController extends Controller
             ->orderBy('group')
             ->pluck('group');
 
-        return Inertia::render('Modules/Settings/Index', [
-            'settingsList' => $settings,
+        return Inertia::render('Modules/Settings/Group', [
+            'settings' => $settings,
             'groups' => $groups,
-            'filters' => [
-                'search' => request('search'),
-                'group' => request('group'),
-            ],
+            'currentGroup' => $group,
+            // Mirrors the actual routing: adding/editing settings only exists
+            // as a route on the central domain (see routes/web.php).
+            'canManage' => ! tenancy()->initialized && Auth::user()->can('manage-settings'),
         ]);
     }
 
@@ -70,6 +73,8 @@ class SettingController extends Controller
 
         return Inertia::render('Modules/Settings/Create', [
             'groups' => $groups,
+            'selectedGroup' => request('group'),
+            'isNewGroup' => request()->boolean('new_group'),
         ]);
     }
 
@@ -78,20 +83,10 @@ class SettingController extends Controller
      */
     public function store(StoreSettingRequest $request): RedirectResponse
     {
-        Setting::create($request->validated());
+        $setting = Setting::create($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.group', $setting->group)
             ->with('success', 'Setting created successfully.');
-    }
-
-    /**
-     * Display the specified setting.
-     */
-    public function show(Setting $setting): Response
-    {
-        return Inertia::render('Modules/Settings/Show', [
-            'setting' => $setting,
-        ]);
     }
 
     /**
@@ -118,7 +113,7 @@ class SettingController extends Controller
     {
         $setting->update($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.group', $setting->group)
             ->with('success', 'Setting updated successfully.');
     }
 
@@ -127,9 +122,10 @@ class SettingController extends Controller
      */
     public function destroy(Setting $setting): RedirectResponse
     {
+        $group = $setting->group;
         $setting->delete();
 
-        return redirect()->route($this->getRoutePrefix().'.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.group', $group)
             ->with('success', 'Setting deleted successfully.');
     }
 
@@ -138,17 +134,18 @@ class SettingController extends Controller
      */
     public function bulkUpdate(): RedirectResponse
     {
-        $settings = request()->validate([
+        $data = request()->validate([
+            'group' => ['required', 'string'],
             'settings' => ['required', 'array'],
             'settings.*.id' => ['required', 'exists:settings,id'],
             'settings.*.value' => ['nullable', 'string'],
         ]);
 
-        foreach ($settings['settings'] as $settingData) {
+        foreach ($data['settings'] as $settingData) {
             Setting::where('id', $settingData['id'])->update(['value' => $settingData['value']]);
         }
 
-        return redirect()->route($this->getRoutePrefix().'.settings.index')
+        return redirect()->route($this->getRoutePrefix().'.settings.group', $data['group'])
             ->with('success', 'Settings updated successfully.');
     }
 }

@@ -6,17 +6,20 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 interface Props {
     groups: string[];
+    selectedGroup: string | null;
+    isNewGroup: boolean;
 }
 
-export default function Create({ groups }: Props): JSX.Element {
+export default function Create({ groups, selectedGroup, isNewGroup }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const [newGroupMode, setNewGroupMode] = useState(isNewGroup || groups.length === 0);
     const { data, setData, post, processing, errors } = useForm({
         key: '',
-        group: 'general',
+        group: newGroupMode ? '' : selectedGroup || groups[0] || 'general',
         value: '',
         type: 'text',
         label: '',
@@ -90,26 +93,49 @@ export default function Create({ groups }: Props): JSX.Element {
 
                         <div className="mb-4">
                             <InputLabel htmlFor="group" value="Group" />
-                            <div className="mt-1 flex gap-2">
-                                <select
-                                    id="group"
-                                    name="group"
-                                    value={data.group}
-                                    onChange={(e) => setData('group', e.target.value)}
-                                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="general">General</option>
-                                    <option value="site">Site</option>
-                                    <option value="email">Email</option>
-                                    <option value="social">Social</option>
-                                    <option value="seo">SEO</option>
-                                    {groups.filter(g => !['general', 'site', 'email', 'social', 'seo'].includes(g)).map((g) => (
-                                        <option key={g} value={g}>
-                                            {g.charAt(0).toUpperCase() + g.slice(1)}
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className="mt-1">
+                                {newGroupMode ? (
+                                    <>
+                                        <TextInput
+                                            id="group"
+                                            name="group"
+                                            value={data.group}
+                                            className="block w-full font-mono"
+                                            placeholder="e.g., shipping"
+                                            onChange={(e) => setData('group', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                        />
+                                        <p className="mt-1 text-sm text-gray-500">
+                                            Only lowercase letters, numbers, and underscores allowed. This becomes a new tab in Settings.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <select
+                                        id="group"
+                                        name="group"
+                                        value={data.group}
+                                        onChange={(e) => setData('group', e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        {groups.map((g) => (
+                                            <option key={g} value={g}>
+                                                {g.charAt(0).toUpperCase() + g.slice(1)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
+                            {groups.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setNewGroupMode(!newGroupMode);
+                                        setData('group', newGroupMode ? groups[0] || 'general' : '');
+                                    }}
+                                    className="mt-1 text-sm text-indigo-600 hover:text-indigo-900"
+                                >
+                                    {newGroupMode ? 'Choose an existing group instead' : '+ Create a new group'}
+                                </button>
+                            )}
                             <InputError message={errors.group} className="mt-2" />
                         </div>
 
@@ -215,7 +241,7 @@ export default function Create({ groups }: Props): JSX.Element {
                             <PrimaryButton disabled={processing}>
                                 Create Setting
                             </PrimaryButton>
-                            <Link href={prefixedRoute('settings.index')}>
+                            <Link href={prefixedRoute('settings.group', selectedGroup || groups[0] || 'general')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

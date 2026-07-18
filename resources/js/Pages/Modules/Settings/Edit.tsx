@@ -230,7 +230,7 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                             <PrimaryButton disabled={processing}>
                                 Update Setting
                             </PrimaryButton>
-                            <Link href={prefixedRoute('settings.index')}>
+                            <Link href={prefixedRoute('settings.group', setting.group)}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PlanController;
+use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\TenantController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,28 @@ use Illuminate\Support\Facades\Route;
 */
 
 $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost';
+
+/*
+| Settings management: adding/editing settings is a platform capability, not a
+| tenant-configurable one — a tenant may still browse (routes/app.php), but
+| not write. This block must be registered *before* the main central group
+| below, which requires routes/app.php: that file's GET /settings/{group} is
+| a single-segment wildcard that would otherwise swallow a same-domain GET
+| /settings/create registered after it (Laravel matches in registration
+| order), since "create" is itself a valid {group} value.
+*/
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-settings'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/settings/create', [ModuleSettingController::class, 'create'])->name('settings.create');
+        Route::post('/settings', [ModuleSettingController::class, 'store'])->name('settings.store');
+        Route::post('/settings/bulk-update', [ModuleSettingController::class, 'bulkUpdate'])->name('settings.bulk-update');
+        Route::get('/settings/{setting}/edit', [ModuleSettingController::class, 'edit'])->name('settings.edit');
+        Route::patch('/settings/{setting}', [ModuleSettingController::class, 'update'])->name('settings.update');
+        Route::delete('/settings/{setting}', [ModuleSettingController::class, 'destroy'])->name('settings.destroy');
+    });
 
 Route::domain($centralDomain)
     ->name('central.')

@@ -39,5 +39,9 @@ class AppServiceProvider extends ServiceProvider
         // install state at once — platform staff only, distinct from
         // manage-modules (a workspace admin's own install/uninstall).
         Gate::define('manage-module-registry', fn (User $user): bool => $user->isAdmin());
+
+        // Settings are a platform-wide definition, edited by platform staff only —
+        // a tenant may still view them, but not add or change them.
+        Gate::define('manage-settings', fn (User $user): bool => $user->isAdmin());
     }
 }

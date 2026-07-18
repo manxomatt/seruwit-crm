@@ -23,7 +23,7 @@ class StoreSettingRequest extends FormRequest
     {
         return [
             'key' => ['required', 'string', 'max:255', 'unique:settings,key', 'regex:/^[a-z0-9_\.]+$/'],
-            'group' => ['required', 'string', 'max:255'],
+            'group' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9_]+$/'],
             'value' => ['nullable', 'string'],
             'type' => ['required', 'string', 'in:text,textarea,boolean,number,email,url,select,json'],
             'label' => ['required', 'string', 'max:255'],
@@ -45,6 +45,7 @@ class StoreSettingRequest extends FormRequest
             'key.unique' => 'This setting key already exists.',
             'key.regex' => 'The setting key may only contain lowercase letters, numbers, underscores, and dots.',
             'group.required' => 'The setting group is required.',
+            'group.regex' => 'The group may only contain lowercase letters, numbers, and underscores.',
             'type.required' => 'The setting type is required.',
             'type.in' => 'The setting type must be one of: text, textarea, boolean, number, email, url, select, json.',
             'label.required' => 'The setting label is required.',

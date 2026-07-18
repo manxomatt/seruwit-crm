@@ -162,7 +162,7 @@ class GlobalSearchController extends Controller
                     'subtitle' => ucfirst($setting->group).' • '.$setting->key,
                     'type' => 'setting',
                     'icon' => 'setting',
-                    'url' => route('module.settings.show', $setting),
+                    'url' => route('module.settings.group', $setting->group),
                 ]);
 
             $results = array_merge($results, $settings->toArray());
