@@ -131,6 +131,29 @@ class SettingTest extends TestCase
         $this->assertDatabaseHas('settings', ['key' => 'shipping.provider', 'group' => 'shipping']);
     }
 
+    public function test_a_color_setting_can_be_created_and_its_value_updated(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->post(route('module.settings.store'), [
+            'key' => 'appearance.accent_color',
+            'group' => 'appearance',
+            'value' => '#FF5733',
+            'type' => 'color',
+            'label' => 'Accent Color',
+        ])->assertSessionHasNoErrors();
+
+        $setting = Setting::firstWhere('key', 'appearance.accent_color');
+        $this->assertSame('color', $setting->type);
+
+        $this->actingAs($user)->post(route('module.settings.bulk-update'), [
+            'group' => 'appearance',
+            'settings' => [['id' => $setting->id, 'value' => '#00AA88']],
+        ])->assertRedirect(route('module.settings.group', 'appearance'));
+
+        $this->assertDatabaseHas('settings', ['id' => $setting->id, 'value' => '#00AA88']);
+    }
+
     public function test_a_group_name_must_be_url_safe(): void
     {
         $user = $this->createAdminUser();

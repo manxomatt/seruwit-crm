@@ -32,7 +32,7 @@ class UpdateSettingRequest extends FormRequest
             ],
             'group' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9_]+$/'],
             'value' => ['nullable', 'string'],
-            'type' => ['required', 'string', 'in:text,textarea,boolean,number,email,url,select,json'],
+            'type' => ['required', 'string', 'in:text,textarea,boolean,number,email,url,select,json,color'],
             'label' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'is_public' => ['boolean'],
@@ -54,7 +54,7 @@ class UpdateSettingRequest extends FormRequest
             'group.required' => 'The setting group is required.',
             'group.regex' => 'The group may only contain lowercase letters, numbers, and underscores.',
             'type.required' => 'The setting type is required.',
-            'type.in' => 'The setting type must be one of: text, textarea, boolean, number, email, url, select, json.',
+            'type.in' => 'The setting type must be one of: text, textarea, boolean, number, email, url, select, json, color.',
             'label.required' => 'The setting label is required.',
         ];
     }

@@ -43,6 +43,7 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
         { value: 'url', label: 'URL' },
         { value: 'select', label: 'Select' },
         { value: 'json', label: 'JSON' },
+        { value: 'color', label: 'Color' },
     ];
 
     return (
@@ -168,6 +169,22 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                         { value: '0', label: 'No / False' },
                                     ]}
                                 />
+                            ) : data.type === 'color' ? (
+                                <div className="mt-1 flex items-center gap-3">
+                                    <input
+                                        id="value"
+                                        type="color"
+                                        className="h-10 w-14 cursor-pointer rounded-md border border-gray-300 bg-white p-1 shadow-sm"
+                                        value={data.value || '#000000'}
+                                        onChange={(e) => setData('value', e.target.value)}
+                                    />
+                                    <TextInput
+                                        className="w-32 font-mono uppercase"
+                                        value={data.value}
+                                        placeholder="#000000"
+                                        onChange={(e) => setData('value', e.target.value)}
+                                    />
+                                </div>
                             ) : (
                                 <TextInput
                                     id="value"
