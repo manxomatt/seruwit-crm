@@ -47,9 +47,11 @@ modules/Carousels/
 ├─ Database/{Migrations,Factories}
 ├─ Http/{Controllers,Requests}
 ├─ Models/
-├─ View/Components/
+├─ View/Components/             # khusus Carousels — komponen Blade untuk landing page
 └─ resources/{js/Pages,views}
 ```
+
+(Modul yang lebih baru — Fleet, Customer, Product, Transportation Management — murni React/Inertia, tanpa `View/Components`/Blade; strukturnya `Database/{Migrations,Factories}`, `Http/{Controllers,Requests}`, `Models/`, `resources/js/Pages/` saja.)
 
 Aturan main yang menentukan desainnya:
 
@@ -58,8 +60,18 @@ Aturan main yang menentukan desainnya:
 - **Uninstall itu non-destruktif** — tabel & data modul tetap hidup; reinstall memulihkan semuanya. Data baru benar-benar dibuang oleh `modules:purge-expired` setelah masa tenggang `modules.purge_after_days` (default 30 hari), dijadwalkan tiap hari pukul 03:00.
 - **Satu view-model** — `App\Modules\ModuleCatalog` dipakai bersama oleh katalog milik admin workspace, panel super admin per tenant, dan `modules:list`, supaya ketiganya tak mungkin berbeda pendapat soal status modul.
 - **Halaman React modul menimpa core** — `resources/js/app.tsx` mencari `modules/<Nama>/resources/js/Pages/<name>.tsx` dulu, baru jatuh ke `./Pages/<name>.tsx`, sehingga sebuah halaman tetap bernama sama saat dipindahkan ke modul. `Modules::pageEntrypoint()` mengulang urutan yang sama di sisi server untuk preload `@vite` di `app.blade.php`; keduanya harus selalu sepakat, dan `ModulePageEntrypointTest` yang menjaganya.
+- **Modul tak pernah tahu soal "konsumennya"** — sebuah modul hanya boleh tahu tentang modul yang ia `requires()`, tak pernah sebaliknya. Mis. `Fleet` (kendaraan & sopir) dan `Customer` sama sekali tak tahu soal `Trip` yang memakainya; relasi lintas modul (`vehicle_id`, `customer_id`, dst.) dilindungi lewat foreign key `constrained()` biasa (tanpa cascade) di migrasi milik modul **konsumen**, dan `QueryException` dari pelanggaran constraint itu ditangkap jadi pesan yang ramah, bukan lewat pengecekan level aplikasi.
+- **Auto-install berantai** — `ModuleInstaller::install()` memasang lebih dulu setiap modul yang di-`requires()` (rekursif) sebelum memasang modul yang diminta, tetap menegakkan entitlement paket di tiap level. Memasang `transportation` misalnya otomatis ikut memasang `fleet`, `customers`, dan `products`.
 
-Modul terdaftar saat ini: **Carousels**.
+Modul terdaftar saat ini:
+
+| Modul (`key`) | Deskripsi | `requires()` |
+|---|---|---|
+| `carousels` | Carousel + manajemen & pengurutan gambar | — |
+| `fleet` | Kendaraan & sopir, dipakai ulang oleh modul lain | — |
+| `customers` | Data pelanggan lintas modul (`global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan, belum dipakai) | — |
+| `products` | Katalog produk; satuan (unit) dikelola lewat Settings grup `units` | — |
+| `transportation` | Dispatch trip, tracking checkpoint, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
 
 ## Paket Langganan & Entitlement
 
@@ -70,7 +82,7 @@ Paket menentukan modul apa yang **boleh** dipasang tenant; install/uninstall men
 - **Baca paket lewat `App\Modules\PlanRepository`**, jangan query telanjang. `Plan` dipatok ke koneksi central (entitlement dicek dari konteks tenant, di mana tabel central tak terjangkau), dan repository memoize seluruh set per request — satu query central per request, bukan satu per pengecekan. Tiap penyimpanan `Plan` otomatis mem-flush memo itu.
 - **Downgrade ≠ uninstall** — kehilangan entitlement membuat modul terkunci (`locked_with_data`) tanpa menyentuh datanya dan tanpa memulai jam purge. Upgrade mengembalikannya persis seperti semula.
 
-Status modul yang bisa muncul di katalog: `available`, `installed`, `uninstalled` (data masih ada, menunggu purge), `locked`, `locked_with_data`.
+Status modul yang bisa muncul di katalog: `available`, `installed`, `uninstalled` (data masih ada, menunggu purge), `locked`, `locked_with_data`, `disabled`, `disabled_with_data` (lihat Module Registry di bawah).
 
 Paket bawaan (`PlanSeeder`, re-runnable dan tidak pernah menimpa definisi yang sudah hidup):
 
@@ -78,20 +90,34 @@ Paket bawaan (`PlanSeeder`, re-runnable dan tidak pernah menimpa definisi yang s
 |---|---|---|
 | `free` | — | CMS inti saja |
 | `basic` | `carousels` | **Default** — sama dengan yang dimiliki tenant sebelum paket ada |
-| `pro` | `carousels` | Seluruh modul yang tersedia |
+| `pro` | `carousels`, `customers`, `fleet`, `products`, `transportation` | Seluruh modul yang tersedia |
+
+## Module Registry — Saklar Modul Tingkat Platform
+
+Sumbu ketiga, terpisah dari entitlement paket dan status install: `ModuleRegistry::platformEnabled($key)`, disokong tabel central `module_settings`. `available() = platformEnabled && entitled && installed` — mematikan sebuah modul di sini membuatnya 404 untuk **semua** tenant sekaligus, apa pun paket atau status install mereka, tanpa menyentuh data.
+
+- **Halaman** `/module/registry` (gate `manage-module-registry`, central-only) — daftar semua modul terdaftar beserta toggle enable/disable.
+- **Tak mengganggu data atau status install** — menonaktifkan lalu mengaktifkan kembali langsung memulihkan akses persis seperti semula (beda dari uninstall, yang punya masa tenggang purge).
+- **Dicek di titik yang sama dengan entitlement** — `ModuleInstaller::install()` menolak memasang modul yang platform-disabled (termasuk saat kena lewat rantai auto-install), dan sidebar/`ModuleCatalog` otomatis menyembunyikannya lewat `available()` yang sama.
+- **Halaman Paket** (`/module/plans`) menampilkan status nonaktif ini juga — modul yang dinonaktifkan platform tapi masih ada di daftar sebuah paket ditampilkan sebagai chip "Dinonaktifkan", checkbox-nya terkunci.
 
 ## Fitur yang Sudah Dikembangkan
 
 ### Aplikasi CRM / CMS (berjalan per tenant)
 - **Dashboard** per peran + pencarian global
-- **Katalog Modul** (`/module/modules`) — admin workspace memasang/mencopot modul yang dientitle paketnya; modul terkunci menampilkan paket mana yang membukanya
+- **Katalog Modul** (`/module/modules`) — admin workspace memasang/mencopot modul yang dientitle paketnya; modul terkunci (paket) atau dinonaktifkan (platform) menampilkan alasannya
 - **Carousels** *(modul)* — carousel beserta manajemen & pengurutan gambar
+- **Fleet** *(modul)* — kendaraan & sopir; dipakai ulang modul lain lewat `requires()`, tak pernah sebaliknya
+- **Customer** *(modul)* — data pelanggan standalone; `global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan
+- **Product** *(modul)* — katalog produk; satuan (unit) dipilih dari daftar terkelola di Settings grup `units`, bukan teks bebas
+- **Transportation Management** *(modul, `requires: fleet, customers, products`)* — dispatch trip (deteksi bentrok kendaraan/sopir per tanggal), tracking checkpoint GPS saat trip berjalan, manifest kargo per trip (produk + kuantitas), jadwal trip berulang (hari-dalam-minggu + generate otomatis, idempoten), kalender (tampilan minggu/bulan/tahun), laporan biaya & utilisasi
 - **Media Library** — upload, picker, bulk delete; file terisolasi per tenant
 - **Menus** — menu dinamis per peran; entri modul ikut hilang saat modul dicopot
-- **Settings** — pengaturan situs per tenant (nama, logo, kontak, dsb.)
+- **Settings** — pengaturan dikelompokkan per grup, satu halaman per grup, nilai diedit langsung sebagai form field (bukan tabel). Tenant boleh mengedit **nilai** setting miliknya sendiri (mis. tautan media sosial berbeda tiap tenant, lewat izin `settings:update` biasa); mendefinisikan/mengganti nama/menghapus sebuah setting adalah kapasitas **central-only** (gate `manage-settings`) yang otomatis menyebar ke semua tenant saat dibuat (idempoten — tenant yang sudah punya key yang sama tak tertimpa)
 - **Users, Roles & Permissions** — RBAC custom per modul+aksi (view/create/update/delete); admin melewati semua cek
 - **Todos, Live Updates, Analytics**
 - **Profil** — edit profil, avatar, ganti password
+- **Dropdown modern** — semua `<select>` di aplikasi memakai komponen `Select` berbasis Headless UI `Listbox` (panel animasi, opsi bisa dinonaktifkan per-item, checkmark pada pilihan aktif), bukan `<select>` native
 
 ### Landing Page (central)
 - Tema CRM segar & minimalis, warna utama biru terang (sky blue): header sticky, hero dengan mockup dashboard pipeline, 6 kartu fitur, strip keunggulan, CTA gradasi biru, footer — konten diambil dari Settings.
@@ -108,7 +134,8 @@ Paket bawaan (`PlanSeeder`, re-runnable dan tidak pernah menimpa definisi yang s
 ### Onboarding & Administrasi Platform
 - **Dua pintu pembuatan tenant**: registrasi mandiri (SaaS) dan panel super admin (`/module/tenants`: list, buat untuk pelanggan, tangguhkan/aktifkan) — gate `manage-tenants`
 - **Panel per tenant** — super admin mengganti paket sebuah tenant dan memasang/mencopot modulnya langsung dari halaman detail tenant
-- **Kelola Paket** (`/module/plans`) — CRUD paket beserta daftar modulnya; menampilkan jumlah tenant per paket
+- **Kelola Paket** (`/module/plans`) — CRUD paket beserta daftar modulnya; menampilkan jumlah tenant per paket dan status nonaktif dari Module Registry
+- **Kelola Modul Platform** (`/module/registry`) — saklar enable/disable per modul untuk seluruh tenant sekaligus, lepas dari paket/status install (lihat Module Registry di atas) — gate `manage-module-registry`
 - **Penangguhan tenant**: seluruh request ke tenant suspended diblokir (403)
 - **Sistem undangan**: admin workspace mengundang via email + pilihan peran; undangan berlaku 7 hari; penerima baru cukup set nama+password, penerima lama tinggal menerima — keduanya berakhir SSO langsung masuk workspace
 
@@ -135,18 +162,20 @@ php artisan modules:purge-expired                 # buang data modul yang tengga
 |---|---|
 | `CENTRAL_SERVES_APP` | `true` (default, dev): CRM juga disajikan di central. **Set `false` di produksi** — central hanya landing, auth, portal, admin |
 | `config/modules.php` | Daftar kelas modul terdaftar + `purge_after_days` |
-| `config/tenancy.php` | Schema manager PostgreSQL, central domains, bootstrapper (database, filesystem, queue aktif; cache menunggu Redis) |
+| `config/tenancy.php` | Schema manager PostgreSQL, central domains, bootstrapper (database, filesystem, queue, dan cache — `CacheTenancyBootstrapper` — semuanya aktif; tiap tenant otomatis dapat namespace Redis sendiri) |
 | Migrasi | `database/migrations/` = central; `database/migrations/tenant/` = per tenant; `modules/*/Database/Migrations/` = per modul (dijalankan ke schema tenant saat install) |
-| Route | `routes/web.php` = central (prefix nama `central.`, plus `/module/tenants` & `/module/plans`); `routes/tenant.php` = domain tenant; `routes/app.php` = aplikasi CRM bersama; route modul didaftarkan dari dalam grup `module.` |
+| Route | `routes/web.php` = central (prefix nama `central.`, plus `/module/tenants`, `/module/plans`, `/module/registry`, dan blok write-route Settings central-only — lihat catatan di bawah); `routes/tenant.php` = domain tenant; `routes/app.php` = aplikasi CRM bersama (dua kali ter-*require*, dari `web.php` **dan** `tenant.php`); route modul didaftarkan dari dalam grup `module.` |
+
+> **Jebakan urutan route Settings**: blok central-only untuk `settings.create/store/edit/update/destroy` di `routes/web.php` **harus** didaftarkan sebelum grup central utama yang me-*require* `app.php` — `GET /settings/{group}` di `app.php` adalah wildcard satu-segmen yang akan "menelan" `GET /settings/create` kalau didaftarkan belakangan, karena Laravel mencocokkan rute domain+method yang sama menurut urutan registrasi, dan `"create"` adalah nilai `{group}` yang sah.
 
 ## Catatan Produksi
 
 1. Wildcard DNS `*.domain.com` + wildcard SSL (Cloudflare/Caddy)
 2. Ubah pipeline provisioning ke queued (`shouldBeQueued(true)`) + jalankan queue worker
 3. PgBouncer harus *session mode* (schema separation bergantung `search_path`)
-4. Aktifkan `CacheTenancyBootstrapper` saat pindah ke Redis (`CACHE_STORE=redis`)
-5. Jalankan scheduler (`php artisan schedule:work` / cron) — `modules:purge-expired` bergantung padanya
-6. `modules:backfill` sekali setelah rilis sistem modul, agar tenant lama tidak kehilangan akses ke modul yang sudah mereka pakai
+4. Jalankan scheduler (`php artisan schedule:work` / cron) — `modules:purge-expired` bergantung padanya
+5. `modules:backfill` sekali setelah rilis sistem modul, agar tenant lama tidak kehilangan akses ke modul yang sudah mereka pakai
+6. `SettingController::store()` menyebarkan setting baru ke **semua** tenant secara sinkron dalam satu request (`Tenant::query()->get()->each(...)`) — proporsional untuk jumlah tenant saat ini, tapi jadi kandidat kuat untuk di-queue kalau jumlah tenant sudah besar
 
 ## Pekerjaan yang Sedang Berjalan
 
