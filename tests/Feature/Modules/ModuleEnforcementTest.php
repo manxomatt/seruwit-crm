@@ -2,12 +2,13 @@
 
 namespace Tests\Feature\Modules;
 
-use App\Models\Page;
 use App\Models\User;
 use App\Modules\ModuleInstaller;
 use Modules\Carousels\CarouselsModule;
 use Modules\Carousels\Models\Carousel;
 use Modules\Carousels\Models\CarouselImage;
+use Modules\Pages\Models\Page;
+use Modules\Pages\PagesModule;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
 
@@ -161,9 +162,43 @@ class ModuleEnforcementTest extends TestCase
             );
     }
 
+    /**
+     * Pages and Posts went through the same extraction as Carousels; this pins
+     * their enforcement plus the public fallbacks that are unique to them —
+     * the homepage must fall back to the stock landing page and the blog must
+     * 404 rather than 500 on the missing tables.
+     */
+    public function test_pages_and_posts_modules_are_enforced_including_their_public_faces(): void
+    {
+        $tenant = $this->provisionTenant('Cms Co', 'cms-co', 'owner@cms.test');
+        $owner = $this->ownerOf($tenant, 'owner@cms.test');
+
+        $this->actingAs($owner)->get('http://cms-co.localhost/module/pages')->assertNotFound();
+        $this->actingAs($owner)->get('http://cms-co.localhost/module/posts')->assertNotFound();
+
+        // Public faces survive the absence: stock landing, 404s over 500s.
+        $this->get('http://cms-co.localhost/')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Welcome'));
+        $this->get('http://cms-co.localhost/blog')->assertNotFound();
+        $this->get('http://cms-co.localhost/p/anything')->assertNotFound();
+
+        $this->installer()->install($tenant, app(PagesModule::class));
+        $this->installer()->install($tenant, app(\Modules\Posts\PostsModule::class));
+        tenancy()->end();
+
+        $this->actingAs($owner)->get('http://cms-co.localhost/module/pages')->assertOk();
+        $this->actingAs($owner)->get('http://cms-co.localhost/module/posts')->assertOk();
+        $this->get('http://cms-co.localhost/blog')->assertOk();
+    }
+
     public function test_a_public_page_with_a_stale_carousel_tag_still_renders(): void
     {
         $tenant = $this->provisionTenant('Stale Co', 'stale-co', 'owner@stale.test');
+
+        // Pages is a module of its own now, so public rendering needs it
+        // installed — the point here stays Carousels' absence, not Pages'.
+        $this->installer()->install($tenant, app(PagesModule::class));
 
         // Page HTML saved while the module was installed keeps its <carousel> tag
         // forever. Rendering it must not consult the module's missing tables.
@@ -188,6 +223,7 @@ class ModuleEnforcementTest extends TestCase
     {
         $tenant = $this->provisionTenant('Live Co', 'live-co', 'owner@live.test');
         $this->installer()->install($tenant, $this->module());
+        $this->installer()->install($tenant, app(PagesModule::class));
 
         $tenant->run(function (): void {
             $owner = User::query()->firstWhere('email', 'owner@live.test');

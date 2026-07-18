@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Modules;
 
-use App\Models\Page;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Carousels\Models\Carousel;
 use Modules\Carousels\Models\CarouselImage;
+use Modules\Pages\Models\Page;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 

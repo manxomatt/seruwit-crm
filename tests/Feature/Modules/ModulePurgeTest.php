@@ -4,13 +4,14 @@ namespace Tests\Feature\Modules;
 
 use App\Models\InstalledModule;
 use App\Models\Menu;
-use App\Models\Page;
 use App\Models\Permission;
 use App\Models\User;
 use App\Modules\ModuleInstaller;
 use Illuminate\Support\Facades\Schema;
 use Modules\Carousels\CarouselsModule;
 use Modules\Carousels\Models\Carousel;
+use Modules\Pages\Models\Page;
+use Modules\Pages\PagesModule;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
 
@@ -102,9 +103,9 @@ class ModulePurgeTest extends TestCase
             $this->assertFalse(InstalledModule::query()->where('key', 'carousels')->exists());
 
             // Core survives: migrate:reset --path must not touch anything else.
-            $this->assertTrue(Schema::hasTable('pages'));
+            $this->assertTrue(Schema::hasTable('media'));
             $this->assertTrue(Schema::hasTable('users'));
-            $this->assertTrue(Permission::query()->where('module', 'pages')->exists());
+            $this->assertTrue(Permission::query()->where('module', 'media')->exists());
         });
     }
 
@@ -150,6 +151,7 @@ class ModulePurgeTest extends TestCase
     {
         $tenant = $this->provisionTenant('Public Co', 'public-co', 'owner@public.test');
         $this->installer()->install($tenant, $this->module());
+        $this->installer()->install($tenant, app(PagesModule::class));
 
         $tenant->run(function (): void {
             $owner = User::query()->firstWhere('email', 'owner@public.test');

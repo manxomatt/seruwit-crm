@@ -36,7 +36,7 @@ class ModuleInstallTest extends TestCase
             $this->assertSame(0, InstalledModule::query()->count());
 
             // Core still arrives untouched.
-            $this->assertTrue(Schema::hasTable('pages'));
+            $this->assertTrue(Schema::hasTable('media'));
             $this->assertFalse(Permission::query()->where('module', 'carousels')->exists());
             $this->assertFalse(Menu::query()->where('slug', 'carousels')->exists());
         });

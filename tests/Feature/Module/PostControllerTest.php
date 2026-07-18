@@ -3,10 +3,10 @@
 namespace Tests\Feature\Module;
 
 use App\Models\Permission;
-use App\Models\Post;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Posts\Models\Post;
 use Tests\TestCase;
 
 class PostControllerTest extends TestCase
@@ -46,25 +46,25 @@ class PostControllerTest extends TestCase
         $this->user->roles()->attach($this->role);
     }
 
-    public function testUserWithPermissionCanAccessPostsIndex(): void
+    public function test_user_with_permission_can_access_posts_index(): void
     {
         $response = $this->actingAs($this->user)
             ->get(route('module.posts.index'));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page->component('Module/Posts/Index'));
+        $response->assertInertia(fn ($page) => $page->component('Modules/Posts/Index'));
     }
 
-    public function testUserWithPermissionCanAccessCreatePost(): void
+    public function test_user_with_permission_can_access_create_post(): void
     {
         $response = $this->actingAs($this->user)
             ->get(route('module.posts.create'));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page->component('Module/Posts/Create'));
+        $response->assertInertia(fn ($page) => $page->component('Modules/Posts/Create'));
     }
 
-    public function testUserWithPermissionCanStorePost(): void
+    public function test_user_with_permission_can_store_post(): void
     {
         $postData = [
             'title' => 'Test Post',
@@ -85,7 +85,7 @@ class PostControllerTest extends TestCase
         ]);
     }
 
-    public function testUserCanViewOwnPost(): void
+    public function test_user_can_view_own_post(): void
     {
         $post = Post::factory()->create(['user_id' => $this->user->id]);
 
@@ -93,10 +93,10 @@ class PostControllerTest extends TestCase
             ->get(route('module.posts.show', $post));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page->component('Module/Posts/Show'));
+        $response->assertInertia(fn ($page) => $page->component('Modules/Posts/Show'));
     }
 
-    public function testUserCanEditOwnPost(): void
+    public function test_user_can_edit_own_post(): void
     {
         $post = Post::factory()->create(['user_id' => $this->user->id]);
 
@@ -104,10 +104,10 @@ class PostControllerTest extends TestCase
             ->get(route('module.posts.edit', $post));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page->component('Module/Posts/Edit'));
+        $response->assertInertia(fn ($page) => $page->component('Modules/Posts/Edit'));
     }
 
-    public function testUserCanUpdateOwnPost(): void
+    public function test_user_can_update_own_post(): void
     {
         $post = Post::factory()->create(['user_id' => $this->user->id]);
 
@@ -125,7 +125,7 @@ class PostControllerTest extends TestCase
         ]);
     }
 
-    public function testUserCanDeleteOwnPost(): void
+    public function test_user_can_delete_own_post(): void
     {
         $post = Post::factory()->create(['user_id' => $this->user->id]);
 
@@ -136,7 +136,7 @@ class PostControllerTest extends TestCase
         $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
 
-    public function testUserCanTogglePublishOwnPost(): void
+    public function test_user_can_toggle_publish_own_post(): void
     {
         $post = Post::factory()->create([
             'user_id' => $this->user->id,
@@ -153,7 +153,7 @@ class PostControllerTest extends TestCase
         ]);
     }
 
-    public function testUserCannotEditOtherUsersPost(): void
+    public function test_user_cannot_edit_other_users_post(): void
     {
         $otherUser = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $otherUser->id]);
@@ -164,7 +164,7 @@ class PostControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function testUserCannotUpdateOtherUsersPost(): void
+    public function test_user_cannot_update_other_users_post(): void
     {
         $otherUser = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $otherUser->id]);
@@ -177,7 +177,7 @@ class PostControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function testUserCannotDeleteOtherUsersPost(): void
+    public function test_user_cannot_delete_other_users_post(): void
     {
         $otherUser = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $otherUser->id]);
@@ -188,7 +188,7 @@ class PostControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function testUserWithoutPermissionCannotAccessPosts(): void
+    public function test_user_without_permission_cannot_access_posts(): void
     {
         // Create user without any permissions
         $userWithoutPermission = User::factory()->create();
@@ -199,7 +199,7 @@ class PostControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function testAdminUserCanAccessModulePosts(): void
+    public function test_admin_user_can_access_module_posts(): void
     {
         // Create admin role
         $adminRole = Role::factory()->create([
@@ -218,7 +218,7 @@ class PostControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testRegularUserWithPermissionCanAccessModulePosts(): void
+    public function test_regular_user_with_permission_can_access_module_posts(): void
     {
         // Create user role with posts permissions
         $userRole = Role::factory()->create([

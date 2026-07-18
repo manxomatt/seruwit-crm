@@ -20,11 +20,14 @@ class TenantProvisioningTest extends TestCase
             $this->assertTrue(Schema::hasTable('users'));
             $this->assertTrue(Schema::hasTable('roles'));
             $this->assertTrue(Schema::hasTable('permissions'));
-            $this->assertTrue(Schema::hasTable('pages'));
-            $this->assertTrue(Schema::hasTable('posts'));
             $this->assertTrue(Schema::hasTable('settings'));
             $this->assertTrue(Schema::hasTable('media'));
             $this->assertTrue(Schema::hasTable('installed_modules'));
+
+            // Pages and Posts are installable modules now — their tables only
+            // appear when a workspace installs them, same as Carousels.
+            $this->assertFalse(Schema::hasTable('pages'));
+            $this->assertFalse(Schema::hasTable('posts'));
         });
     }
 

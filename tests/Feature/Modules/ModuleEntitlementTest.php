@@ -168,18 +168,30 @@ class ModuleEntitlementTest extends TestCase
         $owner = $this->ownerOf($tenant, 'owner@site.test');
 
         $this->installer()->install($tenant, $this->module());
+        $this->installer()->install($tenant, app(\Modules\Pages\PagesModule::class));
 
         $tenant->run(function () use ($owner): void {
             $carousel = Carousel::factory()->active()->create(['user_id' => $owner->id, 'slug' => 'hero']);
 
-            \App\Models\Page::factory()->published()->create([
+            \Modules\Pages\Models\Page::factory()->published()->create([
                 'user_id' => $owner->id,
                 'slug' => 'landing',
                 'html' => '<div>Halo<carousel slug="'.$carousel->slug.'"></carousel></div>',
             ]);
         });
 
-        $tenant->update(['plan' => 'free']);
+        // The downgrade under test revokes Carousels, not Pages — losing Pages
+        // too would take the whole public site down (correctly), which is a
+        // different scenario than a page surviving a missing embed.
+        \App\Models\Plan::query()->create([
+            'key' => 'pages_only',
+            'name' => 'Pages Only',
+            'modules' => ['pages'],
+            'sort_order' => 99,
+            'is_default' => false,
+        ]);
+
+        $tenant->update(['plan' => 'pages_only']);
         tenancy()->end();
 
         $response = $this->get('http://site-co.localhost/p/landing');

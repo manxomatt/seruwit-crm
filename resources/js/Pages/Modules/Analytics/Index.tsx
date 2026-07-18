@@ -46,8 +46,9 @@ interface Activity {
 interface Props {
     overview: {
         totalUsers: number;
-        totalPages: number;
-        publishedPages: number;
+        // Absent when the tenant has not installed the Pages module.
+        totalPages?: number;
+        publishedPages?: number;
         totalMedia: number;
         // Absent when the tenant has not installed the Carousels module.
         totalCarousels?: number;
@@ -56,7 +57,8 @@ interface Props {
         totalSettings: number;
     };
     contentStats: {
-        pages: {
+        // Absent when the tenant has not installed the Pages module.
+        pages?: {
             published: number;
             draft: number;
             total: number;
@@ -263,17 +265,19 @@ export default function Index({
                     }
                     color="bg-gradient-to-br from-blue-500 to-blue-600"
                 />
-                <StatCard
-                    title="Total Pages"
-                    value={overview.totalPages}
-                    subtitle={`${overview.publishedPages} published`}
-                    icon={
-                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                    }
-                    color="bg-gradient-to-br from-green-500 to-green-600"
-                />
+                {overview.totalPages !== undefined && (
+                    <StatCard
+                        title="Total Pages"
+                        value={overview.totalPages}
+                        subtitle={`${overview.publishedPages} published`}
+                        icon={
+                            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                        }
+                        color="bg-gradient-to-br from-green-500 to-green-600"
+                    />
+                )}
                 <StatCard
                     title="Media Files"
                     value={overview.totalMedia}
@@ -311,32 +315,34 @@ export default function Index({
                         <div className="p-6">
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 {/* Pages */}
-                                <div className="rounded-lg border border-gray-200 p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-sm font-medium text-gray-900">Pages</h3>
-                                        <span className="text-2xl font-bold text-gray-900">{contentStats.pages.total}</span>
+                                {contentStats.pages && (
+                                    <div className="rounded-lg border border-gray-200 p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-sm font-medium text-gray-900">Pages</h3>
+                                            <span className="text-2xl font-bold text-gray-900">{contentStats.pages.total}</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Published</span>
+                                                <span className="font-medium text-green-600">{contentStats.pages.published}</span>
+                                            </div>
+                                            <ProgressBar value={contentStats.pages.published} max={contentStats.pages.total} color="bg-green-500" />
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Draft</span>
+                                                <span className="font-medium text-yellow-600">{contentStats.pages.draft}</span>
+                                            </div>
+                                            <ProgressBar value={contentStats.pages.draft} max={contentStats.pages.total} color="bg-yellow-500" />
+                                        </div>
+                                        {contentStats.pages.hasHomepage && (
+                                            <div className="mt-3 flex items-center text-xs text-green-600">
+                                                <svg className="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Homepage configured
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Published</span>
-                                            <span className="font-medium text-green-600">{contentStats.pages.published}</span>
-                                        </div>
-                                        <ProgressBar value={contentStats.pages.published} max={contentStats.pages.total} color="bg-green-500" />
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Draft</span>
-                                            <span className="font-medium text-yellow-600">{contentStats.pages.draft}</span>
-                                        </div>
-                                        <ProgressBar value={contentStats.pages.draft} max={contentStats.pages.total} color="bg-yellow-500" />
-                                    </div>
-                                    {contentStats.pages.hasHomepage && (
-                                        <div className="mt-3 flex items-center text-xs text-green-600">
-                                            <svg className="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Homepage configured
-                                        </div>
-                                    )}
-                                </div>
+                                )}
 
                                 {/* Carousels */}
                                 {contentStats.carousels && (

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LiveUpdate;
 use App\Models\Media;
-use App\Models\Page;
 use App\Models\Setting;
 use App\Models\Todo;
 use App\Models\User;
@@ -16,6 +15,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Carousels\Models\Carousel;
 use Modules\Carousels\Models\CarouselImage;
+use Modules\Pages\Models\Page;
 
 class AnalyticsController extends Controller
 {
@@ -40,13 +40,16 @@ class AnalyticsController extends Controller
     {
         $stats = [
             'totalUsers' => User::query()->count(),
-            'totalPages' => Page::query()->count(),
-            'publishedPages' => Page::query()->where('is_published', true)->count(),
             'totalMedia' => Media::query()->count(),
             'totalTodos' => Todo::query()->count(),
             'completedTodos' => Todo::query()->where('is_completed', true)->count(),
             'totalSettings' => Setting::query()->count(),
         ];
+
+        if (Modules::available('pages')) {
+            $stats['totalPages'] = Page::query()->count();
+            $stats['publishedPages'] = Page::query()->where('is_published', true)->count();
+        }
 
         if (Modules::available('carousels')) {
             $stats['totalCarousels'] = Carousel::query()->count();
@@ -62,15 +65,6 @@ class AnalyticsController extends Controller
      */
     private function getContentStats(): array
     {
-        $pages = Page::query()
-            ->select('is_published', DB::raw('count(*) as count'))
-            ->groupBy('is_published')
-            ->get()
-            ->mapWithKeys(fn ($item) => [
-                $item->is_published ? 'published' : 'draft' => $item->count,
-            ])
-            ->toArray();
-
         $liveUpdates = LiveUpdate::query()
             ->select('is_active', DB::raw('count(*) as count'))
             ->groupBy('is_active')
@@ -81,12 +75,6 @@ class AnalyticsController extends Controller
             ->toArray();
 
         $stats = [
-            'pages' => [
-                'published' => $pages['published'] ?? 0,
-                'draft' => $pages['draft'] ?? 0,
-                'total' => Page::query()->count(),
-                'hasHomepage' => Page::query()->where('is_homepage', true)->exists(),
-            ],
             'liveUpdates' => [
                 'active' => $liveUpdates['active'] ?? 0,
                 'inactive' => $liveUpdates['inactive'] ?? 0,
@@ -99,6 +87,24 @@ class AnalyticsController extends Controller
                 'completionRate' => $this->calculateCompletionRate(),
             ],
         ];
+
+        if (Modules::available('pages')) {
+            $pages = Page::query()
+                ->select('is_published', DB::raw('count(*) as count'))
+                ->groupBy('is_published')
+                ->get()
+                ->mapWithKeys(fn ($item) => [
+                    $item->is_published ? 'published' : 'draft' => $item->count,
+                ])
+                ->toArray();
+
+            $stats['pages'] = [
+                'published' => $pages['published'] ?? 0,
+                'draft' => $pages['draft'] ?? 0,
+                'total' => Page::query()->count(),
+                'hasHomepage' => Page::query()->where('is_homepage', true)->exists(),
+            ];
+        }
 
         if (Modules::available('carousels')) {
             $carousels = Carousel::query()
@@ -186,17 +192,18 @@ class AnalyticsController extends Controller
             : ($usersThisMonth > 0 ? 100 : 0);
 
         $carouselsInstalled = Modules::available('carousels');
+        $pagesInstalled = Modules::available('pages');
 
         $topContributors = User::query()
-            ->withCount(array_filter(['pages', 'media', $carouselsInstalled ? 'carousels' : null]))
-            ->orderByDesc('pages_count')
+            ->withCount(array_filter([$pagesInstalled ? 'pages' : null, 'media', $carouselsInstalled ? 'carousels' : null]))
+            ->orderByDesc($pagesInstalled ? 'pages_count' : 'media_count')
             ->take(5)
             ->get()
             ->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'pagesCount' => $user->pages_count,
+                'pagesCount' => $pagesInstalled ? $user->pages_count : 0,
                 'mediaCount' => $user->media_count,
                 'carouselsCount' => $carouselsInstalled ? $user->carousels_count : 0,
             ])
@@ -234,21 +241,23 @@ class AnalyticsController extends Controller
         $activities = collect();
 
         // Recent pages
-        Page::query()
-            ->latest('updated_at')
-            ->take(5)
-            ->get()
-            ->each(function ($page) use ($activities) {
-                $activities->push([
-                    'id' => 'page_'.$page->id,
-                    'type' => $page->created_at->eq($page->updated_at) ? 'page_created' : 'page_updated',
-                    'description' => $page->created_at->eq($page->updated_at)
-                        ? "Page \"{$page->title}\" was created"
-                        : "Page \"{$page->title}\" was updated",
-                    'time' => $page->updated_at,
-                    'timeForHumans' => $page->updated_at->diffForHumans(),
-                ]);
-            });
+        if (Modules::available('pages')) {
+            Page::query()
+                ->latest('updated_at')
+                ->take(5)
+                ->get()
+                ->each(function ($page) use ($activities) {
+                    $activities->push([
+                        'id' => 'page_'.$page->id,
+                        'type' => $page->created_at->eq($page->updated_at) ? 'page_created' : 'page_updated',
+                        'description' => $page->created_at->eq($page->updated_at)
+                            ? "Page \"{$page->title}\" was created"
+                            : "Page \"{$page->title}\" was updated",
+                        'time' => $page->updated_at,
+                        'timeForHumans' => $page->updated_at->diffForHumans(),
+                    ]);
+                });
+        }
 
         // Recent users
         User::query()
@@ -320,12 +329,14 @@ class AnalyticsController extends Controller
             $dates->push(Carbon::now()->subDays($i)->format('Y-m-d'));
         }
 
-        $pagesByDate = Page::query()
-            ->where('created_at', '>=', Carbon::now()->subDays($days))
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
-            ->groupBy('date')
-            ->pluck('count', 'date')
-            ->toArray();
+        $pagesByDate = Modules::available('pages')
+            ? Page::query()
+                ->where('created_at', '>=', Carbon::now()->subDays($days))
+                ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+                ->groupBy('date')
+                ->pluck('count', 'date')
+                ->toArray()
+            : [];
 
         $usersByDate = User::query()
             ->where('created_at', '>=', Carbon::now()->subDays($days))

@@ -19,12 +19,14 @@ interface Page {
 }
 
 interface Stats {
-    posts: {
+    // Absent when the tenant has not installed the Posts module.
+    posts?: {
         total: number;
         published: number;
         draft: number;
     };
-    pages: {
+    // Absent when the tenant has not installed the Pages module.
+    pages?: {
         total: number;
         published: number;
         draft: number;
@@ -310,22 +312,26 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
 
                 {/* Stats Grid */}
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard
-                        title="Total Postingan"
-                        value={stats.posts.total}
-                        subtitle={`${stats.posts.published} terbit, ${stats.posts.draft} draft`}
-                        icon={<NewspaperIcon />}
-                        color="cyan"
-                        href={route('module.posts.index')}
-                    />
-                    <StatCard
-                        title="Total Halaman"
-                        value={stats.pages.total}
-                        subtitle={`${stats.pages.published} terbit, ${stats.pages.draft} draft`}
-                        icon={<DocumentTextIcon />}
-                        color="emerald"
-                        href={route('module.pages.index')}
-                    />
+                    {stats.posts && (
+                        <StatCard
+                            title="Total Postingan"
+                            value={stats.posts.total}
+                            subtitle={`${stats.posts.published} terbit, ${stats.posts.draft} draft`}
+                            icon={<NewspaperIcon />}
+                            color="cyan"
+                            href={route('module.posts.index')}
+                        />
+                    )}
+                    {stats.pages && (
+                        <StatCard
+                            title="Total Halaman"
+                            value={stats.pages.total}
+                            subtitle={`${stats.pages.published} terbit, ${stats.pages.draft} draft`}
+                            icon={<DocumentTextIcon />}
+                            color="emerald"
+                            href={route('module.pages.index')}
+                        />
+                    )}
                     <StatCard
                         title="File Media"
                         value={stats.media.total}
@@ -356,20 +362,24 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                 Aksi Cepat
                             </h3>
                             <div className="mt-4 space-y-3">
-                                <QuickAction
-                                    title="Postingan Baru"
-                                    description="Buat postingan blog"
-                                    href={route('module.posts.create')}
-                                    icon={<NewspaperIcon />}
-                                    color="bg-gradient-to-r from-cyan-500 to-blue-600"
-                                />
-                                <QuickAction
-                                    title="Halaman Baru"
-                                    description="Buat halaman baru"
-                                    href={route('module.pages.create')}
-                                    icon={<DocumentTextIcon />}
-                                    color="bg-gradient-to-r from-emerald-500 to-teal-600"
-                                />
+                                {stats.posts && (
+                                    <QuickAction
+                                        title="Postingan Baru"
+                                        description="Buat postingan blog"
+                                        href={route('module.posts.create')}
+                                        icon={<NewspaperIcon />}
+                                        color="bg-gradient-to-r from-cyan-500 to-blue-600"
+                                    />
+                                )}
+                                {stats.pages && (
+                                    <QuickAction
+                                        title="Halaman Baru"
+                                        description="Buat halaman baru"
+                                        href={route('module.pages.create')}
+                                        icon={<DocumentTextIcon />}
+                                        color="bg-gradient-to-r from-emerald-500 to-teal-600"
+                                    />
+                                )}
                                 <QuickAction
                                     title="Upload Media"
                                     description="Tambah gambar atau file"

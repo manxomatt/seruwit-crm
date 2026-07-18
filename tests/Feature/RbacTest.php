@@ -16,8 +16,11 @@ class RbacTest extends TestCase
     {
         parent::setUp();
 
-        // Seed permissions and roles for testing
+        // Seed permissions and roles for testing. ModuleRegistrySeeder sits
+        // between the two so the module-declared permissions (pages, posts,
+        // carousels, ...) exist before RoleSeeder syncs them onto the roles.
         $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(\Database\Seeders\ModuleRegistrySeeder::class);
         $this->seed(\Database\Seeders\RoleSeeder::class);
     }
 

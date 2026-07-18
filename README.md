@@ -5,8 +5,6 @@ A multi-tenant SaaS CMS/CRM built with Laravel 12, Inertia.js, React, and Tailwi
 ## Features
 
 ### Core (ships with every tenant)
-- **Page Builder** - Visual page editor with GrapesJS integration
-- **Blog/Posts** - Create and manage blog posts with rich content
 - **Media Library** - Upload and manage images, documents, and other media files
 - **Live Updates** - Real-time content updates and announcements
 - **User Management** - Full user management with profiles and invitations
@@ -16,6 +14,8 @@ A multi-tenant SaaS CMS/CRM built with Laravel 12, Inertia.js, React, and Tailwi
 - **Analytics** - Dashboard analytics
 
 ### Optional (installable per tenant, gated by subscription plan)
+- **Pages** - Visual page builder with GrapesJS, powering the tenant's public homepage and `/p/{slug}` pages
+- **Posts** - Blog posts with drafts and publishing, served publicly at `/blog`
 - **Carousels** - Dynamic image carousels/sliders
 - **Fleet** - Vehicles and drivers, reusable by any module that needs them
 - **Transportation Management** - Trip dispatch, live checkpoint tracking, recurring trip schedules, a calendar view, and cost/utilization reports — built on top of Fleet, Customer, and Product

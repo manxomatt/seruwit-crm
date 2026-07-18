@@ -56,6 +56,19 @@ class ModulePageEntrypointTest extends TestCase
         );
     }
 
+    public function test_pages_owned_by_the_pages_and_posts_modules_resolve_to_the_modules_copies(): void
+    {
+        $this->assertSame(
+            'modules/Pages/resources/js/Pages/Modules/Pages/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/Pages/Index'),
+        );
+
+        $this->assertSame(
+            'modules/Posts/resources/js/Pages/Modules/Posts/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/Posts/Index'),
+        );
+    }
+
     public function test_a_core_page_resolves_to_core(): void
     {
         $this->assertSame(
@@ -103,6 +116,14 @@ class ModulePageEntrypointTest extends TestCase
             'Modules/Product/Create',
             'Modules/Product/Edit',
             'Modules/Product/Show',
+            'Modules/Pages/Index',
+            'Modules/Pages/Create',
+            'Modules/Pages/Editor',
+            'Modules/Pages/Show',
+            'Modules/Posts/Index',
+            'Modules/Posts/Create',
+            'Modules/Posts/Edit',
+            'Modules/Posts/Show',
             'Modules/TransportationManagement/Trips/Index',
             'Modules/TransportationManagement/Trips/Create',
             'Modules/TransportationManagement/Trips/Show',

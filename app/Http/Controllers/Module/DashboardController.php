@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
-use App\Models\Page;
-use App\Models\Post;
 use App\Modules\Facades\Modules;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Carousels\Models\Carousel;
+use Modules\Pages\Models\Page;
+use Modules\Posts\Models\Post;
 
 class DashboardController extends Controller
 {
@@ -22,24 +22,32 @@ class DashboardController extends Controller
         $user = $request->user();
         $primaryRole = $user->getPrimaryRole();
 
-        // Get statistics
+        // Get statistics. Posts, Pages and Carousels are optional modules, so
+        // their stats only exist where the module is available — the frontend
+        // renders each card conditionally.
         $stats = [
-            'posts' => [
-                'total' => Post::query()->count(),
-                'published' => Post::query()->where('is_published', true)->count(),
-                'draft' => Post::query()->where('is_published', false)->count(),
-            ],
-            'pages' => [
-                'total' => Page::query()->count(),
-                'published' => Page::query()->where('is_published', true)->count(),
-                'draft' => Page::query()->where('is_published', false)->count(),
-            ],
             'media' => [
                 'total' => Media::query()->count(),
                 'images' => Media::query()->where('type', 'image')->count(),
                 'documents' => Media::query()->where('type', 'document')->count(),
             ],
         ];
+
+        if (Modules::available('posts')) {
+            $stats['posts'] = [
+                'total' => Post::query()->count(),
+                'published' => Post::query()->where('is_published', true)->count(),
+                'draft' => Post::query()->where('is_published', false)->count(),
+            ];
+        }
+
+        if (Modules::available('pages')) {
+            $stats['pages'] = [
+                'total' => Page::query()->count(),
+                'published' => Page::query()->where('is_published', true)->count(),
+                'draft' => Page::query()->where('is_published', false)->count(),
+            ];
+        }
 
         if (Modules::available('carousels')) {
             $stats['carousels'] = [
@@ -48,17 +56,13 @@ class DashboardController extends Controller
             ];
         }
 
-        // Get recent posts
-        $recentPosts = Post::query()
-            ->latest()
-            ->limit(5)
-            ->get(['id', 'title', 'slug', 'is_published', 'created_at']);
+        $recentPosts = Modules::available('posts')
+            ? Post::query()->latest()->limit(5)->get(['id', 'title', 'slug', 'is_published', 'created_at'])
+            : collect();
 
-        // Get recent pages
-        $recentPages = Page::query()
-            ->latest()
-            ->limit(5)
-            ->get(['id', 'title', 'slug', 'is_published', 'created_at']);
+        $recentPages = Modules::available('pages')
+            ? Page::query()->latest()->limit(5)->get(['id', 'title', 'slug', 'is_published', 'created_at'])
+            : collect();
 
         return Inertia::render('Module/Dashboard', [
             'user' => [

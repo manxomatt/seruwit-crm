@@ -52,12 +52,14 @@ class PlanManagementTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Plans/Index')
                 ->has('plans', 3)
-                ->has('availableModules', 5)
+                ->has('availableModules', 7)
                 ->where('availableModules.0.key', 'carousels')
                 ->where('availableModules.1.key', 'customers')
                 ->where('availableModules.2.key', 'fleet')
-                ->where('availableModules.3.key', 'products')
-                ->where('availableModules.4.key', 'transportation')
+                ->where('availableModules.3.key', 'pages')
+                ->where('availableModules.4.key', 'posts')
+                ->where('availableModules.5.key', 'products')
+                ->where('availableModules.6.key', 'transportation')
                 // The tenant carries no plan of its own, so it counts against the
                 // default — the plan it actually falls back to.
                 ->where('plans.1.key', 'basic')

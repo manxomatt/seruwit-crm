@@ -12,7 +12,7 @@ CRM multi-tenant berbasis SaaS: setiap perusahaan (tenant) mendapatkan workspace
 | Database | PostgreSQL — **satu database, satu schema per tenant** |
 | Cache | Redis — tenant-aware via `CacheTenancyBootstrapper` (tiap tenant punya namespace cache sendiri) |
 | Multi-tenancy | `stancl/tenancy` v3.10 (`PostgreSQLSchemaManager`) |
-| Testing | PHPUnit 11 — 379 test, berjalan di PostgreSQL (database `seruwit_crm_testing`) |
+| Testing | PHPUnit 11 — 381 test, berjalan di PostgreSQL (database `seruwit_crm_testing`) |
 
 ## Arsitektur Multi-Tenant
 
@@ -67,11 +67,15 @@ Modul terdaftar saat ini:
 
 | Modul (`key`) | Deskripsi | `requires()` |
 |---|---|---|
-| `carousels` | Carousel + manajemen & pengurutan gambar | — |
+| `carousels` | Carousel + manajemen & pengurutan gambar | `media` |
+| `pages` | Page builder GrapesJS untuk situs publik tenant (homepage `/` + `/p/{slug}`) | `media` |
+| `posts` | Blog untuk situs publik tenant (`/blog`) | `media` |
 | `fleet` | Kendaraan & sopir, dipakai ulang oleh modul lain | — |
 | `customers` | Data pelanggan lintas modul (`global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan, belum dipakai) | — |
 | `products` | Katalog produk; satuan (unit) dikelola lewat Settings grup `units` | — |
 | `transportation` | Dispatch trip, tracking checkpoint, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
+
+**Wajah publik modul**: route publik Pages (`/`, `/p/{slug}`) dan Posts (`/blog`) tetap tinggal di core (`routes/app.php`) karena situs publik tenant ada terlepas dari modulnya — controller-nya (`PageController`, `BlogController`) yang menjaga diri dengan `Modules::available('pages'/'posts')`: homepage jatuh ke landing bawaan `Welcome`, `/p/{slug}` dan `/blog` menjadi 404, bukan 500. Pola yang sama dipakai GlobalSearch, Dashboard, dan Analytics untuk statistik/pencarian Page/Post (prop di-omit saat modul tak tersedia, seperti carousels).
 
 ## Paket Langganan & Entitlement
 
@@ -89,8 +93,8 @@ Paket bawaan (`PlanSeeder`, re-runnable dan tidak pernah menimpa definisi yang s
 | Key | Modul | Catatan |
 |---|---|---|
 | `free` | — | CMS inti saja |
-| `basic` | `carousels` | **Default** — sama dengan yang dimiliki tenant sebelum paket ada |
-| `pro` | `carousels`, `customers`, `fleet`, `products`, `transportation` | Seluruh modul yang tersedia |
+| `basic` | `carousels`, `pages`, `posts` | **Default** — sama dengan yang dimiliki tenant sebelum paket ada (Pages/Posts dulunya fitur inti) |
+| `pro` | `carousels`, `customers`, `fleet`, `pages`, `posts`, `products`, `transportation` | Seluruh modul yang tersedia |
 
 ## Module Registry — Saklar Modul Tingkat Platform
 
@@ -106,6 +110,8 @@ Sumbu ketiga, terpisah dari entitlement paket dan status install: `ModuleRegistr
 ### Aplikasi CRM / CMS (berjalan per tenant)
 - **Dashboard** per peran + pencarian global
 - **Katalog Modul** (`/module/modules`) — admin workspace memasang/mencopot modul yang dientitle paketnya; modul terkunci (paket) atau dinonaktifkan (platform) menampilkan alasannya
+- **Pages** *(modul)* — page builder visual GrapesJS (editor drag-and-drop, set homepage, render publik di `/` dan `/p/{slug}`)
+- **Posts** *(modul)* — blog dengan draft & publish, tampil publik di `/blog`
 - **Carousels** *(modul)* — carousel beserta manajemen & pengurutan gambar
 - **Fleet** *(modul)* — kendaraan & sopir; dipakai ulang modul lain lewat `requires()`, tak pernah sebaliknya
 - **Customer** *(modul)* — data pelanggan standalone; `global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan
@@ -179,4 +185,4 @@ php artisan modules:purge-expired                 # buang data modul yang tengga
 
 ## Pekerjaan yang Sedang Berjalan
 
-- **Ekstraksi Pages & Posts menjadi modul** — halaman React-nya sudah dihapus, tapi controller, route, dan entri MenuSeeder-nya masih ada, sehingga kedua fitur ini belum bisa dipakai sampai ekstraksinya selesai.
+- Tidak ada — ekstraksi Pages & Posts menjadi modul (pekerjaan tergantung terakhir) sudah selesai. Untuk tenant lama, jalankan `modules:backfill` sekali setelah deploy agar Pages/Posts tertandai terpasang; entitlement paket live diedit dari `/module/plans`.

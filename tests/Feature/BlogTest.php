@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Posts\Models\Post;
 use Tests\TestCase;
 
 class BlogTest extends TestCase

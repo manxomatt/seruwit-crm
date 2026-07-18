@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Page;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Pages\Models\Page;
 use Tests\TestCase;
 
 class PageTest extends TestCase

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Post;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Posts\Models\Post;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 

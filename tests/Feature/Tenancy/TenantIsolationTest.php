@@ -5,12 +5,14 @@ namespace Tests\Feature\Tenancy;
 use App\Actions\Tenancy\CreateTenantAction;
 use App\Models\CentralUser;
 use App\Models\Media;
-use App\Models\Page;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Modules\ModuleInstaller;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Modules\Pages\Models\Page;
+use Modules\Pages\PagesModule;
 use Tests\TestCase;
 
 class TenantIsolationTest extends TestCase
@@ -47,8 +49,18 @@ class TenantIsolationTest extends TestCase
 
     public function test_module_data_from_one_tenant_is_invisible_in_another(): void
     {
+        // Installing needs plan entitlement, and this class seeds nothing.
+        $this->seed(\Database\Seeders\PlanSeeder::class);
+
         $tenantA = $this->provisionTenant('Company A', 'company-a', 'admin@a.test');
         $tenantB = $this->provisionTenant('Company B', 'company-b', 'admin@b.test');
+
+        // Pages is an installable module now, so both workspaces need it
+        // before the isolation of its data can be probed.
+        $installer = app(ModuleInstaller::class);
+        $installer->install($tenantA, app(PagesModule::class));
+        $installer->install($tenantB, app(PagesModule::class));
+        tenancy()->end();
 
         $pageId = $tenantA->run(function (): int {
             $author = User::query()->firstWhere('email', 'admin@a.test');
