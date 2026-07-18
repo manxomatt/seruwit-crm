@@ -26,6 +26,7 @@ class StoreTripRequest extends FormRequest
         return [
             'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
             'driver_id' => ['required', 'integer', 'exists:drivers,id'],
+            'customer_id' => ['required', 'integer', 'exists:customers,id'],
             'origin' => ['required', 'string', 'max:255'],
             'destination' => ['required', 'string', 'max:255'],
             'cargo_notes' => ['nullable', 'string', 'max:2000'],
@@ -69,6 +70,8 @@ class StoreTripRequest extends FormRequest
             'vehicle_id.exists' => 'The selected vehicle does not exist.',
             'driver_id.required' => 'Select a driver for this trip.',
             'driver_id.exists' => 'The selected driver does not exist.',
+            'customer_id.required' => 'Select a customer for this trip.',
+            'customer_id.exists' => 'The selected customer does not exist.',
         ];
     }
 }

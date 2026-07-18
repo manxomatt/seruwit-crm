@@ -40,6 +40,22 @@ class ModulePageEntrypointTest extends TestCase
         );
     }
 
+    public function test_a_page_owned_by_the_customer_module_resolves_to_the_modules_copy(): void
+    {
+        $this->assertSame(
+            'modules/Customer/resources/js/Pages/Modules/Customer/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/Customer/Index'),
+        );
+    }
+
+    public function test_a_page_owned_by_the_product_module_resolves_to_the_modules_copy(): void
+    {
+        $this->assertSame(
+            'modules/Product/resources/js/Pages/Modules/Product/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/Product/Index'),
+        );
+    }
+
     public function test_a_core_page_resolves_to_core(): void
     {
         $this->assertSame(
@@ -79,6 +95,14 @@ class ModulePageEntrypointTest extends TestCase
             'Modules/Fleet/Drivers/Create',
             'Modules/Fleet/Drivers/Edit',
             'Modules/Fleet/Drivers/Show',
+            'Modules/Customer/Index',
+            'Modules/Customer/Create',
+            'Modules/Customer/Edit',
+            'Modules/Customer/Show',
+            'Modules/Product/Index',
+            'Modules/Product/Create',
+            'Modules/Product/Edit',
+            'Modules/Product/Show',
             'Modules/TransportationManagement/Trips/Index',
             'Modules/TransportationManagement/Trips/Create',
             'Modules/TransportationManagement/Trips/Show',

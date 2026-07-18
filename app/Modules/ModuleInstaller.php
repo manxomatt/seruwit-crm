@@ -42,6 +42,12 @@ class ModuleInstaller
      */
     private function installWithinTenant(Tenant $tenant, ModuleContract $module): void
     {
+        if (! Modules::platformEnabled($module->key())) {
+            throw new RuntimeException(
+                "Module [{$module->key()}] is currently disabled.",
+            );
+        }
+
         if (! $tenant->isEntitledTo($module->key())) {
             throw new RuntimeException(
                 "Plan [{$tenant->planKey()}] does not include module [{$module->key()}].",

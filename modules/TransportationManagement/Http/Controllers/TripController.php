@@ -8,8 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Http\Requests\StoreTripRequest;
 use Modules\TransportationManagement\Http\Requests\UpdateTripRequest;
 use Modules\TransportationManagement\Models\Trip;
@@ -32,7 +34,7 @@ class TripController extends Controller
         $user = Auth::user();
 
         $trips = Trip::query()
-            ->with(['vehicle', 'driver'])
+            ->with(['vehicle', 'driver', 'customer'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
@@ -67,6 +69,7 @@ class TripController extends Controller
         return Inertia::render('Modules/TransportationManagement/Trips/Create', [
             'vehicles' => Vehicle::query()->orderBy('name')->get(['id', 'name', 'plate_number', 'status']),
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name', 'license_number', 'status']),
+            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
         ]);
     }
 
@@ -91,10 +94,11 @@ class TripController extends Controller
     {
         $user = Auth::user();
 
-        $trip->load(['vehicle', 'driver', 'checkpoints']);
+        $trip->load(['vehicle', 'driver', 'customer', 'checkpoints', 'items.product']);
 
         return Inertia::render('Modules/TransportationManagement/Trips/Show', [
             'trip' => $trip,
+            'products' => Product::query()->where('status', 'active')->orderBy('name')->get(['id', 'code', 'name', 'unit']),
             'can' => [
                 'update' => $user->hasPermissionFor('transportation', 'update'),
                 'delete' => $user->hasPermissionFor('transportation', 'delete'),

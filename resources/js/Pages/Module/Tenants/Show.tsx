@@ -8,7 +8,7 @@ interface Member {
     roles: string[];
 }
 
-type ModuleState = 'installed' | 'available' | 'uninstalled' | 'locked' | 'locked_with_data';
+type ModuleState = 'installed' | 'available' | 'uninstalled' | 'locked' | 'locked_with_data' | 'disabled' | 'disabled_with_data';
 
 interface ModuleEntry {
     key: string;
@@ -35,7 +35,11 @@ const STATE_BADGE: Record<ModuleState, { label: string; className: string }> = {
     uninstalled: { label: 'Dicopot', className: 'bg-amber-100 text-amber-800' },
     locked: { label: 'Di luar paket', className: 'bg-gray-100 text-gray-600' },
     locked_with_data: { label: 'Terkunci, data tersimpan', className: 'bg-gray-100 text-gray-600' },
+    disabled: { label: 'Dinonaktifkan', className: 'bg-red-100 text-red-800' },
+    disabled_with_data: { label: 'Dinonaktifkan', className: 'bg-red-100 text-red-800' },
 };
+
+const isDisabled = (state: ModuleState): boolean => state === 'disabled' || state === 'disabled_with_data';
 
 interface TenantDetail {
     id: string;
@@ -333,7 +337,14 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                                                 </p>
                                             )}
 
-                                            {!module.entitled && module.plans_offering.length > 0 && (
+                                            {isDisabled(module.state) && (
+                                                <p className="mt-2 text-xs text-red-700">
+                                                    Modul ini dinonaktifkan platform untuk semua tenant
+                                                    {module.state === 'disabled_with_data' && ' — datanya tetap tersimpan'}.
+                                                </p>
+                                            )}
+
+                                            {!isDisabled(module.state) && !module.entitled && module.plans_offering.length > 0 && (
                                                 <p className="mt-2 text-xs text-gray-500">
                                                     Ada di paket {module.plans_offering.join(', ')} — pindahkan paketnya
                                                     untuk membuka.
@@ -342,7 +353,9 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                                         </div>
 
                                         <div className="shrink-0">
-                                            {!module.entitled ? (
+                                            {isDisabled(module.state) ? (
+                                                <span className="text-sm text-gray-400">Dinonaktifkan</span>
+                                            ) : !module.entitled ? (
                                                 <span className="text-sm text-gray-400">Di luar paket</span>
                                             ) : module.installed ? (
                                                 <button

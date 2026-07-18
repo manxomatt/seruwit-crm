@@ -24,10 +24,17 @@ interface Driver {
     status: string;
 }
 
+interface Customer {
+    id: number;
+    code: string;
+    name: string;
+}
+
 interface TripSchedule {
     id: number;
     vehicle_id: number;
     driver_id: number;
+    customer_id: number | null;
     origin: string;
     destination: string;
     cargo_notes: string | null;
@@ -43,6 +50,7 @@ interface Props {
     schedule: TripSchedule;
     vehicles: Vehicle[];
     drivers: Driver[];
+    customers: Customer[];
 }
 
 const DAYS = [
@@ -55,11 +63,12 @@ const DAYS = [
     { value: 0, label: 'Sun' },
 ];
 
-export default function Edit({ schedule, vehicles, drivers }: Props): JSX.Element {
+export default function Edit({ schedule, vehicles, drivers, customers }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors } = useForm({
         vehicle_id: String(schedule.vehicle_id),
         driver_id: String(schedule.driver_id),
+        customer_id: schedule.customer_id ? String(schedule.customer_id) : '',
         origin: schedule.origin,
         destination: schedule.destination,
         cargo_notes: schedule.cargo_notes || '',
@@ -115,6 +124,18 @@ export default function Edit({ schedule, vehicles, drivers }: Props): JSX.Elemen
                                     ))}
                                 </select>
                                 <InputError message={errors.driver_id} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="customer_id" value="Customer" />
+                                <select id="customer_id" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.customer_id} onChange={(e) => setData('customer_id', e.target.value)} required>
+                                    <option value="">Select a customer</option>
+                                    {customers.map((customer) => (
+                                        <option key={customer.id} value={customer.id}>
+                                            {customer.name} ({customer.code})
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.customer_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="origin" value="Origin" />

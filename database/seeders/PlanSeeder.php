@@ -38,7 +38,7 @@ class PlanSeeder extends Seeder
                 'key' => 'pro',
                 'name' => 'Pro',
                 'description' => 'Seluruh modul yang tersedia.',
-                'modules' => ['carousels', 'fleet', 'transportation'],
+                'modules' => ['carousels', 'customers', 'fleet', 'products', 'transportation'],
                 'sort_order' => 3,
                 'is_default' => false,
             ],

@@ -5,7 +5,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
-type ModuleState = 'installed' | 'available' | 'uninstalled' | 'locked' | 'locked_with_data';
+type ModuleState = 'installed' | 'available' | 'uninstalled' | 'locked' | 'locked_with_data' | 'disabled' | 'disabled_with_data';
 
 interface ModuleEntry {
     key: string;
@@ -37,7 +37,11 @@ const STATE_BADGE: Record<ModuleState, { label: string; className: string }> = {
     uninstalled: { label: 'Dicopot', className: 'bg-amber-100 text-amber-800' },
     locked: { label: 'Perlu upgrade', className: 'bg-gray-100 text-gray-600' },
     locked_with_data: { label: 'Terkunci', className: 'bg-gray-100 text-gray-600' },
+    disabled: { label: 'Dinonaktifkan', className: 'bg-red-100 text-red-800' },
+    disabled_with_data: { label: 'Dinonaktifkan', className: 'bg-red-100 text-red-800' },
 };
+
+const isDisabled = (state: ModuleState): boolean => state === 'disabled' || state === 'disabled_with_data';
 
 export default function Index({ modules, plan, graceDays }: Props): JSX.Element {
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
@@ -137,7 +141,14 @@ export default function Index({ modules, plan, graceDays }: Props): JSX.Element 
                                                     </p>
                                                 )}
 
-                                                {!module.entitled && module.plans_offering.length > 0 && (
+                                                {isDisabled(module.state) && (
+                                                    <p className="mt-2 text-xs text-red-700">
+                                                        Modul ini sedang dinonaktifkan platform untuk semua tenant
+                                                        {module.state === 'disabled_with_data' && ' — datamu tetap tersimpan dan kembali begitu diaktifkan lagi'}.
+                                                    </p>
+                                                )}
+
+                                                {!isDisabled(module.state) && !module.entitled && module.plans_offering.length > 0 && (
                                                     <p className="mt-2 text-xs text-gray-500">
                                                         Tersedia di paket {module.plans_offering.join(', ')}.
                                                     </p>
@@ -151,7 +162,9 @@ export default function Index({ modules, plan, graceDays }: Props): JSX.Element 
                                             </div>
 
                                             <div className="shrink-0">
-                                                {!module.entitled ? (
+                                                {isDisabled(module.state) ? (
+                                                    <SecondaryButton disabled>Dinonaktifkan</SecondaryButton>
+                                                ) : !module.entitled ? (
                                                     <SecondaryButton disabled>Perlu upgrade</SecondaryButton>
                                                 ) : module.installed ? (
                                                     <SecondaryButton

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\WorkspaceController;
+use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PlanController;
 use App\Http\Controllers\Module\TenantController;
 use App\Http\Controllers\PageController;
@@ -87,4 +88,19 @@ Route::domain($centralDomain)
         Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
         Route::patch('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
         Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
+    });
+
+/*
+| Platform-wide module kill switch: turns a module off for every tenant at
+| once, regardless of plan or install state. Central only and gated to
+| platform super admins — distinct from module.modules.* (a workspace admin's
+| own install/uninstall of the modules their plan already covers).
+*/
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-module-registry'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/registry', [ModuleRegistryController::class, 'index'])->name('registry.index');
+        Route::patch('/registry/{key}/status', [ModuleRegistryController::class, 'toggleStatus'])->name('registry.toggle-status');
     });

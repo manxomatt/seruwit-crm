@@ -49,6 +49,7 @@ class PlanController extends Controller
                     'key' => $module->key(),
                     'label' => $module->label(),
                     'description' => $module->description(),
+                    'is_enabled' => Modules::platformEnabled($module->key()),
                 ])
                 ->values()
                 ->all(),

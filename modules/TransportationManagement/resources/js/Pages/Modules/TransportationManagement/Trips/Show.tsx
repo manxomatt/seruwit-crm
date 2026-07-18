@@ -19,6 +19,20 @@ interface Checkpoint {
     recorded_at: string;
 }
 
+interface Product {
+    id: number;
+    code: string;
+    name: string;
+    unit: string;
+}
+
+interface TripItem {
+    id: number;
+    quantity: string;
+    notes: string | null;
+    product: Product;
+}
+
 interface Trip {
     id: number;
     code: string;
@@ -33,11 +47,14 @@ interface Trip {
     cancelled_reason: string | null;
     vehicle: { id: number; name: string; plate_number: string };
     driver: { id: number; name: string; phone: string };
+    customer: { id: number; code: string; name: string; phone: string } | null;
     checkpoints: Checkpoint[];
+    items: TripItem[];
 }
 
 interface Props {
     trip: Trip;
+    products: Product[];
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -54,10 +71,11 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ trip, can }: Props): JSX.Element {
+export default function Show({ trip, products, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCheckpointModal, setShowCheckpointModal] = useState(false);
+    const [showItemModal, setShowItemModal] = useState(false);
 
     const cancelForm = useForm({ cancelled_reason: '' });
     const checkpointForm = useForm({
@@ -65,6 +83,11 @@ export default function Show({ trip, can }: Props): JSX.Element {
         longitude: '',
         note: '',
         recorded_at: '',
+    });
+    const itemForm = useForm({
+        product_id: '',
+        quantity: '',
+        notes: '',
     });
 
     const start = () => {
@@ -99,6 +122,21 @@ export default function Show({ trip, can }: Props): JSX.Element {
 
     const deleteCheckpoint = (id: number) => {
         router.delete(prefixedRoute('transportation.trips.checkpoints.destroy', [trip.id, id]), { preserveScroll: true });
+    };
+
+    const submitItem: FormEventHandler = (e) => {
+        e.preventDefault();
+        itemForm.post(prefixedRoute('transportation.trips.items.store', trip.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowItemModal(false);
+                itemForm.reset();
+            },
+        });
+    };
+
+    const deleteItem = (id: number) => {
+        router.delete(prefixedRoute('transportation.trips.items.destroy', [trip.id, id]), { preserveScroll: true });
     };
 
     const canDelete = can.delete && trip.status !== 'in_progress';
@@ -157,6 +195,21 @@ export default function Show({ trip, can }: Props): JSX.Element {
                                         {trip.driver.name}
                                     </Link>{' '}
                                     ({trip.driver.phone})
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-gray-500">Customer</dt>
+                                <dd className="mt-1 text-sm text-gray-900">
+                                    {trip.customer ? (
+                                        <>
+                                            <Link href={prefixedRoute('customers.show', trip.customer.id)} className="text-indigo-600 hover:text-indigo-900">
+                                                {trip.customer.name}
+                                            </Link>{' '}
+                                            ({trip.customer.code})
+                                        </>
+                                    ) : (
+                                        '—'
+                                    )}
                                 </dd>
                             </div>
                             <div>
@@ -240,6 +293,41 @@ export default function Show({ trip, can }: Props): JSX.Element {
                     </div>
                 </div>
 
+                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div className="p-6">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-medium text-gray-900">Cargo Items</h3>
+                            {can.create && (
+                                <PrimaryButton onClick={() => setShowItemModal(true)}>Add Item</PrimaryButton>
+                            )}
+                        </div>
+                        {trip.items.length === 0 ? (
+                            <p className="text-sm text-gray-500">No cargo items recorded yet.</p>
+                        ) : (
+                            <ul className="space-y-3">
+                                {trip.items.map((item) => (
+                                    <li key={item.id} className="flex items-start justify-between rounded-md border border-gray-200 p-3">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {item.product.name} ({item.product.code})
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                {item.quantity} {item.product.unit}
+                                                {item.notes ? ` — ${item.notes}` : ''}
+                                            </p>
+                                        </div>
+                                        {can.delete && (
+                                            <button onClick={() => deleteItem(item.id)} className="text-sm text-red-600 hover:text-red-900">
+                                                Delete
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </div>
+
                 {canDelete && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="flex items-center justify-between p-6">
@@ -285,6 +373,46 @@ export default function Show({ trip, can }: Props): JSX.Element {
                     <div className="mt-6 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setShowCheckpointModal(false)}>Cancel</SecondaryButton>
                         <PrimaryButton disabled={checkpointForm.processing}>Save</PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal show={showItemModal} onClose={() => setShowItemModal(false)} maxWidth="md">
+                <form onSubmit={submitItem} className="p-6">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">Add Cargo Item</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <InputLabel htmlFor="i_product_id" value="Product" />
+                            <select
+                                id="i_product_id"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={itemForm.data.product_id}
+                                onChange={(e) => itemForm.setData('product_id', e.target.value)}
+                                required
+                            >
+                                <option value="">Select a product</option>
+                                {products.map((product) => (
+                                    <option key={product.id} value={product.id}>
+                                        {product.name} ({product.code})
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={itemForm.errors.product_id} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="i_quantity" value="Quantity" />
+                            <TextInput id="i_quantity" type="number" step="0.01" min="0.01" className="mt-1 block w-full" value={itemForm.data.quantity} onChange={(e) => itemForm.setData('quantity', e.target.value)} required />
+                            <InputError message={itemForm.errors.quantity} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="i_notes" value="Notes (optional)" />
+                            <TextInput id="i_notes" className="mt-1 block w-full" value={itemForm.data.notes} onChange={(e) => itemForm.setData('notes', e.target.value)} />
+                            <InputError message={itemForm.errors.notes} className="mt-2" />
+                        </div>
+                    </div>
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={() => setShowItemModal(false)}>Cancel</SecondaryButton>
+                        <PrimaryButton disabled={itemForm.processing}>Save</PrimaryButton>
                     </div>
                 </form>
             </Modal>

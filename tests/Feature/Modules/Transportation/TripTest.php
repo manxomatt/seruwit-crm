@@ -3,6 +3,7 @@
 namespace Tests\Feature\Modules\Transportation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Models\Trip;
@@ -32,10 +33,12 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
+        $customer = Customer::factory()->create();
 
         $response = $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
+            'customer_id' => $customer->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
@@ -53,12 +56,14 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
+        $customer = Customer::factory()->create();
         $date = now()->addDay();
         Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED, 'scheduled_at' => $date]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
+            'customer_id' => $customer->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
@@ -70,12 +75,14 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
+        $customer = Customer::factory()->create();
         $date = now()->addDay();
         Trip::factory()->create(['driver_id' => $driver->id, 'status' => Trip::STATUS_IN_PROGRESS, 'scheduled_at' => $date]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
+            'customer_id' => $customer->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
@@ -92,11 +99,13 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
+        $customer = Customer::factory()->create();
         Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED, 'scheduled_at' => now()->addDay()]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
+            'customer_id' => $customer->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => now()->addDays(5)->format('Y-m-d H:i:s'),

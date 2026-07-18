@@ -21,6 +21,7 @@ interface AvailableModule {
     key: string;
     label: string;
     description: string;
+    is_enabled: boolean;
 }
 
 interface Props {
@@ -162,14 +163,23 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                         {plan.modules.length === 0 ? (
                                             <span className="text-xs text-gray-400">Tanpa modul tambahan</span>
                                         ) : (
-                                            plan.modules.map((key) => (
-                                                <span
-                                                    key={key}
-                                                    className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-sky-200"
-                                                >
-                                                    {availableModules.find((m) => m.key === key)?.label ?? key}
-                                                </span>
-                                            ))
+                                            plan.modules.map((key) => {
+                                                const module = availableModules.find((m) => m.key === key);
+                                                const disabled = module?.is_enabled === false;
+                                                return (
+                                                    <span
+                                                        key={key}
+                                                        className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                                                            disabled
+                                                                ? 'bg-gray-50 text-gray-400 ring-gray-200 line-through'
+                                                                : 'bg-sky-50 text-sky-700 ring-sky-200'
+                                                        }`}
+                                                        title={disabled ? 'Modul ini dinonaktifkan platform' : undefined}
+                                                    >
+                                                        {module?.label ?? key}
+                                                    </span>
+                                                );
+                                            })
                                         )}
                                     </div>
 
@@ -282,23 +292,42 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                             <p className="mt-2 text-sm text-gray-500">Belum ada modul opsional yang terdaftar.</p>
                         ) : (
                             <div className="mt-2 space-y-2">
-                                {availableModules.map((module) => (
-                                    <label
-                                        key={module.key}
-                                        className="flex items-start gap-3 rounded-lg border border-gray-200 p-3"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                            checked={form.data.modules.includes(module.key)}
-                                            onChange={() => toggleModule(module.key)}
-                                        />
-                                        <span className="text-sm">
-                                            <span className="font-medium text-gray-900">{module.label}</span>
-                                            <span className="block text-xs text-gray-500">{module.description}</span>
-                                        </span>
-                                    </label>
-                                ))}
+                                {availableModules.map((module) => {
+                                    const checked = form.data.modules.includes(module.key);
+                                    // A disabled module already in the plan stays visible and
+                                    // checked (frozen, not silently dropped on save); one not yet
+                                    // in the plan simply cannot be added until re-enabled.
+                                    const locked = !module.is_enabled;
+                                    return (
+                                        <label
+                                            key={module.key}
+                                            className={`flex items-start gap-3 rounded-lg border p-3 ${
+                                                locked ? 'border-gray-200 bg-gray-50' : 'border-gray-200'
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                                                checked={checked}
+                                                disabled={locked}
+                                                onChange={() => toggleModule(module.key)}
+                                            />
+                                            <span className="text-sm">
+                                                <span className="flex items-center gap-2">
+                                                    <span className={`font-medium ${locked ? 'text-gray-400' : 'text-gray-900'}`}>
+                                                        {module.label}
+                                                    </span>
+                                                    {locked && (
+                                                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-200">
+                                                            Dinonaktifkan
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="block text-xs text-gray-500">{module.description}</span>
+                                            </span>
+                                        </label>
+                                    );
+                                })}
                             </div>
                         )}
                         {form.errors.modules && <p className="mt-1 text-xs text-red-500">{form.errors.modules}</p>}

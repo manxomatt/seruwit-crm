@@ -23,16 +23,24 @@ interface Driver {
     status: string;
 }
 
+interface Customer {
+    id: number;
+    code: string;
+    name: string;
+}
+
 interface Props {
     vehicles: Vehicle[];
     drivers: Driver[];
+    customers: Customer[];
 }
 
-export default function Create({ vehicles, drivers }: Props): JSX.Element {
+export default function Create({ vehicles, drivers, customers }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
         vehicle_id: '',
         driver_id: '',
+        customer_id: '',
         origin: '',
         destination: '',
         cargo_notes: '',
@@ -80,6 +88,18 @@ export default function Create({ vehicles, drivers }: Props): JSX.Element {
                                     ))}
                                 </select>
                                 <InputError message={errors.driver_id} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="customer_id" value="Customer" />
+                                <select id="customer_id" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.customer_id} onChange={(e) => setData('customer_id', e.target.value)} required>
+                                    <option value="">Select a customer</option>
+                                    {customers.map((customer) => (
+                                        <option key={customer.id} value={customer.id}>
+                                            {customer.name} ({customer.code})
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.customer_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="origin" value="Origin" />

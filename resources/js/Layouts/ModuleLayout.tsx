@@ -91,6 +91,18 @@ const RolesIcon = () => (
     </svg>
 );
 
+const CustomersIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+const ProductIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375C2.754 3.75 2.25 4.254 2.25 4.875v1.5c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+);
+
 const FleetIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v-.243a2.25 2.25 0 00-.659-1.591L14.25 14.5M9.75 6.75H4.5a2.25 2.25 0 00-2.25 2.25v6a2.25 2.25 0 002.25 2.25h.75m9.75-8.25V6a2.25 2.25 0 00-2.25-2.25h-3A2.25 2.25 0 007.5 6v11.25m9.75-8.25H21a.75.75 0 01.75.75v3.75a.75.75 0 01-.75.75h-1.5m-4.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-9 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
@@ -164,10 +176,12 @@ const ChevronDownIcon = () => (
 // and a group with no accessible items is hidden entirely.
 const MENU_GROUPS: { title: string; modules: string[] }[] = [
     { title: 'Konten', modules: ['pages', 'posts', 'carousels', 'media'] },
+    { title: 'Pelanggan', modules: ['customers'] },
+    { title: 'Produk', modules: ['products'] },
     { title: 'Transportasi', modules: ['fleet', 'transportation'] },
     { title: 'Wawasan', modules: ['analytics', 'live-updates'] },
     { title: 'Administrasi', modules: ['users', 'roles', 'settings', 'modules'] },
-    { title: 'Platform', modules: ['tenants', 'plans'] },
+    { title: 'Platform', modules: ['tenants', 'plans', 'module-registry'] },
 ];
 
 // Module to route mapping - use module routes
@@ -176,6 +190,8 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'posts': { route: 'module.posts.index', routePattern: 'module.posts.*' },
     'carousels': { route: 'module.carousels.index', routePattern: 'module.carousels.*' },
     'media': { route: 'module.media.index', routePattern: 'module.media.*' },
+    'customers': { route: 'module.customers.index', routePattern: 'module.customers.*' },
+    'products': { route: 'module.products.index', routePattern: 'module.products.*' },
     'fleet': { route: 'module.fleet.vehicles.index', routePattern: 'module.fleet.*' },
     'transportation': { route: 'module.transportation.trips.index', routePattern: 'module.transportation.*' },
     'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
@@ -191,6 +207,8 @@ const moduleIconMap: Record<string, ReactNode> = {
     'posts': <PostsIcon />,
     'carousels': <CarouselIcon />,
     'media': <MediaIcon />,
+    'customers': <CustomersIcon />,
+    'products': <ProductIcon />,
     'fleet': <FleetIcon />,
     'transportation': <TransportationIcon />,
     'analytics': <AnalyticsIcon />,
@@ -206,6 +224,8 @@ const moduleDisplayNames: Record<string, string> = {
     'posts': 'Posts',
     'carousels': 'Carousels',
     'media': 'Media',
+    'customers': 'Customers',
+    'products': 'Products',
     'fleet': 'Fleet',
     'transportation': 'Transportation',
     'analytics': 'Analytics',
@@ -341,6 +361,19 @@ export default function ModuleLayout({ header, children }: Props) {
                 icon: <PlansIcon />,
                 current: route().current('module.plans.*'),
                 module: 'plans',
+            });
+        }
+
+        // The platform-wide module kill switch — distinct from the workspace's
+        // own "Modul" catalog below, which only picks among what this switch
+        // and the tenant's plan both already allow.
+        if (isCentral && isAdmin && routeExists('module.registry.index')) {
+            items.push({
+                name: 'Modul Platform',
+                href: route('module.registry.index'),
+                icon: <ModulesIcon />,
+                current: route().current('module.registry.*'),
+                module: 'module-registry',
             });
         }
 

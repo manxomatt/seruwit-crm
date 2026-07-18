@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Models\InstalledModule;
+use App\Models\ModuleSetting;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
@@ -19,6 +20,14 @@ class ModuleRegistry
      * @var array<string, list<string>>
      */
     private array $installedKeys = [];
+
+    /**
+     * Platform-disabled module keys, memoized for the life of the request.
+     * Central data, so it never varies by tenant the way installed keys do.
+     *
+     * @var list<string>|null
+     */
+    private ?array $disabledKeys = null;
 
     /**
      * Every registered module, keyed by module key.
@@ -103,11 +112,37 @@ class ModuleRegistry
      * This is what guards, middleware and menus ask — never installed() alone.
      * A downgrade revokes entitlement without uninstalling, so a module can be
      * installed yet unreachable; its data sits untouched and an upgrade brings it
-     * straight back.
+     * straight back. A platform-wide disable behaves the same way: it overrides
+     * entitlement/install without touching either.
      */
     public function available(string $key): bool
     {
-        return $this->entitled($key) && $this->installed($key);
+        return $this->platformEnabled($key) && $this->entitled($key) && $this->installed($key);
+    }
+
+    /**
+     * Whether a super admin has turned this module off platform-wide. This is
+     * independent of any tenant's plan or install state — it overrides both.
+     * Unregistered keys (core features) are never gated.
+     */
+    public function platformEnabled(string $key): bool
+    {
+        if (! $this->has($key)) {
+            return true;
+        }
+
+        return ! in_array($key, $this->disabledKeys(), true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function disabledKeys(): array
+    {
+        return $this->disabledKeys ??= ModuleSetting::query()
+            ->where('is_enabled', false)
+            ->pluck('key')
+            ->all();
     }
 
     /**
@@ -138,6 +173,17 @@ class ModuleRegistry
     public function flushInstalledState(): void
     {
         $this->installedKeys = [];
+    }
+
+    /**
+     * Drop the memoized platform-disabled state. Registered as a singleton, so
+     * anything that writes ModuleSetting must call this — otherwise a toggle
+     * would not take effect until the next process (e.g. the next request in
+     * normal PHP-FPM, but not within a single long-lived process).
+     */
+    public function flushDisabledState(): void
+    {
+        $this->disabledKeys = null;
     }
 
     /**

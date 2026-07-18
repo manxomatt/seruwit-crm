@@ -8,6 +8,7 @@ use Modules\TransportationManagement\Http\Controllers\CalendarController;
 use Modules\TransportationManagement\Http\Controllers\ReportController;
 use Modules\TransportationManagement\Http\Controllers\TripCheckpointController;
 use Modules\TransportationManagement\Http\Controllers\TripController;
+use Modules\TransportationManagement\Http\Controllers\TripItemController;
 use Modules\TransportationManagement\Http\Controllers\TripScheduleController;
 
 class TransportationManagementModule implements ModuleContract
@@ -33,13 +34,13 @@ class TransportationManagementModule implements ModuleContract
     }
 
     /**
-     * Trips are dispatched for a Fleet vehicle and driver, and Reports
-     * aggregate across Fleet's own tables — Transportation cannot stand on
-     * its own without it.
+     * Trips are dispatched for a Fleet vehicle and driver bound for a
+     * Customer and may carry a cargo manifest of Products — Transportation
+     * cannot stand on its own without any of them.
      */
     public function requires(): array
     {
-        return ['fleet'];
+        return ['fleet', 'customers', 'products'];
     }
 
     public function menu(): ?array
@@ -91,6 +92,9 @@ class TransportationManagementModule implements ModuleContract
 
         Route::post('/transportation/trips/{trip}/checkpoints', [TripCheckpointController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.trips.checkpoints.store');
         Route::delete('/transportation/trips/{trip}/checkpoints/{checkpoint}', [TripCheckpointController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.trips.checkpoints.destroy');
+
+        Route::post('/transportation/trips/{trip}/items', [TripItemController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.trips.items.store');
+        Route::delete('/transportation/trips/{trip}/items/{item}', [TripItemController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.trips.items.destroy');
 
         Route::get('/transportation/reports', [ReportController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.reports.index');
 

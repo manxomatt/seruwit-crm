@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Database\Factories\TripFactory;
@@ -41,6 +42,7 @@ class Trip extends Model
         'trip_schedule_id',
         'vehicle_id',
         'driver_id',
+        'customer_id',
         'origin',
         'destination',
         'cargo_notes',
@@ -82,11 +84,29 @@ class Trip extends Model
     }
 
     /**
+     * @return BelongsTo<Customer, $this>
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    /**
      * @return HasMany<TripCheckpoint, $this>
      */
     public function checkpoints(): HasMany
     {
         return $this->hasMany(TripCheckpoint::class)->orderBy('recorded_at');
+    }
+
+    /**
+     * The cargo manifest for this trip.
+     *
+     * @return HasMany<TripItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(TripItem::class)->orderBy('id');
     }
 
     /**

@@ -34,5 +34,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Plans define what every tenant may buy — platform staff, not tenants.
         Gate::define('manage-plans', fn (User $user): bool => $user->isAdmin());
+
+        // Turning a module off platform-wide overrides every tenant's plan and
+        // install state at once — platform staff only, distinct from
+        // manage-modules (a workspace admin's own install/uninstall).
+        Gate::define('manage-module-registry', fn (User $user): bool => $user->isAdmin());
     }
 }

@@ -24,6 +24,7 @@ class UpdateTripScheduleRequest extends FormRequest
         return [
             'vehicle_id' => ['sometimes', 'required', 'integer', 'exists:vehicles,id'],
             'driver_id' => ['sometimes', 'required', 'integer', 'exists:drivers,id'],
+            'customer_id' => ['sometimes', 'required', 'integer', 'exists:customers,id'],
             'origin' => ['sometimes', 'required', 'string', 'max:255'],
             'destination' => ['sometimes', 'required', 'string', 'max:255'],
             'cargo_notes' => ['nullable', 'string', 'max:2000'],

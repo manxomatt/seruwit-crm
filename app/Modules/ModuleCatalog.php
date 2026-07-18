@@ -45,6 +45,7 @@ class ModuleCatalog
 
             foreach (Modules::all() as $key => $module) {
                 $record = $states->get($key);
+                $platformEnabled = Modules::platformEnabled($key);
                 $entitled = $tenant->isEntitledTo($key);
                 $installed = $record !== null && $record->isInstalled();
 
@@ -53,9 +54,10 @@ class ModuleCatalog
                     'label' => $module->label(),
                     'description' => $module->description(),
                     'requires' => $module->requires(),
+                    'platform_enabled' => $platformEnabled,
                     'entitled' => $entitled,
                     'installed' => $installed,
-                    'state' => $this->resolveState($entitled, $installed, $record),
+                    'state' => $this->resolveState($platformEnabled, $entitled, $installed, $record),
                     'purges_at' => $record?->uninstalled_at
                         ?->addDays($graceDays)
                         ->toDateString(),
@@ -120,10 +122,16 @@ class ModuleCatalog
     /**
      * A module the plan no longer covers reads as locked even while its rows and
      * data are still sitting there — a downgrade revokes access without
-     * uninstalling, and never starts the purge clock.
+     * uninstalling, and never starts the purge clock. A platform-wide disable is
+     * checked first since it overrides entitlement entirely: a super admin can
+     * pull a module from every tenant regardless of what any plan sells.
      */
-    private function resolveState(bool $entitled, bool $installed, ?InstalledModule $record): string
+    private function resolveState(bool $platformEnabled, bool $entitled, bool $installed, ?InstalledModule $record): string
     {
+        if (! $platformEnabled) {
+            return $installed || $record ? 'disabled_with_data' : 'disabled';
+        }
+
         if (! $entitled) {
             return $installed || $record ? 'locked_with_data' : 'locked';
         }
