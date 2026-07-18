@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, useForm, router, usePoll } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -161,18 +162,18 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                                         <label htmlFor="type" className="block text-sm font-medium text-gray-700">
                                             Type
                                         </label>
-                                        <select
+                                        <Select
                                             id="type"
-                                            name="type"
+                                            className="mt-1"
                                             value={data.type}
-                                            onChange={(e) => setData('type', e.target.value as 'info' | 'success' | 'warning' | 'error')}
-                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        >
-                                            <option value="info">Info</option>
-                                            <option value="success">Success</option>
-                                            <option value="warning">Warning</option>
-                                            <option value="error">Error</option>
-                                        </select>
+                                            onChange={(value) => setData('type', value as 'info' | 'success' | 'warning' | 'error')}
+                                            options={[
+                                                { value: 'info', label: 'Info' },
+                                                { value: 'success', label: 'Success' },
+                                                { value: 'warning', label: 'Warning' },
+                                                { value: 'error', label: 'Error' },
+                                            ]}
+                                        />
                                         <InputError message={errors.type} className="mt-2" />
                                     </div>
                                 </div>

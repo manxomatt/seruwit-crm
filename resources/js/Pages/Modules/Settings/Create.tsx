@@ -4,6 +4,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -109,19 +110,12 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                         </p>
                                     </>
                                 ) : (
-                                    <select
+                                    <Select
                                         id="group"
-                                        name="group"
                                         value={data.group}
-                                        onChange={(e) => setData('group', e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    >
-                                        {groups.map((g) => (
-                                            <option key={g} value={g}>
-                                                {g.charAt(0).toUpperCase() + g.slice(1)}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(value) => setData('group', value)}
+                                        options={groups.map((g) => ({ value: g, label: g.charAt(0).toUpperCase() + g.slice(1) }))}
+                                    />
                                 )}
                             </div>
                             {groups.length > 0 && (
@@ -141,19 +135,13 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
 
                         <div className="mb-4">
                             <InputLabel htmlFor="type" value="Type" />
-                            <select
+                            <Select
                                 id="type"
-                                name="type"
+                                className="mt-1"
                                 value={data.type}
-                                onChange={(e) => setData('type', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                {settingTypes.map((type) => (
-                                    <option key={type.value} value={type.value}>
-                                        {type.label}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => setData('type', value)}
+                                options={settingTypes}
+                            />
                             <InputError message={errors.type} className="mt-2" />
                         </div>
 
@@ -169,17 +157,17 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                     onChange={(e) => setData('value', e.target.value)}
                                 />
                             ) : data.type === 'boolean' ? (
-                                <select
+                                <Select
                                     id="value"
-                                    name="value"
+                                    className="mt-1"
                                     value={data.value}
-                                    onChange={(e) => setData('value', e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select...</option>
-                                    <option value="1">Yes / True</option>
-                                    <option value="0">No / False</option>
-                                </select>
+                                    onChange={(value) => setData('value', value)}
+                                    placeholder="Select..."
+                                    options={[
+                                        { value: '1', label: 'Yes / True' },
+                                        { value: '0', label: 'No / False' },
+                                    ]}
+                                />
                             ) : (
                                 <TextInput
                                     id="value"

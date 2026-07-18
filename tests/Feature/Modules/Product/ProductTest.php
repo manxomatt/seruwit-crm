@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Product;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Models\TripItem;
@@ -67,6 +68,29 @@ class ProductTest extends TestCase
                 ->has('products.data', 1)
                 ->where('products.data.0.name', 'Pasir Halus')
             );
+    }
+
+    public function test_create_and_edit_pages_offer_units_sourced_from_settings(): void
+    {
+        $user = $this->createAdminUser();
+        Setting::factory()->group('units')->create(['value' => 'kg', 'label' => 'Kilogram', 'sort_order' => 1]);
+        Setting::factory()->group('units')->create(['value' => 'pcs', 'label' => 'Pieces', 'sort_order' => 2]);
+        Setting::factory()->group('general')->create(); // a setting outside the "units" group must not leak in
+        $product = Product::factory()->create(['unit' => 'legacy-unit']);
+
+        $this->actingAs($user)->get(route('module.products.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('units', 2)
+                ->where('units.0.value', 'kg')
+                ->where('units.1.value', 'pcs')
+            );
+
+        // A product's existing unit stays selectable even after it falls out
+        // of the Settings-managed list, so editing never silently drops it.
+        $this->actingAs($user)->get(route('module.products.edit', $product))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('units', 2));
     }
 
     public function test_admin_can_create_a_product_and_gets_an_auto_generated_code(): void

@@ -3,6 +3,7 @@
 namespace Modules\Product\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -57,11 +58,30 @@ class ProductController extends Controller
     }
 
     /**
+     * The selectable options for the Unit field, sourced from the "units"
+     * settings group so the list is centrally managed and consistent across
+     * every product — see Settings.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function unitOptions(): array
+    {
+        return Setting::query()
+            ->where('group', 'units')
+            ->orderBy('sort_order')
+            ->get(['value', 'label'])
+            ->map(fn (Setting $setting) => ['value' => $setting->value, 'label' => $setting->label])
+            ->all();
+    }
+
+    /**
      * Show the form for creating a new product.
      */
     public function create(): Response
     {
-        return Inertia::render('Modules/Product/Create');
+        return Inertia::render('Modules/Product/Create', [
+            'units' => $this->unitOptions(),
+        ]);
     }
 
     /**
@@ -101,6 +121,7 @@ class ProductController extends Controller
     {
         return Inertia::render('Modules/Product/Edit', [
             'product' => $product,
+            'units' => $this->unitOptions(),
         ]);
     }
 

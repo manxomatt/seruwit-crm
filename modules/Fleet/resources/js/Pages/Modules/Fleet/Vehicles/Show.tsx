@@ -6,6 +6,7 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -314,11 +315,17 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
                     <div className="space-y-4">
                         <div>
                             <InputLabel htmlFor="m_type" value="Type" />
-                            <select id="m_type" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={maintenanceForm.data.type} onChange={(e) => maintenanceForm.setData('type', e.target.value)}>
-                                <option value="scheduled_service">Scheduled Service</option>
-                                <option value="repair">Repair</option>
-                                <option value="inspection">Inspection</option>
-                            </select>
+                            <Select
+                                id="m_type"
+                                className="mt-1"
+                                value={maintenanceForm.data.type}
+                                onChange={(value) => maintenanceForm.setData('type', value)}
+                                options={[
+                                    { value: 'scheduled_service', label: 'Scheduled Service' },
+                                    { value: 'repair', label: 'Repair' },
+                                    { value: 'inspection', label: 'Inspection' },
+                                ]}
+                            />
                             <InputError message={maintenanceForm.errors.type} className="mt-2" />
                         </div>
                         <div>
@@ -350,11 +357,17 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
                         </div>
                         <div>
                             <InputLabel htmlFor="m_status" value="Status" />
-                            <select id="m_status" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={maintenanceForm.data.status} onChange={(e) => maintenanceForm.setData('status', e.target.value)}>
-                                <option value="scheduled">Scheduled</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
+                            <Select
+                                id="m_status"
+                                className="mt-1"
+                                value={maintenanceForm.data.status}
+                                onChange={(value) => maintenanceForm.setData('status', value)}
+                                options={[
+                                    { value: 'scheduled', label: 'Scheduled' },
+                                    { value: 'completed', label: 'Completed' },
+                                    { value: 'cancelled', label: 'Cancelled' },
+                                ]}
+                            />
                             <InputError message={maintenanceForm.errors.status} className="mt-2" />
                         </div>
                     </div>

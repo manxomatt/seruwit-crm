@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import Select from '@/Components/Select';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 interface Member {
@@ -239,17 +240,12 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                         </div>
                         <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
                             Paket langganan
-                            <select
-                                className={inputClass}
+                            <Select
+                                className="mt-1 w-full"
                                 value={data.plan}
-                                onChange={(e) => setData('plan', e.target.value)}
-                            >
-                                {plans.map((plan) => (
-                                    <option key={plan.key} value={plan.key}>
-                                        {plan.label} — {plan.description}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => setData('plan', value)}
+                                options={plans.map((plan) => ({ value: plan.key, label: `${plan.label} — ${plan.description}` }))}
+                            />
                             {errors.plan && <p className="mt-1 text-xs text-red-500">{errors.plan}</p>}
                             <p className="mt-1 text-xs text-gray-500">
                                 Menurunkan paket hanya mencabut akses — modul yang sudah terpasang beserta datanya tetap

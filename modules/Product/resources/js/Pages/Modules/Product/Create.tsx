@@ -4,11 +4,21 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-export default function Create(): JSX.Element {
+interface UnitOption {
+    value: string;
+    label: string;
+}
+
+interface Props {
+    units: UnitOption[];
+}
+
+export default function Create({ units }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -40,7 +50,14 @@ export default function Create(): JSX.Element {
                             </div>
                             <div>
                                 <InputLabel htmlFor="unit" value="Unit" />
-                                <TextInput id="unit" placeholder="e.g. pcs, kg, box" className="mt-1 block w-full" value={data.unit} onChange={(e) => setData('unit', e.target.value)} required />
+                                <Select
+                                    id="unit"
+                                    className="mt-1"
+                                    value={data.unit}
+                                    onChange={(value) => setData('unit', value)}
+                                    placeholder="Select a unit"
+                                    options={units.map((unit) => ({ value: unit.value, label: `${unit.label} (${unit.value})` }))}
+                                />
                                 <InputError message={errors.unit} className="mt-2" />
                             </div>
                             <div>
@@ -50,10 +67,16 @@ export default function Create(): JSX.Element {
                             </div>
                             <div>
                                 <InputLabel htmlFor="status" value="Status" />
-                                <select id="status" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.status} onChange={(e) => setData('status', e.target.value)}>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
+                                <Select
+                                    id="status"
+                                    className="mt-1"
+                                    value={data.status}
+                                    onChange={(value) => setData('status', value)}
+                                    options={[
+                                        { value: 'active', label: 'Active' },
+                                        { value: 'inactive', label: 'Inactive' },
+                                    ]}
+                                />
                                 <InputError message={errors.status} className="mt-2" />
                             </div>
                         </div>

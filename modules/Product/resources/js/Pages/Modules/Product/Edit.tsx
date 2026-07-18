@@ -4,6 +4,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -18,11 +19,24 @@ interface Product {
     status: string;
 }
 
-interface Props {
-    product: Product;
+interface UnitOption {
+    value: string;
+    label: string;
 }
 
-export default function Edit({ product }: Props): JSX.Element {
+interface Props {
+    product: Product;
+    units: UnitOption[];
+}
+
+export default function Edit({ product, units }: Props): JSX.Element {
+    // Keep the product's current unit selectable even if it's since been
+    // removed from the Settings-managed list, so an existing product never
+    // silently loses its saved value.
+    const unitOptions = units.some((unit) => unit.value === product.unit)
+        ? units
+        : [...units, { value: product.unit, label: product.unit }];
+
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors } = useForm({
         name: product.name,
@@ -54,7 +68,13 @@ export default function Edit({ product }: Props): JSX.Element {
                             </div>
                             <div>
                                 <InputLabel htmlFor="unit" value="Unit" />
-                                <TextInput id="unit" placeholder="e.g. pcs, kg, box" className="mt-1 block w-full" value={data.unit} onChange={(e) => setData('unit', e.target.value)} required />
+                                <Select
+                                    id="unit"
+                                    className="mt-1"
+                                    value={data.unit}
+                                    onChange={(value) => setData('unit', value)}
+                                    options={unitOptions.map((unit) => ({ value: unit.value, label: `${unit.label} (${unit.value})` }))}
+                                />
                                 <InputError message={errors.unit} className="mt-2" />
                             </div>
                             <div>
@@ -64,10 +84,16 @@ export default function Edit({ product }: Props): JSX.Element {
                             </div>
                             <div>
                                 <InputLabel htmlFor="status" value="Status" />
-                                <select id="status" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.status} onChange={(e) => setData('status', e.target.value)}>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
+                                <Select
+                                    id="status"
+                                    className="mt-1"
+                                    value={data.status}
+                                    onChange={(value) => setData('status', value)}
+                                    options={[
+                                        { value: 'active', label: 'Active' },
+                                        { value: 'inactive', label: 'Inactive' },
+                                    ]}
+                                />
                                 <InputError message={errors.status} className="mt-2" />
                             </div>
                         </div>

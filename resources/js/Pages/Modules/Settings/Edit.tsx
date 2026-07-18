@@ -4,6 +4,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -105,44 +106,34 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
 
                         <div className="mb-4">
                             <InputLabel htmlFor="group" value="Group" />
-                            <div className="mt-1 flex gap-2">
-                                <select
-                                    id="group"
-                                    name="group"
-                                    value={data.group}
-                                    onChange={(e) => setData('group', e.target.value)}
-                                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="general">General</option>
-                                    <option value="site">Site</option>
-                                    <option value="email">Email</option>
-                                    <option value="social">Social</option>
-                                    <option value="seo">SEO</option>
-                                    {groups.filter(g => !['general', 'site', 'email', 'social', 'seo'].includes(g)).map((g) => (
-                                        <option key={g} value={g}>
-                                            {g.charAt(0).toUpperCase() + g.slice(1)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            <Select
+                                id="group"
+                                className="mt-1"
+                                value={data.group}
+                                onChange={(value) => setData('group', value)}
+                                options={[
+                                    { value: 'general', label: 'General' },
+                                    { value: 'site', label: 'Site' },
+                                    { value: 'email', label: 'Email' },
+                                    { value: 'social', label: 'Social' },
+                                    { value: 'seo', label: 'SEO' },
+                                    ...groups
+                                        .filter((g) => !['general', 'site', 'email', 'social', 'seo'].includes(g))
+                                        .map((g) => ({ value: g, label: g.charAt(0).toUpperCase() + g.slice(1) })),
+                                ]}
+                            />
                             <InputError message={errors.group} className="mt-2" />
                         </div>
 
                         <div className="mb-4">
                             <InputLabel htmlFor="type" value="Type" />
-                            <select
+                            <Select
                                 id="type"
-                                name="type"
+                                className="mt-1"
                                 value={data.type}
-                                onChange={(e) => setData('type', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                {settingTypes.map((type) => (
-                                    <option key={type.value} value={type.value}>
-                                        {type.label}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => setData('type', value)}
+                                options={settingTypes}
+                            />
                             <InputError message={errors.type} className="mt-2" />
                         </div>
 
@@ -158,17 +149,17 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                                     onChange={(e) => setData('value', e.target.value)}
                                 />
                             ) : data.type === 'boolean' ? (
-                                <select
+                                <Select
                                     id="value"
-                                    name="value"
+                                    className="mt-1"
                                     value={data.value}
-                                    onChange={(e) => setData('value', e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select...</option>
-                                    <option value="1">Yes / True</option>
-                                    <option value="0">No / False</option>
-                                </select>
+                                    onChange={(value) => setData('value', value)}
+                                    placeholder="Select..."
+                                    options={[
+                                        { value: '1', label: 'Yes / True' },
+                                        { value: '0', label: 'No / False' },
+                                    ]}
+                                />
                             ) : (
                                 <TextInput
                                     id="value"

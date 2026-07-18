@@ -2,6 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
@@ -120,18 +121,16 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                 className="w-full"
                             />
                         </div>
-                        <select
+                        <Select
+                            className="w-48"
                             value={filters.status || ''}
-                            onChange={(e) => handleStatusFilter(e.target.value)}
-                            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        >
-                            <option value="">All statuses</option>
-                            {STATUSES.map((status) => (
-                                <option key={status} value={status}>
-                                    {status.replace('_', ' ')}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={handleStatusFilter}
+                            placeholder="All statuses"
+                            options={[
+                                { value: '', label: 'All statuses' },
+                                ...STATUSES.map((status) => ({ value: status, label: status.replace('_', ' ') })),
+                            ]}
+                        />
                         <PrimaryButton type="submit">Search</PrimaryButton>
                     </form>
 

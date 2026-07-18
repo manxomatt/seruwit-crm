@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import DangerButton from '@/Components/DangerButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler, useEffect } from 'react';
@@ -201,16 +202,18 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                             />
                         </div>
                         <div>
-                            <select
+                            <Select
+                                className="w-40"
                                 value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value)}
-                                className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                <option value="">All Types</option>
-                                <option value="image">Images</option>
-                                <option value="video">Videos</option>
-                                <option value="document">Documents</option>
-                            </select>
+                                onChange={setTypeFilter}
+                                placeholder="All Types"
+                                options={[
+                                    { value: '', label: 'All Types' },
+                                    { value: 'image', label: 'Images' },
+                                    { value: 'video', label: 'Videos' },
+                                    { value: 'document', label: 'Documents' },
+                                ]}
+                            />
                         </div>
                         <PrimaryButton type="submit">Search</PrimaryButton>
                         {(filters.search || filters.type) && (

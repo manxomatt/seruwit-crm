@@ -6,6 +6,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import CarouselImageUploader from '../../../CarouselImageUploader';
 import { Head, Link, useForm, router } from '@inertiajs/react';
@@ -481,15 +482,16 @@ export default function Edit({ carousel }: Props): JSX.Element {
 
                                         <div>
                                             <InputLabel htmlFor="link_target" value="Link Target" />
-                                            <select
+                                            <Select
                                                 id="link_target"
-                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                className="mt-1"
                                                 value={imageForm.data.link_target}
-                                                onChange={(e) => imageForm.setData('link_target', e.target.value)}
-                                            >
-                                                <option value="_self">Same Window</option>
-                                                <option value="_blank">New Window</option>
-                                            </select>
+                                                onChange={(value) => imageForm.setData('link_target', value)}
+                                                options={[
+                                                    { value: '_self', label: 'Same Window' },
+                                                    { value: '_blank', label: 'New Window' },
+                                                ]}
+                                            />
                                         </div>
 
                                         <div>

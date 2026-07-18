@@ -5,6 +5,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -105,36 +106,36 @@ export default function Edit({ schedule, vehicles, drivers, customers }: Props):
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="vehicle_id" value="Vehicle" />
-                                <select id="vehicle_id" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.vehicle_id} onChange={(e) => setData('vehicle_id', e.target.value)} required>
-                                    {vehicles.map((vehicle) => (
-                                        <option key={vehicle.id} value={vehicle.id}>
-                                            {vehicle.name} ({vehicle.plate_number})
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    id="vehicle_id"
+                                    className="mt-1"
+                                    value={data.vehicle_id}
+                                    onChange={(value) => setData('vehicle_id', value)}
+                                    options={vehicles.map((vehicle) => ({ value: String(vehicle.id), label: `${vehicle.name} (${vehicle.plate_number})` }))}
+                                />
                                 <InputError message={errors.vehicle_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="driver_id" value="Driver" />
-                                <select id="driver_id" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.driver_id} onChange={(e) => setData('driver_id', e.target.value)} required>
-                                    {drivers.map((driver) => (
-                                        <option key={driver.id} value={driver.id}>
-                                            {driver.name} ({driver.license_number})
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    id="driver_id"
+                                    className="mt-1"
+                                    value={data.driver_id}
+                                    onChange={(value) => setData('driver_id', value)}
+                                    options={drivers.map((driver) => ({ value: String(driver.id), label: `${driver.name} (${driver.license_number})` }))}
+                                />
                                 <InputError message={errors.driver_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="customer_id" value="Customer" />
-                                <select id="customer_id" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.customer_id} onChange={(e) => setData('customer_id', e.target.value)} required>
-                                    <option value="">Select a customer</option>
-                                    {customers.map((customer) => (
-                                        <option key={customer.id} value={customer.id}>
-                                            {customer.name} ({customer.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    id="customer_id"
+                                    className="mt-1"
+                                    value={data.customer_id}
+                                    onChange={(value) => setData('customer_id', value)}
+                                    placeholder="Select a customer"
+                                    options={customers.map((customer) => ({ value: String(customer.id), label: `${customer.name} (${customer.code})` }))}
+                                />
                                 <InputError message={errors.customer_id} className="mt-2" />
                             </div>
                             <div>

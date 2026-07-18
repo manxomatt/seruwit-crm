@@ -5,6 +5,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -57,23 +58,35 @@ export default function Create(): JSX.Element {
                             </div>
                             <div>
                                 <InputLabel htmlFor="type" value="Type" />
-                                <select id="type" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.type} onChange={(e) => setData('type', e.target.value)}>
-                                    <option value="car">Car</option>
-                                    <option value="truck">Truck</option>
-                                    <option value="van">Van</option>
-                                    <option value="motorcycle">Motorcycle</option>
-                                    <option value="bus">Bus</option>
-                                </select>
+                                <Select
+                                    id="type"
+                                    className="mt-1"
+                                    value={data.type}
+                                    onChange={(value) => setData('type', value)}
+                                    options={[
+                                        { value: 'car', label: 'Car' },
+                                        { value: 'truck', label: 'Truck' },
+                                        { value: 'van', label: 'Van' },
+                                        { value: 'motorcycle', label: 'Motorcycle' },
+                                        { value: 'bus', label: 'Bus' },
+                                    ]}
+                                />
                                 <InputError message={errors.type} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="fuel_type" value="Fuel Type" />
-                                <select id="fuel_type" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.fuel_type} onChange={(e) => setData('fuel_type', e.target.value)}>
-                                    <option value="petrol">Petrol</option>
-                                    <option value="diesel">Diesel</option>
-                                    <option value="electric">Electric</option>
-                                    <option value="hybrid">Hybrid</option>
-                                </select>
+                                <Select
+                                    id="fuel_type"
+                                    className="mt-1"
+                                    value={data.fuel_type}
+                                    onChange={(value) => setData('fuel_type', value)}
+                                    options={[
+                                        { value: 'petrol', label: 'Petrol' },
+                                        { value: 'diesel', label: 'Diesel' },
+                                        { value: 'electric', label: 'Electric' },
+                                        { value: 'hybrid', label: 'Hybrid' },
+                                    ]}
+                                />
                                 <InputError message={errors.fuel_type} className="mt-2" />
                             </div>
                             <div>
@@ -98,12 +111,18 @@ export default function Create(): JSX.Element {
                             </div>
                             <div>
                                 <InputLabel htmlFor="status" value="Status" />
-                                <select id="status" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.status} onChange={(e) => setData('status', e.target.value)}>
-                                    <option value="active">Active</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="retired">Retired</option>
-                                    <option value="out_of_service">Out of Service</option>
-                                </select>
+                                <Select
+                                    id="status"
+                                    className="mt-1"
+                                    value={data.status}
+                                    onChange={(value) => setData('status', value)}
+                                    options={[
+                                        { value: 'active', label: 'Active' },
+                                        { value: 'maintenance', label: 'Maintenance' },
+                                        { value: 'retired', label: 'Retired' },
+                                        { value: 'out_of_service', label: 'Out of Service' },
+                                    ]}
+                                />
                                 <InputError message={errors.status} className="mt-2" />
                             </div>
                             <div>

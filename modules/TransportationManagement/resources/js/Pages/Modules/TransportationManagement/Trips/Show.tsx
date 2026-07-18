@@ -6,6 +6,7 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -383,20 +384,17 @@ export default function Show({ trip, products, can }: Props): JSX.Element {
                     <div className="space-y-4">
                         <div>
                             <InputLabel htmlFor="i_product_id" value="Product" />
-                            <select
+                            <Select
                                 id="i_product_id"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1"
                                 value={itemForm.data.product_id}
-                                onChange={(e) => itemForm.setData('product_id', e.target.value)}
-                                required
-                            >
-                                <option value="">Select a product</option>
-                                {products.map((product) => (
-                                    <option key={product.id} value={product.id}>
-                                        {product.name} ({product.code})
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => itemForm.setData('product_id', value)}
+                                placeholder="Select a product"
+                                options={products.map((product) => ({
+                                    value: String(product.id),
+                                    label: `${product.name} (${product.code})`,
+                                }))}
+                            />
                             <InputError message={itemForm.errors.product_id} className="mt-2" />
                         </div>
                         <div>
