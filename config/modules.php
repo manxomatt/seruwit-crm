@@ -16,6 +16,7 @@ return [
     */
 
     'registered' => [
+        Modules\Billing\BillingModule::class,
         Modules\Carousels\CarouselsModule::class,
         Modules\Customer\CustomerModule::class,
         Modules\Fleet\FleetModule::class,

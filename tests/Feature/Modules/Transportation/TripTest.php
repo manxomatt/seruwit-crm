@@ -57,7 +57,9 @@ class TripTest extends TestCase
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
         $customer = Customer::factory()->create();
-        $date = now()->addDay();
+        // Fixed mid-day time so adding hours never crosses midnight — the
+        // conflict rule is scoped to the calendar date.
+        $date = now()->addDay()->setTime(8, 0);
         Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED, 'scheduled_at' => $date]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
@@ -76,7 +78,9 @@ class TripTest extends TestCase
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
         $customer = Customer::factory()->create();
-        $date = now()->addDay();
+        // Fixed mid-day time so adding hours never crosses midnight — the
+        // conflict rule is scoped to the calendar date.
+        $date = now()->addDay()->setTime(8, 0);
         Trip::factory()->create(['driver_id' => $driver->id, 'status' => Trip::STATUS_IN_PROGRESS, 'scheduled_at' => $date]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
