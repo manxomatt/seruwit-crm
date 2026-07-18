@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Module;
+namespace Modules\Pages\Http\Controllers;
 
-use App\Http\Controllers\Admin\PageController as AdminPageController;
-use App\Http\Requests\StorePageRequest;
-use App\Http\Requests\UpdatePageRequest;
-use App\Models\Page;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Pages\Http\Requests\StorePageRequest;
+use Modules\Pages\Http\Requests\UpdatePageRequest;
+use Modules\Pages\Models\Page;
 
-class PageController extends AdminPageController
+class PageController extends Controller
 {
     /**
      * Get the route prefix for this controller.
@@ -23,26 +24,15 @@ class PageController extends AdminPageController
     }
 
     /**
-     * Get the Inertia page prefix for this controller.
-     */
-    protected function getPagePrefix(): string
-    {
-        return 'Module';
-    }
-
-    /**
      * Display a listing of the pages.
      */
     public function index(): Response
     {
-        $pages = Auth::user()
-            ->pages()
-            ->latest()
-            ->get();
-
         $user = Auth::user();
 
-        return Inertia::render($this->getPagePrefix().'/Pages/Index', [
+        $pages = $user->pages()->latest()->get();
+
+        return Inertia::render('Modules/Pages/Index', [
             'pages' => $pages,
             'can' => [
                 'create' => $user->hasPermissionFor('pages', 'create'),
@@ -57,7 +47,7 @@ class PageController extends AdminPageController
      */
     public function create(): Response
     {
-        return Inertia::render($this->getPagePrefix().'/Pages/Create');
+        return Inertia::render('Modules/Pages/Create');
     }
 
     /**
@@ -79,13 +69,13 @@ class PageController extends AdminPageController
             abort(403);
         }
 
-        return Inertia::render($this->getPagePrefix().'/Pages/Show', [
+        return Inertia::render('Modules/Pages/Show', [
             'page' => $page,
         ]);
     }
 
     /**
-     * Show the form for editing the specified page.
+     * Show the GrapesJS editor for the specified page.
      */
     public function edit(Page $page): Response
     {
@@ -93,7 +83,7 @@ class PageController extends AdminPageController
             abort(403);
         }
 
-        return Inertia::render($this->getPagePrefix().'/Pages/Editor', [
+        return Inertia::render('Modules/Pages/Editor', [
             'page' => $page,
         ]);
     }
@@ -127,9 +117,9 @@ class PageController extends AdminPageController
     }
 
     /**
-     * Save page content via AJAX.
+     * Save the GrapesJS editor content via AJAX.
      */
-    public function saveContent(Request $request, Page $page): \Illuminate\Http\JsonResponse
+    public function saveContent(Request $request, Page $page): JsonResponse
     {
         if ($page->user_id !== Auth::id()) {
             abort(403);
@@ -147,7 +137,7 @@ class PageController extends AdminPageController
     }
 
     /**
-     * Set page as homepage.
+     * Set a page as the homepage.
      */
     public function setHomepage(Page $page): RedirectResponse
     {
@@ -155,7 +145,7 @@ class PageController extends AdminPageController
             abort(403);
         }
 
-        Page::where('is_homepage', true)->update(['is_homepage' => false]);
+        Page::query()->where('is_homepage', true)->update(['is_homepage' => false]);
         $page->update(['is_homepage' => true, 'is_published' => true]);
 
         return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', 'Homepage set successfully.');

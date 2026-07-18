@@ -7,8 +7,6 @@ use App\Http\Controllers\Module\DashboardController as ModuleDashboardController
 use App\Http\Controllers\Module\GlobalSearchController as ModuleGlobalSearchController;
 use App\Http\Controllers\Module\MediaController as ModuleMediaController;
 use App\Http\Controllers\Module\ModuleController as ModuleCatalogController;
-use App\Http\Controllers\Module\PageController as ModulePageController;
-use App\Http\Controllers\Module\PostController as ModulePostController;
 use App\Http\Controllers\Module\RoleController as ModuleRoleController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\UserController as ModuleUserController;
@@ -47,26 +45,8 @@ Route::middleware('auth')->group(function () {
         // Global Search
         Route::get('/search', [ModuleGlobalSearchController::class, 'search'])->name('search');
 
-        // Module Page Routes
-        Route::get('/pages', [ModulePageController::class, 'index'])->middleware('permission:pages,view')->name('pages.index');
-        Route::get('/pages/create', [ModulePageController::class, 'create'])->middleware('permission:pages,create')->name('pages.create');
-        Route::post('/pages', [ModulePageController::class, 'store'])->middleware('permission:pages,create')->name('pages.store');
-        Route::get('/pages/{page}', [ModulePageController::class, 'show'])->middleware('permission:pages,view')->name('pages.show');
-        Route::get('/pages/{page}/edit', [ModulePageController::class, 'edit'])->middleware('permission:pages,update')->name('pages.edit');
-        Route::patch('/pages/{page}', [ModulePageController::class, 'update'])->middleware('permission:pages,update')->name('pages.update');
-        Route::patch('/pages/{page}/save-content', [ModulePageController::class, 'saveContent'])->middleware('permission:pages,update')->name('pages.save-content');
-        Route::patch('/pages/{page}/set-homepage', [ModulePageController::class, 'setHomepage'])->middleware('permission:pages,update')->name('pages.set-homepage');
-        Route::delete('/pages/{page}', [ModulePageController::class, 'destroy'])->middleware('permission:pages,delete')->name('pages.destroy');
-
-        // Module Post Routes
-        Route::get('/posts', [ModulePostController::class, 'index'])->middleware('permission:posts,view')->name('posts.index');
-        Route::get('/posts/create', [ModulePostController::class, 'create'])->middleware('permission:posts,create')->name('posts.create');
-        Route::post('/posts', [ModulePostController::class, 'store'])->middleware('permission:posts,create')->name('posts.store');
-        Route::get('/posts/{post}', [ModulePostController::class, 'show'])->middleware('permission:posts,view')->name('posts.show');
-        Route::get('/posts/{post}/edit', [ModulePostController::class, 'edit'])->middleware('permission:posts,update')->name('posts.edit');
-        Route::patch('/posts/{post}', [ModulePostController::class, 'update'])->middleware('permission:posts,update')->name('posts.update');
-        Route::patch('/posts/{post}/toggle-publish', [ModulePostController::class, 'togglePublish'])->middleware('permission:posts,update')->name('posts.toggle-publish');
-        Route::delete('/posts/{post}', [ModulePostController::class, 'destroy'])->middleware('permission:posts,delete')->name('posts.destroy');
+        // Pages and Posts route from their modules now (see Modules::registerRoutes()
+        // below), same as every other extracted module.
 
         // Module Media Routes
         Route::get('/media', [ModuleMediaController::class, 'index'])->middleware('permission:media,view')->name('media.index');

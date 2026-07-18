@@ -1,16 +1,25 @@
 <?php
 
-namespace Database\Factories;
+namespace Modules\Pages\Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Modules\Pages\Models\Page;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Page>
+ * @extends Factory<Page>
  */
 class PageFactory extends Factory
 {
+    /**
+     * Factory resolution assumes App\Models, so a module factory has to state
+     * its model outright.
+     *
+     * @var class-string<Page>
+     */
+    protected $model = Page::class;
+
     /**
      * Define the model's default state.
      *

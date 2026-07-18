@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
-use App\Models\Page;
-use App\Models\Post;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
@@ -13,6 +11,8 @@ use App\Modules\Facades\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Carousels\Models\Carousel;
+use Modules\Pages\Models\Page;
+use Modules\Posts\Models\Post;
 
 class GlobalSearchController extends Controller
 {
@@ -51,7 +51,7 @@ class GlobalSearchController extends Controller
         }
 
         // Search Posts
-        if ($user->hasPermissionFor('posts', 'view')) {
+        if (Modules::available('posts') && $user->hasPermissionFor('posts', 'view')) {
             $posts = Post::query()
                 ->where('title', 'like', "%{$query}%")
                 ->orWhere('excerpt', 'like', "%{$query}%")
@@ -70,7 +70,7 @@ class GlobalSearchController extends Controller
         }
 
         // Search Pages
-        if ($user->hasPermissionFor('pages', 'view')) {
+        if (Modules::available('pages') && $user->hasPermissionFor('pages', 'view')) {
             $pages = Page::query()
                 ->where('title', 'like', "%{$query}%")
                 ->orWhere('slug', 'like', "%{$query}%")

@@ -21,26 +21,9 @@ class MenuSeeder extends Seeder
                 'permission_module' => null, // Visible to all authenticated users
                 'sort_order' => 1,
             ],
-            [
-                'name' => 'Pages',
-                'slug' => 'pages',
-                'icon' => 'pages',
-                'route_name' => 'pages.index',
-                'permission_module' => 'pages',
-                'permission_action' => 'view',
-                'sort_order' => 2,
-            ],
-            [
-                'name' => 'Posts',
-                'slug' => 'posts',
-                'icon' => 'posts',
-                'route_name' => 'posts.index',
-                'permission_module' => 'posts',
-                'permission_action' => 'view',
-                'sort_order' => 3,
-            ],
-            // sort_order 4 belongs to Carousels, which is an optional module and
-            // seeds its own menu on install (see App\Modules\ModuleContract::menu).
+            // sort_order 2-4 belong to Pages, Posts and Carousels — optional
+            // modules that seed their own menu on install (see
+            // App\Modules\ModuleContract::menu).
             [
                 'name' => 'Media',
                 'slug' => 'media',

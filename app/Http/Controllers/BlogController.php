@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
 use App\Models\Setting;
+use App\Modules\Facades\Modules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Posts\Models\Post;
 
+/**
+ * The public face of the Posts module. These routes are core, so they stay
+ * registered whether or not the module is installed and gate on
+ * Modules::available('posts') at runtime instead.
+ */
 class BlogController extends Controller
 {
     /**
@@ -14,6 +20,8 @@ class BlogController extends Controller
      */
     public function index(): Response
     {
+        abort_unless(Modules::available('posts'), 404);
+
         $posts = Post::query()
             ->where('is_published', true)
             ->with('user:id,name')
@@ -35,6 +43,8 @@ class BlogController extends Controller
      */
     public function show(string $slug): Response
     {
+        abort_unless(Modules::available('posts'), 404);
+
         $post = Post::query()
             ->where('slug', $slug)
             ->where('is_published', true)

@@ -244,31 +244,15 @@ class User extends Authenticatable implements Syncable
     }
 
     /**
-     * @return HasMany<Page, $this>
-     */
-    public function pages(): HasMany
-    {
-        return $this->hasMany(Page::class);
-    }
-
-    /**
-     * The `carousels` relation is attached at boot by the Carousels module
-     * (see Modules\Carousels\CarouselsModule::boot), so that core carries no
-     * reference to an optional module's model.
+     * The `carousels`, `pages` and `posts` relations are attached at boot by
+     * their modules (see e.g. Modules\Carousels\CarouselsModule::boot), so
+     * that core carries no reference to an optional module's model.
      *
      * @return HasMany<Media, $this>
      */
     public function media(): HasMany
     {
         return $this->hasMany(Media::class);
-    }
-
-    /**
-     * @return HasMany<Post, $this>
-     */
-    public function posts(): HasMany
-    {
-        return $this->hasMany(Post::class);
     }
 
     /**

@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace Modules\Posts\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdatePageRequest extends FormRequest
+class StorePostRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,12 +22,13 @@ class UpdatePageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('pages')->ignore($this->route('page'))],
-            'html' => ['nullable', 'string'],
-            'css' => ['nullable', 'string'],
-            'gjs_data' => ['nullable', 'array'],
+            'title' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:posts,slug'],
+            'excerpt' => ['nullable', 'string', 'max:500'],
+            'content' => ['nullable', 'string'],
+            'featured_image' => ['nullable', 'string', 'max:255'],
             'is_published' => ['sometimes', 'boolean'],
+            'published_at' => ['nullable', 'date'],
         ];
     }
 
@@ -40,8 +40,11 @@ class UpdatePageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.max' => 'The page title must not exceed 255 characters.',
+            'title.required' => 'The post title is required.',
+            'title.max' => 'The post title must not exceed 255 characters.',
+            'slug.required' => 'The post slug is required.',
             'slug.unique' => 'This slug is already in use.',
+            'excerpt.max' => 'The excerpt must not exceed 500 characters.',
         ];
     }
 }

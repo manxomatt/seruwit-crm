@@ -29,8 +29,10 @@ class PlanSeeder extends Seeder
             [
                 'key' => 'basic',
                 'name' => 'Basic',
-                'description' => 'CMS inti plus carousel untuk halaman publik.',
-                'modules' => ['carousels'],
+                'description' => 'CMS inti plus page builder, blog, dan carousel untuk halaman publik.',
+                // Pages and Posts were core before their extraction into
+                // modules, so the default plan must keep covering them.
+                'modules' => ['carousels', 'pages', 'posts'],
                 'sort_order' => 2,
                 'is_default' => true,
             ],
@@ -38,7 +40,7 @@ class PlanSeeder extends Seeder
                 'key' => 'pro',
                 'name' => 'Pro',
                 'description' => 'Seluruh modul yang tersedia.',
-                'modules' => ['carousels', 'customers', 'fleet', 'products', 'transportation'],
+                'modules' => ['carousels', 'customers', 'fleet', 'pages', 'posts', 'products', 'transportation'],
                 'sort_order' => 3,
                 'is_default' => false,
             ],

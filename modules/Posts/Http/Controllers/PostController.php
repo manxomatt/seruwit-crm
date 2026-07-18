@@ -1,31 +1,36 @@
 <?php
 
-namespace App\Http\Controllers\Module;
+namespace Modules\Posts\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StorePostRequest;
-use App\Http\Requests\UpdatePostRequest;
-use App\Models\Post;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Posts\Http\Requests\StorePostRequest;
+use Modules\Posts\Http\Requests\UpdatePostRequest;
+use Modules\Posts\Models\Post;
 
 class PostController extends Controller
 {
+    /**
+     * Get the route prefix for this controller.
+     */
+    protected function getRoutePrefix(): string
+    {
+        return 'module';
+    }
+
     /**
      * Display a listing of the posts.
      */
     public function index(): Response
     {
-        $posts = Auth::user()
-            ->posts()
-            ->latest()
-            ->get();
-
         $user = Auth::user();
 
-        return Inertia::render('Module/Posts/Index', [
+        $posts = $user->posts()->latest()->get();
+
+        return Inertia::render('Modules/Posts/Index', [
             'posts' => $posts,
             'can' => [
                 'create' => $user->hasPermissionFor('posts', 'create'),
@@ -40,7 +45,7 @@ class PostController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Module/Posts/Create');
+        return Inertia::render('Modules/Posts/Create');
     }
 
     /**
@@ -56,7 +61,7 @@ class PostController extends Controller
 
         $post = Auth::user()->posts()->create($data);
 
-        return redirect()->route('module.posts.edit', $post);
+        return redirect()->route($this->getRoutePrefix().'.posts.edit', $post);
     }
 
     /**
@@ -68,7 +73,7 @@ class PostController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Module/Posts/Show', [
+        return Inertia::render('Modules/Posts/Show', [
             'post' => $post,
         ]);
     }
@@ -82,7 +87,7 @@ class PostController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Module/Posts/Edit', [
+        return Inertia::render('Modules/Posts/Edit', [
             'post' => $post,
         ]);
     }
@@ -104,7 +109,7 @@ class PostController extends Controller
 
         $post->update($data);
 
-        return redirect()->route('module.posts.index')->with('success', 'Post updated successfully.');
+        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', 'Post updated successfully.');
     }
 
     /**
@@ -118,7 +123,7 @@ class PostController extends Controller
 
         $post->delete();
 
-        return redirect()->route('module.posts.index')->with('success', 'Post deleted successfully.');
+        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', 'Post deleted successfully.');
     }
 
     /**
@@ -135,6 +140,6 @@ class PostController extends Controller
             'published_at' => ! $post->is_published ? now() : $post->published_at,
         ]);
 
-        return redirect()->route('module.posts.index');
+        return redirect()->route($this->getRoutePrefix().'.posts.index');
     }
 }

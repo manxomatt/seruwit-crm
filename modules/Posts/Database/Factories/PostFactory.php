@@ -1,16 +1,25 @@
 <?php
 
-namespace Database\Factories;
+namespace Modules\Posts\Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Modules\Posts\Models\Post;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Post>
+ * @extends Factory<Post>
  */
 class PostFactory extends Factory
 {
+    /**
+     * Factory resolution assumes App\Models, so a module factory has to state
+     * its model outright.
+     *
+     * @var class-string<Post>
+     */
+    protected $model = Post::class;
+
     /**
      * Define the model's default state.
      *
