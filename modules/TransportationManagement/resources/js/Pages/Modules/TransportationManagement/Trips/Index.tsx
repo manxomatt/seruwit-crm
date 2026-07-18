@@ -54,6 +54,13 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
+const EyeIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+);
+
 export default function Index({ trips, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [search, setSearch] = useState(filters.search || '');
@@ -151,9 +158,15 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                    <Link href={prefixedRoute('transportation.trips.show', trip.id)} className="text-gray-600 hover:text-gray-900">
-                                                        View
-                                                    </Link>
+                                                    <div className="flex items-center justify-end">
+                                                        <Link
+                                                            href={prefixedRoute('transportation.trips.show', trip.id)}
+                                                            className="text-gray-600 hover:text-gray-900"
+                                                            title="View"
+                                                        >
+                                                            <EyeIcon />
+                                                        </Link>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
