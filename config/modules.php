@@ -19,6 +19,7 @@ return [
         Modules\Carousels\CarouselsModule::class,
         Modules\Customer\CustomerModule::class,
         Modules\Fleet\FleetModule::class,
+        Modules\Orders\OrdersModule::class,
         Modules\Pages\PagesModule::class,
         Modules\Posts\PostsModule::class,
         Modules\Product\ProductModule::class,

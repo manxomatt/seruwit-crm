@@ -10,6 +10,7 @@ use Modules\TransportationManagement\Http\Controllers\TripCheckpointController;
 use Modules\TransportationManagement\Http\Controllers\TripController;
 use Modules\TransportationManagement\Http\Controllers\TripItemController;
 use Modules\TransportationManagement\Http\Controllers\TripScheduleController;
+use Modules\TransportationManagement\Http\Controllers\TripStopController;
 
 class TransportationManagementModule implements ModuleContract
 {
@@ -95,6 +96,12 @@ class TransportationManagementModule implements ModuleContract
 
         Route::post('/transportation/trips/{trip}/items', [TripItemController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.trips.items.store');
         Route::delete('/transportation/trips/{trip}/items/{item}', [TripItemController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.trips.items.destroy');
+
+        Route::post('/transportation/trips/{trip}/stops', [TripStopController::class, 'store'])->middleware('permission:transportation,create')->name('transportation.trips.stops.store');
+        Route::patch('/transportation/trips/{trip}/stops/{stop}', [TripStopController::class, 'update'])->middleware('permission:transportation,update')->name('transportation.trips.stops.update');
+        Route::delete('/transportation/trips/{trip}/stops/{stop}', [TripStopController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.trips.stops.destroy');
+        Route::post('/transportation/trips/{trip}/stops/{stop}/arrive', [TripStopController::class, 'arrive'])->middleware('permission:transportation,update')->name('transportation.trips.stops.arrive');
+        Route::post('/transportation/trips/{trip}/stops/{stop}/complete', [TripStopController::class, 'complete'])->middleware('permission:transportation,update')->name('transportation.trips.stops.complete');
 
         Route::get('/transportation/reports', [ReportController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.reports.index');
 

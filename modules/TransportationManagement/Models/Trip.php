@@ -110,6 +110,17 @@ class Trip extends Model
     }
 
     /**
+     * The route's ordered pickup/dropoff stops. Optional fine-grained detail;
+     * origin/destination remain the coarse route summary.
+     *
+     * @return HasMany<TripStop, $this>
+     */
+    public function stops(): HasMany
+    {
+        return $this->hasMany(TripStop::class)->orderBy('sequence');
+    }
+
+    /**
      * The recurring template this trip was generated from, if any. Null for
      * trips dispatched one-off.
      *

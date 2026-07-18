@@ -1,0 +1,45 @@
+<?php
+
+namespace Modules\Orders\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateDeliveryOrderRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'customer_id' => ['sometimes', 'required', 'integer', 'exists:customers,id'],
+            'order_date' => ['sometimes', 'required', 'date'],
+            'pickup_address' => ['sometimes', 'required', 'string', 'max:255'],
+            'delivery_address' => ['sometimes', 'required', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    /**
+     * Get the custom error messages for validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'customer_id.required' => 'Please select a customer.',
+            'customer_id.exists' => 'The selected customer does not exist.',
+        ];
+    }
+}

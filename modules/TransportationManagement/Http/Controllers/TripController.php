@@ -3,6 +3,7 @@
 namespace Modules\TransportationManagement\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -94,10 +95,17 @@ class TripController extends Controller
     {
         $user = Auth::user();
 
-        $trip->load(['vehicle', 'driver', 'customer', 'checkpoints', 'items.product']);
+        $trip->load(['vehicle', 'driver', 'customer', 'checkpoints', 'items.product', 'stops']);
+
+        $ordersEnabled = Modules::available('orders');
+
+        if ($ordersEnabled) {
+            $trip->load(['deliveryOrders.customer', 'stops.deliveryOrder']);
+        }
 
         return Inertia::render('Modules/TransportationManagement/Trips/Show', [
             'trip' => $trip,
+            'ordersEnabled' => $ordersEnabled,
             'products' => Product::query()->where('status', 'active')->orderBy('name')->get(['id', 'code', 'name', 'unit']),
             'can' => [
                 'update' => $user->hasPermissionFor('transportation', 'update'),

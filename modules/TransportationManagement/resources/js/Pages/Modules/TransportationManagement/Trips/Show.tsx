@@ -34,6 +34,28 @@ interface TripItem {
     product: Product;
 }
 
+interface TripStop {
+    id: number;
+    sequence: number;
+    type: string;
+    address: string;
+    lat: string | null;
+    lng: string | null;
+    delivery_order_id: number | null;
+    status: string;
+    arrived_at: string | null;
+    completed_at: string | null;
+    delivery_order?: { id: number; code: string } | null;
+}
+
+interface DeliveryOrderSummary {
+    id: number;
+    code: string;
+    status: string;
+    delivery_address: string;
+    customer: { id: number; name: string } | null;
+}
+
 interface Trip {
     id: number;
     code: string;
@@ -51,11 +73,14 @@ interface Trip {
     customer: { id: number; code: string; name: string; phone: string } | null;
     checkpoints: Checkpoint[];
     items: TripItem[];
+    stops: TripStop[];
+    delivery_orders?: DeliveryOrderSummary[];
 }
 
 interface Props {
     trip: Trip;
     products: Product[];
+    ordersEnabled: boolean;
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -72,11 +97,36 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ trip, products, can }: Props): JSX.Element {
+const getStopStatusBadgeColor = (status: string) => {
+    switch (status) {
+        case 'pending':
+            return 'bg-gray-100 text-gray-800';
+        case 'arrived':
+            return 'bg-blue-100 text-blue-800';
+        default:
+            return 'bg-green-100 text-green-800';
+    }
+};
+
+const getOrderStatusBadgeColor = (status: string) => {
+    switch (status) {
+        case 'assigned':
+            return 'bg-indigo-100 text-indigo-800';
+        case 'in_transit':
+            return 'bg-yellow-100 text-yellow-800';
+        case 'delivered':
+            return 'bg-green-100 text-green-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+};
+
+export default function Show({ trip, products, ordersEnabled, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCheckpointModal, setShowCheckpointModal] = useState(false);
     const [showItemModal, setShowItemModal] = useState(false);
+    const [showStopModal, setShowStopModal] = useState(false);
 
     const cancelForm = useForm({ cancelled_reason: '' });
     const checkpointForm = useForm({
@@ -89,6 +139,12 @@ export default function Show({ trip, products, can }: Props): JSX.Element {
         product_id: '',
         quantity: '',
         notes: '',
+    });
+    const stopForm = useForm({
+        type: 'dropoff',
+        address: '',
+        lat: '',
+        lng: '',
     });
 
     const start = () => {
@@ -138,6 +194,29 @@ export default function Show({ trip, products, can }: Props): JSX.Element {
 
     const deleteItem = (id: number) => {
         router.delete(prefixedRoute('transportation.trips.items.destroy', [trip.id, id]), { preserveScroll: true });
+    };
+
+    const submitStop: FormEventHandler = (e) => {
+        e.preventDefault();
+        stopForm.post(prefixedRoute('transportation.trips.stops.store', trip.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowStopModal(false);
+                stopForm.reset();
+            },
+        });
+    };
+
+    const deleteStop = (id: number) => {
+        router.delete(prefixedRoute('transportation.trips.stops.destroy', [trip.id, id]), { preserveScroll: true });
+    };
+
+    const arriveStop = (id: number) => {
+        router.post(prefixedRoute('transportation.trips.stops.arrive', [trip.id, id]), {}, { preserveScroll: true });
+    };
+
+    const completeStop = (id: number) => {
+        router.post(prefixedRoute('transportation.trips.stops.complete', [trip.id, id]), {}, { preserveScroll: true });
     };
 
     const canDelete = can.delete && trip.status !== 'in_progress';
@@ -252,6 +331,101 @@ export default function Show({ trip, products, can }: Props): JSX.Element {
                         </dl>
                     </div>
                 </div>
+
+                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div className="p-6">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-medium text-gray-900">Stops</h3>
+                            {can.create && trip.status === 'scheduled' && (
+                                <PrimaryButton onClick={() => setShowStopModal(true)}>Add Stop</PrimaryButton>
+                            )}
+                        </div>
+                        {trip.stops.length === 0 ? (
+                            <p className="text-sm text-gray-500">No stops planned. Origin and destination describe the route.</p>
+                        ) : (
+                            <ol className="space-y-3">
+                                {trip.stops.map((stop) => (
+                                    <li key={stop.id} className="flex items-start justify-between rounded-md border border-gray-200 p-3">
+                                        <div className="flex items-start gap-3">
+                                            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-700">
+                                                {stop.sequence}
+                                            </span>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {stop.address}
+                                                </p>
+                                                <p className="text-sm text-gray-500">
+                                                    <span className="capitalize">{stop.type}</span>
+                                                    {stop.delivery_order && (
+                                                        <>
+                                                            {' — '}
+                                                            <Link href={prefixedRoute('orders.show', stop.delivery_order.id)} className="text-indigo-600 hover:text-indigo-900">
+                                                                {stop.delivery_order.code}
+                                                            </Link>
+                                                        </>
+                                                    )}
+                                                    {stop.completed_at ? ` — done ${stop.completed_at}` : stop.arrived_at ? ` — arrived ${stop.arrived_at}` : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStopStatusBadgeColor(stop.status)}`}>
+                                                {stop.status}
+                                            </span>
+                                            {can.update && trip.status === 'in_progress' && stop.status === 'pending' && (
+                                                <button onClick={() => arriveStop(stop.id)} className="text-sm text-indigo-600 hover:text-indigo-900">
+                                                    Arrive
+                                                </button>
+                                            )}
+                                            {can.update && trip.status === 'in_progress' && stop.status !== 'completed' && (
+                                                <button onClick={() => completeStop(stop.id)} className="text-sm text-green-600 hover:text-green-900">
+                                                    Complete
+                                                </button>
+                                            )}
+                                            {can.delete && trip.status === 'scheduled' && stop.status === 'pending' && !stop.delivery_order_id && (
+                                                <button onClick={() => deleteStop(stop.id)} className="text-sm text-red-600 hover:text-red-900">
+                                                    Delete
+                                                </button>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ol>
+                        )}
+                    </div>
+                </div>
+
+                {ordersEnabled && trip.delivery_orders && (
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <h3 className="text-lg font-medium text-gray-900">Delivery Orders</h3>
+                            </div>
+                            {trip.delivery_orders.length === 0 ? (
+                                <p className="text-sm text-gray-500">No delivery orders consolidated onto this trip. Attach them from the Orders module.</p>
+                            ) : (
+                                <ul className="space-y-3">
+                                    {trip.delivery_orders.map((order) => (
+                                        <li key={order.id} className="flex items-start justify-between rounded-md border border-gray-200 p-3">
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    <Link href={prefixedRoute('orders.show', order.id)} className="text-indigo-600 hover:text-indigo-900">
+                                                        {order.code}
+                                                    </Link>
+                                                    {order.customer ? ` — ${order.customer.name}` : ''}
+                                                </p>
+                                                <p className="text-sm text-gray-500">{order.delivery_address}</p>
+                                            </div>
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getOrderStatusBadgeColor(order.status)}`}>
+                                                {order.status.replace('_', ' ')}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
@@ -411,6 +585,49 @@ export default function Show({ trip, products, can }: Props): JSX.Element {
                     <div className="mt-6 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setShowItemModal(false)}>Cancel</SecondaryButton>
                         <PrimaryButton disabled={itemForm.processing}>Save</PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal show={showStopModal} onClose={() => setShowStopModal(false)} maxWidth="md">
+                <form onSubmit={submitStop} className="p-6">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">Add Stop</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <InputLabel htmlFor="s_type" value="Type" />
+                            <Select
+                                id="s_type"
+                                className="mt-1"
+                                value={stopForm.data.type}
+                                onChange={(value) => stopForm.setData('type', value)}
+                                options={[
+                                    { value: 'pickup', label: 'Pickup' },
+                                    { value: 'dropoff', label: 'Dropoff' },
+                                ]}
+                            />
+                            <InputError message={stopForm.errors.type} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="s_address" value="Address" />
+                            <TextInput id="s_address" className="mt-1 block w-full" value={stopForm.data.address} onChange={(e) => stopForm.setData('address', e.target.value)} required />
+                            <InputError message={stopForm.errors.address} className="mt-2" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel htmlFor="s_lat" value="Latitude (optional)" />
+                                <TextInput id="s_lat" type="number" step="0.0000001" className="mt-1 block w-full" value={stopForm.data.lat} onChange={(e) => stopForm.setData('lat', e.target.value)} />
+                                <InputError message={stopForm.errors.lat} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="s_lng" value="Longitude (optional)" />
+                                <TextInput id="s_lng" type="number" step="0.0000001" className="mt-1 block w-full" value={stopForm.data.lng} onChange={(e) => stopForm.setData('lng', e.target.value)} />
+                                <InputError message={stopForm.errors.lng} className="mt-2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={() => setShowStopModal(false)}>Cancel</SecondaryButton>
+                        <PrimaryButton disabled={stopForm.processing}>Save</PrimaryButton>
                     </div>
                 </form>
             </Modal>
