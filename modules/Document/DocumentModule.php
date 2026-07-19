@@ -3,6 +3,7 @@
 namespace Modules\Document;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Route;
 use Modules\Document\Http\Controllers\DocumentController;
@@ -29,6 +30,11 @@ class DocumentModule implements ModuleContract
     public function description(): string
     {
         return 'Compliance document management for vehicles and drivers, with expiry tracking and automated reminders.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Foundation;
     }
 
     public function permissions(): array

@@ -194,17 +194,26 @@ const ChevronDownIcon = () => (
     </svg>
 );
 
+// Mirrors App\Modules\ModuleTier — the architectural layer a module declares
+// for itself, shared as the `moduleTiers` prop.
+type ModuleTier = 'content' | 'foundation' | 'vertical';
+
 // Sidebar menu groups: modules are shown under these collapsible sections in
 // this order. Items still appear only when the user has permission for them,
 // and a group with no accessible items is hidden entirely.
-const MENU_GROUPS: { title: string; modules: string[] }[] = [
-    { title: 'Konten', modules: ['pages', 'posts', 'carousels', 'media'] },
-    { title: 'Pelanggan', modules: ['customers'] },
-    { title: 'Produk', modules: ['products'] },
-    { title: 'Transportasi', modules: ['fleet', 'transportation', 'orders'] },
-    { title: 'Dokumen', modules: ['document'] },
-    { title: 'Maintenance', modules: ['maintenance'] },
-    { title: 'Keuangan', modules: ['billing'] },
+//
+// A group is either derived from the tier each module declares in its
+// ModuleContract — so a new module lands in the right group with no edit here —
+// or a fixed list of core features (media, users, settings, the platform
+// control plane), which are not registered modules and so declare no tier.
+type MenuGroup =
+    | { title: string; tier: ModuleTier; also?: string[] }
+    | { title: string; modules: string[] };
+
+const MENU_GROUPS: MenuGroup[] = [
+    { title: 'Konten', tier: 'content', also: ['media'] },
+    { title: 'Fondasi', tier: 'foundation' },
+    { title: 'Operasi', tier: 'vertical' },
     { title: 'Wawasan', modules: ['analytics', 'live-updates'] },
     { title: 'Administrasi', modules: ['users', 'roles', 'settings', 'modules'] },
     { title: 'Platform', modules: ['tenants', 'plans', 'module-registry'] },
@@ -332,6 +341,8 @@ export default function ModuleLayout({ header, children }: Props) {
     const pageProps = usePage().props as any;
     const user = pageProps.auth.user as User | null;
     const settings = pageProps.settings as Record<string, string> | undefined;
+    // Each registered module's declared tier, ordered by its menu sort_order.
+    const moduleTiers = (pageProps.moduleTiers ?? []) as { key: string; tier: ModuleTier }[];
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // No current-tenant domain context means we are on the central domain (the SaaS control plane).
@@ -435,13 +446,24 @@ export default function ModuleLayout({ header, children }: Props) {
     // groups, preserving the module order defined in MENU_GROUPS.
     const dashboardItem = navigation.find((item) => item.module === 'dashboard');
     const menuGroups = useMemo(() => {
+        // Tier-derived groups take their members — and their order — from what the
+        // modules themselves declare on the server; fixed groups list core
+        // features, which are not modules and have no tier.
+        const moduleKeysIn = (group: MenuGroup): string[] =>
+            'tier' in group
+                ? [
+                      ...moduleTiers.filter((entry) => entry.tier === group.tier).map((entry) => entry.key),
+                      ...(group.also ?? []),
+                  ]
+                : group.modules;
+
         return MENU_GROUPS.map((group) => ({
             title: group.title,
-            items: group.modules
+            items: moduleKeysIn(group)
                 .map((module) => navigation.find((item) => item.module === module))
                 .filter((item): item is MenuItem => Boolean(item)),
         })).filter((group) => group.items.length > 0);
-    }, [navigation]);
+    }, [navigation, moduleTiers]);
 
     // Collapsible group state, persisted so it survives page navigations.
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {

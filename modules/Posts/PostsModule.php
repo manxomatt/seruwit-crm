@@ -4,6 +4,7 @@ namespace Modules\Posts;
 
 use App\Models\User;
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Posts\Http\Controllers\PostController;
 use Modules\Posts\Models\Post;
@@ -28,6 +29,11 @@ class PostsModule implements ModuleContract
     public function description(): string
     {
         return 'Blog posts for the public site, with drafts and scheduled publishing.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Content;
     }
 
     public function permissions(): array

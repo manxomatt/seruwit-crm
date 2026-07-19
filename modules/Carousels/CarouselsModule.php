@@ -4,6 +4,7 @@ namespace Modules\Carousels;
 
 use App\Models\User;
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Modules\Carousels\Http\Controllers\CarouselController;
@@ -26,6 +27,11 @@ class CarouselsModule implements ModuleContract
     public function description(): string
     {
         return 'Image sliders for the public site, with ordering and captions.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Content;
     }
 
     public function permissions(): array

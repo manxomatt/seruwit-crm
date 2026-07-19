@@ -3,6 +3,7 @@
 namespace Modules\Product;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Product\Http\Controllers\ProductController;
 
@@ -27,6 +28,11 @@ class ProductModule implements ModuleContract
     public function description(): string
     {
         return 'Product catalog shared by every module that needs it.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Foundation;
     }
 
     public function permissions(): array

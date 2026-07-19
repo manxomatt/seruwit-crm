@@ -73,6 +73,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
             'menus' => $this->getMenus($user, $routePrefix),
+            'moduleTiers' => $this->getModuleTiers(),
             'settings' => $settings,
             // The tenant *domain* we're currently on (null on the central domain).
             // Named distinctly so it never collides with page props that carry a
@@ -118,6 +119,30 @@ class HandleInertiaRequests extends Middleware
         }
 
         return Menu::getMenusForUser($user, $routePrefix)->toArray();
+    }
+
+    /**
+     * Every registered module's architectural tier, so the sidebar can group
+     * itself from what modules declare instead of a hand-maintained list that
+     * has to be edited again for every module added.
+     *
+     * Pure configuration — no tenant state — so it costs no query and is safe on
+     * the central domain too. Ordered by the module's own menu sort_order, which
+     * is what fixes the order of the items within each group; modules with no
+     * menu sort last and simply never match a sidebar entry.
+     *
+     * @return list<array{key: string, tier: string}>
+     */
+    private function getModuleTiers(): array
+    {
+        return collect(Modules::all())
+            ->sortBy(fn ($module): int => $module->menu()['sort_order'] ?? PHP_INT_MAX)
+            ->map(fn ($module): array => [
+                'key' => $module->key(),
+                'tier' => $module->tier()->value,
+            ])
+            ->values()
+            ->all();
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Modules\Billing;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Billing\Http\Controllers\InvoiceController;
 use Modules\Billing\Http\Controllers\InvoicePdfController;
@@ -30,6 +31,11 @@ class BillingModule implements ModuleContract
     public function description(): string
     {
         return 'Route tariffs, customer invoices for delivered orders, and driver trip allowances (uang jalan).';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Vertical;
     }
 
     public function permissions(): array

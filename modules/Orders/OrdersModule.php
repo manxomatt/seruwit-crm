@@ -3,6 +3,7 @@
 namespace Modules\Orders;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Orders\Http\Controllers\DeliveryOrderController;
 use Modules\Orders\Http\Controllers\OrderItemController;
@@ -28,6 +29,11 @@ class OrdersModule implements ModuleContract
     public function description(): string
     {
         return 'Customer delivery orders with trip consolidation, delivery stops, and printable surat jalan.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Vertical;
     }
 
     public function permissions(): array

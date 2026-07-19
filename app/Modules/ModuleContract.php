@@ -28,6 +28,13 @@ interface ModuleContract
     public function description(): string;
 
     /**
+     * The architectural layer this module belongs to: cross-business-line
+     * Foundation, business-line-specific Vertical, or public-site Content.
+     * Drives the sidebar grouping and enforces which modules may requires() which.
+     */
+    public function tier(): ModuleTier;
+
+    /**
      * Permission actions this module owns, e.g. ['view', 'create'].
      *
      * @return list<string>

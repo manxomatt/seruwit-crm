@@ -3,6 +3,7 @@
 namespace Modules\Maintenance;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Maintenance\Http\Controllers\MaintenanceCategoryController;
 use Modules\Maintenance\Http\Controllers\MaintenanceController;
@@ -24,6 +25,11 @@ class MaintenanceModule implements ModuleContract
     public function description(): string
     {
         return 'Work order management for vehicle maintenance: scheduling, tracking, costs, and preventive service reminders.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Foundation;
     }
 
     public function permissions(): array

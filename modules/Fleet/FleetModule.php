@@ -3,6 +3,7 @@
 namespace Modules\Fleet;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Fleet\Http\Controllers\DriverController;
 use Modules\Fleet\Http\Controllers\FuelLogController;
@@ -30,6 +31,11 @@ class FleetModule implements ModuleContract
     public function description(): string
     {
         return 'Vehicle and driver records shared by every module that needs them.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Foundation;
     }
 
     public function permissions(): array

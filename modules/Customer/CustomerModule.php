@@ -3,6 +3,7 @@
 namespace Modules\Customer;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Customer\Http\Controllers\CustomerController;
 
@@ -27,6 +28,11 @@ class CustomerModule implements ModuleContract
     public function description(): string
     {
         return 'Customer records shared by every module that needs them.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Foundation;
     }
 
     public function permissions(): array

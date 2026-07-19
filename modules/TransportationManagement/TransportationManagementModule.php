@@ -3,6 +3,7 @@
 namespace Modules\TransportationManagement;
 
 use App\Modules\ModuleContract;
+use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\TransportationManagement\Http\Controllers\CalendarController;
 use Modules\TransportationManagement\Http\Controllers\ReportController;
@@ -27,6 +28,11 @@ class TransportationManagementModule implements ModuleContract
     public function description(): string
     {
         return 'Trip dispatch, checkpoint tracking, and cost/utilization reports for the Fleet module\'s vehicles and drivers.';
+    }
+
+    public function tier(): ModuleTier
+    {
+        return ModuleTier::Vertical;
     }
 
     public function permissions(): array
