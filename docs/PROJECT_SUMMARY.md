@@ -76,6 +76,8 @@ Modul terdaftar saat ini:
 | `transportation` | Dispatch trip, tracking checkpoint, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
 | `orders` | Delivery order pelanggan, konsolidasi ke trip, stop pengiriman, dan surat jalan cetak | `transportation` |
 | `billing` | Tarif rute, invoice untuk order terkirim, dan uang jalan sopir per trip | `orders` |
+| `document` | Manajemen dokumen kepatuhan untuk kendaraan & sopir, tracking kadaluarsa, dan pengingat otomatis | `fleet`, `media` |
+| `maintenance` | Manajemen work order untuk perawatan kendaraan: penjadwalan, tracking, biaya, dan pengingat layanan preventif | `fleet` |
 
 **Wajah publik modul**: route publik Pages (`/`, `/p/{slug}`) dan Posts (`/blog`) tetap tinggal di core (`routes/app.php`) karena situs publik tenant ada terlepas dari modulnya — controller-nya (`PageController`, `BlogController`) yang menjaga diri dengan `Modules::available('pages'/'posts')`: homepage jatuh ke landing bawaan `Welcome`, `/p/{slug}` dan `/blog` menjadi 404, bukan 500. Pola yang sama dipakai GlobalSearch, Dashboard, dan Analytics untuk statistik/pencarian Page/Post (prop di-omit saat modul tak tersedia, seperti carousels).
 
@@ -121,6 +123,8 @@ Sumbu ketiga, terpisah dari entitlement paket dan status install: `ModuleRegistr
 - **Transportation Management** *(modul, `requires: fleet, customers, products`)* — dispatch trip (deteksi bentrok kendaraan/sopir per tanggal), tracking checkpoint GPS saat trip berjalan, manifest kargo per trip (produk + kuantitas), jadwal trip berulang (hari-dalam-minggu + generate otomatis, idempoten), kalender (tampilan minggu/bulan/tahun), laporan biaya & utilisasi
 - **Orders** *(modul, `requires: transportation`)* — delivery order pelanggan, item order, assignment/unassignment ke trip, dan cetak surat jalan
 - **Billing** *(modul, `requires: orders`)* — manajemen tarif, charge per delivery order, invoice lifecycle (issue/pay/void + PDF), dan uang jalan per trip
+- **Documents** *(modul, `requires: fleet, media`)* — manajemen dokumen kepatuhan untuk kendaraan & sopir, tracking kadaluarsa dengan reminder otomatis, verifikasi dokumen, dan tipe dokumen yang dapat dikonfigurasi
+- **Maintenance** *(modul, `requires: fleet`)* — work order management untuk perawatan kendaraan, penjadwalan pemeliharaan preventif, tracking biaya, kategori perawatan yang dapat dikonfigurasi, dan jadwal layanan berkala
 - **Media Library** — upload, picker, bulk delete; file terisolasi per tenant
 - **Menus** — menu dinamis per peran; entri modul ikut hilang saat modul dicopot
 - **Settings** — pengaturan dikelompokkan per grup, satu halaman per grup, nilai diedit langsung sebagai form field (bukan tabel). Tenant boleh mengedit **nilai** setting miliknya sendiri (mis. tautan media sosial berbeda tiap tenant, lewat izin `settings:update` biasa); mendefinisikan/mengganti nama/menghapus sebuah setting adalah kapasitas **central-only** (gate `manage-settings`) yang otomatis menyebar ke semua tenant saat dibuat (idempoten — tenant yang sudah punya key yang sama tak tertimpa)
@@ -189,4 +193,7 @@ php artisan modules:purge-expired                 # buang data modul yang tengga
 
 ## Pekerjaan yang Sedang Berjalan
 
-- Tidak ada — ekstraksi Pages & Posts menjadi modul (pekerjaan tergantung terakhir) sudah selesai. Untuk tenant lama, jalankan `modules:backfill` sekali setelah deploy agar Pages/Posts tertandai terpasang; entitlement paket live diedit dari `/module/plans`.
+- **Documents** — manajemen dokumen kepatuhan untuk kendaraan & sopir baru selesai diimplementasi dengan fitur tracking kadaluarsa dan verifikasi dokumen
+- **Maintenance** — work order management untuk perawatan kendaraan baru selesai diimplementasi dengan penjadwalan pemeliharaan preventif
+
+Modul ini akan ditambahkan ke paket yang sesuai melalui panel super admin (`/module/plans`).
