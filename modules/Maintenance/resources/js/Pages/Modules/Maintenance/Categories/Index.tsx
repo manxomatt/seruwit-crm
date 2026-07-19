@@ -26,6 +26,18 @@ const COLOR_PRESETS = [
     '#84CC16', '#A78BFA',
 ];
 
+const PencilIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+);
+
+const TrashIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+);
+
 export default function Index({ categories }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showModal, setShowModal] = useState(false);
@@ -127,22 +139,28 @@ export default function Index({ categories }: Props): JSX.Element {
                                 <p className="text-lg font-bold text-gray-900">{cat.work_orders_count}</p>
                                 <p className="text-xs text-gray-400">Work Orders</p>
                             </div>
-                            <div className="flex-shrink-0 flex gap-2">
+                            <div className="flex-shrink-0 flex items-center gap-3">
                                 <button
                                     type="button"
                                     onClick={() => openEdit(cat)}
-                                    className="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+                                    className="text-indigo-600 hover:text-indigo-900"
+                                    title="Edit"
                                 >
-                                    Edit
+                                    <PencilIcon />
                                 </button>
+                                {/*
+                                    Icon-only leaves the tooltip carrying the whole explanation, so
+                                    the disabled reason has to stay in it rather than fall back to a
+                                    bare "Hapus".
+                                */}
                                 <button
                                     type="button"
                                     onClick={() => setDeletingCategory(cat)}
-                                    className="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                                    className="text-red-600 hover:text-red-900 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:text-gray-300"
                                     disabled={cat.work_orders_count > 0}
-                                    title={cat.work_orders_count > 0 ? 'Tidak dapat dihapus: masih digunakan' : undefined}
+                                    title={cat.work_orders_count > 0 ? 'Tidak dapat dihapus: masih digunakan' : 'Hapus'}
                                 >
-                                    Hapus
+                                    <TrashIcon />
                                 </button>
                             </div>
                         </div>
