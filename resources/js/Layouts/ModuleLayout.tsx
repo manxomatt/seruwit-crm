@@ -115,10 +115,15 @@ const DocumentIcon = () => (
     </svg>
 );
 
-const TransportationIcon = () => (
+const WrenchIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h5.083c.621 0 1.191.354 1.409.923.156.406.301.816.436 1.228M14.25 7.5v11.25m0-11.25h-3.75m3.75 0V4.875c0-.621-.504-1.125-1.125-1.125h-7.5C6.879 3.75 6 4.629 6 5.652v9.848m0 0a1.5 1.5 0 013 0M6 15.5h3.75" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
     </svg>
+);
+
+const TransportationIcon = () => (<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h5.083c.621 0 1.191.354 1.409.923.156.406.301.816.436 1.228M14.25 7.5v11.25m0-11.25h-3.75m3.75 0V4.875c0-.621-.504-1.125-1.125-1.125h-7.5C6.879 3.75 6 4.629 6 5.652v9.848m0 0a1.5 1.5 0 013 0M6 15.5h3.75" />
+</svg>
 );
 
 const LiveUpdatesIcon = () => (
@@ -198,6 +203,7 @@ const MENU_GROUPS: { title: string; modules: string[] }[] = [
     { title: 'Produk', modules: ['products'] },
     { title: 'Transportasi', modules: ['fleet', 'transportation', 'orders'] },
     { title: 'Dokumen', modules: ['document'] },
+    { title: 'Maintenance', modules: ['maintenance'] },
     { title: 'Keuangan', modules: ['billing'] },
     { title: 'Wawasan', modules: ['analytics', 'live-updates'] },
     { title: 'Administrasi', modules: ['users', 'roles', 'settings', 'modules'] },
@@ -214,6 +220,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'products': { route: 'module.products.index', routePattern: 'module.products.*' },
     'fleet': { route: 'module.fleet.vehicles.index', routePattern: 'module.fleet.*' },
     'document': { route: 'module.documents.index', routePattern: 'module.documents.*' },
+    'maintenance': { route: 'module.maintenance.index', routePattern: 'module.maintenance.*' },
     'transportation': { route: 'module.transportation.trips.index', routePattern: 'module.transportation.*' },
     'orders': { route: 'module.orders.index', routePattern: 'module.orders.*' },
     'billing': { route: 'module.billing.invoices.index', routePattern: 'module.billing.*' },
@@ -234,6 +241,7 @@ const moduleIconMap: Record<string, ReactNode> = {
     'products': <ProductIcon />,
     'fleet': <FleetIcon />,
     'document': <DocumentIcon />,
+    'maintenance': <WrenchIcon />,
     'transportation': <TransportationIcon />,
     'orders': <OrdersIcon />,
     'billing': <BillingIcon />,
@@ -254,6 +262,7 @@ const moduleDisplayNames: Record<string, string> = {
     'products': 'Products',
     'fleet': 'Fleet',
     'document': 'Documents',
+    'maintenance': 'Maintenance',
     'transportation': 'Transportation',
     'orders': 'Orders',
     'billing': 'Billing',
@@ -459,8 +468,8 @@ export default function ModuleLayout({ header, children }: Props) {
             key={item.name}
             href={item.href}
             className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${item.current
-                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
-                    : `${theme.text} hover:bg-white/10 hover:text-white`
+                ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                : `${theme.text} hover:bg-white/10 hover:text-white`
                 }`}
         >
             <span className={`mr-3 ${item.current ? 'text-white' : `${theme.textHover} group-hover:text-white`}`}>
