@@ -33,10 +33,18 @@ class DriverDocumentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $user = Auth::user();
+
         return Inertia::render('Modules/Document/Driver/Index', [
             'driver' => $driver,
             'types' => $types,
             'documents' => $documents,
+            'can' => [
+                'create' => $user->hasPermissionFor('document', 'create'),
+                'update' => $user->hasPermissionFor('document', 'update'),
+                'delete' => $user->hasPermissionFor('document', 'delete'),
+                'verify' => $user->hasPermissionFor('document', 'verify'),
+            ],
         ]);
     }
 
@@ -95,10 +103,17 @@ class DriverDocumentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $user = Auth::user();
+
         return Inertia::render('Modules/Document/Driver/Show', [
             'driver' => $driver,
             'document' => $document,
             'history' => $history,
+            'can' => [
+                'update' => $user->hasPermissionFor('document', 'update'),
+                'delete' => $user->hasPermissionFor('document', 'delete'),
+                'verify' => $user->hasPermissionFor('document', 'verify'),
+            ],
         ]);
     }
 

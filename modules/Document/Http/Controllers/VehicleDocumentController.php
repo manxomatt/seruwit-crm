@@ -34,10 +34,18 @@ class VehicleDocumentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $user = Auth::user();
+
         return Inertia::render('Modules/Document/Vehicle/Index', [
             'vehicle' => $vehicle,
             'types' => $types,
             'documents' => $documents,
+            'can' => [
+                'create' => $user->hasPermissionFor('document', 'create'),
+                'update' => $user->hasPermissionFor('document', 'update'),
+                'delete' => $user->hasPermissionFor('document', 'delete'),
+                'verify' => $user->hasPermissionFor('document', 'verify'),
+            ],
         ]);
     }
 
@@ -97,10 +105,17 @@ class VehicleDocumentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $user = Auth::user();
+
         return Inertia::render('Modules/Document/Vehicle/Show', [
             'vehicle' => $vehicle,
             'document' => $document,
             'history' => $history,
+            'can' => [
+                'update' => $user->hasPermissionFor('document', 'update'),
+                'delete' => $user->hasPermissionFor('document', 'delete'),
+                'verify' => $user->hasPermissionFor('document', 'verify'),
+            ],
         ]);
     }
 

@@ -109,6 +109,12 @@ const FleetIcon = () => (
     </svg>
 );
 
+const DocumentIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+);
+
 const TransportationIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25h5.083c.621 0 1.191.354 1.409.923.156.406.301.816.436 1.228M14.25 7.5v11.25m0-11.25h-3.75m3.75 0V4.875c0-.621-.504-1.125-1.125-1.125h-7.5C6.879 3.75 6 4.629 6 5.652v9.848m0 0a1.5 1.5 0 013 0M6 15.5h3.75" />
@@ -191,6 +197,7 @@ const MENU_GROUPS: { title: string; modules: string[] }[] = [
     { title: 'Pelanggan', modules: ['customers'] },
     { title: 'Produk', modules: ['products'] },
     { title: 'Transportasi', modules: ['fleet', 'transportation', 'orders'] },
+    { title: 'Dokumen', modules: ['document'] },
     { title: 'Keuangan', modules: ['billing'] },
     { title: 'Wawasan', modules: ['analytics', 'live-updates'] },
     { title: 'Administrasi', modules: ['users', 'roles', 'settings', 'modules'] },
@@ -206,6 +213,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'customers': { route: 'module.customers.index', routePattern: 'module.customers.*' },
     'products': { route: 'module.products.index', routePattern: 'module.products.*' },
     'fleet': { route: 'module.fleet.vehicles.index', routePattern: 'module.fleet.*' },
+    'document': { route: 'module.documents.index', routePattern: 'module.documents.*' },
     'transportation': { route: 'module.transportation.trips.index', routePattern: 'module.transportation.*' },
     'orders': { route: 'module.orders.index', routePattern: 'module.orders.*' },
     'billing': { route: 'module.billing.invoices.index', routePattern: 'module.billing.*' },
@@ -225,6 +233,7 @@ const moduleIconMap: Record<string, ReactNode> = {
     'customers': <CustomersIcon />,
     'products': <ProductIcon />,
     'fleet': <FleetIcon />,
+    'document': <DocumentIcon />,
     'transportation': <TransportationIcon />,
     'orders': <OrdersIcon />,
     'billing': <BillingIcon />,
@@ -244,6 +253,7 @@ const moduleDisplayNames: Record<string, string> = {
     'customers': 'Customers',
     'products': 'Products',
     'fleet': 'Fleet',
+    'document': 'Documents',
     'transportation': 'Transportation',
     'orders': 'Orders',
     'billing': 'Billing',
@@ -448,11 +458,10 @@ export default function ModuleLayout({ header, children }: Props) {
         <Link
             key={item.name}
             href={item.href}
-            className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                item.current
+            className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${item.current
                     ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
                     : `${theme.text} hover:bg-white/10 hover:text-white`
-            }`}
+                }`}
         >
             <span className={`mr-3 ${item.current ? 'text-white' : `${theme.textHover} group-hover:text-white`}`}>
                 {item.icon}
@@ -473,9 +482,8 @@ export default function ModuleLayout({ header, children }: Props) {
                             type="button"
                             onClick={() => toggleGroup(group.title)}
                             aria-expanded={open}
-                            className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
-                                hasActive && !open ? 'text-white' : `${theme.text} hover:text-white`
-                            }`}
+                            className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${hasActive && !open ? 'text-white' : `${theme.text} hover:text-white`
+                                }`}
                         >
                             <span>{group.title}</span>
                             <span className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`}>
@@ -494,7 +502,7 @@ export default function ModuleLayout({ header, children }: Props) {
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
                 <div className="fixed inset-0 z-40 lg:hidden">
-                    <div 
+                    <div
                         className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity"
                         onClick={() => setSidebarOpen(false)}
                     />

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Menu;
+use App\Modules\Facades\Modules;
 use Illuminate\Database\Seeder;
 
 class MenuSeeder extends Seeder
@@ -80,6 +81,19 @@ class MenuSeeder extends Seeder
                 ['slug' => $menuData['slug']],
                 $menuData
             );
+        }
+
+        // In local / central-serves-app mode modules are never "installed"
+        // through the tenant flow, so their menus are never seeded via
+        // ModuleInstaller::seedMenu(). Add them here so the sidebar works
+        // out of the box during development.
+        foreach (Modules::all() as $module) {
+            if ($menu = $module->menu()) {
+                Menu::updateOrCreate(
+                    ['slug' => $menu['slug']],
+                    [...$menu, 'is_active' => true],
+                );
+            }
         }
     }
 }
