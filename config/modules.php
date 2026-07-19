@@ -18,6 +18,7 @@ return [
     'registered' => [
         Modules\Billing\BillingModule::class,
         Modules\Carousels\CarouselsModule::class,
+        Modules\Document\DocumentModule::class,
         Modules\Customer\CustomerModule::class,
         Modules\Fleet\FleetModule::class,
         Modules\Orders\OrdersModule::class,

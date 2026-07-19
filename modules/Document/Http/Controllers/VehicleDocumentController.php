@@ -1,0 +1,139 @@
+<?php
+
+namespace Modules\Document\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
+use Modules\Document\Models\Document;
+use Modules\Document\Models\DocumentType;
+use Modules\Fleet\Models\Vehicle;
+
+class VehicleDocumentController extends Controller
+{
+    /**
+     * All documents for a vehicle, grouped by type, with full history.
+     */
+    public function index(Vehicle $vehicle): Response
+    {
+        $types = DocumentType::query()
+            ->where('entity_type', DocumentType::ENTITY_VEHICLE)
+            ->orderBy('sort_order')
+            ->get();
+
+        // Load active documents (not soft-deleted) + full history per type
+        $documents = Document::query()
+            ->withTrashed()
+            ->where('documentable_type', 'vehicle')
+            ->where('documentable_id', $vehicle->id)
+            ->with(['documentType', 'media', 'uploader', 'verifier'])
+            ->orderBy('document_type_id')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return Inertia::render('Modules/Document/Vehicle/Index', [
+            'vehicle' => $vehicle,
+            'types' => $types,
+            'documents' => $documents,
+        ]);
+    }
+
+    public function create(Vehicle $vehicle): Response
+    {
+        $types = DocumentType::query()
+            ->where('entity_type', DocumentType::ENTITY_VEHICLE)
+            ->orderBy('sort_order')
+            ->get();
+
+        return Inertia::render('Modules/Document/Vehicle/Create', [
+            'vehicle' => $vehicle,
+            'types' => $types,
+        ]);
+    }
+
+    public function store(Request $request, Vehicle $vehicle): RedirectResponse
+    {
+        $validated = $request->validate([
+            'document_type_id' => ['required', 'exists:document_types,id'],
+            'document_number' => ['nullable', 'string', 'max:100'],
+            'issued_at' => ['nullable', 'date'],
+            'expires_at' => ['nullable', 'date', 'after_or_equal:issued_at'],
+            'notes' => ['nullable', 'string'],
+            'media_id' => ['nullable', 'exists:media,id'],
+        ]);
+
+        // Soft-delete any existing active document of the same type for this
+        // vehicle — it becomes "superseded" by the new upload.
+        Document::query()
+            ->where('documentable_type', 'vehicle')
+            ->where('documentable_id', $vehicle->id)
+            ->where('document_type_id', $validated['document_type_id'])
+            ->delete();
+
+        $vehicle->documents()->create([
+            ...$validated,
+            'uploaded_by' => Auth::id(),
+        ]);
+
+        return redirect()->route('fleet.vehicles.documents.index', $vehicle)
+            ->with('success', 'Document uploaded successfully.');
+    }
+
+    public function show(Vehicle $vehicle, Document $document): Response
+    {
+        $document->load(['documentType', 'media', 'uploader', 'verifier']);
+
+        // Previous versions of the same document type for this vehicle
+        $history = Document::query()
+            ->withTrashed()
+            ->where('documentable_type', 'vehicle')
+            ->where('documentable_id', $vehicle->id)
+            ->where('document_type_id', $document->document_type_id)
+            ->where('id', '!=', $document->id)
+            ->with(['uploader'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return Inertia::render('Modules/Document/Vehicle/Show', [
+            'vehicle' => $vehicle,
+            'document' => $document,
+            'history' => $history,
+        ]);
+    }
+
+    public function update(Request $request, Vehicle $vehicle, Document $document): RedirectResponse
+    {
+        $validated = $request->validate([
+            'document_number' => ['nullable', 'string', 'max:100'],
+            'issued_at' => ['nullable', 'date'],
+            'expires_at' => ['nullable', 'date', 'after_or_equal:issued_at'],
+            'notes' => ['nullable', 'string'],
+            'media_id' => ['nullable', 'exists:media,id'],
+        ]);
+
+        $document->update($validated);
+
+        return back()->with('success', 'Document updated.');
+    }
+
+    public function destroy(Vehicle $vehicle, Document $document): RedirectResponse
+    {
+        $document->delete();
+
+        return redirect()->route('fleet.vehicles.documents.index', $vehicle)
+            ->with('success', 'Document removed.');
+    }
+
+    public function verify(Vehicle $vehicle, Document $document): RedirectResponse
+    {
+        $document->update([
+            'verified_by' => Auth::id(),
+            'verified_at' => now(),
+        ]);
+
+        return back()->with('success', 'Document marked as verified.');
+    }
+}
