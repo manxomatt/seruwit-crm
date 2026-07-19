@@ -9,8 +9,8 @@ import TextInput from '@/Components/TextInput';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import MaintenanceNav from '../../MaintenanceNav';
-import { MaintenanceCategory } from '../../maintenanceUtils';
+import MaintenanceNav from '../../../../MaintenanceNav';
+import { MaintenanceCategory } from '../../../../maintenanceUtils';
 
 interface CategoryWithCount extends MaintenanceCategory {
     work_orders_count: number;

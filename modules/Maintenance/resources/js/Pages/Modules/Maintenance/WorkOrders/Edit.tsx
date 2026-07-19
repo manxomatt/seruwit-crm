@@ -8,7 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import MaintenanceNav from '../../MaintenanceNav';
+import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     MaintenanceCategory,
     WorkOrder,
@@ -19,7 +19,7 @@ import {
     TYPE_OPTIONS,
     ITEM_TYPE_OPTIONS,
     formatCurrency,
-} from '../../maintenanceUtils';
+} from '../../../../maintenanceUtils';
 
 interface Props {
     workOrder: WorkOrder;

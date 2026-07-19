@@ -10,14 +10,14 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, useForm, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import MaintenanceNav from '../../MaintenanceNav';
+import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     MaintenanceCategory,
     MaintenanceSchedule,
     WorkOrderVehicle,
     formatDate,
     formatOdometer,
-} from '../../maintenanceUtils';
+} from '../../../../maintenanceUtils';
 
 interface PaginatedSchedules {
     data: MaintenanceSchedule[];

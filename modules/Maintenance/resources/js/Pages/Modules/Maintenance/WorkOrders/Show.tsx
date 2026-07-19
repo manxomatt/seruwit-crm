@@ -5,7 +5,7 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import MaintenanceNav from '../../MaintenanceNav';
+import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     WorkOrder,
     WorkOrderItem,
@@ -16,7 +16,7 @@ import {
     formatDateTime,
     formatCurrency,
     formatOdometer,
-} from '../../maintenanceUtils';
+} from '../../../../maintenanceUtils';
 
 interface Props {
     workOrder: WorkOrder & { actual_total_cost: number | null };

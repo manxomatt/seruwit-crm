@@ -5,7 +5,7 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import MaintenanceNav from '../../MaintenanceNav';
+import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     WorkOrder,
     WorkOrderVehicle,
@@ -16,7 +16,7 @@ import {
     formatCurrency,
     STATUS_OPTIONS,
     PRIORITY_OPTIONS,
-} from '../../maintenanceUtils';
+} from '../../../../maintenanceUtils';
 
 interface PaginatedWorkOrders {
     data: WorkOrder[];

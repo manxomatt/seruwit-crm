@@ -2,14 +2,14 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link } from '@inertiajs/react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import MaintenanceNav from '../MaintenanceNav';
+import MaintenanceNav from '../../../MaintenanceNav';
 import {
     WorkOrder,
     getStatusBadge,
     getPriorityBadge,
     formatDate,
     formatCurrency,
-} from '../maintenanceUtils';
+} from '../../../maintenanceUtils';
 
 interface Summary {
     draft: number;
