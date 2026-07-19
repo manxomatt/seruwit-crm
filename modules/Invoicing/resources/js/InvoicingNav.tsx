@@ -2,13 +2,10 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Buat Invoice', route: 'billing.invoices.create', pattern: 'billing.invoices.*' },
-    { label: 'Charges', route: 'billing.charges.index', pattern: 'billing.charges.*' },
-    { label: 'Tariffs', route: 'billing.tariffs.index', pattern: 'billing.tariffs.*' },
-    { label: 'Uang Jalan', route: 'billing.allowances.index', pattern: 'billing.allowances.*' },
+    { label: 'Invoices', route: 'invoicing.invoices.index', pattern: 'invoicing.invoices.*' },
 ];
 
-export default function BillingNav(): JSX.Element {
+export default function InvoicingNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
 
     return (

@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Billing\Http\Requests\UpdateOrderChargeRequest;
-use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\OrderCharge;
 use Modules\Billing\Models\Tariff;
+use Modules\Invoicing\Models\Invoice;
 use Modules\Orders\Models\DeliveryOrder;
 
 class OrderChargeController extends Controller
@@ -45,7 +45,7 @@ class OrderChargeController extends Controller
         $user = Auth::user();
 
         $orders = DeliveryOrder::query()
-            ->with(['customer:id,code,name', 'charge.tariff:id,origin,destination', 'charge.invoice:id,code,status'])
+            ->with(['customer:id,code,name', 'charge.tariff:id,origin,destination', 'charge.invoiceLine.invoice:id,code,status'])
             ->whereIn('status', self::BILLABLE_STATUSES)
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -57,7 +57,7 @@ class OrderChargeController extends Controller
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
             ->when(
                 request()->boolean('uninvoiced'),
-                fn ($query) => $query->whereDoesntHave('charge', fn ($q) => $q->whereNotNull('invoice_id')),
+                fn ($query) => $query->whereDoesntHave('charge.invoiceLine'),
             )
             ->latest('order_date')
             ->paginate(15)
@@ -103,8 +103,14 @@ class OrderChargeController extends Controller
             ],
         );
 
-        if ($charge->invoice && $charge->invoice->status === Invoice::STATUS_DRAFT) {
-            $charge->invoice->recalculate();
+        // Repricing a charge that is already on a draft invoice must move the
+        // invoice's totals with it; the line carries its own snapshot, so both
+        // have to be updated.
+        $line = $charge->invoiceLine()->with('invoice')->first();
+
+        if ($line && $line->invoice?->status === Invoice::STATUS_DRAFT) {
+            $line->update(['amount' => $charge->amount]);
+            $line->invoice->recalculate();
         }
 
         return back()->with('success', 'Charge updated.');

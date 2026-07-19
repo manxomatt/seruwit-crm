@@ -40,7 +40,10 @@ class PlanSeeder extends Seeder
                 'key' => 'pro',
                 'name' => 'Pro',
                 'description' => 'Seluruh modul yang tersedia.',
-                'modules' => ['billing', 'carousels', 'customers', 'fleet', 'orders', 'pages', 'posts', 'products', 'transportation'],
+                // Invoicing is not optional alongside Billing: Billing requires it,
+                // and the auto-install chain enforces entitlement at every level,
+                // so a plan selling Billing without it could never install either.
+                'modules' => ['billing', 'carousels', 'customers', 'fleet', 'invoicing', 'orders', 'pages', 'posts', 'products', 'transportation'],
                 'sort_order' => 3,
                 'is_default' => false,
             ],

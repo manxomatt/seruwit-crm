@@ -1,13 +1,13 @@
 <?php
 
-namespace Modules\Billing\Http\Controllers;
+namespace Modules\Invoicing\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Modules\Billing\Models\Invoice;
+use Modules\Invoicing\Models\Invoice;
 
 class InvoicePdfController extends Controller
 {
@@ -20,12 +20,9 @@ class InvoicePdfController extends Controller
             return back()->with('error', 'Only an issued or paid invoice can be printed.');
         }
 
-        $invoice->load([
-            'customer:id,code,name',
-            'charges.deliveryOrder:id,code,pickup_address,delivery_address,delivered_at',
-        ]);
+        $invoice->load(['customer:id,code,name', 'lines']);
 
-        return Pdf::loadView('billing::invoice', [
+        return Pdf::loadView('invoicing::invoice', [
             'invoice' => $invoice,
             'company' => [
                 'name' => Setting::getValue('general.site_name', ''),

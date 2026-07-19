@@ -4,7 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
 import BillingNav from '../../../../BillingNav';
-import { formatMoney } from '../../../../money';
+import { formatMoney } from '@/utils/money';
 
 interface Allowance {
     id: number;

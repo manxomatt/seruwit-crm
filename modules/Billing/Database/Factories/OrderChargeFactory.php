@@ -30,7 +30,6 @@ class OrderChargeFactory extends Factory
             'delivery_order_id' => DeliveryOrder::factory(),
             'tariff_id' => null,
             'amount' => fake()->randomFloat(2, 100000, 5000000),
-            'invoice_id' => null,
         ];
     }
 }

@@ -5,9 +5,8 @@ namespace Modules\Billing;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
-use Modules\Billing\Http\Controllers\InvoiceController;
-use Modules\Billing\Http\Controllers\InvoicePdfController;
 use Modules\Billing\Http\Controllers\OrderChargeController;
+use Modules\Billing\Http\Controllers\OrderInvoiceController;
 use Modules\Billing\Http\Controllers\TariffController;
 use Modules\Billing\Http\Controllers\TripAllowanceController;
 use Modules\Billing\Models\OrderCharge;
@@ -16,6 +15,16 @@ use Modules\Billing\Observers\DeliveryOrderObserver;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\TransportationManagement\Models\Trip;
 
+/**
+ * The logistics side of getting paid: what a delivery costs, and what cash a
+ * driver is given for the trip.
+ *
+ * The invoice document itself deliberately lives in Invoicing, one tier down.
+ * This module priced orders *and* owned invoices until the two were split,
+ * which meant a tenant could not invoice anything without running logistics —
+ * everything here speaks of tariffs, routes and delivery orders, and none of it
+ * would have made sense to travel or field sales.
+ */
 class BillingModule implements ModuleContract
 {
     public function key(): string
@@ -30,7 +39,7 @@ class BillingModule implements ModuleContract
 
     public function description(): string
     {
-        return 'Route tariffs, customer invoices for delivered orders, and driver trip allowances (uang jalan).';
+        return 'Route tariffs, pricing for delivered orders, and driver trip allowances (uang jalan). Invoices themselves come from Invoicing.';
     }
 
     public function tier(): ModuleTier
@@ -44,14 +53,16 @@ class BillingModule implements ModuleContract
     }
 
     /**
-     * Tariffs price delivery orders, invoices bundle them, and trip allowances
-     * attach to Transportation trips — Billing cannot stand on its own without
-     * Orders, whose own requirement chain (transportation → fleet, customers,
-     * products) is installed transitively.
+     * Tariffs price delivery orders and trip allowances attach to Transportation
+     * trips, so Billing cannot stand on its own without Orders, whose own
+     * requirement chain (transportation → fleet, customers, products) is
+     * installed transitively. Invoicing supplies the document those prices are
+     * written onto — a Vertical depending on a Foundation module, the direction
+     * the tiers are meant to run.
      */
     public function requires(): array
     {
-        return ['orders'];
+        return ['orders', 'invoicing'];
     }
 
     public function menu(): ?array
@@ -60,7 +71,7 @@ class BillingModule implements ModuleContract
             'name' => 'Billing',
             'slug' => 'billing',
             'icon' => 'billing',
-            'route_name' => 'billing.invoices.index',
+            'route_name' => 'billing.charges.index',
             'permission_module' => 'billing',
             'permission_action' => 'view',
             'sort_order' => 8,
@@ -72,9 +83,13 @@ class BillingModule implements ModuleContract
         return __DIR__.'/Database/Migrations';
     }
 
-    public function viewsPath(): string
+    /**
+     * The one Blade view this module had was the invoice PDF, which went to
+     * Invoicing along with the document it renders.
+     */
+    public function viewsPath(): ?string
     {
-        return __DIR__.'/resources/views';
+        return null;
     }
 
     /**
@@ -94,20 +109,14 @@ class BillingModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/billing', '/billing/invoices');
+        Route::redirect('/billing', '/billing/charges');
 
-        Route::get('/billing/invoices', [InvoiceController::class, 'index'])->middleware('permission:billing,view')->name('billing.invoices.index');
-        Route::get('/billing/invoices/create', [InvoiceController::class, 'create'])->middleware('permission:billing,create')->name('billing.invoices.create');
-        Route::post('/billing/invoices', [InvoiceController::class, 'store'])->middleware('permission:billing,create')->name('billing.invoices.store');
-        Route::get('/billing/invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('permission:billing,view')->name('billing.invoices.show');
-        Route::patch('/billing/invoices/{invoice}', [InvoiceController::class, 'update'])->middleware('permission:billing,update')->name('billing.invoices.update');
-        Route::delete('/billing/invoices/{invoice}', [InvoiceController::class, 'destroy'])->middleware('permission:billing,delete')->name('billing.invoices.destroy');
-        Route::post('/billing/invoices/{invoice}/charges', [InvoiceController::class, 'attachCharge'])->middleware('permission:billing,update')->name('billing.invoices.charges.store');
-        Route::delete('/billing/invoices/{invoice}/charges/{charge}', [InvoiceController::class, 'detachCharge'])->middleware('permission:billing,update')->name('billing.invoices.charges.destroy');
-        Route::post('/billing/invoices/{invoice}/issue', [InvoiceController::class, 'issue'])->middleware('permission:billing,update')->name('billing.invoices.issue');
-        Route::post('/billing/invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->middleware('permission:billing,update')->name('billing.invoices.pay');
-        Route::post('/billing/invoices/{invoice}/void', [InvoiceController::class, 'void'])->middleware('permission:billing,update')->name('billing.invoices.void');
-        Route::get('/billing/invoices/{invoice}/pdf', [InvoicePdfController::class, 'show'])->middleware('permission:billing,view')->name('billing.invoices.pdf');
+        // Raising an invoice from delivered orders. The document that comes out
+        // belongs to Invoicing, so these hand off to its pages once written —
+        // there is no invoice list or detail view here.
+        Route::get('/billing/invoices/create', [OrderInvoiceController::class, 'create'])->middleware('permission:billing,create')->name('billing.invoices.create');
+        Route::post('/billing/invoices', [OrderInvoiceController::class, 'store'])->middleware('permission:billing,create')->name('billing.invoices.store');
+        Route::post('/billing/invoices/{invoice}/orders', [OrderInvoiceController::class, 'attach'])->middleware('permission:billing,update')->name('billing.invoices.orders.store');
 
         Route::get('/billing/charges', [OrderChargeController::class, 'index'])->middleware('permission:billing,view')->name('billing.charges.index');
         Route::patch('/billing/charges/{order}', [OrderChargeController::class, 'update'])->middleware('permission:billing,update')->name('billing.charges.update');

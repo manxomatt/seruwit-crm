@@ -49,7 +49,7 @@
                 @if ($invoice->due_date)
                     <div class="doc-meta">Jatuh tempo: {{ $invoice->due_date->format('d/m/Y') }}</div>
                 @endif
-                @if ($invoice->status === \Modules\Billing\Models\Invoice::STATUS_PAID)
+                @if ($invoice->status === \Modules\Invoicing\Models\Invoice::STATUS_PAID)
                     <div style="text-align: right;"><span class="stamp">LUNAS</span></div>
                 @endif
             </td>
@@ -67,20 +67,19 @@
         <thead>
             <tr>
                 <th class="num">No</th>
-                <th>Kode Order</th>
-                <th>Rute</th>
-                <th>Tgl Kirim</th>
+                {{-- The line's own description, not the order behind it: an issued
+                     invoice must keep saying what it said when it was issued, and
+                     the module that raised the line may not even be installed. --}}
+                <th>Keterangan</th>
                 <th class="amount">Jumlah</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($invoice->charges as $charge)
+            @foreach ($invoice->lines as $line)
                 <tr>
                     <td class="num">{{ $loop->iteration }}</td>
-                    <td>{{ $charge->deliveryOrder?->code }}</td>
-                    <td>{{ $charge->deliveryOrder?->pickup_address }} &rarr; {{ $charge->deliveryOrder?->delivery_address }}</td>
-                    <td>{{ $charge->deliveryOrder?->delivered_at?->format('d/m/Y') }}</td>
-                    <td class="amount">{{ $currencySymbol }} {{ number_format((float) $charge->amount, 0, ',', '.') }}</td>
+                    <td>{{ $line->description }}</td>
+                    <td class="amount">{{ $currencySymbol }} {{ number_format((float) $line->amount, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>

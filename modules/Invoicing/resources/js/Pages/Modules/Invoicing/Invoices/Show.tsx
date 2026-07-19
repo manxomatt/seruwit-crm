@@ -6,31 +6,18 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import BillingNav from '../../../../BillingNav';
-import { formatMoney } from '../../../../money';
+import InvoicingNav from '../../../../InvoicingNav';
+import { formatMoney } from '@/utils/money';
 
-interface Charge {
+interface InvoiceLine {
     id: number;
+    description: string;
     amount: string;
-    delivery_order: {
-        id: number;
-        code: string;
-        pickup_address: string;
-        delivery_address: string;
-        delivered_at: string | null;
-    } | null;
-}
-
-interface AttachableOrder {
-    id: number;
-    code: string;
-    pickup_address: string;
-    delivery_address: string;
-    charge: { id: number; amount: string } | null;
+    source_type: string | null;
+    source_id: number | null;
 }
 
 interface Invoice {
@@ -47,12 +34,11 @@ interface Invoice {
     paid_at: string | null;
     notes: string | null;
     customer: { id: number; code: string; name: string };
-    charges: Charge[];
+    lines: InvoiceLine[];
 }
 
 interface Props {
     invoice: Invoice;
-    attachableOrders: AttachableOrder[];
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -69,54 +55,54 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ invoice, attachableOrders, can }: Props): JSX.Element {
+export default function Show({ invoice, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
-    const [showAttachModal, setShowAttachModal] = useState(false);
+    const [showLineModal, setShowLineModal] = useState(false);
     const [showVoidModal, setShowVoidModal] = useState(false);
 
-    const attachForm = useForm({ order_id: '' });
+    const lineForm = useForm({ description: '', amount: '' });
 
     const isDraft = invoice.status === 'draft';
     const isIssued = invoice.status === 'issued';
     const printable = isIssued || invoice.status === 'paid';
+    const canEditLines = isDraft && can.update;
 
     const issue = () => {
-        router.post(prefixedRoute('billing.invoices.issue', invoice.id), {}, { preserveScroll: true });
+        router.post(prefixedRoute('invoicing.invoices.issue', invoice.id), {}, { preserveScroll: true });
     };
 
     const pay = () => {
-        router.post(prefixedRoute('billing.invoices.pay', invoice.id), {}, { preserveScroll: true });
+        router.post(prefixedRoute('invoicing.invoices.pay', invoice.id), {}, { preserveScroll: true });
     };
 
     const confirmVoid = () => {
-        router.post(prefixedRoute('billing.invoices.void', invoice.id), {}, {
+        router.post(prefixedRoute('invoicing.invoices.void', invoice.id), {}, {
             preserveScroll: true,
             onSuccess: () => setShowVoidModal(false),
         });
     };
 
     const toggleTax = () => {
-        router.patch(prefixedRoute('billing.invoices.update', invoice.id), { tax_enabled: !invoice.tax_enabled }, { preserveScroll: true });
+        router.patch(prefixedRoute('invoicing.invoices.update', invoice.id), { tax_enabled: !invoice.tax_enabled }, { preserveScroll: true });
     };
 
-    const detachCharge = (chargeId: number) => {
-        router.delete(prefixedRoute('billing.invoices.charges.destroy', [invoice.id, chargeId]), { preserveScroll: true });
+    const removeLine = (lineId: number) => {
+        router.delete(prefixedRoute('invoicing.invoices.lines.destroy', [invoice.id, lineId]), { preserveScroll: true });
     };
 
-    const submitAttach: FormEventHandler = (e) => {
+    const submitLine: FormEventHandler = (e) => {
         e.preventDefault();
-        attachForm.transform((data) => ({ order_id: Number(data.order_id) }));
-        attachForm.post(prefixedRoute('billing.invoices.charges.store', invoice.id), {
+        lineForm.post(prefixedRoute('invoicing.invoices.lines.store', invoice.id), {
             preserveScroll: true,
             onSuccess: () => {
-                setShowAttachModal(false);
-                attachForm.reset();
+                setShowLineModal(false);
+                lineForm.reset();
             },
         });
     };
 
     const deleteInvoice = () => {
-        router.delete(prefixedRoute('billing.invoices.destroy', invoice.id));
+        router.delete(prefixedRoute('invoicing.invoices.destroy', invoice.id));
     };
 
     return (
@@ -133,14 +119,14 @@ export default function Show({ invoice, attachableOrders, can }: Props): JSX.Ele
                         {can.update && isDraft && <PrimaryButton onClick={issue}>Issue</PrimaryButton>}
                         {can.update && isIssued && <PrimaryButton onClick={pay}>Mark Paid</PrimaryButton>}
                         {printable && (
-                            <a href={prefixedRoute('billing.invoices.pdf', invoice.id)} target="_blank" rel="noreferrer">
+                            <a href={prefixedRoute('invoicing.invoices.pdf', invoice.id)} target="_blank" rel="noreferrer">
                                 <SecondaryButton type="button">Print PDF</SecondaryButton>
                             </a>
                         )}
                         {can.update && (isDraft || isIssued) && (
                             <DangerButton onClick={() => setShowVoidModal(true)}>Void</DangerButton>
                         )}
-                        <Link href={prefixedRoute('billing.invoices.index')}>
+                        <Link href={prefixedRoute('invoicing.invoices.index')}>
                             <SecondaryButton>Back to List</SecondaryButton>
                         </Link>
                     </div>
@@ -149,7 +135,7 @@ export default function Show({ invoice, attachableOrders, can }: Props): JSX.Ele
         >
             <Head title={invoice.code} />
 
-            <BillingNav />
+            <InvoicingNav />
 
             <div className="space-y-6">
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -186,43 +172,33 @@ export default function Show({ invoice, attachableOrders, can }: Props): JSX.Ele
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">Orders</h3>
-                            {can.update && isDraft && (
-                                <PrimaryButton onClick={() => setShowAttachModal(true)}>Add Order</PrimaryButton>
+                            <h3 className="text-lg font-medium text-gray-900">Item</h3>
+                            {canEditLines && (
+                                <PrimaryButton onClick={() => setShowLineModal(true)}>Tambah Item</PrimaryButton>
                             )}
                         </div>
-                        {invoice.charges.length === 0 ? (
-                            <p className="text-sm text-gray-500">No orders on this invoice yet.</p>
+                        {invoice.lines.length === 0 ? (
+                            <p className="text-sm text-gray-500">Belum ada item pada invoice ini.</p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Order</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Delivered</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
-                                            {can.update && isDraft && <th className="px-4 py-3" />}
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">No</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Keterangan</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Jumlah</th>
+                                            {canEditLines && <th className="px-4 py-3" />}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
-                                        {invoice.charges.map((charge) => (
-                                            <tr key={charge.id}>
-                                                <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
-                                                    {charge.delivery_order ? (
-                                                        <Link href={prefixedRoute('orders.show', charge.delivery_order.id)} className="text-indigo-600 hover:text-indigo-900">
-                                                            {charge.delivery_order.code}
-                                                        </Link>
-                                                    ) : '—'}
-                                                </td>
-                                                <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-500">
-                                                    {charge.delivery_order ? `${charge.delivery_order.pickup_address} → ${charge.delivery_order.delivery_address}` : '—'}
-                                                </td>
-                                                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{charge.delivery_order?.delivered_at || '—'}</td>
-                                                <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">{formatMoney(charge.amount)}</td>
-                                                {can.update && isDraft && (
+                                        {invoice.lines.map((line, index) => (
+                                            <tr key={line.id}>
+                                                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{index + 1}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">{line.description}</td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">{formatMoney(line.amount)}</td>
+                                                {canEditLines && (
                                                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                                                        <button onClick={() => detachCharge(charge.id)} className="text-red-600 hover:text-red-900">Remove</button>
+                                                        <button onClick={() => removeLine(line.id)} className="text-red-600 hover:text-red-900">Remove</button>
                                                     </td>
                                                 )}
                                             </tr>
@@ -266,7 +242,7 @@ export default function Show({ invoice, attachableOrders, can }: Props): JSX.Ele
                         <div className="flex items-center justify-between p-6">
                             <div>
                                 <h3 className="text-sm font-medium text-gray-900">Delete this draft</h3>
-                                <p className="text-sm text-gray-500">Its orders become invoiceable again.</p>
+                                <p className="text-sm text-gray-500">Draft invoice beserta itemnya akan dihapus.</p>
                             </div>
                             <button onClick={deleteInvoice} className="text-sm font-medium text-red-600 hover:text-red-900">
                                 Delete Invoice
@@ -276,34 +252,43 @@ export default function Show({ invoice, attachableOrders, can }: Props): JSX.Ele
                 )}
             </div>
 
-            <Modal show={showAttachModal} onClose={() => setShowAttachModal(false)} maxWidth="md">
-                <form onSubmit={submitAttach} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Add Order</h3>
-                    {attachableOrders.length === 0 ? (
-                        <p className="text-sm text-gray-500">Tidak ada order delivered yang belum tertagih untuk pelanggan ini.</p>
-                    ) : (
-                        <div>
-                            <InputLabel htmlFor="a_order_id" value="Order" />
-                            <Select
-                                id="a_order_id"
-                                className="mt-1"
-                                value={attachForm.data.order_id}
-                                onChange={(value) => attachForm.setData('order_id', value)}
-                                placeholder="Select an order"
-                                options={attachableOrders.map((order) => ({
-                                    value: String(order.id),
-                                    label: `${order.code} — ${order.pickup_address} → ${order.delivery_address}${order.charge ? ` (${formatMoney(order.charge.amount)})` : ''}`,
-                                }))}
-                            />
-                            <InputError message={attachForm.errors.order_id} className="mt-2" />
+            {canEditLines && (
+                <Modal show={showLineModal} onClose={() => setShowLineModal(false)} maxWidth="md">
+                    <form onSubmit={submitLine} className="p-6">
+                        <h3 className="mb-4 text-lg font-medium text-gray-900">Tambah Item</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <InputLabel htmlFor="line_description" value="Keterangan" />
+                                <TextInput
+                                    id="line_description"
+                                    type="text"
+                                    className="mt-1 block w-full"
+                                    value={lineForm.data.description}
+                                    onChange={(e) => lineForm.setData('description', e.target.value)}
+                                />
+                                <InputError message={lineForm.errors.description} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="line_amount" value="Jumlah" />
+                                <TextInput
+                                    id="line_amount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    className="mt-1 block w-full"
+                                    value={lineForm.data.amount}
+                                    onChange={(e) => lineForm.setData('amount', e.target.value)}
+                                />
+                                <InputError message={lineForm.errors.amount} className="mt-2" />
+                            </div>
                         </div>
-                    )}
-                    <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowAttachModal(false)}>Cancel</SecondaryButton>
-                        {attachableOrders.length > 0 && <PrimaryButton disabled={attachForm.processing}>Add</PrimaryButton>}
-                    </div>
-                </form>
-            </Modal>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <SecondaryButton type="button" onClick={() => setShowLineModal(false)}>Cancel</SecondaryButton>
+                            <PrimaryButton disabled={lineForm.processing}>Add</PrimaryButton>
+                        </div>
+                    </form>
+                </Modal>
+            )}
 
             <Modal show={showVoidModal} onClose={() => setShowVoidModal(false)} maxWidth="sm">
                 <div className="p-6">

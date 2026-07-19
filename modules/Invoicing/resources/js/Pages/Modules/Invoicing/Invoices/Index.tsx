@@ -5,8 +5,8 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
-import BillingNav from '../../../../BillingNav';
-import { formatMoney } from '../../../../money';
+import InvoicingNav from '../../../../InvoicingNav';
+import { formatMoney } from '@/utils/money';
 
 interface Invoice {
     id: number;
@@ -31,7 +31,7 @@ interface Props {
     invoices: PaginatedInvoices;
     summary: { outstanding: number; paid_this_month: number; draft_count: number };
     filters: { search: string | null; status: string | null };
-    can: { create: boolean };
+    can: { create: boolean; update: boolean; delete: boolean };
 }
 
 const STATUSES = ['draft', 'issued', 'paid', 'void'];
@@ -55,14 +55,14 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(prefixedRoute('billing.invoices.index'), {
+        router.get(prefixedRoute('invoicing.invoices.index'), {
             search: search || undefined,
             status: filters.status || undefined,
         }, { preserveState: true, replace: true });
     };
 
     const handleStatusFilter = (status: string) => {
-        router.get(prefixedRoute('billing.invoices.index'), {
+        router.get(prefixedRoute('invoicing.invoices.index'), {
             search: search || undefined,
             status: status || undefined,
         }, { preserveState: true, replace: true });
@@ -72,9 +72,9 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Billing</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Invoicing</h2>
                     {can.create && (
-                        <Link href={prefixedRoute('billing.invoices.create')}>
+                        <Link href={prefixedRoute('invoicing.invoices.create')}>
                             <PrimaryButton>New Invoice</PrimaryButton>
                         </Link>
                     )}
@@ -83,7 +83,7 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
         >
             <Head title="Invoices" />
 
-            <BillingNav />
+            <InvoicingNav />
 
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
@@ -152,7 +152,7 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                                             <tr
                                                 key={invoice.id}
                                                 className="cursor-pointer hover:bg-gray-50"
-                                                onClick={() => router.get(prefixedRoute('billing.invoices.show', invoice.id))}
+                                                onClick={() => router.get(prefixedRoute('invoicing.invoices.show', invoice.id))}
                                             >
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-indigo-600">{invoice.code}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{invoice.customer.name}</td>

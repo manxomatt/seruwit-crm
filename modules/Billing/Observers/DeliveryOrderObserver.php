@@ -40,9 +40,12 @@ class DeliveryOrderObserver
         }
 
         if ($order->status === DeliveryOrder::STATUS_CANCELLED) {
+            // An already-billed charge stays: it is part of a financial document
+            // now, and cancelling the order behind it must not silently rewrite
+            // an invoice that has been sent.
             OrderCharge::query()
                 ->where('delivery_order_id', $order->id)
-                ->whereNull('invoice_id')
+                ->whereDoesntHave('invoiceLine')
                 ->delete();
         }
     }

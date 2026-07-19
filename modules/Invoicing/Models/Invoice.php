@@ -1,14 +1,14 @@
 <?php
 
-namespace Modules\Billing\Models;
+namespace Modules\Invoicing\Models;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Billing\Database\Factories\InvoiceFactory;
 use Modules\Customer\Models\Customer;
+use Modules\Invoicing\Database\Factories\InvoiceFactory;
 
 class Invoice extends Model
 {
@@ -76,21 +76,21 @@ class Invoice extends Model
     }
 
     /**
-     * @return HasMany<OrderCharge, $this>
+     * @return HasMany<InvoiceLine, $this>
      */
-    public function charges(): HasMany
+    public function lines(): HasMany
     {
-        return $this->hasMany(OrderCharge::class)->orderBy('id');
+        return $this->hasMany(InvoiceLine::class)->orderBy('id');
     }
 
     /**
-     * Recomputes and stores the totals from the attached charges. Called on
+     * Recomputes and stores the totals from the attached lines. Called on
      * every draft mutation, so issuing is a pure status flip — nothing
      * recomputes after issue, which is the snapshot guarantee.
      */
     public function recalculate(): void
     {
-        $subtotal = (float) $this->charges()->sum('amount');
+        $subtotal = (float) $this->lines()->sum('amount');
         $taxAmount = $this->tax_enabled ? round($subtotal * ((float) $this->tax_rate) / 100, 2) : 0;
 
         $this->update([

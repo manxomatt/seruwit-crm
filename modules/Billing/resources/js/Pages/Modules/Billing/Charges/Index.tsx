@@ -10,7 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
-import { formatMoney } from '../../../../money';
+import { formatMoney } from '@/utils/money';
 
 interface Tariff {
     id: number;

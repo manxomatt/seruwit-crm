@@ -63,19 +63,38 @@ Aturan main yang menentukan desainnya:
 - **Modul tak pernah tahu soal "konsumennya"** — sebuah modul hanya boleh tahu tentang modul yang ia `requires()`, tak pernah sebaliknya. Mis. `Fleet` (kendaraan & sopir) dan `Customer` sama sekali tak tahu soal `Trip` yang memakainya; relasi lintas modul (`vehicle_id`, `customer_id`, dst.) dilindungi lewat foreign key `constrained()` biasa (tanpa cascade) di migrasi milik modul **konsumen**, dan `QueryException` dari pelanggaran constraint itu ditangkap jadi pesan yang ramah, bukan lewat pengecekan level aplikasi.
 - **Auto-install berantai** — `ModuleInstaller::install()` memasang lebih dulu setiap modul yang di-`requires()` (rekursif) sebelum memasang modul yang diminta, tetap menegakkan entitlement paket di tiap level. Memasang `transportation` misalnya otomatis ikut memasang `fleet`, `customers`, dan `products`.
 
+### Tier Modul — Lintas Lini Bisnis vs Spesifik
+
+Setiap modul mendeklarasikan **tier**-nya lewat `tier(): ModuleTier` (`App\Modules\ModuleTier`). Ini yang menjadikan pemisahan "dipakai semua lini bisnis" vs "khusus satu lini" sebagai fakta yang dibawa kode, bukan konvensi di kepala orang:
+
+| Tier | Arti | Modul |
+|---|---|---|
+| `Content` | Situs publik tenant; lepas dari lini bisnis apa pun | `pages`, `posts`, `carousels` |
+| `Foundation` | Sumber daya lintas lini bisnis — dipakai ulang lini mana pun yang memanfaatkan kendaraan | `fleet`, `customers`, `products`, `document`, `maintenance`, `invoicing` |
+| `Vertical` | Operasi khusus satu lini bisnis, dibangun di atas Foundation | `transportation`, `orders`, `billing` |
+
+**Aturan lapisnya keras**: dependency hanya boleh mengalir ke tier yang **lebih rendah atau sama**. Vertical boleh me-`requires()` Foundation; Foundation tak pernah boleh menarik Vertical — itu akan mengelas satu lini bisnis ke dalam basis bersama yang seharusnya dipakai ulang lini lain. Ini pernyataan level-lapisan dari aturan "modul tak pernah tahu konsumennya", dan ditegakkan oleh `App\Modules\ModuleLayering` + `ModuleLayeringTest`, yang juga menolak `requires()` yang tak bisa di-resolve (`ModuleInstaller` diam-diam melewati key tak dikenal sebagai "fitur core", jadi salah ketik akan lolos tanpa penjaga ini).
+
+Grup sidebar diturunkan dari tier ini (prop `moduleTiers`), bukan daftar hardcoded — modul baru otomatis masuk grup yang benar.
+
 Modul terdaftar saat ini:
 
-| Modul (`key`) | Deskripsi | `requires()` |
-|---|---|---|
-| `carousels` | Carousel + manajemen & pengurutan gambar | `media` |
-| `pages` | Page builder GrapesJS untuk situs publik tenant (homepage `/` + `/p/{slug}`) | `media` |
-| `posts` | Blog untuk situs publik tenant (`/blog`) | `media` |
-| `fleet` | Kendaraan & sopir, dipakai ulang oleh modul lain | `media` |
-| `customers` | Data pelanggan lintas modul (`global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan, belum dipakai) | — |
-| `products` | Katalog produk; satuan (unit) dikelola lewat Settings grup `units` | — |
-| `transportation` | Dispatch trip, tracking checkpoint, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
-| `orders` | Delivery order pelanggan, konsolidasi ke trip, stop pengiriman, dan surat jalan cetak | `transportation` |
-| `billing` | Tarif rute, invoice untuk order terkirim, dan uang jalan sopir per trip | `orders` |
+| Modul (`key`) | Tier | Deskripsi | `requires()` |
+|---|---|---|---|
+| `carousels` | Content | Carousel + manajemen & pengurutan gambar | `media` |
+| `pages` | Content | Page builder GrapesJS untuk situs publik tenant (homepage `/` + `/p/{slug}`) | `media` |
+| `posts` | Content | Blog untuk situs publik tenant (`/blog`) | `media` |
+| `fleet` | Foundation | Kendaraan & sopir, dipakai ulang oleh modul lain | `media` |
+| `customers` | Foundation | Data pelanggan lintas modul (`global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan, belum dipakai) | — |
+| `products` | Foundation | Katalog produk; satuan (unit) dikelola lewat Settings grup `units` | — |
+| `document` | Foundation | Dokumen kepatuhan kendaraan & sopir, tracking kedaluwarsa + pengingat | `fleet`, `media` |
+| `maintenance` | Foundation | Work order perawatan kendaraan: jadwal, biaya, pengingat servis | `fleet` |
+| `invoicing` | Foundation | **Dokumen invoice generik**: baris invoice, lifecycle draft/issued/paid, PDF. Sengaja tak tahu apa pun tentang *apa* yang ditagih | `customers` |
+| `transportation` | Vertical | Dispatch trip, tracking checkpoint, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
+| `orders` | Vertical | Delivery order pelanggan, konsolidasi ke trip, stop pengiriman, dan surat jalan cetak | `transportation` |
+| `billing` | Vertical | Tarif rute, harga per delivery order, dan uang jalan sopir per trip | `orders`, `invoicing` |
+
+**Invoicing vs Billing**: keduanya dulu satu modul, yang membuat penagihan hanya mungkin bila tenant menjalankan logistik. Sekarang `invoicing` memegang dokumennya dan `billing` memegang kosakata logistiknya (tarif, rute, delivery order). Sebuah `invoice_line` membawa deskripsi + jumlah + `source` polimorfik opsional yang menunjuk balik ke apa pun yang menerbitkannya — `OrderCharge` hari ini, booking travel nanti. Konsekuensinya, "sudah ditagih atau belum" dijawab oleh **ada/tidaknya invoice line** yang menunjuk charge itu; `order_charges` sengaja tak menyimpan `invoice_id` agar tak ada jawaban kedua yang bisa berbeda pendapat.
 
 **Wajah publik modul**: route publik Pages (`/`, `/p/{slug}`) dan Posts (`/blog`) tetap tinggal di core (`routes/app.php`) karena situs publik tenant ada terlepas dari modulnya — controller-nya (`PageController`, `BlogController`) yang menjaga diri dengan `Modules::available('pages'/'posts')`: homepage jatuh ke landing bawaan `Welcome`, `/p/{slug}` dan `/blog` menjadi 404, bukan 500. Pola yang sama dipakai GlobalSearch, Dashboard, dan Analytics untuk statistik/pencarian Page/Post (prop di-omit saat modul tak tersedia, seperti carousels).
 
@@ -120,7 +139,8 @@ Sumbu ketiga, terpisah dari entitlement paket dan status install: `ModuleRegistr
 - **Product** *(modul)* — katalog produk; satuan (unit) dipilih dari daftar terkelola di Settings grup `units`, bukan teks bebas
 - **Transportation Management** *(modul, `requires: fleet, customers, products`)* — dispatch trip (deteksi bentrok kendaraan/sopir per tanggal), tracking checkpoint GPS saat trip berjalan, manifest kargo per trip (produk + kuantitas), jadwal trip berulang (hari-dalam-minggu + generate otomatis, idempoten), kalender (tampilan minggu/bulan/tahun), laporan biaya & utilisasi
 - **Orders** *(modul, `requires: transportation`)* — delivery order pelanggan, item order, assignment/unassignment ke trip, dan cetak surat jalan
-- **Billing** *(modul, `requires: orders`)* — manajemen tarif, charge per delivery order, invoice lifecycle (issue/pay/void + PDF), dan uang jalan per trip
+- **Invoicing** *(modul, `requires: customers`)* — dokumen invoice generik: baris invoice, lifecycle issue/pay/void, dan PDF. Dipakai bersama modul mana pun yang menagih
+- **Billing** *(modul, `requires: orders, invoicing`)* — manajemen tarif, harga per delivery order, penerbitan invoice dari order terkirim, dan uang jalan per trip
 - **Media Library** — upload, picker, bulk delete; file terisolasi per tenant
 - **Menus** — menu dinamis per peran; entri modul ikut hilang saat modul dicopot
 - **Settings** — pengaturan dikelompokkan per grup, satu halaman per grup, nilai diedit langsung sebagai form field (bukan tabel). Tenant boleh mengedit **nilai** setting miliknya sendiri (mis. tautan media sosial berbeda tiap tenant, lewat izin `settings:update` biasa); mendefinisikan/mengganti nama/menghapus sebuah setting adalah kapasitas **central-only** (gate `manage-settings`) yang otomatis menyebar ke semua tenant saat dibuat (idempoten — tenant yang sudah punya key yang sama tak tertimpa)

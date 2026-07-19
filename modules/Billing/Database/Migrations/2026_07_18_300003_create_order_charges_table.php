@@ -21,9 +21,10 @@ return new class extends Migration
             // destroy priced work, it only loses provenance.
             $table->foreignId('tariff_id')->nullable()->constrained('tariffs')->nullOnDelete();
             $table->decimal('amount', 12, 2)->default(0);
-            // Deleting a draft invoice automatically releases its charges for
-            // re-invoicing.
-            $table->foreignId('invoice_id')->nullable()->constrained('invoices')->nullOnDelete();
+            // No invoice_id: whether a charge has been billed is recorded by
+            // Invoicing, as an invoice_line pointing back at it. Keeping a
+            // column here as well would be a second answer to the same question,
+            // free to disagree with the first.
             $table->timestamps();
         });
     }

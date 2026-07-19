@@ -1,11 +1,10 @@
 <?php
 
-namespace Tests\Feature\Modules\Billing;
+namespace Tests\Feature\Modules\Invoicing;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Billing\Models\Invoice;
-use Modules\Billing\Models\OrderCharge;
-use Modules\Orders\Models\DeliveryOrder;
+use Modules\Invoicing\Models\Invoice;
+use Modules\Invoicing\Models\InvoiceLine;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -26,14 +25,9 @@ class InvoicePdfTest extends TestCase
     {
         $user = $this->createAdminUser();
         $invoice = Invoice::factory()->issued()->create();
-        $order = DeliveryOrder::factory()->create([
-            'customer_id' => $invoice->customer_id,
-            'status' => DeliveryOrder::STATUS_DELIVERED,
-            'delivered_at' => now(),
-        ]);
-        OrderCharge::factory()->create(['delivery_order_id' => $order->id, 'invoice_id' => $invoice->id]);
+        InvoiceLine::factory()->create(['invoice_id' => $invoice->id]);
 
-        $response = $this->actingAs($user)->get(route('module.billing.invoices.pdf', $invoice));
+        $response = $this->actingAs($user)->get(route('module.invoicing.invoices.pdf', $invoice));
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
@@ -45,8 +39,8 @@ class InvoicePdfTest extends TestCase
         $invoice = Invoice::factory()->create();
 
         $this->actingAs($user)
-            ->from(route('module.billing.invoices.show', $invoice))
-            ->get(route('module.billing.invoices.pdf', $invoice))
-            ->assertRedirect(route('module.billing.invoices.show', $invoice));
+            ->from(route('module.invoicing.invoices.show', $invoice))
+            ->get(route('module.invoicing.invoices.pdf', $invoice))
+            ->assertRedirect(route('module.invoicing.invoices.show', $invoice));
     }
 }

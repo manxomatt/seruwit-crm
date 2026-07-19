@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Billing\Http\Requests;
+namespace Modules\Invoicing\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AttachInvoiceChargeRequest extends FormRequest
+class UpdateInvoiceRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,10 @@ class AttachInvoiceChargeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_id' => ['required', 'integer', 'exists:delivery_orders,id'],
+            'issue_date' => ['sometimes', 'required', 'date'],
+            'due_date' => ['nullable', 'date'],
+            'tax_enabled' => ['sometimes', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
 }

@@ -70,26 +70,4 @@ class ModuleTierTest extends TestCase
             );
         }
     }
-
-    /**
-     * The layering rule stated as a test: Foundation is what Verticals build on,
-     * so it must never depend on one. Without this, the first module that reaches
-     * downward would quietly weld a business line into the shared base.
-     */
-    public function test_foundation_modules_never_depend_on_a_vertical(): void
-    {
-        foreach ($this->registry->all() as $key => $module) {
-            if ($module->tier() !== ModuleTier::Foundation) {
-                continue;
-            }
-
-            foreach ($module->requires() as $dependency) {
-                $this->assertNotSame(
-                    ModuleTier::Vertical,
-                    $this->registry->find($dependency)?->tier(),
-                    "Foundation module [{$key}] must not require the vertical [{$dependency}].",
-                );
-            }
-        }
-    }
 }

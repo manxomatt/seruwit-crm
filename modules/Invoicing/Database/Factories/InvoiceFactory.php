@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\Billing\Database\Factories;
+namespace Modules\Invoicing\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Billing\Models\Invoice;
+use Modules\Invoicing\Models\Invoice;
 use Modules\Customer\Models\Customer;
 
 /**

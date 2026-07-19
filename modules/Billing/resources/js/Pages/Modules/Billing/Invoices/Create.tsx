@@ -5,11 +5,10 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
-import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
-import { formatMoney } from '../../../../money';
+import { formatMoney } from '@/utils/money';
 
 interface Customer {
     id: number;
@@ -37,15 +36,9 @@ export default function Create({ customers, selectedCustomerId, invoiceableOrder
     const { data, setData, post, processing, errors } = useForm<{
         customer_id: string;
         order_ids: number[];
-        issue_date: string;
-        due_date: string;
-        notes: string;
     }>({
         customer_id: selectedCustomerId || '',
         order_ids: [],
-        issue_date: '',
-        due_date: '',
-        notes: '',
     });
 
     const selectCustomer = (customerId: string) => {
@@ -83,7 +76,7 @@ export default function Create({ customers, selectedCustomerId, invoiceableOrder
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
                     <form onSubmit={submit} className="max-w-3xl space-y-6">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="customer_id" value="Customer" />
                                 <Select
@@ -98,16 +91,6 @@ export default function Create({ customers, selectedCustomerId, invoiceableOrder
                                     }))}
                                 />
                                 <InputError message={errors.customer_id} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="issue_date" value="Issue Date (default hari ini)" />
-                                <TextInput id="issue_date" type="date" className="mt-1 block w-full" value={data.issue_date} onChange={(e) => setData('issue_date', e.target.value)} />
-                                <InputError message={errors.issue_date} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="due_date" value="Due Date (opsional)" />
-                                <TextInput id="due_date" type="date" className="mt-1 block w-full" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
-                                <InputError message={errors.due_date} className="mt-2" />
                             </div>
                         </div>
 
@@ -150,15 +133,9 @@ export default function Create({ customers, selectedCustomerId, invoiceableOrder
                             </div>
                         )}
 
-                        <div>
-                            <InputLabel htmlFor="notes" value="Notes (opsional)" />
-                            <textarea id="notes" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
-                            <InputError message={errors.notes} className="mt-2" />
-                        </div>
-
                         <div className="flex items-center gap-4">
                             <PrimaryButton disabled={processing || data.order_ids.length === 0}>Create Draft Invoice</PrimaryButton>
-                            <Link href={prefixedRoute('billing.invoices.index')}>
+                            <Link href={prefixedRoute('billing.charges.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>
                         </div>

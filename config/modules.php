@@ -21,6 +21,7 @@ return [
         Modules\Document\DocumentModule::class,
         Modules\Customer\CustomerModule::class,
         Modules\Fleet\FleetModule::class,
+        Modules\Invoicing\InvoicingModule::class,
         Modules\Maintenance\MaintenanceModule::class,
         Modules\Orders\OrdersModule::class,
         Modules\Pages\PagesModule::class,

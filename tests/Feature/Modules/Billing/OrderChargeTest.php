@@ -3,10 +3,11 @@
 namespace Tests\Feature\Modules\Billing;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Billing\Models\Invoice;
 use Modules\Billing\Models\OrderCharge;
 use Modules\Billing\Models\Tariff;
 use Modules\Customer\Models\Customer;
+use Modules\Invoicing\Models\Invoice;
+use Modules\Invoicing\Models\InvoiceLine;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Models\DeliveryOrderItem;
 use Tests\TestCase;
@@ -143,16 +144,30 @@ class OrderChargeTest extends TestCase
         $this->assertSame('888000.00', $charge->amount);
     }
 
+    /**
+     * Bill $amount of work on $invoice, the way OrderInvoiceController does.
+     */
+    private function billed(DeliveryOrder $order, Invoice $invoice, float $amount): OrderCharge
+    {
+        $charge = OrderCharge::factory()->create([
+            'delivery_order_id' => $order->id,
+            'amount' => $amount,
+        ]);
+
+        InvoiceLine::factory()->sourcedFrom($charge)->create([
+            'invoice_id' => $invoice->id,
+            'amount' => $amount,
+        ]);
+
+        return $charge;
+    }
+
     public function test_a_charge_on_an_issued_invoice_cannot_be_changed(): void
     {
         $user = $this->createAdminUser();
         $invoice = Invoice::factory()->issued()->create();
         $order = DeliveryOrder::factory()->create(['status' => DeliveryOrder::STATUS_DELIVERED]);
-        OrderCharge::factory()->create([
-            'delivery_order_id' => $order->id,
-            'invoice_id' => $invoice->id,
-            'amount' => 100000,
-        ]);
+        $this->billed($order, $invoice, 100000);
 
         $this->actingAs($user)->patch(route('module.billing.charges.update', $order), [
             'amount' => 999999,
@@ -161,21 +176,23 @@ class OrderChargeTest extends TestCase
         $this->assertSame('100000.00', OrderCharge::firstWhere('delivery_order_id', $order->id)->amount);
     }
 
+    /**
+     * The line carries its own amount snapshot, so repricing has to move both
+     * it and the invoice totals — otherwise the invoice would keep quoting the
+     * old price.
+     */
     public function test_updating_a_charge_on_a_draft_invoice_recalculates_its_totals(): void
     {
         $user = $this->createAdminUser();
         $invoice = Invoice::factory()->create(['tax_enabled' => false]);
         $order = DeliveryOrder::factory()->create(['status' => DeliveryOrder::STATUS_DELIVERED]);
-        OrderCharge::factory()->create([
-            'delivery_order_id' => $order->id,
-            'invoice_id' => $invoice->id,
-            'amount' => 100000,
-        ]);
+        $this->billed($order, $invoice, 100000);
 
         $this->actingAs($user)->patch(route('module.billing.charges.update', $order), [
             'amount' => 250000,
         ]);
 
         $this->assertSame('250000.00', $invoice->fresh()->total);
+        $this->assertSame('250000.00', $invoice->lines()->first()->amount);
     }
 }

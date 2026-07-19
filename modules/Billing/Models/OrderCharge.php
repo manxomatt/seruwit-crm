@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Modules\Billing\Database\Factories\OrderChargeFactory;
+use Modules\Invoicing\Models\Invoice;
+use Modules\Invoicing\Models\InvoiceLine;
 use Modules\Orders\Models\DeliveryOrder;
 
 class OrderCharge extends Model
@@ -30,7 +33,6 @@ class OrderCharge extends Model
         'delivery_order_id',
         'tariff_id',
         'amount',
-        'invoice_id',
     ];
 
     /**
@@ -60,11 +62,15 @@ class OrderCharge extends Model
     }
 
     /**
-     * @return BelongsTo<Invoice, $this>
+     * The invoice line raised for this charge, if it has been billed. Its
+     * absence is what makes an order invoiceable, so this relation — not a
+     * column here — is the single answer to "has this been billed yet?".
+     *
+     * @return MorphOne<InvoiceLine, $this>
      */
-    public function invoice(): BelongsTo
+    public function invoiceLine(): MorphOne
     {
-        return $this->belongsTo(Invoice::class);
+        return $this->morphOne(InvoiceLine::class, 'source');
     }
 
     /**
@@ -73,7 +79,9 @@ class OrderCharge extends Model
      */
     public function isLocked(): bool
     {
-        return $this->invoice !== null
-            && in_array($this->invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_PAID], true);
+        $invoice = $this->invoiceLine?->invoice;
+
+        return $invoice !== null
+            && in_array($invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_PAID], true);
     }
 }

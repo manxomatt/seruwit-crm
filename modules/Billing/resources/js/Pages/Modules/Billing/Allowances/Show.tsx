@@ -11,7 +11,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import BillingNav from '../../../../BillingNav';
-import { formatMoney } from '../../../../money';
+import { formatMoney } from '@/utils/money';
 
 interface Expense {
     id: number;

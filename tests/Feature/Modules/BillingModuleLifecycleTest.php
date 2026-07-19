@@ -4,9 +4,11 @@ namespace Tests\Feature\Modules;
 
 use App\Models\InstalledModule;
 use App\Modules\ModuleInstaller;
+use Illuminate\Support\Facades\Schema;
 use Modules\Billing\BillingModule;
 use Modules\Billing\Models\OrderCharge;
 use Modules\Customer\Models\Customer;
+use Modules\Invoicing\InvoicingModule;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\OrdersModule;
 use Tests\TestCase;
@@ -62,13 +64,53 @@ class BillingModuleLifecycleTest extends TestCase
         $this->installer()->install($tenant, $this->billing());
 
         $tenant->run(function () {
-            foreach (['billing', 'orders', 'transportation', 'fleet', 'customers', 'products'] as $key) {
+            // Invoicing among them: Billing prices work but no longer owns the
+            // document it is billed on, so the chain has to reach one tier down
+            // and pull it in.
+            foreach (['billing', 'invoicing', 'orders', 'transportation', 'fleet', 'customers', 'products'] as $key) {
                 $this->assertTrue(
                     InstalledModule::query()->where('key', $key)->installed()->exists(),
                     "Expected module [{$key}] to be installed.",
                 );
             }
         });
+    }
+
+    /**
+     * The split is only real if Invoicing can stand without the business line
+     * that used to own it — otherwise nothing has been decoupled.
+     */
+    public function test_invoicing_installs_without_billing_or_any_logistics_module(): void
+    {
+        $tenant = $this->provisionTenant('Invoice Only Co', 'invoice-only-co', 'owner@invoice-only.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+
+        $this->installer()->install($tenant, app(InvoicingModule::class));
+
+        $tenant->run(function () {
+            $this->assertTrue(Schema::hasTable('invoices'));
+            $this->assertTrue(Schema::hasTable('invoice_lines'));
+
+            foreach (['billing', 'orders', 'transportation', 'fleet'] as $key) {
+                $this->assertFalse(
+                    InstalledModule::query()->where('key', $key)->installed()->exists(),
+                    "Invoicing must not drag [{$key}] in with it.",
+                );
+            }
+        });
+    }
+
+    public function test_invoicing_cannot_be_uninstalled_while_billing_depends_on_it(): void
+    {
+        $tenant = $this->provisionTenant('Invoice Guard Co', 'invoice-guard-co', 'owner@invoice-guard.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+
+        $this->installer()->install($tenant, $this->billing());
+
+        $this->expectException(\RuntimeException::class);
+        $this->installer()->uninstall($tenant, app(InvoicingModule::class));
     }
 
     public function test_orders_cannot_be_uninstalled_while_billing_depends_on_it(): void
