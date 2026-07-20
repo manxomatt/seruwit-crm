@@ -13,6 +13,12 @@ class TripCheckpoint extends Model
     /** @use HasFactory<TripCheckpointFactory> */
     use HasFactory;
 
+    /** Typed in by an operator. */
+    public const SOURCE_MANUAL = 'manual';
+
+    /** Written automatically from a GPS fix while the trip was under way. */
+    public const SOURCE_GPS = 'gps';
+
     /**
      * Factory resolution assumes App\Models, so a module's models must point at
      * their own factory explicitly.
@@ -27,6 +33,7 @@ class TripCheckpoint extends Model
      */
     protected $fillable = [
         'trip_id',
+        'source',
         'latitude',
         'longitude',
         'note',

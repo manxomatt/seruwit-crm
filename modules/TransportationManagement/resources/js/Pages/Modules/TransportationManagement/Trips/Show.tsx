@@ -8,16 +8,28 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import LeafletMap from '@/Components/Map/LeafletMap';
+import RouteTrail from '@/Components/Map/RouteTrail';
+import VehicleMarker from '@/Components/Map/VehicleMarker';
+import { formatSpeedKph, toLatLng, type LatLng } from '@/utils/geo';
+import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
+import { FormEventHandler, useMemo, useState } from 'react';
 import TransportationNav from '../../../../TransportationNav';
 
 interface Checkpoint {
     id: number;
+    source: string;
     latitude: string;
     longitude: string;
     note: string | null;
     recorded_at: string;
+}
+
+interface LivePosition {
+    latitude: string;
+    longitude: string;
+    speed_kph: string | null;
+    recorded_at: string | null;
 }
 
 interface Product {
@@ -81,6 +93,8 @@ interface Props {
     trip: Trip;
     products: Product[];
     ordersEnabled: boolean;
+    trackingEnabled: boolean;
+    livePosition: LivePosition | null;
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -121,7 +135,7 @@ const getOrderStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ trip, products, ordersEnabled, can }: Props): JSX.Element {
+export default function Show({ trip, products, ordersEnabled, trackingEnabled, livePosition, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCheckpointModal, setShowCheckpointModal] = useState(false);
@@ -218,6 +232,35 @@ export default function Show({ trip, products, ordersEnabled, can }: Props): JSX
     const completeStop = (id: number) => {
         router.post(prefixedRoute('transportation.trips.stops.complete', [trip.id, id]), {}, { preserveScroll: true });
     };
+
+    // Only worth refreshing while the vehicle is actually moving.
+    usePoll(20000, { only: ['trip', 'livePosition'] }, { autoStart: trackingEnabled && trip.status === 'in_progress' });
+
+    const trail = useMemo(
+        () =>
+            trip.checkpoints
+                .map((checkpoint) => toLatLng(checkpoint.latitude, checkpoint.longitude))
+                .filter((point): point is LatLng => point !== null),
+        [trip.checkpoints],
+    );
+
+    const mappedStops = useMemo(
+        () =>
+            trip.stops
+                .map((stop) => ({ stop, position: toLatLng(stop.lat, stop.lng) }))
+                .filter((entry): entry is { stop: TripStop; position: LatLng } => entry.position !== null)
+                .map(({ stop, position }) => ({
+                    position,
+                    label: stop.address,
+                    sequence: stop.sequence,
+                    status: stop.status,
+                })),
+        [trip.stops],
+    );
+
+    const live = livePosition ? toLatLng(livePosition.latitude, livePosition.longitude) : null;
+    const hasMap = trail.length > 0 || mappedStops.length > 0 || live !== null;
+    const bounds = [...trail, ...mappedStops.map((stop) => stop.position), ...(live ? [live] : [])];
 
     const canDelete = can.delete && trip.status !== 'in_progress';
 
@@ -332,6 +375,31 @@ export default function Show({ trip, products, ordersEnabled, can }: Props): JSX
                     </div>
                 </div>
 
+                {hasMap && (
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <h3 className="text-lg font-medium text-gray-900">Route</h3>
+                                {live && (
+                                    <span className="text-sm text-gray-500">
+                                        Live: {formatSpeedKph(livePosition?.speed_kph)} — {livePosition?.recorded_at}
+                                    </span>
+                                )}
+                            </div>
+                            <LeafletMap bounds={bounds} height="420px">
+                                <RouteTrail trail={trail} stops={mappedStops} />
+                                {live && (
+                                    <VehicleMarker
+                                        position={live}
+                                        label={trip.vehicle.name}
+                                        tone={Number(livePosition?.speed_kph ?? 0) > 3 ? 'moving' : 'idle'}
+                                    />
+                                )}
+                            </LeafletMap>
+                        </div>
+                    </div>
+                )}
+
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-center justify-between">
@@ -442,7 +510,12 @@ export default function Show({ trip, products, ordersEnabled, can }: Props): JSX
                                 {trip.checkpoints.map((checkpoint) => (
                                     <li key={checkpoint.id} className="flex items-start justify-between rounded-md border border-gray-200 p-3">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900">{checkpoint.recorded_at}</p>
+                                            <p className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                                                {checkpoint.recorded_at}
+                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${checkpoint.source === 'gps' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                    {checkpoint.source}
+                                                </span>
+                                            </p>
                                             <p className="text-sm text-gray-500">
                                                 {checkpoint.latitude}, {checkpoint.longitude}
                                                 {checkpoint.note ? ` — ${checkpoint.note}` : ''}

@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    /*
+     * Default Traccar server for the Tracking module. Base URL only: every
+     * tenant points at the same company-run server, so defaulting it saves
+     * setup friction. Credentials are deliberately absent — each tenant's own
+     * Traccar account is what scopes which devices it can see, so they live
+     * per-tenant in tracking_configs (encrypted), never here.
+     */
+    'traccar' => [
+        'base_url' => env('TRACCAR_BASE_URL'),
+    ],
+
 ];

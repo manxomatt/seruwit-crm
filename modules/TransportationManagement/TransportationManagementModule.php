@@ -4,7 +4,9 @@ namespace Modules\TransportationManagement;
 
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Modules\Tracking\Events\VehiclePositionsRecorded;
 use Modules\TransportationManagement\Http\Controllers\CalendarController;
 use Modules\TransportationManagement\Http\Controllers\ReportController;
 use Modules\TransportationManagement\Http\Controllers\TripCheckpointController;
@@ -12,6 +14,7 @@ use Modules\TransportationManagement\Http\Controllers\TripController;
 use Modules\TransportationManagement\Http\Controllers\TripItemController;
 use Modules\TransportationManagement\Http\Controllers\TripScheduleController;
 use Modules\TransportationManagement\Http\Controllers\TripStopController;
+use Modules\TransportationManagement\Listeners\TrackTripProgress;
 
 class TransportationManagementModule implements ModuleContract
 {
@@ -74,13 +77,16 @@ class TransportationManagementModule implements ModuleContract
     }
 
     /**
-     * Pure configuration only — no tenant is initialized yet at boot, so this
-     * module has nothing to register beyond what routes() and permissions()
-     * already cover.
+     * Subscribes to GPS telemetry so trips gain their route trail, distance and
+     * automatic stop arrivals. Tracking sits a tier below and cannot know trips
+     * exist, so the dependency is inverted here — and it stays optional: the
+     * event simply never fires for a tenant without the Tracking module, which
+     * is why this module does not requires() it. Registration only; the
+     * listener gates on Modules::available() at call time.
      */
     public function boot(): void
     {
-        //
+        Event::listen(VehiclePositionsRecorded::class, TrackTripProgress::class);
     }
 
     public function routes(): void

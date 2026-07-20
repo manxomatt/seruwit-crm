@@ -3,6 +3,7 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -85,8 +86,18 @@ class VehicleController extends Controller
 
         $vehicle->load(['maintenanceLogs', 'fuelLogs']);
 
+        // Tracking registers the gpsDevice relation on this model from its own
+        // boot(), so Fleet stays ignorant of it — but the table only exists
+        // where that module is installed, hence the gate.
+        $trackingEnabled = Modules::available('tracking');
+
+        if ($trackingEnabled) {
+            $vehicle->load('gpsDevice');
+        }
+
         return Inertia::render('Modules/Fleet/Vehicles/Show', [
             'vehicle' => $vehicle,
+            'trackingEnabled' => $trackingEnabled,
             'can' => [
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),

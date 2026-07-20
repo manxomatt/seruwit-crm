@@ -27,6 +27,7 @@ return [
         Modules\Pages\PagesModule::class,
         Modules\Posts\PostsModule::class,
         Modules\Product\ProductModule::class,
+        Modules\Tracking\TrackingModule::class,
         Modules\TransportationManagement\TransportationManagementModule::class,
     ],
 

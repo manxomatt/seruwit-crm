@@ -28,10 +28,22 @@ class TripCheckpointFactory extends Factory
     {
         return [
             'trip_id' => Trip::factory(),
+            'source' => TripCheckpoint::SOURCE_MANUAL,
             'latitude' => fake()->latitude(-8, 6),
             'longitude' => fake()->longitude(95, 141),
             'note' => fake()->optional()->sentence(),
             'recorded_at' => fake()->dateTimeBetween('-1 day', 'now'),
         ];
+    }
+
+    /**
+     * Indicate that the checkpoint came from a GPS fix rather than an operator.
+     */
+    public function fromGps(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'source' => TripCheckpoint::SOURCE_GPS,
+            'note' => null,
+        ]);
     }
 }

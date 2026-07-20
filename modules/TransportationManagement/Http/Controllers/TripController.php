@@ -103,9 +103,30 @@ class TripController extends Controller
             $trip->load(['deliveryOrders.customer', 'stops.deliveryOrder']);
         }
 
+        // A GPS-fed trip carries thousands of checkpoints, so the trail is
+        // thinned before it reaches the payload — the drawn line is
+        // indistinguishable and the response stays a sensible size.
+        $trip->setRelation('checkpoints', $this->thinTrail($trip->checkpoints));
+
+        $trackingEnabled = Modules::available('tracking');
+        $livePosition = null;
+
+        if ($trackingEnabled && $trip->vehicle?->gpsDevice?->hasPosition()) {
+            $device = $trip->vehicle->gpsDevice;
+
+            $livePosition = [
+                'latitude' => $device->last_latitude,
+                'longitude' => $device->last_longitude,
+                'speed_kph' => $device->last_speed_kph,
+                'recorded_at' => $device->last_recorded_at?->toDateTimeString(),
+            ];
+        }
+
         return Inertia::render('Modules/TransportationManagement/Trips/Show', [
             'trip' => $trip,
             'ordersEnabled' => $ordersEnabled,
+            'trackingEnabled' => $trackingEnabled,
+            'livePosition' => $livePosition,
             'products' => Product::query()->where('status', 'active')->orderBy('name')->get(['id', 'code', 'name', 'unit']),
             'can' => [
                 'update' => $user->hasPermissionFor('transportation', 'update'),
@@ -113,6 +134,30 @@ class TripController extends Controller
                 'create' => $user->hasPermissionFor('transportation', 'create'),
             ],
         ]);
+    }
+
+    /**
+     * Keeps every checkpoint up to a readable ceiling, then samples evenly.
+     * The first and last points are always kept so the trail still starts and
+     * ends where the trip did.
+     *
+     * @param  \Illuminate\Support\Collection<int, \Modules\TransportationManagement\Models\TripCheckpoint>  $checkpoints
+     * @return \Illuminate\Support\Collection<int, \Modules\TransportationManagement\Models\TripCheckpoint>
+     */
+    protected function thinTrail($checkpoints)
+    {
+        $limit = 500;
+
+        if ($checkpoints->count() <= $limit) {
+            return $checkpoints;
+        }
+
+        $step = (int) ceil($checkpoints->count() / $limit);
+
+        return $checkpoints
+            ->values()
+            ->filter(fn ($checkpoint, $index) => $index % $step === 0 || $index === $checkpoints->count() - 1)
+            ->values();
     }
 
     /**

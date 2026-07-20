@@ -71,7 +71,7 @@ Setiap modul mendeklarasikan **tier**-nya lewat `tier(): ModuleTier` (`App\Modul
 | Tier | Arti | Modul |
 |---|---|---|
 | `Content` | Situs publik tenant; lepas dari lini bisnis apa pun | `pages`, `posts`, `carousels` |
-| `Foundation` | Sumber daya lintas lini bisnis — dipakai ulang lini mana pun yang memanfaatkan kendaraan | `fleet`, `customers`, `products`, `document`, `maintenance`, `invoicing` |
+| `Foundation` | Sumber daya lintas lini bisnis — dipakai ulang lini mana pun yang memanfaatkan kendaraan | `fleet`, `customers`, `products`, `document`, `maintenance`, `invoicing`, `tracking` |
 | `Vertical` | Operasi khusus satu lini bisnis, dibangun di atas Foundation | `transportation`, `orders`, `billing` |
 
 **Aturan lapisnya keras**: dependency hanya boleh mengalir ke tier yang **lebih rendah atau sama**. Vertical boleh me-`requires()` Foundation; Foundation tak pernah boleh menarik Vertical — itu akan mengelas satu lini bisnis ke dalam basis bersama yang seharusnya dipakai ulang lini lain. Ini pernyataan level-lapisan dari aturan "modul tak pernah tahu konsumennya", dan ditegakkan oleh `App\Modules\ModuleLayering` + `ModuleLayeringTest`, yang juga menolak `requires()` yang tak bisa di-resolve (`ModuleInstaller` diam-diam melewati key tak dikenal sebagai "fitur core", jadi salah ketik akan lolos tanpa penjaga ini).
@@ -91,7 +91,8 @@ Modul terdaftar saat ini:
 | `document` | Foundation | Dokumen kepatuhan kendaraan & sopir, tracking kedaluwarsa + pengingat | `fleet`, `media` |
 | `maintenance` | Foundation | Work order perawatan kendaraan: jadwal, biaya, pengingat servis | `fleet` |
 | `invoicing` | Foundation | **Dokumen invoice generik**: baris invoice, lifecycle draft/issued/paid, PDF. Sengaja tak tahu apa pun tentang *apa* yang ditagih | `customers` |
-| `transportation` | Vertical | Dispatch trip, stop multi-titik (pickup/dropoff berurutan), tracking checkpoint, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
+| `tracking` | Foundation | **Integrasi GPS Traccar**: pairing device↔kendaraan, tarik posisi live (polling per menit), peta armada Leaflet, odometer otomatis. Sengaja tak tahu apa pun tentang *trip* — konsumen berlangganan event | `fleet` |
+| `transportation` | Vertical | Dispatch trip, stop multi-titik (pickup/dropoff berurutan), checkpoint (manual **atau** GPS otomatis), jarak & geofence dari telemetri, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
 | `orders` | Vertical | Delivery order pelanggan, konsolidasi banyak order ke satu trip (stop dropoff dibuat otomatis), dan surat jalan cetak (PDF) | `transportation` |
 | `billing` | Vertical | Tarif rute, harga per delivery order (charge), penerbitan invoice dari order terkirim (dokumennya milik Invoicing), dan uang jalan sopir per trip | `orders`, `invoicing` |
 

@@ -4,6 +4,7 @@ namespace Modules\TransportationManagement\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Modules\TransportationManagement\Actions\TripStopTransitions;
 use Modules\TransportationManagement\Http\Requests\StoreTripStopRequest;
 use Modules\TransportationManagement\Http\Requests\UpdateTripStopRequest;
 use Modules\TransportationManagement\Models\Trip;
@@ -86,51 +87,28 @@ class TripStopController extends Controller
     /**
      * Mark the stop as arrived.
      */
-    public function arrive(Trip $trip, TripStop $stop): RedirectResponse
+    public function arrive(Trip $trip, TripStop $stop, TripStopTransitions $transitions): RedirectResponse
     {
         if ($stop->trip_id !== $trip->id) {
             abort(404);
         }
 
-        if ($trip->status !== Trip::STATUS_IN_PROGRESS) {
-            return back()->with('error', 'Stops can only be worked while the trip is in progress.');
-        }
+        $result = $transitions->arrive($trip, $stop);
 
-        if ($stop->status !== TripStop::STATUS_PENDING) {
-            return back()->with('error', 'Only a pending stop can be marked as arrived.');
-        }
-
-        $stop->update([
-            'status' => TripStop::STATUS_ARRIVED,
-            'arrived_at' => now(),
-        ]);
-
-        return back()->with('success', 'Arrived at stop.');
+        return back()->with($result->ok ? 'success' : 'error', $result->message);
     }
 
     /**
      * Mark the stop as completed.
      */
-    public function complete(Trip $trip, TripStop $stop): RedirectResponse
+    public function complete(Trip $trip, TripStop $stop, TripStopTransitions $transitions): RedirectResponse
     {
         if ($stop->trip_id !== $trip->id) {
             abort(404);
         }
 
-        if ($trip->status !== Trip::STATUS_IN_PROGRESS) {
-            return back()->with('error', 'Stops can only be worked while the trip is in progress.');
-        }
+        $result = $transitions->complete($trip, $stop);
 
-        if (! in_array($stop->status, [TripStop::STATUS_PENDING, TripStop::STATUS_ARRIVED], true)) {
-            return back()->with('error', 'This stop has already been completed.');
-        }
-
-        $stop->update([
-            'status' => TripStop::STATUS_COMPLETED,
-            'arrived_at' => $stop->arrived_at ?? now(),
-            'completed_at' => now(),
-        ]);
-
-        return back()->with('success', 'Stop completed.');
+        return back()->with($result->ok ? 'success' : 'error', $result->message);
     }
 }
