@@ -193,6 +193,10 @@ php artisan modules:install {tenant} {module}     # pasang (memulihkan data bila
 php artisan modules:uninstall {tenant} {module}   # copot, data disimpan sampai masa tenggang habis
 php artisan modules:backfill [--tenant=]          # tandai modul lama sebagai terpasang (idempotent)
 php artisan modules:purge-expired                 # buang data modul yang tenggangnya lewat (terjadwal 03:00)
+
+# GPS Tracking
+php artisan tracking:poll [--tenant=]             # tarik posisi terbaru dari Traccar tiap tenant (terjadwal per menit)
+php artisan tracking:prune [--tenant=]            # pangkas vehicle_positions ke jendela retensi (terjadwal 03:30)
 ```
 
 ## Konfigurasi Penting
@@ -212,7 +216,7 @@ php artisan modules:purge-expired                 # buang data modul yang tengga
 1. Wildcard DNS `*.domain.com` + wildcard SSL (Cloudflare/Caddy)
 2. Ubah pipeline provisioning ke queued (`shouldBeQueued(true)`) + jalankan queue worker
 3. PgBouncer harus *session mode* (schema separation bergantung `search_path`)
-4. Jalankan scheduler (`php artisan schedule:work` / cron) — `modules:purge-expired` bergantung padanya
+4. Jalankan scheduler (`php artisan schedule:work` / cron) — `modules:purge-expired`, `tracking:poll` (per menit), dan `tracking:prune` bergantung padanya
 5. `modules:backfill` sekali setelah rilis sistem modul, agar tenant lama tidak kehilangan akses ke modul yang sudah mereka pakai
 6. `SettingController::store()` menyebarkan setting baru ke **semua** tenant secara sinkron dalam satu request (`Tenant::query()->get()->each(...)`) — proporsional untuk jumlah tenant saat ini, tapi jadi kandidat kuat untuk di-queue kalau jumlah tenant sudah besar
 
@@ -222,7 +226,7 @@ Roadmap logistik 5 fase (aplikasi menyasar perusahaan transportasi; perusahaan s
 
 | Fase | Isi | Status |
 |---|---|---|
-| 1 | Integrasi server GPS: live tracking, auto-checkpoint, geofencing | **Belum** — menunggu detail API server GPS |
+| 1 | Integrasi server GPS: live tracking, auto-checkpoint, geofencing, odometer | ✅ Selesai (modul `tracking` + listener di `transportation`) |
 | 2 | Delivery Order + multi-stop trip + surat jalan | ✅ Selesai (modul `orders` + stop di `transportation`) |
 | 3 | Proof of Delivery + tampilan driver (PWA) | Belum |
 | 4 | Tarif → invoice → uang jalan | ✅ Selesai (modul `billing` + `invoicing`) |
@@ -231,5 +235,9 @@ Roadmap logistik 5 fase (aplikasi menyasar perusahaan transportasi; perusahaan s
 Catatan terbuka:
 
 - `document` dan `maintenance` belum masuk paket mana pun (lihat "Celah entitlement" di atas).
-- Pencocokan tarif Billing memakai alamat free-text (exact, case-insensitive) — typo alamat menghasilkan charge 0 yang harus diisi manual; master lokasi + dropdown alamat di form order adalah perbaikan strukturalnya.
+- Pencocokan tarif Billing memakai alamat free-text (exact, case-insensitive) — typo alamat menghasilkan charge 0 yang harus diisi manual; master lokasi + dropdown alamat di form order adalah perbaikan strukturalnya. Master lokasi yang sama juga akan mempermudah mengisi lat/lng stop trip, yang saat ini prasyarat geofence-arrival GPS.
 - Menghapus trip yang punya uang jalan / customer yang direferensikan invoice muncul sebagai `QueryException` mentah di UI modul hulunya (by design — modul hulu tak boleh kenal konsumennya); handler pesan ramah bisa ditambahkan per pola Fleet.
+- **GPS Tracking, asumsi yang harus dikonfirmasi ke server Traccar asli**: `TraccarClient::latestPositions()` mengasumsikan `GET /api/positions` tanpa parameter mengembalikan posisi terakhir tiap device; ada fallback `latestPositionsViaDevices()` bila server menolaknya (400). Verifikasi lewat halaman Settings → "Test connection" + `tracking:poll --tenant=` manual sebelum mengandalkan.
+- **Skala polling GPS**: `tracking:poll` sinkron per tenant per menit — sepele di ~5 tenant, melewati jendela 60 detik di ~100. `QueueTenancyBootstrapper` sudah aktif, jadi perbaikannya operasional (satu queued job per tenant + jalankan worker), bukan arsitektur. `vehicle_positions` tumbuh ~26 juta baris/tahun per 50 kendaraan; retensi dipangkas `tracking:prune`.
+- **Tile OSM**: dipakai untuk Fase 1 (tanpa API key), tapi kebijakan OSMF membatasi penggunaan komersial berat — self-host tile (bisa lewat box Traccar) sebelum jumlah tenant/beban naik. URL template ada di satu tempat (`resources/js/Components/Map/LeafletMap.tsx`) agar mudah diganti.
+- **Otoritas odometer**: saat device ter-pair, `tracking:poll` menulis `vehicles.odometer_km`. Form edit Fleet dan fuel log juga bisa menulisnya — belum dijadikan read-only saat ter-pair; kalau operator mengeditnya, baseline device perlu di-re-pair agar tak melenceng.
