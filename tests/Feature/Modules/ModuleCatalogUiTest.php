@@ -61,10 +61,11 @@ class ModuleCatalogUiTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Modules/Index')
                 ->where('plan.key', 'basic')
-                ->where('modules.0.key', 'carousels')
-                ->where('modules.0.entitled', true)
-                ->where('modules.0.installed', false)
-                ->where('modules.0.state', 'available')
+                // Registration order puts billing first; carousels sits at 1.
+                ->where('modules.1.key', 'carousels')
+                ->where('modules.1.entitled', true)
+                ->where('modules.1.installed', false)
+                ->where('modules.1.state', 'available')
             );
     }
 
@@ -103,8 +104,8 @@ class ModuleCatalogUiTest extends TestCase
 
         $this->actingAs($owner)->get('http://grace-co.localhost/module/modules')
             ->assertInertia(fn ($page) => $page
-                ->where('modules.0.state', 'uninstalled')
-                ->where('modules.0.purges_at', now()->addDays(30)->toDateString())
+                ->where('modules.1.state', 'uninstalled')
+                ->where('modules.1.purges_at', now()->addDays(30)->toDateString())
             );
     }
 
@@ -119,9 +120,9 @@ class ModuleCatalogUiTest extends TestCase
 
         $this->actingAs($owner)->get('http://lock-co.localhost/module/modules')
             ->assertInertia(fn ($page) => $page
-                ->where('modules.0.entitled', false)
-                ->where('modules.0.state', 'locked_with_data')
-                ->where('modules.0.plans_offering', ['Basic', 'Pro'])
+                ->where('modules.1.entitled', false)
+                ->where('modules.1.state', 'locked_with_data')
+                ->where('modules.1.plans_offering', ['Basic', 'Pro'])
             );
     }
 
@@ -174,8 +175,8 @@ class ModuleCatalogUiTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Tenants/Show')
                 ->where('tenant.plan', 'basic')
-                ->where('modules.0.key', 'carousels')
-                ->where('modules.0.state', 'available')
+                ->where('modules.1.key', 'carousels')
+                ->where('modules.1.state', 'available')
                 ->has('plans', 3)
             );
     }

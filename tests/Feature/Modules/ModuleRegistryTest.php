@@ -199,8 +199,8 @@ class ModuleRegistryTest extends TestCase
         $this->actingAs($admin)->get('/module/plans')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('availableModules.2.key', 'fleet')
-                ->where('availableModules.2.is_enabled', false)
+                ->where('availableModules.4.key', 'fleet')
+                ->where('availableModules.4.is_enabled', false)
             );
     }
 }

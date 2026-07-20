@@ -86,7 +86,13 @@ class MenuSeeder extends Seeder
         // In local / central-serves-app mode modules are never "installed"
         // through the tenant flow, so their menus are never seeded via
         // ModuleInstaller::seedMenu(). Add them here so the sidebar works
-        // out of the box during development.
+        // out of the box during development. Central only: inside a tenant
+        // this seeder runs during provisioning, where a module's menu must
+        // arrive with its install, not before it.
+        if (tenancy()->initialized) {
+            return;
+        }
+
         foreach (Modules::all() as $module) {
             if ($menu = $module->menu()) {
                 Menu::updateOrCreate(
