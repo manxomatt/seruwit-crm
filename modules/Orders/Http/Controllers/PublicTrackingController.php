@@ -22,7 +22,7 @@ class PublicTrackingController extends Controller
 
         $order = DeliveryOrder::query()
             ->where('tracking_token', $token)
-            ->with('trip.vehicle')
+            ->with(['trip.vehicle', 'pod'])
             ->first();
 
         // A missing token, or an order not yet trackable, both look the same to
@@ -40,6 +40,11 @@ class PublicTrackingController extends Controller
                 'delivered_at' => $order->delivered_at?->toDateTimeString(),
                 'pickup_address' => $order->pickup_address,
                 'delivery_address' => $order->delivery_address,
+                // Only the fact of receipt — never the signature, photos, GPS or
+                // driver behind the POD. The minimal public stance is deliberate.
+                'recipient_name' => $order->status === DeliveryOrder::STATUS_DELIVERED
+                    ? $order->pod?->recipient_name
+                    : null,
             ],
             'livePosition' => $this->livePosition($order),
         ]);

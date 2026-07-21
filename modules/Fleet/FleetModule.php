@@ -5,6 +5,7 @@ namespace Modules\Fleet;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Fleet\Http\Controllers\DriverAccountController;
 use Modules\Fleet\Http\Controllers\DriverController;
 use Modules\Fleet\Http\Controllers\FuelLogController;
 use Modules\Fleet\Http\Controllers\VehicleController;
@@ -107,5 +108,7 @@ class FleetModule implements ModuleContract
         Route::get('/fleet/drivers/{driver}/edit', [DriverController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.drivers.edit');
         Route::patch('/fleet/drivers/{driver}', [DriverController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.drivers.update');
         Route::delete('/fleet/drivers/{driver}', [DriverController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.drivers.destroy');
+
+        Route::post('/fleet/drivers/{driver}/account', [DriverAccountController::class, 'store'])->middleware('permission:fleet,update')->name('fleet.drivers.account.store');
     }
 }

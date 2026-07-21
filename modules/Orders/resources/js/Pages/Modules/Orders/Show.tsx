@@ -35,6 +35,33 @@ interface AssignableTrip {
     driver: { id: number; name: string } | null;
 }
 
+interface PodItem {
+    id: number;
+    accepted_quantity: string;
+    rejected_quantity: string;
+    returned_quantity: string;
+    reason: string | null;
+    delivery_order_item: { id: number; product: Product | null } | null;
+}
+
+interface PodPhoto {
+    id: number;
+    url: string;
+}
+
+interface Pod {
+    id: number;
+    recipient_name: string;
+    signature_url: string | null;
+    notes: string | null;
+    latitude: string | null;
+    longitude: string | null;
+    delivered_at: string;
+    submitter: { id: number; name: string } | null;
+    photos: PodPhoto[];
+    items: PodItem[];
+}
+
 interface Order {
     id: number;
     code: string;
@@ -57,6 +84,7 @@ interface Order {
         driver: { id: number; name: string };
     } | null;
     items: OrderItem[];
+    pod: Pod | null;
 }
 
 interface Props {
@@ -332,6 +360,98 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                         )}
                     </div>
                 </div>
+
+                {order.pod && (
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6">
+                            <h3 className="text-lg font-medium text-gray-900">Bukti Pengiriman</h3>
+                            <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Diterima oleh</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{order.pod.recipient_name}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Waktu</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{order.pod.delivered_at}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Diinput oleh</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{order.pod.submitter?.name ?? '—'}</dd>
+                                </div>
+                            </dl>
+
+                            {order.pod.signature_url && (
+                                <div className="mt-4">
+                                    <p className="text-sm font-medium text-gray-500">Tanda Tangan</p>
+                                    <img
+                                        src={order.pod.signature_url}
+                                        alt="Tanda tangan penerima"
+                                        className="mt-1 h-32 rounded-md border border-gray-200 bg-white object-contain"
+                                    />
+                                </div>
+                            )}
+
+                            {order.pod.photos.length > 0 && (
+                                <div className="mt-4">
+                                    <p className="text-sm font-medium text-gray-500">Foto</p>
+                                    <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                                        {order.pod.photos.map((photo) => (
+                                            <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer">
+                                                <img src={photo.url} alt="Foto bukti" className="h-24 w-full rounded-md object-cover" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                    <thead>
+                                        <tr className="text-left text-xs font-medium uppercase text-gray-500">
+                                            <th className="py-2 pr-4">Barang</th>
+                                            <th className="py-2 pr-4">Diterima</th>
+                                            <th className="py-2 pr-4">Ditolak</th>
+                                            <th className="py-2 pr-4">Retur</th>
+                                            <th className="py-2">Alasan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {order.pod.items.map((podItem) => (
+                                            <tr key={podItem.id} className="text-gray-900">
+                                                <td className="py-2 pr-4">{podItem.delivery_order_item?.product?.name ?? '—'}</td>
+                                                <td className="py-2 pr-4">{podItem.accepted_quantity}</td>
+                                                <td className="py-2 pr-4">{podItem.rejected_quantity}</td>
+                                                <td className="py-2 pr-4">{podItem.returned_quantity}</td>
+                                                <td className="py-2">{podItem.reason ?? '—'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {order.pod.notes && (
+                                <div className="mt-4">
+                                    <p className="text-sm font-medium text-gray-500">Catatan</p>
+                                    <p className="mt-1 text-sm text-gray-900">{order.pod.notes}</p>
+                                </div>
+                            )}
+
+                            {order.pod.latitude && order.pod.longitude && (
+                                <div className="mt-4">
+                                    <p className="text-sm font-medium text-gray-500">Lokasi</p>
+                                    <a
+                                        href={`https://www.openstreetmap.org/?mlat=${order.pod.latitude}&mlon=${order.pod.longitude}#map=17/${order.pod.latitude}/${order.pod.longitude}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="mt-1 inline-block text-sm text-indigo-600 hover:text-indigo-900"
+                                    >
+                                        {order.pod.latitude}, {order.pod.longitude} — lihat di peta
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {can.delete && isDraft && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">

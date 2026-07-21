@@ -94,7 +94,15 @@ class DeliveryOrderController extends Controller
     {
         $user = Auth::user();
 
-        $order->load(['customer', 'trip.vehicle', 'trip.driver', 'items.product']);
+        $order->load([
+            'customer',
+            'trip.vehicle',
+            'trip.driver',
+            'items.product',
+            'pod.photos',
+            'pod.items.deliveryOrderItem.product',
+            'pod.submitter:id,name',
+        ]);
 
         return Inertia::render('Modules/Orders/Show', [
             'order' => $order,

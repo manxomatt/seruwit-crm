@@ -44,5 +44,26 @@ class RoleSeeder extends Seeder
             ->where('action', 'view')
             ->get();
         $userRole->permissions()->sync($viewPermissions->pluck('id')->toArray());
+
+        // Driver: the mobile delivery portal only. Narrow set — see their trips
+        // and orders, and deliver (POD). No dispatch, no admin.
+        $driverRole = Role::query()->firstOrCreate(
+            ['slug' => 'driver'],
+            [
+                'name' => 'Driver',
+                'description' => 'Mobile delivery driver — POD only',
+                'is_system' => true,
+                'dashboard_path' => '/module/driver/today',
+            ]
+        );
+
+        $driverPermissions = Permission::query()
+            ->where(function ($query) {
+                $query
+                    ->where(fn ($q) => $q->where('module', 'orders')->whereIn('action', ['view', 'deliver']))
+                    ->orWhere(fn ($q) => $q->where('module', 'transportation')->where('action', 'view'));
+            })
+            ->get();
+        $driverRole->permissions()->sync($driverPermissions->pluck('id')->toArray());
     }
 }

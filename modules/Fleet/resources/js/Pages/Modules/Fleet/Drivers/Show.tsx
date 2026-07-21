@@ -1,10 +1,21 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import TextInput from '@/Components/TextInput';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
 import FleetNav from '../../../../FleetNav';
+
+interface DriverUser {
+    id: number;
+    name: string;
+    username: string | null;
+    email: string;
+}
 
 interface Driver {
     id: number;
@@ -17,6 +28,7 @@ interface Driver {
     status: string;
     photo_url: string | null;
     notes: string | null;
+    user: DriverUser | null;
 }
 
 interface Props {
@@ -42,10 +54,25 @@ export default function Show({ driver, can }: Props): JSX.Element {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
 
+    const accountForm = useForm({
+        name: driver.name,
+        username: '',
+        email: driver.email ?? '',
+        password: '',
+    });
+
     const confirmDelete = () => {
         setProcessing(true);
         router.delete(prefixedRoute('fleet.drivers.destroy', driver.id), {
             onFinish: () => setProcessing(false),
+        });
+    };
+
+    const submitAccount: FormEventHandler = (event) => {
+        event.preventDefault();
+        accountForm.post(prefixedRoute('fleet.drivers.account.store', driver.id), {
+            preserveScroll: true,
+            onSuccess: () => accountForm.reset('password'),
         });
     };
 
@@ -115,6 +142,89 @@ export default function Show({ driver, can }: Props): JSX.Element {
                         </dl>
                     </div>
                 </div>
+
+                {can.update && (
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6">
+                            <h3 className="text-sm font-medium text-gray-900">Driver login</h3>
+                            {driver.user ? (
+                                <div className="mt-2 rounded-md bg-green-50 p-4">
+                                    <p className="text-sm text-green-800">
+                                        This driver can sign in to the mobile portal.
+                                    </p>
+                                    <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                                        <div>
+                                            <dt className="font-medium text-gray-500">Username</dt>
+                                            <dd className="text-gray-900">{driver.user.username || '—'}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="font-medium text-gray-500">Email</dt>
+                                            <dd className="text-gray-900">{driver.user.email}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            ) : (
+                                <>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        Create a login so this driver can use the mobile delivery portal.
+                                    </p>
+                                    <form onSubmit={submitAccount} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <InputLabel htmlFor="account_name" value="Name" />
+                                            <TextInput
+                                                id="account_name"
+                                                className="mt-1 block w-full"
+                                                value={accountForm.data.name}
+                                                onChange={(e) => accountForm.setData('name', e.target.value)}
+                                            />
+                                            <InputError message={accountForm.errors.name} className="mt-1" />
+                                        </div>
+                                        <div>
+                                            <InputLabel htmlFor="account_username" value="Username" />
+                                            <TextInput
+                                                id="account_username"
+                                                className="mt-1 block w-full"
+                                                value={accountForm.data.username}
+                                                onChange={(e) => accountForm.setData('username', e.target.value)}
+                                                autoComplete="off"
+                                            />
+                                            <InputError message={accountForm.errors.username} className="mt-1" />
+                                        </div>
+                                        <div>
+                                            <InputLabel htmlFor="account_email" value="Email" />
+                                            <TextInput
+                                                id="account_email"
+                                                type="email"
+                                                className="mt-1 block w-full"
+                                                value={accountForm.data.email}
+                                                onChange={(e) => accountForm.setData('email', e.target.value)}
+                                                autoComplete="off"
+                                            />
+                                            <InputError message={accountForm.errors.email} className="mt-1" />
+                                        </div>
+                                        <div>
+                                            <InputLabel htmlFor="account_password" value="Password" />
+                                            <TextInput
+                                                id="account_password"
+                                                type="password"
+                                                className="mt-1 block w-full"
+                                                value={accountForm.data.password}
+                                                onChange={(e) => accountForm.setData('password', e.target.value)}
+                                                autoComplete="new-password"
+                                            />
+                                            <InputError message={accountForm.errors.password} className="mt-1" />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <PrimaryButton disabled={accountForm.processing}>
+                                                Create Login
+                                            </PrimaryButton>
+                                        </div>
+                                    </form>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {can.delete && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">

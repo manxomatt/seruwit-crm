@@ -3,11 +3,8 @@
 namespace Modules\Orders\Observers;
 
 use App\Modules\Facades\Modules;
-use App\Notifications\GenericNotification;
-use App\Support\NotificationRecipients;
-use Illuminate\Support\Facades\Notification;
-use Modules\Orders\Events\ShipmentStatusChanged;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Orders\Support\ShipmentStatusNotifier;
 use Modules\TransportationManagement\Models\Trip;
 
 /**
@@ -17,6 +14,8 @@ use Modules\TransportationManagement\Models\Trip;
  */
 class TripObserver
 {
+    public function __construct(private readonly ShipmentStatusNotifier $notifier) {}
+
     public function updated(Trip $trip): void
     {
         // available() is also false during an entitlement downgrade while the
@@ -64,23 +63,9 @@ class TripObserver
             ->whereIn('id', $orders->pluck('id'))
             ->update(['status' => $to, ...$extra]);
 
-        $recipients = NotificationRecipients::forPermission('orders', 'view');
-        $label = str_replace('_', ' ', $to);
-
         foreach ($orders as $order) {
             $order->status = $to;
-
-            if ($recipients->isNotEmpty()) {
-                Notification::send($recipients, new GenericNotification(
-                    title: "{$order->code} — {$label}",
-                    body: "Kiriman untuk {$order->customer?->name} kini {$label}.",
-                    url: route('module.orders.show', $order->id),
-                    icon: 'truck',
-                    type: 'info',
-                ));
-            }
-
-            ShipmentStatusChanged::dispatch($order, $from, $to);
+            $this->notifier->announce($order, $from, $to);
         }
     }
 

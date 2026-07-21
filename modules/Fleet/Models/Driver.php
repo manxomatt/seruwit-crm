@@ -2,9 +2,11 @@
 
 namespace Modules\Fleet\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Fleet\Database\Factories\DriverFactory;
 
 /**
@@ -37,6 +39,7 @@ class Driver extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'user_id',
         'name',
         'license_number',
         'license_type',
@@ -56,5 +59,25 @@ class Driver extends Model
         return [
             'license_expires_at' => 'date',
         ];
+    }
+
+    /**
+     * The driver's login, if one has been provisioned. Points at the core User
+     * model — a downward reference, so Fleet stays free of consumer modules.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The driver linked to a given login, or null. How the driver portal
+     * resolves "who am I" from the authenticated user.
+     */
+    public static function forUser(User $user): ?self
+    {
+        return static::query()->firstWhere('user_id', $user->id);
     }
 }

@@ -83,6 +83,8 @@ class DriverController extends Controller
     {
         $user = Auth::user();
 
+        $driver->load('user:id,name,username,email');
+
         return Inertia::render('Modules/Fleet/Drivers/Show', [
             'driver' => $driver,
             'can' => [

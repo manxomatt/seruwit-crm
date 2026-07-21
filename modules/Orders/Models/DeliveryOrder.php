@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 use Modules\Customer\Models\Customer;
 use Modules\Orders\Database\Factories\DeliveryOrderFactory;
@@ -105,6 +106,16 @@ class DeliveryOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(DeliveryOrderItem::class)->orderBy('id');
+    }
+
+    /**
+     * The proof of delivery captured when this order was handed over, if any.
+     *
+     * @return HasOne<ProofOfDelivery, $this>
+     */
+    public function pod(): HasOne
+    {
+        return $this->hasOne(ProofOfDelivery::class);
     }
 
     /**

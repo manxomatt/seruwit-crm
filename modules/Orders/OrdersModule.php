@@ -6,7 +6,9 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Orders\Http\Controllers\DeliveryOrderController;
+use Modules\Orders\Http\Controllers\DriverPortalController;
 use Modules\Orders\Http\Controllers\OrderItemController;
+use Modules\Orders\Http\Controllers\PodController;
 use Modules\Orders\Http\Controllers\SuratJalanController;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Observers\TripObserver;
@@ -38,7 +40,10 @@ class OrdersModule implements ModuleContract
 
     public function permissions(): array
     {
-        return ['view', 'create', 'update', 'delete'];
+        // 'deliver' is the driver capability: submitting a POD and completing a
+        // dropoff. Kept distinct from 'update' so a driver never gains the
+        // dispatch-mutation power that transportation,update carries.
+        return ['view', 'create', 'update', 'delete', 'deliver'];
     }
 
     /**
@@ -108,5 +113,14 @@ class OrdersModule implements ModuleContract
         Route::delete('/orders/{order}/items/{item}', [OrderItemController::class, 'destroy'])->middleware('permission:orders,delete')->name('orders.items.destroy');
 
         Route::get('/orders/{order}/surat-jalan', [SuratJalanController::class, 'show'])->middleware('permission:orders,view')->name('orders.surat-jalan');
+
+        Route::middleware('permission:orders,deliver')->group(function (): void {
+            Route::get('/driver/today', [DriverPortalController::class, 'today'])->name('driver.today');
+            Route::get('/driver/trips/{trip}', [DriverPortalController::class, 'trip'])->name('driver.trip');
+            Route::post('/driver/trips/{trip}/start', [DriverPortalController::class, 'startTrip'])->name('driver.trips.start');
+            Route::post('/driver/trips/{trip}/stops/{stop}/arrive', [DriverPortalController::class, 'arriveStop'])->name('driver.stops.arrive');
+            Route::get('/driver/orders/{order}/pod', [PodController::class, 'create'])->name('driver.pod.create');
+            Route::post('/driver/orders/{order}/pod', [PodController::class, 'store'])->name('driver.pod.store');
+        });
     }
 }

@@ -11,6 +11,7 @@ interface Order {
     delivered_at: string | null;
     pickup_address: string;
     delivery_address: string;
+    recipient_name: string | null;
 }
 
 interface LivePosition {
@@ -76,7 +77,12 @@ export default function Show({ order, livePosition }: Props): JSX.Element {
                                         <div>
                                             <p className={`text-sm font-medium ${done ? 'text-gray-900' : 'text-gray-400'}`}>{step.label}</p>
                                             {step.key === 'delivered' && order.delivered_at && (
-                                                <p className="text-xs text-gray-500">{order.delivered_at}</p>
+                                                <>
+                                                    <p className="text-xs text-gray-500">{order.delivered_at}</p>
+                                                    {order.recipient_name && (
+                                                        <p className="text-xs text-gray-500">Diterima oleh {order.recipient_name}</p>
+                                                    )}
+                                                </>
                                             )}
                                             {step.key === 'confirmed' && order.confirmed_at && (
                                                 <p className="text-xs text-gray-500">{order.confirmed_at}</p>

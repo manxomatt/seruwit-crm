@@ -4,7 +4,9 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
+type ModuleTier = 'vertical' | 'foundation' | 'content';
 
 interface PlanRow {
     id: number;
@@ -21,6 +23,7 @@ interface AvailableModule {
     key: string;
     label: string;
     description: string;
+    tier: ModuleTier;
     is_enabled: boolean;
 }
 
@@ -28,6 +31,28 @@ interface Props {
     plans: PlanRow[];
     availableModules: AvailableModule[];
 }
+
+// Verticals are the headline products, so they lead; foundations enable them;
+// content sits at the bottom. Each tier gets a plain-language heading.
+const TIER_ORDER: ModuleTier[] = ['vertical', 'foundation', 'content'];
+
+const TIER_META: Record<ModuleTier, { label: string; hint: string; accent: string }> = {
+    vertical: {
+        label: 'Fitur Bisnis',
+        hint: 'Modul yang dijual sebagai fitur utama',
+        accent: 'bg-indigo-500',
+    },
+    foundation: {
+        label: 'Fondasi',
+        hint: 'Data & layanan yang menopang fitur bisnis',
+        accent: 'bg-sky-500',
+    },
+    content: {
+        label: 'Konten & Situs',
+        hint: 'Halaman publik dan CMS',
+        accent: 'bg-emerald-500',
+    },
+};
 
 const inputClass =
     'mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm';
@@ -38,6 +63,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
     const [editing, setEditing] = useState<PlanRow | null>(null);
     const [creating, setCreating] = useState(false);
     const [deleting, setDeleting] = useState<PlanRow | null>(null);
+    const [moduleSearch, setModuleSearch] = useState('');
 
     const form = useForm({
         key: '',
@@ -60,6 +86,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
             is_default: false,
         });
         form.clearErrors();
+        setModuleSearch('');
         setCreating(true);
     };
 
@@ -73,6 +100,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
             is_default: plan.is_default,
         });
         form.clearErrors();
+        setModuleSearch('');
         setEditing(plan);
     };
 
@@ -89,6 +117,44 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                 : [...form.data.modules, key],
         );
     };
+
+    // Only modules that can actually be toggled participate in bulk actions —
+    // a locked (platform-disabled) module is never added or removed here.
+    const selectableKeys = useMemo(
+        () => availableModules.filter((m) => m.is_enabled).map((m) => m.key),
+        [availableModules],
+    );
+
+    const selectAll = (): void => {
+        const merged = new Set([...form.data.modules, ...selectableKeys]);
+        form.setData('modules', Array.from(merged));
+    };
+
+    const clearAll = (): void => {
+        // Keep any locked-but-already-selected modules frozen in place.
+        const locked = availableModules.filter((m) => !m.is_enabled).map((m) => m.key);
+        form.setData(
+            'modules',
+            form.data.modules.filter((key) => locked.includes(key)),
+        );
+    };
+
+    const query = moduleSearch.trim().toLowerCase();
+
+    const groupedModules = useMemo(() => {
+        const matches = availableModules.filter(
+            (module) =>
+                query === '' ||
+                module.label.toLowerCase().includes(query) ||
+                module.key.toLowerCase().includes(query) ||
+                module.description.toLowerCase().includes(query),
+        );
+
+        return TIER_ORDER.map((tier) => ({
+            tier,
+            modules: matches.filter((module) => module.tier === tier),
+        })).filter((group) => group.modules.length > 0);
+    }, [availableModules, query]);
 
     const submit = (e: React.FormEvent): void => {
         e.preventDefault();
@@ -211,13 +277,16 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                 </div>
             </div>
 
-            <Modal show={creating || editing !== null} onClose={close} maxWidth="lg">
-                <form onSubmit={submit} className="p-6">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        {editing ? `Ubah paket ${editing.name}` : 'Paket baru'}
-                    </h2>
+            <Modal show={creating || editing !== null} onClose={close} maxWidth="2xl">
+                <form onSubmit={submit} className="flex max-h-[85vh] flex-col">
+                    <div className="border-b border-gray-100 px-6 py-4">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            {editing ? `Ubah paket ${editing.name}` : 'Paket baru'}
+                        </h2>
+                    </div>
 
-                    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="flex-1 overflow-y-auto px-6 py-5">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-gray-700">
                             Nama
                             <input
@@ -286,52 +355,132 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                         </label>
                     </div>
 
-                    <fieldset className="mt-5">
-                        <legend className="text-sm font-medium text-gray-700">Modul dalam paket ini</legend>
-                        {availableModules.length === 0 ? (
-                            <p className="mt-2 text-sm text-gray-500">Belum ada modul opsional yang terdaftar.</p>
-                        ) : (
-                            <div className="mt-2 space-y-2">
-                                {availableModules.map((module) => {
-                                    const checked = form.data.modules.includes(module.key);
-                                    // A disabled module already in the plan stays visible and
-                                    // checked (frozen, not silently dropped on save); one not yet
-                                    // in the plan simply cannot be added until re-enabled.
-                                    const locked = !module.is_enabled;
-                                    return (
-                                        <label
-                                            key={module.key}
-                                            className={`flex items-start gap-3 rounded-lg border p-3 ${
-                                                locked ? 'border-gray-200 bg-gray-50' : 'border-gray-200'
-                                            }`}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
-                                                checked={checked}
-                                                disabled={locked}
-                                                onChange={() => toggleModule(module.key)}
-                                            />
-                                            <span className="text-sm">
-                                                <span className="flex items-center gap-2">
-                                                    <span className={`font-medium ${locked ? 'text-gray-400' : 'text-gray-900'}`}>
-                                                        {module.label}
-                                                    </span>
-                                                    {locked && (
-                                                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-200">
-                                                            Dinonaktifkan
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                <span className="block text-xs text-gray-500">{module.description}</span>
-                                            </span>
-                                        </label>
-                                    );
-                                })}
+                    <div className="mt-6">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-700">Modul dalam paket ini</span>
+                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-indigo-100">
+                                    {form.data.modules.length} dipilih
+                                </span>
                             </div>
+                            <div className="flex items-center gap-1 text-xs">
+                                <button
+                                    type="button"
+                                    onClick={selectAll}
+                                    className="rounded-md px-2 py-1 font-medium text-indigo-600 hover:bg-indigo-50"
+                                >
+                                    Pilih semua
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={clearAll}
+                                    className="rounded-md px-2 py-1 font-medium text-gray-500 hover:bg-gray-100"
+                                >
+                                    Kosongkan
+                                </button>
+                            </div>
+                        </div>
+
+                        {availableModules.length === 0 ? (
+                            <p className="mt-3 text-sm text-gray-500">Belum ada modul opsional yang terdaftar.</p>
+                        ) : (
+                            <>
+                                <div className="relative mt-3">
+                                    <svg
+                                        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        value={moduleSearch}
+                                        onChange={(e) => setModuleSearch(e.target.value)}
+                                        placeholder="Cari modul…"
+                                        className="block w-full rounded-lg border-gray-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+
+                                {groupedModules.length === 0 ? (
+                                    <p className="mt-4 text-center text-sm text-gray-400">
+                                        Tidak ada modul yang cocok dengan “{moduleSearch}”.
+                                    </p>
+                                ) : (
+                                    <div className="mt-4 space-y-5">
+                                        {groupedModules.map(({ tier, modules }) => (
+                                            <div key={tier}>
+                                                <div className="mb-2 flex items-center gap-2">
+                                                    <span className={`h-2 w-2 rounded-full ${TIER_META[tier].accent}`} />
+                                                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                        {TIER_META[tier].label}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400">— {TIER_META[tier].hint}</span>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                                    {modules.map((module) => {
+                                                        const checked = form.data.modules.includes(module.key);
+                                                        // A disabled module already in the plan stays
+                                                        // visible and checked (frozen, not silently
+                                                        // dropped on save); one not yet in the plan
+                                                        // simply cannot be added until re-enabled.
+                                                        const locked = !module.is_enabled;
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={module.key}
+                                                                onClick={() => !locked && toggleModule(module.key)}
+                                                                disabled={locked}
+                                                                aria-pressed={checked}
+                                                                className={`flex items-start gap-3 rounded-lg border p-3 text-left transition ${
+                                                                    locked
+                                                                        ? 'cursor-not-allowed border-gray-200 bg-gray-50'
+                                                                        : checked
+                                                                          ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
+                                                                          : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                                                                }`}
+                                                            >
+                                                                <span
+                                                                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                                                                        checked && !locked
+                                                                            ? 'border-indigo-600 bg-indigo-600 text-white'
+                                                                            : 'border-gray-300 bg-white'
+                                                                    }`}
+                                                                >
+                                                                    {checked && (
+                                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                    )}
+                                                                </span>
+                                                                <span className="min-w-0 text-sm">
+                                                                    <span className="flex items-center gap-2">
+                                                                        <span className={`font-medium ${locked ? 'text-gray-400' : 'text-gray-900'}`}>
+                                                                            {module.label}
+                                                                        </span>
+                                                                        {locked && (
+                                                                            <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 ring-1 ring-red-200">
+                                                                                Nonaktif
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                    <span className="mt-0.5 block text-xs text-gray-500">{module.description}</span>
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         )}
-                        {form.errors.modules && <p className="mt-1 text-xs text-red-500">{form.errors.modules}</p>}
-                    </fieldset>
+                        {form.errors.modules && <p className="mt-2 text-xs text-red-500">{form.errors.modules}</p>}
+                    </div>
 
                     {editing && editing.tenants > 0 && (
                         <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 ring-1 ring-amber-200">
@@ -339,8 +488,9 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                             — data mereka tetap utuh dan kembali jika modulnya dimasukkan lagi.
                         </p>
                     )}
+                    </div>
 
-                    <div className="mt-6 flex justify-end gap-2">
+                    <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
                         <SecondaryButton type="button" onClick={close}>
                             Batal
                         </SecondaryButton>

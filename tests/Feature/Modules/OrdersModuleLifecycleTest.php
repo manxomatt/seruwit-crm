@@ -3,7 +3,9 @@
 namespace Tests\Feature\Modules;
 
 use App\Models\InstalledModule;
+use App\Models\Permission;
 use App\Modules\ModuleInstaller;
+use Illuminate\Support\Facades\Schema;
 use Modules\Orders\OrdersModule;
 use Modules\TransportationManagement\TransportationManagementModule;
 use Tests\TestCase;
@@ -65,6 +67,26 @@ class OrdersModuleLifecycleTest extends TestCase
                     "Expected module [{$key}] to be installed.",
                 );
             }
+        });
+    }
+
+    public function test_installing_creates_the_pod_tables_and_seeds_the_deliver_capability(): void
+    {
+        $tenant = $this->provisionTenant('POD Co', 'pod-co', 'owner@pod.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+
+        $this->installer()->install($tenant, $this->orders());
+
+        $tenant->run(function () {
+            foreach (['proof_of_deliveries', 'pod_photos', 'pod_items'] as $table) {
+                $this->assertTrue(Schema::hasTable($table), "Expected table [{$table}] to exist.");
+            }
+
+            $this->assertTrue(
+                Permission::query()->where('module', 'orders')->where('action', 'deliver')->exists(),
+                'Expected the orders,deliver permission to be seeded.',
+            );
         });
     }
 
