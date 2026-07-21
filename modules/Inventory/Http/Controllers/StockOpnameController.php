@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Modules\Inventory\Http\Requests\FinalizeStockOpnameRequest;
 use Modules\Inventory\Http\Requests\StoreStockOpnameRequest;
 use Modules\Inventory\Http\Requests\UpdateStockOpnameRequest;
-use Modules\Inventory\Models\StockMovement;
 use Modules\Inventory\Models\StockOpname;
+use Modules\Inventory\Support\StockMovementRecorder;
 
 class StockOpnameController extends Controller
 {
@@ -75,7 +75,7 @@ class StockOpnameController extends Controller
                 }
 
                 // Record adjustment movement
-                StockMovement::create([
+                StockMovementRecorder::record([
                     'product_id' => $opnameItem->product_id,
                     'warehouse_id' => $opname->warehouse_id,
                     'type' => $variance > 0 ? 'in' : 'out',

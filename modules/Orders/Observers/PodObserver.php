@@ -3,7 +3,7 @@
 namespace Modules\Orders\Observers;
 
 use Illuminate\Support\Facades\DB;
-use Modules\Inventory\Models\StockMovement;
+use Modules\Inventory\Support\StockMovementRecorder;
 use Modules\Orders\Models\ProofOfDelivery;
 
 class PodObserver
@@ -26,7 +26,7 @@ class PodObserver
 
                 // OUT movement: accepted_quantity
                 if ($podItem->accepted_quantity > 0) {
-                    StockMovement::create([
+                    StockMovementRecorder::record([
                         'product_id' => $product->id,
                         'warehouse_id' => $warehouse->id,
                         'type' => 'out',
@@ -42,7 +42,7 @@ class PodObserver
 
                 // IN movement: returned_quantity (untuk retur dari konsumen)
                 if ($podItem->returned_quantity > 0) {
-                    StockMovement::create([
+                    StockMovementRecorder::record([
                         'product_id' => $product->id,
                         'warehouse_id' => $warehouse->id,
                         'type' => 'in',
