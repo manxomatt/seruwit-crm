@@ -57,6 +57,28 @@ class TrackingCommandsTest extends TestCase
         ], $overrides);
     }
 
+    /**
+     * Fakes the client's two-step path for a host: /devices?all=true derived
+     * from the positions, then /positions?id=… returning them.
+     *
+     * @param  array<int, array<string, mixed>>  $positions
+     * @return array<string, mixed>
+     */
+    private function fleetStubs(string $host, array $positions): array
+    {
+        $devices = collect($positions)
+            ->pluck('deviceId')
+            ->unique()
+            ->values()
+            ->map(fn (int $id, int $i) => ['id' => $id, 'uniqueId' => (string) $id, 'name' => 'D'.$id, 'positionId' => 1000 + $i])
+            ->all();
+
+        return [
+            "{$host}/api/devices*" => Http::response($devices),
+            "{$host}/api/positions*" => Http::response($positions),
+        ];
+    }
+
     public function test_it_polls_each_tenant_into_its_own_schema(): void
     {
         $first = $this->trackedTenant('Track One', 'track-one', 'owner@track-one.test');
@@ -72,12 +94,10 @@ class TrackingCommandsTest extends TestCase
             GpsDevice::factory()->create(['traccar_device_id' => 22]);
         });
 
-        Http::fake([
-            'gps.example.test/api/positions' => Http::response([
-                $this->position(11),
-                $this->position(22),
-            ]),
-        ]);
+        Http::fake($this->fleetStubs('gps.example.test', [
+            $this->position(11),
+            $this->position(22),
+        ]));
 
         $this->artisan('tracking:poll')->assertSuccessful();
 
@@ -134,7 +154,7 @@ class TrackingCommandsTest extends TestCase
 
         Http::fake([
             'broken.example.test/api/*' => Http::response([], 401),
-            'gps.example.test/api/positions' => Http::response([$this->position(22)]),
+            ...$this->fleetStubs('gps.example.test', [$this->position(22)]),
         ]);
 
         $this->artisan('tracking:poll')->assertFailed();

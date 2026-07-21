@@ -102,7 +102,7 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
 
                         {positioned.length === 0 ? (
                             <p className="text-sm text-gray-500">
-                                No vehicle has reported a position yet. Pair a device on the Devices tab.
+                                No device has reported a position yet. Sync from Traccar on the Devices tab, then wait for the next poll.
                             </p>
                         ) : (
                             <ul className="divide-y divide-gray-200">
@@ -114,8 +114,10 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
                                         >
                                             <p className="text-sm font-medium text-gray-900">
                                                 {device.vehicle?.name ?? device.name}
-                                                {device.vehicle && (
+                                                {device.vehicle ? (
                                                     <span className="ml-1 text-gray-500">({device.vehicle.plate_number})</span>
+                                                ) : (
+                                                    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">belum di-pair</span>
                                                 )}
                                             </p>
                                             <p className="text-sm text-gray-500">

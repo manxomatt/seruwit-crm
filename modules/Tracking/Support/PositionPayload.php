@@ -55,13 +55,6 @@ class PositionPayload
             return null;
         }
 
-        // Traccar flags a fix it does not trust; a device with no satellite
-        // lock reports 0,0, which is a real coordinate in the Atlantic and
-        // would otherwise draw a line from Jakarta to the Gulf of Guinea.
-        if (Arr::get($row, 'valid') === false) {
-            return null;
-        }
-
         $latitude = (float) $latitude;
         $longitude = (float) $longitude;
 
@@ -69,6 +62,12 @@ class PositionPayload
             return null;
         }
 
+        // Null island: a device with no satellite lock reports 0,0, a real
+        // coordinate in the Atlantic that would otherwise draw a line from
+        // Jakarta to the Gulf of Guinea. Traccar's own `valid` flag is
+        // deliberately NOT used to reject here — a parked vehicle reports
+        // valid=false with its last-known coordinates, and dropping those would
+        // hide most of a fleet most of the time.
         if ($latitude === 0.0 && $longitude === 0.0) {
             return null;
         }

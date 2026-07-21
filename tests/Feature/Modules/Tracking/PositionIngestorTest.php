@@ -29,14 +29,38 @@ class PositionIngestorTest extends TestCase
     }
 
     /**
+     * Fakes the two-step path the client really uses: /devices?all=true to
+     * learn each device's positionId, then /positions?id=… for the fixes. The
+     * device list is derived from the positions so tests keep passing plain
+     * position rows.
+     *
      * @param  array<int, array<string, mixed>>  $positions
      */
     private function fakeTraccar(array $positions): void
     {
         Http::fake([
-            'gps.example.test/api/positions' => Http::response($positions),
-            'gps.example.test/api/devices' => Http::response([]),
+            'gps.example.test/api/devices*' => Http::response($this->devicesFor($positions)),
+            'gps.example.test/api/positions*' => Http::response($positions),
         ]);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $positions
+     * @return array<int, array<string, mixed>>
+     */
+    private function devicesFor(array $positions): array
+    {
+        return collect($positions)
+            ->pluck('deviceId')
+            ->unique()
+            ->values()
+            ->map(fn (int $id, int $i) => [
+                'id' => $id,
+                'uniqueId' => (string) $id,
+                'name' => 'Device '.$id,
+                'positionId' => 1000 + $i,
+            ])
+            ->all();
     }
 
     /**
@@ -134,7 +158,12 @@ class PositionIngestorTest extends TestCase
             ])]);
         }
 
-        Http::fake(['gps.example.test/api/positions' => $sequence]);
+        Http::fake([
+            'gps.example.test/api/devices*' => Http::response([
+                ['id' => 7, 'uniqueId' => '7', 'name' => 'Device 7', 'positionId' => 1000],
+            ]),
+            'gps.example.test/api/positions*' => $sequence,
+        ]);
 
         for ($poll = 0; $poll < 3; $poll++) {
             $this->ingest($config);

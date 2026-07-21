@@ -192,6 +192,7 @@ php artisan modules:list {tenant}                 # entitlement + status install
 php artisan modules:install {tenant} {module}     # pasang (memulihkan data bila pernah dicopot)
 php artisan modules:uninstall {tenant} {module}   # copot, data disimpan sampai masa tenggang habis
 php artisan modules:backfill [--tenant=]          # tandai modul lama sebagai terpasang (idempotent)
+php artisan modules:migrate [--tenant=] [--pretend] # jalankan migrasi modul yang ditambahkan SETELAH tenant meng-install modulnya (idempotent)
 php artisan modules:purge-expired                 # buang data modul yang tenggangnya lewat (terjadwal 03:00)
 
 # GPS Tracking
@@ -218,7 +219,8 @@ php artisan tracking:prune [--tenant=]            # pangkas vehicle_positions ke
 3. PgBouncer harus *session mode* (schema separation bergantung `search_path`)
 4. Jalankan scheduler (`php artisan schedule:work` / cron) — `modules:purge-expired`, `tracking:poll` (per menit), dan `tracking:prune` bergantung padanya
 5. `modules:backfill` sekali setelah rilis sistem modul, agar tenant lama tidak kehilangan akses ke modul yang sudah mereka pakai
-6. `SettingController::store()` menyebarkan setting baru ke **semua** tenant secara sinkron dalam satu request (`Tenant::query()->get()->each(...)`) — proporsional untuk jumlah tenant saat ini, tapi jadi kandidat kuat untuk di-queue kalau jumlah tenant sudah besar
+6. **`modules:migrate` di setiap deploy** — migrasi modul hanya jalan saat modul di-*install* ke sebuah tenant, jadi migrasi yang ditambahkan ke modul yang **sudah** terpasang tak pernah menyusul ke tenant yang meng-install-nya lebih dulu (`tenants:migrate` dari stancl hanya menangani `database/migrations/tenant/`, bukan path modul). `modules:migrate` menutup celah itu: idempoten, jalankan setelah `tenants:migrate` di `composer deploy`.
+7. `SettingController::store()` menyebarkan setting baru ke **semua** tenant secara sinkron dalam satu request (`Tenant::query()->get()->each(...)`) — proporsional untuk jumlah tenant saat ini, tapi jadi kandidat kuat untuk di-queue kalau jumlah tenant sudah besar
 
 ## Pekerjaan yang Sedang Berjalan
 
@@ -237,7 +239,7 @@ Catatan terbuka:
 - `document` dan `maintenance` belum masuk paket mana pun (lihat "Celah entitlement" di atas).
 - Pencocokan tarif Billing memakai alamat free-text (exact, case-insensitive) — typo alamat menghasilkan charge 0 yang harus diisi manual; master lokasi + dropdown alamat di form order adalah perbaikan strukturalnya. Master lokasi yang sama juga akan mempermudah mengisi lat/lng stop trip, yang saat ini prasyarat geofence-arrival GPS.
 - Menghapus trip yang punya uang jalan / customer yang direferensikan invoice muncul sebagai `QueryException` mentah di UI modul hulunya (by design — modul hulu tak boleh kenal konsumennya); handler pesan ramah bisa ditambahkan per pola Fleet.
-- **GPS Tracking, asumsi yang harus dikonfirmasi ke server Traccar asli**: `TraccarClient::latestPositions()` mengasumsikan `GET /api/positions` tanpa parameter mengembalikan posisi terakhir tiap device; ada fallback `latestPositionsViaDevices()` bila server menolaknya (400). Verifikasi lewat halaman Settings → "Test connection" + `tracking:poll --tenant=` manual sebelum mengandalkan.
+- **GPS Tracking — terverifikasi terhadap server Traccar asli (sky-track.net, 2026-07-20)**: akun tenant biasanya **admin/manager** reseller GPS, jadi `TraccarClient::devices()` memakai `?all=true` (fallback ke `/devices` polos untuk akun user biasa yang menolaknya), dan `latestPositions()` mengambil via positionId per-device (`/positions?id=…`) — bukan `/api/positions` polos yang untuk admin selalu `[]`. Batch di-chunk 50 dan **memecah diri saat 400**, karena satu positionId basi (posisi lama yang sudah dipangkas Traccar untuk device offline) mem-400-kan seluruh batch. `PositionPayload` **tidak** menolak `valid=false` (kendaraan parkir melapor valid=false dengan koordinat terakhir yang sah); hanya null-island 0,0 & di luar rentang yang dibuang. Terbukti: 260 device → 253 posisi masuk.
 - **Skala polling GPS**: `tracking:poll` sinkron per tenant per menit — sepele di ~5 tenant, melewati jendela 60 detik di ~100. `QueueTenancyBootstrapper` sudah aktif, jadi perbaikannya operasional (satu queued job per tenant + jalankan worker), bukan arsitektur. `vehicle_positions` tumbuh ~26 juta baris/tahun per 50 kendaraan; retensi dipangkas `tracking:prune`.
 - **Tile OSM**: dipakai untuk Fase 1 (tanpa API key), tapi kebijakan OSMF membatasi penggunaan komersial berat — self-host tile (bisa lewat box Traccar) sebelum jumlah tenant/beban naik. URL template ada di satu tempat (`resources/js/Components/Map/LeafletMap.tsx`) agar mudah diganti.
 - **Otoritas odometer**: saat device ter-pair, `tracking:poll` menulis `vehicles.odometer_km`. Form edit Fleet dan fuel log juga bisa menulisnya — belum dijadikan read-only saat ter-pair; kalau operator mengeditnya, baseline device perlu di-re-pair agar tak melenceng.

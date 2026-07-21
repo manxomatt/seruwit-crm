@@ -20,43 +20,39 @@ class TraccarClient
     public function __construct(private readonly TrackingConfig $config) {}
 
     /**
-     * Every device the authenticated Traccar user can see.
+     * Every device the account manages.
+     *
+     * The reseller-style accounts these fleets use are Traccar admins or
+     * managers, and a plain /devices returns only devices they own *directly* —
+     * empty, since the trackers belong to sub-users. ?all=true returns the whole
+     * managed tree. A regular user's account rejects ?all=true with 400, so that
+     * is the signal to fall back to the plain listing.
      *
      * @return array<int, array<string, mixed>>
      */
     public function devices(): array
     {
-        return $this->getJson('/devices');
-    }
-
-    /**
-     * The latest fix for each visible device.
-     *
-     * Assumes GET /api/positions with no parameters returns one row per device,
-     * which is Traccar's documented behaviour. Deployments differ, so a 400 is
-     * treated as "this server wants explicit ids" and retried through the
-     * device list rather than surfaced as a failure.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function latestPositions(): array
-    {
-        $response = $this->send('/positions');
+        $response = $this->send('/devices?all=true');
 
         if ($response->status() === 400) {
-            return $this->latestPositionsViaDevices();
+            return $this->getJson('/devices');
         }
 
         return $this->json($response);
     }
 
     /**
-     * Fallback path: read each device's current positionId, then ask for those
-     * positions by id.
+     * The latest fix for each managed device.
+     *
+     * A bare /positions returns only the positions of directly-owned devices,
+     * which is empty for the admin/manager accounts these fleets use — so the
+     * positions are derived from the device list's positionIds, which works for
+     * every account type. That was designed as a fallback; the real server
+     * proved it is the only path that works, so it is now the primary one.
      *
      * @return array<int, array<string, mixed>>
      */
-    public function latestPositionsViaDevices(): array
+    public function latestPositions(): array
     {
         $ids = collect($this->devices())
             ->pluck('positionId')
@@ -68,7 +64,54 @@ class TraccarClient
             return [];
         }
 
-        return $this->getJson('/positions?'.$ids->map(fn (int $id) => 'id='.$id)->implode('&'));
+        // Chunked so a large fleet's id list never overruns the server's URL
+        // length limit — 260 devices is already a couple of kilobytes of query.
+        return $ids->chunk(50)
+            ->flatMap(fn ($chunk) => $this->fetchPositionsByIds($chunk->values()))
+            ->all();
+    }
+
+    /**
+     * Fetches a batch of positions by their ids, tolerating dangling ones.
+     *
+     * Traccar prunes old positions on its own retention schedule, so an offline
+     * device's last positionId can point at a row that no longer exists — and a
+     * single such id makes the whole batch return 400. The batch is split to
+     * isolate the bad id and drop it; every retrievable position still comes
+     * back. Real failures (auth, server error) still surface.
+     *
+     * @param  \Illuminate\Support\Collection<int, int>  $ids
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchPositionsByIds(\Illuminate\Support\Collection $ids): array
+    {
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $response = $this->send('/positions?'.$ids->map(fn (int $id) => 'id='.$id)->implode('&'));
+
+        if ($response->successful()) {
+            $data = $response->json();
+
+            return is_array($data) ? $data : [];
+        }
+
+        if ($response->status() === 400) {
+            if ($ids->count() === 1) {
+                return []; // a single dangling id — skip it
+            }
+
+            $half = (int) ceil($ids->count() / 2);
+
+            return array_merge(
+                $this->fetchPositionsByIds($ids->take($half)->values()),
+                $this->fetchPositionsByIds($ids->skip($half)->values()),
+            );
+        }
+
+        // 401/403/5xx are genuine failures, not a bad id — let json() raise.
+        return $this->json($response);
     }
 
     /**
@@ -126,9 +169,10 @@ class TraccarClient
         $request = Http::baseUrl(rtrim((string) $this->config->baseUrl(), '/').'/api')
             ->timeout(10)
             ->connectTimeout(5)
-            // Never throw on a retried status: a failed run must degrade into a
-            // recorded error for one tenant, not an exception mid-loop.
-            ->retry(2, 200, throw: false)
+            // Retry only a dropped connection, never a 4xx: a 400 here is a
+            // deterministic answer (a dangling position id) that the caller
+            // handles by splitting the batch, so retrying it just wastes time.
+            ->retry(2, 200, fn ($exception) => $exception instanceof ConnectionException, throw: false)
             ->acceptJson();
 
         $request = $this->config->auth_type === TrackingConfig::AUTH_TOKEN

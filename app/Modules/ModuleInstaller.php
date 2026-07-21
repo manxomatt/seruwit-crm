@@ -71,11 +71,7 @@ class ModuleInstaller
             }
         }
 
-        Artisan::call('migrate', [
-            '--path' => $module->migrationsPath(),
-            '--realpath' => true,
-            '--force' => true,
-        ]);
+        $this->migrate($module);
 
         $this->seedPermissions($module);
         $this->seedMenu($module);
@@ -158,6 +154,38 @@ class ModuleInstaller
             ->where('key', $module->key())
             ->installed()
             ->exists());
+    }
+
+    /**
+     * Runs a module's migrations against the current schema. Idempotent —
+     * Laravel records migrations by basename and skips those already run — so
+     * this both installs a module's tables and, run again later, applies any
+     * migrations added to the module since the tenant first installed it.
+     */
+    public function migrate(ModuleContract $module): void
+    {
+        Artisan::call('migrate', [
+            '--path' => $module->migrationsPath(),
+            '--realpath' => true,
+            '--force' => true,
+        ]);
+    }
+
+    /**
+     * The module's migrations that have not yet run in the current schema,
+     * by basename. Empty when the module is fully migrated here.
+     *
+     * @return list<string>
+     */
+    public function pendingMigrations(ModuleContract $module): array
+    {
+        $ran = app('migration.repository')->getRan();
+
+        return collect(File::glob($module->migrationsPath().'/*.php'))
+            ->map(fn (string $path): string => str_replace('.php', '', basename($path)))
+            ->reject(fn (string $migration): bool => in_array($migration, $ran, true))
+            ->values()
+            ->all();
     }
 
     /**

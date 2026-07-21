@@ -28,9 +28,12 @@ class TrackingMapController extends Controller
         $user = Auth::user();
         $config = TrackingConfig::current();
 
+        // Every device that has reported a fix, paired or not: right after a
+        // sync the whole fleet is unpaired, and a map that hid it would look
+        // broken. Paired devices carry their vehicle's name; the rest fall back
+        // to the device name and are flagged unpaired on the client.
         $devices = GpsDevice::query()
             ->with('vehicle:id,name,plate_number,status')
-            ->paired()
             ->whereNotNull('last_latitude')
             ->orderBy('name')
             ->get();

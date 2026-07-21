@@ -68,9 +68,14 @@ class PositionPayloadTest extends TestCase
         $this->assertSame(12.4, $payload->attributes['battery']);
     }
 
-    public function test_it_rejects_a_fix_traccar_marked_invalid(): void
+    public function test_it_keeps_a_valid_false_fix_that_still_has_real_coordinates(): void
     {
-        $this->assertNull(PositionPayload::fromTraccar($this->row(['valid' => false])));
+        // A parked vehicle reports valid=false with its last-known position;
+        // dropping those would hide most of a fleet most of the time.
+        $payload = PositionPayload::fromTraccar($this->row(['valid' => false]));
+
+        $this->assertNotNull($payload);
+        $this->assertSame(-6.2, $payload->latitude);
     }
 
     public function test_it_rejects_null_island_and_out_of_range_coordinates(): void

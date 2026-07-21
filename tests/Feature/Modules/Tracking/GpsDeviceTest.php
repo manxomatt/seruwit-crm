@@ -43,7 +43,7 @@ class GpsDeviceTest extends TestCase
         $existing = GpsDevice::factory()->create(['traccar_device_id' => 1, 'name' => 'Old name']);
 
         Http::fake([
-            'gps.example.test/api/devices' => Http::response([
+            'gps.example.test/api/devices*' => Http::response([
                 ['id' => 1, 'uniqueId' => '860000000000001', 'name' => 'Truck A', 'status' => 'online'],
                 ['id' => 2, 'uniqueId' => '860000000000002', 'name' => 'Truck B', 'status' => 'offline'],
             ]),

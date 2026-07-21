@@ -23,10 +23,10 @@ class TraccarClientTest extends TestCase
         ]));
     }
 
-    public function test_it_lists_devices(): void
+    public function test_it_lists_every_managed_device_with_all_true(): void
     {
         Http::fake([
-            'gps.example.test/api/devices' => Http::response([
+            'gps.example.test/api/devices?all=true' => Http::response([
                 ['id' => 1, 'uniqueId' => '860123456789012', 'name' => 'Truck A', 'status' => 'online', 'positionId' => 55],
             ]),
         ]);
@@ -35,20 +35,52 @@ class TraccarClientTest extends TestCase
 
         $this->assertCount(1, $devices);
         $this->assertSame('Truck A', $devices[0]['name']);
+        Http::assertSent(fn (Request $request) => str_contains($request->url(), 'all=true'));
     }
 
-    public function test_it_reads_the_latest_position_of_every_device(): void
+    public function test_a_regular_account_that_rejects_all_true_falls_back_to_the_plain_listing(): void
     {
         Http::fake([
-            'gps.example.test/api/positions' => Http::response([
-                ['deviceId' => 1, 'latitude' => -6.2, 'longitude' => 106.8, 'speed' => 10, 'valid' => true, 'fixTime' => '2026-07-19T10:00:00Z'],
+            'gps.example.test/api/devices?all=true' => Http::response([], 400),
+            'gps.example.test/api/devices' => Http::response([
+                ['id' => 9, 'uniqueId' => '111', 'name' => 'Own Truck', 'positionId' => 77],
+            ]),
+        ]);
+
+        $devices = $this->client()->devices();
+
+        $this->assertCount(1, $devices);
+        $this->assertSame('Own Truck', $devices[0]['name']);
+    }
+
+    public function test_it_reads_positions_through_the_managed_device_ids(): void
+    {
+        Http::fake([
+            'gps.example.test/api/devices?all=true' => Http::response([
+                ['id' => 1, 'positionId' => 55],
+                ['id' => 2, 'positionId' => 56],
+            ]),
+            'gps.example.test/api/positions?id=55&id=56' => Http::response([
+                ['deviceId' => 1, 'latitude' => -6.2, 'longitude' => 106.8, 'valid' => true, 'fixTime' => '2026-07-19T10:00:00Z'],
+                ['deviceId' => 2, 'latitude' => -6.3, 'longitude' => 106.9, 'valid' => true, 'fixTime' => '2026-07-19T10:00:00Z'],
             ]),
         ]);
 
         $positions = $this->client()->latestPositions();
 
-        $this->assertCount(1, $positions);
+        $this->assertCount(2, $positions);
         $this->assertSame(1, $positions[0]['deviceId']);
+    }
+
+    public function test_it_returns_nothing_when_no_device_has_a_position(): void
+    {
+        Http::fake([
+            'gps.example.test/api/devices?all=true' => Http::response([
+                ['id' => 1, 'positionId' => 0],
+            ]),
+        ]);
+
+        $this->assertSame([], $this->client()->latestPositions());
     }
 
     public function test_basic_credentials_are_sent_when_the_tenant_uses_password_auth(): void
@@ -101,25 +133,5 @@ class TraccarClientTest extends TestCase
 
         $this->expectException(TraccarUnavailableException::class);
         $this->client()->devices();
-    }
-
-    public function test_a_server_that_rejects_a_bare_positions_call_falls_back_to_device_position_ids(): void
-    {
-        Http::fake([
-            'gps.example.test/api/positions?id=55&id=56' => Http::response([
-                ['deviceId' => 1, 'latitude' => -6.2, 'longitude' => 106.8, 'valid' => true, 'fixTime' => '2026-07-19T10:00:00Z'],
-                ['deviceId' => 2, 'latitude' => -6.3, 'longitude' => 106.9, 'valid' => true, 'fixTime' => '2026-07-19T10:00:00Z'],
-            ]),
-            'gps.example.test/api/positions' => Http::response([], 400),
-            'gps.example.test/api/devices' => Http::response([
-                ['id' => 1, 'positionId' => 55],
-                ['id' => 2, 'positionId' => 56],
-                ['id' => 3, 'positionId' => 0],
-            ]),
-        ]);
-
-        $positions = $this->client()->latestPositions();
-
-        $this->assertCount(2, $positions);
     }
 }
