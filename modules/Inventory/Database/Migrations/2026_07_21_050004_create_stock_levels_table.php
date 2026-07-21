@@ -14,7 +14,6 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->decimal('on_hand', 10, 2)->default(0);
             $table->decimal('reserved', 10, 2)->default(0);
-            $table->timestamp('updated_at');
             $table->unique(['product_id', 'warehouse_id']);
             $table->index(['on_hand', 'product_id']);
         });
