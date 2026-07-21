@@ -11,6 +11,8 @@ use Modules\Orders\Http\Controllers\OrderItemController;
 use Modules\Orders\Http\Controllers\PodController;
 use Modules\Orders\Http\Controllers\SuratJalanController;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Orders\Models\ProofOfDelivery;
+use Modules\Orders\Observers\PodObserver;
 use Modules\Orders\Observers\TripObserver;
 use Modules\Orders\Observers\TripStopObserver;
 use Modules\TransportationManagement\Models\Trip;
@@ -93,6 +95,7 @@ class OrdersModule implements ModuleContract
 
         Trip::observe(TripObserver::class);
         TripStop::observe(TripStopObserver::class);
+        ProofOfDelivery::observe(PodObserver::class);
     }
 
     public function routes(): void

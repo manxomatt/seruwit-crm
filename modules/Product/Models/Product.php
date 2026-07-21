@@ -5,6 +5,8 @@ namespace Modules\Product\Models;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Inventory\Models\Warehouse;
 use Modules\Product\Database\Factories\ProductFactory;
 
 /**
@@ -33,6 +35,11 @@ class Product extends Model
         'description',
         'price',
         'status',
+        'category',
+        'stock_unit',
+        'reorder_threshold',
+        'reorder_quantity',
+        'warehouse_id',
     ];
 
     /**
@@ -42,7 +49,17 @@ class Product extends Model
     {
         return [
             'price' => 'decimal:2',
+            'reorder_threshold' => 'integer',
+            'reorder_quantity' => 'integer',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Warehouse, $this>
+     */
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     /**
