@@ -10,11 +10,13 @@ use App\Http\Controllers\Module\ModuleController as ModuleCatalogController;
 use App\Http\Controllers\Module\RoleController as ModuleRoleController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\UserController as ModuleUserController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TodoController;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Route;
+use Modules\Orders\Http\Controllers\PublicTrackingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +35,10 @@ Route::get('/', [PageController::class, 'homepage'])->name('home');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
+// Public shipment tracking — no auth, tenant resolved by domain. The Orders
+// controller 404s when the module is not installed, like the blog does.
+Route::get('/track/{token}', [PublicTrackingController::class, 'show'])->name('track.show');
+
 Route::get('/dashboard', [ModuleDashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -44,6 +50,11 @@ Route::middleware('auth')->group(function () {
 
         // Global Search
         Route::get('/search', [ModuleGlobalSearchController::class, 'search'])->name('search');
+
+        // Notifications — every authenticated user reads their own, no gate.
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+        Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
         // Pages and Posts route from their modules now (see Modules::registerRoutes()
         // below), same as every other extracted module.

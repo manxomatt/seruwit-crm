@@ -133,9 +133,13 @@ class TripSchedule extends Model
                 continue;
             }
 
-            if (Trip::hasActiveTripOn('vehicle_id', $this->vehicle_id, $dateString)
-                || Trip::hasActiveTripOn('driver_id', $this->driver_id, $dateString)) {
-                $skipped[] = ['date' => $dateString, 'reason' => 'The vehicle or driver already has an active trip that day.'];
+            $reasons = array_merge(
+                $this->vehicle ? Trip::vehicleDispatchReasons($this->vehicle, $dateString) : [],
+                $this->driver ? Trip::driverDispatchReasons($this->driver, $dateString) : [],
+            );
+
+            if ($reasons !== []) {
+                $skipped[] = ['date' => $dateString, 'reason' => implode(' ', $reasons)];
 
                 continue;
             }

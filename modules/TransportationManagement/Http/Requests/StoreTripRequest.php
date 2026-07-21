@@ -4,6 +4,8 @@ namespace Modules\TransportationManagement\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Models\Trip;
 
 class StoreTripRequest extends FormRequest
@@ -36,26 +38,40 @@ class StoreTripRequest extends FormRequest
     }
 
     /**
-     * A vehicle or driver already tied to a scheduled or in-progress trip on
-     * the same calendar date cannot be double-booked onto another one.
-     * Checked against Trip directly (Transportation's own table) rather than
-     * a method on the Fleet models, since Fleet has no concept of a "trip".
+     * A vehicle/driver must be dispatchable for the chosen date: not
+     * double-booked, active/available, and with valid papers. The rule lives
+     * on Trip (reading Fleet's columns downward) so Store, Update and recurring
+     * generation all share one definition.
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            $vehicleId = $this->input('vehicle_id');
-            $driverId = $this->input('driver_id');
             $date = $this->input('scheduled_at');
 
-            if ($vehicleId && $date && Trip::hasActiveTripOn('vehicle_id', $vehicleId, $date)) {
-                $validator->errors()->add('vehicle_id', 'This vehicle is already assigned to an active trip on this date.');
+            if (! $date) {
+                return;
             }
 
-            if ($driverId && $date && Trip::hasActiveTripOn('driver_id', $driverId, $date)) {
-                $validator->errors()->add('driver_id', 'This driver is already assigned to an active trip on this date.');
+            if ($vehicle = Vehicle::find($this->input('vehicle_id'))) {
+                foreach (Trip::vehicleDispatchReasons($vehicle, $date, $this->excludingTripId()) as $reason) {
+                    $validator->errors()->add('vehicle_id', $reason);
+                }
+            }
+
+            if ($driver = Driver::find($this->input('driver_id'))) {
+                foreach (Trip::driverDispatchReasons($driver, $date, $this->excludingTripId()) as $reason) {
+                    $validator->errors()->add('driver_id', $reason);
+                }
             }
         });
+    }
+
+    /**
+     * The trip to exclude from double-booking checks — none when creating.
+     */
+    protected function excludingTripId(): ?int
+    {
+        return null;
     }
 
     /**

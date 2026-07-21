@@ -1,7 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import GlobalSearch from '@/Components/GlobalSearch';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, usePoll } from '@inertiajs/react';
 import { useState, ReactNode, useMemo } from 'react';
 
 interface UserProfile {
@@ -354,9 +354,17 @@ export default function ModuleLayout({ header, children }: Props) {
     const pageProps = usePage().props as any;
     const user = pageProps.auth.user as User | null;
     const settings = pageProps.settings as Record<string, string> | undefined;
+    const notifications = pageProps.notificationCenter as {
+        unread_count: number;
+        recent: Array<{ id: string; title: string; body: string; url: string | null; read_at: string | null; created_at: string | null }>;
+    } | null;
     // Each registered module's declared tier, ordered by its menu sort_order.
     const moduleTiers = (pageProps.moduleTiers ?? []) as { key: string; tier: ModuleTier }[];
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Keep the bell fresh without a full navigation. Only the notifications
+    // prop is re-fetched, so this is cheap.
+    usePoll(60000, { only: ['notificationCenter'] });
 
     // No current-tenant domain context means we are on the central domain (the SaaS control plane).
     const isCentral = !pageProps.currentTenant;
@@ -637,11 +645,56 @@ export default function ModuleLayout({ header, children }: Props) {
 
                         <div className="flex items-center gap-x-4 lg:gap-x-6">
                             {/* Notifications */}
-                            <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                                </svg>
-                            </button>
+                            <Dropdown>
+                                <Dropdown.Trigger>
+                                    <button type="button" className="relative -m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
+                                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                        </svg>
+                                        {!!notifications?.unread_count && (
+                                            <span className="absolute right-1 top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
+                                                {notifications.unread_count > 9 ? '9+' : notifications.unread_count}
+                                            </span>
+                                        )}
+                                    </button>
+                                </Dropdown.Trigger>
+                                <Dropdown.Content width="80" contentClasses="py-1 bg-white">
+                                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2">
+                                        <span className="text-sm font-semibold text-gray-900">Notifikasi</span>
+                                        {!!notifications?.unread_count && (
+                                            <Link
+                                                href={route('module.notifications.read-all')}
+                                                method="post"
+                                                as="button"
+                                                preserveScroll
+                                                className="text-xs text-indigo-600 hover:text-indigo-900"
+                                            >
+                                                Tandai semua terbaca
+                                            </Link>
+                                        )}
+                                    </div>
+                                    <div className="max-h-80 overflow-y-auto">
+                                        {!notifications?.recent?.length ? (
+                                            <p className="px-4 py-6 text-center text-sm text-gray-500">Belum ada notifikasi.</p>
+                                        ) : (
+                                            notifications.recent.map((item) => (
+                                                <Link
+                                                    key={item.id}
+                                                    href={item.url ?? route('module.notifications.index')}
+                                                    className={`block border-b border-gray-50 px-4 py-3 hover:bg-gray-50 ${item.read_at ? '' : 'bg-indigo-50/40'}`}
+                                                >
+                                                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                                                    <p className="text-xs text-gray-500">{item.body}</p>
+                                                    <p className="mt-0.5 text-[10px] text-gray-400">{item.created_at}</p>
+                                                </Link>
+                                            ))
+                                        )}
+                                    </div>
+                                    <Link href={route('module.notifications.index')} className="block border-t border-gray-100 px-4 py-2 text-center text-sm text-indigo-600 hover:text-indigo-900">
+                                        Lihat semua
+                                    </Link>
+                                </Dropdown.Content>
+                            </Dropdown>
 
                             {/* Separator */}
                             <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />

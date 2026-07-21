@@ -19,6 +19,12 @@ class Vehicle extends Model
     /** @use HasFactory<VehicleFactory> */
     use HasFactory;
 
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_MAINTENANCE = 'maintenance';
+
+    public const STATUS_INACTIVE = 'inactive';
+
     /**
      * Factory resolution assumes App\Models, so a module's models must point at
      * their own factory explicitly.

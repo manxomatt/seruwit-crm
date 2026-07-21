@@ -116,6 +116,76 @@ class TripTest extends TestCase
         ])->assertSessionHasNoErrors();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function dispatchPayload(int $vehicleId, int $driverId, int $customerId): array
+    {
+        return [
+            'vehicle_id' => $vehicleId,
+            'driver_id' => $driverId,
+            'customer_id' => $customerId,
+            'origin' => 'Jakarta',
+            'destination' => 'Bandung',
+            'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    public function test_a_vehicle_in_maintenance_cannot_be_dispatched(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_MAINTENANCE]);
+        $driver = Driver::factory()->create();
+        $customer = Customer::factory()->create();
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+            ->assertSessionHasErrors('vehicle_id');
+    }
+
+    public function test_a_vehicle_with_an_expired_stnk_cannot_be_dispatched(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['stnk_expires_at' => now()->subDay()]);
+        $driver = Driver::factory()->create();
+        $customer = Customer::factory()->create();
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+            ->assertSessionHasErrors('vehicle_id');
+    }
+
+    public function test_an_unavailable_driver_cannot_be_dispatched(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+        $driver = Driver::factory()->create(['status' => Driver::STATUS_ON_LEAVE]);
+        $customer = Customer::factory()->create();
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+            ->assertSessionHasErrors('driver_id');
+    }
+
+    public function test_a_driver_with_an_expired_sim_cannot_be_dispatched(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+        $driver = Driver::factory()->create(['license_expires_at' => now()->subDay()]);
+        $customer = Customer::factory()->create();
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+            ->assertSessionHasErrors('driver_id');
+    }
+
+    public function test_a_null_expiry_does_not_block_dispatch(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['stnk_expires_at' => null, 'kir_expires_at' => null]);
+        $driver = Driver::factory()->create(['license_expires_at' => null]);
+        $customer = Customer::factory()->create();
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+            ->assertSessionHasNoErrors();
+    }
+
     public function test_starting_a_scheduled_trip_moves_it_to_in_progress(): void
     {
         $user = $this->createAdminUser();

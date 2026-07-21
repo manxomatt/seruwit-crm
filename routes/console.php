@@ -30,3 +30,10 @@ Schedule::command('tracking:prune')
     ->dailyAt('03:30')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Alerts staff about vehicle/driver papers (STNK/KIR/SIM) nearing or past
+// expiry. Morning, once a day — a reminder is raised at most once per threshold.
+Schedule::command('document:scan-expiring')
+    ->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->onOneServer();

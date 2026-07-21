@@ -162,4 +162,63 @@ class Trip extends Model
             ->when($excludingTripId, fn ($query) => $query->where('id', '!=', $excludingTripId))
             ->exists();
     }
+
+    /**
+     * Reasons a vehicle cannot be dispatched on $date, empty when it can.
+     *
+     * Reads Fleet's own columns (status, STNK/KIR expiry) — a downward
+     * dependency, so Fleet stays ignorant of Transportation. Expiry dates
+     * default null on vehicles without the Document module; null means "no
+     * paper on file / no block", so the gate needs no Modules::available guard.
+     * Expired papers are a hard block: dispatching a vehicle with a lapsed KIR
+     * is a compliance violation, not a warning.
+     *
+     * @return list<string>
+     */
+    public static function vehicleDispatchReasons(Vehicle $vehicle, string|\DateTimeInterface $date, ?int $excludingTripId = null): array
+    {
+        $reasons = [];
+
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
+            $reasons[] = "Vehicle {$vehicle->name} is {$vehicle->status}, not active.";
+        }
+
+        if (self::hasActiveTripOn('vehicle_id', $vehicle->id, $date, $excludingTripId)) {
+            $reasons[] = "Vehicle {$vehicle->name} already has a trip on this date.";
+        }
+
+        if ($vehicle->stnk_expires_at && $vehicle->stnk_expires_at->isPast()) {
+            $reasons[] = "Vehicle {$vehicle->name} has an expired STNK.";
+        }
+
+        if ($vehicle->kir_expires_at && $vehicle->kir_expires_at->isPast()) {
+            $reasons[] = "Vehicle {$vehicle->name} has an expired KIR.";
+        }
+
+        return $reasons;
+    }
+
+    /**
+     * Reasons a driver cannot be dispatched on $date, empty when they can.
+     *
+     * @return list<string>
+     */
+    public static function driverDispatchReasons(Driver $driver, string|\DateTimeInterface $date, ?int $excludingTripId = null): array
+    {
+        $reasons = [];
+
+        if ($driver->status !== Driver::STATUS_AVAILABLE) {
+            $reasons[] = "Driver {$driver->name} is {$driver->status}, not available.";
+        }
+
+        if (self::hasActiveTripOn('driver_id', $driver->id, $date, $excludingTripId)) {
+            $reasons[] = "Driver {$driver->name} already has a trip on this date.";
+        }
+
+        if ($driver->license_expires_at && $driver->license_expires_at->isPast()) {
+            $reasons[] = "Driver {$driver->name} has an expired SIM.";
+        }
+
+        return $reasons;
+    }
 }

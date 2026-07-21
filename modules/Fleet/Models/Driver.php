@@ -18,6 +18,12 @@ class Driver extends Model
     /** @use HasFactory<DriverFactory> */
     use HasFactory;
 
+    public const STATUS_AVAILABLE = 'available';
+
+    public const STATUS_ON_LEAVE = 'on_leave';
+
+    public const STATUS_INACTIVE = 'inactive';
+
     /**
      * Factory resolution assumes App\Models, so a module's models must point at
      * their own factory explicitly.

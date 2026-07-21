@@ -33,6 +33,23 @@ class OrderTripSyncTest extends TestCase
         $this->assertSame(DeliveryOrder::STATUS_IN_TRANSIT, $order->fresh()->status);
     }
 
+    public function test_a_status_change_notifies_staff_and_fires_the_shipment_event(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([\Modules\Orders\Events\ShipmentStatusChanged::class]);
+
+        $admin = $this->createAdminUser();
+        $trip = Trip::factory()->create();
+        $order = DeliveryOrder::factory()->assigned($trip)->create();
+
+        $this->actingAs($admin)->post(route('module.transportation.trips.start', $trip));
+
+        $this->assertGreaterThan(0, $admin->notifications()->count());
+        \Illuminate\Support\Facades\Event::assertDispatched(
+            \Modules\Orders\Events\ShipmentStatusChanged::class,
+            fn ($event) => $event->order->id === $order->id && $event->to === DeliveryOrder::STATUS_IN_TRANSIT,
+        );
+    }
+
     public function test_completing_a_dropoff_stop_marks_its_order_delivered(): void
     {
         $user = $this->createAdminUser();

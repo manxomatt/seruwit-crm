@@ -4,6 +4,8 @@ namespace Modules\TransportationManagement\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\Vehicle;
 use Modules\TransportationManagement\Models\Trip;
 
 class UpdateTripRequest extends FormRequest
@@ -36,27 +38,31 @@ class UpdateTripRequest extends FormRequest
     }
 
     /**
-     * A vehicle or driver already tied to a scheduled or in-progress trip on
-     * the same calendar date (other than this one) cannot be double-booked
-     * onto this trip. Checked against Trip directly (Transportation's own
-     * table) rather than a method on the Fleet models, since Fleet has no
-     * concept of a "trip".
+     * The reassigned vehicle/driver must be dispatchable for the effective
+     * date, excluding this trip itself. Only a resource actually present in the
+     * request is checked, so editing an unrelated field never fails because a
+     * paper expired since dispatch. Same rule as Store, shared on Trip.
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
             $trip = $this->route('trip');
-            $tripId = $trip?->id;
-            $vehicleId = $this->input('vehicle_id');
-            $driverId = $this->input('driver_id');
             $date = $this->input('scheduled_at', $trip?->scheduled_at);
 
-            if ($vehicleId && $date && Trip::hasActiveTripOn('vehicle_id', $vehicleId, $date, $tripId)) {
-                $validator->errors()->add('vehicle_id', 'This vehicle is already assigned to an active trip on this date.');
+            if (! $date) {
+                return;
             }
 
-            if ($driverId && $date && Trip::hasActiveTripOn('driver_id', $driverId, $date, $tripId)) {
-                $validator->errors()->add('driver_id', 'This driver is already assigned to an active trip on this date.');
+            if ($this->has('vehicle_id') && ($vehicle = Vehicle::find($this->input('vehicle_id')))) {
+                foreach (Trip::vehicleDispatchReasons($vehicle, $date, $trip?->id) as $reason) {
+                    $validator->errors()->add('vehicle_id', $reason);
+                }
+            }
+
+            if ($this->has('driver_id') && ($driver = Driver::find($this->input('driver_id')))) {
+                foreach (Trip::driverDispatchReasons($driver, $date, $trip?->id) as $reason) {
+                    $validator->errors()->add('driver_id', $reason);
+                }
             }
         });
     }

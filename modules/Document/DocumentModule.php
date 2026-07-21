@@ -4,8 +4,10 @@ namespace Modules\Document;
 
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
+use Illuminate\Console\Application as Artisan;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Route;
+use Modules\Document\Console\Commands\DocumentScanExpiring;
 use Modules\Document\Http\Controllers\DocumentController;
 use Modules\Document\Http\Controllers\DocumentTypeController;
 use Modules\Document\Http\Controllers\DriverDocumentController;
@@ -101,6 +103,12 @@ class DocumentModule implements ModuleContract
         );
 
         Document::observe(DocumentObserver::class);
+
+        // Laravel only auto-discovers app/Console/Commands, so a module's
+        // command has to register itself.
+        Artisan::starting(fn (Artisan $artisan) => $artisan->resolveCommands([
+            DocumentScanExpiring::class,
+        ]));
     }
 
     public function routes(): void

@@ -102,6 +102,8 @@ Modul terdaftar saat ini:
 
 **Wajah publik modul**: route publik Pages (`/`, `/p/{slug}`) dan Posts (`/blog`) tetap tinggal di core (`routes/app.php`) karena situs publik tenant ada terlepas dari modulnya — controller-nya (`PageController`, `BlogController`) yang menjaga diri dengan `Modules::available('pages'/'posts')`: homepage jatuh ke landing bawaan `Welcome`, `/p/{slug}` dan `/blog` menjadi 404, bukan 500. Pola yang sama dipakai GlobalSearch, Dashboard, dan Analytics untuk statistik/pencarian Page/Post (prop di-omit saat modul tak tersedia, seperti carousels).
 
+**Notifikasi in-app sebagai core, bukan modul**: banyak modul perlu memberi tahu staf, jadi tabel `notifications` (standar Laravel) ada di path migrasi core — di **kedua** `database/migrations/` (central + test) dan `database/migrations/tenant/` (per tenant), sama seperti users/settings — dan menjangkau tenant lama lewat `tenants:migrate`. Data bell dibagikan lewat prop `notificationCenter` di `HandleInertiaRequests` (dinamai beda dari prop halaman `notifications` agar tak bertabrakan). Perubahan status kiriman di-emit dari `TripObserver` (bukan observer model `DeliveryOrder`), karena transisi status memakai bulk `update()` yang tak memicu Eloquent event — pola yang sama menjadi alasan notifikasi & event `ShipmentStatusChanged` diletakkan di titik yang mengubah status, bukan di model.
+
 ## Paket Langganan & Entitlement
 
 Paket menentukan modul apa yang **boleh** dipasang tenant; install/uninstall menentukan apa yang **sedang** dipasang. Keduanya terpisah:
@@ -121,7 +123,7 @@ Paket bawaan (`PlanSeeder`, re-runnable dan tidak pernah menimpa definisi yang s
 | `basic` | `carousels`, `pages`, `posts` | **Default** — sama dengan yang dimiliki tenant sebelum paket ada (Pages/Posts dulunya fitur inti) |
 | `pro` | `billing`, `carousels`, `customers`, `fleet`, `invoicing`, `orders`, `pages`, `posts`, `products`, `tracking`, `transportation` | Hampir seluruh modul |
 
-> **Celah entitlement**: `document` dan `maintenance` sudah terdaftar (dan punya tier Foundation) tapi **belum masuk paket mana pun** — tenant tidak bisa memasangnya sampai keduanya ditambahkan ke sebuah paket lewat `/module/plans` (untuk instalasi live) dan `PlanSeeder` (untuk default instalasi baru).
+> **Celah entitlement (sudah ditutup)**: `document` dan `maintenance` kini masuk paket `pro` di `PlanSeeder`. Untuk instalasi lama yang barisnya sudah ada (`firstOrCreate`), tambahkan keduanya ke paket lewat `/module/plans`.
 
 ## Module Registry — Saklar Modul Tingkat Platform
 
@@ -154,6 +156,8 @@ Sumbu ketiga, terpisah dari entitlement paket dan status install: `ModuleRegistr
 - **Menus** — menu dinamis per peran; entri modul ikut hilang saat modul dicopot
 - **Settings** — pengaturan dikelompokkan per grup, satu halaman per grup, nilai diedit langsung sebagai form field (bukan tabel). Tenant boleh mengedit **nilai** setting miliknya sendiri (mis. tautan media sosial berbeda tiap tenant, lewat izin `settings:update` biasa); mendefinisikan/mengganti nama/menghapus sebuah setting adalah kapasitas **central-only** (gate `manage-settings`) yang otomatis menyebar ke semua tenant saat dibuat (idempoten — tenant yang sudah punya key yang sama tak tertimpa)
 - **Users, Roles & Permissions** — RBAC custom per modul+aksi (view/create/update/delete); admin melewati semua cek
+- **Pusat Notifikasi** *(core)* — notifikasi in-app via database channel Laravel + lonceng di topbar (badge unread, dropdown, halaman `/module/notifications`). Satu kelas `GenericNotification` generik; penerima dipilih `NotificationRecipients::forPermission($module,$action)` (admin ∪ pemegang izin). Dipakai alert kedaluwarsa dokumen & perubahan status kiriman
+- **Tracking Publik Pelanggan** *(Orders)* — halaman `/track/{token}` tanpa login (token acak per DO, bukan kode berurutan): timeline status + posisi kendaraan di peta saat trip berjalan. Payload minimal (tanpa harga/data driver); draft/cancelled → 404. Perubahan status juga men-*dispatch* event `ShipmentStatusChanged` sebagai seam push email/WA ke pelanggan nanti
 - **Todos, Live Updates, Analytics**
 - **Profil** — edit profil, avatar, ganti password
 - **Dropdown modern** — semua `<select>` di aplikasi memakai komponen `Select` berbasis Headless UI `Listbox` (panel animasi, opsi bisa dinonaktifkan per-item, checkmark pada pilihan aktif), bukan `<select>` native
@@ -198,6 +202,9 @@ php artisan modules:purge-expired                 # buang data modul yang tengga
 # GPS Tracking
 php artisan tracking:poll [--tenant=]             # tarik posisi terbaru dari Traccar tiap tenant (terjadwal per menit)
 php artisan tracking:prune [--tenant=]            # pangkas vehicle_positions ke jendela retensi (terjadwal 03:30)
+
+# Notifikasi & kepatuhan
+php artisan document:scan-expiring [--tenant=]    # buat reminder + alert in-app dokumen mau/telah habis (terjadwal 06:00)
 ```
 
 ## Konfigurasi Penting
@@ -217,7 +224,7 @@ php artisan tracking:prune [--tenant=]            # pangkas vehicle_positions ke
 1. Wildcard DNS `*.domain.com` + wildcard SSL (Cloudflare/Caddy)
 2. Ubah pipeline provisioning ke queued (`shouldBeQueued(true)`) + jalankan queue worker
 3. PgBouncer harus *session mode* (schema separation bergantung `search_path`)
-4. Jalankan scheduler (`php artisan schedule:work` / cron) — `modules:purge-expired`, `tracking:poll` (per menit), dan `tracking:prune` bergantung padanya
+4. Jalankan scheduler (`php artisan schedule:work` / cron) — `modules:purge-expired`, `tracking:poll` (per menit), `tracking:prune`, dan `document:scan-expiring` bergantung padanya
 5. `modules:backfill` sekali setelah rilis sistem modul, agar tenant lama tidak kehilangan akses ke modul yang sudah mereka pakai
 6. **`modules:migrate` di setiap deploy** — migrasi modul hanya jalan saat modul di-*install* ke sebuah tenant, jadi migrasi yang ditambahkan ke modul yang **sudah** terpasang tak pernah menyusul ke tenant yang meng-install-nya lebih dulu (`tenants:migrate` dari stancl hanya menangani `database/migrations/tenant/`, bukan path modul). `modules:migrate` menutup celah itu: idempoten, jalankan setelah `tenants:migrate` di `composer deploy`.
 7. `SettingController::store()` menyebarkan setting baru ke **semua** tenant secara sinkron dalam satu request (`Tenant::query()->get()->each(...)`) — proporsional untuk jumlah tenant saat ini, tapi jadi kandidat kuat untuk di-queue kalau jumlah tenant sudah besar
@@ -232,11 +239,15 @@ Roadmap logistik 5 fase (aplikasi menyasar perusahaan transportasi; perusahaan s
 | 2 | Delivery Order + multi-stop trip + surat jalan | ✅ Selesai (modul `orders` + stop di `transportation`) |
 | 3 | Proof of Delivery + tampilan driver (PWA) | Belum |
 | 4 | Tarif → invoice → uang jalan | ✅ Selesai (modul `billing` + `invoicing`) |
-| 5 | Notifikasi, tracking publik pelanggan, cek bentrok dispatch lanjutan | Belum (deteksi bentrok dasar per tanggal sudah ada) |
+| 5 | Notifikasi in-app, tracking publik pelanggan, gating dispatch lanjutan | ✅ Selesai (pusat notifikasi core, alert kedaluwarsa dokumen, halaman `/track/{token}`, gating status/kedaluwarsa) |
+
+Semua 5 fase inti sudah jalan. Kandidat lanjutan: **Fase 3 (Proof of Delivery + tampilan driver/PWA)** — satu-satunya fase roadmap yang belum dikerjakan; menutup siklus dengan bukti serah terima yang diinput driver.
 
 Catatan terbuka:
 
-- `document` dan `maintenance` belum masuk paket mana pun (lihat "Celah entitlement" di atas).
+- **Push notifikasi ke pelanggan ditunda**: Fase 5 hanya membangun halaman tracking publik (pull) + event `ShipmentStatusChanged`; belum ada listener yang mengirim email/WA (mail driver `log`, WA belum ada). Saat channel dikonfigurasi, cukup tambah listener ke event itu.
+- **Time-overlap dispatch ditunda**: gating baru mengecek status kendaraan/driver + kedaluwarsa STNK/KIR/SIM + bentrok per-tanggal; overlap waktu sebenarnya butuh kolom durasi/`scheduled_end_at` di trip.
+- **Notifikasi kedaluwarsa dokumen** butuh scheduler jalan (`document:scan-expiring` harian) dan tenant memasang modul `document`.
 - Pencocokan tarif Billing memakai alamat free-text (exact, case-insensitive) — typo alamat menghasilkan charge 0 yang harus diisi manual; master lokasi + dropdown alamat di form order adalah perbaikan strukturalnya. Master lokasi yang sama juga akan mempermudah mengisi lat/lng stop trip, yang saat ini prasyarat geofence-arrival GPS.
 - Menghapus trip yang punya uang jalan / customer yang direferensikan invoice muncul sebagai `QueryException` mentah di UI modul hulunya (by design — modul hulu tak boleh kenal konsumennya); handler pesan ramah bisa ditambahkan per pola Fleet.
 - **GPS Tracking — terverifikasi terhadap server Traccar asli (sky-track.net, 2026-07-20)**: akun tenant biasanya **admin/manager** reseller GPS, jadi `TraccarClient::devices()` memakai `?all=true` (fallback ke `/devices` polos untuk akun user biasa yang menolaknya), dan `latestPositions()` mengambil via positionId per-device (`/positions?id=…`) — bukan `/api/positions` polos yang untuk admin selalu `[]`. Batch di-chunk 50 dan **memecah diri saat 400**, karena satu positionId basi (posisi lama yang sudah dipangkas Traccar untuk device offline) mem-400-kan seluruh batch. `PositionPayload` **tidak** menolak `valid=false` (kendaraan parkir melapor valid=false dengan koordinat terakhir yang sah); hanya null-island 0,0 & di luar rentang yang dibuang. Terbukti: 260 device → 253 posisi masuk.

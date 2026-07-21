@@ -39,6 +39,7 @@ interface Order {
     id: number;
     code: string;
     status: string;
+    tracking_token: string;
     order_date: string;
     pickup_address: string;
     delivery_address: string;
@@ -241,6 +242,32 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                         </dl>
                     </div>
                 </div>
+
+                {!['draft', 'cancelled'].includes(order.status) && (
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6">
+                            <h3 className="mb-2 text-lg font-medium text-gray-900">Link Pelacakan Pelanggan</h3>
+                            <p className="mb-3 text-sm text-gray-500">Bagikan tautan ini agar pelanggan dapat memantau kirimannya tanpa login.</p>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    readOnly
+                                    value={`${window.location.origin}/track/${order.tracking_token}`}
+                                    className="w-full rounded-md border-gray-300 bg-gray-50 text-sm text-gray-700 shadow-sm"
+                                    onFocus={(e) => e.currentTarget.select()}
+                                />
+                                <SecondaryButton
+                                    type="button"
+                                    onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/track/${order.tracking_token}`)}
+                                >
+                                    Salin
+                                </SecondaryButton>
+                                <a href={`/track/${order.tracking_token}`} target="_blank" rel="noreferrer">
+                                    <SecondaryButton type="button">Buka</SecondaryButton>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {order.trip && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">

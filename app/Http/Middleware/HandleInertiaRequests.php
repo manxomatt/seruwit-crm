@@ -74,6 +74,21 @@ class HandleInertiaRequests extends Middleware
             ],
             'menus' => $this->getMenus($user, $routePrefix),
             'moduleTiers' => $this->getModuleTiers(),
+            // The bell dropdown's data — the unread badge needs it on every
+            // load, and the recent list is small, so both resolve eagerly for
+            // an authenticated user (guests get null and pay nothing). Named
+            // distinctly from any page's own `notifications` prop (e.g. the
+            // notifications index list) so the two never collide.
+            'notificationCenter' => $user ? [
+                'unread_count' => $user->unreadNotifications()->count(),
+                'recent' => $user->notifications()->latest()->limit(10)->get()
+                    ->map(fn ($notification) => [
+                        'id' => $notification->id,
+                        'read_at' => $notification->read_at?->toDateTimeString(),
+                        'created_at' => $notification->created_at?->toDateTimeString(),
+                        ...$notification->data,
+                    ]),
+            ] : null,
             'settings' => $settings,
             // The tenant *domain* we're currently on (null on the central domain).
             // Named distinctly so it never collides with page props that carry a

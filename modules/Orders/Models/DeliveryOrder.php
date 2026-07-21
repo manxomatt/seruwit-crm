@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Modules\Customer\Models\Customer;
 use Modules\Orders\Database\Factories\DeliveryOrderFactory;
 use Modules\TransportationManagement\Models\Trip;
@@ -36,6 +37,18 @@ class DeliveryOrder extends Model
     protected static function newFactory(): Factory
     {
         return DeliveryOrderFactory::new();
+    }
+
+    /**
+     * Every order gets an unguessable public tracking token at creation. Set
+     * here rather than in $fillable so it can never be mass-assigned to a
+     * chosen value.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $order): void {
+            $order->tracking_token ??= Str::random(40);
+        });
     }
 
     /**
