@@ -54,9 +54,7 @@ class PodInventoryIntegrationTest extends TestCase
             'returned_quantity' => 0,
         ]);
 
-        // Trigger observer
-        $pod->refresh();
-        $pod->createEvent('created');
+        // The PodItemObserver records stock movements when the item is created above.
 
         // Verify stock movement
         $movement = StockMovement::where('product_id', $product->id)
@@ -112,9 +110,7 @@ class PodInventoryIntegrationTest extends TestCase
             'reason' => 'rusak',
         ]);
 
-        // Trigger observer
-        $pod->refresh();
-        $pod->createEvent('created');
+        // The PodItemObserver records stock movements when the item is created above.
 
         // Verify OUT movement for accepted
         $outMovement = StockMovement::where('product_id', $product->id)
@@ -167,9 +163,7 @@ class PodInventoryIntegrationTest extends TestCase
             'accepted_quantity' => 10,
         ]);
 
-        // Trigger observer
-        $pod->refresh();
-        $pod->createEvent('created');
+        // The PodItemObserver records stock movements when the item is created above.
 
         // Verify no movements created
         $movements = StockMovement::where('product_id', $product->id)->count();

@@ -12,7 +12,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
+use Modules\Product\Models\Brand;
 use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductType;
 
 class ProductController extends Controller
 {
@@ -32,22 +34,42 @@ class ProductController extends Controller
         $user = Auth::user();
 
         $products = Product::query()
+            ->with(['brand.principal:id,name', 'productType:id,name'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%");
+                        ->orWhere('code', 'like', "%{$search}%")
+                        ->orWhere('sku', 'like', "%{$search}%")
+                        ->orWhere('barcode', 'like', "%{$search}%");
                 });
             })
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
+            ->when(request('brand_id'), fn ($q, $id) => $q->where('brand_id', $id))
+            ->when(request('product_type_id'), fn ($q, $id) => $q->where('product_type_id', $id))
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
+        $brands = Brand::query()
+            ->with('principal:id,name')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'principal_id']);
+
+        $productTypes = ProductType::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'parent_id']);
+
         return Inertia::render('Modules/Product/Index', [
             'products' => $products,
+            'brands' => $brands,
+            'productTypes' => $productTypes,
             'filters' => [
                 'search' => request('search'),
                 'status' => request('status'),
+                'brand_id' => request('brand_id'),
+                'product_type_id' => request('product_type_id'),
             ],
             'can' => [
                 'create' => $user->hasPermissionFor('products', 'create'),
@@ -74,6 +96,25 @@ class ProductController extends Controller
             ->all();
     }
 
+    /** @return \Illuminate\Support\Collection<int, array<string, mixed>> */
+    private function brandOptions(): \Illuminate\Support\Collection
+    {
+        return Brand::query()
+            ->with('principal:id,name')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'principal_id']);
+    }
+
+    /** @return \Illuminate\Support\Collection<int, array<string, mixed>> */
+    private function productTypeOptions(): \Illuminate\Support\Collection
+    {
+        return ProductType::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'parent_id']);
+    }
+
     /**
      * Show the form for creating a new product.
      */
@@ -81,6 +122,8 @@ class ProductController extends Controller
     {
         return Inertia::render('Modules/Product/Create', [
             'units' => $this->unitOptions(),
+            'brands' => $this->brandOptions(),
+            'productTypes' => $this->productTypeOptions(),
         ]);
     }
 
@@ -104,6 +147,7 @@ class ProductController extends Controller
     public function show(Product $product): Response
     {
         $user = Auth::user();
+        $product->load(['brand.principal', 'productType']);
 
         return Inertia::render('Modules/Product/Show', [
             'product' => $product,
@@ -119,9 +163,13 @@ class ProductController extends Controller
      */
     public function edit(Product $product): Response
     {
+        $product->load(['brand.principal', 'productType']);
+
         return Inertia::render('Modules/Product/Edit', [
             'product' => $product,
             'units' => $this->unitOptions(),
+            'brands' => $this->brandOptions(),
+            'productTypes' => $this->productTypeOptions(),
         ]);
     }
 

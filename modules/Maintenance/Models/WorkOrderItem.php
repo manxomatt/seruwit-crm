@@ -4,6 +4,7 @@ namespace Modules\Maintenance\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Product\Models\Product;
 
 class WorkOrderItem extends Model
 {
@@ -19,6 +20,8 @@ class WorkOrderItem extends Model
     protected $fillable = [
         'work_order_id',
         'item_type',
+        'product_id',
+        'warehouse_id',
         'name',
         'description',
         'quantity',
@@ -45,5 +48,13 @@ class WorkOrderItem extends Model
     public function workOrder(): BelongsTo
     {
         return $this->belongsTo(WorkOrder::class);
+    }
+
+    /**
+     * @return BelongsTo<Product, $this>
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 }

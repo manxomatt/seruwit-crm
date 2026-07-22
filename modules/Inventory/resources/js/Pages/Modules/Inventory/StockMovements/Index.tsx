@@ -1,4 +1,8 @@
-import ModuleLayout from '@/Layouts/ModuleLayout'
+import DynamicLayout from '@/Layouts/DynamicLayout'
+import { useRoutePrefix } from '@/hooks/useRoutePrefix'
+import PrimaryButton from '@/Components/PrimaryButton'
+import { Head, Link } from '@inertiajs/react'
+import InventoryNav from '../../../../InventoryNav'
 
 interface StockMovement {
   id: number
@@ -9,7 +13,7 @@ interface StockMovement {
   source_type: string
   reference_code?: string
   notes?: string
-  recordedBy: { id: number; name: string }
+  recorded_by?: { id: number; name: string } | null
   recorded_at: string
 }
 
@@ -23,6 +27,7 @@ interface Props {
 }
 
 export default function StockMovementsIndex({ movements }: Props) {
+  const { prefixedRoute } = useRoutePrefix()
   const typeColors = {
     in: 'bg-green-100 text-green-800',
     out: 'bg-red-100 text-red-800',
@@ -31,47 +36,66 @@ export default function StockMovementsIndex({ movements }: Props) {
   }
 
   return (
-    <ModuleLayout title="Stock Movements">
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Stock Movement Ledger</h1>
+    <DynamicLayout
+      header={
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory</h2>
+          <Link href={prefixedRoute('inventory.stock-movements.create')}>
+            <PrimaryButton>Record Movement</PrimaryButton>
+          </Link>
+        </div>
+      }
+    >
+      <Head title="Stock Movements" />
 
-        <div className="overflow-x-auto rounded-lg border bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+      <InventoryNav />
+
+      <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead>
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Product</th>
-                <th className="px-4 py-3 text-left font-semibold">Warehouse</th>
-                <th className="px-4 py-3 text-left font-semibold">Type</th>
-                <th className="px-4 py-3 text-right font-semibold">Qty</th>
-                <th className="px-4 py-3 text-left font-semibold">Source</th>
-                <th className="px-4 py-3 text-left font-semibold">Reference</th>
-                <th className="px-4 py-3 text-left font-semibold">By</th>
-                <th className="px-4 py-3 text-left font-semibold">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Product</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Warehouse</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Qty</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Source</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Reference</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">By</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
               </tr>
             </thead>
-            <tbody>
-              {movements.data.map((movement) => (
-                <tr key={movement.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">{movement.product.name}</td>
-                  <td className="px-4 py-3">{movement.warehouse.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${typeColors[movement.type as keyof typeof typeColors]}`}>
-                      {movement.type}
-                    </span>
+            <tbody className="divide-y divide-gray-200">
+              {movements.data.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                    No movements recorded yet.
                   </td>
-                  <td className={`px-4 py-3 text-right font-medium ${movement.type === 'out' ? 'text-red-600' : 'text-green-600'}`}>
-                    {movement.type === 'out' ? '-' : '+'}{movement.quantity}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-600">{movement.source_type}</td>
-                  <td className="px-4 py-3 text-xs">{movement.reference_code || '—'}</td>
-                  <td className="px-4 py-3 text-sm">{movement.recordedBy.name}</td>
-                  <td className="px-4 py-3 text-xs text-gray-600">{new Date(movement.recorded_at).toLocaleDateString('id-ID')}</td>
                 </tr>
-              ))}
+              ) : (
+                movements.data.map((movement) => (
+                  <tr key={movement.id} className="hover:bg-gray-50">
+                    <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">{movement.product.name}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-500">{movement.warehouse.name}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${typeColors[movement.type as keyof typeof typeColors]}`}>
+                        {movement.type}
+                      </span>
+                    </td>
+                    <td className={`whitespace-nowrap px-4 py-3 text-right font-medium ${movement.type === 'out' ? 'text-red-600' : 'text-green-600'}`}>
+                      {movement.type === 'out' ? '-' : '+'}{movement.quantity}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{movement.source_type}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{movement.reference_code || '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-500">{movement.recorded_by?.name ?? '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{new Date(movement.recorded_at).toLocaleDateString('id-ID')}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
-    </ModuleLayout>
+    </DynamicLayout>
   )
 }

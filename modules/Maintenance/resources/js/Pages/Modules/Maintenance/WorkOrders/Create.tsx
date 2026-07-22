@@ -13,6 +13,7 @@ import {
     MaintenanceCategory,
     WorkOrderVehicle,
     WorkOrderItem,
+    SparePartOption,
     STATUS_OPTIONS,
     PRIORITY_OPTIONS,
     TYPE_OPTIONS,
@@ -23,6 +24,7 @@ import {
 interface Props {
     vehicles: WorkOrderVehicle[];
     categories: MaintenanceCategory[];
+    spareParts: SparePartOption[];
 }
 
 type FormData = {
@@ -54,7 +56,7 @@ const TrashIcon = () => (
     </svg>
 );
 
-export default function Create({ vehicles, categories }: Props): JSX.Element {
+export default function Create({ vehicles, categories, spareParts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
 
     const { data, setData, post, processing, errors } = useForm<FormData>({
@@ -82,16 +84,45 @@ export default function Create({ vehicles, categories }: Props): JSX.Element {
     const addItem = () => {
         setData('items', [
             ...data.items,
-            { item_type: 'part', name: '', description: null, quantity: 1, unit: 'pcs', unit_price: 0, total_price: 0 },
+            { item_type: 'part', product_id: null, warehouse_id: null, name: '', description: null, quantity: 1, unit: 'pcs', unit_price: 0, total_price: 0 },
         ]);
     };
 
-    const updateItem = (index: number, field: keyof WorkOrderItem, value: string | number) => {
+    const updateItem = (index: number, field: keyof WorkOrderItem, value: string | number | null) => {
         const newItems = [...data.items];
         const item = { ...newItems[index], [field]: value };
 
         if (field === 'quantity' || field === 'unit_price') {
             item.total_price = Number(item.quantity) * Number(item.unit_price);
+        }
+
+        // Leaving the "part" type clears any inventory link.
+        if (field === 'item_type' && value !== 'part') {
+            item.product_id = null;
+            item.warehouse_id = null;
+        }
+
+        newItems[index] = item;
+        setData('items', newItems);
+    };
+
+    const selectSparePart = (index: number, productId: string) => {
+        const newItems = [...data.items];
+        const item = { ...newItems[index] };
+
+        if (!productId) {
+            item.product_id = null;
+            item.warehouse_id = null;
+        } else {
+            const part = spareParts.find((p) => p.id === Number(productId));
+            if (part) {
+                item.product_id = part.id;
+                item.warehouse_id = part.warehouse_id;
+                item.name = part.name;
+                item.unit = part.unit ?? item.unit;
+                item.unit_price = Number(part.price ?? item.unit_price);
+                item.total_price = Number(item.quantity) * item.unit_price;
+            }
         }
 
         newItems[index] = item;
@@ -318,6 +349,7 @@ export default function Create({ vehicles, categories }: Props): JSX.Element {
                                 <thead>
                                     <tr className="border-b border-gray-200 text-xs text-gray-500">
                                         <th className="pb-2 text-left font-medium">Tipe</th>
+                                        <th className="pb-2 text-left font-medium">Sparepart (Inventory)</th>
                                         <th className="pb-2 text-left font-medium">Nama</th>
                                         <th className="pb-2 text-left font-medium">Qty</th>
                                         <th className="pb-2 text-left font-medium">Satuan</th>
@@ -339,6 +371,25 @@ export default function Create({ vehicles, categories }: Props): JSX.Element {
                                                         <option key={o.value} value={o.value}>{o.label}</option>
                                                     ))}
                                                 </select>
+                                            </td>
+                                            <td className="py-2 pr-2">
+                                                {item.item_type === 'part' ? (
+                                                    <select
+                                                        value={item.product_id ?? ''}
+                                                        onChange={(e) => selectSparePart(i, e.target.value)}
+                                                        className="w-52 rounded border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        disabled={spareParts.length === 0}
+                                                    >
+                                                        <option value="">
+                                                            {spareParts.length === 0 ? '— tidak ada sparepart —' : '— manual (tanpa stok) —'}
+                                                        </option>
+                                                        {spareParts.map((p) => (
+                                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
                                             </td>
                                             <td className="py-2 pr-2">
                                                 <TextInput
@@ -389,7 +440,7 @@ export default function Create({ vehicles, categories }: Props): JSX.Element {
                                 </tbody>
                                 <tfoot>
                                     <tr className="border-t-2 border-gray-300">
-                                        <td colSpan={5} className="pt-3 text-right text-sm font-semibold text-gray-700">Total Estimasi</td>
+                                        <td colSpan={6} className="pt-3 text-right text-sm font-semibold text-gray-700">Total Estimasi</td>
                                         <td className="pt-3 text-right text-sm font-bold text-gray-900">{formatCurrency(totalEstimated)}</td>
                                         <td></td>
                                     </tr>

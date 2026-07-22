@@ -14,6 +14,7 @@ use Modules\Maintenance\Http\Requests\UpdateWorkOrderRequest;
 use Modules\Maintenance\Models\MaintenanceCategory;
 use Modules\Maintenance\Models\WorkOrder;
 use Modules\Maintenance\Models\WorkOrderItem;
+use Modules\Maintenance\Support\MaintenanceStockRecorder;
 
 class WorkOrderController extends Controller
 {
@@ -72,7 +73,34 @@ class WorkOrderController extends Controller
         return Inertia::render('Modules/Maintenance/WorkOrders/Create', [
             'vehicles' => $vehicles,
             'categories' => $categories,
+            'spareParts' => $this->sparePartOptions(),
         ]);
+    }
+
+    /**
+     * Fleet-sparepart products that a work order part line can draw from,
+     * empty when the inventory module is not installed for this tenant.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function sparePartOptions(): \Illuminate\Support\Collection
+    {
+        if (! \App\Modules\Facades\Modules::available('inventory')) {
+            return collect();
+        }
+
+        return \Modules\Product\Models\Product::query()
+            ->where('category', 'fleet_sparepart')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($product): array => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'unit' => $product->unit,
+                'price' => $product->price,
+                'warehouse_id' => $product->warehouse_id,
+            ]);
     }
 
     public function store(StoreWorkOrderRequest $request): RedirectResponse
@@ -127,6 +155,7 @@ class WorkOrderController extends Controller
             'workOrder' => $workOrder,
             'vehicles' => $vehicles,
             'categories' => $categories,
+            'spareParts' => $this->sparePartOptions(),
         ]);
     }
 
@@ -137,6 +166,8 @@ class WorkOrderController extends Controller
         unset($validated['items']);
 
         DB::transaction(function () use ($workOrder, $validated, $items) {
+            $originalStatus = $workOrder->status;
+
             // Auto-set approved_by when status transitions to approved
             if ($validated['status'] === WorkOrder::STATUS_APPROVED && $workOrder->status !== WorkOrder::STATUS_APPROVED) {
                 $validated['approved_by'] = Auth::id();
@@ -168,6 +199,18 @@ class WorkOrderController extends Controller
                         $workOrder->items()->create($itemData);
                     }
                 }
+            }
+
+            // Draw sparepart stock down once the order is completed, and hand it
+            // back if a completed order is reopened or cancelled. Items are
+            // reloaded so the deduction reflects the just-synced part lines.
+            $workOrder->load('items.product');
+            $newStatus = $workOrder->status;
+
+            if ($newStatus === WorkOrder::STATUS_COMPLETED && $originalStatus !== WorkOrder::STATUS_COMPLETED) {
+                MaintenanceStockRecorder::deduct($workOrder);
+            } elseif ($originalStatus === WorkOrder::STATUS_COMPLETED && $newStatus !== WorkOrder::STATUS_COMPLETED) {
+                MaintenanceStockRecorder::reverse($workOrder);
             }
         });
 

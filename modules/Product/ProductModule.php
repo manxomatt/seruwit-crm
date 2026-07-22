@@ -5,7 +5,10 @@ namespace Modules\Product;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Product\Http\Controllers\BrandController;
+use Modules\Product\Http\Controllers\PrincipalController;
 use Modules\Product\Http\Controllers\ProductController;
+use Modules\Product\Http\Controllers\ProductTypeController;
 
 /**
  * Product catalog, deliberately free of any stock/quantity-on-hand concept.
@@ -81,6 +84,31 @@ class ProductModule implements ModuleContract
 
     public function routes(): void
     {
+        // Principals (before {product} wildcard)
+        Route::get('/products/principals', [PrincipalController::class, 'index'])->middleware('permission:products,view')->name('products.principals.index');
+        Route::get('/products/principals/create', [PrincipalController::class, 'create'])->middleware('permission:products,create')->name('products.principals.create');
+        Route::post('/products/principals', [PrincipalController::class, 'store'])->middleware('permission:products,create')->name('products.principals.store');
+        Route::get('/products/principals/{principal}/edit', [PrincipalController::class, 'edit'])->middleware('permission:products,update')->name('products.principals.edit');
+        Route::patch('/products/principals/{principal}', [PrincipalController::class, 'update'])->middleware('permission:products,update')->name('products.principals.update');
+        Route::delete('/products/principals/{principal}', [PrincipalController::class, 'destroy'])->middleware('permission:products,delete')->name('products.principals.destroy');
+
+        // Brands (before {product} wildcard)
+        Route::get('/products/brands', [BrandController::class, 'index'])->middleware('permission:products,view')->name('products.brands.index');
+        Route::get('/products/brands/create', [BrandController::class, 'create'])->middleware('permission:products,create')->name('products.brands.create');
+        Route::post('/products/brands', [BrandController::class, 'store'])->middleware('permission:products,create')->name('products.brands.store');
+        Route::get('/products/brands/{brand}/edit', [BrandController::class, 'edit'])->middleware('permission:products,update')->name('products.brands.edit');
+        Route::patch('/products/brands/{brand}', [BrandController::class, 'update'])->middleware('permission:products,update')->name('products.brands.update');
+        Route::delete('/products/brands/{brand}', [BrandController::class, 'destroy'])->middleware('permission:products,delete')->name('products.brands.destroy');
+
+        // Product Types (before {product} wildcard)
+        Route::get('/products/product-types', [ProductTypeController::class, 'index'])->middleware('permission:products,view')->name('products.product-types.index');
+        Route::get('/products/product-types/create', [ProductTypeController::class, 'create'])->middleware('permission:products,create')->name('products.product-types.create');
+        Route::post('/products/product-types', [ProductTypeController::class, 'store'])->middleware('permission:products,create')->name('products.product-types.store');
+        Route::get('/products/product-types/{productType}/edit', [ProductTypeController::class, 'edit'])->middleware('permission:products,update')->name('products.product-types.edit');
+        Route::patch('/products/product-types/{productType}', [ProductTypeController::class, 'update'])->middleware('permission:products,update')->name('products.product-types.update');
+        Route::delete('/products/product-types/{productType}', [ProductTypeController::class, 'destroy'])->middleware('permission:products,delete')->name('products.product-types.destroy');
+
+        // Products
         Route::get('/products', [ProductController::class, 'index'])->middleware('permission:products,view')->name('products.index');
         Route::get('/products/create', [ProductController::class, 'create'])->middleware('permission:products,create')->name('products.create');
         Route::post('/products', [ProductController::class, 'store'])->middleware('permission:products,create')->name('products.store');

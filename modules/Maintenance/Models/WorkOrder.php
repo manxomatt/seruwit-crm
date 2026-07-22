@@ -4,6 +4,8 @@ namespace Modules\Maintenance\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +14,15 @@ use Modules\Fleet\Models\Vehicle;
 
 class WorkOrder extends Model
 {
+    /** @use HasFactory<\Modules\Maintenance\Database\Factories\WorkOrderFactory> */
+    use HasFactory;
+
     use SoftDeletes;
+
+    protected static function newFactory(): Factory
+    {
+        return \Modules\Maintenance\Database\Factories\WorkOrderFactory::new();
+    }
 
     // ── Status constants ────────────────────────────────────────────────────
     public const STATUS_DRAFT = 'draft';
@@ -61,6 +71,7 @@ class WorkOrder extends Model
         'scheduled_date',
         'started_at',
         'completed_at',
+        'stock_deducted_at',
         'vendor_name',
         'mechanic_name',
         'invoice_number',
@@ -83,6 +94,7 @@ class WorkOrder extends Model
             'scheduled_date' => 'date',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'stock_deducted_at' => 'datetime',
             'approved_at' => 'datetime',
             'estimated_cost' => 'decimal:2',
             'actual_labor_cost' => 'decimal:2',

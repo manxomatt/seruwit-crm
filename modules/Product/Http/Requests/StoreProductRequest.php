@@ -22,11 +22,18 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
+            'product_type_id' => ['nullable', 'integer', 'exists:product_types,id'],
+            'sku' => ['nullable', 'string', 'max:100', 'unique:products,sku'],
+            'barcode' => ['nullable', 'string', 'max:100'],
             'name' => ['required', 'string', 'max:255'],
             'unit' => ['required', 'string', 'max:20'],
             'description' => ['nullable', 'string', 'max:2000'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'string', 'in:active,inactive'],
+            'category' => ['nullable', 'string', 'in:merchandise,fleet_sparepart'],
+            'reorder_threshold' => ['nullable', 'integer', 'min:0'],
+            'reorder_quantity' => ['nullable', 'integer', 'min:0'],
         ];
     }
 
@@ -39,6 +46,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'status.in' => 'Select a valid product status.',
+            'category.in' => 'Select a valid inventory category.',
         ];
     }
 }

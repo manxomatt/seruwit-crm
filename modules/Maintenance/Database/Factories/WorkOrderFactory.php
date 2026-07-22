@@ -25,8 +25,10 @@ class WorkOrderFactory extends Factory
         ]);
 
         $scheduledDate = fake()->dateTimeBetween('-3 months', '+1 month');
+        // A started/completed order must have begun in the past, regardless of a
+        // scheduled date that may sit in the future.
         $startedAt = in_array($status, [WorkOrder::STATUS_IN_PROGRESS, WorkOrder::STATUS_COMPLETED])
-            ? fake()->dateTimeBetween($scheduledDate, 'now')
+            ? fake()->dateTimeBetween('-3 months', 'now')
             : null;
         $completedAt = $status === WorkOrder::STATUS_COMPLETED && $startedAt
             ? fake()->dateTimeBetween($startedAt, 'now')

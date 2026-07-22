@@ -1,4 +1,6 @@
-import ModuleLayout from '@/Layouts/ModuleLayout'
+import DynamicLayout from '@/Layouts/DynamicLayout'
+import { Head } from '@inertiajs/react'
+import InventoryNav from '../../../../InventoryNav'
 
 interface Warehouse {
   id: number
@@ -31,11 +33,15 @@ interface Props {
 
 export default function StockLevelsIndex({ warehouses, matrix }: Props) {
   return (
-    <ModuleLayout title="Stock Levels">
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Stock Levels Matrix</h1>
+    <DynamicLayout
+      header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory</h2>}
+    >
+      <Head title="Stock Levels" />
 
-        <div className="overflow-x-auto rounded-lg border bg-white">
+      <InventoryNav />
+
+      <div className="space-y-4">
+        <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
           <table className="w-full">
             <thead>
               <tr className="border-b">
@@ -94,6 +100,6 @@ export default function StockLevelsIndex({ warehouses, matrix }: Props) {
           <p className="text-red-600">Red rows indicate low stock (below reorder threshold)</p>
         </div>
       </div>
-    </ModuleLayout>
+    </DynamicLayout>
   )
 }

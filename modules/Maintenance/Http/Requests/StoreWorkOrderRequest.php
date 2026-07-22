@@ -32,6 +32,8 @@ class StoreWorkOrderRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:2000'],
             'items' => ['nullable', 'array'],
             'items.*.item_type' => ['required', 'string', 'in:part,labor,other'],
+            'items.*.product_id' => ['nullable', 'integer'],
+            'items.*.warehouse_id' => ['nullable', 'integer'],
             'items.*.name' => ['required', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:1000'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],

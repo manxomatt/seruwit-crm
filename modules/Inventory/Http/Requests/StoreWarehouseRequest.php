@@ -17,6 +17,6 @@ class StoreWarehouseRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->can('inventory:create') ?? false;
+        return true;
     }
 }

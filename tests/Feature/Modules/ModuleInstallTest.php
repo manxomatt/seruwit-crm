@@ -175,8 +175,8 @@ class ModuleInstallTest extends TestCase
     {
         $tenant = $this->provisionTenant('Cmd Co', 'cmd-co', 'owner@cmd.test');
 
-        $this->artisan('modules:install', ['tenant' => $tenant->id, 'module' => 'inventory'])
-            ->expectsOutputToContain('Module [inventory] is not registered.')
+        $this->artisan('modules:install', ['tenant' => $tenant->id, 'module' => 'nonexistent'])
+            ->expectsOutputToContain('Module [nonexistent] is not registered.')
             ->assertFailed();
     }
 

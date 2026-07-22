@@ -18,12 +18,22 @@ export interface WorkOrderItem {
     id?: number;
     work_order_id?: number;
     item_type: ItemType;
+    product_id?: number | null;
+    warehouse_id?: number | null;
     name: string;
     description: string | null;
     quantity: number;
     unit: string | null;
     unit_price: number;
     total_price: number;
+}
+
+export interface SparePartOption {
+    id: number;
+    name: string;
+    unit: string | null;
+    price: number | null;
+    warehouse_id: number | null;
 }
 
 export interface WorkOrderVehicle {

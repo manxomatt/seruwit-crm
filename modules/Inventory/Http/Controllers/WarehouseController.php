@@ -25,11 +25,16 @@ class WarehouseController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        return inertia('Modules/Inventory/Warehouses/Create');
+    }
+
     public function store(StoreWarehouseRequest $request): RedirectResponse
     {
         Warehouse::create($request->validated());
 
-        return redirect()->route('inventory.warehouses.index')
+        return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.index')
             ->with('success', 'Warehouse created successfully');
     }
 
@@ -51,7 +56,7 @@ class WarehouseController extends Controller
     {
         $warehouse->delete();
 
-        return redirect()->route('inventory.warehouses.index')
+        return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.index')
             ->with('success', 'Warehouse deleted successfully');
     }
 }

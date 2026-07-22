@@ -3,9 +3,9 @@
 namespace Tests\Feature\Modules\Inventory;
 
 use App\Modules\ModuleInstaller;
-use Illuminate\Foundation\Testing\LazyLoadingViolationException;
+use Illuminate\Support\Facades\Schema;
+use Modules\Inventory\InventoryModule;
 use Modules\Inventory\Models\StockLevel;
-use Modules\Inventory\Models\StockMovement;
 use Modules\Inventory\Models\StockOpname;
 use Modules\Inventory\Models\Warehouse;
 use Tests\TestCase;
@@ -18,25 +18,35 @@ class InventoryModuleLifecycleTest extends TestCase
 
     public function test_inventory_tables_are_created_on_install(): void
     {
-        $installer = app(ModuleInstaller::class);
-        $installer->install('inventory');
+        $tenant = $this->provisionTenant('Inventory Install Co', 'inventory-install-co', 'owner@inventory-install.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
 
-        $this->assertDatabaseHasTable('warehouses');
-        $this->assertDatabaseHasTable('stock_movements');
-        $this->assertDatabaseHasTable('stock_levels');
-        $this->assertDatabaseHasTable('stock_opnames');
-        $this->assertDatabaseHasTable('stock_opname_items');
+        app(ModuleInstaller::class)->install($tenant, new InventoryModule);
+
+        $tenant->run(function () {
+            $this->assertTrue(Schema::hasTable('warehouses'));
+            $this->assertTrue(Schema::hasTable('stock_movements'));
+            $this->assertTrue(Schema::hasTable('stock_levels'));
+            $this->assertTrue(Schema::hasTable('stock_opnames'));
+            $this->assertTrue(Schema::hasTable('stock_opname_items'));
+        });
     }
 
     public function test_inventory_permissions_are_seeded(): void
     {
-        $installer = app(ModuleInstaller::class);
-        $installer->install('inventory');
+        $tenant = $this->provisionTenant('Inventory Perms Co', 'inventory-perms-co', 'owner@inventory-perms.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
 
-        $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'view']);
-        $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'create']);
-        $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'update']);
-        $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'adjust']);
+        app(ModuleInstaller::class)->install($tenant, new InventoryModule);
+
+        $tenant->run(function () {
+            $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'view']);
+            $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'create']);
+            $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'update']);
+            $this->assertDatabaseHas('permissions', ['module' => 'inventory', 'action' => 'adjust']);
+        });
     }
 
     public function test_warehouse_creation(): void
@@ -55,11 +65,15 @@ class InventoryModuleLifecycleTest extends TestCase
         $warehouse = Warehouse::factory()->create();
         $product = \Modules\Product\Models\Product::factory()->create();
 
-        StockMovement::factory()->create([
+        \Modules\Inventory\Support\StockMovementRecorder::record([
             'product_id' => $product->id,
             'warehouse_id' => $warehouse->id,
             'type' => 'in',
             'quantity' => 100,
+            'source_type' => 'manual',
+            'source_id' => null,
+            'recorded_by' => null,
+            'recorded_at' => now(),
         ]);
 
         $level = StockLevel::where('product_id', $product->id)

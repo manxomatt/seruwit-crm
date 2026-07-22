@@ -126,6 +126,12 @@ const TransportationIcon = () => (<svg className="h-5 w-5" fill="none" viewBox="
 </svg>
 );
 
+const InventoryIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+);
+
 const LiveUpdatesIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -239,6 +245,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'maintenance': { route: 'module.maintenance.index', routePattern: 'module.maintenance.*' },
     'tracking': { route: 'module.tracking.map', routePattern: 'module.tracking.*' },
     'transportation': { route: 'module.transportation.trips.index', routePattern: 'module.transportation.*' },
+    'inventory': { route: 'module.inventory.warehouses.index', routePattern: 'module.inventory.*' },
     'orders': { route: 'module.orders.index', routePattern: 'module.orders.*' },
     'billing': { route: 'module.billing.charges.index', routePattern: 'module.billing.*' },
     'invoicing': { route: 'module.invoicing.invoices.index', routePattern: 'module.invoicing.*' },
@@ -262,6 +269,7 @@ const moduleIconMap: Record<string, ReactNode> = {
     'maintenance': <WrenchIcon />,
     'tracking': <TrackingIcon />,
     'transportation': <TransportationIcon />,
+    'inventory': <InventoryIcon />,
     'orders': <OrdersIcon />,
     'billing': <BillingIcon />,
     'invoicing': <BillingIcon />,
@@ -285,6 +293,7 @@ const moduleDisplayNames: Record<string, string> = {
     'maintenance': 'Maintenance',
     'tracking': 'Tracking',
     'transportation': 'Transportation',
+    'inventory': 'Inventory',
     'orders': 'Orders',
     'billing': 'Billing',
     'invoicing': 'Invoicing',

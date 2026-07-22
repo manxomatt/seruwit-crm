@@ -30,6 +30,10 @@ class Product extends Model
      */
     protected $fillable = [
         'code',
+        'brand_id',
+        'product_type_id',
+        'sku',
+        'barcode',
         'name',
         'unit',
         'description',
@@ -54,9 +58,19 @@ class Product extends Model
         ];
     }
 
-    /**
-     * @return BelongsTo<Warehouse, $this>
-     */
+    /** @return BelongsTo<Brand, $this> */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    /** @return BelongsTo<ProductType, $this> */
+    public function productType(): BelongsTo
+    {
+        return $this->belongsTo(ProductType::class);
+    }
+
+    /** @return BelongsTo<Warehouse, $this> */
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);

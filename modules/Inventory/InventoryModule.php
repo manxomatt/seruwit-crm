@@ -34,7 +34,7 @@ class InventoryModule implements ModuleContract
 
     public function requires(): array
     {
-        return [];
+        return ['products'];
     }
 
     public function permissions(): array
@@ -66,9 +66,14 @@ class InventoryModule implements ModuleContract
     public function routes(): void
     {
         Route::middleware(['auth', 'permission:inventory,view'])->group(function (): void {
+            Route::get('/inventory', function () {
+                return redirect('/module/inventory/warehouses');
+            });
+
             Route::prefix('inventory')->name('inventory.')->group(function (): void {
                 // Warehouses
                 Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
+                Route::get('/warehouses/create', [WarehouseController::class, 'create'])->middleware('permission:inventory,create')->name('warehouses.create');
                 Route::post('/warehouses', [WarehouseController::class, 'store'])->middleware('permission:inventory,create')->name('warehouses.store');
                 Route::get('/warehouses/{warehouse}', [WarehouseController::class, 'show'])->name('warehouses.show');
                 Route::patch('/warehouses/{warehouse}', [WarehouseController::class, 'update'])->middleware('permission:inventory,update')->name('warehouses.update');
@@ -79,12 +84,15 @@ class InventoryModule implements ModuleContract
 
                 // Stock Movements (ledger)
                 Route::get('/stock-movements', [StockMovementController::class, 'index'])->name('stock-movements.index');
+                Route::get('/stock-movements/create', [StockMovementController::class, 'create'])->middleware('permission:inventory,adjust')->name('stock-movements.create');
+                Route::post('/stock-movements', [StockMovementController::class, 'store'])->middleware('permission:inventory,adjust')->name('stock-movements.store');
 
                 // Stock Opnames
                 Route::get('/stock-opnames', [StockOpnameController::class, 'index'])->name('stock-opnames.index');
+                Route::get('/stock-opnames/create', [StockOpnameController::class, 'create'])->middleware('permission:inventory,create')->name('stock-opnames.create');
                 Route::post('/stock-opnames', [StockOpnameController::class, 'store'])->middleware('permission:inventory,create')->name('stock-opnames.store');
                 Route::get('/stock-opnames/{opname}', [StockOpnameController::class, 'show'])->name('stock-opnames.show');
-                Route::patch('/stock-opnames/{opname}', [StockOpnameController::class, 'update'])->middleware('permission:inventory,update')->name('stock-opnames.update');
+                Route::patch('/stock-opnames/{opname}/counts', [StockOpnameController::class, 'updateCounts'])->middleware('permission:inventory,update')->name('stock-opnames.counts');
                 Route::post('/stock-opnames/{opname}/finalize', [StockOpnameController::class, 'finalize'])->middleware('permission:inventory,adjust')->name('stock-opnames.finalize');
             });
         });

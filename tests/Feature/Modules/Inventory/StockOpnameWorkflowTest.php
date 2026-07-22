@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Inventory;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Inventory\Models\StockLevel;
 use Modules\Inventory\Models\StockMovement;
 use Modules\Inventory\Models\StockOpname;
@@ -10,15 +11,15 @@ use Modules\Inventory\Models\Warehouse;
 use Modules\Product\Models\Product;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
-use Tests\Traits\WithTenant;
 
 class StockOpnameWorkflowTest extends TestCase
 {
-    use WithRoles, WithTenant;
+    use RefreshDatabase, WithRoles;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutVite();
         $this->setUpRoles();
     }
 
@@ -27,7 +28,7 @@ class StockOpnameWorkflowTest extends TestCase
         $warehouse = Warehouse::factory()->create();
         $user = $this->createAdminUser();
 
-        $response = $this->actingAs($user)->post(route('inventory.stock-opnames.store', [], false), [
+        $response = $this->actingAs($user)->post(route('module.inventory.stock-opnames.store', [], false), [
             'warehouse_id' => $warehouse->id,
             'opname_date' => now()->toDateString(),
         ]);
@@ -67,7 +68,7 @@ class StockOpnameWorkflowTest extends TestCase
 
         // Finalize opname
         $this->actingAs($this->createAdminUser())->post(
-            route('inventory.stock-opnames.finalize', $opname, false),
+            route('module.inventory.stock-opnames.finalize', $opname, false),
             ['items' => [['product_id' => $product->id, 'system_qty' => 100, 'actual_qty' => 95]]]
         );
 
@@ -116,7 +117,7 @@ class StockOpnameWorkflowTest extends TestCase
 
         // Finalize
         $this->actingAs($this->createAdminUser())->post(
-            route('inventory.stock-opnames.finalize', $opname, false),
+            route('module.inventory.stock-opnames.finalize', $opname, false),
             ['items' => [['product_id' => $product->id, 'system_qty' => 100, 'actual_qty' => 105]]]
         );
 
@@ -158,7 +159,7 @@ class StockOpnameWorkflowTest extends TestCase
 
         // Finalize
         $this->actingAs($this->createAdminUser())->post(
-            route('inventory.stock-opnames.finalize', $opname, false),
+            route('module.inventory.stock-opnames.finalize', $opname, false),
             ['items' => [['product_id' => $product->id, 'system_qty' => 100, 'actual_qty' => 100]]]
         );
 

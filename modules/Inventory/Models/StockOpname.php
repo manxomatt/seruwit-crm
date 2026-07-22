@@ -56,6 +56,6 @@ class StockOpname extends Model
      */
     public function items(): HasMany
     {
-        return $this->hasMany(StockOpnameItem::class);
+        return $this->hasMany(StockOpnameItem::class, 'opname_id');
     }
 }

@@ -39,7 +39,7 @@ class StockOpnameItem extends Model
      */
     public function opname(): BelongsTo
     {
-        return $this->belongsTo(StockOpname::class);
+        return $this->belongsTo(StockOpname::class, 'opname_id');
     }
 
     /**
