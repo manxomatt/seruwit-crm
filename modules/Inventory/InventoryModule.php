@@ -9,6 +9,7 @@ use Modules\Inventory\Http\Controllers\StockLevelController;
 use Modules\Inventory\Http\Controllers\StockMovementController;
 use Modules\Inventory\Http\Controllers\StockOpnameController;
 use Modules\Inventory\Http\Controllers\WarehouseController;
+use Modules\Inventory\Http\Controllers\WarehouseLocationController;
 
 class InventoryModule implements ModuleContract
 {
@@ -71,6 +72,13 @@ class InventoryModule implements ModuleContract
             });
 
             Route::prefix('inventory')->name('inventory.')->group(function (): void {
+                // Warehouse Locations (before wildcard)
+                Route::get('/warehouses/{warehouse}/locations/create', [WarehouseLocationController::class, 'create'])->middleware('permission:inventory,create')->name('warehouses.locations.create');
+                Route::post('/warehouses/{warehouse}/locations', [WarehouseLocationController::class, 'store'])->middleware('permission:inventory,create')->name('warehouses.locations.store');
+                Route::get('/warehouses/{warehouse}/locations/{location}/edit', [WarehouseLocationController::class, 'edit'])->middleware('permission:inventory,update')->name('warehouses.locations.edit');
+                Route::patch('/warehouses/{warehouse}/locations/{location}', [WarehouseLocationController::class, 'update'])->middleware('permission:inventory,update')->name('warehouses.locations.update');
+                Route::delete('/warehouses/{warehouse}/locations/{location}', [WarehouseLocationController::class, 'destroy'])->middleware('permission:inventory,update')->name('warehouses.locations.destroy');
+
                 // Warehouses
                 Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
                 Route::get('/warehouses/create', [WarehouseController::class, 'create'])->middleware('permission:inventory,create')->name('warehouses.create');

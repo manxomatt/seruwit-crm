@@ -21,21 +21,35 @@ interface Warehouse {
   name: string
 }
 
+interface Location {
+  id: number
+  warehouse_id: number
+  name: string
+  code: string
+  type: string
+}
+
 interface Props {
   products: Product[]
   warehouses: Warehouse[]
+  locations: Location[]
 }
 
-export default function StockMovementCreate({ products, warehouses }: Props): JSX.Element {
+export default function StockMovementCreate({ products, warehouses, locations }: Props): JSX.Element {
   const { prefixedRoute } = useRoutePrefix()
   const { data, setData, post, processing, errors } = useForm({
     warehouse_id: warehouses[0]?.id ? String(warehouses[0].id) : '',
+    location_id: '',
     product_id: '',
     type: 'in',
     quantity: '',
     reference_code: '',
     notes: '',
   })
+
+  const filteredLocations = locations.filter(
+    (l) => String(l.warehouse_id) === data.warehouse_id
+  )
 
   const submit: FormEventHandler = (e) => {
     e.preventDefault()
@@ -64,11 +78,27 @@ export default function StockMovementCreate({ products, warehouses }: Props): JS
                   id="warehouse_id"
                   className="mt-1"
                   value={data.warehouse_id}
-                  onChange={(value) => setData('warehouse_id', value)}
+                  onChange={(value) => { setData('warehouse_id', value); setData('location_id', ''); }}
                   placeholder="Select a warehouse"
                   options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))}
                 />
                 <InputError message={errors.warehouse_id} className="mt-2" />
+              </div>
+
+              <div>
+                <InputLabel htmlFor="location_id" value="Lokasi (opsional)" />
+                <select
+                  id="location_id"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  value={data.location_id}
+                  onChange={(e) => setData('location_id', e.target.value)}
+                >
+                  <option value="">— Semua lokasi —</option>
+                  {filteredLocations.map((l) => (
+                    <option key={l.id} value={String(l.id)}>{l.code} — {l.name}</option>
+                  ))}
+                </select>
+                <InputError message={errors.location_id} className="mt-2" />
               </div>
 
               <div>

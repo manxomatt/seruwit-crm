@@ -28,9 +28,10 @@ class StockLevelController extends Controller
             ->get();
 
         $stockLevels = StockLevel::query()
-            ->select('product_id', 'warehouse_id', 'on_hand', 'reserved')
+            ->with('location:id,name,code')
+            ->select('product_id', 'warehouse_id', 'location_id', 'on_hand', 'reserved')
             ->get()
-            ->keyBy(fn ($level) => "{$level->product_id}-{$level->warehouse_id}");
+            ->groupBy(fn ($level) => "{$level->product_id}-{$level->warehouse_id}");
 
         // Build matrix: rows are products, columns are warehouses
         $matrix = $products->map(function ($product) use ($warehouses, $stockLevels) {
@@ -44,14 +45,21 @@ class StockLevelController extends Controller
                 ],
                 'levels' => $warehouses->map(function ($warehouse) use ($product, $stockLevels) {
                     $key = "{$product->id}-{$warehouse->id}";
-                    $level = $stockLevels[$key] ?? null;
+                    $group = $stockLevels[$key] ?? collect();
+                    $onHand = $group->sum('on_hand');
+                    $reserved = $group->sum('reserved');
 
                     return [
                         'warehouse_id' => $warehouse->id,
-                        'on_hand' => $level?->on_hand ?? 0,
-                        'reserved' => $level?->reserved ?? 0,
-                        'available' => ($level?->on_hand ?? 0) - ($level?->reserved ?? 0),
-                        'is_low_stock' => $level?->isLowStock() ?? false,
+                        'on_hand' => $onHand,
+                        'reserved' => $reserved,
+                        'available' => $onHand - $reserved,
+                        'is_low_stock' => ($onHand - $reserved) <= ($product->reorder_threshold ?? 10),
+                        'by_location' => $group->filter(fn ($l) => $l->location_id !== null)->map(fn ($l) => [
+                            'location' => $l->location?->only('id', 'name', 'code'),
+                            'on_hand' => $l->on_hand,
+                            'reserved' => $l->reserved,
+                        ])->values(),
                     ];
                 }),
             ];

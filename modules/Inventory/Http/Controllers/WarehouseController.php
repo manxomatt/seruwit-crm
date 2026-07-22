@@ -20,6 +20,7 @@ class WarehouseController extends Controller
         return inertia('Modules/Inventory/Warehouses/Index', [
             'warehouses' => Warehouse::query()
                 ->select('id', 'name', 'location', 'status', 'created_at')
+                ->withCount('locations')
                 ->orderBy('name')
                 ->get(),
         ]);
@@ -32,7 +33,8 @@ class WarehouseController extends Controller
 
     public function store(StoreWarehouseRequest $request): RedirectResponse
     {
-        Warehouse::create($request->validated());
+        $warehouse = Warehouse::create($request->validated());
+        $warehouse->createDefaultLocations();
 
         return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.index')
             ->with('success', 'Warehouse created successfully');
@@ -41,7 +43,12 @@ class WarehouseController extends Controller
     public function show(Warehouse $warehouse)
     {
         return inertia('Modules/Inventory/Warehouses/Show', [
-            'warehouse' => $warehouse->load(['stockLevels.product:id,name,category', 'stockMovements' => fn ($q) => $q->latest()->limit(50)]),
+            'warehouse' => $warehouse->load([
+                'locations' => fn ($q) => $q->with('parent:id,name,code')->withCount(['stockLevels', 'children'])->orderBy('sort_order'),
+                'stockLevels.product:id,name,category',
+                'stockLevels.location:id,name,code',
+                'stockMovements' => fn ($q) => $q->with('location:id,name,code')->latest()->limit(50),
+            ]),
         ]);
     }
 

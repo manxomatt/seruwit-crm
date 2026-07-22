@@ -26,6 +26,7 @@ class InventoryModuleLifecycleTest extends TestCase
 
         $tenant->run(function () {
             $this->assertTrue(Schema::hasTable('warehouses'));
+            $this->assertTrue(Schema::hasTable('warehouse_locations'));
             $this->assertTrue(Schema::hasTable('stock_movements'));
             $this->assertTrue(Schema::hasTable('stock_levels'));
             $this->assertTrue(Schema::hasTable('stock_opnames'));

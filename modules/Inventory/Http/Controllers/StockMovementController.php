@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Modules\Inventory\Http\Requests\StoreStockMovementRequest;
 use Modules\Inventory\Models\StockMovement;
 use Modules\Inventory\Models\Warehouse;
+use Modules\Inventory\Models\WarehouseLocation;
 use Modules\Inventory\Support\StockMovementRecorder;
 use Modules\Product\Models\Product;
 
@@ -21,8 +22,8 @@ class StockMovementController extends Controller
     {
         return inertia('Modules/Inventory/StockMovements/Index', [
             'movements' => StockMovement::query()
-                ->with(['product:id,name', 'warehouse:id,name', 'recordedBy:id,name'])
-                ->select('id', 'product_id', 'warehouse_id', 'type', 'quantity', 'source_type', 'reference_code', 'notes', 'recorded_by', 'recorded_at')
+                ->with(['product:id,name', 'warehouse:id,name', 'location:id,name,code', 'recordedBy:id,name'])
+                ->select('id', 'product_id', 'warehouse_id', 'location_id', 'type', 'quantity', 'source_type', 'reference_code', 'notes', 'recorded_by', 'recorded_at')
                 ->latest('recorded_at')
                 ->paginate(50),
         ]);
@@ -40,6 +41,10 @@ class StockMovementController extends Controller
                 ->select('id', 'name')
                 ->orderBy('name')
                 ->get(),
+            'locations' => WarehouseLocation::query()
+                ->select('id', 'warehouse_id', 'name', 'code', 'type')
+                ->orderBy('sort_order')
+                ->get(),
         ]);
     }
 
@@ -50,6 +55,7 @@ class StockMovementController extends Controller
         StockMovementRecorder::record([
             'product_id' => $validated['product_id'],
             'warehouse_id' => $validated['warehouse_id'],
+            'location_id' => $validated['location_id'] ?? null,
             'type' => $validated['type'],
             'quantity' => $validated['quantity'],
             'source_type' => 'manual',

@@ -19,6 +19,7 @@ class StoreStockMovementRequest extends FormRequest
         return [
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+            'location_id' => ['nullable', 'integer', 'exists:warehouse_locations,id'],
             'type' => ['required', 'string', 'in:in,out,adjustment'],
             'quantity' => ['required', 'numeric', 'min:0'],
             'reference_code' => ['nullable', 'string', 'max:255'],

@@ -16,6 +16,7 @@ class StockLevel extends Model
     protected $fillable = [
         'product_id',
         'warehouse_id',
+        'location_id',
         'on_hand',
         'reserved',
     ];
@@ -49,6 +50,14 @@ class StockLevel extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    /**
+     * @return BelongsTo<WarehouseLocation, $this>
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseLocation::class, 'location_id');
     }
 
     public function getAvailableAttribute(): string

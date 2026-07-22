@@ -16,6 +16,7 @@ class StockMovementRecorder
             self::updateStockLevel(
                 $data['product_id'],
                 $data['warehouse_id'],
+                $data['location_id'] ?? null,
                 $data['type'],
                 $data['quantity']
             );
@@ -24,10 +25,10 @@ class StockMovementRecorder
         });
     }
 
-    private static function updateStockLevel(int $productId, int $warehouseId, string $type, string|int|float $quantity): void
+    private static function updateStockLevel(int $productId, int $warehouseId, ?int $locationId, string $type, string|int|float $quantity): void
     {
         $level = StockLevel::firstOrCreate(
-            ['product_id' => $productId, 'warehouse_id' => $warehouseId],
+            ['product_id' => $productId, 'warehouse_id' => $warehouseId, 'location_id' => $locationId],
             ['on_hand' => 0, 'reserved' => 0]
         );
 

@@ -24,6 +24,14 @@ class Warehouse extends Model
     }
 
     /**
+     * @return HasMany<WarehouseLocation, $this>
+     */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(WarehouseLocation::class);
+    }
+
+    /**
      * @return HasMany<StockLevel, $this>
      */
     public function stockLevels(): HasMany
@@ -42,5 +50,15 @@ class Warehouse extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function createDefaultLocations(): void
+    {
+        foreach (WarehouseLocation::defaultLocations() as $loc) {
+            $this->locations()->firstOrCreate(
+                ['code' => $loc['code']],
+                array_merge($loc, ['is_default' => true]),
+            );
+        }
     }
 }

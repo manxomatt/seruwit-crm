@@ -8,6 +8,7 @@ interface StockMovement {
   id: number
   product: { id: number; name: string }
   warehouse: { id: number; name: string }
+  location: { id: number; name: string; code: string } | null
   type: 'in' | 'out' | 'adjustment' | 'transfer'
   quantity: string
   source_type: string
@@ -57,6 +58,7 @@ export default function StockMovementsIndex({ movements }: Props) {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Product</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Warehouse</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Lokasi</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Qty</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Source</th>
@@ -68,7 +70,7 @@ export default function StockMovementsIndex({ movements }: Props) {
             <tbody className="divide-y divide-gray-200">
               {movements.data.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
                     No movements recorded yet.
                   </td>
                 </tr>
@@ -77,6 +79,7 @@ export default function StockMovementsIndex({ movements }: Props) {
                   <tr key={movement.id} className="hover:bg-gray-50">
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">{movement.product.name}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-500">{movement.warehouse.name}</td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-gray-500">{movement.location?.code ?? '—'}</td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${typeColors[movement.type as keyof typeof typeColors]}`}>
                         {movement.type}
