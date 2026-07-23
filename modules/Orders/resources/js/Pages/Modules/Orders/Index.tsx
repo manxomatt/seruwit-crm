@@ -13,7 +13,7 @@ interface Order {
     order_date: string;
     pickup_address: string;
     delivery_address: string;
-    customer: { id: number; code: string; name: string };
+    partner: { id: number; code: string; name: string };
     trip: { id: number; code: string } | null;
 }
 
@@ -134,7 +134,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Code</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Order Date</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Trip</th>
@@ -146,7 +146,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                         {orders.data.map((order) => (
                                             <tr key={order.id} className="hover:bg-gray-50">
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{order.code}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.customer.name}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.partner.name}</td>
                                                 <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-500">{order.pickup_address} → {order.delivery_address}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.order_date}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.trip?.code || '—'}</td>

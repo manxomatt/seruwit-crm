@@ -24,7 +24,7 @@ class StoreTripScheduleRequest extends FormRequest
         return [
             'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
             'driver_id' => ['required', 'integer', 'exists:drivers,id'],
-            'customer_id' => ['required', 'integer', 'exists:customers,id'],
+            'partner_id' => ['required', 'integer', 'exists:partners,id'],
             'origin' => ['required', 'string', 'max:255'],
             'destination' => ['required', 'string', 'max:255'],
             'cargo_notes' => ['nullable', 'string', 'max:2000'],
@@ -48,7 +48,7 @@ class StoreTripScheduleRequest extends FormRequest
         return [
             'vehicle_id.required' => 'Select a vehicle for this schedule.',
             'driver_id.required' => 'Select a driver for this schedule.',
-            'customer_id.required' => 'Select a customer for this schedule.',
+            'partner_id.required' => 'Select a customer for this schedule.',
             'days_of_week.required' => 'Select at least one day of the week.',
             'days_of_week.min' => 'Select at least one day of the week.',
             'ends_on.after_or_equal' => 'The end date must be on or after the start date.',

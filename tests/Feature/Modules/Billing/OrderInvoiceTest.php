@@ -5,10 +5,10 @@ namespace Tests\Feature\Modules\Billing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Billing\Models\OrderCharge;
 use Modules\Billing\Models\Tariff;
-use Modules\Customer\Models\Customer;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Partners\Models\Partner;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -33,10 +33,10 @@ class OrderInvoiceTest extends TestCase
         $this->setUpRoles();
     }
 
-    private function deliveredOrder(Customer $customer, float $amount): DeliveryOrder
+    private function deliveredOrder(Partner $partner, float $amount): DeliveryOrder
     {
         $order = DeliveryOrder::factory()->create([
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'status' => DeliveryOrder::STATUS_DELIVERED,
             'delivered_at' => now(),
         ]);
@@ -49,12 +49,12 @@ class OrderInvoiceTest extends TestCase
     public function test_a_draft_invoice_bundles_the_selected_orders_with_correct_totals(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
-        $orderA = $this->deliveredOrder($customer, 1000000);
-        $orderB = $this->deliveredOrder($customer, 500000);
+        $partner = Partner::factory()->create();
+        $orderA = $this->deliveredOrder($partner, 1000000);
+        $orderB = $this->deliveredOrder($partner, 500000);
 
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$orderA->id, $orderB->id],
         ])->assertRedirect();
 
@@ -72,11 +72,11 @@ class OrderInvoiceTest extends TestCase
     public function test_each_line_points_back_at_the_charge_it_was_raised_for(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
-        $order = $this->deliveredOrder($customer, 750000);
+        $partner = Partner::factory()->create();
+        $order = $this->deliveredOrder($partner, 750000);
 
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$order->id],
         ]);
 
@@ -94,17 +94,17 @@ class OrderInvoiceTest extends TestCase
     public function test_storing_creates_missing_charges_from_the_matching_tariff(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
         Tariff::factory()->create(['origin' => 'Gudang A', 'destination' => 'Toko B', 'price' => 350000]);
         $order = DeliveryOrder::factory()->create([
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'status' => DeliveryOrder::STATUS_DELIVERED,
             'pickup_address' => 'Gudang A',
             'delivery_address' => 'Toko B',
         ]);
 
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$order->id],
         ]);
 
@@ -114,27 +114,27 @@ class OrderInvoiceTest extends TestCase
     public function test_orders_of_another_customer_or_undelivered_or_invoiced_are_rejected(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
-        $foreign = $this->deliveredOrder(Customer::factory()->create(), 100);
+        $foreign = $this->deliveredOrder(Partner::factory()->create(), 100);
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$foreign->id],
         ])->assertSessionHas('error');
 
-        $undelivered = DeliveryOrder::factory()->confirmed()->create(['customer_id' => $customer->id]);
+        $undelivered = DeliveryOrder::factory()->confirmed()->create(['partner_id' => $partner->id]);
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$undelivered->id],
         ])->assertSessionHas('error');
 
-        $invoiced = $this->deliveredOrder($customer, 100);
-        $existing = Invoice::factory()->create(['customer_id' => $customer->id]);
+        $invoiced = $this->deliveredOrder($partner, 100);
+        $existing = Invoice::factory()->create(['partner_id' => $partner->id]);
         $charge = OrderCharge::firstWhere('delivery_order_id', $invoiced->id);
         InvoiceLine::factory()->sourcedFrom($charge)->create(['invoice_id' => $existing->id]);
 
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$invoiced->id],
         ])->assertSessionHas('error');
 
@@ -144,12 +144,12 @@ class OrderInvoiceTest extends TestCase
     public function test_more_orders_can_be_attached_to_a_draft_with_recalculation(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
-        $orderA = $this->deliveredOrder($customer, 1000000);
-        $orderB = $this->deliveredOrder($customer, 500000);
+        $partner = Partner::factory()->create();
+        $orderA = $this->deliveredOrder($partner, 1000000);
+        $orderB = $this->deliveredOrder($partner, 500000);
 
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$orderA->id],
         ]);
         $invoice = Invoice::first();
@@ -164,9 +164,9 @@ class OrderInvoiceTest extends TestCase
     public function test_orders_cannot_be_attached_to_an_issued_invoice(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
-        $order = $this->deliveredOrder($customer, 100000);
-        $invoice = Invoice::factory()->issued()->create(['customer_id' => $customer->id]);
+        $partner = Partner::factory()->create();
+        $order = $this->deliveredOrder($partner, 100000);
+        $invoice = Invoice::factory()->issued()->create(['partner_id' => $partner->id]);
 
         $this->actingAs($user)->post(route('module.billing.invoices.orders.store', $invoice), [
             'order_ids' => [$order->id],
@@ -182,11 +182,11 @@ class OrderInvoiceTest extends TestCase
     public function test_removing_the_line_makes_the_order_invoiceable_again(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
-        $order = $this->deliveredOrder($customer, 400000);
+        $partner = Partner::factory()->create();
+        $order = $this->deliveredOrder($partner, 400000);
 
         $this->actingAs($user)->post(route('module.billing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_ids' => [$order->id],
         ]);
 
@@ -195,7 +195,7 @@ class OrderInvoiceTest extends TestCase
 
         $this->actingAs($user)->delete(route('module.invoicing.invoices.lines.destroy', [$invoice, $line]));
 
-        $response = $this->actingAs($user)->get(route('module.billing.invoices.create', ['customer_id' => $customer->id]));
+        $response = $this->actingAs($user)->get(route('module.billing.invoices.create', ['partner_id' => $partner->id]));
         $invoiceable = $response->viewData('page')['props']['invoiceableOrders'];
 
         $this->assertCount(1, $invoiceable);

@@ -6,15 +6,11 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Product\Database\Factories\ProductFactory;
 
-/**
- * Deliberately has no knowledge of Trip or any other consumer's cargo/stock
- * concept — Product exists so Transportation, and eventually an Inventory or
- * sales module, can reference the same catalog via `requires(): ['products']`
- * without this module depending back on any of them.
- */
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -30,6 +26,7 @@ class Product extends Model
      */
     protected $fillable = [
         'code',
+        'parent_id',
         'brand_id',
         'product_type_id',
         'sku',
@@ -37,13 +34,22 @@ class Product extends Model
         'name',
         'unit',
         'description',
+        'description_sale',
+        'description_purchase',
         'price',
+        'cost',
+        'weight',
+        'volume',
         'status',
         'category',
         'stock_unit',
         'reorder_threshold',
         'reorder_quantity',
         'warehouse_id',
+        'is_favorite',
+        'is_storable',
+        'images',
+        'tracking',
     ];
 
     /**
@@ -53,9 +59,27 @@ class Product extends Model
     {
         return [
             'price' => 'decimal:2',
+            'cost' => 'decimal:4',
+            'weight' => 'decimal:4',
+            'volume' => 'decimal:4',
             'reorder_threshold' => 'integer',
             'reorder_quantity' => 'integer',
+            'is_favorite' => 'boolean',
+            'is_storable' => 'boolean',
+            'images' => 'array',
         ];
+    }
+
+    /** @return BelongsTo<self, $this> */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /** @return HasMany<self, $this> */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     /** @return BelongsTo<Brand, $this> */
@@ -76,12 +100,41 @@ class Product extends Model
         return $this->belongsTo(Warehouse::class);
     }
 
-    /**
-     * Generates the next sequential human-readable product code, e.g.
-     * PROD-000001. Not safe against a race between two simultaneous store
-     * requests, but product creation is a low-frequency, single-operator
-     * action here — same trade-off as Customer::nextCode().
-     */
+    /** @return BelongsToMany<ProductTag, $this> */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductTag::class, 'product_product_tag', 'product_id', 'tag_id');
+    }
+
+    /** @return HasMany<ProductPackaging, $this> */
+    public function packagings(): HasMany
+    {
+        return $this->hasMany(ProductPackaging::class)->orderBy('sort');
+    }
+
+    /** @return HasMany<ProductProductAttribute, $this> */
+    public function productAttributes(): HasMany
+    {
+        return $this->hasMany(ProductProductAttribute::class)->orderBy('sort');
+    }
+
+    /** @return HasMany<ProductAttributeValue, $this> */
+    public function attributeValues(): HasMany
+    {
+        return $this->hasMany(ProductAttributeValue::class);
+    }
+
+    /** @return HasMany<ProductCombination, $this> */
+    public function combinations(): HasMany
+    {
+        return $this->hasMany(ProductCombination::class);
+    }
+
+    public function isService(): bool
+    {
+        return $this->category === 'service';
+    }
+
     public static function nextCode(): string
     {
         $lastNumber = (int) static::query()

@@ -14,10 +14,7 @@ return new class extends Migration
         Schema::create('delivery_orders', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            // No cascade — Customer must stay free of any knowledge of Orders,
-            // so a customer still referenced by an order is protected at the
-            // database level instead. Same pattern as trips.customer_id.
-            $table->foreignId('customer_id')->constrained();
+            $table->foreignId('partner_id')->constrained('partners');
             // The trips table is guaranteed to exist here because Orders
             // requires Transportation. nullOnDelete is a safety net only:
             // TripObserver releases attached orders before a trip is deleted.

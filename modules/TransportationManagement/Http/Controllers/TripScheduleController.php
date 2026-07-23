@@ -9,9 +9,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Http\Requests\StoreTripScheduleRequest;
 use Modules\TransportationManagement\Http\Requests\UpdateTripScheduleRequest;
 use Modules\TransportationManagement\Models\TripSchedule;
@@ -34,7 +34,7 @@ class TripScheduleController extends Controller
         $user = Auth::user();
 
         $schedules = TripSchedule::query()
-            ->with(['vehicle', 'driver', 'customer'])
+            ->with(['vehicle', 'driver', 'partner'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('origin', 'like', "%{$search}%")
@@ -66,7 +66,7 @@ class TripScheduleController extends Controller
         return Inertia::render('Modules/TransportationManagement/Schedules/Create', [
             'vehicles' => Vehicle::query()->orderBy('name')->get(['id', 'name', 'plate_number', 'status']),
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name', 'license_number', 'status']),
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
         ]);
     }
 
@@ -88,7 +88,7 @@ class TripScheduleController extends Controller
     {
         $user = Auth::user();
 
-        $schedule->load(['vehicle', 'driver', 'customer']);
+        $schedule->load(['vehicle', 'driver', 'partner']);
         $schedule->loadCount('trips');
 
         return Inertia::render('Modules/TransportationManagement/Schedules/Show', [
@@ -109,7 +109,7 @@ class TripScheduleController extends Controller
             'schedule' => $schedule,
             'vehicles' => Vehicle::query()->orderBy('name')->get(['id', 'name', 'plate_number', 'status']),
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name', 'license_number', 'status']),
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
         ]);
     }
 

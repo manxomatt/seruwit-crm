@@ -5,7 +5,7 @@ namespace Tests\Feature\Modules\Billing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Billing\Models\OrderCharge;
 use Modules\Billing\Models\Tariff;
-use Modules\Customer\Models\Customer;
+use Modules\Partners\Models\Partner;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -39,7 +39,7 @@ class TariffTest extends TestCase
         ])->assertRedirect(route('module.billing.tariffs.index'));
 
         $tariff = Tariff::first();
-        $this->assertNull($tariff->customer_id);
+        $this->assertNull($tariff->partner_id);
 
         $this->actingAs($user)->patch(route('module.billing.tariffs.update', $tariff), [
             'origin' => 'Jakarta',
@@ -71,19 +71,19 @@ class TariffTest extends TestCase
     public function test_a_duplicate_route_for_the_same_customer_is_rejected_but_other_customers_may_share_it(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
-        Tariff::factory()->forCustomer($customer)->create(['origin' => 'Jakarta', 'destination' => 'Bandung']);
+        $partner = Partner::factory()->create();
+        Tariff::factory()->forCustomer($partner)->create(['origin' => 'Jakarta', 'destination' => 'Bandung']);
 
         $this->actingAs($user)->post(route('module.billing.tariffs.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'price' => 900000,
         ])->assertSessionHasErrors('destination');
 
-        $other = Customer::factory()->create();
+        $other = Partner::factory()->create();
         $this->actingAs($user)->post(route('module.billing.tariffs.store'), [
-            'customer_id' => $other->id,
+            'partner_id' => $other->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'price' => 900000,

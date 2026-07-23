@@ -10,7 +10,7 @@ interface Trip {
     scheduled_at: string | null;
     stops_count: number;
     vehicle: { id: number; plate_number: string; name: string | null } | null;
-    customer: { id: number; name: string } | null;
+    partner: { id: number; name: string } | null;
 }
 
 interface Props {
@@ -56,7 +56,7 @@ export default function Today({ driverName, trips }: Props): JSX.Element {
                             </p>
                             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                                 {trip.vehicle && <span>🚚 {trip.vehicle.plate_number}</span>}
-                                {trip.customer && <span>🏢 {trip.customer.name}</span>}
+                                {trip.partner && <span>🏢 {trip.partner.name}</span>}
                                 <span>📍 {trip.stops_count} pemberhentian</span>
                             </div>
                         </Link>

@@ -13,7 +13,7 @@ import { useState, FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
 import { formatMoney } from '@/utils/money';
 
-interface Customer {
+interface Partner {
     id: number;
     code: string;
     name: string;
@@ -21,12 +21,12 @@ interface Customer {
 
 interface Tariff {
     id: number;
-    customer_id: number | null;
+    partner_id: number | null;
     origin: string;
     destination: string;
     price: string;
     is_active: boolean;
-    customer: Customer | null;
+    partner: Partner | null;
 }
 
 interface PaginatedTariffs {
@@ -40,12 +40,12 @@ interface PaginatedTariffs {
 
 interface Props {
     tariffs: PaginatedTariffs;
-    customers: Customer[];
-    filters: { search: string | null; customer_id: string | null };
+    partners: Partner[];
+    filters: { search: string | null; partner_id: string | null };
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-export default function Index({ tariffs, customers, filters, can }: Props): JSX.Element {
+export default function Index({ tariffs, partners, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [search, setSearch] = useState(filters.search || '');
     const [showModal, setShowModal] = useState(false);
@@ -53,7 +53,7 @@ export default function Index({ tariffs, customers, filters, can }: Props): JSX.
     const [deleting, setDeleting] = useState<Tariff | null>(null);
 
     const form = useForm({
-        customer_id: '',
+        partner_id: '',
         origin: '',
         destination: '',
         price: '',
@@ -71,7 +71,7 @@ export default function Index({ tariffs, customers, filters, can }: Props): JSX.
         setEditing(tariff);
         form.clearErrors();
         form.setData({
-            customer_id: tariff.customer_id ? String(tariff.customer_id) : '',
+            partner_id: tariff.partner_id ? String(tariff.partner_id) : '',
             origin: tariff.origin,
             destination: tariff.destination,
             price: tariff.price,
@@ -108,14 +108,14 @@ export default function Index({ tariffs, customers, filters, can }: Props): JSX.
         e.preventDefault();
         router.get(prefixedRoute('billing.tariffs.index'), {
             search: search || undefined,
-            customer_id: filters.customer_id || undefined,
+            partner_id: filters.partner_id || undefined,
         }, { preserveState: true, replace: true });
     };
 
-    const handleCustomerFilter = (customerId: string) => {
+    const handlePartnerFilter = (partnerId: string) => {
         router.get(prefixedRoute('billing.tariffs.index'), {
             search: search || undefined,
-            customer_id: customerId || undefined,
+            partner_id: partnerId || undefined,
         }, { preserveState: true, replace: true });
     };
 
@@ -146,12 +146,12 @@ export default function Index({ tariffs, customers, filters, can }: Props): JSX.
                         </div>
                         <Select
                             className="w-56"
-                            value={filters.customer_id || ''}
-                            onChange={handleCustomerFilter}
-                            placeholder="All customers"
+                            value={filters.partner_id || ''}
+                            onChange={handlePartnerFilter}
+                            placeholder="All partners"
                             options={[
-                                { value: '', label: 'All customers' },
-                                ...customers.map((customer) => ({ value: String(customer.id), label: customer.name })),
+                                { value: '', label: 'All partners' },
+                                ...partners.map((partner) => ({ value: String(partner.id), label: partner.name })),
                             ]}
                         />
                         <PrimaryButton type="submit">Search</PrimaryButton>
@@ -169,7 +169,7 @@ export default function Index({ tariffs, customers, filters, can }: Props): JSX.
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Price</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
@@ -182,7 +182,7 @@ export default function Index({ tariffs, customers, filters, can }: Props): JSX.
                                                     {tariff.origin} → {tariff.destination}
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                    {tariff.customer ? tariff.customer.name : (
+                                                    {tariff.partner ? tariff.partner.name : (
                                                         <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Umum</span>
                                                     )}
                                                 </td>
@@ -243,19 +243,19 @@ export default function Index({ tariffs, customers, filters, can }: Props): JSX.
                     <h3 className="mb-4 text-lg font-medium text-gray-900">{editing ? 'Edit Tariff' : 'New Tariff'}</h3>
                     <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="t_customer_id" value="Customer (kosongkan untuk tarif umum)" />
+                            <InputLabel htmlFor="t_partner_id" value="Partner (kosongkan untuk tarif umum)" />
                             <Select
-                                id="t_customer_id"
+                                id="t_partner_id"
                                 className="mt-1"
-                                value={form.data.customer_id}
-                                onChange={(value) => form.setData('customer_id', value)}
+                                value={form.data.partner_id}
+                                onChange={(value) => form.setData('partner_id', value)}
                                 placeholder="Tarif umum"
                                 options={[
                                     { value: '', label: 'Tarif umum' },
-                                    ...customers.map((customer) => ({ value: String(customer.id), label: `${customer.name} (${customer.code})` })),
+                                    ...partners.map((partner) => ({ value: String(partner.id), label: `${partner.name} (${partner.code})` })),
                                 ]}
                             />
-                            <InputError message={form.errors.customer_id} className="mt-2" />
+                            <InputError message={form.errors.partner_id} className="mt-2" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>

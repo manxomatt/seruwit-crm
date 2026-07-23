@@ -22,7 +22,7 @@ class UpdateDeliveryOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['sometimes', 'required', 'integer', 'exists:customers,id'],
+            'partner_id' => ['sometimes', 'required', 'integer', 'exists:partners,id'],
             'order_date' => ['sometimes', 'required', 'date'],
             'pickup_address' => ['sometimes', 'required', 'string', 'max:255'],
             'delivery_address' => ['sometimes', 'required', 'string', 'max:255'],
@@ -38,8 +38,8 @@ class UpdateDeliveryOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'customer_id.required' => 'Please select a customer.',
-            'customer_id.exists' => 'The selected customer does not exist.',
+            'partner_id.required' => 'Please select a customer.',
+            'partner_id.exists' => 'The selected customer does not exist.',
         ];
     }
 }

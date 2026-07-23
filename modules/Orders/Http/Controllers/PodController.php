@@ -34,7 +34,7 @@ class PodController extends Controller
 
         abort_if($order->status !== DeliveryOrder::STATUS_IN_TRANSIT, 403, 'This order is not out for delivery.');
 
-        $order->load(['customer:id,name', 'items.product:id,name']);
+        $order->load(['partner:id,name', 'items.product:id,name']);
 
         return Inertia::render('Modules/Orders/Driver/PodForm', [
             'driverName' => $driver->name,

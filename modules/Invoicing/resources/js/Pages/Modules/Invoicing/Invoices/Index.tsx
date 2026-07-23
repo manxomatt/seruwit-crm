@@ -15,7 +15,7 @@ interface Invoice {
     issue_date: string;
     due_date: string | null;
     total: string;
-    customer: { id: number; code: string; name: string };
+    partner: { id: number; code: string; name: string };
 }
 
 interface PaginatedInvoices {
@@ -140,7 +140,7 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Code</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Issue Date</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Due Date</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Total</th>
@@ -155,7 +155,7 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                                                 onClick={() => router.get(prefixedRoute('invoicing.invoices.show', invoice.id))}
                                             >
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-indigo-600">{invoice.code}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{invoice.customer.name}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{invoice.partner.name}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{invoice.issue_date}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{invoice.due_date || '—'}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">{formatMoney(invoice.total)}</td>

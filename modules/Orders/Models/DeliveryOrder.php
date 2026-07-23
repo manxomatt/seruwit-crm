@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
-use Modules\Customer\Models\Customer;
 use Modules\Orders\Database\Factories\DeliveryOrderFactory;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Models\Trip;
 use Modules\TransportationManagement\Models\TripStop;
 
@@ -57,7 +57,7 @@ class DeliveryOrder extends Model
      */
     protected $fillable = [
         'code',
-        'customer_id',
+        'partner_id',
         'trip_id',
         'status',
         'order_date',
@@ -82,11 +82,11 @@ class DeliveryOrder extends Model
     }
 
     /**
-     * @return BelongsTo<Customer, $this>
+     * @return BelongsTo<Partner, $this>
      */
-    public function customer(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Partner::class);
     }
 
     /**

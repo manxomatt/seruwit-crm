@@ -59,7 +59,7 @@
     <table class="billto">
         <tr>
             <td class="label">Ditagihkan kepada</td>
-            <td>: {{ $invoice->customer?->name }} ({{ $invoice->customer?->code }})</td>
+            <td>: {{ $invoice->partner?->name }} ({{ $invoice->partner?->code }})</td>
         </tr>
     </table>
 

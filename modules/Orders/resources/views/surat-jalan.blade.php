@@ -32,7 +32,7 @@
     <table class="meta">
         <tr>
             <td class="label">Pelanggan</td><td class="sep">:</td>
-            <td>{{ $order->customer?->name }}</td>
+            <td>{{ $order->partner?->name }}</td>
             <td class="label">No. Trip</td><td class="sep">:</td>
             <td>{{ $order->trip?->code }}</td>
         </tr>

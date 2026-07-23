@@ -3,9 +3,9 @@
 namespace Tests\Feature\Modules\Transportation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Models\Trip;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -33,12 +33,12 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
         $response = $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
@@ -56,7 +56,7 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
         // Fixed mid-day time so adding hours never crosses midnight — the
         // conflict rule is scoped to the calendar date.
         $date = now()->addDay()->setTime(8, 0);
@@ -65,7 +65,7 @@ class TripTest extends TestCase
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
@@ -77,7 +77,7 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
         // Fixed mid-day time so adding hours never crosses midnight — the
         // conflict rule is scoped to the calendar date.
         $date = now()->addDay()->setTime(8, 0);
@@ -86,7 +86,7 @@ class TripTest extends TestCase
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
@@ -103,13 +103,13 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
         Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED, 'scheduled_at' => now()->addDay()]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => now()->addDays(5)->format('Y-m-d H:i:s'),
@@ -119,12 +119,12 @@ class TripTest extends TestCase
     /**
      * @return array<string, mixed>
      */
-    private function dispatchPayload(int $vehicleId, int $driverId, int $customerId): array
+    private function dispatchPayload(int $vehicleId, int $driverId, int $partnerId): array
     {
         return [
             'vehicle_id' => $vehicleId,
             'driver_id' => $driverId,
-            'customer_id' => $customerId,
+            'partner_id' => $partnerId,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => now()->addDay()->format('Y-m-d H:i:s'),
@@ -136,9 +136,9 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_MAINTENANCE]);
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
-        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $partner->id))
             ->assertSessionHasErrors('vehicle_id');
     }
 
@@ -147,9 +147,9 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create(['stnk_expires_at' => now()->subDay()]);
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
-        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $partner->id))
             ->assertSessionHasErrors('vehicle_id');
     }
 
@@ -158,9 +158,9 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create(['status' => Driver::STATUS_ON_LEAVE]);
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
-        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $partner->id))
             ->assertSessionHasErrors('driver_id');
     }
 
@@ -169,9 +169,9 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create(['license_expires_at' => now()->subDay()]);
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
-        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $partner->id))
             ->assertSessionHasErrors('driver_id');
     }
 
@@ -180,9 +180,9 @@ class TripTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create(['stnk_expires_at' => null, 'kir_expires_at' => null]);
         $driver = Driver::factory()->create(['license_expires_at' => null]);
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
-        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $customer->id))
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), $this->dispatchPayload($vehicle->id, $driver->id, $partner->id))
             ->assertSessionHasNoErrors();
     }
 

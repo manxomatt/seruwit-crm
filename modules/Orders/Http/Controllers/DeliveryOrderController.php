@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Customer\Models\Customer;
 use Modules\Orders\Http\Requests\AssignTripRequest;
 use Modules\Orders\Http\Requests\StoreDeliveryOrderRequest;
 use Modules\Orders\Http\Requests\UpdateDeliveryOrderRequest;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Models\Trip;
 use Modules\TransportationManagement\Models\TripStop;
@@ -36,7 +36,7 @@ class DeliveryOrderController extends Controller
         $user = Auth::user();
 
         $orders = DeliveryOrder::query()
-            ->with(['customer', 'trip'])
+            ->with(['partner', 'trip'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
@@ -69,7 +69,7 @@ class DeliveryOrderController extends Controller
     public function create(): Response
     {
         return Inertia::render('Modules/Orders/Create', [
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
         ]);
     }
 
@@ -95,7 +95,7 @@ class DeliveryOrderController extends Controller
         $user = Auth::user();
 
         $order->load([
-            'customer',
+            'partner',
             'trip.vehicle',
             'trip.driver',
             'items.product',
@@ -134,7 +134,7 @@ class DeliveryOrderController extends Controller
 
         return Inertia::render('Modules/Orders/Edit', [
             'order' => $order,
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
         ]);
     }
 

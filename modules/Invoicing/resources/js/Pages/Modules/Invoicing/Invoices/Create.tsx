@@ -10,26 +10,26 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import InvoicingNav from '../../../../InvoicingNav';
 
-interface Customer {
+interface Partner {
     id: number;
     code: string;
     name: string;
 }
 
 interface Props {
-    customers: Customer[];
-    selectedCustomerId?: number | string | null;
+    partners: Partner[];
+    selectedPartnerId?: number | string | null;
 }
 
-export default function Create({ customers, selectedCustomerId }: Props): JSX.Element {
+export default function Create({ partners, selectedPartnerId }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm<{
-        customer_id: string;
+        partner_id: string;
         issue_date: string;
         due_date: string;
         notes: string;
     }>({
-        customer_id: selectedCustomerId ? String(selectedCustomerId) : '',
+        partner_id: selectedPartnerId ? String(selectedPartnerId) : '',
         issue_date: '',
         due_date: '',
         notes: '',
@@ -53,19 +53,19 @@ export default function Create({ customers, selectedCustomerId }: Props): JSX.El
                     <form onSubmit={submit} className="max-w-3xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                             <div>
-                                <InputLabel htmlFor="customer_id" value="Customer" />
+                                <InputLabel htmlFor="partner_id" value="Partner" />
                                 <Select
-                                    id="customer_id"
+                                    id="partner_id"
                                     className="mt-1"
-                                    value={data.customer_id}
-                                    onChange={(value) => setData('customer_id', value)}
-                                    placeholder="Select a customer"
-                                    options={customers.map((customer) => ({
-                                        value: String(customer.id),
-                                        label: `${customer.name} (${customer.code})`,
+                                    value={data.partner_id}
+                                    onChange={(value) => setData('partner_id', value)}
+                                    placeholder="Select a partner"
+                                    options={partners.map((partner) => ({
+                                        value: String(partner.id),
+                                        label: `${partner.name} (${partner.code})`,
                                     }))}
                                 />
-                                <InputError message={errors.customer_id} className="mt-2" />
+                                <InputError message={errors.partner_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="issue_date" value="Issue Date (default hari ini)" />
@@ -86,7 +86,7 @@ export default function Create({ customers, selectedCustomerId }: Props): JSX.El
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing || !data.customer_id}>Create Draft Invoice</PrimaryButton>
+                            <PrimaryButton disabled={processing || !data.partner_id}>Create Draft Invoice</PrimaryButton>
                             <Link href={prefixedRoute('invoicing.invoices.index')}>
                                 <SecondaryButton type="button">Cancel</SecondaryButton>
                             </Link>

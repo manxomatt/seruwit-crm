@@ -14,11 +14,7 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            // No cascade — Customer must stay free of any knowledge of
-            // Billing, so a customer still referenced by an invoice is
-            // protected at the database level instead. Same pattern as
-            // delivery_orders.customer_id.
-            $table->foreignId('customer_id')->constrained();
+            $table->foreignId('partner_id')->constrained('partners');
             $table->string('status')->default('draft')->index();
             $table->date('issue_date');
             $table->date('due_date')->nullable();

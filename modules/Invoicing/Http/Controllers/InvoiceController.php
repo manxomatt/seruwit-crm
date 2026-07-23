@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Customer\Models\Customer;
 use Modules\Invoicing\Http\Requests\StoreInvoiceRequest;
 use Modules\Invoicing\Http\Requests\UpdateInvoiceRequest;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Partners\Models\Partner;
 
 class InvoiceController extends Controller
 {
@@ -33,7 +33,7 @@ class InvoiceController extends Controller
         $user = Auth::user();
 
         $invoices = Invoice::query()
-            ->with('customer:id,code,name')
+            ->with('partner:id,code,name')
             ->when(request('search'), fn ($query, $search) => $query->where('code', 'like', "%{$search}%"))
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
             ->latest('issue_date')
@@ -64,8 +64,8 @@ class InvoiceController extends Controller
     public function create(): Response
     {
         return Inertia::render('Modules/Invoicing/Invoices/Create', [
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
-            'selectedCustomerId' => request('customer_id'),
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'selectedPartnerId' => request('partner_id'),
         ]);
     }
 
@@ -78,7 +78,7 @@ class InvoiceController extends Controller
 
         $invoice = Invoice::create([
             'code' => Invoice::nextCode(),
-            'customer_id' => $validated['customer_id'],
+            'partner_id' => $validated['partner_id'],
             'status' => Invoice::STATUS_DRAFT,
             'issue_date' => $validated['issue_date'] ?? now()->toDateString(),
             'due_date' => $validated['due_date'] ?? null,
@@ -96,7 +96,7 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice): Response
     {
-        $invoice->load(['customer:id,code,name', 'lines']);
+        $invoice->load(['partner:id,code,name', 'lines']);
 
         return Inertia::render('Modules/Invoicing/Invoices/Show', [
             'invoice' => $invoice,

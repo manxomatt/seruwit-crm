@@ -7,7 +7,9 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Product\Http\Controllers\BrandController;
 use Modules\Product\Http\Controllers\PrincipalController;
+use Modules\Product\Http\Controllers\ProductAttributeController;
 use Modules\Product\Http\Controllers\ProductController;
+use Modules\Product\Http\Controllers\ProductTagController;
 use Modules\Product\Http\Controllers\ProductTypeController;
 
 /**
@@ -107,6 +109,22 @@ class ProductModule implements ModuleContract
         Route::get('/products/product-types/{productType}/edit', [ProductTypeController::class, 'edit'])->middleware('permission:products,update')->name('products.product-types.edit');
         Route::patch('/products/product-types/{productType}', [ProductTypeController::class, 'update'])->middleware('permission:products,update')->name('products.product-types.update');
         Route::delete('/products/product-types/{productType}', [ProductTypeController::class, 'destroy'])->middleware('permission:products,delete')->name('products.product-types.destroy');
+
+        // Attributes (before {product} wildcard)
+        Route::get('/products/attributes', [ProductAttributeController::class, 'index'])->middleware('permission:products,view')->name('products.attributes.index');
+        Route::get('/products/attributes/create', [ProductAttributeController::class, 'create'])->middleware('permission:products,create')->name('products.attributes.create');
+        Route::post('/products/attributes', [ProductAttributeController::class, 'store'])->middleware('permission:products,create')->name('products.attributes.store');
+        Route::get('/products/attributes/{attribute}/edit', [ProductAttributeController::class, 'edit'])->middleware('permission:products,update')->name('products.attributes.edit');
+        Route::patch('/products/attributes/{attribute}', [ProductAttributeController::class, 'update'])->middleware('permission:products,update')->name('products.attributes.update');
+        Route::delete('/products/attributes/{attribute}', [ProductAttributeController::class, 'destroy'])->middleware('permission:products,delete')->name('products.attributes.destroy');
+
+        // Tags (before {product} wildcard)
+        Route::get('/products/tags', [ProductTagController::class, 'index'])->middleware('permission:products,view')->name('products.tags.index');
+        Route::get('/products/tags/create', [ProductTagController::class, 'create'])->middleware('permission:products,create')->name('products.tags.create');
+        Route::post('/products/tags', [ProductTagController::class, 'store'])->middleware('permission:products,create')->name('products.tags.store');
+        Route::get('/products/tags/{tag}/edit', [ProductTagController::class, 'edit'])->middleware('permission:products,update')->name('products.tags.edit');
+        Route::patch('/products/tags/{tag}', [ProductTagController::class, 'update'])->middleware('permission:products,update')->name('products.tags.update');
+        Route::delete('/products/tags/{tag}', [ProductTagController::class, 'destroy'])->middleware('permission:products,delete')->name('products.tags.destroy');
 
         // Products
         Route::get('/products', [ProductController::class, 'index'])->middleware('permission:products,view')->name('products.index');

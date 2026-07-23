@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Customer\Models\Customer;
 use Modules\Invoicing\Database\Factories\InvoiceFactory;
+use Modules\Partners\Models\Partner;
 
 class Invoice extends Model
 {
@@ -37,7 +37,7 @@ class Invoice extends Model
      */
     protected $fillable = [
         'code',
-        'customer_id',
+        'partner_id',
         'status',
         'issue_date',
         'due_date',
@@ -68,11 +68,11 @@ class Invoice extends Model
     }
 
     /**
-     * @return BelongsTo<Customer, $this>
+     * @return BelongsTo<Partner, $this>
      */
-    public function customer(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Partner::class);
     }
 
     /**

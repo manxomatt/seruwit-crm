@@ -74,7 +74,7 @@ interface Order {
     confirmed_at: string | null;
     delivered_at: string | null;
     cancelled_reason: string | null;
-    customer: { id: number; code: string; name: string };
+    partner: { id: number; code: string; name: string };
     trip: {
         id: number;
         code: string;
@@ -227,12 +227,12 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                     <div className="p-6">
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Customer</dt>
+                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    <Link href={prefixedRoute('customers.show', order.customer.id)} className="text-indigo-600 hover:text-indigo-900">
-                                        {order.customer.name}
+                                    <Link href={prefixedRoute('partners.show', order.partner.id)} className="text-indigo-600 hover:text-indigo-900">
+                                        {order.partner.name}
                                     </Link>{' '}
-                                    ({order.customer.code})
+                                    ({order.partner.code})
                                 </dd>
                             </div>
                             <div>
@@ -274,8 +274,8 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                 {!['draft', 'cancelled'].includes(order.status) && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-2 text-lg font-medium text-gray-900">Link Pelacakan Pelanggan</h3>
-                            <p className="mb-3 text-sm text-gray-500">Bagikan tautan ini agar pelanggan dapat memantau kirimannya tanpa login.</p>
+                            <h3 className="mb-2 text-lg font-medium text-gray-900">Link Pelacakan Partner</h3>
+                            <p className="mb-3 text-sm text-gray-500">Bagikan tautan ini agar partner dapat memantau kirimannya tanpa login.</p>
                             <div className="flex items-center gap-2">
                                 <input
                                     readOnly

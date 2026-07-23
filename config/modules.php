@@ -19,7 +19,7 @@ return [
         Modules\Billing\BillingModule::class,
         Modules\Carousels\CarouselsModule::class,
         Modules\Document\DocumentModule::class,
-        Modules\Customer\CustomerModule::class,
+        Modules\Partners\PartnersModule::class,
         Modules\Fleet\FleetModule::class,
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,

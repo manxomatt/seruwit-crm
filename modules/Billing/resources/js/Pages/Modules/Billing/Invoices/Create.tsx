@@ -10,7 +10,7 @@ import { FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
 import { formatMoney } from '@/utils/money';
 
-interface Customer {
+interface Partner {
     id: number;
     code: string;
     name: string;
@@ -26,27 +26,27 @@ interface InvoiceableOrder {
 }
 
 interface Props {
-    customers: Customer[];
-    selectedCustomerId: string | null;
+    partners: Partner[];
+    selectedPartnerId: string | null;
     invoiceableOrders: InvoiceableOrder[];
 }
 
-export default function Create({ customers, selectedCustomerId, invoiceableOrders }: Props): JSX.Element {
+export default function Create({ partners, selectedPartnerId, invoiceableOrders }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm<{
-        customer_id: string;
+        partner_id: string;
         order_ids: number[];
     }>({
-        customer_id: selectedCustomerId || '',
+        partner_id: selectedPartnerId || '',
         order_ids: [],
     });
 
-    const selectCustomer = (customerId: string) => {
-        setData((current) => ({ ...current, customer_id: customerId, order_ids: [] }));
-        router.get(prefixedRoute('billing.invoices.create'), { customer_id: customerId || undefined }, {
+    const selectPartner = (partnerId: string) => {
+        setData((current) => ({ ...current, partner_id: partnerId, order_ids: [] }));
+        router.get(prefixedRoute('billing.invoices.create'), { partner_id: partnerId || undefined }, {
             preserveState: true,
             replace: true,
-            only: ['invoiceableOrders', 'selectedCustomerId'],
+            only: ['invoiceableOrders', 'selectedPartnerId'],
         });
     };
 
@@ -78,28 +78,28 @@ export default function Create({ customers, selectedCustomerId, invoiceableOrder
                     <form onSubmit={submit} className="max-w-3xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="customer_id" value="Customer" />
+                                <InputLabel htmlFor="partner_id" value="Partner" />
                                 <Select
-                                    id="customer_id"
+                                    id="partner_id"
                                     className="mt-1"
-                                    value={data.customer_id}
-                                    onChange={selectCustomer}
-                                    placeholder="Select a customer"
-                                    options={customers.map((customer) => ({
-                                        value: String(customer.id),
-                                        label: `${customer.name} (${customer.code})`,
+                                    value={data.partner_id}
+                                    onChange={selectPartner}
+                                    placeholder="Select a partner"
+                                    options={partners.map((partner) => ({
+                                        value: String(partner.id),
+                                        label: `${partner.name} (${partner.code})`,
                                     }))}
                                 />
-                                <InputError message={errors.customer_id} className="mt-2" />
+                                <InputError message={errors.partner_id} className="mt-2" />
                             </div>
                         </div>
 
-                        {data.customer_id && (
+                        {data.partner_id && (
                             <div>
                                 <InputLabel value="Delivered orders belum tertagih" />
                                 <InputError message={errors.order_ids} className="mt-2" />
                                 {invoiceableOrders.length === 0 ? (
-                                    <p className="mt-2 text-sm text-gray-500">Tidak ada order delivered yang belum tertagih untuk pelanggan ini.</p>
+                                    <p className="mt-2 text-sm text-gray-500">Tidak ada order delivered yang belum tertagih untuk partner ini.</p>
                                 ) : (
                                     <ul className="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
                                         {invoiceableOrders.map((order) => (

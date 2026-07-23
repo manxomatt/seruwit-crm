@@ -3,9 +3,9 @@
 namespace Tests\Feature\Modules\Orders;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Customer\Models\Customer;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Models\DeliveryOrderItem;
+use Modules\Partners\Models\Partner;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -38,10 +38,10 @@ class DeliveryOrderTest extends TestCase
     public function test_an_order_can_be_created_as_a_draft_with_a_sequential_code(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
         $this->actingAs($user)->post(route('module.orders.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'order_date' => now()->toDateString(),
             'pickup_address' => 'Gudang A, Jakarta',
             'delivery_address' => 'Toko B, Bandung',

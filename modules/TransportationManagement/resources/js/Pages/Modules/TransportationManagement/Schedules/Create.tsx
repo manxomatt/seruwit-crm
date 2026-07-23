@@ -24,7 +24,7 @@ interface Driver {
     status: string;
 }
 
-interface Customer {
+interface Partner {
     id: number;
     code: string;
     name: string;
@@ -33,7 +33,7 @@ interface Customer {
 interface Props {
     vehicles: Vehicle[];
     drivers: Driver[];
-    customers: Customer[];
+    partners: Partner[];
 }
 
 const DAYS = [
@@ -46,12 +46,12 @@ const DAYS = [
     { value: 0, label: 'Sun' },
 ];
 
-export default function Create({ vehicles, drivers, customers }: Props): JSX.Element {
+export default function Create({ vehicles, drivers, partners }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
         vehicle_id: '',
         driver_id: '',
-        customer_id: '',
+        partner_id: '',
         origin: '',
         destination: '',
         cargo_notes: '',
@@ -111,16 +111,16 @@ export default function Create({ vehicles, drivers, customers }: Props): JSX.Ele
                                 <InputError message={errors.driver_id} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="customer_id" value="Customer" />
+                                <InputLabel htmlFor="partner_id" value="Partner" />
                                 <Select
-                                    id="customer_id"
+                                    id="partner_id"
                                     className="mt-1"
-                                    value={data.customer_id}
-                                    onChange={(value) => setData('customer_id', value)}
-                                    placeholder="Select a customer"
-                                    options={customers.map((customer) => ({ value: String(customer.id), label: `${customer.name} (${customer.code})` }))}
+                                    value={data.partner_id}
+                                    onChange={(value) => setData('partner_id', value)}
+                                    placeholder="Select a partner"
+                                    options={partners.map((partner) => ({ value: String(partner.id), label: `${partner.name} (${partner.code})` }))}
                                 />
-                                <InputError message={errors.customer_id} className="mt-2" />
+                                <InputError message={errors.partner_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="origin" value="Origin" />

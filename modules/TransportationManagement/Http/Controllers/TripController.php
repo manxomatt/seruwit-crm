@@ -9,9 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Http\Requests\StoreTripRequest;
 use Modules\TransportationManagement\Http\Requests\UpdateTripRequest;
@@ -35,7 +35,7 @@ class TripController extends Controller
         $user = Auth::user();
 
         $trips = Trip::query()
-            ->with(['vehicle', 'driver', 'customer'])
+            ->with(['vehicle', 'driver', 'partner'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
@@ -70,7 +70,7 @@ class TripController extends Controller
         return Inertia::render('Modules/TransportationManagement/Trips/Create', [
             'vehicles' => Vehicle::query()->orderBy('name')->get(['id', 'name', 'plate_number', 'status']),
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name', 'license_number', 'status']),
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
         ]);
     }
 
@@ -95,12 +95,12 @@ class TripController extends Controller
     {
         $user = Auth::user();
 
-        $trip->load(['vehicle', 'driver', 'customer', 'checkpoints', 'items.product', 'stops']);
+        $trip->load(['vehicle', 'driver', 'partner', 'checkpoints', 'items.product', 'stops']);
 
         $ordersEnabled = Modules::available('orders');
 
         if ($ordersEnabled) {
-            $trip->load(['deliveryOrders.customer', 'stops.deliveryOrder']);
+            $trip->load(['deliveryOrders.partner', 'stops.deliveryOrder']);
         }
 
         // A GPS-fed trip carries thousands of checkpoints, so the trail is

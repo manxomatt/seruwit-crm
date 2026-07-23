@@ -10,7 +10,7 @@ use Inertia\Response;
 use Modules\Billing\Http\Requests\StoreTariffRequest;
 use Modules\Billing\Http\Requests\UpdateTariffRequest;
 use Modules\Billing\Models\Tariff;
-use Modules\Customer\Models\Customer;
+use Modules\Partners\Models\Partner;
 
 class TariffController extends Controller
 {
@@ -30,14 +30,14 @@ class TariffController extends Controller
         $user = Auth::user();
 
         $tariffs = Tariff::query()
-            ->with('customer:id,code,name')
+            ->with('partner:id,code,name')
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('origin', 'like', "%{$search}%")
                         ->orWhere('destination', 'like', "%{$search}%");
                 });
             })
-            ->when(request('customer_id'), fn ($query, $customerId) => $query->where('customer_id', $customerId))
+            ->when(request('partner_id'), fn ($query, $partnerId) => $query->where('partner_id', $partnerId))
             ->orderBy('origin')
             ->orderBy('destination')
             ->paginate(15)
@@ -45,10 +45,10 @@ class TariffController extends Controller
 
         return Inertia::render('Modules/Billing/Tariffs/Index', [
             'tariffs' => $tariffs,
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
             'filters' => [
                 'search' => request('search'),
-                'customer_id' => request('customer_id'),
+                'partner_id' => request('partner_id'),
             ],
             'can' => [
                 'create' => $user->hasPermissionFor('billing', 'create'),

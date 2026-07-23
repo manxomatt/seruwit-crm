@@ -13,9 +13,9 @@ use Modules\Billing\Http\Requests\AttachOrdersRequest;
 use Modules\Billing\Http\Requests\StoreOrderInvoiceRequest;
 use Modules\Billing\Models\OrderCharge;
 use Modules\Billing\Models\Tariff;
-use Modules\Customer\Models\Customer;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Partners\Models\Partner;
 
 /**
  * Turns delivered orders into invoice lines.
@@ -37,16 +37,16 @@ class OrderInvoiceController extends Controller
     }
 
     /**
-     * Show the form for invoicing a customer's delivered orders. Choosing a
-     * customer reloads the page with that customer's invoiceable orders.
+     * Show the form for invoicing a partner's delivered orders. Choosing a
+     * partner reloads the page with that partner's invoiceable orders.
      */
     public function create(): Response
     {
         return Inertia::render('Modules/Billing/Invoices/Create', [
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name']),
-            'selectedCustomerId' => request('customer_id'),
-            'invoiceableOrders' => request('customer_id')
-                ? $this->invoiceableOrdersFor((int) request('customer_id'))
+            'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'selectedPartnerId' => request('partner_id'),
+            'invoiceableOrders' => request('partner_id')
+                ? $this->invoiceableOrdersFor((int) request('partner_id'))
                 : [],
         ]);
     }
@@ -57,21 +57,21 @@ class OrderInvoiceController extends Controller
     public function store(StoreOrderInvoiceRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $customerId = (int) $validated['customer_id'];
+        $partnerId = (int) $validated['partner_id'];
 
         $orders = DeliveryOrder::query()
             ->with('charge.invoiceLine')
             ->whereIn('id', $validated['order_ids'])
             ->get();
 
-        if ($rejection = $this->rejectionFor($orders, $customerId)) {
+        if ($rejection = $this->rejectionFor($orders, $partnerId)) {
             return back()->with('error', $rejection);
         }
 
-        $invoice = DB::transaction(function () use ($customerId, $orders): Invoice {
+        $invoice = DB::transaction(function () use ($partnerId, $orders): Invoice {
             $invoice = Invoice::create([
                 'code' => Invoice::nextCode(),
-                'customer_id' => $customerId,
+                'partner_id' => $partnerId,
                 'status' => Invoice::STATUS_DRAFT,
                 'issue_date' => now()->toDateString(),
                 'tax_enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
@@ -88,7 +88,7 @@ class OrderInvoiceController extends Controller
     }
 
     /**
-     * Add more of the same customer's delivered orders to a draft invoice.
+     * Add more of the same partner's delivered orders to a draft invoice.
      */
     public function attach(AttachOrdersRequest $request, Invoice $invoice): RedirectResponse
     {
@@ -101,7 +101,7 @@ class OrderInvoiceController extends Controller
             ->whereIn('id', $request->validated()['order_ids'])
             ->get();
 
-        if ($rejection = $this->rejectionFor($orders, $invoice->customer_id)) {
+        if ($rejection = $this->rejectionFor($orders, $invoice->partner_id)) {
             return back()->with('error', $rejection);
         }
 
@@ -111,15 +111,15 @@ class OrderInvoiceController extends Controller
     }
 
     /**
-     * Why these orders cannot be invoiced for this customer, or null if they can.
+     * Why these orders cannot be invoiced for this partner, or null if they can.
      *
      * @param  Collection<int, DeliveryOrder>  $orders
      */
-    private function rejectionFor(Collection $orders, int $customerId): ?string
+    private function rejectionFor(Collection $orders, int $partnerId): ?string
     {
         foreach ($orders as $order) {
-            if ($order->customer_id !== $customerId) {
-                return "Order {$order->code} belongs to another customer.";
+            if ($order->partner_id !== $partnerId) {
+                return "Order {$order->code} belongs to another partner.";
             }
 
             if ($order->status !== DeliveryOrder::STATUS_DELIVERED) {
@@ -145,7 +145,7 @@ class OrderInvoiceController extends Controller
     private function addLinesFor(Invoice $invoice, Collection $orders): void
     {
         foreach ($orders as $order) {
-            $tariff = Tariff::findFor($order->customer_id, $order->pickup_address, $order->delivery_address);
+            $tariff = Tariff::findFor($order->partner_id, $order->pickup_address, $order->delivery_address);
 
             $charge = OrderCharge::firstOrCreate(
                 ['delivery_order_id' => $order->id],
@@ -164,7 +164,7 @@ class OrderInvoiceController extends Controller
     }
 
     /**
-     * The customer's delivered orders that are not yet on any invoice.
+     * The partner's delivered orders that are not yet on any invoice.
      *
      * "Not yet invoiced" is the absence of an invoice line pointing at the
      * charge — Invoicing owns that fact, and this module never keeps a second
@@ -172,11 +172,11 @@ class OrderInvoiceController extends Controller
      *
      * @return \Illuminate\Support\Collection<int, DeliveryOrder>
      */
-    private function invoiceableOrdersFor(int $customerId): \Illuminate\Support\Collection
+    private function invoiceableOrdersFor(int $partnerId): \Illuminate\Support\Collection
     {
         return DeliveryOrder::query()
             ->with('charge:id,delivery_order_id,amount')
-            ->where('customer_id', $customerId)
+            ->where('partner_id', $partnerId)
             ->where('status', DeliveryOrder::STATUS_DELIVERED)
             ->whereDoesntHave('charge.invoiceLine')
             ->orderBy('delivered_at')

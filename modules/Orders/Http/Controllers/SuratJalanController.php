@@ -27,7 +27,7 @@ class SuratJalanController extends Controller
             return back()->with('error', 'A surat jalan is only available once the order is assigned to a trip.');
         }
 
-        $order->load(['customer', 'items.product', 'trip.vehicle', 'trip.driver']);
+        $order->load(['partner', 'items.product', 'trip.vehicle', 'trip.driver']);
 
         return Pdf::loadView('orders::surat-jalan', [
             'order' => $order,

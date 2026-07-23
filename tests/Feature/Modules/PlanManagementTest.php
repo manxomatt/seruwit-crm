@@ -56,7 +56,7 @@ class PlanManagementTest extends TestCase
                 ->where('availableModules.0.key', 'billing')
                 ->where('availableModules.1.key', 'carousels')
                 ->where('availableModules.2.key', 'document')
-                ->where('availableModules.3.key', 'customers')
+                ->where('availableModules.3.key', 'partners')
                 ->where('availableModules.4.key', 'fleet')
                 ->where('availableModules.5.key', 'inventory')
                 ->where('availableModules.6.key', 'invoicing')

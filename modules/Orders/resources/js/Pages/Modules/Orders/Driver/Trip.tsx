@@ -11,7 +11,7 @@ interface DeliveryOrder {
     id: number;
     code: string;
     status: string;
-    customer: { id: number; name: string } | null;
+    partner: { id: number; name: string } | null;
     pod: Pod | null;
 }
 
@@ -109,7 +109,7 @@ export default function TripPage({ driverName, trip }: Props): JSX.Element {
                                         </span>
                                     </div>
                                     <p className="mt-1 text-sm text-gray-900">{stop.address}</p>
-                                    {order && <p className="text-xs text-gray-500">{order.code} · {order.customer?.name}</p>}
+                                    {order && <p className="text-xs text-gray-500">{order.code} · {order.partner?.name}</p>}
                                 </div>
                                 {done && (
                                     <span className="text-green-600" aria-label="Selesai">

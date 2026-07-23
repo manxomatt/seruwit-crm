@@ -28,7 +28,7 @@ class UpdateTripRequest extends FormRequest
         return [
             'vehicle_id' => ['sometimes', 'required', 'integer', 'exists:vehicles,id'],
             'driver_id' => ['sometimes', 'required', 'integer', 'exists:drivers,id'],
-            'customer_id' => ['sometimes', 'required', 'integer', 'exists:customers,id'],
+            'partner_id' => ['sometimes', 'required', 'integer', 'exists:partners,id'],
             'origin' => ['sometimes', 'required', 'string', 'max:255'],
             'destination' => ['sometimes', 'required', 'string', 'max:255'],
             'cargo_notes' => ['nullable', 'string', 'max:2000'],
@@ -77,7 +77,7 @@ class UpdateTripRequest extends FormRequest
         return [
             'vehicle_id.exists' => 'The selected vehicle does not exist.',
             'driver_id.exists' => 'The selected driver does not exist.',
-            'customer_id.exists' => 'The selected customer does not exist.',
+            'partner_id.exists' => 'The selected customer does not exist.',
         ];
     }
 }

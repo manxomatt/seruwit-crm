@@ -16,7 +16,7 @@ interface Trip {
     scheduled_at: string;
     vehicle: { id: number; name: string; plate_number: string };
     driver: { id: number; name: string };
-    customer: { id: number; code: string; name: string } | null;
+    partner: { id: number; code: string; name: string } | null;
 }
 
 interface PaginatedTrips {
@@ -136,7 +136,7 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Code</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Vehicle / Driver</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Scheduled</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
@@ -150,7 +150,7 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                                     {trip.vehicle.name} ({trip.vehicle.plate_number}) / {trip.driver.name}
                                                 </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{trip.customer?.name || '—'}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{trip.partner?.name || '—'}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{trip.scheduled_at}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(trip.status)}`}>

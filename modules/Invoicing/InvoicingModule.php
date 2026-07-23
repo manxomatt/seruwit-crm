@@ -55,7 +55,7 @@ class InvoicingModule implements ModuleContract
      */
     public function requires(): array
     {
-        return ['customers'];
+        return ['partners'];
     }
 
     public function menu(): ?array

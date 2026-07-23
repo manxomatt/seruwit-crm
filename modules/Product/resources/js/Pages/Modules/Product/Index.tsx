@@ -47,6 +47,7 @@ interface Filters {
     status: string | null;
     brand_id: string | null;
     product_type_id: string | null;
+    category: string | null;
 }
 
 interface Props {
@@ -74,6 +75,7 @@ export default function Index({ products, brands, productTypes, filters, can }: 
             status: filters.status || undefined,
             brand_id: filters.brand_id || undefined,
             product_type_id: filters.product_type_id || undefined,
+            category: filters.category || undefined,
             ...overrides,
         }, { preserveState: true, replace: true });
     };
@@ -138,6 +140,18 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                             options={[
                                 { value: '', label: 'Semua tipe' },
                                 ...productTypes.map((pt) => ({ value: String(pt.id), label: pt.name })),
+                            ]}
+                        />
+                        <Select
+                            className="w-40"
+                            value={filters.category || ''}
+                            onChange={(v) => applyFilters({ category: v || undefined })}
+                            placeholder="Semua kategori"
+                            options={[
+                                { value: '', label: 'Semua kategori' },
+                                { value: 'merchandise', label: 'Barang' },
+                                { value: 'fleet_sparepart', label: 'Sparepart' },
+                                { value: 'service', label: 'Jasa' },
                             ]}
                         />
                         <Select

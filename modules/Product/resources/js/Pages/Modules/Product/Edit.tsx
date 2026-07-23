@@ -10,6 +10,25 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
+interface Packaging {
+    id: number;
+    name: string;
+    barcode: string | null;
+    qty: string | null;
+    sort: number | null;
+}
+
+interface Tag {
+    id: number;
+    name: string;
+    color: string | null;
+}
+
+interface ProductAttribute {
+    id: number;
+    attribute_id: number;
+}
+
 interface Product {
     id: number;
     code: string;
@@ -20,28 +39,47 @@ interface Product {
     name: string;
     unit: string;
     description: string | null;
+    description_sale: string | null;
+    description_purchase: string | null;
     price: string | null;
+    cost: string | null;
+    weight: string | null;
+    volume: string | null;
     status: string;
     category: string;
+    tracking: string;
+    is_storable: boolean;
     reorder_threshold: number;
     reorder_quantity: number;
+    tags: Tag[];
+    packagings: Packaging[];
+    product_attributes: ProductAttribute[];
 }
 
-interface UnitOption {
-    value: string;
-    label: string;
-}
+interface UnitOption { value: string; label: string; }
+interface BrandOption { id: number; name: string; principal: { id: number; name: string } | null; }
+interface ProductTypeOption { id: number; name: string; parent_id: number | null; }
+interface TagOption { id: number; name: string; color: string | null; }
 
-interface BrandOption {
+interface AttributeOptionItem {
     id: number;
     name: string;
-    principal: { id: number; name: string } | null;
+    color: string | null;
 }
 
-interface ProductTypeOption {
+interface AttributeOption {
     id: number;
     name: string;
-    parent_id: number | null;
+    type: string;
+    options: AttributeOptionItem[];
+}
+
+interface PackagingRow {
+    id: number | null;
+    name: string;
+    barcode: string;
+    qty: string;
+    sort: string;
 }
 
 interface Props {
@@ -49,15 +87,56 @@ interface Props {
     units: UnitOption[];
     brands: BrandOption[];
     productTypes: ProductTypeOption[];
+    tags: TagOption[];
+    attributes: AttributeOption[];
 }
 
-export default function Edit({ product, units, brands, productTypes }: Props): JSX.Element {
-    const unitOptions = units.some((u) => u.value === product.unit)
-        ? units
-        : [...units, { value: product.unit, label: product.unit }];
+const TAG_COLORS: Record<string, string> = {
+    red: 'bg-red-100 text-red-800 border-red-200',
+    blue: 'bg-blue-100 text-blue-800 border-blue-200',
+    green: 'bg-green-100 text-green-800 border-green-200',
+    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    purple: 'bg-purple-100 text-purple-800 border-purple-200',
+    orange: 'bg-orange-100 text-orange-800 border-orange-200',
+    pink: 'bg-pink-100 text-pink-800 border-pink-200',
+    gray: 'bg-gray-100 text-gray-800 border-gray-200',
+};
+
+const ATTR_TYPE_LABELS: Record<string, string> = {
+    select: 'Select',
+    color: 'Color',
+    radio: 'Radio',
+    checkbox: 'Checkbox',
+};
+
+export default function Edit({ product, units, brands, productTypes, tags, attributes }: Props): JSX.Element {
+    const unitOptions = units.some((u) => u.value === product.unit) ? units : [...units, { value: product.unit, label: product.unit }];
 
     const { prefixedRoute } = useRoutePrefix();
-    const { data, setData, patch, processing, errors } = useForm({
+    const { data, setData, patch, processing, errors } = useForm<{
+        brand_id: string;
+        product_type_id: string;
+        sku: string;
+        barcode: string;
+        name: string;
+        unit: string;
+        description: string;
+        description_sale: string;
+        description_purchase: string;
+        price: string;
+        cost: string;
+        weight: string;
+        volume: string;
+        status: string;
+        category: string;
+        tracking: string;
+        is_storable: boolean;
+        reorder_threshold: string;
+        reorder_quantity: string;
+        tag_ids: number[];
+        attribute_ids: number[];
+        packagings: PackagingRow[];
+    }>({
         brand_id: product.brand_id ? String(product.brand_id) : '',
         product_type_id: product.product_type_id ? String(product.product_type_id) : '',
         sku: product.sku || '',
@@ -65,12 +144,52 @@ export default function Edit({ product, units, brands, productTypes }: Props): J
         name: product.name,
         unit: product.unit,
         description: product.description || '',
+        description_sale: product.description_sale || '',
+        description_purchase: product.description_purchase || '',
         price: product.price || '',
+        cost: product.cost || '',
+        weight: product.weight || '',
+        volume: product.volume || '',
         status: product.status,
         category: product.category ?? 'merchandise',
+        tracking: product.tracking ?? 'qty',
+        is_storable: product.is_storable ?? true,
         reorder_threshold: String(product.reorder_threshold ?? 10),
         reorder_quantity: String(product.reorder_quantity ?? 50),
+        tag_ids: product.tags.map((t) => t.id),
+        attribute_ids: (product.product_attributes || []).map((pa) => pa.attribute_id),
+        packagings: product.packagings.map((p) => ({
+            id: p.id,
+            name: p.name,
+            barcode: p.barcode || '',
+            qty: p.qty !== null ? String(p.qty) : '',
+            sort: p.sort !== null ? String(p.sort) : '',
+        })),
     });
+
+    const isService = data.category === 'service';
+
+    const toggleTag = (tagId: number) => {
+        setData('tag_ids', data.tag_ids.includes(tagId) ? data.tag_ids.filter((id) => id !== tagId) : [...data.tag_ids, tagId]);
+    };
+
+    const toggleAttribute = (attrId: number) => {
+        setData('attribute_ids', data.attribute_ids.includes(attrId) ? data.attribute_ids.filter((id) => id !== attrId) : [...data.attribute_ids, attrId]);
+    };
+
+    const addPackaging = () => {
+        setData('packagings', [...data.packagings, { id: null, name: '', barcode: '', qty: '', sort: String(data.packagings.length) }]);
+    };
+
+    const updatePackaging = (index: number, field: keyof PackagingRow, value: string) => {
+        const updated = [...data.packagings];
+        updated[index] = { ...updated[index], [field]: value };
+        setData('packagings', updated);
+    };
+
+    const removePackaging = (index: number) => {
+        setData('packagings', data.packagings.filter((_, i) => i !== index));
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -78,45 +197,45 @@ export default function Edit({ product, units, brands, productTypes }: Props): J
     };
 
     return (
-        <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Product</h2>}
-        >
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Produk</h2>}>
             <Head title={`Edit: ${product.name}`} />
             <ProductNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
-                    <form onSubmit={submit} className="max-w-2xl space-y-6">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <form onSubmit={submit} className="max-w-3xl space-y-6">
+                        <div>
+                            <InputLabel htmlFor="category" value="Jenis Produk" />
+                            <Select id="category" className="mt-1 w-64" value={data.category} onChange={(value) => setData('category', value)}
+                                options={[{ value: 'merchandise', label: 'Barang (Merchandise)' }, { value: 'fleet_sparepart', label: 'Fleet Sparepart' }, { value: 'service', label: 'Jasa (Service)' }]} />
+                            <InputError message={errors.category} className="mt-2" />
+                            {isService && (
+                                <p className="mt-1 text-xs text-amber-600">Jasa/layanan tidak memerlukan brand, tipe produk, harga beli, stok, berat, volume, kemasan, dan atribut.</p>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 border-t pt-6 sm:grid-cols-2">
                             <div className="sm:col-span-2">
                                 <InputLabel htmlFor="name" value="Nama Produk" />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required autoFocus />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
-                            <div>
-                                <InputLabel htmlFor="brand_id" value="Brand" />
-                                <Select
-                                    id="brand_id"
-                                    className="mt-1"
-                                    value={data.brand_id}
-                                    onChange={(value) => setData('brand_id', value)}
-                                    placeholder="Pilih brand..."
-                                    options={brands.map((b) => ({ value: String(b.id), label: `${b.name}${b.principal ? ` (${b.principal.name})` : ''}` }))}
-                                />
-                                <InputError message={errors.brand_id} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="product_type_id" value="Tipe Produk" />
-                                <Select
-                                    id="product_type_id"
-                                    className="mt-1"
-                                    value={data.product_type_id}
-                                    onChange={(value) => setData('product_type_id', value)}
-                                    placeholder="Pilih tipe..."
-                                    options={productTypes.map((pt) => ({ value: String(pt.id), label: pt.name }))}
-                                />
-                                <InputError message={errors.product_type_id} className="mt-2" />
-                            </div>
+                            {!isService && (
+                                <>
+                                    <div>
+                                        <InputLabel htmlFor="brand_id" value="Brand" />
+                                        <Select id="brand_id" className="mt-1" value={data.brand_id} onChange={(value) => setData('brand_id', value)} placeholder="Pilih brand..."
+                                            options={brands.map((b) => ({ value: String(b.id), label: `${b.name}${b.principal ? ` (${b.principal.name})` : ''}` }))} />
+                                        <InputError message={errors.brand_id} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel htmlFor="product_type_id" value="Tipe Produk" />
+                                        <Select id="product_type_id" className="mt-1" value={data.product_type_id} onChange={(value) => setData('product_type_id', value)} placeholder="Pilih tipe..."
+                                            options={productTypes.map((pt) => ({ value: String(pt.id), label: pt.name }))} />
+                                        <InputError message={errors.product_type_id} className="mt-2" />
+                                    </div>
+                                </>
+                            )}
                             <div>
                                 <InputLabel htmlFor="sku" value="SKU" />
                                 <TextInput id="sku" className="mt-1 block w-full" value={data.sku} onChange={(e) => setData('sku', e.target.value)} placeholder="Opsional" />
@@ -129,73 +248,189 @@ export default function Edit({ product, units, brands, productTypes }: Props): J
                             </div>
                             <div>
                                 <InputLabel htmlFor="unit" value="Satuan" />
-                                <Select
-                                    id="unit"
-                                    className="mt-1"
-                                    value={data.unit}
-                                    onChange={(value) => setData('unit', value)}
-                                    options={unitOptions.map((u) => ({ value: u.value, label: `${u.label} (${u.value})` }))}
-                                />
+                                <Select id="unit" className="mt-1" value={data.unit} onChange={(value) => setData('unit', value)}
+                                    options={unitOptions.map((u) => ({ value: u.value, label: `${u.label} (${u.value})` }))} />
                                 <InputError message={errors.unit} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="price" value="Harga (opsional)" />
-                                <TextInput id="price" type="number" step="0.01" min="0" className="mt-1 block w-full" value={data.price} onChange={(e) => setData('price', e.target.value)} />
-                                <InputError message={errors.price} className="mt-2" />
-                            </div>
-                            <div>
                                 <InputLabel htmlFor="status" value="Status" />
-                                <Select
-                                    id="status"
-                                    className="mt-1"
-                                    value={data.status}
-                                    onChange={(value) => setData('status', value)}
-                                    options={[
-                                        { value: 'active', label: 'Active' },
-                                        { value: 'inactive', label: 'Inactive' },
-                                    ]}
-                                />
+                                <Select id="status" className="mt-1" value={data.status} onChange={(value) => setData('status', value)}
+                                    options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
                                 <InputError message={errors.status} className="mt-2" />
                             </div>
                         </div>
 
                         <div className="border-t pt-6">
-                            <h3 className="mb-1 text-sm font-semibold text-gray-700">Inventory Settings</h3>
-                            <p className="mb-4 text-xs text-gray-500">
-                                Merchandise dapat dikirim/dijual ke pelanggan; fleet sparepart untuk bengkel/maintenance saja.
-                            </p>
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                            <h3 className="mb-4 text-sm font-semibold text-gray-700">Harga</h3>
+                            <div className={`grid grid-cols-1 gap-6 ${isService ? 'sm:grid-cols-1 max-w-xs' : 'sm:grid-cols-4'}`}>
                                 <div>
-                                    <InputLabel htmlFor="category" value="Kategori" />
-                                    <Select
-                                        id="category"
-                                        className="mt-1"
-                                        value={data.category}
-                                        onChange={(value) => setData('category', value)}
-                                        options={[
-                                            { value: 'merchandise', label: 'Merchandise' },
-                                            { value: 'fleet_sparepart', label: 'Fleet Sparepart' },
-                                        ]}
-                                    />
-                                    <InputError message={errors.category} className="mt-2" />
+                                    <InputLabel htmlFor="price" value="Harga Jual" />
+                                    <TextInput id="price" type="number" step="0.01" min="0" className="mt-1 block w-full" value={data.price} onChange={(e) => setData('price', e.target.value)} />
+                                    <InputError message={errors.price} className="mt-2" />
                                 </div>
-                                <div>
-                                    <InputLabel htmlFor="reorder_threshold" value="Reorder Threshold" />
-                                    <TextInput id="reorder_threshold" type="number" min="0" className="mt-1 block w-full" value={data.reorder_threshold} onChange={(e) => setData('reorder_threshold', e.target.value)} required />
-                                    <InputError message={errors.reorder_threshold} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="reorder_quantity" value="Reorder Quantity" />
-                                    <TextInput id="reorder_quantity" type="number" min="0" className="mt-1 block w-full" value={data.reorder_quantity} onChange={(e) => setData('reorder_quantity', e.target.value)} required />
-                                    <InputError message={errors.reorder_quantity} className="mt-2" />
-                                </div>
+                                {!isService && (
+                                    <>
+                                        <div>
+                                            <InputLabel htmlFor="cost" value="Harga Beli" />
+                                            <TextInput id="cost" type="number" step="0.01" min="0" className="mt-1 block w-full" value={data.cost} onChange={(e) => setData('cost', e.target.value)} />
+                                            <InputError message={errors.cost} className="mt-2" />
+                                        </div>
+                                        <div>
+                                            <InputLabel htmlFor="weight" value="Berat (kg)" />
+                                            <TextInput id="weight" type="number" step="0.0001" min="0" className="mt-1 block w-full" value={data.weight} onChange={(e) => setData('weight', e.target.value)} />
+                                            <InputError message={errors.weight} className="mt-2" />
+                                        </div>
+                                        <div>
+                                            <InputLabel htmlFor="volume" value="Volume (m³)" />
+                                            <TextInput id="volume" type="number" step="0.0001" min="0" className="mt-1 block w-full" value={data.volume} onChange={(e) => setData('volume', e.target.value)} />
+                                            <InputError message={errors.volume} className="mt-2" />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        <div>
-                            <InputLabel htmlFor="description" value="Deskripsi (opsional)" />
-                            <textarea id="description" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.description} onChange={(e) => setData('description', e.target.value)} />
-                            <InputError message={errors.description} className="mt-2" />
+                        {!isService && (
+                            <div className="border-t pt-6">
+                                <h3 className="mb-4 text-sm font-semibold text-gray-700">Inventory Settings</h3>
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                    <div>
+                                        <InputLabel htmlFor="tracking" value="Tracking" />
+                                        <Select id="tracking" className="mt-1" value={data.tracking} onChange={(value) => setData('tracking', value)}
+                                            options={[{ value: 'qty', label: 'By Quantity' }, { value: 'serial', label: 'By Serial' }, { value: 'lot', label: 'By Lot' }, { value: 'none', label: 'No Tracking' }]} />
+                                        <InputError message={errors.tracking} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel htmlFor="reorder_threshold" value="Reorder Threshold" />
+                                        <TextInput id="reorder_threshold" type="number" min="0" className="mt-1 block w-full" value={data.reorder_threshold} onChange={(e) => setData('reorder_threshold', e.target.value)} />
+                                        <InputError message={errors.reorder_threshold} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <InputLabel htmlFor="reorder_quantity" value="Reorder Quantity" />
+                                        <TextInput id="reorder_quantity" type="number" min="0" className="mt-1 block w-full" value={data.reorder_quantity} onChange={(e) => setData('reorder_quantity', e.target.value)} />
+                                        <InputError message={errors.reorder_quantity} className="mt-2" />
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" checked={data.is_storable} onChange={(e) => setData('is_storable', e.target.checked)}
+                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                        <span className="text-sm text-gray-700">Produk dapat disimpan di gudang (storable)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="border-t pt-6">
+                            <InputLabel value="Tags" />
+                            {tags.length > 0 ? (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {tags.map((tag) => (
+                                        <button key={tag.id} type="button" onClick={() => toggleTag(tag.id)}
+                                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                                                data.tag_ids.includes(tag.id) ? (TAG_COLORS[tag.color || ''] || 'bg-indigo-100 text-indigo-800 border-indigo-200') : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                                            }`}>
+                                            {tag.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="mt-2 text-sm text-gray-500">Belum ada tag. <Link href={prefixedRoute('products.tags.create')} className="text-indigo-600 hover:text-indigo-900">Buat tag baru</Link></p>
+                            )}
+                        </div>
+
+                        {!isService && (
+                            <div className="border-t pt-6">
+                                <InputLabel value="Atribut Produk" />
+                                <p className="mb-3 text-xs text-gray-500">Pilih atribut yang berlaku untuk produk ini (misal: Warna, Ukuran). Atribut digunakan untuk membuat varian produk.</p>
+                                {attributes.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {attributes.map((attr) => (
+                                            <label key={attr.id} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
+                                                data.attribute_ids.includes(attr.id) ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200 bg-white hover:bg-gray-50'
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.attribute_ids.includes(attr.id)}
+                                                    onChange={() => toggleAttribute(attr.id)}
+                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <div className="flex-1">
+                                                    <span className="text-sm font-medium text-gray-900">{attr.name}</span>
+                                                    <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                                                        {ATTR_TYPE_LABELS[attr.type] || attr.type}
+                                                    </span>
+                                                </div>
+                                                {attr.options.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {attr.options.slice(0, 5).map((opt) => (
+                                                            <span key={opt.id} className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                                                                {opt.color && <span className="inline-block h-2.5 w-2.5 rounded-full border" style={{ backgroundColor: opt.color }} />}
+                                                                {opt.name}
+                                                            </span>
+                                                        ))}
+                                                        {attr.options.length > 5 && (
+                                                            <span className="text-xs text-gray-400">+{attr.options.length - 5}</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </label>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">Belum ada atribut. <Link href={prefixedRoute('products.attributes.create')} className="text-indigo-600 hover:text-indigo-900">Buat atribut baru</Link></p>
+                                )}
+                            </div>
+                        )}
+
+                        {!isService && (
+                            <div className="border-t pt-6">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <InputLabel value="Kemasan (Packaging)" />
+                                    <SecondaryButton type="button" onClick={addPackaging}>+ Tambah Kemasan</SecondaryButton>
+                                </div>
+                                {data.packagings.length > 0 && (
+                                    <div className="space-y-3">
+                                        {data.packagings.map((pkg, i) => (
+                                            <div key={i} className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                                <div className="flex-1">
+                                                    <TextInput placeholder="Nama kemasan" className="w-full" value={pkg.name} onChange={(e) => updatePackaging(i, 'name', e.target.value)} required />
+                                                </div>
+                                                <div className="w-40">
+                                                    <TextInput placeholder="Barcode" className="w-full" value={pkg.barcode} onChange={(e) => updatePackaging(i, 'barcode', e.target.value)} />
+                                                </div>
+                                                <div className="w-28">
+                                                    <TextInput type="number" placeholder="Qty / pack" className="w-full" value={pkg.qty} onChange={(e) => updatePackaging(i, 'qty', e.target.value)} />
+                                                </div>
+                                                <button type="button" onClick={() => removePackaging(i)} className="mt-2 text-red-500 hover:text-red-700">
+                                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="border-t pt-6">
+                            <h3 className="mb-4 text-sm font-semibold text-gray-700">Deskripsi</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <InputLabel htmlFor="description" value="Deskripsi Umum" />
+                                    <textarea id="description" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.description} onChange={(e) => setData('description', e.target.value)} />
+                                    <InputError message={errors.description} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="description_sale" value="Deskripsi Penjualan" />
+                                    <textarea id="description_sale" rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.description_sale} onChange={(e) => setData('description_sale', e.target.value)} />
+                                    <InputError message={errors.description_sale} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="description_purchase" value="Deskripsi Pembelian" />
+                                    <textarea id="description_purchase" rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.description_purchase} onChange={(e) => setData('description_purchase', e.target.value)} />
+                                    <InputError message={errors.description_purchase} className="mt-2" />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-4">

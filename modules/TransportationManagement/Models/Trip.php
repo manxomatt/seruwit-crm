@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Database\Factories\TripFactory;
 
 class Trip extends Model
@@ -42,7 +42,7 @@ class Trip extends Model
         'trip_schedule_id',
         'vehicle_id',
         'driver_id',
-        'customer_id',
+        'partner_id',
         'origin',
         'destination',
         'cargo_notes',
@@ -84,11 +84,11 @@ class Trip extends Model
     }
 
     /**
-     * @return BelongsTo<Customer, $this>
+     * @return BelongsTo<Partner, $this>
      */
-    public function customer(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Partner::class);
     }
 
     /**

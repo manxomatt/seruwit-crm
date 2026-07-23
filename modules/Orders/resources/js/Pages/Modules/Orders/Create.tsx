@@ -9,20 +9,20 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-interface Customer {
+interface Partner {
     id: number;
     code: string;
     name: string;
 }
 
 interface Props {
-    customers: Customer[];
+    partners: Partner[];
 }
 
-export default function Create({ customers }: Props): JSX.Element {
+export default function Create({ partners }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, post, processing, errors } = useForm({
-        customer_id: '',
+        partner_id: '',
         order_date: '',
         pickup_address: '',
         delivery_address: '',
@@ -45,19 +45,19 @@ export default function Create({ customers }: Props): JSX.Element {
                     <form onSubmit={submit} className="max-w-2xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="customer_id" value="Customer" />
+                                <InputLabel htmlFor="partner_id" value="Partner" />
                                 <Select
-                                    id="customer_id"
+                                    id="partner_id"
                                     className="mt-1"
-                                    value={data.customer_id}
-                                    onChange={(value) => setData('customer_id', value)}
-                                    placeholder="Select a customer"
-                                    options={customers.map((customer) => ({
-                                        value: String(customer.id),
-                                        label: `${customer.name} (${customer.code})`,
+                                    value={data.partner_id}
+                                    onChange={(value) => setData('partner_id', value)}
+                                    placeholder="Select a partner"
+                                    options={partners.map((partner) => ({
+                                        value: String(partner.id),
+                                        label: `${partner.name} (${partner.code})`,
                                     }))}
                                 />
-                                <InputError message={errors.customer_id} className="mt-2" />
+                                <InputError message={errors.partner_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="order_date" value="Order Date" />

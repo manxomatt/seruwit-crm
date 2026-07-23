@@ -55,7 +55,7 @@ class BillingModule implements ModuleContract
     /**
      * Tariffs price delivery orders and trip allowances attach to Transportation
      * trips, so Billing cannot stand on its own without Orders, whose own
-     * requirement chain (transportation → fleet, customers, products) is
+     * requirement chain (transportation → fleet, partners, products) is
      * installed transitively. Invoicing supplies the document those prices are
      * written onto — a Vertical depending on a Foundation module, the direction
      * the tiers are meant to run.

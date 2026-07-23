@@ -6,6 +6,8 @@ const TABS = [
     { label: 'Principals', route: 'products.principals.index', patterns: ['products.principals.*'] },
     { label: 'Brands', route: 'products.brands.index', patterns: ['products.brands.*'] },
     { label: 'Tipe Produk', route: 'products.product-types.index', patterns: ['products.product-types.*'] },
+    { label: 'Atribut', route: 'products.attributes.index', patterns: ['products.attributes.*'] },
+    { label: 'Tags', route: 'products.tags.index', patterns: ['products.tags.*'] },
 ];
 
 export default function ProductNav(): JSX.Element {

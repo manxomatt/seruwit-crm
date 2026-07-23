@@ -14,7 +14,7 @@ interface Order {
     id: number;
     code: string;
     trip_id: number | null;
-    customer: { id: number; name: string } | null;
+    partner: { id: number; name: string } | null;
     items: OrderItem[];
 }
 
@@ -194,7 +194,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
             <form onSubmit={submit} className="space-y-5">
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <p className="text-sm font-semibold text-gray-900">{order.code}</p>
-                    <p className="text-xs text-gray-500">{order.customer?.name}</p>
+                    <p className="text-xs text-gray-500">{order.partner?.name}</p>
                 </div>
 
                 <div className="rounded-lg bg-white p-4 shadow-sm">

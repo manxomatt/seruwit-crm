@@ -33,7 +33,7 @@ interface Invoice {
     total: string;
     paid_at: string | null;
     notes: string | null;
-    customer: { id: number; code: string; name: string };
+    partner: { id: number; code: string; name: string };
     lines: InvoiceLine[];
 }
 
@@ -142,8 +142,8 @@ export default function Show({ invoice, can }: Props): JSX.Element {
                     <div className="p-6">
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Customer</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{invoice.customer.name} ({invoice.customer.code})</dd>
+                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{invoice.partner.name} ({invoice.partner.code})</dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Issue Date</dt>

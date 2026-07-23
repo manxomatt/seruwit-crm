@@ -32,7 +32,7 @@ class OrdersModule implements ModuleContract
 
     public function description(): string
     {
-        return 'Customer delivery orders with trip consolidation, delivery stops, and printable surat jalan.';
+        return 'Partner delivery orders with trip consolidation, delivery stops, and printable surat jalan.';
     }
 
     public function tier(): ModuleTier
@@ -51,7 +51,7 @@ class OrdersModule implements ModuleContract
     /**
      * A delivery order is fulfilled by a Transportation trip and its stops —
      * Orders cannot stand on its own without them. Transportation's own
-     * requirements (fleet, customers, products) are installed transitively.
+     * requirements (fleet, partners, products) are installed transitively.
      */
     public function requires(): array
     {

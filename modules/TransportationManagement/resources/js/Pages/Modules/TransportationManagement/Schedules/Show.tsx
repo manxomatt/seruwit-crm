@@ -22,7 +22,7 @@ interface TripSchedule {
     trips_count: number;
     vehicle: { id: number; name: string; plate_number: string };
     driver: { id: number; name: string };
-    customer: { id: number; code: string; name: string } | null;
+    partner: { id: number; code: string; name: string } | null;
 }
 
 interface Props {
@@ -85,11 +85,11 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Customer</dt>
+                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {schedule.customer ? (
-                                        <Link href={prefixedRoute('customers.show', schedule.customer.id)} className="text-indigo-600 hover:text-indigo-900">
-                                            {schedule.customer.name} ({schedule.customer.code})
+                                    {schedule.partner ? (
+                                        <Link href={prefixedRoute('partners.show', schedule.partner.id)} className="text-indigo-600 hover:text-indigo-900">
+                                            {schedule.partner.name} ({schedule.partner.code})
                                         </Link>
                                     ) : (
                                         '—'

@@ -22,7 +22,7 @@ class StoreOrderInvoiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['required', 'integer', 'exists:customers,id'],
+            'partner_id' => ['required', 'integer', 'exists:partners,id'],
             'order_ids' => ['required', 'array', 'min:1'],
             'order_ids.*' => ['integer', 'exists:delivery_orders,id'],
         ];

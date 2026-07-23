@@ -45,7 +45,7 @@ class OrderChargeController extends Controller
         $user = Auth::user();
 
         $orders = DeliveryOrder::query()
-            ->with(['customer:id,code,name', 'charge.tariff:id,origin,destination', 'charge.invoiceLine.invoice:id,code,status'])
+            ->with(['partner:id,code,name', 'charge.tariff:id,origin,destination', 'charge.invoiceLine.invoice:id,code,status'])
             ->whereIn('status', self::BILLABLE_STATUSES)
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -65,7 +65,7 @@ class OrderChargeController extends Controller
 
         return Inertia::render('Modules/Billing/Charges/Index', [
             'orders' => $orders,
-            'tariffs' => Tariff::query()->active()->orderBy('origin')->get(['id', 'customer_id', 'origin', 'destination', 'price']),
+            'tariffs' => Tariff::query()->active()->orderBy('origin')->get(['id', 'partner_id', 'origin', 'destination', 'price']),
             'filters' => [
                 'search' => request('search'),
                 'status' => request('status'),

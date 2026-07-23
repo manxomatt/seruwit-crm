@@ -65,7 +65,7 @@ interface DeliveryOrderSummary {
     code: string;
     status: string;
     delivery_address: string;
-    customer: { id: number; name: string } | null;
+    partner: { id: number; name: string } | null;
 }
 
 interface Trip {
@@ -82,7 +82,7 @@ interface Trip {
     cancelled_reason: string | null;
     vehicle: { id: number; name: string; plate_number: string };
     driver: { id: number; name: string; phone: string };
-    customer: { id: number; code: string; name: string; phone: string } | null;
+    partner: { id: number; code: string; name: string; phone: string } | null;
     checkpoints: Checkpoint[];
     items: TripItem[];
     stops: TripStop[];
@@ -321,14 +321,14 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Customer</dt>
+                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {trip.customer ? (
+                                    {trip.partner ? (
                                         <>
-                                            <Link href={prefixedRoute('customers.show', trip.customer.id)} className="text-indigo-600 hover:text-indigo-900">
-                                                {trip.customer.name}
+                                            <Link href={prefixedRoute('partners.show', trip.partner.id)} className="text-indigo-600 hover:text-indigo-900">
+                                                {trip.partner.name}
                                             </Link>{' '}
-                                            ({trip.customer.code})
+                                            ({trip.partner.code})
                                         </>
                                     ) : (
                                         '—'
@@ -480,7 +480,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                                     <Link href={prefixedRoute('orders.show', order.id)} className="text-indigo-600 hover:text-indigo-900">
                                                         {order.code}
                                                     </Link>
-                                                    {order.customer ? ` — ${order.customer.name}` : ''}
+                                                    {order.partner ? ` — ${order.partner.name}` : ''}
                                                 </p>
                                                 <p className="text-sm text-gray-500">{order.delivery_address}</p>
                                             </div>

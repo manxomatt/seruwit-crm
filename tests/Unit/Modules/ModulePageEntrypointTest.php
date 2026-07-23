@@ -40,11 +40,11 @@ class ModulePageEntrypointTest extends TestCase
         );
     }
 
-    public function test_a_page_owned_by_the_customer_module_resolves_to_the_modules_copy(): void
+    public function test_a_page_owned_by_the_partners_module_resolves_to_the_modules_copy(): void
     {
         $this->assertSame(
-            'modules/Customer/resources/js/Pages/Modules/Customer/Index.tsx',
-            $this->registry->pageEntrypoint('Modules/Customer/Index'),
+            'modules/Partners/resources/js/Pages/Modules/Partners/Index.tsx',
+            $this->registry->pageEntrypoint('Modules/Partners/Index'),
         );
     }
 
@@ -108,10 +108,10 @@ class ModulePageEntrypointTest extends TestCase
             'Modules/Fleet/Drivers/Create',
             'Modules/Fleet/Drivers/Edit',
             'Modules/Fleet/Drivers/Show',
-            'Modules/Customer/Index',
-            'Modules/Customer/Create',
-            'Modules/Customer/Edit',
-            'Modules/Customer/Show',
+            'Modules/Partners/Index',
+            'Modules/Partners/Create',
+            'Modules/Partners/Edit',
+            'Modules/Partners/Show',
             'Modules/Product/Index',
             'Modules/Product/Create',
             'Modules/Product/Edit',

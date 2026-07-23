@@ -4,7 +4,7 @@ namespace Modules\Billing\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Billing\Models\Tariff;
-use Modules\Customer\Models\Customer;
+use Modules\Partners\Models\Partner;
 
 /**
  * @extends Factory<Tariff>
@@ -27,7 +27,7 @@ class TariffFactory extends Factory
     public function definition(): array
     {
         return [
-            'customer_id' => null,
+            'partner_id' => null,
             'origin' => fake()->unique()->city(),
             'destination' => fake()->unique()->city(),
             'price' => fake()->randomFloat(2, 100000, 5000000),
@@ -38,10 +38,10 @@ class TariffFactory extends Factory
     /**
      * Indicate that the tariff is specific to the given customer.
      */
-    public function forCustomer(Customer $customer): static
+    public function forCustomer(Partner $partner): static
     {
         return $this->state(fn (array $attributes): array => [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
         ]);
     }
 

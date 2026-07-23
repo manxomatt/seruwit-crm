@@ -14,6 +14,8 @@ use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
 use Modules\Product\Models\Brand;
 use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductAttribute;
+use Modules\Product\Models\ProductTag;
 use Modules\Product\Models\ProductType;
 
 class ProductController extends Controller
@@ -46,6 +48,7 @@ class ProductController extends Controller
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
             ->when(request('brand_id'), fn ($q, $id) => $q->where('brand_id', $id))
             ->when(request('product_type_id'), fn ($q, $id) => $q->where('product_type_id', $id))
+            ->when(request('category'), fn ($q, $cat) => $q->where('category', $cat))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -70,6 +73,7 @@ class ProductController extends Controller
                 'status' => request('status'),
                 'brand_id' => request('brand_id'),
                 'product_type_id' => request('product_type_id'),
+                'category' => request('category'),
             ],
             'can' => [
                 'create' => $user->hasPermissionFor('products', 'create'),
@@ -115,39 +119,92 @@ class ProductController extends Controller
             ->get(['id', 'name', 'parent_id']);
     }
 
-    /**
-     * Show the form for creating a new product.
-     */
+    /** @return \Illuminate\Support\Collection<int, array<string, mixed>> */
+    private function tagOptions(): \Illuminate\Support\Collection
+    {
+        return ProductTag::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'color']);
+    }
+
+    /** @return \Illuminate\Support\Collection<int, array<string, mixed>> */
+    private function attributeOptions(): \Illuminate\Support\Collection
+    {
+        return ProductAttribute::query()
+            ->with('options')
+            ->orderBy('sort')
+            ->orderBy('name')
+            ->get();
+    }
+
     public function create(): Response
     {
         return Inertia::render('Modules/Product/Create', [
             'units' => $this->unitOptions(),
             'brands' => $this->brandOptions(),
             'productTypes' => $this->productTypeOptions(),
+            'tags' => $this->tagOptions(),
+            'attributes' => $this->attributeOptions(),
         ]);
     }
 
-    /**
-     * Store a newly created product in storage.
-     */
     public function store(StoreProductRequest $request): RedirectResponse
     {
+        $validated = $request->validated();
+        $tagIds = $validated['tag_ids'] ?? [];
+        $packagings = $validated['packagings'] ?? [];
+        $attributeIds = $validated['attribute_ids'] ?? [];
+        unset($validated['tag_ids'], $validated['packagings'], $validated['attribute_ids']);
+
+        if (($validated['category'] ?? null) === 'service') {
+            $validated['brand_id'] = null;
+            $validated['product_type_id'] = null;
+            $validated['cost'] = null;
+            $validated['is_storable'] = false;
+            $validated['tracking'] = 'none';
+            $validated['weight'] = null;
+            $validated['volume'] = null;
+            $validated['reorder_threshold'] = 0;
+            $validated['reorder_quantity'] = 0;
+            $packagings = [];
+            $attributeIds = [];
+        }
+
         $product = Product::create([
-            ...$request->validated(),
+            ...$validated,
             'code' => Product::nextCode(),
         ]);
 
+        if ($tagIds) {
+            $product->tags()->sync($tagIds);
+        }
+
+        foreach ($packagings as $packaging) {
+            $product->packagings()->create($packaging);
+        }
+
+        foreach ($attributeIds as $i => $attributeId) {
+            $product->productAttributes()->create([
+                'attribute_id' => $attributeId,
+                'sort' => $i,
+            ]);
+        }
+
         return redirect()->route($this->getRoutePrefix().'.products.show', $product)
-            ->with('success', 'Product created successfully.');
+            ->with('success', 'Produk berhasil dibuat.');
     }
 
-    /**
-     * Display the specified product.
-     */
     public function show(Product $product): Response
     {
         $user = Auth::user();
-        $product->load(['brand.principal', 'productType']);
+        $product->load([
+            'brand.principal',
+            'productType',
+            'tags',
+            'packagings',
+            'variants',
+            'productAttributes.attribute.options',
+        ]);
 
         return Inertia::render('Modules/Product/Show', [
             'product' => $product,
@@ -158,30 +215,74 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified product.
-     */
     public function edit(Product $product): Response
     {
-        $product->load(['brand.principal', 'productType']);
+        $product->load(['brand.principal', 'productType', 'tags', 'packagings', 'productAttributes']);
 
         return Inertia::render('Modules/Product/Edit', [
             'product' => $product,
             'units' => $this->unitOptions(),
             'brands' => $this->brandOptions(),
             'productTypes' => $this->productTypeOptions(),
+            'tags' => $this->tagOptions(),
+            'attributes' => $this->attributeOptions(),
         ]);
     }
 
-    /**
-     * Update the specified product in storage.
-     */
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $product->update($request->validated());
+        $validated = $request->validated();
+        $tagIds = $validated['tag_ids'] ?? null;
+        $packagings = $validated['packagings'] ?? null;
+        $attributeIds = $validated['attribute_ids'] ?? null;
+        unset($validated['tag_ids'], $validated['packagings'], $validated['attribute_ids']);
+
+        if (($validated['category'] ?? $product->category) === 'service') {
+            $validated['brand_id'] = null;
+            $validated['product_type_id'] = null;
+            $validated['cost'] = null;
+            $validated['is_storable'] = false;
+            $validated['tracking'] = 'none';
+            $validated['weight'] = null;
+            $validated['volume'] = null;
+            $validated['reorder_threshold'] = 0;
+            $validated['reorder_quantity'] = 0;
+            $packagings = [];
+            $attributeIds = [];
+        }
+
+        $product->update($validated);
+
+        if ($tagIds !== null) {
+            $product->tags()->sync($tagIds);
+        }
+
+        if ($packagings !== null) {
+            $keepIds = [];
+            foreach ($packagings as $packagingData) {
+                if (! empty($packagingData['id'])) {
+                    $product->packagings()->where('id', $packagingData['id'])->update($packagingData);
+                    $keepIds[] = $packagingData['id'];
+                } else {
+                    $p = $product->packagings()->create($packagingData);
+                    $keepIds[] = $p->id;
+                }
+            }
+            $product->packagings()->whereNotIn('id', $keepIds)->delete();
+        }
+
+        if ($attributeIds !== null) {
+            $product->productAttributes()->delete();
+            foreach ($attributeIds as $i => $attributeId) {
+                $product->productAttributes()->create([
+                    'attribute_id' => $attributeId,
+                    'sort' => $i,
+                ]);
+            }
+        }
 
         return redirect()->route($this->getRoutePrefix().'.products.show', $product)
-            ->with('success', 'Product updated successfully.');
+            ->with('success', 'Produk berhasil diperbarui.');
     }
 
     /**

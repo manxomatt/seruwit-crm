@@ -4,7 +4,7 @@ namespace Modules\Invoicing\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Invoicing\Models\Invoice;
-use Modules\Customer\Models\Customer;
+use Modules\Partners\Models\Partner;
 
 /**
  * @extends Factory<Invoice>
@@ -28,7 +28,7 @@ class InvoiceFactory extends Factory
     {
         return [
             'code' => 'INV-'.fake()->unique()->numerify('######'),
-            'customer_id' => Customer::factory(),
+            'partner_id' => Partner::factory(),
             'status' => Invoice::STATUS_DRAFT,
             'issue_date' => now()->toDateString(),
             'due_date' => null,

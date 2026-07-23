@@ -5,11 +5,11 @@ namespace Tests\Feature\Modules\Billing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Billing\Models\OrderCharge;
 use Modules\Billing\Models\Tariff;
-use Modules\Customer\Models\Customer;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Models\DeliveryOrderItem;
+use Modules\Partners\Models\Partner;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -52,11 +52,11 @@ class OrderChargeTest extends TestCase
 
     public function test_a_customer_specific_tariff_wins_over_the_general_one(): void
     {
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
         Tariff::factory()->create(['origin' => 'Gudang A', 'destination' => 'Toko B', 'price' => 500000]);
-        $specific = Tariff::factory()->forCustomer($customer)->create(['origin' => 'Gudang A', 'destination' => 'Toko B', 'price' => 400000]);
+        $specific = Tariff::factory()->forCustomer($partner)->create(['origin' => 'Gudang A', 'destination' => 'Toko B', 'price' => 400000]);
         $order = DeliveryOrder::factory()->create([
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'pickup_address' => 'Gudang A',
             'delivery_address' => 'Toko B',
         ]);

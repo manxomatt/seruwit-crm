@@ -4,9 +4,9 @@ namespace Tests\Feature\Modules\Transportation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Models\Trip;
 use Modules\TransportationManagement\Models\TripSchedule;
 use Tests\TestCase;
@@ -35,12 +35,12 @@ class TripScheduleTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
         $response = $this->actingAs($user)->post(route('module.transportation.schedules.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'days_of_week' => [1, 4],
@@ -58,12 +58,12 @@ class TripScheduleTest extends TestCase
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
         $this->actingAs($user)->post(route('module.transportation.schedules.store'), [
             'vehicle_id' => $vehicle->id,
             'driver_id' => $driver->id,
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'days_of_week' => [],

@@ -20,7 +20,7 @@ class InvoicePdfController extends Controller
             return back()->with('error', 'Only an issued or paid invoice can be printed.');
         }
 
-        $invoice->load(['customer:id,code,name', 'lines']);
+        $invoice->load(['partner:id,code,name', 'lines']);
 
         return Pdf::loadView('invoicing::invoice', [
             'invoice' => $invoice,

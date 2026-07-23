@@ -12,11 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('trips', function (Blueprint $table) {
-            // Nullable so existing trips are unaffected; StoreTripRequest
-            // requires it going forward. No cascade — Customer must stay free
-            // of any knowledge of Trip, so a customer still referenced by a
-            // trip is protected at the database level instead.
-            $table->foreignId('customer_id')->nullable()->after('trip_schedule_id')->constrained();
+            $table->foreignId('partner_id')->nullable()->after('trip_schedule_id')->constrained('partners');
         });
     }
 
@@ -26,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('trips', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('customer_id');
+            $table->dropConstrainedForeignId('partner_id');
         });
     }
 };

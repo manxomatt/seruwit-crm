@@ -14,7 +14,7 @@ import { formatMoney } from '@/utils/money';
 
 interface Tariff {
     id: number;
-    customer_id: number | null;
+    partner_id: number | null;
     origin: string;
     destination: string;
     price: string;
@@ -34,7 +34,7 @@ interface Order {
     pickup_address: string;
     delivery_address: string;
     order_date: string;
-    customer: { id: number; code: string; name: string };
+    partner: { id: number; code: string; name: string };
     charge: Charge | null;
 }
 
@@ -176,7 +176,7 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Order</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Customer</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
@@ -188,7 +188,7 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                                         {orders.data.map((order) => (
                                             <tr key={order.id} className="hover:bg-gray-50">
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{order.code}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.customer.name}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.partner.name}</td>
                                                 <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-500">{order.pickup_address} → {order.delivery_address}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(order.status)}`}>

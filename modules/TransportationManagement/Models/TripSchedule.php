@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Modules\Customer\Models\Customer;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Database\Factories\TripScheduleFactory;
 
 /**
@@ -34,7 +34,7 @@ class TripSchedule extends Model
     protected $fillable = [
         'vehicle_id',
         'driver_id',
-        'customer_id',
+        'partner_id',
         'origin',
         'destination',
         'cargo_notes',
@@ -77,11 +77,11 @@ class TripSchedule extends Model
     }
 
     /**
-     * @return BelongsTo<Customer, $this>
+     * @return BelongsTo<Partner, $this>
      */
-    public function customer(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Partner::class);
     }
 
     /**
@@ -149,7 +149,7 @@ class TripSchedule extends Model
                 'trip_schedule_id' => $this->id,
                 'vehicle_id' => $this->vehicle_id,
                 'driver_id' => $this->driver_id,
-                'customer_id' => $this->customer_id,
+                'partner_id' => $this->partner_id,
                 'origin' => $this->origin,
                 'destination' => $this->destination,
                 'cargo_notes' => $this->cargo_notes,

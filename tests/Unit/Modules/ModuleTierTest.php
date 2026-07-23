@@ -40,7 +40,7 @@ class ModuleTierTest extends TestCase
 
     public function test_cross_business_line_resources_are_foundation(): void
     {
-        foreach (['fleet', 'customers', 'products', 'document', 'maintenance'] as $key) {
+        foreach (['fleet', 'partners', 'products', 'document', 'maintenance'] as $key) {
             $this->assertSame(
                 ModuleTier::Foundation,
                 $this->registry->find($key)?->tier(),

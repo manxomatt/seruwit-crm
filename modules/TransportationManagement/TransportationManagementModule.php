@@ -50,7 +50,7 @@ class TransportationManagementModule implements ModuleContract
      */
     public function requires(): array
     {
-        return ['fleet', 'customers', 'products'];
+        return ['fleet', 'partners', 'products'];
     }
 
     public function menu(): ?array

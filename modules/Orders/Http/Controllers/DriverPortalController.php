@@ -28,7 +28,7 @@ class DriverPortalController extends Controller
             ->where('driver_id', $driver->id)
             ->whereIn('status', [Trip::STATUS_SCHEDULED, Trip::STATUS_IN_PROGRESS])
             ->whereDate('scheduled_at', now()->toDateString())
-            ->with(['vehicle:id,plate_number,name', 'customer:id,name'])
+            ->with(['vehicle:id,plate_number,name', 'partner:id,name'])
             ->withCount('stops')
             ->orderBy('scheduled_at')
             ->get();
@@ -46,8 +46,8 @@ class DriverPortalController extends Controller
 
         $trip->load([
             'vehicle:id,plate_number,name',
-            'customer:id,name',
-            'stops.deliveryOrder.customer:id,name',
+            'partner:id,name',
+            'stops.deliveryOrder.partner:id,name',
             'stops.deliveryOrder.pod',
         ]);
 

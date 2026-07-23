@@ -7,10 +7,10 @@ use App\Modules\ModuleInstaller;
 use Illuminate\Support\Facades\Schema;
 use Modules\Billing\BillingModule;
 use Modules\Billing\Models\OrderCharge;
-use Modules\Customer\Models\Customer;
 use Modules\Invoicing\InvoicingModule;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\OrdersModule;
+use Modules\Partners\Models\Partner;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
 
@@ -67,7 +67,7 @@ class BillingModuleLifecycleTest extends TestCase
             // Invoicing among them: Billing prices work but no longer owns the
             // document it is billed on, so the chain has to reach one tier down
             // and pull it in.
-            foreach (['billing', 'invoicing', 'orders', 'transportation', 'fleet', 'customers', 'products'] as $key) {
+            foreach (['billing', 'invoicing', 'orders', 'transportation', 'fleet', 'partners', 'products'] as $key) {
                 $this->assertTrue(
                     InstalledModule::query()->where('key', $key)->installed()->exists(),
                     "Expected module [{$key}] to be installed.",
@@ -138,7 +138,7 @@ class BillingModuleLifecycleTest extends TestCase
         $tenant->run(function () {
             $order = DeliveryOrder::create([
                 'code' => DeliveryOrder::nextCode(),
-                'customer_id' => Customer::factory()->create()->id,
+                'partner_id' => Partner::factory()->create()->id,
                 'status' => DeliveryOrder::STATUS_DRAFT,
                 'order_date' => now()->toDateString(),
                 'pickup_address' => 'Gudang A',

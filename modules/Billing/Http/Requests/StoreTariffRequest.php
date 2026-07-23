@@ -23,7 +23,7 @@ class StoreTariffRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
+            'partner_id' => ['nullable', 'integer', 'exists:partners,id'],
             'origin' => ['required', 'string', 'max:255'],
             'destination' => [
                 'required',
@@ -38,7 +38,7 @@ class StoreTariffRequest extends FormRequest
 
     /**
      * One tariff per route per customer (and one general tariff per route).
-     * Enforced here rather than by a DB unique index because NULL customer_id
+     * Enforced here rather than by a DB unique index because NULL partner_id
      * rows would escape such an index.
      */
     protected function uniqueRouteRule(?int $ignoreId = null): \Illuminate\Validation\Rules\Unique
@@ -46,9 +46,9 @@ class StoreTariffRequest extends FormRequest
         $rule = Rule::unique('tariffs', 'destination')
             ->where('origin', (string) $this->input('origin'))
             ->when(
-                $this->filled('customer_id'),
-                fn ($rule) => $rule->where('customer_id', (int) $this->input('customer_id')),
-                fn ($rule) => $rule->whereNull('customer_id'),
+                $this->filled('partner_id'),
+                fn ($rule) => $rule->where('partner_id', (int) $this->input('partner_id')),
+                fn ($rule) => $rule->whereNull('partner_id'),
             );
 
         return $ignoreId === null ? $rule : $rule->ignore($ignoreId);

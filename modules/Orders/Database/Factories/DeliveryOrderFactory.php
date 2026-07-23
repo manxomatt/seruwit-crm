@@ -3,8 +3,8 @@
 namespace Modules\Orders\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Customer\Models\Customer;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Partners\Models\Partner;
 use Modules\TransportationManagement\Models\Trip;
 
 /**
@@ -29,7 +29,7 @@ class DeliveryOrderFactory extends Factory
     {
         return [
             'code' => 'DO-'.fake()->unique()->numerify('######'),
-            'customer_id' => Customer::factory(),
+            'partner_id' => Partner::factory(),
             'trip_id' => null,
             'status' => DeliveryOrder::STATUS_DRAFT,
             'order_date' => fake()->dateTimeBetween('now', '+1 week'),

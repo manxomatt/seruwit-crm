@@ -3,9 +3,9 @@
 namespace Tests\Feature\Modules\Invoicing;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Customer\Models\Customer;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
+use Modules\Partners\Models\Partner;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -45,16 +45,16 @@ class InvoiceTest extends TestCase
     public function test_storing_creates_an_empty_draft_for_the_customer(): void
     {
         $user = $this->createAdminUser();
-        $customer = Customer::factory()->create();
+        $partner = Partner::factory()->create();
 
         $this->actingAs($user)->post(route('module.invoicing.invoices.store'), [
-            'customer_id' => $customer->id,
+            'partner_id' => $partner->id,
         ])->assertRedirect();
 
         $invoice = Invoice::first();
         $this->assertSame('INV-000001', $invoice->code);
         $this->assertSame(Invoice::STATUS_DRAFT, $invoice->status);
-        $this->assertSame($customer->id, $invoice->customer_id);
+        $this->assertSame($partner->id, $invoice->partner_id);
         $this->assertSame(0, $invoice->lines()->count());
     }
 

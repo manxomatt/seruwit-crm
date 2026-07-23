@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('trip_schedules', function (Blueprint $table) {
-            $table->foreignId('customer_id')->nullable()->after('driver_id')->constrained();
+            $table->foreignId('partner_id')->nullable()->after('driver_id')->constrained('partners');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('trip_schedules', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('customer_id');
+            $table->dropConstrainedForeignId('partner_id');
         });
     }
 };
