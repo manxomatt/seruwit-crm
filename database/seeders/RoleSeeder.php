@@ -65,5 +65,23 @@ class RoleSeeder extends Seeder
             })
             ->get();
         $driverRole->permissions()->sync($driverPermissions->pluck('id')->toArray());
+
+        // Salesperson: field canvassing portal only — check in/out and view canvassing data.
+        $salespersonRole = Role::query()->firstOrCreate(
+            ['slug' => 'salesperson'],
+            [
+                'name' => 'Salesperson',
+                'description' => 'Field salesperson — mobile canvassing portal only',
+                'is_system' => true,
+                'dashboard_path' => '/module/canvassing/portal/today',
+            ]
+        );
+
+        $salespersonPermissions = Permission::query()
+            ->where(function ($query): void {
+                $query->where(fn ($q) => $q->where('module', 'canvassing')->whereIn('action', ['view', 'checkin']));
+            })
+            ->get();
+        $salespersonRole->permissions()->sync($salespersonPermissions->pluck('id')->toArray());
     }
 }

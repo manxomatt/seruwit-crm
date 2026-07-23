@@ -2,10 +2,12 @@
 
 namespace Modules\TransportationManagement\Http\Requests;
 
+use App\Modules\Facades\Modules;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Rental\Models\Rental;
 use Modules\TransportationManagement\Models\Trip;
 
 class StoreTripRequest extends FormRequest
@@ -55,6 +57,11 @@ class StoreTripRequest extends FormRequest
             if ($vehicle = Vehicle::find($this->input('vehicle_id'))) {
                 foreach (Trip::vehicleDispatchReasons($vehicle, $date, $this->excludingTripId()) as $reason) {
                     $validator->errors()->add('vehicle_id', $reason);
+                }
+
+                // Guard against double-booking a vehicle that is in an active rental.
+                if (Modules::available('rental') && Rental::hasOverlapFor($vehicle->id, $date, $date, null)) {
+                    $validator->errors()->add('vehicle_id', "Vehicle {$vehicle->name} is blocked by an active rental on this date.");
                 }
             }
 

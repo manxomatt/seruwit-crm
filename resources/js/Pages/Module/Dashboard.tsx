@@ -1,6 +1,78 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+
+interface Stats {
+    posts?: { total: number; published: number; draft: number };
+    pages?: { total: number; published: number; draft: number };
+    media: { total: number; images: number; documents: number };
+    carousels?: { total: number; active: number };
+}
+
+interface TripStats {
+    active: number;
+    previous_active: number;
+    period: { total: number; completed: number };
+}
+
+interface OrderStats {
+    by_status: Record<string, number>;
+    total: number;
+    period_total: number;
+    previous_period_total: number;
+}
+
+interface FleetStats {
+    vehicles: Record<string, number>;
+    vehicles_total: number;
+    drivers: Record<string, number>;
+    drivers_total: number;
+    fuel: { liters: number; cost: number };
+}
+
+interface InvoiceStatusDetail {
+    count: number;
+    amount: number;
+}
+
+interface InvoiceStats {
+    by_status: Record<string, InvoiceStatusDetail>;
+    overdue: { count: number; amount: number };
+}
+
+interface RevenuePoint {
+    month: string;
+    amount: number;
+}
+
+interface TopPartner {
+    name: string;
+    revenue: number;
+}
+
+interface Logistics {
+    trips?: TripStats;
+    orders?: OrderStats;
+    fleet?: FleetStats;
+    partners?: { total: number; customers: number; suppliers: number };
+    invoices?: InvoiceStats;
+    revenue?: RevenuePoint[];
+    top_partners?: TopPartner[];
+}
+
+interface Alert {
+    type: string;
+    severity: 'danger' | 'warning' | 'info';
+    message: string;
+    count: number;
+}
+
+interface Activity {
+    icon: string;
+    type: string;
+    description: string;
+    time: string;
+}
 
 interface Post {
     id: number;
@@ -18,238 +90,220 @@ interface Page {
     created_at: string;
 }
 
-interface Stats {
-    // Absent when the tenant has not installed the Posts module.
-    posts?: {
-        total: number;
-        published: number;
-        draft: number;
-    };
-    // Absent when the tenant has not installed the Pages module.
-    pages?: {
-        total: number;
-        published: number;
-        draft: number;
-    };
-    media: {
-        total: number;
-        images: number;
-        documents: number;
-    };
-    // Absent when the tenant has not installed the Carousels module.
-    carousels?: {
-        total: number;
-        active: number;
-    };
-}
-
 interface Props {
-    user: {
-        name: string;
-        email: string;
-        roles: string[];
-    };
-    primaryRole: {
-        name: string;
-        slug: string;
-    } | null;
+    user: { name: string; email: string; roles: string[] };
+    primaryRole: { name: string; slug: string } | null;
     stats: Stats;
+    logistics: Logistics;
+    alerts: Alert[];
+    recentActivity: Activity[];
     recentPosts: Post[];
     recentPages: Page[];
+    period: string;
 }
 
-// Icon Components
-const DocumentTextIcon = () => (
-    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-    </svg>
-);
-
-const NewspaperIcon = () => (
-    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
-    </svg>
-);
-
-const PhotoIcon = () => (
-    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-    </svg>
-);
-
-const RectangleStackIcon = () => (
-    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122" />
-    </svg>
-);
-
-const PlusIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-);
-
-const ArrowRightIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-    </svg>
-);
-
-const ClockIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
-
-const SparklesIcon = () => (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-    </svg>
-);
-
-const UserCircleIcon = () => (
-    <svg className="h-16 w-16" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-);
-
-interface StatCardProps {
-    title: string;
-    value: number;
-    subtitle: string;
-    icon: React.ReactNode;
-    color: 'cyan' | 'emerald' | 'amber' | 'rose';
-    href: string;
+function formatCurrency(value: number): string {
+    if (value >= 1_000_000_000) return `Rp ${Math.round(value / 1_000_000_000)}M`;
+    if (value >= 1_000_000) return `Rp ${Math.round(value / 1_000_000)}jt`;
+    if (value >= 1_000) return `Rp ${Math.round(value / 1_000)}rb`;
+    return `Rp ${value}`;
 }
 
-const StatCard = ({ title, value, subtitle, icon, color, href }: StatCardProps) => {
-    const colorClasses = {
-        cyan: {
-            bg: 'bg-cyan-50',
-            icon: 'text-cyan-600',
-            ring: 'ring-cyan-500/10',
-            hover: 'hover:bg-cyan-100',
-        },
-        emerald: {
-            bg: 'bg-emerald-50',
-            icon: 'text-emerald-600',
-            ring: 'ring-emerald-500/10',
-            hover: 'hover:bg-emerald-100',
-        },
-        amber: {
-            bg: 'bg-amber-50',
-            icon: 'text-amber-600',
-            ring: 'ring-amber-500/10',
-            hover: 'hover:bg-amber-100',
-        },
-        rose: {
-            bg: 'bg-rose-50',
-            icon: 'text-rose-600',
-            ring: 'ring-rose-500/10',
-            hover: 'hover:bg-rose-100',
-        },
+function formatRelativeTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const minutes = Math.floor(diff / 60_000);
+    if (minutes < 1) return 'Baru saja';
+    if (minutes < 60) return `${minutes} menit lalu`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} jam lalu`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} hari lalu`;
+    return new Date(iso).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+}
+
+function deltaLabel(current: number, previous: number, periodLabel: string): { text: string; direction: 'up' | 'down' | 'neutral' } {
+    const diff = current - previous;
+    if (diff === 0) return { text: `Sama dengan ${periodLabel}`, direction: 'neutral' };
+    const sign = diff > 0 ? '+' : '';
+    return {
+        text: `${sign}${diff} dari ${periodLabel}`,
+        direction: diff > 0 ? 'up' : 'down',
     };
+}
 
-    const classes = colorClasses[color];
+const PERIOD_OPTIONS = [
+    { key: 'today', label: 'Hari ini', deltaLabel: 'kemarin' },
+    { key: 'week', label: 'Minggu ini', deltaLabel: 'minggu lalu' },
+    { key: 'month', label: 'Bulan ini', deltaLabel: 'bulan lalu' },
+] as const;
 
-    return (
-        <Link
-            href={href}
-            className={`group relative overflow-hidden rounded-2xl ${classes.bg} p-6 ring-1 ${classes.ring} transition-all duration-300 ${classes.hover} hover:shadow-lg hover:scale-[1.02]`}
-        >
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-600">{title}</p>
-                    <p className="mt-2 text-4xl font-bold text-gray-900">{value}</p>
-                    <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
-                </div>
-                <div className={`rounded-xl ${classes.bg} p-3 ${classes.icon}`}>
-                    {icon}
-                </div>
-            </div>
-            <div className="absolute bottom-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <ArrowRightIcon />
-            </div>
-        </Link>
-    );
+const ORDER_STATUS_COLORS: Record<string, string> = {
+    draft: 'bg-gray-400',
+    confirmed: 'bg-blue-500',
+    assigned: 'bg-indigo-500',
+    in_transit: 'bg-amber-500',
+    delivered: 'bg-green-500',
+    cancelled: 'bg-red-500',
 };
 
-interface QuickActionProps {
-    title: string;
-    description: string;
-    href: string;
-    icon: React.ReactNode;
-    color: string;
-}
-
-const QuickAction = ({ title, description, href, icon, color }: QuickActionProps) => (
-    <Link
-        href={href}
-        className="group flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 transition-all duration-300 hover:shadow-md hover:ring-gray-900/10"
-    >
-        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color} text-white transition-transform duration-300 group-hover:scale-110`}>
-            {icon}
-        </div>
-        <div className="flex-1">
-            <p className="font-semibold text-gray-900">{title}</p>
-            <p className="text-sm text-gray-500">{description}</p>
-        </div>
-        <ArrowRightIcon />
-    </Link>
-);
-
-interface RecentItemProps {
-    title: string;
-    slug: string;
-    isPublished: boolean;
-    createdAt: string;
-    href: string;
-}
-
-const RecentItem = ({ title, isPublished, createdAt, href }: RecentItemProps) => {
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-        if (diffInHours < 1) return 'Baru saja';
-        if (diffInHours < 24) return `${diffInHours} jam lalu`;
-        if (diffInHours < 48) return 'Kemarin';
-        return date.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
-    };
-
-    return (
-        <Link
-            href={href}
-            className="group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-gray-50"
-        >
-            <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-gray-900 group-hover:text-cyan-600">
-                    {title}
-                </p>
-                <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-                    <ClockIcon />
-                    <span>{formatDate(createdAt)}</span>
-                </div>
-            </div>
-            <span
-                className={`ml-4 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    isPublished
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                }`}
-            >
-                {isPublished ? 'Terbit' : 'Draft'}
-            </span>
-        </Link>
-    );
+const ORDER_STATUS_LABELS: Record<string, string> = {
+    draft: 'Draft',
+    confirmed: 'Confirmed',
+    assigned: 'Assigned',
+    in_transit: 'In Transit',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
 };
 
-export default function Dashboard({ user, primaryRole, stats, recentPosts, recentPages }: Props): JSX.Element {
+const VEHICLE_STATUS_COLORS: Record<string, string> = {
+    active: 'bg-green-500',
+    maintenance: 'bg-amber-500',
+    inactive: 'bg-gray-400',
+};
+
+const VEHICLE_STATUS_LABELS: Record<string, string> = {
+    active: 'Aktif',
+    maintenance: 'Maintenance',
+    inactive: 'Nonaktif',
+};
+
+const ALERT_STYLES: Record<string, { bg: string; text: string; icon: string }> = {
+    danger: { bg: 'bg-red-50 ring-red-200', text: 'text-red-800', icon: 'text-red-600' },
+    warning: { bg: 'bg-amber-50 ring-amber-200', text: 'text-amber-800', icon: 'text-amber-600' },
+    info: { bg: 'bg-blue-50 ring-blue-200', text: 'text-blue-800', icon: 'text-blue-600' },
+};
+
+const ALERT_ICONS: Record<string, JSX.Element> = {
+    danger: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+    ),
+    warning: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    ),
+    info: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.384-3.115A1.61 1.61 0 015 10.654V6.69a1.61 1.61 0 011.036-1.401l5.384-3.115a1.61 1.61 0 011.16 0l5.384 3.115A1.61 1.61 0 0119 6.69v3.965a1.61 1.61 0 01-1.036 1.401l-5.384 3.115a1.61 1.61 0 01-1.16 0z" />
+        </svg>
+    ),
+};
+
+const ACTIVITY_ICONS: Record<string, { bg: string; color: string; svg: JSX.Element }> = {
+    order: {
+        bg: 'bg-green-100',
+        color: 'text-green-600',
+        svg: (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        ),
+    },
+    trip: {
+        bg: 'bg-blue-100',
+        color: 'text-blue-600',
+        svg: (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" />
+            </svg>
+        ),
+    },
+    invoice: {
+        bg: 'bg-amber-100',
+        color: 'text-amber-600',
+        svg: (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+        ),
+    },
+    maintenance: {
+        bg: 'bg-red-100',
+        color: 'text-red-600',
+        svg: (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.384-3.115A1.61 1.61 0 015 10.654V6.69a1.61 1.61 0 011.036-1.401l5.384-3.115a1.61 1.61 0 011.16 0l5.384 3.115A1.61 1.61 0 0119 6.69v3.965a1.61 1.61 0 01-1.036 1.401l-5.384 3.115a1.61 1.61 0 01-1.16 0z" />
+            </svg>
+        ),
+    },
+};
+
+function KpiCard({ label, value, icon, delta }: {
+    label: string;
+    value: string | number;
+    icon: JSX.Element;
+    delta?: { text: string; direction: 'up' | 'down' | 'neutral' };
+}): JSX.Element {
+    const dirColors = { up: 'text-green-600', down: 'text-red-600', neutral: 'text-gray-500' };
+    return (
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+                {icon}
+                <span>{label}</span>
+            </div>
+            <div className="mt-2 text-2xl font-bold tabular-nums text-gray-900">{value}</div>
+            {delta && <div className={`mt-1 text-xs tabular-nums ${dirColors[delta.direction]}`}>{delta.text}</div>}
+        </div>
+    );
+}
+
+function StatusBar({ items, total }: { items: { key: string; count: number; color: string; label: string }[]; total: number }): JSX.Element {
+    return (
+        <div>
+            <div className="flex h-2 gap-0.5 overflow-hidden rounded-full bg-gray-100">
+                {items.map((item) => (
+                    item.count > 0 && (
+                        <span
+                            key={item.key}
+                            className={`block rounded-full ${item.color}`}
+                            style={{ width: `${(item.count / total) * 100}%` }}
+                        />
+                    )
+                ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                {items.map((item) => (
+                    <span key={item.key} className="flex items-center gap-1.5 text-xs text-gray-600">
+                        <span className={`inline-block h-2 w-2 rounded-sm ${item.color}`} />
+                        {item.label} {item.count}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function SectionCard({ title, action, children }: { title: string; action?: { label: string; href: string }; children: React.ReactNode }): JSX.Element {
+    return (
+        <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+                <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+                {action && (
+                    <Link href={action.href} className="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                        {action.label} &rarr;
+                    </Link>
+                )}
+            </div>
+            <div className="p-5">{children}</div>
+        </div>
+    );
+}
+
+export default function Dashboard({ user, primaryRole, stats, logistics, alerts, recentActivity, recentPosts, recentPages, period }: Props): JSX.Element {
     const { auth } = usePage().props as any;
     const permissions = auth.user?.permissions || {};
     const permissionModules = Object.keys(permissions);
-    const [activeTab, setActiveTab] = useState<'posts' | 'pages'>('posts');
+
+    const hasLogistics = !!(logistics.trips || logistics.orders || logistics.fleet || logistics.invoices);
+    const currentPeriod = PERIOD_OPTIONS.find((p) => p.key === period) ?? PERIOD_OPTIONS[1];
+
+    const [activeContentTab, setActiveContentTab] = useState<'posts' | 'pages'>('posts');
+
+    const changePeriod = (key: string) => {
+        router.get(route('module.dashboard'), { period: key }, { preserveState: true, preserveScroll: true });
+    };
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -258,279 +312,315 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
         return 'Selamat Malam';
     };
 
-    const getFirstName = (name: string) => name.split(' ')[0];
-
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard Modul'}
+                        {primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard'}
                     </h2>
+                    {hasLogistics && (
+                        <div className="flex rounded-lg bg-gray-100 p-0.5">
+                            {PERIOD_OPTIONS.map((opt) => (
+                                <button
+                                    key={opt.key}
+                                    onClick={() => changePeriod(opt.key)}
+                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                        period === opt.key
+                                            ? 'bg-white text-gray-900 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             }
         >
-            <Head title={primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard Modul'} />
+            <Head title={primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard'} />
 
-            <div className="space-y-8">
-                {/* Welcome Section - Sky Track Theme */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 text-white shadow-xl">
-                    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl" />
-                    <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl" />
-                    <div className="relative flex items-center gap-6">
-                        <div className="hidden sm:block">
-                            <div className="rounded-full bg-white/10 p-2 backdrop-blur-sm border border-white/20">
-                                <UserCircleIcon />
-                            </div>
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                                <SparklesIcon />
-                                <span className="text-sm font-medium text-white/70">
-                                    {getGreeting()}
-                                </span>
-                            </div>
-                            <h1 className="mt-1 text-3xl font-bold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
-                                Selamat Datang, {getFirstName(user.name)}!
-                            </h1>
-                            <p className="mt-2 text-white/70">
-                                {primaryRole ? (
-                                    <>Anda masuk sebagai <span className="font-semibold text-cyan-400">{primaryRole.name}</span></>
-                                ) : (
-                                    <>Siap mengelola konten Anda?</>
-                                )}
-                            </p>
-                        </div>
-                        <div className="hidden lg:block">
-                            <div className="rounded-xl bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/20">
-                                <p className="text-sm text-white/70">Peran</p>
-                                <p className="font-semibold text-white">{user.roles.join(', ')}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    {stats.posts && (
-                        <StatCard
-                            title="Total Postingan"
-                            value={stats.posts.total}
-                            subtitle={`${stats.posts.published} terbit, ${stats.posts.draft} draft`}
-                            icon={<NewspaperIcon />}
-                            color="cyan"
-                            href={route('module.posts.index')}
-                        />
-                    )}
-                    {stats.pages && (
-                        <StatCard
-                            title="Total Halaman"
-                            value={stats.pages.total}
-                            subtitle={`${stats.pages.published} terbit, ${stats.pages.draft} draft`}
-                            icon={<DocumentTextIcon />}
-                            color="emerald"
-                            href={route('module.pages.index')}
-                        />
-                    )}
-                    <StatCard
-                        title="File Media"
-                        value={stats.media.total}
-                        subtitle={`${stats.media.images} gambar, ${stats.media.documents} dokumen`}
-                        icon={<PhotoIcon />}
-                        color="amber"
-                        href={route('module.media.index')}
-                    />
-                    {stats.carousels && (
-                        <StatCard
-                            title="Carousel"
-                            value={stats.carousels.total}
-                            subtitle={`${stats.carousels.active} aktif`}
-                            icon={<RectangleStackIcon />}
-                            color="rose"
-                            href={route('module.carousels.index')}
-                        />
+            <div className="space-y-6">
+                {/* Welcome banner */}
+                <div className="rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-5 text-white">
+                    <p className="text-sm text-white/60">{getGreeting()}</p>
+                    <h1 className="mt-1 text-xl font-bold">{user.name}</h1>
+                    {primaryRole && (
+                        <p className="mt-0.5 text-sm text-white/70">
+                            {primaryRole.name} &middot; {user.roles.join(', ')}
+                        </p>
                     )}
                 </div>
 
-                {/* Quick Actions & Recent Activity */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Quick Actions */}
-                    <div className="lg:col-span-1">
-                        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-                            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                                <PlusIcon />
-                                Aksi Cepat
-                            </h3>
-                            <div className="mt-4 space-y-3">
-                                {stats.posts && (
-                                    <QuickAction
-                                        title="Postingan Baru"
-                                        description="Buat postingan blog"
-                                        href={route('module.posts.create')}
-                                        icon={<NewspaperIcon />}
-                                        color="bg-gradient-to-r from-cyan-500 to-blue-600"
-                                    />
-                                )}
-                                {stats.pages && (
-                                    <QuickAction
-                                        title="Halaman Baru"
-                                        description="Buat halaman baru"
-                                        href={route('module.pages.create')}
-                                        icon={<DocumentTextIcon />}
-                                        color="bg-gradient-to-r from-emerald-500 to-teal-600"
-                                    />
-                                )}
-                                <QuickAction
-                                    title="Upload Media"
-                                    description="Tambah gambar atau file"
-                                    href={route('module.media.create')}
-                                    icon={<PhotoIcon />}
-                                    color="bg-gradient-to-r from-amber-500 to-orange-600"
+                {/* === LOGISTICS SECTION === */}
+                {hasLogistics && (
+                    <>
+                        {/* KPI cards */}
+                        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                            {logistics.trips && (
+                                <KpiCard
+                                    label="Trip aktif"
+                                    value={logistics.trips.active}
+                                    icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" /></svg>}
+                                    delta={deltaLabel(logistics.trips.active, logistics.trips.previous_active, currentPeriod.deltaLabel)}
                                 />
-                                {stats.carousels && (
-                                    <QuickAction
-                                        title="Carousel Baru"
-                                        description="Buat slideshow"
-                                        href={route('module.carousels.create')}
-                                        icon={<RectangleStackIcon />}
-                                        color="bg-gradient-to-r from-rose-500 to-pink-600"
+                            )}
+                            {logistics.orders && (
+                                <KpiCard
+                                    label="Delivery order"
+                                    value={logistics.orders.period_total}
+                                    icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>}
+                                    delta={deltaLabel(logistics.orders.period_total, logistics.orders.previous_period_total, currentPeriod.deltaLabel)}
+                                />
+                            )}
+                            {logistics.invoices && (() => {
+                                const paid = logistics.invoices.by_status?.paid;
+                                const paidAmount = paid?.amount ?? 0;
+                                return (
+                                    <KpiCard
+                                        label="Revenue"
+                                        value={formatCurrency(paidAmount)}
+                                        icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                                     />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Recent Activity */}
-                    <div className="lg:col-span-2">
-                        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Aktivitas Terbaru
-                                </h3>
-                                <div className="flex rounded-lg bg-gray-100 p-1">
-                                    <button
-                                        onClick={() => setActiveTab('posts')}
-                                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                                            activeTab === 'posts'
-                                                ? 'bg-white text-gray-900 shadow-sm'
-                                                : 'text-gray-600 hover:text-gray-900'
-                                        }`}
-                                    >
-                                        Postingan
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('pages')}
-                                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                                            activeTab === 'pages'
-                                                ? 'bg-white text-gray-900 shadow-sm'
-                                                : 'text-gray-600 hover:text-gray-900'
-                                        }`}
-                                    >
-                                        Halaman
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="mt-4">
-                                {activeTab === 'posts' ? (
-                                    recentPosts.length > 0 ? (
-                                        <div className="divide-y divide-gray-100">
-                                            {recentPosts.map((post) => (
-                                                <RecentItem
-                                                    key={post.id}
-                                                    title={post.title}
-                                                    slug={post.slug}
-                                                    isPublished={post.is_published}
-                                                    createdAt={post.created_at}
-                                                    href={route('module.posts.edit', post.id)}
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="py-8 text-center">
-                                            <NewspaperIcon />
-                                            <p className="mt-2 text-sm text-gray-500">
-                                                Belum ada postingan. Buat postingan pertama Anda!
-                                            </p>
-                                            <Link
-                                                href={route('module.posts.create')}
-                                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:from-cyan-400 hover:to-blue-500"
-                                            >
-                                                <PlusIcon />
-                                                Buat Postingan
-                                            </Link>
-                                        </div>
-                                    )
-                                ) : recentPages.length > 0 ? (
-                                    <div className="divide-y divide-gray-100">
-                                        {recentPages.map((page) => (
-                                            <RecentItem
-                                                key={page.id}
-                                                title={page.title}
-                                                slug={page.slug}
-                                                isPublished={page.is_published}
-                                                createdAt={page.created_at}
-                                                href={route('module.pages.edit', page.id)}
-                                            />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="py-8 text-center">
-                                        <DocumentTextIcon />
-                                        <p className="mt-2 text-sm text-gray-500">
-                                            Belum ada halaman. Buat halaman pertama Anda!
-                                        </p>
-                                        <Link
-                                            href={route('module.pages.create')}
-                                            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-medium text-white hover:from-emerald-400 hover:to-teal-500"
-                                        >
-                                            <PlusIcon />
-                                            Buat Halaman
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-
-                            {((activeTab === 'posts' && recentPosts.length > 0) ||
-                                (activeTab === 'pages' && recentPages.length > 0)) && (
-                                <div className="mt-4 border-t border-gray-100 pt-4">
-                                    <Link
-                                        href={activeTab === 'posts' ? route('module.posts.index') : route('module.pages.index')}
-                                        className="flex items-center justify-center gap-2 text-sm font-medium text-cyan-600 hover:text-cyan-700"
-                                    >
-                                        Lihat semua {activeTab === 'posts' ? 'postingan' : 'halaman'}
-                                        <ArrowRightIcon />
-                                    </Link>
-                                </div>
+                                );
+                            })()}
+                            {logistics.invoices && (
+                                <KpiCard
+                                    label="Outstanding"
+                                    value={formatCurrency(logistics.invoices.by_status?.issued?.amount ?? 0)}
+                                    icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
+                                    delta={logistics.invoices.overdue.count > 0
+                                        ? { text: `${logistics.invoices.overdue.count} overdue`, direction: 'down' }
+                                        : undefined}
+                                />
                             )}
                         </div>
-                    </div>
-                </div>
 
-                {/* Permissions Overview */}
-                {permissionModules.length > 0 && (
-                    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                            Izin Akses Anda
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Berikut adalah akses yang Anda miliki dalam sistem ini
-                        </p>
-                        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {permissionModules.map((module) => (
-                                <div
-                                    key={module}
-                                    className="rounded-xl border border-gray-200 p-4 transition-colors hover:border-cyan-200 hover:bg-cyan-50/50"
+                        {/* Row: orders status + alerts */}
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            {logistics.orders && (
+                                <SectionCard
+                                    title="Status delivery order"
+                                    action={{ label: 'Lihat semua', href: route('module.orders.index') }}
                                 >
-                                    <h4 className="font-medium capitalize text-gray-800">
-                                        {module.replace('-', ' ')}
-                                    </h4>
-                                    <div className="mt-2 flex flex-wrap gap-1">
-                                        {permissions[module].map((action: string) => (
-                                            <span
-                                                key={action}
-                                                className="inline-flex items-center rounded-md bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-700"
-                                            >
+                                    <StatusBar
+                                        total={logistics.orders.total || 1}
+                                        items={Object.entries(ORDER_STATUS_LABELS).map(([key, label]) => ({
+                                            key,
+                                            count: logistics.orders!.by_status[key] ?? 0,
+                                            color: ORDER_STATUS_COLORS[key],
+                                            label,
+                                        }))}
+                                    />
+                                </SectionCard>
+                            )}
+
+                            {alerts.length > 0 && (
+                                <SectionCard title="Peringatan">
+                                    <div className="flex flex-col gap-2">
+                                        {alerts.map((alert) => {
+                                            const style = ALERT_STYLES[alert.severity] ?? ALERT_STYLES.info;
+                                            return (
+                                                <div
+                                                    key={alert.type}
+                                                    className={`flex items-start gap-2.5 rounded-lg p-3 text-sm ring-1 ${style.bg} ${style.text}`}
+                                                >
+                                                    <span className={style.icon}>{ALERT_ICONS[alert.severity]}</span>
+                                                    <span>{alert.message}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </SectionCard>
+                            )}
+                        </div>
+
+                        {/* Row: revenue chart + fleet */}
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            {logistics.revenue && logistics.revenue.length > 0 && (
+                                <SectionCard title="Revenue bulanan">
+                                    <RevenueChart data={logistics.revenue} />
+                                </SectionCard>
+                            )}
+
+                            {logistics.fleet && (
+                                <SectionCard
+                                    title="Fleet"
+                                    action={{ label: 'Kelola', href: route('module.fleet.vehicles.index') }}
+                                >
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <MiniStat label="Kendaraan aktif" value={logistics.fleet.vehicles.active ?? 0} unit={`/ ${logistics.fleet.vehicles_total}`} />
+                                        <MiniStat label="Driver tersedia" value={logistics.fleet.drivers.available ?? 0} unit={`/ ${logistics.fleet.drivers_total}`} />
+                                        <MiniStat label="Dalam maintenance" value={logistics.fleet.vehicles.maintenance ?? 0} unit="kendaraan" />
+                                        <MiniStat label="BBM periode ini" value={logistics.fleet.fuel.liters.toLocaleString('id-ID')} unit="liter" />
+                                    </div>
+                                    <div className="mt-3">
+                                        <StatusBar
+                                            total={logistics.fleet.vehicles_total || 1}
+                                            items={Object.entries(VEHICLE_STATUS_LABELS).map(([key, label]) => ({
+                                                key,
+                                                count: logistics.fleet!.vehicles[key] ?? 0,
+                                                color: VEHICLE_STATUS_COLORS[key],
+                                                label,
+                                            }))}
+                                        />
+                                    </div>
+                                </SectionCard>
+                            )}
+                        </div>
+
+                        {/* Row: top partners + activity */}
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            {logistics.top_partners && logistics.top_partners.length > 0 && (
+                                <SectionCard
+                                    title="Top partner (revenue)"
+                                    action={{ label: 'Semua partner', href: route('module.partners.index') }}
+                                >
+                                    <div className="divide-y divide-gray-100">
+                                        {logistics.top_partners.map((p, i) => (
+                                            <div key={i} className="flex items-center gap-3 py-2 text-sm">
+                                                <span className="w-5 text-center text-xs text-gray-400 tabular-nums">{i + 1}</span>
+                                                <span className="flex-1 truncate text-gray-900">{p.name}</span>
+                                                <span className="tabular-nums text-gray-500">{formatCurrency(p.revenue)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </SectionCard>
+                            )}
+
+                            {recentActivity.length > 0 && (
+                                <SectionCard title="Aktivitas terbaru">
+                                    <div className="divide-y divide-gray-100">
+                                        {recentActivity.map((act, i) => {
+                                            const iconSet = ACTIVITY_ICONS[act.type] ?? ACTIVITY_ICONS.order;
+                                            return (
+                                                <div key={i} className="flex items-start gap-3 py-2.5">
+                                                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${iconSet.bg} ${iconSet.color}`}>
+                                                        {iconSet.svg}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm text-gray-900">{act.description}</p>
+                                                        <p className="text-xs text-gray-400">{formatRelativeTime(act.time)}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </SectionCard>
+                            )}
+                        </div>
+
+                        {/* Invoice summary */}
+                        {logistics.invoices && (
+                            <SectionCard
+                                title="Invoice"
+                                action={{ label: 'Kelola invoice', href: route('module.invoicing.invoices.index') }}
+                            >
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                    <MiniStat label="Draft" value={logistics.invoices.by_status?.draft?.count ?? 0} />
+                                    <MiniStat label="Issued" value={logistics.invoices.by_status?.issued?.count ?? 0} unit={formatCurrency(logistics.invoices.by_status?.issued?.amount ?? 0)} />
+                                    <MiniStat label="Paid" value={logistics.invoices.by_status?.paid?.count ?? 0} unit={formatCurrency(logistics.invoices.by_status?.paid?.amount ?? 0)} />
+                                    <MiniStat
+                                        label="Overdue"
+                                        value={logistics.invoices.overdue.count}
+                                        unit={logistics.invoices.overdue.count > 0 ? formatCurrency(logistics.invoices.overdue.amount) : undefined}
+                                        danger={logistics.invoices.overdue.count > 0}
+                                    />
+                                </div>
+                            </SectionCard>
+                        )}
+                    </>
+                )}
+
+                {/* === CMS SECTION === */}
+                {(stats.posts || stats.pages || stats.carousels) && (
+                    <>
+                        {hasLogistics && (
+                            <div className="border-t border-gray-200 pt-2">
+                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Konten</h3>
+                            </div>
+                        )}
+
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            {stats.posts && (
+                                <Link href={route('module.posts.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
+                                    <p className="text-sm text-gray-500">Postingan</p>
+                                    <p className="mt-1 text-2xl font-bold text-gray-900">{stats.posts.total}</p>
+                                    <p className="mt-0.5 text-xs text-gray-400">{stats.posts.published} terbit, {stats.posts.draft} draft</p>
+                                </Link>
+                            )}
+                            {stats.pages && (
+                                <Link href={route('module.pages.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
+                                    <p className="text-sm text-gray-500">Halaman</p>
+                                    <p className="mt-1 text-2xl font-bold text-gray-900">{stats.pages.total}</p>
+                                    <p className="mt-0.5 text-xs text-gray-400">{stats.pages.published} terbit, {stats.pages.draft} draft</p>
+                                </Link>
+                            )}
+                            <Link href={route('module.media.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
+                                <p className="text-sm text-gray-500">Media</p>
+                                <p className="mt-1 text-2xl font-bold text-gray-900">{stats.media.total}</p>
+                                <p className="mt-0.5 text-xs text-gray-400">{stats.media.images} gambar, {stats.media.documents} dokumen</p>
+                            </Link>
+                            {stats.carousels && (
+                                <Link href={route('module.carousels.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
+                                    <p className="text-sm text-gray-500">Carousel</p>
+                                    <p className="mt-1 text-2xl font-bold text-gray-900">{stats.carousels.total}</p>
+                                    <p className="mt-0.5 text-xs text-gray-400">{stats.carousels.active} aktif</p>
+                                </Link>
+                            )}
+                        </div>
+
+                        {/* Recent content */}
+                        {(recentPosts.length > 0 || recentPages.length > 0) && (
+                            <SectionCard title="Konten terbaru">
+                                <div className="mb-3 flex gap-1">
+                                    {stats.posts && (
+                                        <button
+                                            onClick={() => setActiveContentTab('posts')}
+                                            className={`rounded-md px-3 py-1 text-xs font-medium transition ${activeContentTab === 'posts' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            Postingan
+                                        </button>
+                                    )}
+                                    {stats.pages && (
+                                        <button
+                                            onClick={() => setActiveContentTab('pages')}
+                                            className={`rounded-md px-3 py-1 text-xs font-medium transition ${activeContentTab === 'pages' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            Halaman
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="divide-y divide-gray-100">
+                                    {(activeContentTab === 'posts' ? recentPosts : recentPages).map((item) => (
+                                        <Link
+                                            key={item.id}
+                                            href={route(activeContentTab === 'posts' ? 'module.posts.edit' : 'module.pages.edit', item.id)}
+                                            className="flex items-center justify-between py-2.5 text-sm hover:bg-gray-50 -mx-2 px-2 rounded"
+                                        >
+                                            <span className="truncate text-gray-900">{item.title}</span>
+                                            <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${item.is_published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                {item.is_published ? 'Terbit' : 'Draft'}
+                                            </span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </SectionCard>
+                        )}
+                    </>
+                )}
+
+                {/* Permissions overview */}
+                {permissionModules.length > 0 && (
+                    <SectionCard title="Izin akses Anda">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {permissionModules.map((mod) => (
+                                <div key={mod} className="rounded-lg border border-gray-200 p-3">
+                                    <h4 className="text-sm font-medium capitalize text-gray-800">{mod.replace('-', ' ')}</h4>
+                                    <div className="mt-1.5 flex flex-wrap gap-1">
+                                        {permissions[mod].map((action: string) => (
+                                            <span key={action} className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-700">
                                                 {action}
                                             </span>
                                         ))}
@@ -538,9 +628,41 @@ export default function Dashboard({ user, primaryRole, stats, recentPosts, recen
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </SectionCard>
                 )}
             </div>
         </DynamicLayout>
+    );
+}
+
+function MiniStat({ label, value, unit, danger }: { label: string; value: string | number; unit?: string; danger?: boolean }): JSX.Element {
+    return (
+        <div className="rounded-lg bg-gray-50 p-3">
+            <div className="text-xs text-gray-500">{label}</div>
+            <div className="mt-0.5 flex items-baseline gap-1.5">
+                <span className={`text-lg font-bold tabular-nums ${danger ? 'text-red-600' : 'text-gray-900'}`}>{value}</span>
+                {unit && <span className="text-xs text-gray-400">{unit}</span>}
+            </div>
+        </div>
+    );
+}
+
+function RevenueChart({ data }: { data: RevenuePoint[] }): JSX.Element {
+    const maxAmount = Math.max(...data.map((d) => d.amount), 1);
+    return (
+        <div>
+            <div className="flex items-end gap-2" style={{ height: 160 }}>
+                {data.map((d, i) => (
+                    <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                        <span className="text-xs tabular-nums text-gray-400">{formatCurrency(d.amount)}</span>
+                        <div
+                            className="w-full rounded-t bg-indigo-500 transition-all"
+                            style={{ height: `${(d.amount / maxAmount) * 120}px`, minHeight: 4 }}
+                        />
+                        <span className="text-xs text-gray-500">{d.month}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }

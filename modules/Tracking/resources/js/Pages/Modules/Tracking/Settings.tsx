@@ -6,8 +6,8 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, router, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import TrackingNav from '../../../TrackingNav';
 
 interface Config {
@@ -33,6 +33,22 @@ interface Props {
 
 export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl, lastPolledAt, lastPollError, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setToast({ type: 'success', message: flash.success });
+        } else if (flash?.error) {
+            setToast({ type: 'error', message: flash.error });
+        }
+    }, [flash]);
+
+    useEffect(() => {
+        if (!toast) return;
+        const timer = setTimeout(() => setToast(null), 5000);
+        return () => clearTimeout(timer);
+    }, [toast]);
 
     const { data, setData, patch, processing, errors } = useForm({
         base_url: config.base_url ?? '',
@@ -52,8 +68,14 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
         patch(prefixedRoute('tracking.settings.update'), { preserveScroll: true });
     };
 
+    const [testing, setTesting] = useState(false);
+
     const testConnection = () => {
-        router.post(prefixedRoute('tracking.settings.test'), {}, { preserveScroll: true });
+        setTesting(true);
+        router.post(prefixedRoute('tracking.settings.test'), {}, {
+            preserveScroll: true,
+            onFinish: () => setTesting(false),
+        });
     };
 
     const usesToken = data.auth_type === 'token';
@@ -63,6 +85,29 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
             <Head title="Tracking Settings" />
 
             <TrackingNav />
+
+            {toast && (
+                <div
+                    className={`mb-6 flex items-center justify-between rounded-lg p-4 text-sm ring-1 ${
+                        toast.type === 'success'
+                            ? 'bg-green-50 text-green-800 ring-green-200'
+                            : 'bg-red-50 text-red-800 ring-red-200'
+                    }`}
+                >
+                    <span>{toast.message}</span>
+                    <button
+                        type="button"
+                        onClick={() => setToast(null)}
+                        className={`ml-4 shrink-0 rounded p-1 transition hover:bg-opacity-20 ${
+                            toast.type === 'success' ? 'hover:bg-green-600' : 'hover:bg-red-600'
+                        }`}
+                    >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
 
             {lastPollError && (
                 <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800">
@@ -216,7 +261,9 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                         {can.update && (
                             <div className="flex items-center gap-4">
                                 <PrimaryButton disabled={processing}>Save Settings</PrimaryButton>
-                                <SecondaryButton type="button" onClick={testConnection}>Test connection</SecondaryButton>
+                                <SecondaryButton type="button" onClick={testConnection} disabled={testing}>
+                                    {testing ? 'Testing...' : 'Test connection'}
+                                </SecondaryButton>
                                 <span className="text-xs text-gray-500">Last poll: {lastPolledAt ?? 'never'}</span>
                             </div>
                         )}

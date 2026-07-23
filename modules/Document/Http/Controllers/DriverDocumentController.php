@@ -85,7 +85,7 @@ class DriverDocumentController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
-        return redirect()->route('fleet.drivers.documents.index', $driver)
+        return redirect()->route('module.fleet.drivers.documents.index', $driver)
             ->with('success', 'Document uploaded successfully.');
     }
 
@@ -136,7 +136,7 @@ class DriverDocumentController extends Controller
     {
         $document->delete();
 
-        return redirect()->route('fleet.drivers.documents.index', $driver)
+        return redirect()->route('module.fleet.drivers.documents.index', $driver)
             ->with('success', 'Document removed.');
     }
 

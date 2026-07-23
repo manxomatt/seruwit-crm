@@ -86,7 +86,7 @@ class VehicleDocumentController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
-        return redirect()->route('fleet.vehicles.documents.index', $vehicle)
+        return redirect()->route('module.fleet.vehicles.documents.index', $vehicle)
             ->with('success', 'Document uploaded successfully.');
     }
 
@@ -138,7 +138,7 @@ class VehicleDocumentController extends Controller
     {
         $document->delete();
 
-        return redirect()->route('fleet.vehicles.documents.index', $vehicle)
+        return redirect()->route('module.fleet.vehicles.documents.index', $vehicle)
             ->with('success', 'Document removed.');
     }
 

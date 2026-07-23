@@ -30,6 +30,8 @@ return [
         Modules\Product\ProductModule::class,
         Modules\Tracking\TrackingModule::class,
         Modules\TransportationManagement\TransportationManagementModule::class,
+        Modules\Rental\RentalModule::class,
+        Modules\Canvassing\CanvassingModule::class,
     ],
 
     /*
