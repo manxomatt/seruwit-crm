@@ -47,7 +47,7 @@ class ReportController extends Controller
         $fuelCostByVehicle = FuelLog::query()
             ->with('vehicle:id,name,plate_number')
             ->whereBetween('filled_at', [$from, $to])
-            ->selectRaw('vehicle_id, sum(cost) as total_cost, sum(liters) as total_liters')
+            ->selectRaw('vehicle_id, sum(cost) as total_cost, sum(liters) as total_liters, avg(km_per_liter) as avg_km_per_liter, sum(case when anomaly_flags is not null then 1 else 0 end) as anomaly_count')
             ->groupBy('vehicle_id')
             ->orderByDesc('total_cost')
             ->get();

@@ -30,6 +30,8 @@ class StoreVehicleRequest extends FormRequest
             'capacity' => ['nullable', 'string', 'max:100'],
             'capacity_kg' => ['nullable', 'numeric', 'min:0'],
             'cost_per_km' => ['nullable', 'numeric', 'min:0'],
+            'tank_capacity_liters' => ['nullable', 'numeric', 'min:0'],
+            'expected_km_per_liter' => ['nullable', 'numeric', 'min:0'],
             'fuel_type' => ['required', 'string', 'in:petrol,diesel,electric,hybrid'],
             'status' => ['required', 'string', 'in:active,maintenance,retired,out_of_service'],
             'odometer_km' => ['integer', 'min:0'],

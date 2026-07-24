@@ -29,6 +29,22 @@ interface FuelLog {
     liters: string;
     cost: string;
     odometer_km: number | null;
+    distance_since_last_km: number | null;
+    km_per_liter: string | number | null;
+    liters_per_100km: string | number | null;
+    odometer_source: string | null;
+    station_name: string | null;
+    is_full_tank: boolean;
+    anomaly_flags: { code: string; message: string; severity: string }[] | null;
+    driver: { id: number; name: string } | null;
+}
+
+interface FuelSummary {
+    average_km_per_liter: number | null;
+    expected_km_per_liter: number | null;
+    anomaly_count: number;
+    suggested_odometer_km: number;
+    suggested_odometer_source: string;
 }
 
 interface Vehicle {
@@ -39,6 +55,8 @@ interface Vehicle {
     brand: string | null;
     model_year: number | null;
     capacity: string | null;
+    tank_capacity_liters: string | number | null;
+    expected_km_per_liter: string | number | null;
     fuel_type: string;
     status: string;
     odometer_km: number;
@@ -52,6 +70,9 @@ interface Vehicle {
 
 interface Props {
     vehicle: Vehicle;
+    trackingEnabled?: boolean;
+    fuelSummary: FuelSummary;
+    drivers: { id: number; name: string }[];
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -68,7 +89,7 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ vehicle, can }: Props): JSX.Element {
+export default function Show({ vehicle, trackingEnabled = false, fuelSummary, drivers, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [showFuelModal, setShowFuelModal] = useState(false);
@@ -86,10 +107,16 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
     });
 
     const fuelForm = useForm({
-        filled_at: '',
+        filled_at: new Date().toISOString().slice(0, 10),
         liters: '',
         cost: '',
-        odometer_km: '',
+        odometer_km: String(fuelSummary.suggested_odometer_km || ''),
+        odometer_source: fuelSummary.suggested_odometer_source || 'vehicle',
+        driver_id: '',
+        station_name: '',
+        receipt_number: '',
+        is_full_tank: true as boolean,
+        notes: '',
     });
 
     const submitMaintenance: FormEventHandler = (e) => {
@@ -255,9 +282,31 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">Fuel Log</h3>
-                            {can.create && <PrimaryButton onClick={() => setShowFuelModal(true)}>Add Fuel Log</PrimaryButton>}
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 className="text-lg font-medium text-gray-900">Fuel Management</h3>
+                                <p className="text-xs text-gray-500">
+                                    Avg {fuelSummary.average_km_per_liter ?? '—'} km/L
+                                    {fuelSummary.expected_km_per_liter ? ` · expected ${fuelSummary.expected_km_per_liter} km/L` : ''}
+                                    {fuelSummary.anomaly_count > 0 ? ` · ${fuelSummary.anomaly_count} anomal${fuelSummary.anomaly_count === 1 ? 'y' : 'ies'}` : ''}
+                                    {trackingEnabled ? ' · GPS odometer linked' : ''}
+                                </p>
+                            </div>
+                            {can.create && (
+                                <PrimaryButton
+                                    onClick={() => {
+                                        fuelForm.setData({
+                                            ...fuelForm.data,
+                                            filled_at: new Date().toISOString().slice(0, 10),
+                                            odometer_km: String(fuelSummary.suggested_odometer_km || ''),
+                                            odometer_source: fuelSummary.suggested_odometer_source || 'vehicle',
+                                        });
+                                        setShowFuelModal(true);
+                                    }}
+                                >
+                                    Add Fuel Log
+                                </PrimaryButton>
+                            )}
                         </div>
                         {vehicle.fuel_logs.length === 0 ? (
                             <p className="text-sm text-gray-500">No fuel logs yet.</p>
@@ -269,16 +318,49 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Liters</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Cost</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Odometer</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Δ km</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">km/L</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Flags</th>
                                         <th className="px-3 py-2" />
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {vehicle.fuel_logs.map((log) => (
-                                        <tr key={log.id}>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900">{log.filled_at}</td>
+                                        <tr key={log.id} className={log.anomaly_flags?.length ? 'bg-amber-50/60' : ''}>
+                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900">
+                                                {log.filled_at}
+                                                {log.is_full_tank && <span className="ml-1 text-xs text-indigo-600">full</span>}
+                                            </td>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{log.liters} L</td>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">Rp {Number(log.cost).toLocaleString()}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{log.odometer_km ? `${log.odometer_km.toLocaleString()} km` : '—'}</td>
+                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                                {log.odometer_km ? `${log.odometer_km.toLocaleString()} km` : '—'}
+                                                {log.odometer_source && (
+                                                    <span className="ml-1 text-xs uppercase text-gray-400">{log.odometer_source}</span>
+                                                )}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                                {log.distance_since_last_km != null ? `${log.distance_since_last_km} km` : '—'}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                                {log.km_per_liter ?? '—'}
+                                                {log.liters_per_100km != null && (
+                                                    <span className="block text-xs text-gray-400">{log.liters_per_100km} L/100km</span>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2 text-sm">
+                                                {log.anomaly_flags?.length ? (
+                                                    <ul className="space-y-0.5 text-xs text-amber-800">
+                                                        {log.anomaly_flags.map((flag) => (
+                                                            <li key={flag.code} title={flag.message}>
+                                                                {flag.code.replaceAll('_', ' ')}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
+                                            </td>
                                             <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
                                                 {can.delete && (
                                                     <button onClick={() => deleteFuel(log.id)} className="text-red-600 hover:text-red-900">
@@ -378,31 +460,65 @@ export default function Show({ vehicle, can }: Props): JSX.Element {
                 </form>
             </Modal>
 
-            <Modal show={showFuelModal} onClose={() => setShowFuelModal(false)} maxWidth="md">
+            <Modal show={showFuelModal} onClose={() => setShowFuelModal(false)} maxWidth="lg">
                 <form onSubmit={submitFuel} className="p-6">
                     <h3 className="mb-4 text-lg font-medium text-gray-900">Add Fuel Log</h3>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <InputLabel htmlFor="f_filled_at" value="Date" />
                             <TextInput id="f_filled_at" type="date" className="mt-1 block w-full" value={fuelForm.data.filled_at} onChange={(e) => fuelForm.setData('filled_at', e.target.value)} required />
                             <InputError message={fuelForm.errors.filled_at} className="mt-2" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <InputLabel htmlFor="f_liters" value="Liters" />
-                                <TextInput id="f_liters" type="number" min={0} step="0.01" className="mt-1 block w-full" value={fuelForm.data.liters} onChange={(e) => fuelForm.setData('liters', e.target.value)} required />
-                                <InputError message={fuelForm.errors.liters} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="f_cost" value="Cost" />
-                                <TextInput id="f_cost" type="number" min={0} className="mt-1 block w-full" value={fuelForm.data.cost} onChange={(e) => fuelForm.setData('cost', e.target.value)} required />
-                                <InputError message={fuelForm.errors.cost} className="mt-2" />
-                            </div>
+                        <div>
+                            <InputLabel htmlFor="f_driver_id" value="Driver (optional)" />
+                            <Select
+                                id="f_driver_id"
+                                className="mt-1"
+                                value={fuelForm.data.driver_id}
+                                onChange={(value) => fuelForm.setData('driver_id', value)}
+                                placeholder="—"
+                                options={drivers.map((d) => ({ value: String(d.id), label: d.name }))}
+                            />
                         </div>
                         <div>
-                            <InputLabel htmlFor="f_odometer_km" value="Odometer (optional)" />
+                            <InputLabel htmlFor="f_liters" value="Liters" />
+                            <TextInput id="f_liters" type="number" min={0} step="0.01" className="mt-1 block w-full" value={fuelForm.data.liters} onChange={(e) => fuelForm.setData('liters', e.target.value)} required />
+                            <InputError message={fuelForm.errors.liters} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="f_cost" value="Cost" />
+                            <TextInput id="f_cost" type="number" min={0} className="mt-1 block w-full" value={fuelForm.data.cost} onChange={(e) => fuelForm.setData('cost', e.target.value)} required />
+                            <InputError message={fuelForm.errors.cost} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="f_odometer_km" value={`Odometer (${fuelForm.data.odometer_source || 'manual'})`} />
                             <TextInput id="f_odometer_km" type="number" min={0} className="mt-1 block w-full" value={fuelForm.data.odometer_km} onChange={(e) => fuelForm.setData('odometer_km', e.target.value)} />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Prefills from vehicle{trackingEnabled ? ' / GPS' : ''} odometer ({fuelSummary.suggested_odometer_km.toLocaleString()} km).
+                            </p>
                             <InputError message={fuelForm.errors.odometer_km} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="f_station_name" value="Station (optional)" />
+                            <TextInput id="f_station_name" className="mt-1 block w-full" value={fuelForm.data.station_name} onChange={(e) => fuelForm.setData('station_name', e.target.value)} />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="f_receipt_number" value="Receipt # (optional)" />
+                            <TextInput id="f_receipt_number" className="mt-1 block w-full" value={fuelForm.data.receipt_number} onChange={(e) => fuelForm.setData('receipt_number', e.target.value)} />
+                        </div>
+                        <div className="flex items-end pb-2">
+                            <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={fuelForm.data.is_full_tank}
+                                    onChange={(e) => fuelForm.setData('is_full_tank', e.target.checked)}
+                                />
+                                Full tank
+                            </label>
+                        </div>
+                        <div className="sm:col-span-2">
+                            <InputLabel htmlFor="f_notes" value="Notes (optional)" />
+                            <TextInput id="f_notes" className="mt-1 block w-full" value={fuelForm.data.notes} onChange={(e) => fuelForm.setData('notes', e.target.value)} />
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end gap-3">

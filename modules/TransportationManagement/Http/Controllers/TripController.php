@@ -16,6 +16,7 @@ use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Http\Requests\StoreTripRequest;
 use Modules\TransportationManagement\Http\Requests\UpdateTripRequest;
 use Modules\TransportationManagement\Models\Trip;
+use Modules\TransportationManagement\Support\TripFuelAttribution;
 
 class TripController extends Controller
 {
@@ -91,7 +92,7 @@ class TripController extends Controller
     /**
      * Display the specified trip.
      */
-    public function show(Trip $trip): Response
+    public function show(Trip $trip, TripFuelAttribution $fuelAttribution): Response
     {
         $user = Auth::user();
 
@@ -127,6 +128,7 @@ class TripController extends Controller
             'ordersEnabled' => $ordersEnabled,
             'trackingEnabled' => $trackingEnabled,
             'livePosition' => $livePosition,
+            'fuelEstimate' => $fuelAttribution->forTrip($trip),
             'products' => Product::query()->where('status', 'active')->orderBy('name')->get(['id', 'code', 'name', 'unit']),
             'can' => [
                 'update' => $user->hasPermissionFor('transportation', 'update'),

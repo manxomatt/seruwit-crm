@@ -34,6 +34,10 @@ class FuelLogFactory extends Factory
             'liters' => $liters,
             'cost' => $liters * fake()->randomFloat(2, 10000, 15000),
             'odometer_km' => fake()->optional()->numberBetween(0, 150000),
+            'station_name' => fake()->optional()->company(),
+            'is_full_tank' => fake()->boolean(70),
+            'odometer_source' => fake()->optional()->randomElement(['manual', 'vehicle', 'gps']),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

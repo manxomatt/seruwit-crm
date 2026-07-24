@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/react';
 const TABS = [
     { label: 'Vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
     { label: 'Drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
+    { label: 'Fuel', route: 'fleet.fuel.index', pattern: 'fleet.fuel.*' },
 ];
 
 export default function FleetNav(): JSX.Element {

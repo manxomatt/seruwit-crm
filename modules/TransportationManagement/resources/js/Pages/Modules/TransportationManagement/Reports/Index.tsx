@@ -35,6 +35,8 @@ interface FuelCost {
     vehicle_id: number;
     total_cost: string;
     total_liters: string;
+    avg_km_per_liter: string | null;
+    anomaly_count: number;
     vehicle: VehicleRef;
 }
 
@@ -166,7 +168,7 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
 
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Fuel Cost by Vehicle</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">Fuel Cost & Consumption by Vehicle</h3>
                             {fuelCostByVehicle.length === 0 ? (
                                 <p className="text-sm text-gray-500">No fuel logs in this range.</p>
                             ) : (
@@ -175,7 +177,11 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
                                         <div key={row.vehicle_id}>
                                             <div className="mb-1 flex justify-between text-sm">
                                                 <span className="text-gray-900">{row.vehicle.name} ({row.vehicle.plate_number})</span>
-                                                <span className="text-gray-500">Rp {Number(row.total_cost).toLocaleString()} · {row.total_liters} L</span>
+                                                <span className="text-gray-500">
+                                                    Rp {Number(row.total_cost).toLocaleString()} · {row.total_liters} L
+                                                    {row.avg_km_per_liter ? ` · ${Number(row.avg_km_per_liter).toFixed(1)} km/L` : ''}
+                                                    {row.anomaly_count > 0 ? ` · ${row.anomaly_count} anomal${row.anomaly_count === 1 ? 'y' : 'ies'}` : ''}
+                                                </span>
                                             </div>
                                             <Bar value={Number(row.total_cost)} max={maxFuelCost} />
                                         </div>

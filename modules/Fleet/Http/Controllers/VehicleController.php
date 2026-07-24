@@ -12,7 +12,10 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Http\Requests\StoreVehicleRequest;
 use Modules\Fleet\Http\Requests\UpdateVehicleRequest;
+use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\FuelConsumptionCalculator;
+use Modules\Fleet\Support\FuelLogRecorder;
 
 class VehicleController extends Controller
 {
@@ -80,15 +83,12 @@ class VehicleController extends Controller
     /**
      * Display the specified vehicle.
      */
-    public function show(Vehicle $vehicle): Response
+    public function show(Vehicle $vehicle, FuelConsumptionCalculator $calculator, FuelLogRecorder $recorder): Response
     {
         $user = Auth::user();
 
-        $vehicle->load(['maintenanceLogs', 'fuelLogs']);
+        $vehicle->load(['maintenanceLogs', 'fuelLogs.driver']);
 
-        // Tracking registers the gpsDevice relation on this model from its own
-        // boot(), so Fleet stays ignorant of it — but the table only exists
-        // where that module is installed, hence the gate.
         $trackingEnabled = Modules::available('tracking');
 
         if ($trackingEnabled) {
@@ -98,6 +98,16 @@ class VehicleController extends Controller
         return Inertia::render('Modules/Fleet/Vehicles/Show', [
             'vehicle' => $vehicle,
             'trackingEnabled' => $trackingEnabled,
+            'fuelSummary' => [
+                'average_km_per_liter' => $calculator->recentAverageKmPerLiter($vehicle),
+                'expected_km_per_liter' => $vehicle->expected_km_per_liter !== null
+                    ? (float) $vehicle->expected_km_per_liter
+                    : null,
+                'anomaly_count' => $vehicle->fuelLogs->filter(fn ($log) => $log->hasAnomalies())->count(),
+                'suggested_odometer_km' => (int) $vehicle->odometer_km,
+                'suggested_odometer_source' => $recorder->suggestOdometerSource($vehicle),
+            ],
+            'drivers' => Driver::query()->orderBy('name')->get(['id', 'name']),
             'can' => [
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),

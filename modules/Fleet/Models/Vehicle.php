@@ -46,6 +46,8 @@ class Vehicle extends Model
         'capacity',
         'capacity_kg',
         'cost_per_km',
+        'tank_capacity_liters',
+        'expected_km_per_liter',
         'fuel_type',
         'status',
         'odometer_km',
@@ -65,6 +67,8 @@ class Vehicle extends Model
             'odometer_km' => 'integer',
             'capacity_kg' => 'decimal:2',
             'cost_per_km' => 'decimal:2',
+            'tank_capacity_liters' => 'decimal:2',
+            'expected_km_per_liter' => 'decimal:2',
             'stnk_expires_at' => 'date',
             'kir_expires_at' => 'date',
         ];

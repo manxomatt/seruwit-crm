@@ -22,6 +22,8 @@ export default function Create(): JSX.Element {
         capacity: '',
         capacity_kg: '',
         cost_per_km: '',
+        tank_capacity_liters: '',
+        expected_km_per_liter: '',
         fuel_type: 'petrol',
         status: 'active',
         odometer_km: 0,
@@ -115,6 +117,16 @@ export default function Create(): JSX.Element {
                                 <InputLabel htmlFor="cost_per_km" value="Cost per km (BBM)" />
                                 <TextInput id="cost_per_km" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.cost_per_km} onChange={(e) => setData('cost_per_km', e.target.value)} />
                                 <InputError message={errors.cost_per_km} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="tank_capacity_liters" value="Tank capacity (L)" />
+                                <TextInput id="tank_capacity_liters" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.tank_capacity_liters} onChange={(e) => setData('tank_capacity_liters', e.target.value)} />
+                                <InputError message={errors.tank_capacity_liters} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="expected_km_per_liter" value="Expected km/L" />
+                                <TextInput id="expected_km_per_liter" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.expected_km_per_liter} onChange={(e) => setData('expected_km_per_liter', e.target.value)} />
+                                <InputError message={errors.expected_km_per_liter} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="odometer_km" value="Odometer (km)" />

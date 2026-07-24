@@ -31,7 +31,7 @@ class FleetModule implements ModuleContract
 
     public function description(): string
     {
-        return 'Vehicle and driver records shared by every module that needs them.';
+        return 'Vehicle and driver records with fuel fills, consumption, and anomaly detection — shared by Transportation and other modules.';
     }
 
     public function tier(): ModuleTier
@@ -98,6 +98,7 @@ class FleetModule implements ModuleContract
         Route::patch('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.maintenance-logs.update');
         Route::delete('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.maintenance-logs.destroy');
 
+        Route::get('/fleet/fuel', [FuelLogController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.index');
         Route::post('/fleet/vehicles/{vehicle}/fuel-logs', [FuelLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.fuel-logs.store');
         Route::delete('/fleet/vehicles/{vehicle}/fuel-logs/{fuelLog}', [FuelLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.fuel-logs.destroy');
 

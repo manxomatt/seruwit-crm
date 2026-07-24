@@ -89,12 +89,23 @@ interface Trip {
     delivery_orders?: DeliveryOrderSummary[];
 }
 
+interface FuelEstimate {
+    distance_km: number | null;
+    estimated_liters: number | null;
+    estimated_cost: number | null;
+    km_per_liter: number | null;
+    liters_per_100km: number | null;
+    fills_in_window: number;
+    source: string;
+}
+
 interface Props {
     trip: Trip;
     products: Product[];
     ordersEnabled: boolean;
     trackingEnabled: boolean;
     livePosition: LivePosition | null;
+    fuelEstimate: FuelEstimate;
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -135,7 +146,7 @@ const getOrderStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ trip, products, ordersEnabled, trackingEnabled, livePosition, can }: Props): JSX.Element {
+export default function Show({ trip, products, ordersEnabled, trackingEnabled, livePosition, fuelEstimate, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCheckpointModal, setShowCheckpointModal] = useState(false);
@@ -338,6 +349,22 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Distance</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{trip.distance_km ? `${trip.distance_km} km` : '—'}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-gray-500">Fuel estimate</dt>
+                                <dd className="mt-1 text-sm text-gray-900">
+                                    {fuelEstimate.estimated_liters != null
+                                        ? `${fuelEstimate.estimated_liters} L`
+                                        : '—'}
+                                    {fuelEstimate.km_per_liter != null && (
+                                        <span className="text-gray-500"> · {fuelEstimate.km_per_liter} km/L</span>
+                                    )}
+                                    {fuelEstimate.estimated_cost != null && (
+                                        <span className="block text-xs text-gray-500">
+                                            ~Rp {Number(fuelEstimate.estimated_cost).toLocaleString()}
+                                        </span>
+                                    )}
+                                </dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Origin</dt>
