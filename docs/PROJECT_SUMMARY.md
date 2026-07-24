@@ -52,7 +52,7 @@ modules/Carousels/
 └─ resources/{js/Pages,views}
 ```
 
-(Modul yang lebih baru — Fleet, Customer, Product, Transportation Management, Orders, Billing, Invoicing, Document, dan Maintenance — murni React/Inertia tanpa `View/Components`; strukturnya `Database/{Migrations,Factories}`, `Http/{Controllers,Requests}`, `Models/`, `resources/js/Pages/`, plus `Observers/` dan `resources/views/` untuk template PDF bila modulnya butuh.)
+(Modul yang lebih baru — Fleet, Partners, Product, Inventory, Transportation Management, Orders, Billing, Invoicing, Document, Maintenance, Rental, dan Canvassing — murni React/Inertia tanpa `View/Components`; strukturnya `Database/{Migrations,Factories}`, `Http/{Controllers,Requests}`, `Models/`, `resources/js/Pages/`, plus `Observers/` dan `resources/views/` untuk template PDF bila modulnya butuh.)
 
 Aturan main yang menentukan desainnya:
 
@@ -61,8 +61,8 @@ Aturan main yang menentukan desainnya:
 - **Uninstall itu non-destruktif** — tabel & data modul tetap hidup; reinstall memulihkan semuanya. Data baru benar-benar dibuang oleh `modules:purge-expired` setelah masa tenggang `modules.purge_after_days` (default 30 hari), dijadwalkan tiap hari pukul 03:00.
 - **Satu view-model** — `App\Modules\ModuleCatalog` dipakai bersama oleh katalog milik admin workspace, panel super admin per tenant, dan `modules:list`, supaya ketiganya tak mungkin berbeda pendapat soal status modul.
 - **Halaman React modul menimpa core** — `resources/js/app.tsx` mencari `modules/<Nama>/resources/js/Pages/<name>.tsx` dulu, baru jatuh ke `./Pages/<name>.tsx`, sehingga sebuah halaman tetap bernama sama saat dipindahkan ke modul. `Modules::pageEntrypoint()` mengulang urutan yang sama di sisi server untuk preload `@vite` di `app.blade.php`; keduanya harus selalu sepakat, dan `ModulePageEntrypointTest` yang menjaganya.
-- **Modul tak pernah tahu soal "konsumennya"** — sebuah modul hanya boleh tahu tentang modul yang ia `requires()`, tak pernah sebaliknya. Mis. `Fleet` (kendaraan & sopir) dan `Customer` sama sekali tak tahu soal `Trip` yang memakainya; relasi lintas modul (`vehicle_id`, `customer_id`, dst.) dilindungi lewat foreign key `constrained()` biasa (tanpa cascade) di migrasi milik modul **konsumen**, dan `QueryException` dari pelanggaran constraint itu ditangkap jadi pesan yang ramah, bukan lewat pengecekan level aplikasi.
-- **Auto-install berantai** — `ModuleInstaller::install()` memasang lebih dulu setiap modul yang di-`requires()` (rekursif) sebelum memasang modul yang diminta, tetap menegakkan entitlement paket di tiap level. Memasang `transportation` misalnya otomatis ikut memasang `fleet`, `customers`, dan `products`.
+- **Modul tak pernah tahu soal "konsumennya"** — sebuah modul hanya boleh tahu tentang modul yang ia `requires()`, tak pernah sebaliknya. Mis. `Fleet` (kendaraan & sopir) dan `Partners` sama sekali tak tahu soal `Trip` yang memakainya; relasi lintas modul (`vehicle_id`, `partner_id`, dst.) dilindungi lewat foreign key `constrained()` biasa (tanpa cascade) di migrasi milik modul **konsumen**, dan `QueryException` dari pelanggaran constraint itu ditangkap jadi pesan yang ramah, bukan lewat pengecekan level aplikasi.
+- **Auto-install berantai** — `ModuleInstaller::install()` memasang lebih dulu setiap modul yang di-`requires()` (rekursif) sebelum memasang modul yang diminta, tetap menegakkan entitlement paket di tiap level. Memasang `transportation` misalnya otomatis ikut memasang `fleet`, `partners`, dan `products`.
 
 ### Tier Modul — Lintas Lini Bisnis vs Spesifik
 
@@ -71,8 +71,8 @@ Setiap modul mendeklarasikan **tier**-nya lewat `tier(): ModuleTier` (`App\Modul
 | Tier | Arti | Modul |
 |---|---|---|
 | `Content` | Situs publik tenant; lepas dari lini bisnis apa pun | `pages`, `posts`, `carousels` |
-| `Foundation` | Sumber daya lintas lini bisnis — dipakai ulang lini mana pun yang memanfaatkan kendaraan | `fleet`, `customers`, `products`, `document`, `maintenance`, `invoicing`, `tracking` |
-| `Vertical` | Operasi khusus satu lini bisnis, dibangun di atas Foundation | `transportation`, `orders`, `billing` |
+| `Foundation` | Sumber daya lintas lini bisnis — dipakai ulang lini mana pun | `fleet`, `partners`, `products`, `inventory`, `document`, `maintenance`, `invoicing`, `tracking` |
+| `Vertical` | Operasi khusus satu lini bisnis, dibangun di atas Foundation | `transportation`, `orders`, `billing`, `rental`, `canvassing` |
 
 **Aturan lapisnya keras**: dependency hanya boleh mengalir ke tier yang **lebih rendah atau sama**. Vertical boleh me-`requires()` Foundation; Foundation tak pernah boleh menarik Vertical — itu akan mengelas satu lini bisnis ke dalam basis bersama yang seharusnya dipakai ulang lini lain. Ini pernyataan level-lapisan dari aturan "modul tak pernah tahu konsumennya", dan ditegakkan oleh `App\Modules\ModuleLayering` + `ModuleLayeringTest`, yang juga menolak `requires()` yang tak bisa di-resolve (`ModuleInstaller` diam-diam melewati key tak dikenal sebagai "fitur core", jadi salah ketik akan lolos tanpa penjaga ini).
 
@@ -86,15 +86,18 @@ Modul terdaftar saat ini:
 | `pages` | Content | Page builder GrapesJS untuk situs publik tenant (homepage `/` + `/p/{slug}`) | `media` |
 | `posts` | Content | Blog untuk situs publik tenant (`/blog`) | `media` |
 | `fleet` | Foundation | Kendaraan & sopir, dipakai ulang oleh modul lain | `media` |
-| `customers` | Foundation | Data pelanggan lintas modul (`global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan, belum dipakai) | — |
-| `products` | Foundation | Katalog produk; satuan (unit) dikelola lewat Settings grup `units` | — |
+| `partners` | Foundation | Manajemen kontak terpadu (pelanggan, vendor, supplier) lintas modul — menggantikan modul `customers` yang lama | — |
+| `products` | Foundation | Katalog produk lengkap: principals, brands, product types, attributes, tags — taksonomi penuh. Satuan (unit) dikelola lewat Settings grup `units` | — |
+| `inventory` | Foundation | Gudang (warehouses), lokasi penyimpanan, stok level, pergerakan stok (ledger), stock opname, dan alert stok rendah | `products` |
 | `document` | Foundation | Dokumen kepatuhan kendaraan & sopir, tracking kedaluwarsa + pengingat | `fleet`, `media` |
 | `maintenance` | Foundation | Work order perawatan kendaraan: jadwal, biaya, pengingat servis | `fleet` |
-| `invoicing` | Foundation | **Dokumen invoice generik**: baris invoice, lifecycle draft/issued/paid, PDF. Sengaja tak tahu apa pun tentang *apa* yang ditagih | `customers` |
+| `invoicing` | Foundation | **Dokumen invoice generik**: baris invoice, lifecycle draft/issued/paid, PDF. Sengaja tak tahu apa pun tentang *apa* yang ditagih | `partners` |
 | `tracking` | Foundation | **Integrasi GPS Traccar**: pairing device↔kendaraan, tarik posisi live (polling per menit), peta armada Leaflet, odometer otomatis. Sengaja tak tahu apa pun tentang *trip* — konsumen berlangganan event | `fleet` |
-| `transportation` | Vertical | Dispatch trip, stop multi-titik (pickup/dropoff berurutan), checkpoint (manual **atau** GPS otomatis), jarak & geofence dari telemetri, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `customers`, `products` |
+| `transportation` | Vertical | Dispatch trip, stop multi-titik (pickup/dropoff berurutan), checkpoint (manual **atau** GPS otomatis), jarak & geofence dari telemetri, jadwal trip berulang + kalender, manifest kargo, laporan biaya/utilisasi | `fleet`, `partners`, `products` |
 | `orders` | Vertical | Delivery order pelanggan, konsolidasi banyak order ke satu trip (stop dropoff dibuat otomatis), dan surat jalan cetak (PDF) | `transportation` |
 | `billing` | Vertical | Tarif rute, harga per delivery order (charge), penerbitan invoice dari order terkirim (dokumennya milik Invoicing), dan uang jalan sopir per trip | `orders`, `invoicing` |
+| `rental` | Vertical | Booking rental kendaraan dengan lifecycle (draft → confirmed → active → returned → completed), tarif harian/mingguan/bulanan, limit km, pelaporan kerusakan, perpanjangan | `fleet`, `partners`, `invoicing` |
+| `canvassing` | Vertical | Monitoring field sales: salesperson, kunjungan (visit) dengan check-in/check-out GPS, rencana kunjungan harian, target performa, dan portal mobile untuk salesperson | `partners` |
 
 **Invoicing vs Billing**: keduanya dulu satu modul, yang membuat penagihan hanya mungkin bila tenant menjalankan logistik. Sekarang `invoicing` memegang dokumennya dan `billing` memegang kosakata logistiknya (tarif, rute, delivery order). Sebuah `invoice_line` membawa deskripsi + jumlah + `source` polimorfik opsional yang menunjuk balik ke apa pun yang menerbitkannya — `OrderCharge` hari ini, booking travel nanti. Konsekuensinya, "sudah ditagih atau belum" dijawab oleh **ada/tidaknya invoice line** yang menunjuk charge itu; `order_charges` sengaja tak menyimpan `invoice_id` agar tak ada jawaban kedua yang bisa berbeda pendapat.
 
@@ -121,9 +124,11 @@ Paket bawaan (`PlanSeeder`, re-runnable dan tidak pernah menimpa definisi yang s
 |---|---|---|
 | `free` | — | CMS inti saja |
 | `basic` | `carousels`, `pages`, `posts` | **Default** — sama dengan yang dimiliki tenant sebelum paket ada (Pages/Posts dulunya fitur inti) |
-| `pro` | `billing`, `carousels`, `customers`, `fleet`, `invoicing`, `orders`, `pages`, `posts`, `products`, `tracking`, `transportation` | Hampir seluruh modul |
+| `pro` | `billing`, `carousels`, `fleet`, `inventory`, `invoicing`, `orders`, `pages`, `partners`, `posts`, `products`, `tracking`, `transportation` | Hampir seluruh modul |
 
 > **Celah entitlement (sudah ditutup)**: `document` dan `maintenance` kini masuk paket `pro` di `PlanSeeder`. Untuk instalasi lama yang barisnya sudah ada (`firstOrCreate`), tambahkan keduanya ke paket lewat `/module/plans`.
+
+> **`rental` dan `canvassing` belum masuk paket mana pun** — keputusan komersial (pricing) belum ditetapkan. Kedua modul aktif di kode tapi hanya bisa dipasang manual oleh super admin per tenant sampai ada paket yang meng-entitle-nya.
 
 ## Module Registry — Saklar Modul Tingkat Platform
 
@@ -143,14 +148,17 @@ Sumbu ketiga, terpisah dari entitlement paket dan status install: `ModuleRegistr
 - **Posts** *(modul)* — blog dengan draft & publish, tampil publik di `/blog`
 - **Carousels** *(modul)* — carousel beserta manajemen & pengurutan gambar
 - **Fleet** *(modul)* — kendaraan & sopir; dipakai ulang modul lain lewat `requires()`, tak pernah sebaliknya
-- **Customer** *(modul)* — data pelanggan standalone; `global_customer_id` disiapkan untuk aplikasi customer-facing lintas tenant di masa depan
-- **Product** *(modul)* — katalog produk; satuan (unit) dipilih dari daftar terkelola di Settings grup `units`, bukan teks bebas
-- **Transportation Management** *(modul, `requires: fleet, customers, products`)* — dispatch trip (deteksi bentrok kendaraan/sopir per tanggal), stop multi-titik per trip (pickup/dropoff berurutan dengan status pending → arrived → completed), tracking checkpoint GPS saat trip berjalan, manifest kargo per trip (produk + kuantitas), jadwal trip berulang (hari-dalam-minggu + generate otomatis, idempoten), kalender (tampilan minggu/bulan/tahun), laporan biaya & utilisasi
+- **Partners** *(modul)* — manajemen kontak terpadu (pelanggan, vendor, supplier) lintas modul; menggantikan modul Customer yang lama
+- **Product** *(modul)* — katalog produk lengkap dengan taksonomi: principals, brands, product types, attributes, tags; satuan (unit) dipilih dari daftar terkelola di Settings grup `units`
+- **Inventory** *(modul, `requires: products`)* — gudang (warehouses), lokasi penyimpanan, stok level, pergerakan stok (ledger), stock opname, dan alert stok rendah
+- **Rental** *(modul, `requires: fleet, partners, invoicing`)* — booking rental kendaraan dengan lifecycle (draft → confirmed → active → returned → completed), tarif harian/mingguan/bulanan, limit km, pelaporan kerusakan, perpanjangan
+- **Canvassing** *(modul, `requires: partners`)* — monitoring field sales: salesperson, kunjungan (visit) dengan check-in/check-out GPS, rencana kunjungan harian, target performa, dan portal mobile untuk salesperson
+- **Transportation Management** *(modul, `requires: fleet, partners, products`)* — dispatch trip (deteksi bentrok kendaraan/sopir per tanggal), stop multi-titik per trip (pickup/dropoff berurutan dengan status pending → arrived → completed), tracking checkpoint GPS saat trip berjalan, manifest kargo per trip (produk + kuantitas), jadwal trip berulang (hari-dalam-minggu + generate otomatis, idempoten), kalender (tampilan minggu/bulan/tahun), laporan biaya & utilisasi
 - **Orders** *(modul, `requires: transportation`)* — delivery order pelanggan dengan lifecycle draft → confirmed → assigned → in_transit → delivered, item order, konsolidasi banyak order ke satu trip (stop dropoff dibuat otomatis dari alamat kiriman; status order tersinkron dengan lifecycle trip via observer), dan cetak surat jalan PDF
 - **Tracking** *(modul, `requires: fleet`)* — integrasi GPS Traccar: pairing device↔kendaraan (sync dari Traccar), tarik posisi live via `tracking:poll` per menit, peta armada Leaflet + OSM dengan refresh polling, odometer kendaraan otomatis, dan jejak rute + geofence-arrival + jarak trip yang di-feed ke Transportation lewat event (Foundation → tak mengenal trip)
 - **Document** *(modul, `requires: fleet, media`)* — dokumen kepatuhan kendaraan & sopir (tipe dokumen terkelola), tracking kedaluwarsa + pengingat otomatis (DocumentReminder via observer)
 - **Maintenance** *(modul, `requires: fleet`)* — work order perawatan kendaraan: kategori, item pekerjaan + biaya, dan jadwal servis preventif
-- **Invoicing** *(modul, `requires: customers`)* — dokumen invoice generik: baris invoice dengan `source` polimorfik, lifecycle issue/pay/void, dan PDF ber-kop perusahaan dari Settings. Dipakai bersama modul mana pun yang menagih
+- **Invoicing** *(modul, `requires: partners`)* — dokumen invoice generik: baris invoice dengan `source` polimorfik, lifecycle issue/pay/void, dan PDF ber-kop perusahaan dari Settings. Dipakai bersama modul mana pun yang menagih
 - **Billing** *(modul, `requires: orders, invoicing`)* — master tarif rute (umum/per pelanggan, tarif spesifik menang), harga per delivery order terisi otomatis saat confirm (bisa di-override sampai tertagih), penerbitan invoice dari order terkirim (PPN dari Settings `ecommerce.*`), dan uang jalan sopir per trip (kasbon → pengeluaran per kategori → settlement dengan saldo dua arah)
 - **Media Library** — upload, picker, bulk delete; file terisolasi per tenant
 - **Menus** — menu dinamis per peran; entri modul ikut hilang saat modul dicopot
@@ -175,12 +183,32 @@ Sumbu ketiga, terpisah dari entitlement paket dan status install: `ModuleRegistr
 - Tenant switcher lintas domain tanpa login ulang
 
 ### Onboarding & Administrasi Platform
-- **Dua pintu pembuatan tenant**: registrasi mandiri (SaaS) dan panel super admin (`/module/tenants`: list, buat untuk pelanggan, tangguhkan/aktifkan) — gate `manage-tenants`
+- **Tiga pintu pembuatan/pengelolaan tenant**: registrasi mandiri (SaaS), panel super admin (`/module/tenants`: list, buat untuk pelanggan, tangguhkan/aktifkan), dan panel reseller (scope terbatas ke tenant miliknya) — gate `manage-tenants` (admin atau reseller)
+- **Reseller Management** — reseller punya akses central terbatas ke `/module/tenants` untuk tenant miliknya; lihat bagian Reseller Management di atas
+- **Super admin workspace entry** — super admin dapat memasuki workspace tenant mana pun tanpa perlu keanggotaan (impersonates admin pertama)
 - **Panel per tenant** — super admin mengganti paket sebuah tenant dan memasang/mencopot modulnya langsung dari halaman detail tenant
 - **Kelola Paket** (`/module/plans`) — CRUD paket beserta daftar modulnya; menampilkan jumlah tenant per paket dan status nonaktif dari Module Registry
 - **Kelola Modul Platform** (`/module/registry`) — saklar enable/disable per modul untuk seluruh tenant sekaligus, lepas dari paket/status install (lihat Module Registry di atas) — gate `manage-module-registry`
 - **Penangguhan tenant**: seluruh request ke tenant suspended diblokir (403)
 - **Sistem undangan**: admin workspace mengundang via email + pilihan peran; undangan berlaku 7 hari; penerima baru cukup set nama+password, penerima lama tinggal menerima — keduanya berakhir SSO langsung masuk workspace
+
+### Reseller Management — Model Akses Tiga Tier
+
+Platform menerapkan model akses central tiga tier:
+
+| Role | Akses central `/module/*` | Kelola tenant |
+|---|---|---|
+| Super Admin | Seluruh control plane platform | Semua tenant |
+| Reseller | `/module/tenants` saja | Tenant miliknya (`reseller_global_id`) |
+| SaaS Customer | Diarahkan ke portal workspace | Tidak ada |
+
+Detail implementasi:
+- `reseller_global_id`: nullable UUID di tabel `tenants`, FK ke `users.global_id` — menandai tenant mana yang "dimiliki" reseller
+- Gate `manage-tenants` sekarang terbuka untuk admin **atau** reseller
+- `TenantController` men-scope seluruh query berdasarkan `reseller_global_id` untuk user dengan role reseller
+- Reseller dikecualikan dari middleware redirect ke portal workspace (tetap di central)
+- Role `reseller` didaftarkan di `RoleSeeder`
+- Super admin dapat memasuki workspace tenant mana pun tanpa keanggotaan (impersonates admin pertama tenant tersebut)
 
 ## Perintah Penting
 
@@ -231,7 +259,9 @@ php artisan document:scan-expiring [--tenant=]    # buat reminder + alert in-app
 
 ## Pekerjaan yang Sedang Berjalan
 
-Roadmap logistik 5 fase (aplikasi menyasar perusahaan transportasi; perusahaan sudah punya server GPS sendiri):
+Aplikasi kini menyasar **beberapa industri** (transportasi/logistik, rental kendaraan, field sales/canvassing), bukan hanya logistik. Roadmap awal 5 fase tetap relevan untuk lini logistik, sementara `rental` dan `canvassing` adalah vertikal baru di luar fase tersebut.
+
+### Roadmap Logistik (5 Fase)
 
 | Fase | Isi | Status |
 |---|---|---|
@@ -243,14 +273,24 @@ Roadmap logistik 5 fase (aplikasi menyasar perusahaan transportasi; perusahaan s
 
 Semua 5 fase inti sudah jalan. Kandidat lanjutan: **Fase 3 (Proof of Delivery + tampilan driver/PWA)** — satu-satunya fase roadmap yang belum dikerjakan; menutup siklus dengan bukti serah terima yang diinput driver.
 
+### Vertikal Baru (di luar roadmap logistik)
+
+| Vertikal | Status | Catatan |
+|---|---|---|
+| `rental` | Modul tersedia, belum masuk paket | Booking rental kendaraan lengkap; keputusan pricing pending |
+| `canvassing` | Modul tersedia, belum masuk paket | Field sales monitoring + portal mobile; keputusan pricing pending |
+
 Catatan terbuka:
 
 - **Push notifikasi ke pelanggan ditunda**: Fase 5 hanya membangun halaman tracking publik (pull) + event `ShipmentStatusChanged`; belum ada listener yang mengirim email/WA (mail driver `log`, WA belum ada). Saat channel dikonfigurasi, cukup tambah listener ke event itu.
 - **Time-overlap dispatch ditunda**: gating baru mengecek status kendaraan/driver + kedaluwarsa STNK/KIR/SIM + bentrok per-tanggal; overlap waktu sebenarnya butuh kolom durasi/`scheduled_end_at` di trip.
 - **Notifikasi kedaluwarsa dokumen** butuh scheduler jalan (`document:scan-expiring` harian) dan tenant memasang modul `document`.
 - Pencocokan tarif Billing memakai alamat free-text (exact, case-insensitive) — typo alamat menghasilkan charge 0 yang harus diisi manual; master lokasi + dropdown alamat di form order adalah perbaikan strukturalnya. Master lokasi yang sama juga akan mempermudah mengisi lat/lng stop trip, yang saat ini prasyarat geofence-arrival GPS.
-- Menghapus trip yang punya uang jalan / customer yang direferensikan invoice muncul sebagai `QueryException` mentah di UI modul hulunya (by design — modul hulu tak boleh kenal konsumennya); handler pesan ramah bisa ditambahkan per pola Fleet.
+- Menghapus trip yang punya uang jalan / partner yang direferensikan invoice muncul sebagai `QueryException` mentah di UI modul hulunya (by design — modul hulu tak boleh kenal konsumennya); handler pesan ramah bisa ditambahkan per pola Fleet.
 - **GPS Tracking — terverifikasi terhadap server Traccar asli (sky-track.net, 2026-07-20)**: akun tenant biasanya **admin/manager** reseller GPS, jadi `TraccarClient::devices()` memakai `?all=true` (fallback ke `/devices` polos untuk akun user biasa yang menolaknya), dan `latestPositions()` mengambil via positionId per-device (`/positions?id=…`) — bukan `/api/positions` polos yang untuk admin selalu `[]`. Batch di-chunk 50 dan **memecah diri saat 400**, karena satu positionId basi (posisi lama yang sudah dipangkas Traccar untuk device offline) mem-400-kan seluruh batch. `PositionPayload` **tidak** menolak `valid=false` (kendaraan parkir melapor valid=false dengan koordinat terakhir yang sah); hanya null-island 0,0 & di luar rentang yang dibuang. Terbukti: 260 device → 253 posisi masuk.
 - **Skala polling GPS**: `tracking:poll` sinkron per tenant per menit — sepele di ~5 tenant, melewati jendela 60 detik di ~100. `QueueTenancyBootstrapper` sudah aktif, jadi perbaikannya operasional (satu queued job per tenant + jalankan worker), bukan arsitektur. `vehicle_positions` tumbuh ~26 juta baris/tahun per 50 kendaraan; retensi dipangkas `tracking:prune`.
 - **Tile OSM**: dipakai untuk Fase 1 (tanpa API key), tapi kebijakan OSMF membatasi penggunaan komersial berat — self-host tile (bisa lewat box Traccar) sebelum jumlah tenant/beban naik. URL template ada di satu tempat (`resources/js/Components/Map/LeafletMap.tsx`) agar mudah diganti.
 - **Otoritas odometer**: saat device ter-pair, `tracking:poll` menulis `vehicles.odometer_km`. Form edit Fleet dan fuel log juga bisa menulisnya — belum dijadikan read-only saat ter-pair; kalau operator mengeditnya, baseline device perlu di-re-pair agar tak melenceng.
+- **Layout baru**: `CanvassingLayout` (portal mobile salesperson untuk modul canvassing) dan `DriverLayout` (disiapkan untuk portal driver di masa depan/Fase 3 PoD) ditambahkan di samping layout utama aplikasi.
+- **Rantai dependensi billing yang diperbarui**: `billing` → `orders` → `transportation` → `fleet` + `partners` + `products`; dan `billing` → `invoicing` → `partners`. Perubahan dari `customers` ke `partners` berdampak ke seluruh rantai ini.
+- **`rental` dan `canvassing` belum masuk paket** — kedua modul perlu keputusan komersial sebelum di-entitle ke paket tertentu.
