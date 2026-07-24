@@ -2,8 +2,9 @@
 
 namespace Modules\Inventory\Support;
 
-use App\Models\Notification;
 use App\Models\User;
+use App\Notifications\GenericNotification;
+use App\Support\NotificationRecipients;
 use Modules\Inventory\Models\StockLevel;
 
 class LowStockNotifier
@@ -26,33 +27,28 @@ class LowStockNotifier
         $product = $level->product;
         $warehouse = $level->warehouse;
 
-        $recipients = User::query()
-            ->whereHas('roles.permissions', function ($query) {
-                $query->where('module', 'inventory')
-                    ->where('action', 'view');
-            })
-            ->pluck('id')
-            ->all();
+        if ($product === null || $warehouse === null) {
+            return;
+        }
 
-        if (empty($recipients)) {
+        $recipients = NotificationRecipients::forPermission('inventory', 'view');
+
+        if ($recipients->isEmpty()) {
             return;
         }
 
         $availableQty = $level->getAvailableAttribute();
+        $threshold = $product->reorder_threshold ?? 10;
 
-        foreach ($recipients as $userId) {
-            Notification::query()->create([
-                'user_id' => $userId,
-                'title' => "Low Stock: {$product->name}",
-                'message' => "Available qty in {$warehouse->name}: {$availableQty} (threshold: {$product->reorder_threshold})",
-                'type' => 'inventory_low_stock',
-                'data' => [
-                    'product_id' => $product->id,
-                    'warehouse_id' => $warehouse->id,
-                    'available_qty' => $availableQty,
-                    'threshold' => $product->reorder_threshold,
-                ],
-            ]);
+        foreach ($recipients as $user) {
+            /** @var User $user */
+            $user->notify(new GenericNotification(
+                title: "Low Stock: {$product->name}",
+                body: "Available qty in {$warehouse->name}: {$availableQty} (threshold: {$threshold})",
+                url: null,
+                icon: 'archive',
+                type: 'inventory_low_stock',
+            ));
         }
     }
 }

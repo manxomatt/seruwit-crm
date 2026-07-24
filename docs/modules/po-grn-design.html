@@ -1,0 +1,1090 @@
+
+<title>Purchase Orders + GRN — Module Design</title>
+<style>
+  :root {
+    --bg: #F1F5F9;
+    --surface: #FFFFFF;
+    --surface-2: #F8FAFC;
+    --border: #CBD5E1;
+    --border-light: #E2E8F0;
+    --text: #0F172A;
+    --text-2: #334155;
+    --muted: #64748B;
+    --accent: #1E6FAD;
+    --accent-light: #EFF6FF;
+    --accent-mid: #BFDBFE;
+
+    --s-draft: #64748B;
+    --s-draft-bg: #F1F5F9;
+    --s-submitted: #1D4ED8;
+    --s-submitted-bg: #EFF6FF;
+    --s-approved: #0369A1;
+    --s-approved-bg: #E0F2FE;
+    --s-partial: #B45309;
+    --s-partial-bg: #FFFBEB;
+    --s-received: #047857;
+    --s-received-bg: #ECFDF5;
+    --s-closed: #374151;
+    --s-closed-bg: #F9FAFB;
+    --s-cancelled: #B91C1C;
+    --s-cancelled-bg: #FEF2F2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D1117;
+      --surface: #161B22;
+      --surface-2: #0D1117;
+      --border: #30363D;
+      --border-light: #21262D;
+      --text: #E2E8F0;
+      --text-2: #CBD5E1;
+      --muted: #8B949E;
+      --accent: #58A6FF;
+      --accent-light: #0D1B2E;
+      --accent-mid: #1D3A5F;
+
+      --s-draft: #8B949E;
+      --s-draft-bg: #21262D;
+      --s-submitted: #58A6FF;
+      --s-submitted-bg: #0D1B2E;
+      --s-approved: #38BDF8;
+      --s-approved-bg: #0A1F2E;
+      --s-partial: #FBBF24;
+      --s-partial-bg: #1C1500;
+      --s-received: #34D399;
+      --s-received-bg: #021C10;
+      --s-closed: #9CA3AF;
+      --s-closed-bg: #1F2937;
+      --s-cancelled: #F87171;
+      --s-cancelled-bg: #1C0A0A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D1117; --surface: #161B22; --surface-2: #0D1117;
+    --border: #30363D; --border-light: #21262D;
+    --text: #E2E8F0; --text-2: #CBD5E1; --muted: #8B949E;
+    --accent: #58A6FF; --accent-light: #0D1B2E; --accent-mid: #1D3A5F;
+    --s-draft: #8B949E; --s-draft-bg: #21262D;
+    --s-submitted: #58A6FF; --s-submitted-bg: #0D1B2E;
+    --s-approved: #38BDF8; --s-approved-bg: #0A1F2E;
+    --s-partial: #FBBF24; --s-partial-bg: #1C1500;
+    --s-received: #34D399; --s-received-bg: #021C10;
+    --s-closed: #9CA3AF; --s-closed-bg: #1F2937;
+    --s-cancelled: #F87171; --s-cancelled-bg: #1C0A0A;
+  }
+  :root[data-theme="light"] {
+    --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;
+    --border: #CBD5E1; --border-light: #E2E8F0;
+    --text: #0F172A; --text-2: #334155; --muted: #64748B;
+    --accent: #1E6FAD; --accent-light: #EFF6FF; --accent-mid: #BFDBFE;
+    --s-draft: #64748B; --s-draft-bg: #F1F5F9;
+    --s-submitted: #1D4ED8; --s-submitted-bg: #EFF6FF;
+    --s-approved: #0369A1; --s-approved-bg: #E0F2FE;
+    --s-partial: #B45309; --s-partial-bg: #FFFBEB;
+    --s-received: #047857; --s-received-bg: #ECFDF5;
+    --s-closed: #374151; --s-closed-bg: #F9FAFB;
+    --s-cancelled: #B91C1C; --s-cancelled-bg: #FEF2F2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 24px 20px 40px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ── Masthead ── */
+  .masthead {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+  .masthead-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .masthead h1 { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -.02em; }
+  .masthead-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .masthead-meta { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+  .meta-item { font-size: 11px; color: var(--muted); }
+  .meta-item strong { color: var(--text-2); }
+
+  /* ── Section ── */
+  .section { margin-bottom: 32px; }
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+  /* ── ERD ── */
+  .erd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 12px;
+  }
+  .erd-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .erd-head {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 7px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .erd-head-tag {
+    font-size: 9px;
+    font-weight: 600;
+    opacity: .75;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .erd-body { padding: 8px 0; }
+  .erd-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 12px;
+    font-size: 11px;
+  }
+  .erd-field:hover { background: var(--surface-2); }
+  .erd-pk { font-weight: 700; color: var(--accent); }
+  .erd-fk { color: var(--s-partial); }
+  .erd-name { color: var(--text-2); flex: 1; }
+  .erd-type { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .erd-divider { height: 1px; background: var(--border-light); margin: 5px 0; }
+
+  /* ── Status flow ── */
+  .flow-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .flow-row { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .flow-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .flow-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: .03em;
+  }
+  .flow-desc { font-size: 9px; color: var(--muted); text-align: center; max-width: 70px; line-height: 1.3; }
+  .flow-arrow {
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .flow-branch {
+    display: flex;
+    align-items: center;
+    margin-left: 28px;
+    gap: 0;
+    margin-top: 10px;
+  }
+
+  .badge-draft { background: var(--s-draft-bg); color: var(--s-draft); border: 1px solid currentColor; }
+  .badge-submitted { background: var(--s-submitted-bg); color: var(--s-submitted); }
+  .badge-approved { background: var(--s-approved-bg); color: var(--s-approved); }
+  .badge-partial { background: var(--s-partial-bg); color: var(--s-partial); }
+  .badge-received { background: var(--s-received-bg); color: var(--s-received); }
+  .badge-closed { background: var(--s-closed-bg); color: var(--s-closed); border: 1px solid var(--border); }
+  .badge-cancelled { background: var(--s-cancelled-bg); color: var(--s-cancelled); }
+  .badge-confirmed { background: var(--s-received-bg); color: var(--s-received); }
+
+  .flow-note { font-size: 10px; color: var(--muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light); }
+  .flow-note strong { color: var(--text-2); }
+
+  /* ── UI Screens ── */
+  .screen-tabs { display: flex; gap: 2px; margin-bottom: -1px; }
+  .tab {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: var(--surface-2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .tab.active { background: var(--surface); color: var(--text); }
+
+  .screen-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 6px 6px 6px;
+    padding: 16px;
+  }
+
+  /* Screen: Index */
+  .screen-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .screen-title { font-size: 15px; font-weight: 700; }
+  .btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filter-chip {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .filter-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  .mock-table { width: 100%; border-collapse: collapse; }
+  .mock-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .mock-table td {
+    font-size: 12px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-2);
+    vertical-align: middle;
+  }
+  .mock-table tr:last-child td { border-bottom: none; }
+  .mock-table tr:hover td { background: var(--surface-2); }
+  .td-primary { color: var(--text) !important; font-weight: 600; }
+  .td-num { font-variant-numeric: tabular-nums; }
+  .td-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .link-action { font-size: 11px; color: var(--accent); font-weight: 500; cursor: pointer; }
+
+  /* Screen: Create PO */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .form-full { grid-column: 1 / -1; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .form-control {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+    background: var(--surface);
+    color: var(--text-2);
+  }
+  .form-control:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+  .items-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0 8px;
+  }
+  .items-title { font-size: 12px; font-weight: 700; color: var(--text); }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 2fr 80px 90px 90px auto;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-total { font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; color: var(--text); text-align: right; }
+  .rm-btn { font-size: 16px; color: var(--muted); cursor: pointer; line-height: 1; padding: 2px 4px; }
+  .rm-btn:hover { color: var(--s-cancelled); }
+
+  .po-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .po-grand { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .po-grand span { font-size: 11px; font-weight: 400; color: var(--muted); margin-right: 6px; }
+
+  /* Screen: Show PO */
+  .show-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .show-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .show-card-head {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--surface);
+  }
+  .show-card-body { padding: 12px; }
+  .kv-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--border-light); }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-key { font-size: 11px; color: var(--muted); }
+  .kv-val { font-size: 11px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .progress-bar-wrap { margin: 10px 0 4px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .progress-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+
+  .grn-list { display: flex; flex-direction: column; gap: 6px; }
+  .grn-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+  }
+  .grn-code { font-size: 11px; font-weight: 600; color: var(--accent); }
+  .grn-date { font-size: 10px; color: var(--muted); }
+  .grn-qty { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-2); }
+
+  /* Screen: GRN Form */
+  .grn-banner {
+    background: var(--accent-light);
+    border: 1px solid var(--accent-mid);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: var(--text-2);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .grn-banner strong { color: var(--accent); }
+
+  .grn-item-row {
+    display: grid;
+    grid-template-columns: 2fr 80px 80px 100px 110px auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 11px;
+  }
+  .grn-item-row:last-child { border-bottom: none; }
+  .grn-item-head {
+    display: grid;
+    grid-template-columns: 2fr 80px 80px 100px 110px auto;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .gh { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .qty-display { font-variant-numeric: tabular-nums; font-size: 11px; color: var(--muted); }
+  .highlight { color: var(--s-partial); font-weight: 600; }
+
+  /* Implementation plan */
+  .impl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .impl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .impl-head {
+    padding: 7px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .impl-num {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .impl-body { padding: 8px 12px; }
+  .impl-file {
+    font-size: 10px;
+    color: var(--muted);
+    padding: 2px 0;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .impl-file::before { content: '▸ '; color: var(--accent); }
+
+  .integration-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 10px;
+  }
+  .int-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 11px;
+  }
+  .int-row:last-child { border-bottom: none; }
+  .int-from { font-weight: 700; color: var(--accent); min-width: 100px; font-family: ui-monospace, 'SF Mono', monospace; font-size: 10px; }
+  .int-desc { color: var(--text-2); }
+  .int-arrow { color: var(--muted); flex-shrink: 0; }
+</style>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="masthead">
+  <div class="masthead-eyebrow">Module Design Document</div>
+  <h1>Purchase Orders + GRN</h1>
+  <div class="masthead-sub">Procurement inbound — dari PO ke supplier hingga stok masuk di gudang</div>
+  <div class="masthead-meta">
+    <span class="meta-item"><strong>Module:</strong> Inventory (extend)</span>
+    <span class="meta-item"><strong>Depends on:</strong> Partners, Product, Inventory (StockMovementRecorder)</span>
+    <span class="meta-item"><strong>New tables:</strong> 4</span>
+    <span class="meta-item"><strong>New pages:</strong> 5</span>
+  </div>
+</div>
+
+<!-- ══ 1. ENTITY RELATIONSHIP ══ -->
+<div class="section">
+  <div class="section-label">1 · Entity Relationship</div>
+  <div class="erd-grid">
+
+    <div class="erd-card">
+      <div class="erd-head">purchase_orders <span class="erd-head-tag">PO Header</span></div>
+      <div class="erd-body">
+        <div class="erd-field"><span class="erd-pk">PK</span><span class="erd-name">id</span><span class="erd-type">bigint</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">partner_id</span><span class="erd-type">→ partners</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">warehouse_id</span><span class="erd-type">→ warehouses</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">created_by</span><span class="erd-type">→ users</span></div>
+        <div class="erd-divider"></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">po_number</span><span class="erd-type">varchar unique</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">status</span><span class="erd-type">enum</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">ordered_at</span><span class="erd-type">date</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">expected_at</span><span class="erd-type">date nullable</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">notes</span><span class="erd-type">text nullable</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">total_amount</span><span class="erd-type">decimal(15,2)</span></div>
+      </div>
+    </div>
+
+    <div class="erd-card">
+      <div class="erd-head">purchase_order_items <span class="erd-head-tag">PO Lines</span></div>
+      <div class="erd-body">
+        <div class="erd-field"><span class="erd-pk">PK</span><span class="erd-name">id</span><span class="erd-type">bigint</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">purchase_order_id</span><span class="erd-type">cascadeDelete</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">product_id</span><span class="erd-type">→ products</span></div>
+        <div class="erd-divider"></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">quantity_ordered</span><span class="erd-type">decimal(10,2)</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">quantity_received</span><span class="erd-type">decimal(10,2) def 0</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">unit_price</span><span class="erd-type">decimal(15,2)</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">unit</span><span class="erd-type">varchar nullable</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">notes</span><span class="erd-type">text nullable</span></div>
+      </div>
+    </div>
+
+    <div class="erd-card">
+      <div class="erd-head">good_receipt_notes <span class="erd-head-tag">GRN Header</span></div>
+      <div class="erd-body">
+        <div class="erd-field"><span class="erd-pk">PK</span><span class="erd-name">id</span><span class="erd-type">bigint</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">purchase_order_id</span><span class="erd-type">→ PO</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">warehouse_id</span><span class="erd-type">→ warehouses</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">received_by</span><span class="erd-type">→ users</span></div>
+        <div class="erd-divider"></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">grn_number</span><span class="erd-type">varchar unique</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">status</span><span class="erd-type">enum draft|confirmed</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">received_at</span><span class="erd-type">date</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">supplier_do_number</span><span class="erd-type">varchar nullable</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">notes</span><span class="erd-type">text nullable</span></div>
+      </div>
+    </div>
+
+    <div class="erd-card">
+      <div class="erd-head">good_receipt_note_items <span class="erd-head-tag">GRN Lines</span></div>
+      <div class="erd-body">
+        <div class="erd-field"><span class="erd-pk">PK</span><span class="erd-name">id</span><span class="erd-type">bigint</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">good_receipt_note_id</span><span class="erd-type">cascadeDelete</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">po_item_id</span><span class="erd-type">→ PO items</span></div>
+        <div class="erd-field"><span class="erd-fk">FK</span><span class="erd-name">location_id</span><span class="erd-type">→ warehouse_locations</span></div>
+        <div class="erd-divider"></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">quantity_received</span><span class="erd-type">decimal(10,2)</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">batch_number</span><span class="erd-type">varchar nullable</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">expiry_date</span><span class="erd-type">date nullable</span></div>
+        <div class="erd-field"><span class="erd-type" style="width:28px"></span><span class="erd-name">notes</span><span class="erd-type">text nullable</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ 2. STATUS FLOW ══ -->
+<div class="section">
+  <div class="section-label">2 · Status Machine</div>
+  <div class="flow-container">
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">Purchase Order</div>
+    <div class="flow-row">
+      <div class="flow-node">
+        <span class="flow-badge badge-draft">Draft</span>
+        <span class="flow-desc">dibuat, belum dikirim ke supplier</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <span class="flow-badge badge-submitted">Submitted</span>
+        <span class="flow-desc">dikirim ke supplier, menunggu</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <span class="flow-badge badge-approved">Approved</span>
+        <span class="flow-desc">supplier konfirmasi, siap diterima</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <span class="flow-badge badge-partial">Partial</span>
+        <span class="flow-desc">sebagian item diterima via GRN</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <span class="flow-badge badge-received">Fully Received</span>
+        <span class="flow-desc">semua qty terpenuhi</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <span class="flow-badge badge-closed">Closed</span>
+        <span class="flow-desc">selesai &amp; diarsip</span>
+      </div>
+    </div>
+
+    <div class="flow-branch">
+      <div class="flow-arrow" style="width:14px;color:var(--s-cancelled)">↳</div>
+      <div class="flow-node" style="margin-left:4px">
+        <span class="flow-badge badge-cancelled">Cancelled</span>
+        <span class="flow-desc">bisa dari draft / submitted / approved</span>
+      </div>
+    </div>
+
+    <div style="height:12px"></div>
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">Good Receipt Note</div>
+    <div class="flow-row">
+      <div class="flow-node">
+        <span class="flow-badge badge-draft">Draft</span>
+        <span class="flow-desc">diisi, belum dikonfirmasi</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <span class="flow-badge badge-confirmed">Confirmed</span>
+        <span class="flow-desc">stock movement `in` dibuat otomatis</span>
+      </div>
+    </div>
+
+    <div class="flow-note">
+      <strong>Trigger otomatis saat GRN confirmed:</strong>
+      StockMovementRecorder::record() dipanggil per item → update StockLevel.on_hand → update PurchaseOrderItem.quantity_received → recalculate PO status (partial / fully_received).
+    </div>
+  </div>
+</div>
+
+<!-- ══ 3. UI SCREENS ══ -->
+<div class="section">
+  <div class="section-label">3 · Layar Utama</div>
+
+  <!-- Tab nav (visual only) -->
+  <div class="screen-tabs">
+    <div class="tab active">PO Index</div>
+    <div class="tab">Buat PO</div>
+    <div class="tab">Detail PO</div>
+    <div class="tab">Form GRN</div>
+  </div>
+
+  <!-- PO INDEX -->
+  <div class="screen-wrap">
+    <div class="screen-toolbar">
+      <span class="screen-title">Purchase Orders</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost">Export</button>
+        <button class="btn btn-primary">+ New PO</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <span class="filter-chip active">Semua</span>
+      <span class="filter-chip">Draft</span>
+      <span class="filter-chip">Submitted</span>
+      <span class="filter-chip">Approved</span>
+      <span class="filter-chip">Partial</span>
+      <span class="filter-chip">Fully Received</span>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="mock-table">
+        <thead>
+          <tr>
+            <th>No. PO</th>
+            <th>Supplier</th>
+            <th>Gudang</th>
+            <th>Tgl Order</th>
+            <th>Exp. Tiba</th>
+            <th style="text-align:right">Total</th>
+            <th>Progress</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-primary">PO-2026-0041</td>
+            <td>PT Sumber Makmur</td>
+            <td>Gudang Utama</td>
+            <td>20 Jul 2026</td>
+            <td>25 Jul 2026</td>
+            <td class="td-num" style="text-align:right">Rp 12.450.000</td>
+            <td><div style="width:80px"><div class="progress-track"><div class="progress-fill" style="width:60%"></div></div></div></td>
+            <td><span class="flow-badge badge-partial" style="font-size:10px;padding:2px 8px">Partial</span></td>
+            <td class="td-actions"><span class="link-action">Lihat</span><span class="link-action">GRN</span></td>
+          </tr>
+          <tr>
+            <td class="td-primary">PO-2026-0040</td>
+            <td>CV Mitra Sejati</td>
+            <td>Gudang Bekasi</td>
+            <td>18 Jul 2026</td>
+            <td>22 Jul 2026</td>
+            <td class="td-num" style="text-align:right">Rp 8.200.000</td>
+            <td><div style="width:80px"><div class="progress-track"><div class="progress-fill" style="width:100%;background:var(--s-received)"></div></div></div></td>
+            <td><span class="flow-badge badge-received" style="font-size:10px;padding:2px 8px">Received</span></td>
+            <td class="td-actions"><span class="link-action">Lihat</span></td>
+          </tr>
+          <tr>
+            <td class="td-primary">PO-2026-0039</td>
+            <td>PT Global Supply</td>
+            <td>Gudang Utama</td>
+            <td>17 Jul 2026</td>
+            <td>24 Jul 2026</td>
+            <td class="td-num" style="text-align:right">Rp 31.750.000</td>
+            <td><div style="width:80px"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div></div></td>
+            <td><span class="flow-badge badge-approved" style="font-size:10px;padding:2px 8px">Approved</span></td>
+            <td class="td-actions"><span class="link-action">Lihat</span><span class="link-action">GRN</span></td>
+          </tr>
+          <tr>
+            <td class="td-primary">PO-2026-0038</td>
+            <td>PT Sumber Makmur</td>
+            <td>Gudang Bekasi</td>
+            <td>14 Jul 2026</td>
+            <td>—</td>
+            <td class="td-num" style="text-align:right">Rp 5.500.000</td>
+            <td><div style="width:80px"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div></div></td>
+            <td><span class="flow-badge badge-draft" style="font-size:10px;padding:2px 8px">Draft</span></td>
+            <td class="td-actions"><span class="link-action">Edit</span><span class="link-action">Submit</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE PO -->
+<div class="section" style="margin-top:24px">
+  <div class="section-label">3b · Buat Purchase Order</div>
+  <div class="screen-wrap">
+    <div class="screen-toolbar" style="margin-bottom:16px">
+      <span class="screen-title">Purchase Order Baru</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Supplier *</label>
+        <div class="form-control" style="color:var(--muted)">Pilih supplier dari Partners…</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gudang Tujuan *</label>
+        <div class="form-control" style="color:var(--muted)">Pilih gudang penerima…</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal Order *</label>
+        <div class="form-control">2026-07-24</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estimasi Tiba</label>
+        <div class="form-control" style="color:var(--muted)">Tanggal…</div>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Catatan</label>
+        <div class="form-control" style="height:52px;color:var(--muted)">Keterangan PO opsional…</div>
+      </div>
+    </div>
+
+    <div class="items-header">
+      <span class="items-title">Item Pesanan</span>
+      <button class="btn btn-ghost">+ Tambah Item</button>
+    </div>
+
+    <div class="grn-item-head" style="grid-template-columns:2fr 80px 90px 90px auto;gap:8px">
+      <div class="gh">Produk</div>
+      <div class="gh">Qty</div>
+      <div class="gh">Satuan</div>
+      <div class="gh">Harga/Unit</div>
+      <div class="gh" style="text-align:right">Subtotal</div>
+      <div></div>
+    </div>
+
+    <div class="item-row">
+      <div class="form-control" style="font-size:11px">Minyak Goreng Bimoli 2L</div>
+      <div class="form-control" style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums">100</div>
+      <div class="form-control" style="font-size:11px">karton</div>
+      <div class="form-control" style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums">85.000</div>
+      <div class="item-total">8.500.000</div>
+      <div class="rm-btn">×</div>
+    </div>
+    <div class="item-row">
+      <div class="form-control" style="font-size:11px">Gula Pasir Gulaku 1kg</div>
+      <div class="form-control" style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums">200</div>
+      <div class="form-control" style="font-size:11px">pack</div>
+      <div class="form-control" style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums">19.500</div>
+      <div class="item-total">3.900.000</div>
+      <div class="rm-btn">×</div>
+    </div>
+
+    <div class="po-footer">
+      <div style="font-size:11px;color:var(--muted)">2 item · 300 unit total</div>
+      <div>
+        <span class="po-grand"><span>Grand Total</span>Rp 12.400.000</span>
+        <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+          <button class="btn btn-ghost">Simpan Draft</button>
+          <button class="btn btn-primary">Submit ke Supplier →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PO -->
+<div class="section" style="margin-top:24px">
+  <div class="section-label">3c · Detail Purchase Order</div>
+  <div class="screen-wrap">
+    <div class="screen-toolbar" style="margin-bottom:14px">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">← Kembali ke PO List</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="screen-title">PO-2026-0041</span>
+          <span class="flow-badge badge-partial" style="font-size:10px;padding:2px 8px">Partial</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost">Cetak PO</button>
+        <button class="btn btn-primary">+ Buat GRN</button>
+      </div>
+    </div>
+
+    <div class="show-grid">
+      <div>
+        <!-- Items table -->
+        <div class="show-card">
+          <div class="show-card-head">Item Pesanan</div>
+          <div style="overflow-x:auto">
+            <table class="mock-table">
+              <thead>
+                <tr>
+                  <th>Produk</th>
+                  <th style="text-align:right">Dipesan</th>
+                  <th style="text-align:right">Diterima</th>
+                  <th style="text-align:right">Sisa</th>
+                  <th style="text-align:right">Harga</th>
+                  <th style="text-align:right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-primary">Minyak Goreng Bimoli 2L</td>
+                  <td class="td-num" style="text-align:right">100</td>
+                  <td class="td-num" style="text-align:right;color:var(--s-received)">60</td>
+                  <td class="td-num highlight" style="text-align:right">40</td>
+                  <td class="td-num" style="text-align:right">85.000</td>
+                  <td class="td-num" style="text-align:right">8.500.000</td>
+                </tr>
+                <tr>
+                  <td class="td-primary">Gula Pasir Gulaku 1kg</td>
+                  <td class="td-num" style="text-align:right">200</td>
+                  <td class="td-num" style="text-align:right;color:var(--s-received)">200</td>
+                  <td class="td-num" style="text-align:right;color:var(--muted)">0</td>
+                  <td class="td-num" style="text-align:right">19.500</td>
+                  <td class="td-num" style="text-align:right">3.900.000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:10px 12px;border-top:1px solid var(--border-light);display:flex;justify-content:flex-end">
+            <span style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums">Total: Rp 12.400.000</span>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border-light);border-radius:6px">
+          <div class="progress-label"><span>Penerimaan</span><span>60% (157/257 unit)</span></div>
+          <div class="progress-track" style="height:8px"><div class="progress-fill" style="width:61%"></div></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <!-- Info card -->
+        <div class="show-card">
+          <div class="show-card-head">Informasi PO</div>
+          <div class="show-card-body">
+            <div class="kv-row"><span class="kv-key">Supplier</span><span class="kv-val">PT Sumber Makmur</span></div>
+            <div class="kv-row"><span class="kv-key">Gudang</span><span class="kv-val">Gudang Utama</span></div>
+            <div class="kv-row"><span class="kv-key">Tgl Order</span><span class="kv-val">20 Jul 2026</span></div>
+            <div class="kv-row"><span class="kv-key">Exp. Tiba</span><span class="kv-val" style="color:var(--s-partial)">25 Jul 2026</span></div>
+            <div class="kv-row"><span class="kv-key">Dibuat oleh</span><span class="kv-val">Ahmad Subarjo</span></div>
+          </div>
+        </div>
+
+        <!-- GRN list -->
+        <div class="show-card">
+          <div class="show-card-head">Good Receipt Notes</div>
+          <div class="show-card-body">
+            <div class="grn-list">
+              <div class="grn-item">
+                <div>
+                  <div class="grn-code">GRN-2026-0018</div>
+                  <div class="grn-date">22 Jul 2026</div>
+                </div>
+                <div style="text-align:right">
+                  <div class="grn-qty">157 unit</div>
+                  <span class="flow-badge badge-confirmed" style="font-size:9px;padding:1px 6px">Confirmed</span>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center;display:flex;font-size:11px;margin-top:4px">+ Buat GRN Berikutnya</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GRN FORM -->
+<div class="section" style="margin-top:24px">
+  <div class="section-label">3d · Form Good Receipt Note</div>
+  <div class="screen-wrap">
+    <div class="screen-toolbar" style="margin-bottom:12px">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">← Kembali ke PO-2026-0041</div>
+        <span class="screen-title">Buat GRN</span>
+      </div>
+    </div>
+
+    <div class="grn-banner">
+      <span>PO: <strong>PO-2026-0041</strong></span>
+      <span>Supplier: <strong>PT Sumber Makmur</strong></span>
+      <span>Gudang: <strong>Gudang Utama</strong></span>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="form-group">
+        <label class="form-label">Tanggal Terima *</label>
+        <div class="form-control">2026-07-24</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">No. Surat Jalan Supplier</label>
+        <div class="form-control" style="color:var(--muted)">Opsional…</div>
+      </div>
+    </div>
+
+    <div class="items-title" style="margin-bottom:8px">Item Diterima <span style="font-weight:400;color:var(--muted);font-size:11px">— hanya item yang masih ada sisa</span></div>
+
+    <div class="grn-item-head">
+      <div class="gh">Produk</div>
+      <div class="gh" style="text-align:right">Dipesan</div>
+      <div class="gh" style="text-align:right">Sisa</div>
+      <div class="gh">Lokasi / Bin</div>
+      <div class="gh">Batch · Exp</div>
+      <div class="gh" style="text-align:right">Diterima</div>
+    </div>
+
+    <div class="grn-item-row">
+      <div style="font-weight:600;font-size:12px">Minyak Goreng Bimoli 2L</div>
+      <div class="qty-display" style="text-align:right">100</div>
+      <div class="qty-display highlight" style="text-align:right">40</div>
+      <div class="form-control" style="font-size:11px">Rak A-01</div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div class="form-control" style="font-size:10px;padding:4px 8px" placeholder="Batch">LOT-240724</div>
+        <div class="form-control" style="font-size:10px;padding:4px 8px">2027-01-31</div>
+      </div>
+      <div class="form-control" style="text-align:right;font-size:11px;font-variant-numeric:tabular-nums;font-weight:600">40</div>
+    </div>
+
+    <div style="background:var(--accent-light);border:1px solid var(--accent-mid);border-radius:4px;padding:8px 12px;margin-top:10px;font-size:11px;color:var(--text-2)">
+      ⓘ Setelah dikonfirmasi, sistem akan otomatis membuat <strong>StockMovement `in`</strong> untuk setiap baris dan memperbarui <strong>StockLevel</strong> di lokasi yang dipilih.
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button class="btn btn-ghost">Simpan Draft</button>
+      <button class="btn btn-primary">Konfirmasi Penerimaan →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 4. IMPLEMENTATION PLAN ══ -->
+<div class="section">
+  <div class="section-label">4 · Rencana Implementasi</div>
+  <div class="impl-grid">
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">1</div>Migrations</div>
+      <div class="impl-body">
+        <div class="impl-file">create_purchase_orders_table</div>
+        <div class="impl-file">create_purchase_order_items_table</div>
+        <div class="impl-file">create_good_receipt_notes_table</div>
+        <div class="impl-file">create_good_receipt_note_items_table</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">2</div>Models + Factories</div>
+      <div class="impl-body">
+        <div class="impl-file">Inventory/Models/PurchaseOrder.php</div>
+        <div class="impl-file">Inventory/Models/PurchaseOrderItem.php</div>
+        <div class="impl-file">Inventory/Models/GoodReceiptNote.php</div>
+        <div class="impl-file">Inventory/Models/GoodReceiptNoteItem.php</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">3</div>Support Class</div>
+      <div class="impl-body">
+        <div class="impl-file">Inventory/Support/GrnConfirmationService.php</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5">Orchestrates: loop GRN items → StockMovementRecorder → update po_item.quantity_received → recalculate PO status</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">4</div>HTTP Layer</div>
+      <div class="impl-body">
+        <div class="impl-file">Http/Controllers/PurchaseOrderController.php</div>
+        <div class="impl-file">Http/Controllers/GoodReceiptNoteController.php</div>
+        <div class="impl-file">Http/Requests/StorePurchaseOrderRequest.php</div>
+        <div class="impl-file">Http/Requests/StoreGoodReceiptNoteRequest.php</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">5</div>Frontend Pages</div>
+      <div class="impl-body">
+        <div class="impl-file">Inventory/PurchaseOrders/Index.tsx</div>
+        <div class="impl-file">Inventory/PurchaseOrders/Create.tsx</div>
+        <div class="impl-file">Inventory/PurchaseOrders/Show.tsx</div>
+        <div class="impl-file">Inventory/GoodReceiptNotes/Create.tsx</div>
+        <div class="impl-file">Inventory/GoodReceiptNotes/Show.tsx</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">6</div>Tests</div>
+      <div class="impl-body">
+        <div class="impl-file">Tests/Feature/Inventory/PurchaseOrderTest.php</div>
+        <div class="impl-file">Tests/Feature/Inventory/GoodReceiptNoteTest.php</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5">Covers: CRUD PO, status transitions, GRN confirm → StockMovement created, PO status auto-update, partial/full receipt.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Integration points -->
+  <div class="integration-box">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">Titik Integrasi</div>
+    <div class="int-row">
+      <span class="int-from">GrnConfirmationService</span>
+      <span class="int-arrow">→</span>
+      <span class="int-desc"><code style="font-size:10px">StockMovementRecorder::record()</code> — sudah ada, langsung dipakai. Source type: <code style="font-size:10px">'grn'</code>, source_id: grn_item.id</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">PO partner_id</span>
+      <span class="int-arrow">→</span>
+      <span class="int-desc">FK ke tabel <code style="font-size:10px">partners</code> (Partners module) — supplier difilter berdasarkan tipe 'supplier' atau 'both'</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">PO item product_id</span>
+      <span class="int-arrow">→</span>
+      <span class="int-desc">FK ke tabel <code style="font-size:10px">products</code> (Product module) — batch_number + expiry_date disimpan di GRN item untuk FMCG</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">GRN location_id</span>
+      <span class="int-arrow">→</span>
+      <span class="int-desc">FK ke <code style="font-size:10px">warehouse_locations</code> — per item bisa masuk lokasi/bin berbeda dalam satu GRN</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">LowStockNotifier</span>
+      <span class="int-arrow">→</span>
+      <span class="int-desc">Dipanggil setelah GRN confirmed untuk recalculate stok dan clear low-stock alert jika sudah di atas threshold</span>
+    </div>
+  </div>
+</div>

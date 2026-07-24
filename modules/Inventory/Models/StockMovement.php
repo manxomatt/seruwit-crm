@@ -23,6 +23,8 @@ class StockMovement extends Model
         'source_type',
         'source_id',
         'reference_code',
+        'batch_number',
+        'expiry_date',
         'notes',
         'recorded_by',
         'recorded_at',
@@ -32,6 +34,7 @@ class StockMovement extends Model
     {
         return [
             'quantity' => 'decimal:2',
+            'expiry_date' => 'date',
             'recorded_at' => 'datetime',
         ];
     }

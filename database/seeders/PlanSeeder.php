@@ -43,7 +43,7 @@ class PlanSeeder extends Seeder
                 // Invoicing is not optional alongside Billing: Billing requires it,
                 // and the auto-install chain enforces entitlement at every level,
                 // so a plan selling Billing without it could never install either.
-                'modules' => ['billing', 'carousels', 'document', 'fleet', 'inventory', 'invoicing', 'maintenance', 'orders', 'pages', 'partners', 'posts', 'products', 'tracking', 'transportation'],
+                'modules' => ['billing', 'carousels', 'document', 'fleet', 'inventory', 'invoicing', 'maintenance', 'orders', 'pages', 'partners', 'posts', 'products', 'purchasing', 'tracking', 'transportation'],
                 'sort_order' => 3,
                 'is_default' => false,
             ],
