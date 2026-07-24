@@ -13,6 +13,7 @@ use Modules\Orders\Http\Requests\AssignTripRequest;
 use Modules\Orders\Http\Requests\StoreDeliveryOrderRequest;
 use Modules\Orders\Http\Requests\UpdateDeliveryOrderRequest;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Orders\Support\DeliveryOrderStock;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Models\Trip;
@@ -181,10 +182,14 @@ class DeliveryOrderController extends Controller
             return back()->with('error', 'Add at least one item before confirming.');
         }
 
-        $order->update([
-            'status' => DeliveryOrder::STATUS_CONFIRMED,
-            'confirmed_at' => now(),
-        ]);
+        DB::transaction(function () use ($order): void {
+            DeliveryOrderStock::reserve($order);
+
+            $order->update([
+                'status' => DeliveryOrder::STATUS_CONFIRMED,
+                'confirmed_at' => now(),
+            ]);
+        });
 
         return back()->with('success', 'Delivery order confirmed.');
     }
@@ -202,10 +207,16 @@ class DeliveryOrderController extends Controller
             'cancelled_reason' => ['required', 'string', 'max:255'],
         ]);
 
-        $order->update([
-            'status' => DeliveryOrder::STATUS_CANCELLED,
-            'cancelled_reason' => $request->input('cancelled_reason'),
-        ]);
+        DB::transaction(function () use ($order, $request): void {
+            if ($order->status === DeliveryOrder::STATUS_CONFIRMED) {
+                DeliveryOrderStock::release($order);
+            }
+
+            $order->update([
+                'status' => DeliveryOrder::STATUS_CANCELLED,
+                'cancelled_reason' => $request->input('cancelled_reason'),
+            ]);
+        });
 
         return back()->with('success', 'Delivery order cancelled.');
     }

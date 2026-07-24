@@ -16,6 +16,7 @@ use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Models\PodItem;
 use Modules\Orders\Models\PodPhoto;
 use Modules\Orders\Models\ProofOfDelivery;
+use Modules\Orders\Support\DeliveryOrderStock;
 use Modules\Orders\Support\ShipmentStatusNotifier;
 use Modules\TransportationManagement\Actions\TripStopTransitions;
 
@@ -99,6 +100,7 @@ class PodController extends Controller
                     'status' => DeliveryOrder::STATUS_DELIVERED,
                     'delivered_at' => now(),
                 ]);
+                DeliveryOrderStock::fulfill($order);
             }
         });
 

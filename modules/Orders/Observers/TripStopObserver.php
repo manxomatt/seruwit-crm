@@ -4,6 +4,7 @@ namespace Modules\Orders\Observers;
 
 use App\Modules\Facades\Modules;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Orders\Support\DeliveryOrderStock;
 use Modules\TransportationManagement\Models\TripStop;
 
 /**
@@ -27,12 +28,20 @@ class TripStopObserver
             return;
         }
 
-        DeliveryOrder::query()
+        $updated = DeliveryOrder::query()
             ->where('id', $stop->delivery_order_id)
             ->where('status', DeliveryOrder::STATUS_IN_TRANSIT)
             ->update([
                 'status' => DeliveryOrder::STATUS_DELIVERED,
                 'delivered_at' => now(),
             ]);
+
+        if ($updated > 0) {
+            $order = DeliveryOrder::query()->find($stop->delivery_order_id);
+
+            if ($order) {
+                DeliveryOrderStock::fulfill($order);
+            }
+        }
     }
 }

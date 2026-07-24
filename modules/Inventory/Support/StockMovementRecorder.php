@@ -16,7 +16,7 @@ class StockMovementRecorder
             $type = $data['type'];
             $batch = self::normalizeBatch($data['batch_number'] ?? null);
 
-            if ($type === 'out' && $batch === '') {
+            if ($type === 'out' && $batch === '' && ($data['allocate'] ?? true) !== false) {
                 $movements = self::recordAllocatedOut($data, $strategy ?? StockPickingStrategy::default());
 
                 return $movements[0];
@@ -149,11 +149,16 @@ class StockMovementRecorder
 
         if ($batchNumber !== null) {
             $query->where('batch_number', self::normalizeBatch($batchNumber));
+            $level = $query->first(['on_hand', 'reserved']);
 
-            return (string) ($query->value('on_hand') ?? 0);
+            if (! $level) {
+                return '0';
+            }
+
+            return (string) max(0, (float) $level->on_hand - (float) $level->reserved);
         }
 
-        return (string) ($query->sum('on_hand') ?? 0);
+        return (string) max(0, (float) $query->sum(DB::raw('on_hand - reserved')));
     }
 
     public static function normalizeBatch(?string $batchNumber): string

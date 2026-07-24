@@ -5,14 +5,14 @@ namespace Modules\Orders\Observers;
 use App\Modules\Facades\Modules;
 use Modules\Inventory\Support\StockMovementRecorder;
 use Modules\Orders\Models\PodItem;
+use Modules\Orders\Support\DeliveryOrderStock;
 use Modules\Outbound\Support\OutboundDispatchGate;
 
 /**
  * Records inventory stock movements for each delivered line.
  *
- * This lives on PodItem rather than ProofOfDelivery because the POD's `created`
- * event fires before its items exist — an observer on the parent would see an
- * empty item set. Firing per item guarantees the line's quantities are present.
+ * Prefers consuming/releasing StockLevel.reserved linked to the delivery order.
+ * Falls back to a plain stock-out when no reservation covers the accepted qty.
  */
 class PodItemObserver
 {
@@ -24,7 +24,9 @@ class PodItemObserver
 
         $podItem->loadMissing(['deliveryOrderItem.product.warehouse', 'proofOfDelivery.deliveryOrder']);
 
-        $product = $podItem->deliveryOrderItem?->product;
+        $orderItem = $podItem->deliveryOrderItem;
+        $product = $orderItem?->product;
+
         if (! $product || $product->category !== 'merchandise') {
             return;
         }
@@ -41,14 +43,47 @@ class PodItemObserver
             && $order
             && OutboundDispatchGate::hasDispatchedStock($order);
 
-        // OUT movement: accepted_quantity (delivered to customer)
-        // Skip when Outbound already deducted stock at pick/pack dispatch.
-        if ($podItem->accepted_quantity > 0 && ! $alreadyDispatched) {
+        $accepted = (float) $podItem->accepted_quantity;
+
+        if ($alreadyDispatched) {
+            // Stock already left the warehouse at pick/pack dispatch — only clear leftover reserved.
+            if ($orderItem) {
+                DeliveryOrderStock::releaseItem($orderItem);
+            }
+        } elseif ($accepted > 0 && $orderItem && DeliveryOrderStock::hasOpenReservations($order)) {
+            $consumed = DeliveryOrderStock::consumeItem($orderItem, $accepted, [
+                'source_type' => 'pod',
+                'source_id' => $pod?->id,
+                'reference_code' => $order?->code,
+                'notes' => 'terkirim ke konsumen',
+                'recorded_by' => $pod?->submitted_by,
+                'recorded_at' => $pod?->delivered_at,
+            ]);
+
+            $shortfall = round($accepted - $consumed, 2);
+
+            if ($shortfall > 0.009) {
+                StockMovementRecorder::record([
+                    'product_id' => $product->id,
+                    'warehouse_id' => $warehouse->id,
+                    'type' => 'out',
+                    'quantity' => $shortfall,
+                    'source_type' => 'pod',
+                    'source_id' => $pod?->id,
+                    'reference_code' => $order?->code,
+                    'notes' => 'terkirim ke konsumen (unreserved)',
+                    'recorded_by' => $pod?->submitted_by,
+                    'recorded_at' => $pod?->delivered_at,
+                ]);
+            }
+
+            DeliveryOrderStock::releaseItem($orderItem);
+        } elseif ($accepted > 0) {
             StockMovementRecorder::record([
                 'product_id' => $product->id,
                 'warehouse_id' => $warehouse->id,
                 'type' => 'out',
-                'quantity' => $podItem->accepted_quantity,
+                'quantity' => $accepted,
                 'source_type' => 'pod',
                 'source_id' => $pod?->id,
                 'reference_code' => $order?->code,
@@ -58,7 +93,6 @@ class PodItemObserver
             ]);
         }
 
-        // IN movement: returned_quantity (returned by customer)
         if ($podItem->returned_quantity > 0) {
             StockMovementRecorder::record([
                 'product_id' => $product->id,

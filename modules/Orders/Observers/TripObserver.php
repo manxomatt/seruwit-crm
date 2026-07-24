@@ -4,6 +4,7 @@ namespace Modules\Orders\Observers;
 
 use App\Modules\Facades\Modules;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Orders\Support\DeliveryOrderStock;
 use Modules\Orders\Support\ShipmentStatusNotifier;
 use Modules\TransportationManagement\Models\Trip;
 
@@ -65,6 +66,11 @@ class TripObserver
 
         foreach ($orders as $order) {
             $order->status = $to;
+
+            if ($to === DeliveryOrder::STATUS_DELIVERED) {
+                DeliveryOrderStock::fulfill($order);
+            }
+
             $this->notifier->announce($order, $from, $to);
         }
     }

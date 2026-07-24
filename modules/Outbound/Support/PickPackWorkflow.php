@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Modules\Inventory\Support\StockMovementRecorder;
+use Modules\Orders\Support\DeliveryOrderStock;
 use Modules\Outbound\Models\Pack;
 use Modules\Outbound\Models\PackItem;
 use Modules\Outbound\Models\PickList;
@@ -243,21 +244,41 @@ class PickPackWorkflow
                     continue;
                 }
 
-                StockMovementRecorder::record([
-                    'product_id' => $item->product_id,
-                    'warehouse_id' => $pickList->warehouse_id,
-                    'location_id' => $item->location_id,
-                    'type' => 'out',
-                    'quantity' => $qty,
-                    'batch_number' => $item->batch_number,
-                    'expiry_date' => $item->expiry_date?->toDateString(),
+                $meta = [
                     'source_type' => 'outbound_dispatch',
                     'source_id' => $pickList->id,
                     'reference_code' => $pickList->code,
                     'notes' => 'Outbound pick/pack dispatch for '.$pickList->deliveryOrder?->code,
                     'recorded_by' => Auth::id(),
                     'recorded_at' => now(),
-                ]);
+                ];
+
+                $orderItem = $item->deliveryOrderItem;
+                $consumed = 0.0;
+
+                if (
+                    $orderItem
+                    && $pickList->deliveryOrder
+                    && DeliveryOrderStock::hasOpenReservations($pickList->deliveryOrder)
+                ) {
+                    $consumed = DeliveryOrderStock::consumeItem($orderItem, $qty, $meta);
+                }
+
+                $remainder = round($qty - $consumed, 2);
+
+                if ($remainder > 0.009) {
+                    StockMovementRecorder::record([
+                        'product_id' => $item->product_id,
+                        'warehouse_id' => $pickList->warehouse_id,
+                        'location_id' => $item->location_id,
+                        'type' => 'out',
+                        'quantity' => $remainder,
+                        'batch_number' => $item->batch_number,
+                        'expiry_date' => $item->expiry_date?->toDateString(),
+                        ...$meta,
+                        'allocate' => $item->batch_number ? true : false,
+                    ]);
+                }
             }
 
             $pickList->update([
