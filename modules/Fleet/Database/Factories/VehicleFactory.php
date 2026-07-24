@@ -32,6 +32,8 @@ class VehicleFactory extends Factory
             'brand' => fake()->randomElement(['Toyota', 'Mitsubishi', 'Isuzu', 'Hino', 'Daihatsu']),
             'model_year' => fake()->numberBetween(2015, 2026),
             'capacity' => fake()->randomElement(['1200 kg', '2000 kg', '5 seats', '12 seats']),
+            'capacity_kg' => fake()->randomElement([500, 1000, 2000, 5000]),
+            'cost_per_km' => fake()->randomFloat(2, 1500, 8000),
             'fuel_type' => fake()->randomElement(['petrol', 'diesel', 'electric', 'hybrid']),
             'status' => 'active',
             'odometer_km' => fake()->numberBetween(0, 150000),

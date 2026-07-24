@@ -22,6 +22,9 @@ interface Order {
     order_date: string;
     pickup_address: string;
     delivery_address: string;
+    delivery_lat: string | number | null;
+    delivery_lng: string | number | null;
+    demand_kg: string | number | null;
     notes: string | null;
 }
 
@@ -37,6 +40,9 @@ export default function Edit({ order, partners }: Props): JSX.Element {
         order_date: order.order_date ? order.order_date.substring(0, 10) : '',
         pickup_address: order.pickup_address,
         delivery_address: order.delivery_address,
+        delivery_lat: order.delivery_lat ?? '',
+        delivery_lng: order.delivery_lng ?? '',
+        demand_kg: order.demand_kg ?? '',
         notes: order.notes || '',
     });
 
@@ -84,6 +90,21 @@ export default function Edit({ order, partners }: Props): JSX.Element {
                                 <InputLabel htmlFor="delivery_address" value="Delivery Address" />
                                 <TextInput id="delivery_address" className="mt-1 block w-full" value={data.delivery_address} onChange={(e) => setData('delivery_address', e.target.value)} required />
                                 <InputError message={errors.delivery_address} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="delivery_lat" value="Delivery latitude (routing)" />
+                                <TextInput id="delivery_lat" className="mt-1 block w-full" value={data.delivery_lat} onChange={(e) => setData('delivery_lat', e.target.value)} />
+                                <InputError message={errors.delivery_lat} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="delivery_lng" value="Delivery longitude (routing)" />
+                                <TextInput id="delivery_lng" className="mt-1 block w-full" value={data.delivery_lng} onChange={(e) => setData('delivery_lng', e.target.value)} />
+                                <InputError message={errors.delivery_lng} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="demand_kg" value="Demand (kg)" />
+                                <TextInput id="demand_kg" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.demand_kg} onChange={(e) => setData('demand_kg', e.target.value)} />
+                                <InputError message={errors.demand_kg} className="mt-2" />
                             </div>
                         </div>
 

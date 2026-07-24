@@ -72,7 +72,12 @@ class PurchasingModule implements ModuleContract
 
     public function boot(): void
     {
-        //
+        if (class_exists(\Modules\Approvals\Events\ApprovalCompleted::class)) {
+            \Illuminate\Support\Facades\Event::listen(
+                \Modules\Approvals\Events\ApprovalCompleted::class,
+                \Modules\Purchasing\Listeners\SubmitPurchaseOrderAfterApproval::class,
+            );
+        }
     }
 
     public function routes(): void

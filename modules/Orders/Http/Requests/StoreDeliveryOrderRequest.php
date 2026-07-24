@@ -26,6 +26,9 @@ class StoreDeliveryOrderRequest extends FormRequest
             'order_date' => ['required', 'date'],
             'pickup_address' => ['required', 'string', 'max:255'],
             'delivery_address' => ['required', 'string', 'max:255'],
+            'delivery_lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'delivery_lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'demand_kg' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

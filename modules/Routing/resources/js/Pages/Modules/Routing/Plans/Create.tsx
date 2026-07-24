@@ -1,0 +1,217 @@
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
+import TextInput from '@/Components/TextInput';
+import { Head, Link, useForm, router } from '@inertiajs/react';
+import { FormEventHandler } from 'react';
+
+interface OrderRow {
+    id: number;
+    code: string;
+    delivery_address: string;
+    delivery_lat: string | number | null;
+    delivery_lng: string | number | null;
+    demand_kg: string | number | null;
+    partner: { id: number; name: string } | null;
+}
+
+interface Props {
+    defaults: {
+        planned_date: string;
+        objective: string;
+        depot_address: string;
+        depot_lat: number;
+        depot_lng: number;
+    };
+    orders: OrderRow[];
+    eligible_counts: {
+        geocoded: number;
+        missing_coords: number;
+        vehicles: number;
+        drivers: number;
+    };
+}
+
+export default function Create({ defaults, orders, eligible_counts }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
+    const geocodedIds = orders.filter((o) => o.delivery_lat !== null && o.delivery_lng !== null).map((o) => o.id);
+
+    const { data, setData, post, processing, errors } = useForm({
+        planned_date: defaults.planned_date,
+        objective: defaults.objective,
+        depot_address: defaults.depot_address,
+        depot_lat: String(defaults.depot_lat),
+        depot_lng: String(defaults.depot_lng),
+        delivery_order_ids: geocodedIds as number[],
+    });
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        post(prefixedRoute('routing.plans.store'));
+    };
+
+    const reloadOrders = (date: string): void => {
+        setData('planned_date', date);
+        router.get(
+            prefixedRoute('routing.plans.create'),
+            { planned_date: date },
+            { preserveState: true, only: ['orders', 'eligible_counts', 'defaults'] },
+        );
+    };
+
+    const toggleOrder = (id: number): void => {
+        if (data.delivery_order_ids.includes(id)) {
+            setData(
+                'delivery_order_ids',
+                data.delivery_order_ids.filter((x) => x !== id),
+            );
+        } else {
+            setData('delivery_order_ids', [...data.delivery_order_ids, id]);
+        }
+    };
+
+    return (
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">New Route Plan</h2>}>
+            <Head title="New Route Plan" />
+            <div className="py-6">
+                <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                            <div className="text-xs text-gray-500">Geocoded DOs</div>
+                            <div className="text-lg font-semibold text-gray-900">{eligible_counts.geocoded}</div>
+                        </div>
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                            <div className="text-xs text-gray-500">Missing coords</div>
+                            <div className="text-lg font-semibold text-amber-700">{eligible_counts.missing_coords}</div>
+                        </div>
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                            <div className="text-xs text-gray-500">Active vehicles</div>
+                            <div className="text-lg font-semibold text-gray-900">{eligible_counts.vehicles}</div>
+                        </div>
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                            <div className="text-xs text-gray-500">Available drivers</div>
+                            <div className="text-lg font-semibold text-gray-900">{eligible_counts.drivers}</div>
+                        </div>
+                    </div>
+
+                    <form onSubmit={submit} className="space-y-6 rounded-lg border border-gray-200 bg-white p-6">
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div>
+                                <InputLabel htmlFor="planned_date" value="Plan date" />
+                                <TextInput
+                                    id="planned_date"
+                                    type="date"
+                                    className="mt-1 block w-full"
+                                    value={data.planned_date}
+                                    onChange={(e) => reloadOrders(e.target.value)}
+                                    required
+                                />
+                                <InputError message={errors.planned_date} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="objective" value="Objective" />
+                                <Select
+                                    id="objective"
+                                    className="mt-1"
+                                    value={data.objective}
+                                    onChange={(value) => setData('objective', value)}
+                                    options={[
+                                        { value: 'fuel_cost', label: 'Minimise fuel cost' },
+                                        { value: 'distance', label: 'Minimise distance' },
+                                    ]}
+                                />
+                                <InputError message={errors.objective} className="mt-2" />
+                            </div>
+                            <div className="sm:col-span-2">
+                                <InputLabel htmlFor="depot_address" value="Depot address" />
+                                <TextInput
+                                    id="depot_address"
+                                    className="mt-1 block w-full"
+                                    value={data.depot_address}
+                                    onChange={(e) => setData('depot_address', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="depot_lat" value="Depot latitude" />
+                                <TextInput
+                                    id="depot_lat"
+                                    className="mt-1 block w-full"
+                                    value={data.depot_lat}
+                                    onChange={(e) => setData('depot_lat', e.target.value)}
+                                    required
+                                />
+                                <InputError message={errors.depot_lat} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="depot_lng" value="Depot longitude" />
+                                <TextInput
+                                    id="depot_lng"
+                                    className="mt-1 block w-full"
+                                    value={data.depot_lng}
+                                    onChange={(e) => setData('depot_lng', e.target.value)}
+                                    required
+                                />
+                                <InputError message={errors.depot_lng} className="mt-2" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="mb-2 text-sm font-medium text-gray-900">Confirmed delivery orders</h3>
+                            <p className="mb-3 text-xs text-gray-500">
+                                Only orders with delivery coordinates are optimizable. Add lat/lng on the order form.
+                            </p>
+                            <div className="max-h-72 overflow-y-auto rounded-md border border-gray-200">
+                                {orders.length === 0 ? (
+                                    <div className="px-4 py-8 text-center text-sm text-gray-500">No confirmed orders on this date.</div>
+                                ) : (
+                                    <ul className="divide-y divide-gray-100">
+                                        {orders.map((order) => {
+                                            const hasCoords = order.delivery_lat !== null && order.delivery_lng !== null;
+                                            return (
+                                                <li key={order.id} className="flex items-start gap-3 px-4 py-3 text-sm">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="mt-1"
+                                                        disabled={!hasCoords}
+                                                        checked={data.delivery_order_ids.includes(order.id)}
+                                                        onChange={() => toggleOrder(order.id)}
+                                                    />
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="font-medium text-gray-900">
+                                                            {order.code}
+                                                            {order.partner ? ` · ${order.partner.name}` : ''}
+                                                        </div>
+                                                        <div className="truncate text-gray-600">{order.delivery_address}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {hasCoords
+                                                                ? `${order.delivery_lat}, ${order.delivery_lng} · ${order.demand_kg ?? 1} kg`
+                                                                : 'Missing coordinates'}
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </div>
+                            <InputError message={errors.delivery_order_ids} className="mt-2" />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <PrimaryButton disabled={processing || data.delivery_order_ids.length === 0}>
+                                Optimize routes
+                            </PrimaryButton>
+                            <Link href={prefixedRoute('routing.plans.index')}>
+                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                            </Link>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </DynamicLayout>
+    );
+}

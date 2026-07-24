@@ -26,7 +26,12 @@ class UpdateDeliveryOrderRequest extends FormRequest
             'order_date' => ['sometimes', 'required', 'date'],
             'pickup_address' => ['sometimes', 'required', 'string', 'max:255'],
             'delivery_address' => ['sometimes', 'required', 'string', 'max:255'],
+            'delivery_lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'delivery_lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'demand_kg' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'promised_at' => ['nullable', 'date'],
         ];
     }
 

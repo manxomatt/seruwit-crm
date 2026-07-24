@@ -217,6 +217,21 @@ class PurchaseOrderController extends Controller
             return back()->with('error', 'Add at least one item before submitting.');
         }
 
+        if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)) {
+            $gate = \Modules\Approvals\Support\ApprovalGate::authorize(
+                \Modules\Approvals\Support\ApprovalTriggers::PO_AMOUNT,
+                $po,
+                [
+                    'amount' => (float) $po->total_amount,
+                    'resume' => 'purchasing.po.submit',
+                ],
+            );
+
+            if (! $gate['allowed']) {
+                return back()->with('error', $gate['message'] ?? 'Approval required before submit.');
+            }
+        }
+
         $po->update(['status' => PurchaseOrder::STATUS_SUBMITTED]);
 
         return back()->with('success', 'Purchase order submitted to supplier.');

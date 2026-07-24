@@ -51,7 +51,7 @@ class ModuleTierTest extends TestCase
 
     public function test_logistics_specific_operations_are_vertical(): void
     {
-        foreach (['transportation', 'orders', 'billing'] as $key) {
+        foreach (['transportation', 'orders', 'billing', 'routing'] as $key) {
             $this->assertSame(
                 ModuleTier::Vertical,
                 $this->registry->find($key)?->tier(),

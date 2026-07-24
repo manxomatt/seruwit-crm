@@ -63,10 +63,15 @@ class DeliveryOrder extends Model
         'order_date',
         'pickup_address',
         'delivery_address',
+        'delivery_lat',
+        'delivery_lng',
+        'demand_kg',
         'notes',
         'confirmed_at',
         'delivered_at',
         'cancelled_reason',
+        'discount_percent',
+        'promised_at',
     ];
 
     /**
@@ -78,6 +83,11 @@ class DeliveryOrder extends Model
             'order_date' => 'date',
             'confirmed_at' => 'datetime',
             'delivered_at' => 'datetime',
+            'promised_at' => 'datetime',
+            'discount_percent' => 'decimal:2',
+            'delivery_lat' => 'decimal:7',
+            'delivery_lng' => 'decimal:7',
+            'demand_kg' => 'decimal:2',
         ];
     }
 

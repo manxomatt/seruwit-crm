@@ -44,6 +44,8 @@ class Vehicle extends Model
         'brand',
         'model_year',
         'capacity',
+        'capacity_kg',
+        'cost_per_km',
         'fuel_type',
         'status',
         'odometer_km',
@@ -61,6 +63,8 @@ class Vehicle extends Model
         return [
             'model_year' => 'integer',
             'odometer_km' => 'integer',
+            'capacity_kg' => 'decimal:2',
+            'cost_per_km' => 'decimal:2',
             'stnk_expires_at' => 'date',
             'kir_expires_at' => 'date',
         ];

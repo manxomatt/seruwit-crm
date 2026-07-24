@@ -19,6 +19,8 @@ interface Vehicle {
     brand: string | null;
     model_year: number | null;
     capacity: string | null;
+    capacity_kg: string | number | null;
+    cost_per_km: string | number | null;
     fuel_type: string;
     status: string;
     odometer_km: number;
@@ -41,6 +43,8 @@ export default function Edit({ vehicle }: Props): JSX.Element {
         brand: vehicle.brand || '',
         model_year: vehicle.model_year ?? '',
         capacity: vehicle.capacity || '',
+        capacity_kg: vehicle.capacity_kg ?? '',
+        cost_per_km: vehicle.cost_per_km ?? '',
         fuel_type: vehicle.fuel_type,
         status: vehicle.status,
         odometer_km: vehicle.odometer_km,
@@ -124,6 +128,16 @@ export default function Edit({ vehicle }: Props): JSX.Element {
                                 <InputLabel htmlFor="capacity" value="Capacity (optional)" />
                                 <TextInput id="capacity" placeholder="e.g. 1200 kg or 12 seats" className="mt-1 block w-full" value={data.capacity} onChange={(e) => setData('capacity', e.target.value)} />
                                 <InputError message={errors.capacity} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="capacity_kg" value="Capacity kg (for routing)" />
+                                <TextInput id="capacity_kg" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.capacity_kg} onChange={(e) => setData('capacity_kg', e.target.value)} />
+                                <InputError message={errors.capacity_kg} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="cost_per_km" value="Cost per km (BBM)" />
+                                <TextInput id="cost_per_km" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.cost_per_km} onChange={(e) => setData('cost_per_km', e.target.value)} />
+                                <InputError message={errors.cost_per_km} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="odometer_km" value="Odometer (km)" />

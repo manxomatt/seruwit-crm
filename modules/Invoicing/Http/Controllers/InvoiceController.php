@@ -163,11 +163,28 @@ class InvoiceController extends Controller
 
         $invoice->loadMissing('partner');
 
-        if (
-            class_exists(CreditLimitChecker::class)
-            && CreditLimitChecker::wouldExceed($invoice->partner, (float) $invoice->total)
-        ) {
-            return back()->with('error', 'Issuing this invoice would exceed the partner credit limit.');
+        $creditExceeded = class_exists(CreditLimitChecker::class)
+            && CreditLimitChecker::wouldExceed($invoice->partner, (float) $invoice->total);
+
+        if ($creditExceeded) {
+            if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)) {
+                $gate = \Modules\Approvals\Support\ApprovalGate::authorize(
+                    \Modules\Approvals\Support\ApprovalTriggers::CREDIT_LIMIT,
+                    $invoice,
+                    [
+                        'amount' => (float) $invoice->total,
+                        'credit_exceeded' => true,
+                        'partner_id' => $invoice->partner_id,
+                        'resume' => 'invoicing.invoice.issue',
+                    ],
+                );
+
+                if (! $gate['allowed']) {
+                    return back()->with('error', $gate['message'] ?? 'Credit limit approval required before issuing.');
+                }
+            } else {
+                return back()->with('error', 'Issuing this invoice would exceed the partner credit limit.');
+            }
         }
 
         $invoice->update(['status' => Invoice::STATUS_ISSUED]);

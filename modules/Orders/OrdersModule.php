@@ -96,6 +96,13 @@ class OrdersModule implements ModuleContract
         Trip::observe(TripObserver::class);
         TripStop::observe(TripStopObserver::class);
         PodItem::observe(PodItemObserver::class);
+
+        if (class_exists(\Modules\Approvals\Events\ApprovalCompleted::class)) {
+            \Illuminate\Support\Facades\Event::listen(
+                \Modules\Approvals\Events\ApprovalCompleted::class,
+                \Modules\Orders\Listeners\ConfirmDeliveryOrderAfterApproval::class,
+            );
+        }
     }
 
     public function routes(): void

@@ -29,6 +29,8 @@ class UpdateVehicleRequest extends FormRequest
             'brand' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
             'capacity' => ['nullable', 'string', 'max:100'],
+            'capacity_kg' => ['nullable', 'numeric', 'min:0'],
+            'cost_per_km' => ['nullable', 'numeric', 'min:0'],
             'fuel_type' => ['sometimes', 'required', 'string', 'in:petrol,diesel,electric,hybrid'],
             'status' => ['sometimes', 'required', 'string', 'in:active,maintenance,retired,out_of_service'],
             'odometer_km' => ['integer', 'min:0'],

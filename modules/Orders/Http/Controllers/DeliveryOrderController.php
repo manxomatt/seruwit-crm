@@ -182,6 +182,50 @@ class DeliveryOrderController extends Controller
             return back()->with('error', 'Add at least one item before confirming.');
         }
 
+        if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)) {
+            $messages = [];
+
+            $discount = (float) ($order->discount_percent ?? 0);
+            if ($discount > 0) {
+                $gate = \Modules\Approvals\Support\ApprovalGate::authorize(
+                    \Modules\Approvals\Support\ApprovalTriggers::ORDER_DISCOUNT,
+                    $order,
+                    [
+                        'discount_percent' => $discount,
+                        'resume' => 'orders.delivery_order.confirm',
+                    ],
+                );
+
+                if (! $gate['allowed']) {
+                    $messages[] = $gate['message'] ?? 'Discount approval required.';
+                }
+            }
+
+            if ($order->promised_at) {
+                $leadHours = $order->promised_at->greaterThan(now())
+                    ? (float) now()->diffInHours($order->promised_at)
+                    : 0.0;
+
+                $gate = \Modules\Approvals\Support\ApprovalGate::authorize(
+                    \Modules\Approvals\Support\ApprovalTriggers::ORDER_SLA,
+                    $order,
+                    [
+                        'lead_hours' => $leadHours,
+                        'promised_at' => $order->promised_at->toDateTimeString(),
+                        'resume' => 'orders.delivery_order.confirm',
+                    ],
+                );
+
+                if (! $gate['allowed']) {
+                    $messages[] = $gate['message'] ?? 'SLA exception approval required.';
+                }
+            }
+
+            if ($messages !== []) {
+                return back()->with('error', implode(' ', $messages));
+            }
+        }
+
         DB::transaction(function () use ($order): void {
             DeliveryOrderStock::reserve($order);
 
@@ -243,6 +287,8 @@ class DeliveryOrderController extends Controller
                 'sequence' => ((int) $trip->stops()->max('sequence')) + 1,
                 'type' => TripStop::TYPE_DROPOFF,
                 'address' => $order->delivery_address,
+                'lat' => $order->delivery_lat,
+                'lng' => $order->delivery_lng,
                 'delivery_order_id' => $order->id,
                 'status' => TripStop::STATUS_PENDING,
             ]);
