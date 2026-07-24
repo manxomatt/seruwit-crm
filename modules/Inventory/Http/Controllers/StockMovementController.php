@@ -5,11 +5,13 @@ namespace Modules\Inventory\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Modules\Inventory\Http\Requests\StoreStockMovementRequest;
+use Modules\Inventory\Http\Requests\StoreStockTransferRequest;
 use Modules\Inventory\Models\StockMovement;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Inventory\Models\WarehouseLocation;
 use Modules\Inventory\Support\StockMovementRecorder;
 use Modules\Product\Models\Product;
+use RuntimeException;
 
 class StockMovementController extends Controller
 {
@@ -68,5 +70,49 @@ class StockMovementController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.inventory.stock-movements.index')
             ->with('success', 'Stock movement recorded');
+    }
+
+    public function createTransfer()
+    {
+        return inertia('Modules/Inventory/StockMovements/Transfer', [
+            'products' => Product::query()
+                ->select('id', 'name', 'category', 'unit')
+                ->orderBy('name')
+                ->get(),
+            'warehouses' => Warehouse::query()
+                ->where('status', 'active')
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get(),
+            'locations' => WarehouseLocation::query()
+                ->select('id', 'warehouse_id', 'name', 'code', 'type')
+                ->orderBy('sort_order')
+                ->get(),
+        ]);
+    }
+
+    public function storeTransfer(StoreStockTransferRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        try {
+            $result = StockMovementRecorder::transfer([
+                'product_id' => $validated['product_id'],
+                'from_warehouse_id' => $validated['from_warehouse_id'],
+                'to_warehouse_id' => $validated['to_warehouse_id'],
+                'from_location_id' => $validated['from_location_id'] ?? null,
+                'to_location_id' => $validated['to_location_id'] ?? null,
+                'quantity' => $validated['quantity'],
+                'reference_code' => $validated['reference_code'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'recorded_by' => auth()->id(),
+                'recorded_at' => now(),
+            ]);
+        } catch (RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route($this->getRoutePrefix().'.inventory.stock-movements.index')
+            ->with('success', "Transfer {$result['reference_code']} recorded (out + in).");
     }
 }

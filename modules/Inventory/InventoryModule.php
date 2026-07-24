@@ -94,6 +94,8 @@ class InventoryModule implements ModuleContract
                 Route::get('/stock-movements', [StockMovementController::class, 'index'])->name('stock-movements.index');
                 Route::get('/stock-movements/create', [StockMovementController::class, 'create'])->middleware('permission:inventory,adjust')->name('stock-movements.create');
                 Route::post('/stock-movements', [StockMovementController::class, 'store'])->middleware('permission:inventory,adjust')->name('stock-movements.store');
+                Route::get('/stock-movements/transfer', [StockMovementController::class, 'createTransfer'])->middleware('permission:inventory,adjust')->name('stock-movements.transfer.create');
+                Route::post('/stock-movements/transfer', [StockMovementController::class, 'storeTransfer'])->middleware('permission:inventory,adjust')->name('stock-movements.transfer.store');
 
                 // Stock Opnames
                 Route::get('/stock-opnames', [StockOpnameController::class, 'index'])->name('stock-opnames.index');

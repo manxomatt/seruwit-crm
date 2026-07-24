@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout'
 import { useRoutePrefix } from '@/hooks/useRoutePrefix'
 import PrimaryButton from '@/Components/PrimaryButton'
+import SecondaryButton from '@/Components/SecondaryButton'
 import { Head, Link } from '@inertiajs/react'
 import InventoryNav from '../../../../InventoryNav'
 
@@ -39,11 +40,16 @@ export default function StockMovementsIndex({ movements }: Props) {
   return (
     <DynamicLayout
       header={
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory</h2>
-          <Link href={prefixedRoute('inventory.stock-movements.create')}>
-            <PrimaryButton>Record Movement</PrimaryButton>
-          </Link>
+          <div className="flex gap-2">
+            <Link href={prefixedRoute('inventory.stock-movements.transfer.create')}>
+              <SecondaryButton>Transfer Antar Gudang</SecondaryButton>
+            </Link>
+            <Link href={prefixedRoute('inventory.stock-movements.create')}>
+              <PrimaryButton>Record Movement</PrimaryButton>
+            </Link>
+          </div>
         </div>
       }
     >
