@@ -12,16 +12,18 @@ class CreateTenantAction
     /**
      * Provision a new tenant owned by the given central user.
      *
-     * Creating the Tenant runs the provisioning pipeline (create schema,
-     * migrate, seed). Attaching the owner's pivot record then syncs their
-     * identity into the tenant schema, where the admin role is assigned.
+     * When a reseller creates the tenant, $resellerGlobalId is stored so the
+     * tenant is permanently scoped to that reseller's management portal.
      *
      * Note: intentionally not wrapped in a transaction — the pipeline runs
      * DDL on a separate connection that cannot see uncommitted changes.
      */
-    public function execute(string $companyName, string $subdomain, CentralUser $owner): Tenant
+    public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null): Tenant
     {
-        $tenant = Tenant::create(['name' => $companyName]);
+        $tenant = Tenant::create([
+            'name' => $companyName,
+            'reseller_global_id' => $resellerGlobalId,
+        ]);
 
         $tenant->domains()->create(['domain' => self::fullDomain($subdomain)]);
 

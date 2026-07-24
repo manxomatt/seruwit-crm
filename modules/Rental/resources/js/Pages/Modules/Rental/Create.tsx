@@ -4,7 +4,6 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -34,6 +33,8 @@ type FormData = {
     deposit_amount: string;
     notes: string;
 };
+
+const selectCls = 'mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white';
 
 export default function Create({ vehicles, drivers, partners, rates }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -86,26 +87,26 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="partner_id" value="Customer *" />
-                                <Select id="partner_id" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)} className="mt-1 w-full">
+                                <select id="partner_id" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)} className={selectCls}>
                                     <option value="">Select partner…</option>
                                     {partners.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
-                                </Select>
+                                </select>
                                 <InputError message={errors.partner_id} className="mt-1" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="vehicle_id" value="Vehicle *" />
-                                <Select id="vehicle_id" value={data.vehicle_id} onChange={(e) => setData('vehicle_id', e.target.value)} className="mt-1 w-full">
+                                <select id="vehicle_id" value={data.vehicle_id} onChange={(e) => setData('vehicle_id', e.target.value)} className={selectCls}>
                                     <option value="">Select vehicle…</option>
                                     {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name} — {v.plate_number}</option>)}
-                                </Select>
+                                </select>
                                 <InputError message={errors.vehicle_id} className="mt-1" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="driver_id" value="Driver (optional)" />
-                                <Select id="driver_id" value={data.driver_id} onChange={(e) => setData('driver_id', e.target.value)} className="mt-1 w-full">
+                                <select id="driver_id" value={data.driver_id} onChange={(e) => setData('driver_id', e.target.value)} className={selectCls}>
                                     <option value="">No driver</option>
                                     {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                </Select>
+                                </select>
                                 <InputError message={errors.driver_id} className="mt-1" />
                             </div>
                             <div />
@@ -126,20 +127,24 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pricing</h2>
                             {rates.length > 0 && (
-                                <Select onChange={(e) => applyRate(e.target.value)} defaultValue="" className="text-xs">
+                                <select
+                                    onChange={(e) => applyRate(e.target.value)}
+                                    defaultValue=""
+                                    className="rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                >
                                     <option value="">Apply rate template…</option>
                                     {rates.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                </Select>
+                                </select>
                             )}
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="period_type" value="Period Type *" />
-                                <Select id="period_type" value={data.period_type} onChange={(e) => setData('period_type', e.target.value)} className="mt-1 w-full">
+                                <select id="period_type" value={data.period_type} onChange={(e) => setData('period_type', e.target.value)} className={selectCls}>
                                     <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
-                                </Select>
+                                </select>
                                 <InputError message={errors.period_type} className="mt-1" />
                             </div>
                             <div>

@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
-        Gate::define('manage-tenants', fn (User $user): bool => $user->isAdmin());
+        Gate::define('manage-tenants', fn (User $user): bool => $user->isAdmin() || $user->hasRole('reseller'));
 
         // Installing a module reshapes the whole workspace, so it stays with the
         // workspace admin rather than becoming another view/create/update subject.

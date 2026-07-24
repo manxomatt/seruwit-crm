@@ -4,7 +4,6 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -16,6 +15,8 @@ interface Rate { id: number; name: string; period_type: string; rate_per_period:
 interface Rental { id: number; code: string; vehicle_id: number; driver_id: number | null; partner_id: number; start_date: string; end_date: string; period_type: string; rate_per_period: string; km_limit_per_period: number | null; excess_km_rate: string | null; deposit_amount: string; notes: string | null; }
 
 interface Props { rental: Rental; vehicles: Vehicle[]; drivers: Driver[]; partners: Partner[]; rates: Rate[]; }
+
+const selectCls = 'mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white';
 
 export default function Edit({ rental, vehicles, drivers, partners, rates }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -58,24 +59,24 @@ export default function Edit({ rental, vehicles, drivers, partners, rates }: Pro
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="partner_id" value="Customer *" />
-                                <Select id="partner_id" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)} className="mt-1 w-full">
+                                <select id="partner_id" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)} className={selectCls}>
                                     {partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </Select>
+                                </select>
                                 <InputError message={errors.partner_id} className="mt-1" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="vehicle_id" value="Vehicle *" />
-                                <Select id="vehicle_id" value={data.vehicle_id} onChange={(e) => setData('vehicle_id', e.target.value)} className="mt-1 w-full">
+                                <select id="vehicle_id" value={data.vehicle_id} onChange={(e) => setData('vehicle_id', e.target.value)} className={selectCls}>
                                     {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name} — {v.plate_number}</option>)}
-                                </Select>
+                                </select>
                                 <InputError message={errors.vehicle_id} className="mt-1" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="driver_id" value="Driver" />
-                                <Select id="driver_id" value={data.driver_id} onChange={(e) => setData('driver_id', e.target.value)} className="mt-1 w-full">
+                                <select id="driver_id" value={data.driver_id} onChange={(e) => setData('driver_id', e.target.value)} className={selectCls}>
                                     <option value="">No driver</option>
                                     {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                </Select>
+                                </select>
                             </div>
                             <div />
                             <div>
@@ -94,20 +95,24 @@ export default function Edit({ rental, vehicles, drivers, partners, rates }: Pro
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pricing</h2>
                             {rates.length > 0 && (
-                                <Select onChange={(e) => applyRate(e.target.value)} defaultValue="" className="text-xs">
+                                <select
+                                    onChange={(e) => applyRate(e.target.value)}
+                                    defaultValue=""
+                                    className="rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                >
                                     <option value="">Apply rate…</option>
                                     {rates.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                </Select>
+                                </select>
                             )}
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="period_type" value="Period Type *" />
-                                <Select id="period_type" value={data.period_type} onChange={(e) => setData('period_type', e.target.value)} className="mt-1 w-full">
+                                <select id="period_type" value={data.period_type} onChange={(e) => setData('period_type', e.target.value)} className={selectCls}>
                                     <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
-                                </Select>
+                                </select>
                             </div>
                             <div>
                                 <InputLabel htmlFor="rate_per_period" value="Rate per Period (Rp) *" />

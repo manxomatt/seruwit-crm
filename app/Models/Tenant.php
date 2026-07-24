@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Modules\PlanRepository;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
@@ -21,6 +22,7 @@ use Stancl\Tenancy\Database\Models\TenantPivot;
  * @property string|null $tax_id
  * @property string|null $notes
  * @property string|null $plan
+ * @property string|null $reseller_global_id
  */
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
@@ -62,6 +64,16 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     }
 
     /**
+     * The reseller who owns this tenant (null = directly owned by platform).
+     *
+     * @return BelongsTo<CentralUser, $this>
+     */
+    public function reseller(): BelongsTo
+    {
+        return $this->belongsTo(CentralUser::class, 'reseller_global_id', 'global_id');
+    }
+
+    /**
      * The central user identities that are members of this tenant.
      *
      * @return BelongsToMany<CentralUser, $this>
@@ -84,6 +96,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'id',
             'name',
             'status',
+            'reseller_global_id',
         ];
     }
 }

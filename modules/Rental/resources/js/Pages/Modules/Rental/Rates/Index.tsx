@@ -5,7 +5,6 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -20,6 +19,8 @@ interface Props { rates: Rate[]; vehicles: Vehicle[]; }
 type FormData = { vehicle_id: string; vehicle_type: string; name: string; period_type: string; rate_per_period: string; km_limit_per_period: string; excess_km_rate: string; deposit_amount: string; is_active: boolean; notes: string; };
 
 const emptyForm: FormData = { vehicle_id: '', vehicle_type: '', name: '', period_type: 'daily', rate_per_period: '', km_limit_per_period: '', excess_km_rate: '', deposit_amount: '', is_active: true, notes: '' };
+
+const selectCls = 'mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white';
 
 export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -66,18 +67,18 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
                 </div>
                 <div>
                     <InputLabel htmlFor="period_type" value="Period Type *" />
-                    <Select id="period_type" value={form.data.period_type} onChange={(e) => form.setData('period_type', e.target.value)} className="mt-1 w-full">
+                    <select id="period_type" value={form.data.period_type} onChange={(e) => form.setData('period_type', e.target.value)} className={selectCls}>
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>
-                    </Select>
+                    </select>
                 </div>
                 <div>
                     <InputLabel htmlFor="vehicle_id" value="Specific Vehicle" />
-                    <Select id="vehicle_id" value={form.data.vehicle_id} onChange={(e) => form.setData('vehicle_id', e.target.value)} className="mt-1 w-full">
+                    <select id="vehicle_id" value={form.data.vehicle_id} onChange={(e) => form.setData('vehicle_id', e.target.value)} className={selectCls}>
                         <option value="">Any vehicle</option>
                         {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                    </Select>
+                    </select>
                 </div>
                 <div>
                     <InputLabel htmlFor="vehicle_type" value="Vehicle Type" />

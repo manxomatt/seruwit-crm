@@ -11,8 +11,10 @@ use App\Modules\Facades\Modules;
 use App\Modules\ModuleCatalog;
 use App\Modules\ModuleInstaller;
 use App\Rules\ValidSubdomain;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
@@ -28,11 +30,13 @@ class TenantController extends Controller
     ) {}
 
     /**
-     * List all tenants for the platform super admin.
+     * List tenants. Super admins see all; resellers see only their own.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $tenants = Tenant::query()
+        Gate::authorize('manage-tenants');
+
+        $tenants = $this->scopedQuery($request)
             ->with('domains')
             ->withCount('users')
             ->latest()
@@ -52,10 +56,12 @@ class TenantController extends Controller
     }
 
     /**
-     * Create a tenant on behalf of a customer (closed/B2B onboarding).
+     * Create a tenant; resellers automatically become its owner.
      */
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('manage-tenants');
+
         $request->validate([
             'company_name' => 'required|string|max:255',
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain],
@@ -76,20 +82,28 @@ class TenantController extends Controller
             $owner = CentralUser::query()->firstWhere('email', $request->string('owner_email')->value());
         }
 
+        $user = $request->user();
+        $resellerGlobalId = ($user && ! $user->isAdmin() && $user->hasRole('reseller'))
+            ? $user->global_id
+            : null;
+
         $this->createTenant->execute(
             companyName: $request->string('company_name')->value(),
             subdomain: $request->string('subdomain')->value(),
             owner: $owner,
+            resellerGlobalId: $resellerGlobalId,
         );
 
         return back()->with('success', 'Tenant berhasil dibuat.');
     }
 
     /**
-     * Show a single tenant with its members.
+     * Show a single tenant. Resellers may only view their own.
      */
-    public function show(Tenant $tenant): Response
+    public function show(Request $request, Tenant $tenant): Response
     {
+        $this->authorizeOwnership($request, $tenant);
+
         $tenant->loadCount('users');
         $domain = $tenant->domains()->first()?->domain;
 
@@ -128,10 +142,12 @@ class TenantController extends Controller
     }
 
     /**
-     * Update a tenant's name, subdomain, and status.
+     * Update a tenant's details. Resellers may only edit their own.
      */
     public function update(Request $request, Tenant $tenant): RedirectResponse
     {
+        $this->authorizeOwnership($request, $tenant);
+
         $currentDomain = $tenant->domains()->first();
 
         $validated = $request->validate([
@@ -146,12 +162,6 @@ class TenantController extends Controller
             'notes' => 'nullable|string|max:2000',
         ]);
 
-        // billing_email/phone/address/tax_id/notes/plan are stored in the tenant's
-        // data JSON column (virtual columns), no migration required.
-        //
-        // Changing the plan is never destructive: a downgrade only revokes access,
-        // leaving installed modules and their data in place, so an upgrade brings
-        // them straight back.
         $tenant->update([
             'name' => $validated['name'],
             'status' => $validated['status'],
@@ -173,10 +183,12 @@ class TenantController extends Controller
     }
 
     /**
-     * Toggle a tenant between active and suspended.
+     * Toggle a tenant between active and suspended. Resellers may only toggle their own.
      */
-    public function toggleStatus(Tenant $tenant): RedirectResponse
+    public function toggleStatus(Request $request, Tenant $tenant): RedirectResponse
     {
+        $this->authorizeOwnership($request, $tenant);
+
         $tenant->update([
             'status' => $tenant->status === 'active' ? 'suspended' : 'active',
         ]);
@@ -185,13 +197,12 @@ class TenantController extends Controller
     }
 
     /**
-     * Permanently delete a tenant: drops its schema and all data.
-     *
-     * Guarded by a typed confirmation of the tenant name so the destructive
-     * action cannot fire on a stray click.
+     * Permanently delete a tenant. Resellers may only delete their own.
      */
     public function destroy(Request $request, Tenant $tenant): RedirectResponse
     {
+        $this->authorizeOwnership($request, $tenant);
+
         $request->validate([
             'confirm_name' => 'required|string',
         ]);
@@ -210,14 +221,12 @@ class TenantController extends Controller
     }
 
     /**
-     * Install a module into a tenant on their behalf.
-     *
-     * The same installer the tenant's own admin drives, including the plan check —
-     * a super admin who wants to hand over a module moves the tenant's plan rather
-     * than working around it, so entitlement stays the single source of truth.
+     * Install a module into a tenant. Resellers may only act on their own tenants.
      */
-    public function installModule(Tenant $tenant, string $module, ModuleInstaller $installer): RedirectResponse
+    public function installModule(Request $request, Tenant $tenant, string $module, ModuleInstaller $installer): RedirectResponse
     {
+        $this->authorizeOwnership($request, $tenant);
+
         $registered = Modules::find($module);
 
         if (! $registered) {
@@ -233,8 +242,10 @@ class TenantController extends Controller
         return back()->with('success', "Modul {$registered->label()} dipasang untuk {$tenant->name}.");
     }
 
-    public function uninstallModule(Tenant $tenant, string $module, ModuleInstaller $installer): RedirectResponse
+    public function uninstallModule(Request $request, Tenant $tenant, string $module, ModuleInstaller $installer): RedirectResponse
     {
+        $this->authorizeOwnership($request, $tenant);
+
         $registered = Modules::find($module);
 
         if (! $registered) {
@@ -253,5 +264,38 @@ class TenantController extends Controller
             'success',
             "Modul {$registered->label()} dicopot dari {$tenant->name}. Datanya disimpan {$days} hari.",
         );
+    }
+
+    /**
+     * Returns a query scoped to only the tenants this user may manage.
+     * Super admins see all tenants; resellers only see their own.
+     *
+     * @return Builder<Tenant>
+     */
+    private function scopedQuery(Request $request): Builder
+    {
+        $user = $request->user();
+        $query = Tenant::query();
+
+        if ($user && ! $user->isAdmin() && $user->hasRole('reseller')) {
+            $query->where('reseller_global_id', $user->global_id);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Abort with 403 if a reseller tries to act on a tenant they don't own.
+     * Super admins bypass this check entirely.
+     */
+    private function authorizeOwnership(Request $request, Tenant $tenant): void
+    {
+        Gate::authorize('manage-tenants');
+
+        $user = $request->user();
+
+        if ($user && ! $user->isAdmin() && $user->hasRole('reseller')) {
+            abort_unless($tenant->reseller_global_id === $user->global_id, 403);
+        }
     }
 }

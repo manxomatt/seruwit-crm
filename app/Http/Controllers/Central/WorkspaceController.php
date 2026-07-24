@@ -44,17 +44,30 @@ class WorkspaceController extends Controller
 
         $centralUser = $this->centralUser($request);
 
-        abort_unless(
-            $centralUser->tenants()->whereKey($tenant->getTenantKey())->exists(),
-            403,
-            'Anda bukan anggota workspace ini.',
-        );
+        $isAdmin = $request->user()->isAdmin();
+
+        if (! $isAdmin) {
+            abort_unless(
+                $centralUser->tenants()->whereKey($tenant->getTenantKey())->exists(),
+                403,
+                'Anda bukan anggota workspace ini.',
+            );
+        }
 
         $tenantUserId = $tenant->run(
             fn (): ?int => User::query()
                 ->where('global_id', $centralUser->global_id)
                 ->value('id'),
         );
+
+        if ($tenantUserId === null && $isAdmin) {
+            // Admin entering a tenant they are not a member of: impersonate the tenant owner (first admin).
+            $tenantUserId = $tenant->run(
+                fn (): ?int => User::query()
+                    ->whereHas('roles', fn ($q) => $q->where('slug', 'admin'))
+                    ->value('id'),
+            );
+        }
 
         abort_if($tenantUserId === null, 403, 'Akun Anda belum tersedia di workspace ini.');
 

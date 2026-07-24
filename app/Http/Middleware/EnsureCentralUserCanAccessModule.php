@@ -26,6 +26,7 @@ class EnsureCentralUserCanAccessModule
             && $request->is('module/*')
             && ($user = $request->user())
             && ! $user->isAdmin()
+            && ! $user->hasRole('reseller')
             && $this->belongsToAnyTenant($user)
         ) {
             return redirect()->route('central.workspaces.index');

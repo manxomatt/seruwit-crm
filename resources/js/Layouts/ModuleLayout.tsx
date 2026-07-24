@@ -18,6 +18,7 @@ interface User {
     email: string;
     email_verified_at: string | null;
     is_admin: boolean;
+    is_reseller: boolean;
     dashboard_path: string;
     profile: UserProfile | null;
     permissions: Record<string, string[]>;
@@ -397,6 +398,7 @@ export default function ModuleLayout({ header, children }: Props) {
     // No current-tenant domain context means we are on the central domain (the SaaS control plane).
     const isCentral = !pageProps.currentTenant;
     const isAdmin = user?.is_admin || false;
+    const isReseller = user?.is_reseller || false;
     const theme = getThemeColors(isAdmin);
     const panelName = isAdmin ? 'Admin' : 'Module';
 
@@ -439,8 +441,8 @@ export default function ModuleLayout({ header, children }: Props) {
             }
         });
 
-        // On the central domain, super admins also manage tenants (SaaS control plane).
-        if (isCentral && isAdmin && routeExists('module.tenants.index')) {
+        // On the central domain, super admins and resellers manage tenants.
+        if (isCentral && (isAdmin || isReseller) && routeExists('module.tenants.index')) {
             items.push({
                 name: 'Kelola Tenant',
                 href: route('module.tenants.index'),
@@ -489,7 +491,7 @@ export default function ModuleLayout({ header, children }: Props) {
         }
 
         return items;
-    }, [user, isCentral, isAdmin]);
+    }, [user, isCentral, isAdmin, isReseller]);
 
     // Split the flat navigation into the standalone Dashboard plus collapsible
     // groups, preserving the module order defined in MENU_GROUPS.

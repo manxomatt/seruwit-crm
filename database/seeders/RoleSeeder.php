@@ -83,5 +83,17 @@ class RoleSeeder extends Seeder
             })
             ->get();
         $salespersonRole->permissions()->sync($salespersonPermissions->pluck('id')->toArray());
+
+        // Reseller: can manage their own tenant portfolio from the central domain.
+        // No module-level permissions — access is gated by the manage-tenants gate.
+        Role::query()->firstOrCreate(
+            ['slug' => 'reseller'],
+            [
+                'name' => 'Reseller',
+                'description' => 'Can manage tenants they own on the central control plane',
+                'is_system' => true,
+                'dashboard_path' => '/module/tenants',
+            ]
+        );
     }
 }

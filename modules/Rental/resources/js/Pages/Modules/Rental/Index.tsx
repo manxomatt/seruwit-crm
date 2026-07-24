@@ -1,7 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import PrimaryButton from '@/Components/PrimaryButton';
-import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -103,16 +102,16 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                             Search
                         </button>
                     </form>
-                    <Select
+                    <select
                         value={filters.status ?? ''}
                         onChange={(e) => applyFilters({ status: e.target.value })}
-                        className="w-40"
+                        className="w-40 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     >
                         <option value="">All Status</option>
                         {Object.entries(STATUS_LABELS).map(([v, l]) => (
                             <option key={v} value={v}>{l}</option>
                         ))}
-                    </Select>
+                    </select>
                 </div>
 
                 {/* Table */}

@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'email_verified_at' => $user->email_verified_at,
                     'is_admin' => $user->isAdmin(),
+                    'is_reseller' => $user->hasRole('reseller'),
                     'dashboard_path' => $user->getDashboardPath(),
                     'profile' => $user->profile ? [
                         'id' => $user->profile->id,
