@@ -1,0 +1,188 @@
+<?php
+
+namespace Modules\Receivables\Support;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Modules\Invoicing\Models\Invoice;
+use Modules\Receivables\Models\Payment;
+use Modules\Receivables\Models\PaymentAllocation;
+
+class PaymentRecorder
+{
+    /**
+     * @param  array{
+     *     partner_id: int,
+     *     payment_date: string,
+     *     amount: float|int|string,
+     *     type?: string,
+     *     method?: string,
+     *     reference_number?: string|null,
+     *     notes?: string|null,
+     *     recorded_by?: int|null,
+     *     allocations: list<array{invoice_id: int, amount: float|int|string}>
+     * }  $data
+     */
+    public static function record(array $data): Payment
+    {
+        return DB::transaction(function () use ($data): Payment {
+            $amount = round((float) $data['amount'], 2);
+            $allocations = collect($data['allocations'] ?? []);
+
+            if ($allocations->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'allocations' => 'At least one invoice allocation is required.',
+                ]);
+            }
+
+            $allocatedTotal = round($allocations->sum(fn (array $row): float => (float) $row['amount']), 2);
+
+            if (abs($allocatedTotal - $amount) > 0.009) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Payment amount must equal the sum of allocations.',
+                ]);
+            }
+
+            $payment = Payment::query()->create([
+                'code' => Payment::nextCode(),
+                'partner_id' => $data['partner_id'],
+                'payment_date' => $data['payment_date'],
+                'amount' => $amount,
+                'type' => $data['type'] ?? Payment::TYPE_INSTALLMENT,
+                'method' => $data['method'] ?? Payment::METHOD_TRANSFER,
+                'reference_number' => $data['reference_number'] ?? null,
+                'status' => Payment::STATUS_POSTED,
+                'notes' => $data['notes'] ?? null,
+                'recorded_by' => $data['recorded_by'] ?? Auth::id(),
+            ]);
+
+            $touchedInvoiceIds = [];
+
+            foreach ($allocations as $row) {
+                $invoice = Invoice::query()->lockForUpdate()->findOrFail($row['invoice_id']);
+
+                if ((int) $invoice->partner_id !== (int) $data['partner_id']) {
+                    throw ValidationException::withMessages([
+                        'allocations' => "Invoice {$invoice->code} does not belong to this partner.",
+                    ]);
+                }
+
+                if (! in_array($invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID], true)) {
+                    throw ValidationException::withMessages([
+                        'allocations' => "Invoice {$invoice->code} is not open for payment.",
+                    ]);
+                }
+
+                $allocAmount = round((float) $row['amount'], 2);
+
+                if ($allocAmount <= 0) {
+                    throw ValidationException::withMessages([
+                        'allocations' => 'Allocation amounts must be greater than zero.',
+                    ]);
+                }
+
+                if ($allocAmount - $invoice->balanceDue() > 0.009) {
+                    throw ValidationException::withMessages([
+                        'allocations' => "Allocation for {$invoice->code} exceeds the remaining balance.",
+                    ]);
+                }
+
+                PaymentAllocation::query()->create([
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $allocAmount,
+                ]);
+
+                $touchedInvoiceIds[] = $invoice->id;
+            }
+
+            foreach (array_unique($touchedInvoiceIds) as $invoiceId) {
+                self::syncInvoice((int) $invoiceId);
+            }
+
+            return $payment->fresh(['allocations', 'partner']);
+        });
+    }
+
+    /**
+     * Record a full settlement for a single open invoice (convenience for "Mark Paid").
+     */
+    public static function settleInvoice(Invoice $invoice, ?string $method = null): Payment
+    {
+        $balance = $invoice->balanceDue();
+
+        if ($balance <= 0) {
+            throw ValidationException::withMessages([
+                'invoice' => 'Invoice has no remaining balance.',
+            ]);
+        }
+
+        return self::record([
+            'partner_id' => $invoice->partner_id,
+            'payment_date' => now()->toDateString(),
+            'amount' => $balance,
+            'type' => Payment::TYPE_SETTLEMENT,
+            'method' => $method ?? Payment::METHOD_TRANSFER,
+            'allocations' => [
+                ['invoice_id' => $invoice->id, 'amount' => $balance],
+            ],
+        ]);
+    }
+
+    public static function void(Payment $payment): void
+    {
+        if (! $payment->isPosted()) {
+            throw ValidationException::withMessages([
+                'payment' => 'Only a posted payment can be voided.',
+            ]);
+        }
+
+        DB::transaction(function () use ($payment): void {
+            $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+            $invoiceIds = $payment->allocations()->pluck('invoice_id')->all();
+
+            $payment->update([
+                'status' => Payment::STATUS_VOIDED,
+                'voided_at' => now(),
+            ]);
+
+            foreach ($invoiceIds as $invoiceId) {
+                self::syncInvoice((int) $invoiceId);
+            }
+        });
+    }
+
+    public static function syncInvoice(int $invoiceId): void
+    {
+        $invoice = Invoice::query()->lockForUpdate()->findOrFail($invoiceId);
+
+        if (in_array($invoice->status, [Invoice::STATUS_DRAFT, Invoice::STATUS_VOID], true)) {
+            return;
+        }
+
+        $amountPaid = (float) PaymentAllocation::query()
+            ->where('invoice_id', $invoice->id)
+            ->whereHas('payment', fn ($q) => $q->where('status', Payment::STATUS_POSTED))
+            ->sum('amount');
+
+        $amountPaid = round($amountPaid, 2);
+        $total = round((float) $invoice->total, 2);
+
+        $attributes = ['amount_paid' => $amountPaid];
+
+        if ($amountPaid <= 0) {
+            $attributes['status'] = Invoice::STATUS_ISSUED;
+            $attributes['paid_at'] = null;
+        } elseif ($amountPaid + 0.009 >= $total) {
+            $attributes['status'] = Invoice::STATUS_PAID;
+            $attributes['paid_at'] = $invoice->paid_at ?? now();
+            $attributes['amount_paid'] = $total;
+        } else {
+            $attributes['status'] = Invoice::STATUS_PARTIALLY_PAID;
+            $attributes['paid_at'] = null;
+        }
+
+        $invoice->update($attributes);
+    }
+}

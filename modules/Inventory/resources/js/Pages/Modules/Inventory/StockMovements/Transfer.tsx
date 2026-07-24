@@ -46,6 +46,8 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
         from_location_id: '',
         to_location_id: '',
         quantity: '',
+        batch_number: '',
+        expiry_date: '',
         reference_code: '',
         notes: '',
     });
@@ -179,6 +181,9 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                                     required
                                 />
                                 <InputError message={errors.quantity} className="mt-2" />
+                                {!data.batch_number && (
+                                    <p className="mt-1 text-xs text-gray-500">Tanpa batch: sumber dialokasi FEFO otomatis.</p>
+                                )}
                             </div>
                             <div>
                                 <InputLabel value="No. Referensi (opsional)" />
@@ -189,6 +194,26 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                                     onChange={(e) => setData('reference_code', e.target.value)}
                                 />
                                 <InputError message={errors.reference_code} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel value="Batch / Lot (opsional)" />
+                                <TextInput
+                                    className="mt-1 block w-full"
+                                    value={data.batch_number}
+                                    onChange={(e) => setData('batch_number', e.target.value)}
+                                    placeholder="Kosongkan untuk FEFO"
+                                />
+                                <InputError message={errors.batch_number} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel value="Expiry (opsional)" />
+                                <TextInput
+                                    type="date"
+                                    className="mt-1 block w-full"
+                                    value={data.expiry_date}
+                                    onChange={(e) => setData('expiry_date', e.target.value)}
+                                />
+                                <InputError message={errors.expiry_date} className="mt-2" />
                             </div>
                         </div>
 

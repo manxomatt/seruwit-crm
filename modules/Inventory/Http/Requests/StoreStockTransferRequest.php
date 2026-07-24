@@ -26,6 +26,8 @@ class StoreStockTransferRequest extends FormRequest
             'from_location_id' => ['nullable', 'integer', 'exists:warehouse_locations,id'],
             'to_location_id' => ['nullable', 'integer', 'exists:warehouse_locations,id'],
             'quantity' => ['required', 'numeric', 'min:0.01'],
+            'batch_number' => ['nullable', 'string', 'max:100'],
+            'expiry_date' => ['nullable', 'date'],
             'reference_code' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
@@ -77,10 +79,12 @@ class StoreStockTransferRequest extends FormRequest
 
             $productId = (int) $this->input('product_id');
             $quantity = (float) $this->input('quantity');
+            $batch = $this->input('batch_number');
             $available = (float) StockMovementRecorder::availableOnHand(
                 $productId,
                 $fromWarehouseId,
                 $fromLocationId ? (int) $fromLocationId : null,
+                filled($batch) ? (string) $batch : null,
             );
 
             if ($quantity > $available) {

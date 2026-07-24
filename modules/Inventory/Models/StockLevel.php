@@ -17,6 +17,8 @@ class StockLevel extends Model
         'product_id',
         'warehouse_id',
         'location_id',
+        'batch_number',
+        'expiry_date',
         'on_hand',
         'reserved',
     ];
@@ -26,6 +28,7 @@ class StockLevel extends Model
         return [
             'on_hand' => 'decimal:2',
             'reserved' => 'decimal:2',
+            'expiry_date' => 'date',
         ];
     }
 

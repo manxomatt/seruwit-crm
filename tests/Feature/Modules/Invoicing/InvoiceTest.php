@@ -129,13 +129,15 @@ class InvoiceTest extends TestCase
     public function test_pay_marks_the_invoice_paid(): void
     {
         $user = $this->createAdminUser();
-        $invoice = Invoice::factory()->issued()->create();
+        $invoice = $this->draftWithLines(250000);
+        $this->actingAs($user)->post(route('module.invoicing.invoices.issue', $invoice))->assertSessionHas('success');
 
         $this->actingAs($user)->post(route('module.invoicing.invoices.pay', $invoice))->assertSessionHas('success');
 
         $invoice->refresh();
         $this->assertSame(Invoice::STATUS_PAID, $invoice->status);
         $this->assertNotNull($invoice->paid_at);
+        $this->assertEquals((float) $invoice->total, (float) $invoice->amount_paid);
     }
 
     public function test_void_drops_the_lines_and_a_paid_invoice_cannot_be_voided(): void

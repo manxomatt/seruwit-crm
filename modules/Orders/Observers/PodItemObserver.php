@@ -5,6 +5,7 @@ namespace Modules\Orders\Observers;
 use App\Modules\Facades\Modules;
 use Modules\Inventory\Support\StockMovementRecorder;
 use Modules\Orders\Models\PodItem;
+use Modules\Outbound\Support\OutboundDispatchGate;
 
 /**
  * Records inventory stock movements for each delivered line.
@@ -34,9 +35,15 @@ class PodItemObserver
         }
 
         $pod = $podItem->proofOfDelivery;
+        $order = $pod?->deliveryOrder;
+        $alreadyDispatched = Modules::available('outbound')
+            && class_exists(OutboundDispatchGate::class)
+            && $order
+            && OutboundDispatchGate::hasDispatchedStock($order);
 
         // OUT movement: accepted_quantity (delivered to customer)
-        if ($podItem->accepted_quantity > 0) {
+        // Skip when Outbound already deducted stock at pick/pack dispatch.
+        if ($podItem->accepted_quantity > 0 && ! $alreadyDispatched) {
             StockMovementRecorder::record([
                 'product_id' => $product->id,
                 'warehouse_id' => $warehouse->id,
@@ -44,7 +51,7 @@ class PodItemObserver
                 'quantity' => $podItem->accepted_quantity,
                 'source_type' => 'pod',
                 'source_id' => $pod?->id,
-                'reference_code' => $pod?->deliveryOrder?->reference_code,
+                'reference_code' => $order?->code,
                 'notes' => 'terkirim ke konsumen',
                 'recorded_by' => $pod?->submitted_by,
                 'recorded_at' => $pod?->delivered_at,
@@ -60,7 +67,7 @@ class PodItemObserver
                 'quantity' => $podItem->returned_quantity,
                 'source_type' => 'pod',
                 'source_id' => $pod?->id,
-                'reference_code' => $pod?->deliveryOrder?->reference_code,
+                'reference_code' => $order?->code,
                 'notes' => "retur dari konsumen: {$podItem->reason}",
                 'recorded_by' => $pod?->submitted_by,
                 'recorded_at' => $pod?->delivered_at,

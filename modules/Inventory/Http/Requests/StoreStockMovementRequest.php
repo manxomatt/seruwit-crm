@@ -22,6 +22,8 @@ class StoreStockMovementRequest extends FormRequest
             'location_id' => ['nullable', 'integer', 'exists:warehouse_locations,id'],
             'type' => ['required', 'string', 'in:in,out,adjustment'],
             'quantity' => ['required', 'numeric', 'min:0'],
+            'batch_number' => ['nullable', 'string', 'max:100'],
+            'expiry_date' => ['nullable', 'date'],
             'reference_code' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];

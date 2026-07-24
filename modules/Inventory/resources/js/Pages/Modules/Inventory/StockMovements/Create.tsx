@@ -43,6 +43,8 @@ export default function StockMovementCreate({ products, warehouses, locations }:
     product_id: '',
     type: 'in',
     quantity: '',
+    batch_number: '',
+    expiry_date: '',
     reference_code: '',
     notes: '',
   })
@@ -151,6 +153,35 @@ export default function StockMovementCreate({ products, warehouses, locations }:
                     On-hand will be set to this exact value.
                   </p>
                 )}
+                {data.type === 'out' && !data.batch_number && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Tanpa batch: stok diambil otomatis FEFO (kadaluarsa terdekat dulu).
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <InputLabel htmlFor="batch_number" value="Batch / Lot (opsional)" />
+                <TextInput
+                  id="batch_number"
+                  className="mt-1 block w-full"
+                  placeholder="e.g. LOT-240724"
+                  value={data.batch_number}
+                  onChange={(e) => setData('batch_number', e.target.value)}
+                />
+                <InputError message={errors.batch_number} className="mt-2" />
+              </div>
+
+              <div>
+                <InputLabel htmlFor="expiry_date" value="Expiry Date (opsional)" />
+                <TextInput
+                  id="expiry_date"
+                  type="date"
+                  className="mt-1 block w-full"
+                  value={data.expiry_date}
+                  onChange={(e) => setData('expiry_date', e.target.value)}
+                />
+                <InputError message={errors.expiry_date} className="mt-2" />
               </div>
             </div>
 

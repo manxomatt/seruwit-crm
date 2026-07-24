@@ -19,6 +19,8 @@ class Invoice extends Model
 
     public const STATUS_ISSUED = 'issued';
 
+    public const STATUS_PARTIALLY_PAID = 'partially_paid';
+
     public const STATUS_PAID = 'paid';
 
     public const STATUS_VOID = 'void';
@@ -46,6 +48,7 @@ class Invoice extends Model
         'subtotal',
         'tax_amount',
         'total',
+        'amount_paid',
         'paid_at',
         'notes',
     ];
@@ -63,8 +66,19 @@ class Invoice extends Model
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
             'paid_at' => 'datetime',
         ];
+    }
+
+    public function balanceDue(): float
+    {
+        return max(0, round((float) $this->total - (float) ($this->amount_paid ?? 0), 2));
+    }
+
+    public function isOpen(): bool
+    {
+        return in_array($this->status, [self::STATUS_ISSUED, self::STATUS_PARTIALLY_PAID], true);
     }
 
     /**

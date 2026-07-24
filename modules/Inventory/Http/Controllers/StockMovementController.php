@@ -25,7 +25,7 @@ class StockMovementController extends Controller
         return inertia('Modules/Inventory/StockMovements/Index', [
             'movements' => StockMovement::query()
                 ->with(['product:id,name', 'warehouse:id,name', 'location:id,name,code', 'recordedBy:id,name'])
-                ->select('id', 'product_id', 'warehouse_id', 'location_id', 'type', 'quantity', 'source_type', 'reference_code', 'notes', 'recorded_by', 'recorded_at')
+                ->select('id', 'product_id', 'warehouse_id', 'location_id', 'type', 'quantity', 'source_type', 'reference_code', 'batch_number', 'expiry_date', 'notes', 'recorded_by', 'recorded_at')
                 ->latest('recorded_at')
                 ->paginate(50),
         ]);
@@ -63,6 +63,8 @@ class StockMovementController extends Controller
             'source_type' => 'manual',
             'source_id' => null,
             'reference_code' => $validated['reference_code'] ?? null,
+            'batch_number' => $validated['batch_number'] ?? null,
+            'expiry_date' => $validated['expiry_date'] ?? null,
             'notes' => $validated['notes'] ?? null,
             'recorded_by' => auth()->id(),
             'recorded_at' => now(),
@@ -103,6 +105,8 @@ class StockMovementController extends Controller
                 'from_location_id' => $validated['from_location_id'] ?? null,
                 'to_location_id' => $validated['to_location_id'] ?? null,
                 'quantity' => $validated['quantity'],
+                'batch_number' => $validated['batch_number'] ?? null,
+                'expiry_date' => $validated['expiry_date'] ?? null,
                 'reference_code' => $validated['reference_code'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'recorded_by' => auth()->id(),

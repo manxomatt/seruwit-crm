@@ -37,6 +37,7 @@ class InvoiceFactory extends Factory
             'subtotal' => 0,
             'tax_amount' => 0,
             'total' => 0,
+            'amount_paid' => 0,
             'paid_at' => null,
             'notes' => null,
         ];
@@ -53,12 +54,24 @@ class InvoiceFactory extends Factory
     }
 
     /**
+     * Indicate that the invoice has been partially paid.
+     */
+    public function partiallyPaid(float $amountPaid = 0): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'status' => Invoice::STATUS_PARTIALLY_PAID,
+            'amount_paid' => $amountPaid,
+        ]);
+    }
+
+    /**
      * Indicate that the invoice has been paid.
      */
     public function paid(): static
     {
         return $this->state(fn (array $attributes): array => [
             'status' => Invoice::STATUS_PAID,
+            'amount_paid' => $attributes['total'] ?? 0,
             'paid_at' => now(),
         ]);
     }

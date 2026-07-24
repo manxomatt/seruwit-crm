@@ -23,17 +23,16 @@ class StockLevelController extends Controller
             ->get();
 
         $products = Product::query()
-            ->select('id', 'name', 'category', 'stock_unit', 'reorder_threshold')
+            ->select('id', 'name', 'category', 'stock_unit', 'reorder_threshold', 'tracking')
             ->orderBy('name')
             ->get();
 
         $stockLevels = StockLevel::query()
             ->with('location:id,name,code')
-            ->select('product_id', 'warehouse_id', 'location_id', 'on_hand', 'reserved')
+            ->select('product_id', 'warehouse_id', 'location_id', 'batch_number', 'expiry_date', 'on_hand', 'reserved')
             ->get()
             ->groupBy(fn ($level) => "{$level->product_id}-{$level->warehouse_id}");
 
-        // Build matrix: rows are products, columns are warehouses
         $matrix = $products->map(function ($product) use ($warehouses, $stockLevels) {
             return [
                 'product' => [
@@ -42,6 +41,7 @@ class StockLevelController extends Controller
                     'category' => $product->category,
                     'stock_unit' => $product->stock_unit,
                     'reorder_threshold' => $product->reorder_threshold,
+                    'tracking' => $product->tracking,
                 ],
                 'levels' => $warehouses->map(function ($warehouse) use ($product, $stockLevels) {
                     $key = "{$product->id}-{$warehouse->id}";
@@ -55,11 +55,17 @@ class StockLevelController extends Controller
                         'reserved' => $reserved,
                         'available' => $onHand - $reserved,
                         'is_low_stock' => ($onHand - $reserved) <= ($product->reorder_threshold ?? 10),
-                        'by_location' => $group->filter(fn ($l) => $l->location_id !== null)->map(fn ($l) => [
-                            'location' => $l->location?->only('id', 'name', 'code'),
-                            'on_hand' => $l->on_hand,
-                            'reserved' => $l->reserved,
-                        ])->values(),
+                        'batches' => $group
+                            ->filter(fn ($l) => (float) $l->on_hand > 0)
+                            ->sortBy(fn ($l) => $l->expiry_date?->toDateString() ?? '9999-99-99')
+                            ->values()
+                            ->map(fn ($l) => [
+                                'batch_number' => $l->batch_number !== '' ? $l->batch_number : null,
+                                'expiry_date' => $l->expiry_date?->toDateString(),
+                                'location' => $l->location?->only('id', 'name', 'code'),
+                                'on_hand' => $l->on_hand,
+                                'reserved' => $l->reserved,
+                            ]),
                     ];
                 }),
             ];

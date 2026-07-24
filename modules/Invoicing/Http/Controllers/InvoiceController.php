@@ -7,12 +7,15 @@ use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Invoicing\Http\Requests\StoreInvoiceRequest;
 use Modules\Invoicing\Http\Requests\UpdateInvoiceRequest;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Partners\Models\Partner;
+use Modules\Receivables\Support\CreditLimitChecker;
+use Modules\Receivables\Support\PaymentRecorder;
 
 class InvoiceController extends Controller
 {
@@ -43,7 +46,10 @@ class InvoiceController extends Controller
         return Inertia::render('Modules/Invoicing/Invoices/Index', [
             'invoices' => $invoices,
             'summary' => [
-                'outstanding' => (float) Invoice::query()->where('status', Invoice::STATUS_ISSUED)->sum('total'),
+                'outstanding' => (float) Invoice::query()
+                    ->whereIn('status', [Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID])
+                    ->get(['total', 'amount_paid'])
+                    ->sum(fn (Invoice $invoice): float => $invoice->balanceDue()),
                 'paid_this_month' => (float) Invoice::query()
                     ->where('status', Invoice::STATUS_PAID)
                     ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
@@ -96,11 +102,18 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice): Response
     {
-        $invoice->load(['partner:id,code,name', 'lines']);
+        $invoice->load(['partner:id,code,name,credit_limit', 'lines']);
+
+        $credit = null;
+        if (class_exists(CreditLimitChecker::class)) {
+            $credit = CreditLimitChecker::snapshot($invoice->partner);
+        }
 
         return Inertia::render('Modules/Invoicing/Invoices/Show', [
             'invoice' => $invoice,
+            'credit' => $credit,
             'can' => $this->abilitiesFor(),
+            'canRecordPayment' => Schema::hasTable('payments'),
         ]);
     }
 
@@ -148,22 +161,38 @@ class InvoiceController extends Controller
             return back()->with('error', 'Add at least one line before issuing.');
         }
 
+        $invoice->loadMissing('partner');
+
+        if (
+            class_exists(CreditLimitChecker::class)
+            && CreditLimitChecker::wouldExceed($invoice->partner, (float) $invoice->total)
+        ) {
+            return back()->with('error', 'Issuing this invoice would exceed the partner credit limit.');
+        }
+
         $invoice->update(['status' => Invoice::STATUS_ISSUED]);
 
         return back()->with('success', 'Invoice issued.');
     }
 
     /**
-     * Mark the issued invoice as paid.
+     * Settle the remaining balance via a payment record when AR tables exist.
      */
     public function pay(Invoice $invoice): RedirectResponse
     {
-        if ($invoice->status !== Invoice::STATUS_ISSUED) {
-            return back()->with('error', 'Only an issued invoice can be marked as paid.');
+        if (! $invoice->isOpen()) {
+            return back()->with('error', 'Only an open invoice can be marked as paid.');
+        }
+
+        if (Schema::hasTable('payments') && class_exists(PaymentRecorder::class)) {
+            PaymentRecorder::settleInvoice($invoice);
+
+            return back()->with('success', 'Payment recorded and invoice settled.');
         }
 
         $invoice->update([
             'status' => Invoice::STATUS_PAID,
+            'amount_paid' => $invoice->total,
             'paid_at' => now(),
         ]);
 
@@ -177,8 +206,12 @@ class InvoiceController extends Controller
      */
     public function void(Invoice $invoice): RedirectResponse
     {
-        if (! in_array($invoice->status, [Invoice::STATUS_DRAFT, Invoice::STATUS_ISSUED], true)) {
+        if (! in_array($invoice->status, [Invoice::STATUS_DRAFT, Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID], true)) {
             return back()->with('error', 'A paid invoice cannot be voided.');
+        }
+
+        if ((float) ($invoice->amount_paid ?? 0) > 0) {
+            return back()->with('error', 'Void payments first before voiding a partially paid invoice.');
         }
 
         DB::transaction(function () use ($invoice) {

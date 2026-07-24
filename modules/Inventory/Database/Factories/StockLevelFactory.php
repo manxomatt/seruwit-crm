@@ -16,6 +16,8 @@ class StockLevelFactory extends Factory
         return [
             'product_id' => Product::factory(),
             'warehouse_id' => Warehouse::factory(),
+            'batch_number' => '',
+            'expiry_date' => null,
             'on_hand' => fake()->randomFloat(2, 0, 1000),
             'reserved' => 0,
         ];

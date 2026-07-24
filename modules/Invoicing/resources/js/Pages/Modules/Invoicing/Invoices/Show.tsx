@@ -31,15 +31,26 @@ interface Invoice {
     subtotal: string;
     tax_amount: string;
     total: string;
+    amount_paid?: string;
     paid_at: string | null;
     notes: string | null;
-    partner: { id: number; code: string; name: string };
+    partner: { id: number; code: string; name: string; credit_limit?: string | null };
     lines: InvoiceLine[];
+}
+
+interface CreditSnapshot {
+    limit: number | null;
+    outstanding: number;
+    available: number | null;
+    utilization: number | null;
+    is_over_limit: boolean;
 }
 
 interface Props {
     invoice: Invoice;
+    credit?: CreditSnapshot | null;
     can: { create: boolean; update: boolean; delete: boolean };
+    canRecordPayment?: boolean;
 }
 
 const getStatusBadgeColor = (status: string) => {
@@ -48,6 +59,8 @@ const getStatusBadgeColor = (status: string) => {
             return 'bg-gray-100 text-gray-800';
         case 'issued':
             return 'bg-blue-100 text-blue-800';
+        case 'partially_paid':
+            return 'bg-amber-100 text-amber-800';
         case 'paid':
             return 'bg-green-100 text-green-800';
         default:
@@ -55,7 +68,7 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ invoice, can }: Props): JSX.Element {
+export default function Show({ invoice, credit, can, canRecordPayment = false }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showLineModal, setShowLineModal] = useState(false);
     const [showVoidModal, setShowVoidModal] = useState(false);
@@ -64,8 +77,11 @@ export default function Show({ invoice, can }: Props): JSX.Element {
 
     const isDraft = invoice.status === 'draft';
     const isIssued = invoice.status === 'issued';
-    const printable = isIssued || invoice.status === 'paid';
+    const isPartiallyPaid = invoice.status === 'partially_paid';
+    const isOpen = isIssued || isPartiallyPaid;
+    const printable = isOpen || invoice.status === 'paid';
     const canEditLines = isDraft && can.update;
+    const balanceDue = Math.max(0, parseFloat(invoice.total) - parseFloat(invoice.amount_paid || '0'));
 
     const issue = () => {
         router.post(prefixedRoute('invoicing.invoices.issue', invoice.id), {}, { preserveScroll: true });
@@ -117,7 +133,18 @@ export default function Show({ invoice, can }: Props): JSX.Element {
                     </div>
                     <div className="flex gap-2">
                         {can.update && isDraft && <PrimaryButton onClick={issue}>Issue</PrimaryButton>}
-                        {can.update && isIssued && <PrimaryButton onClick={pay}>Mark Paid</PrimaryButton>}
+                        {can.update && isOpen && (
+                            <PrimaryButton onClick={pay}>
+                                {isPartiallyPaid ? 'Settle Remaining' : 'Mark Paid'}
+                            </PrimaryButton>
+                        )}
+                        {canRecordPayment && isOpen && (
+                            <Link
+                                href={`${prefixedRoute('receivables.payments.create')}?partner_id=${invoice.partner.id}&invoice_id=${invoice.id}`}
+                            >
+                                <SecondaryButton type="button">Record Payment</SecondaryButton>
+                            </Link>
+                        )}
                         {printable && (
                             <a href={prefixedRoute('invoicing.invoices.pdf', invoice.id)} target="_blank" rel="noreferrer">
                                 <SecondaryButton type="button">Print PDF</SecondaryButton>
@@ -232,10 +259,36 @@ export default function Show({ invoice, can }: Props): JSX.Element {
                                     <dt className="text-sm font-semibold text-gray-900">Total</dt>
                                     <dd className="text-sm font-semibold text-gray-900">{formatMoney(invoice.total)}</dd>
                                 </div>
+                                {(isOpen || invoice.status === 'paid') && (
+                                    <>
+                                        <div className="flex items-center justify-between">
+                                            <dt className="text-sm text-gray-500">Paid</dt>
+                                            <dd className="text-sm text-gray-900">{formatMoney(invoice.amount_paid || 0)}</dd>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <dt className="text-sm font-semibold text-gray-900">Balance Due</dt>
+                                            <dd className="text-sm font-semibold text-gray-900">{formatMoney(balanceDue)}</dd>
+                                        </div>
+                                    </>
+                                )}
                             </dl>
                         </div>
                     </div>
                 </div>
+
+                {credit && credit.limit !== null && credit.limit > 0 && (
+                    <div
+                        className={`rounded-lg border px-4 py-3 text-sm ${
+                            credit.is_over_limit
+                                ? 'border-red-200 bg-red-50 text-red-900'
+                                : 'border-gray-200 bg-white text-gray-700'
+                        }`}
+                    >
+                        Credit limit {formatMoney(credit.limit)} · Outstanding {formatMoney(credit.outstanding)}
+                        {credit.available !== null && <> · Available {formatMoney(credit.available)}</>}
+                        {credit.utilization !== null && <> · {credit.utilization.toFixed(1)}% used</>}
+                    </div>
+                )}
 
                 {can.delete && isDraft && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">

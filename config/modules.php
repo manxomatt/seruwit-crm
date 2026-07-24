@@ -24,6 +24,8 @@ return [
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,
         Modules\Purchasing\PurchasingModule::class,
+        Modules\Receivables\ReceivablesModule::class,
+        Modules\Outbound\OutboundModule::class,
         Modules\Maintenance\MaintenanceModule::class,
         Modules\Orders\OrdersModule::class,
         Modules\Pages\PagesModule::class,

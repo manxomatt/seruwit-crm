@@ -14,6 +14,8 @@ interface StockMovement {
   quantity: string
   source_type: string
   reference_code?: string
+  batch_number?: string | null
+  expiry_date?: string | null
   notes?: string
   recorded_by?: { id: number; name: string } | null
   recorded_at: string
@@ -69,6 +71,7 @@ export default function StockMovementsIndex({ movements }: Props) {
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Qty</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Source</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Reference</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Batch</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">By</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
               </tr>
@@ -76,7 +79,7 @@ export default function StockMovementsIndex({ movements }: Props) {
             <tbody className="divide-y divide-gray-200">
               {movements.data.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
                     No movements recorded yet.
                   </td>
                 </tr>
@@ -96,6 +99,14 @@ export default function StockMovementsIndex({ movements }: Props) {
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{movement.source_type}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{movement.reference_code || '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+                      {movement.batch_number || '—'}
+                      {movement.expiry_date ? (
+                        <span className="block text-[10px] text-gray-400">
+                          exp {new Date(movement.expiry_date).toLocaleDateString('id-ID')}
+                        </span>
+                      ) : null}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-500">{movement.recorded_by?.name ?? '—'}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{new Date(movement.recorded_at).toLocaleDateString('id-ID')}</td>
                   </tr>
