@@ -28,6 +28,7 @@ return [
         Modules\Approvals\ApprovalsModule::class,
         Modules\DriverScoring\DriverScoringModule::class,
         Modules\TradePromotions\TradePromotionsModule::class,
+        Modules\ExecutiveDashboard\ExecutiveDashboardModule::class,
         Modules\Outbound\OutboundModule::class,
         Modules\Routing\RoutingModule::class,
         Modules\Maintenance\MaintenanceModule::class,
