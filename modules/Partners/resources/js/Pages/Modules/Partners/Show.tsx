@@ -226,6 +226,10 @@ export default function Show({ partner, can }: Props): JSX.Element {
     const [processing, setProcessing] = useState(false);
     const [showAddressForm, setShowAddressForm] = useState(false);
     const [showBankForm, setShowBankForm] = useState(false);
+    const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
+    const [bankAccountToDelete, setBankAccountToDelete] = useState<BankAccount | null>(null);
+    const [deletingAddress, setDeletingAddress] = useState(false);
+    const [deletingBankAccount, setDeletingBankAccount] = useState(false);
 
     const confirmDelete = () => {
         setProcessing(true);
@@ -234,13 +238,43 @@ export default function Show({ partner, can }: Props): JSX.Element {
         });
     };
 
-    const deleteAddress = (addressId: number) => {
-        router.delete(prefixedRoute('partners.addresses.destroy', [partner.id, addressId]));
+    const confirmDeleteAddress = () => {
+        if (!addressToDelete) {
+            return;
+        }
+
+        setDeletingAddress(true);
+        router.delete(prefixedRoute('partners.addresses.destroy', [partner.id, addressToDelete.id]), {
+            preserveScroll: true,
+            onSuccess: () => setAddressToDelete(null),
+            onFinish: () => setDeletingAddress(false),
+        });
     };
 
-    const deleteBankAccount = (bankAccountId: number) => {
-        router.delete(prefixedRoute('partners.bank-accounts.destroy', [partner.id, bankAccountId]));
+    const confirmDeleteBankAccount = () => {
+        if (!bankAccountToDelete) {
+            return;
+        }
+
+        setDeletingBankAccount(true);
+        router.delete(prefixedRoute('partners.bank-accounts.destroy', [partner.id, bankAccountToDelete.id]), {
+            preserveScroll: true,
+            onSuccess: () => setBankAccountToDelete(null),
+            onFinish: () => setDeletingBankAccount(false),
+        });
     };
+
+    const addressDeleteDetail = addressToDelete
+        ? [
+            t(`partners.address_type.${addressToDelete.type}`, undefined, addressToDelete.type),
+            addressToDelete.label,
+            addressToDelete.street,
+        ].filter(Boolean).join(' — ')
+        : '';
+
+    const bankAccountLastDigits = bankAccountToDelete
+        ? bankAccountToDelete.account_number.slice(-4)
+        : '';
 
     const roleBadges: Array<{ key: string; label: string; className: string }> = [];
     if (partner.customer_rank > 0) {
@@ -434,7 +468,11 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                             </p>
                                         </div>
                                         {can.update && (
-                                            <button onClick={() => deleteAddress(addr.id)} className="text-sm text-red-600 hover:text-red-900">
+                                            <button
+                                                type="button"
+                                                onClick={() => setAddressToDelete(addr)}
+                                                className="text-sm text-red-600 hover:text-red-900"
+                                            >
                                                 {t('common.delete')}
                                             </button>
                                         )}
@@ -486,7 +524,11 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                                 <td className="whitespace-nowrap px-4 py-2 text-sm text-gray-900">{ba.account_holder_name}</td>
                                                 {can.update && (
                                                     <td className="whitespace-nowrap px-4 py-2 text-right">
-                                                        <button onClick={() => deleteBankAccount(ba.id)} className="text-sm text-red-600 hover:text-red-900">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBankAccountToDelete(ba)}
+                                                            className="text-sm text-red-600 hover:text-red-900"
+                                                        >
                                                             {t('common.delete')}
                                                         </button>
                                                     </td>
@@ -565,6 +607,29 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 processing={processing}
                 title={t('partners.show.delete_title')}
                 message={t('partners.show.delete_confirm', { name: partner.name, code: partner.code })}
+            />
+
+            <ConfirmDeleteDialog
+                show={addressToDelete !== null}
+                onClose={() => !deletingAddress && setAddressToDelete(null)}
+                onConfirm={confirmDeleteAddress}
+                processing={deletingAddress}
+                title={t('partners.show.delete_address_title')}
+                message={t('partners.show.delete_address_confirm', {
+                    detail: addressDeleteDetail,
+                })}
+            />
+
+            <ConfirmDeleteDialog
+                show={bankAccountToDelete !== null}
+                onClose={() => !deletingBankAccount && setBankAccountToDelete(null)}
+                onConfirm={confirmDeleteBankAccount}
+                processing={deletingBankAccount}
+                title={t('partners.show.delete_bank_account_title')}
+                message={t('partners.show.delete_bank_account_confirm', {
+                    bank: bankAccountToDelete?.bank_name ?? '',
+                    account: bankAccountLastDigits,
+                })}
             />
         </DynamicLayout>
     );

@@ -116,6 +116,10 @@ return [
         'delete_action' => 'Delete Partner',
         'delete_title' => 'Delete Partner',
         'delete_confirm' => 'Are you sure you want to delete ":name" (:code)? This cannot be undone.',
+        'delete_address_title' => 'Delete Address',
+        'delete_address_confirm' => 'Are you sure you want to delete this address (:detail)? This cannot be undone.',
+        'delete_bank_account_title' => 'Delete Bank Account',
+        'delete_bank_account_confirm' => 'Are you sure you want to delete the :bank account ending in :account? This cannot be undone.',
         'bank_columns' => [
             'bank' => 'Bank',
             'account_number' => 'Account Number',

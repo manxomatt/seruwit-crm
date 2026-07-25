@@ -116,6 +116,10 @@ return [
         'delete_action' => 'Hapus Partner',
         'delete_title' => 'Hapus Partner',
         'delete_confirm' => 'Yakin ingin menghapus ":name" (:code)? Tindakan ini tidak dapat dibatalkan.',
+        'delete_address_title' => 'Hapus Alamat',
+        'delete_address_confirm' => 'Yakin ingin menghapus alamat ini (:detail)? Tindakan ini tidak dapat dibatalkan.',
+        'delete_bank_account_title' => 'Hapus Rekening Bank',
+        'delete_bank_account_confirm' => 'Yakin ingin menghapus rekening :bank dengan nomor akhir :account? Tindakan ini tidak dapat dibatalkan.',
         'bank_columns' => [
             'bank' => 'Bank',
             'account_number' => 'No. Rekening',

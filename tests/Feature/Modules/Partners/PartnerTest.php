@@ -131,12 +131,18 @@ class PartnerTest extends TestCase
     {
         $user = $this->createAdminUser();
         $partner = Partner::factory()->create();
+        PartnerAddress::factory()->create(['partner_id' => $partner->id]);
+        PartnerBankAccount::factory()->create(['partner_id' => $partner->id]);
 
         $this->actingAs($user)->get(route('module.partners.show', $partner))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Partners/Show')
                 ->has('partner')
+                ->has('partner.addresses', 1)
+                ->has('partner.bank_accounts', 1)
+                ->where('can.update', true)
+                ->where('can.delete', true)
             );
     }
 
