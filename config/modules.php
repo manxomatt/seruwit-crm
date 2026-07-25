@@ -24,6 +24,7 @@ return [
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,
         Modules\Purchasing\PurchasingModule::class,
+        Modules\Sales\SalesModule::class,
         Modules\Receivables\ReceivablesModule::class,
         Modules\Approvals\ApprovalsModule::class,
         Modules\DriverScoring\DriverScoringModule::class,

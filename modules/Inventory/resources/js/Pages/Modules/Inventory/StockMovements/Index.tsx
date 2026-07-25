@@ -22,6 +22,7 @@ interface StockMovement {
   recorded_by?: { id: number; name: string } | null
   recorded_at: string
   grn_id?: number | null
+  gin_id?: number | null
 }
 
 interface PaginatedMovements {
@@ -115,6 +116,13 @@ export default function StockMovementsIndex({ movements }: Props) {
                       {movement.grn_id && movement.reference_code ? (
                         <Link
                           href={prefixedRoute('purchasing.grn.show', movement.grn_id)}
+                          className="font-medium text-indigo-600 hover:text-indigo-900"
+                        >
+                          {movement.reference_code}
+                        </Link>
+                      ) : movement.gin_id && movement.reference_code ? (
+                        <Link
+                          href={prefixedRoute('sales.gin.show', movement.gin_id)}
                           className="font-medium text-indigo-600 hover:text-indigo-900"
                         >
                           {movement.reference_code}

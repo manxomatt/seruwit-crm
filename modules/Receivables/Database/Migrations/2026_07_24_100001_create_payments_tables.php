@@ -34,17 +34,18 @@ return new class extends Migration
             $table->unique(['payment_id', 'invoice_id']);
         });
 
-        Schema::table('invoices', function (Blueprint $table) {
-            $table->decimal('amount_paid', 15, 2)->default(0)->after('total');
-        });
+        // amount_paid lives on invoices for Invoicing's mark-as-paid flow;
+        // Receivables only updates it. Skip if Invoicing already added it.
+        if (! Schema::hasColumn('invoices', 'amount_paid')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                $table->decimal('amount_paid', 15, 2)->default(0)->after('total');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('invoices', function (Blueprint $table) {
-            $table->dropColumn('amount_paid');
-        });
-
+        // Leave amount_paid in place — Invoicing owns the column after install.
         Schema::dropIfExists('payment_allocations');
         Schema::dropIfExists('payments');
     }

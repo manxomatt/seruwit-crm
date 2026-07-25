@@ -35,6 +35,12 @@ class StockMovementController extends Controller
             ->unique()
             ->values();
 
+        $ginNumbers = $movements->getCollection()
+            ->filter(fn (StockMovement $movement): bool => in_array($movement->source_type, ['gin', 'gin_void'], true) && filled($movement->reference_code))
+            ->pluck('reference_code')
+            ->unique()
+            ->values();
+
         $grnIdsByNumber = [];
         if ($grnNumbers->isNotEmpty() && class_exists(\Modules\Purchasing\Models\GoodReceiptNote::class)) {
             $grnIdsByNumber = \Modules\Purchasing\Models\GoodReceiptNote::query()
@@ -43,9 +49,21 @@ class StockMovementController extends Controller
                 ->all();
         }
 
-        $movements->getCollection()->transform(function (StockMovement $movement) use ($grnIdsByNumber) {
+        $ginIdsByNumber = [];
+        if ($ginNumbers->isNotEmpty() && class_exists(\Modules\Sales\Models\GoodsIssueNote::class)) {
+            $ginIdsByNumber = \Modules\Sales\Models\GoodsIssueNote::query()
+                ->whereIn('gin_number', $ginNumbers)
+                ->pluck('id', 'gin_number')
+                ->all();
+        }
+
+        $movements->getCollection()->transform(function (StockMovement $movement) use ($grnIdsByNumber, $ginIdsByNumber) {
             if (in_array($movement->source_type, ['grn', 'grn_void'], true) && filled($movement->reference_code)) {
                 $movement->setAttribute('grn_id', $grnIdsByNumber[$movement->reference_code] ?? null);
+            }
+
+            if (in_array($movement->source_type, ['gin', 'gin_void'], true) && filled($movement->reference_code)) {
+                $movement->setAttribute('gin_id', $ginIdsByNumber[$movement->reference_code] ?? null);
             }
 
             return $movement;
