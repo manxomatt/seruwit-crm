@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -69,6 +70,7 @@ interface Props {
 
 export default function Edit({ partner, industries, titles, tags, partners }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         account_type: partner.account_type,
         sub_type: partner.sub_type || 'customer',
@@ -91,7 +93,7 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
         notes: partner.notes || '',
         comment: partner.comment || '',
         status: partner.status,
-        tag_ids: partner.tags.map((t) => t.id),
+        tag_ids: partner.tags.map((tag) => tag.id),
     });
 
     const isIndividual = data.account_type === 'individual';
@@ -109,9 +111,9 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Partner</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('partners.edit.head')}</h2>}
         >
-            <Head title={`Edit: ${partner.name}`} />
+            <Head title={t('partners.edit.title', { name: partner.name })} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -119,15 +121,15 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                         {/* Tipe Akun & Peran */}
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                             <div>
-                                <InputLabel htmlFor="account_type" value="Tipe Akun" />
+                                <InputLabel htmlFor="account_type" value={t('partners.fields.account_type')} />
                                 <Select
                                     id="account_type"
                                     className="mt-1"
                                     value={data.account_type}
                                     onChange={(value) => setData('account_type', value)}
                                     options={[
-                                        { value: 'company', label: 'Perusahaan' },
-                                        { value: 'individual', label: 'Individu' },
+                                        { value: 'company', label: t('partners.account_type.company') },
+                                        { value: 'individual', label: t('partners.account_type.individual') },
                                     ]}
                                 />
                                 <InputError message={errors.account_type} className="mt-2" />
@@ -140,7 +142,7 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                                         onChange={(e) => setData('is_customer', e.target.checked)}
                                         className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                     />
-                                    <span className="text-sm text-gray-700">Customer</span>
+                                    <span className="text-sm text-gray-700">{t('partners.role.customer')}</span>
                                 </label>
                                 <label className="flex items-center gap-2">
                                     <input
@@ -149,19 +151,19 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                                         onChange={(e) => setData('is_supplier', e.target.checked)}
                                         className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                     />
-                                    <span className="text-sm text-gray-700">Supplier</span>
+                                    <span className="text-sm text-gray-700">{t('partners.role.supplier')}</span>
                                 </label>
                             </div>
                             <div>
-                                <InputLabel htmlFor="status" value="Status" />
+                                <InputLabel htmlFor="status" value={t('partners.fields.status')} />
                                 <Select
                                     id="status"
                                     className="mt-1"
                                     value={data.status}
                                     onChange={(value) => setData('status', value)}
                                     options={[
-                                        { value: 'active', label: 'Active' },
-                                        { value: 'inactive', label: 'Inactive' },
+                                        { value: 'active', label: t('partners.status.active') },
+                                        { value: 'inactive', label: t('partners.status.inactive') },
                                     ]}
                                 />
                                 <InputError message={errors.status} className="mt-2" />
@@ -174,43 +176,43 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             {isIndividual && (
                                 <div>
-                                    <InputLabel htmlFor="title_id" value="Sapaan" />
+                                    <InputLabel htmlFor="title_id" value={t('partners.fields.title')} />
                                     <Select
                                         id="title_id"
                                         className="mt-1"
                                         value={data.title_id}
                                         onChange={(value) => setData('title_id', value)}
-                                        placeholder="Pilih sapaan"
+                                        placeholder={t('partners.placeholders.select_title')}
                                         options={[
-                                            { value: '', label: 'Tidak ada' },
-                                            ...titles.map((t) => ({ value: String(t.id), label: `${t.short_name} (${t.name})` })),
+                                            { value: '', label: t('partners.placeholders.none') },
+                                            ...titles.map((title) => ({ value: String(title.id), label: `${title.short_name} (${title.name})` })),
                                         ]}
                                     />
                                 </div>
                             )}
                             <div className={isIndividual ? '' : 'sm:col-span-2'}>
-                                <InputLabel htmlFor="name" value="Nama" />
+                                <InputLabel htmlFor="name" value={t('partners.fields.name')} />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required autoFocus />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
                             {isIndividual && (
                                 <div>
-                                    <InputLabel htmlFor="job_title" value="Jabatan" />
+                                    <InputLabel htmlFor="job_title" value={t('partners.fields.job_title')} />
                                     <TextInput id="job_title" className="mt-1 block w-full" value={data.job_title} onChange={(e) => setData('job_title', e.target.value)} />
                                     <InputError message={errors.job_title} className="mt-2" />
                                 </div>
                             )}
                             {isIndividual && (
                                 <div>
-                                    <InputLabel htmlFor="parent_id" value="Perusahaan Induk" />
+                                    <InputLabel htmlFor="parent_id" value={t('partners.fields.parent_company')} />
                                     <Select
                                         id="parent_id"
                                         className="mt-1"
                                         value={data.parent_id}
                                         onChange={(value) => setData('parent_id', value)}
-                                        placeholder="Pilih perusahaan"
+                                        placeholder={t('partners.placeholders.select_company')}
                                         options={[
-                                            { value: '', label: 'Tidak ada' },
+                                            { value: '', label: t('partners.placeholders.none') },
                                             ...partners.map((p) => ({ value: String(p.id), label: `${p.name} (${p.code})` })),
                                         ]}
                                     />
@@ -221,22 +223,22 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                         {/* Kontak */}
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="phone" value="Telepon" />
+                                <InputLabel htmlFor="phone" value={t('partners.fields.phone')} />
                                 <TextInput id="phone" className="mt-1 block w-full" value={data.phone} onChange={(e) => setData('phone', e.target.value)} />
                                 <InputError message={errors.phone} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="mobile" value="HP / WhatsApp" />
+                                <InputLabel htmlFor="mobile" value={t('partners.fields.mobile')} />
                                 <TextInput id="mobile" className="mt-1 block w-full" value={data.mobile} onChange={(e) => setData('mobile', e.target.value)} />
                                 <InputError message={errors.mobile} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="email" value="Email" />
+                                <InputLabel htmlFor="email" value={t('partners.fields.email')} />
                                 <TextInput id="email" type="email" className="mt-1 block w-full" value={data.email} onChange={(e) => setData('email', e.target.value)} />
                                 <InputError message={errors.email} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="website" value="Website" />
+                                <InputLabel htmlFor="website" value={t('partners.fields.website')} />
                                 <TextInput id="website" className="mt-1 block w-full" value={data.website} onChange={(e) => setData('website', e.target.value)} />
                                 <InputError message={errors.website} className="mt-2" />
                             </div>
@@ -245,26 +247,26 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                         {/* Bisnis */}
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                             <div>
-                                <InputLabel htmlFor="industry_id" value="Industri" />
+                                <InputLabel htmlFor="industry_id" value={t('partners.fields.industry')} />
                                 <Select
                                     id="industry_id"
                                     className="mt-1"
                                     value={data.industry_id}
                                     onChange={(value) => setData('industry_id', value)}
-                                    placeholder="Pilih industri"
+                                    placeholder={t('partners.placeholders.select_industry')}
                                     options={[
-                                        { value: '', label: 'Tidak ada' },
+                                        { value: '', label: t('partners.placeholders.none') },
                                         ...industries.map((i) => ({ value: String(i.id), label: i.name })),
                                     ]}
                                 />
                             </div>
                             <div>
-                                <InputLabel htmlFor="tax_id" value="NPWP" />
+                                <InputLabel htmlFor="tax_id" value={t('partners.fields.tax_id')} />
                                 <TextInput id="tax_id" className="mt-1 block w-full" value={data.tax_id} onChange={(e) => setData('tax_id', e.target.value)} />
                                 <InputError message={errors.tax_id} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="credit_limit" value="Batas Kredit" />
+                                <InputLabel htmlFor="credit_limit" value={t('partners.fields.credit_limit')} />
                                 <TextInput id="credit_limit" type="number" className="mt-1 block w-full" value={data.credit_limit} onChange={(e) => setData('credit_limit', e.target.value)} min="0" step="0.01" />
                                 <InputError message={errors.credit_limit} className="mt-2" />
                             </div>
@@ -273,7 +275,7 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                         {/* Tags */}
                         {tags.length > 0 && (
                             <div>
-                                <InputLabel value="Tags" />
+                                <InputLabel value={t('partners.fields.tags')} />
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     {tags.map((tag) => (
                                         <button
@@ -295,21 +297,21 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
 
                         {/* Alamat & Catatan */}
                         <div>
-                            <InputLabel htmlFor="address" value="Alamat Utama" />
+                            <InputLabel htmlFor="address" value={t('partners.fields.address')} />
                             <textarea id="address" rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.address} onChange={(e) => setData('address', e.target.value)} />
                             <InputError message={errors.address} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="notes" value="Catatan" />
+                            <InputLabel htmlFor="notes" value={t('partners.fields.notes')} />
                             <textarea id="notes" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
                             <InputError message={errors.notes} className="mt-2" />
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing}>Simpan Perubahan</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('partners.edit.submit')}</PrimaryButton>
                             <Link href={prefixedRoute('partners.show', partner.id)}>
-                                <SecondaryButton type="button">Batal</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

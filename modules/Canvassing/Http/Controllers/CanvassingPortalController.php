@@ -101,7 +101,7 @@ class CanvassingPortalController extends Controller
         ]);
 
         return redirect()->route('module.canvassing.portal.visits.show', $visit)
-            ->with('success', 'Checked in successfully.');
+            ->with('success', __('canvassing.messages.checked_in'));
     }
 
     public function visitDetail(CanvassingVisit $visit): Response
@@ -148,6 +148,6 @@ class CanvassingPortalController extends Controller
         });
 
         return redirect()->route('module.canvassing.portal.today')
-            ->with('success', 'Checked out successfully.');
+            ->with('success', __('canvassing.messages.checked_out'));
     }
 }

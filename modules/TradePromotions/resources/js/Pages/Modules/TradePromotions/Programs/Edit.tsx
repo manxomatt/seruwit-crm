@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -58,6 +59,7 @@ function toLocal(value: string): string {
 
 export default function Edit({ program, partners, products, principals }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         name: program.name,
         description: program.description || '',
@@ -72,13 +74,13 @@ export default function Edit({ program, partners, products, principals }: Props)
         product_ids: program.products.map((p) => p.id),
         tiers:
             program.tiers.length > 0
-                ? program.tiers.map((t) => ({
-                      min_qty: t.min_qty != null ? String(t.min_qty) : '',
-                      min_value: t.min_value != null ? String(t.min_value) : '',
-                      discount_percent: t.discount_percent != null ? String(t.discount_percent) : '',
-                      discount_amount: t.discount_amount != null ? String(t.discount_amount) : '',
-                      free_product_id: t.free_product_id ? String(t.free_product_id) : '',
-                      free_qty: t.free_qty != null ? String(t.free_qty) : '',
+                ? program.tiers.map((tier) => ({
+                      min_qty: tier.min_qty != null ? String(tier.min_qty) : '',
+                      min_value: tier.min_value != null ? String(tier.min_value) : '',
+                      discount_percent: tier.discount_percent != null ? String(tier.discount_percent) : '',
+                      discount_amount: tier.discount_amount != null ? String(tier.discount_amount) : '',
+                      free_product_id: tier.free_product_id ? String(tier.free_product_id) : '',
+                      free_qty: tier.free_qty != null ? String(tier.free_qty) : '',
                   }))
                 : [{ min_qty: '', min_value: '', discount_percent: '', discount_amount: '', free_product_id: '', free_qty: '' }],
         rebate_percent: program.rebate_rule?.rebate_percent != null ? String(program.rebate_rule.rebate_percent) : '',
@@ -92,33 +94,33 @@ export default function Edit({ program, partners, products, principals }: Props)
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Edit Program</h2>}>
-            <Head title="Edit Program" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.programs.edit.title')}</h2>}>
+            <Head title={t('promotions.programs.edit.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <PromotionsNav />
                     <form onSubmit={submit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
                         <div>
-                            <InputLabel value="Name" />
+                            <InputLabel value={t('promotions.fields.name')} />
                             <TextInput className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />
                             <InputError message={errors.name} className="mt-1" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <InputLabel value="Starts at" />
+                                <InputLabel value={t('promotions.fields.starts_at')} />
                                 <TextInput type="datetime-local" className="mt-1 block w-full" value={data.starts_at} onChange={(e) => setData('starts_at', e.target.value)} />
                             </div>
                             <div>
-                                <InputLabel value="Ends at" />
+                                <InputLabel value={t('promotions.fields.ends_at')} />
                                 <TextInput type="datetime-local" className="mt-1 block w-full" value={data.ends_at} onChange={(e) => setData('ends_at', e.target.value)} />
                             </div>
                         </div>
                         <div>
-                            <InputLabel value="Target amount" />
+                            <InputLabel value={t('promotions.fields.target_amount')} />
                             <TextInput className="mt-1 block w-full" value={data.target_amount} onChange={(e) => setData('target_amount', e.target.value)} />
                         </div>
                         <div>
-                            <InputLabel value="Principal" />
+                            <InputLabel value={t('promotions.fields.principal')} />
                             <Select
                                 className="mt-1"
                                 value={data.principal_id}
@@ -128,13 +130,16 @@ export default function Edit({ program, partners, products, principals }: Props)
                             />
                         </div>
                         <p className="text-xs text-gray-500">
-                            Type: {data.type}. Distributors selected: {data.partner_ids.length || 'all'}. Products: {data.product_ids.length || 'all'}.
-                            Use Create for full tier editing on new programs; here you can adjust period and target.
+                            {t('promotions.programs.edit.hint', {
+                                type: t(`promotions.types.${data.type}`, undefined, data.type),
+                                partners: data.partner_ids.length || t('promotions.programs.edit.all'),
+                                products: data.product_ids.length || t('promotions.programs.edit.all'),
+                            })}
                         </p>
                         <div className="flex gap-3">
-                            <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('promotions.programs.edit.submit')}</PrimaryButton>
                             <Link href={prefixedRoute('promotions.programs.show', program.id)}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

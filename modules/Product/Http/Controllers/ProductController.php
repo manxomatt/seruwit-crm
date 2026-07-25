@@ -191,7 +191,7 @@ class ProductController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.products.show', $product)
-            ->with('success', 'Produk berhasil dibuat.');
+            ->with('success', __('products.messages.product_created'));
     }
 
     public function show(Product $product): Response
@@ -282,7 +282,7 @@ class ProductController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.products.show', $product)
-            ->with('success', 'Produk berhasil diperbarui.');
+            ->with('success', __('products.messages.product_updated'));
     }
 
     /**
@@ -301,10 +301,10 @@ class ProductController extends Controller
         try {
             DB::transaction(fn () => $product->delete());
         } catch (QueryException) {
-            return back()->with('error', 'This product is still referenced by other records and cannot be deleted.');
+            return back()->with('error', __('products.messages.product_referenced'));
         }
 
         return redirect()->route($this->getRoutePrefix().'.products.index')
-            ->with('success', 'Product deleted successfully.');
+            ->with('success', __('products.messages.product_deleted'));
     }
 }

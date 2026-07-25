@@ -5,17 +5,18 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     WorkOrder,
     WorkOrderItem,
+    ItemType,
     getStatusBadge,
     getPriorityBadge,
     getTypeBadge,
     formatDate,
     formatDateTime,
     formatCurrency,
-    formatOdometer,
 } from '../../../../maintenanceUtils';
 
 interface Props {
@@ -32,12 +33,14 @@ const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) =>
 
 export default function Show({ workOrder: wo, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    const statusBadge = getStatusBadge(wo.status);
-    const priorityBadge = getPriorityBadge(wo.priority);
-    const typeBadge = getTypeBadge(wo.type);
+    const statusBadge = getStatusBadge(wo.status, t);
+    const priorityBadge = getPriorityBadge(wo.priority, t);
+    const typeBadge = getTypeBadge(wo.type, t);
 
     const confirmDelete = () => {
         setDeleting(true);
@@ -55,21 +58,27 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
     const totalLabor = laborItems.reduce((s: number, i: WorkOrderItem) => s + Number(i.total_price), 0);
     const totalOther = otherItems.reduce((s: number, i: WorkOrderItem) => s + Number(i.total_price), 0);
 
+    const itemGroups: { type: ItemType; items: WorkOrderItem[]; total: number }[] = [
+        { type: 'part', items: partItems, total: totalParts },
+        { type: 'labor', items: laborItems, total: totalLabor },
+        { type: 'other', items: otherItems, total: totalOther },
+    ];
+
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">Work Order</h2>
+                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.work_orders.show_title')}</h2>
                         <p className="mt-1 font-mono text-sm text-gray-500">{wo.reference_number}</p>
                     </div>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('maintenance.work-orders.index')}>
-                            <SecondaryButton>← Kembali</SecondaryButton>
+                            <SecondaryButton>{t('maintenance.actions.back')}</SecondaryButton>
                         </Link>
                         {can.update && (
                             <Link href={prefixedRoute('maintenance.work-orders.edit', wo.id)}>
-                                <PrimaryButton>Edit</PrimaryButton>
+                                <PrimaryButton>{t('common.edit')}</PrimaryButton>
                             </Link>
                         )}
                         {can.delete && (
@@ -78,14 +87,14 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                                 onClick={() => setShowDeleteDialog(true)}
                                 className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
                             >
-                                Hapus
+                                {t('common.delete')}
                             </button>
                         )}
                     </div>
                 </div>
             }
         >
-            <Head title={`WO — ${wo.reference_number}`} />
+            <Head title={`${t('maintenance.work_orders.show_title')} — ${wo.reference_number}`} />
             <MaintenanceNav />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -114,25 +123,23 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                     {/* Items table */}
                     {wo.items && wo.items.length > 0 && (
                         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <h3 className="mb-4 font-semibold text-gray-900">Rincian Pekerjaan</h3>
+                            <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.work_orders.details')}</h3>
 
-                            {[
-                                { label: 'Suku Cadang', items: partItems, total: totalParts },
-                                { label: 'Jasa', items: laborItems, total: totalLabor },
-                                { label: 'Lainnya', items: otherItems, total: totalOther },
-                            ]
+                            {itemGroups
                                 .filter((g) => g.items.length > 0)
                                 .map((group) => (
-                                    <div key={group.label} className="mb-4">
-                                        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">{group.label}</h4>
+                                    <div key={group.type} className="mb-4">
+                                        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                            {t(`maintenance.item_type.${group.type}`)}
+                                        </h4>
                                         <table className="min-w-full">
                                             <thead>
                                                 <tr className="text-xs text-gray-500">
-                                                    <th className="pb-1 text-left font-medium">Nama</th>
-                                                    <th className="pb-1 text-right font-medium">Qty</th>
-                                                    <th className="pb-1 text-right font-medium">Satuan</th>
-                                                    <th className="pb-1 text-right font-medium">Harga</th>
-                                                    <th className="pb-1 text-right font-medium">Total</th>
+                                                    <th className="pb-1 text-left font-medium">{t('maintenance.work_orders.item_columns.name')}</th>
+                                                    <th className="pb-1 text-right font-medium">{t('maintenance.work_orders.item_columns.qty')}</th>
+                                                    <th className="pb-1 text-right font-medium">{t('maintenance.work_orders.item_columns.unit')}</th>
+                                                    <th className="pb-1 text-right font-medium">{t('maintenance.work_orders.item_columns.price')}</th>
+                                                    <th className="pb-1 text-right font-medium">{t('maintenance.work_orders.item_columns.total')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
@@ -141,15 +148,17 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                                                         <td className="py-1.5 text-sm text-gray-900">{item.name}</td>
                                                         <td className="py-1.5 text-right text-sm text-gray-700">{item.quantity}</td>
                                                         <td className="py-1.5 text-right text-sm text-gray-500">{item.unit ?? '—'}</td>
-                                                        <td className="py-1.5 text-right text-sm text-gray-700">{formatCurrency(item.unit_price)}</td>
-                                                        <td className="py-1.5 text-right text-sm font-medium text-gray-900">{formatCurrency(item.total_price)}</td>
+                                                        <td className="py-1.5 text-right text-sm text-gray-700">{formatCurrency(item.unit_price, localeTag)}</td>
+                                                        <td className="py-1.5 text-right text-sm font-medium text-gray-900">{formatCurrency(item.total_price, localeTag)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                             <tfoot>
                                                 <tr className="border-t border-gray-200">
-                                                    <td colSpan={4} className="pt-2 text-right text-xs text-gray-500">Subtotal {group.label}</td>
-                                                    <td className="pt-2 text-right text-sm font-semibold text-gray-900">{formatCurrency(group.total)}</td>
+                                                    <td colSpan={4} className="pt-2 text-right text-xs text-gray-500">
+                                                        {t('maintenance.work_orders.subtotal', { label: t(`maintenance.item_type.${group.type}`) })}
+                                                    </td>
+                                                    <td className="pt-2 text-right text-sm font-semibold text-gray-900">{formatCurrency(group.total, localeTag)}</td>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -158,9 +167,9 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
 
                             <div className="mt-4 border-t-2 border-gray-300 pt-3 flex justify-end">
                                 <div className="text-right">
-                                    <p className="text-xs text-gray-500">Grand Total</p>
+                                    <p className="text-xs text-gray-500">{t('maintenance.work_orders.grand_total')}</p>
                                     <p className="text-xl font-bold text-gray-900">
-                                        {formatCurrency(totalParts + totalLabor + totalOther)}
+                                        {formatCurrency(totalParts + totalLabor + totalOther, localeTag)}
                                     </p>
                                 </div>
                             </div>
@@ -170,7 +179,7 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                     {/* Resolution notes */}
                     {wo.resolution_notes && (
                         <div className="rounded-xl border border-green-200 bg-green-50 p-6">
-                            <h3 className="mb-2 font-semibold text-green-800">Catatan Penyelesaian</h3>
+                            <h3 className="mb-2 font-semibold text-green-800">{t('maintenance.work_orders.resolution_notes')}</h3>
                             <p className="text-sm text-green-700 whitespace-pre-line">{wo.resolution_notes}</p>
                         </div>
                     )}
@@ -180,39 +189,43 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                 <div className="space-y-6">
                     {/* Vehicle card */}
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h3 className="mb-3 font-semibold text-gray-900">Kendaraan</h3>
+                        <h3 className="mb-3 font-semibold text-gray-900">{t('maintenance.work_orders.columns.vehicle')}</h3>
                         <p className="font-medium text-gray-900">{wo.vehicle?.name}</p>
                         <p className="text-sm text-gray-500">{wo.vehicle?.plate_number}</p>
                         {wo.odometer_at_service && (
-                            <p className="mt-1 text-sm text-gray-500">Odometer: {formatOdometer(wo.odometer_at_service)}</p>
+                            <p className="mt-1 text-sm text-gray-500">
+                                {t('maintenance.work_orders.odometer_hint', {
+                                    value: new Intl.NumberFormat(localeTag).format(wo.odometer_at_service),
+                                })}
+                            </p>
                         )}
                     </div>
 
                     {/* Timeline */}
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h3 className="mb-3 font-semibold text-gray-900">Timeline</h3>
+                        <h3 className="mb-3 font-semibold text-gray-900">{t('maintenance.work_orders.timeline')}</h3>
                         <dl>
-                            <InfoRow label="Jadwal" value={formatDate(wo.scheduled_date)} />
-                            <InfoRow label="Mulai Dikerjakan" value={formatDateTime(wo.started_at)} />
-                            <InfoRow label="Selesai" value={formatDateTime(wo.completed_at)} />
-                            <InfoRow label="Disetujui oleh" value={wo.approver?.name} />
-                            <InfoRow label="Dibuat oleh" value={wo.creator?.name} />
+                            <InfoRow label={t('maintenance.work_orders.schedule')} value={formatDate(wo.scheduled_date, localeTag)} />
+                            <InfoRow label={t('maintenance.work_orders.started')} value={formatDateTime(wo.started_at, localeTag)} />
+                            <InfoRow label={t('maintenance.work_orders.completed')} value={formatDateTime(wo.completed_at, localeTag)} />
+                            <InfoRow label={t('maintenance.work_orders.approved_by')} value={wo.approver?.name} />
+                            <InfoRow label={t('maintenance.work_orders.created_by')} value={wo.creator?.name} />
                         </dl>
                     </div>
 
                     {/* Cost */}
                     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h3 className="mb-3 font-semibold text-gray-900">Biaya</h3>
+                        <h3 className="mb-3 font-semibold text-gray-900">{t('maintenance.work_orders.costs')}</h3>
                         <dl>
-                            <InfoRow label="Estimasi" value={formatCurrency(wo.estimated_cost)} />
-                            <InfoRow label="Jasa (aktual)" value={formatCurrency(wo.actual_labor_cost)} />
-                            <InfoRow label="Suku Cadang" value={formatCurrency(wo.actual_parts_cost)} />
-                            <InfoRow label="No. Invoice" value={wo.invoice_number} />
+                            <InfoRow label={t('maintenance.work_orders.estimate')} value={formatCurrency(wo.estimated_cost, localeTag)} />
+                            <InfoRow label={t('maintenance.work_orders.labor_actual')} value={formatCurrency(wo.actual_labor_cost, localeTag)} />
+                            <InfoRow label={t('maintenance.work_orders.parts')} value={formatCurrency(wo.actual_parts_cost, localeTag)} />
+                            <InfoRow label={t('maintenance.work_orders.invoice_number')} value={wo.invoice_number} />
                         </dl>
                         {wo.actual_total_cost !== null && (
                             <div className="mt-3 rounded-lg bg-gray-50 p-3 text-center">
-                                <p className="text-xs text-gray-500">Total Aktual</p>
-                                <p className="text-xl font-bold text-gray-900">{formatCurrency(wo.actual_total_cost)}</p>
+                                <p className="text-xs text-gray-500">{t('maintenance.work_orders.actual_total')}</p>
+                                <p className="text-xl font-bold text-gray-900">{formatCurrency(wo.actual_total_cost, localeTag)}</p>
                             </div>
                         )}
                     </div>
@@ -220,10 +233,10 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                     {/* Vendor */}
                     {(wo.vendor_name || wo.mechanic_name) && (
                         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <h3 className="mb-3 font-semibold text-gray-900">Bengkel</h3>
+                            <h3 className="mb-3 font-semibold text-gray-900">{t('maintenance.work_orders.workshop')}</h3>
                             <dl>
-                                <InfoRow label="Vendor / Bengkel" value={wo.vendor_name} />
-                                <InfoRow label="Mekanik" value={wo.mechanic_name} />
+                                <InfoRow label={t('maintenance.work_orders.vendor_label')} value={wo.vendor_name} />
+                                <InfoRow label={t('maintenance.work_orders.mechanic')} value={wo.mechanic_name} />
                             </dl>
                         </div>
                     )}
@@ -231,7 +244,7 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                     {/* Notes */}
                     {wo.notes && (
                         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <h3 className="mb-2 font-semibold text-gray-900">Catatan</h3>
+                            <h3 className="mb-2 font-semibold text-gray-900">{t('maintenance.work_orders.notes')}</h3>
                             <p className="text-sm text-gray-600 whitespace-pre-line">{wo.notes}</p>
                         </div>
                     )}
@@ -240,11 +253,14 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
 
             <ConfirmDeleteDialog
                 show={showDeleteDialog}
-                title="Hapus Work Order"
-                description={`Yakin ingin menghapus work order "${wo.reference_number} — ${wo.title}"?`}
+                title={t('maintenance.work_orders.delete_title')}
+                message={t('maintenance.work_orders.delete_confirm', {
+                    ref: wo.reference_number,
+                    title: wo.title,
+                })}
                 processing={deleting}
                 onConfirm={confirmDelete}
-                onCancel={() => setShowDeleteDialog(false)}
+                onClose={() => setShowDeleteDialog(false)}
             />
         </DynamicLayout>
     );

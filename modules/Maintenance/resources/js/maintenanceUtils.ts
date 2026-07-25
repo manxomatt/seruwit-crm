@@ -4,6 +4,8 @@ export type WorkOrderPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type WorkOrderType = 'scheduled' | 'corrective' | 'preventive' | 'emergency';
 export type ItemType = 'part' | 'labor' | 'other';
 
+type Translate = (key: string, params?: Record<string, string | number>, fallback?: string) => string;
+
 // ── Interfaces ──────────────────────────────────────────────────────────────
 export interface MaintenanceCategory {
     id: number;
@@ -95,49 +97,91 @@ export interface MaintenanceSchedule {
     notes: string | null;
 }
 
+const STATUS_CLASSES: Record<WorkOrderStatus, string> = {
+    draft: 'bg-gray-100 text-gray-700',
+    pending: 'bg-yellow-100 text-yellow-800',
+    approved: 'bg-blue-100 text-blue-800',
+    in_progress: 'bg-indigo-100 text-indigo-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+};
+
+const PRIORITY_CLASSES: Record<WorkOrderPriority, string> = {
+    low: 'bg-gray-100 text-gray-600',
+    normal: 'bg-blue-100 text-blue-700',
+    high: 'bg-orange-100 text-orange-800',
+    urgent: 'bg-red-100 text-red-800 font-semibold',
+};
+
+const TYPE_CLASSES: Record<WorkOrderType, string> = {
+    scheduled: 'bg-teal-100 text-teal-800',
+    corrective: 'bg-orange-100 text-orange-800',
+    preventive: 'bg-blue-100 text-blue-800',
+    emergency: 'bg-red-100 text-red-800',
+};
+
+export const STATUS_VALUES: WorkOrderStatus[] = ['draft', 'pending', 'approved', 'in_progress', 'completed', 'cancelled'];
+export const PRIORITY_VALUES: WorkOrderPriority[] = ['low', 'normal', 'high', 'urgent'];
+export const TYPE_VALUES: WorkOrderType[] = ['scheduled', 'corrective', 'preventive', 'emergency'];
+export const ITEM_TYPE_VALUES: ItemType[] = ['part', 'labor', 'other'];
+
 // ── Status helpers ──────────────────────────────────────────────────────────
-export function getStatusBadge(status: WorkOrderStatus): { label: string; classes: string } {
-    switch (status) {
-        case 'draft': return { label: 'Draft', classes: 'bg-gray-100 text-gray-700' };
-        case 'pending': return { label: 'Menunggu', classes: 'bg-yellow-100 text-yellow-800' };
-        case 'approved': return { label: 'Disetujui', classes: 'bg-blue-100 text-blue-800' };
-        case 'in_progress': return { label: 'Sedang Dikerjakan', classes: 'bg-indigo-100 text-indigo-800' };
-        case 'completed': return { label: 'Selesai', classes: 'bg-green-100 text-green-800' };
-        case 'cancelled': return { label: 'Dibatalkan', classes: 'bg-red-100 text-red-800' };
-    }
+export function getStatusBadge(status: WorkOrderStatus, t: Translate): { label: string; classes: string } {
+    return {
+        label: t(`maintenance.status.${status}`, undefined, status),
+        classes: STATUS_CLASSES[status],
+    };
 }
 
-export function getPriorityBadge(priority: WorkOrderPriority): { label: string; classes: string } {
-    switch (priority) {
-        case 'low': return { label: 'Rendah', classes: 'bg-gray-100 text-gray-600' };
-        case 'normal': return { label: 'Normal', classes: 'bg-blue-100 text-blue-700' };
-        case 'high': return { label: 'Tinggi', classes: 'bg-orange-100 text-orange-800' };
-        case 'urgent': return { label: 'Urgent', classes: 'bg-red-100 text-red-800 font-semibold' };
-    }
+export function getPriorityBadge(priority: WorkOrderPriority, t: Translate): { label: string; classes: string } {
+    return {
+        label: t(`maintenance.priority.${priority}`, undefined, priority),
+        classes: PRIORITY_CLASSES[priority],
+    };
 }
 
-export function getTypeBadge(type: WorkOrderType): { label: string; classes: string } {
-    switch (type) {
-        case 'scheduled': return { label: 'Terjadwal', classes: 'bg-teal-100 text-teal-800' };
-        case 'corrective': return { label: 'Korektif', classes: 'bg-orange-100 text-orange-800' };
-        case 'preventive': return { label: 'Preventif', classes: 'bg-blue-100 text-blue-800' };
-        case 'emergency': return { label: 'Darurat', classes: 'bg-red-100 text-red-800' };
-    }
+export function getTypeBadge(type: WorkOrderType, t: Translate): { label: string; classes: string } {
+    return {
+        label: t(`maintenance.type.${type}`, undefined, type),
+        classes: TYPE_CLASSES[type],
+    };
+}
+
+export function statusOptions(t: Translate): { value: WorkOrderStatus; label: string }[] {
+    return STATUS_VALUES.map((value) => ({ value, label: t(`maintenance.status.${value}`) }));
+}
+
+export function priorityOptions(t: Translate): { value: WorkOrderPriority; label: string }[] {
+    return PRIORITY_VALUES.map((value) => ({ value, label: t(`maintenance.priority.${value}`) }));
+}
+
+export function typeOptions(t: Translate): { value: WorkOrderType; label: string }[] {
+    return TYPE_VALUES.map((value) => ({ value, label: t(`maintenance.type.${value}`) }));
+}
+
+export function itemTypeOptions(t: Translate): { value: ItemType; label: string }[] {
+    return ITEM_TYPE_VALUES.map((value) => ({ value, label: t(`maintenance.item_type.${value}`) }));
 }
 
 // ── Date / currency helpers ─────────────────────────────────────────────────
-export function formatDate(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('id-ID', {
+export function formatDate(value: string | null, localeTag = 'id-ID'): string {
+    if (!value) {
+        return '—';
+    }
+
+    return new Date(value).toLocaleDateString(localeTag, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
     });
 }
 
-export function formatDateTime(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleString('id-ID', {
+export function formatDateTime(value: string | null, localeTag = 'id-ID'): string {
+    if (!value) {
+        return '—';
+    }
+
+    return new Date(value).toLocaleString(localeTag, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -146,41 +190,31 @@ export function formatDateTime(value: string | null): string {
     });
 }
 
-export function formatCurrency(value: string | number | null): string {
-    if (value === null || value === undefined) return '—';
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value));
+export function formatCurrency(value: string | number | null, localeTag = 'id-ID'): string {
+    if (value === null || value === undefined) {
+        return '—';
+    }
+
+    return new Intl.NumberFormat(localeTag, {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(Number(value));
 }
 
-export function formatOdometer(value: number | null): string {
-    if (value === null) return '—';
-    return new Intl.NumberFormat('id-ID').format(value) + ' km';
+export function formatOdometer(value: number | null, localeTag = 'id-ID'): string {
+    if (value === null) {
+        return '—';
+    }
+
+    return new Intl.NumberFormat(localeTag).format(value) + ' km';
 }
 
-export const STATUS_OPTIONS: { value: WorkOrderStatus; label: string }[] = [
-    { value: 'draft', label: 'Draft' },
-    { value: 'pending', label: 'Menunggu Persetujuan' },
-    { value: 'approved', label: 'Disetujui' },
-    { value: 'in_progress', label: 'Sedang Dikerjakan' },
-    { value: 'completed', label: 'Selesai' },
-    { value: 'cancelled', label: 'Dibatalkan' },
-];
-
-export const PRIORITY_OPTIONS: { value: WorkOrderPriority; label: string }[] = [
-    { value: 'low', label: 'Rendah' },
-    { value: 'normal', label: 'Normal' },
-    { value: 'high', label: 'Tinggi' },
-    { value: 'urgent', label: 'Urgent' },
-];
-
-export const TYPE_OPTIONS: { value: WorkOrderType; label: string }[] = [
-    { value: 'scheduled', label: 'Terjadwal' },
-    { value: 'corrective', label: 'Korektif' },
-    { value: 'preventive', label: 'Preventif' },
-    { value: 'emergency', label: 'Darurat' },
-];
-
-export const ITEM_TYPE_OPTIONS: { value: ItemType; label: string }[] = [
-    { value: 'part', label: 'Suku Cadang' },
-    { value: 'labor', label: 'Jasa' },
-    { value: 'other', label: 'Lainnya' },
-];
+/** @deprecated Use statusOptions(t) */
+export const STATUS_OPTIONS = STATUS_VALUES.map((value) => ({ value, label: value }));
+/** @deprecated Use priorityOptions(t) */
+export const PRIORITY_OPTIONS = PRIORITY_VALUES.map((value) => ({ value, label: value }));
+/** @deprecated Use typeOptions(t) */
+export const TYPE_OPTIONS = TYPE_VALUES.map((value) => ({ value, label: value }));
+/** @deprecated Use itemTypeOptions(t) */
+export const ITEM_TYPE_OPTIONS = ITEM_TYPE_VALUES.map((value) => ({ value, label: value }));

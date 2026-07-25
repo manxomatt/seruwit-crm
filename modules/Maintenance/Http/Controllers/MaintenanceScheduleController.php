@@ -56,7 +56,7 @@ class MaintenanceScheduleController extends Controller
         $schedule = MaintenanceSchedule::create($request->validated());
         $schedule->recalculateNextService();
 
-        return back()->with('success', 'Jadwal perawatan berhasil ditambahkan.');
+        return back()->with('success', __('maintenance.messages.schedule_created'));
     }
 
     public function update(StoreMaintenanceScheduleRequest $request, MaintenanceSchedule $schedule): RedirectResponse
@@ -64,13 +64,13 @@ class MaintenanceScheduleController extends Controller
         $schedule->update($request->validated());
         $schedule->recalculateNextService();
 
-        return back()->with('success', 'Jadwal perawatan berhasil diperbarui.');
+        return back()->with('success', __('maintenance.messages.schedule_updated'));
     }
 
     public function destroy(MaintenanceSchedule $schedule): RedirectResponse
     {
         $schedule->delete();
 
-        return back()->with('success', 'Jadwal perawatan berhasil dihapus.');
+        return back()->with('success', __('maintenance.messages.schedule_deleted'));
     }
 }

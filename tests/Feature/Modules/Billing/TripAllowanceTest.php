@@ -94,7 +94,7 @@ class TripAllowanceTest extends TestCase
         TripAllowanceExpense::factory()->create(['trip_allowance_id' => $surplus->id, 'amount' => 300000]);
 
         $this->actingAs($user)->post(route('module.billing.allowances.settle', $surplus))
-            ->assertSessionHas('success', 'Allowance settled. Driver returns Rp 200.000.');
+            ->assertSessionHas('success', __('billing.messages.allowance_settled_return', ['amount' => '200.000']));
 
         $surplus->refresh();
         $this->assertSame(TripAllowance::STATUS_SETTLED, $surplus->status);
@@ -104,7 +104,7 @@ class TripAllowanceTest extends TestCase
         TripAllowanceExpense::factory()->create(['trip_allowance_id' => $deficit->id, 'amount' => 250000]);
 
         $this->actingAs($user)->post(route('module.billing.allowances.settle', $deficit))
-            ->assertSessionHas('success', 'Allowance settled. Company reimburses Rp 150.000.');
+            ->assertSessionHas('success', __('billing.messages.allowance_settled_reimburse', ['amount' => '150.000']));
     }
 
     public function test_a_settled_allowance_is_immutable_and_cannot_be_deleted(): void

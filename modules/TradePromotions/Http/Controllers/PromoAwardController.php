@@ -11,7 +11,7 @@ class PromoAwardController extends Controller
     public function settle(TradePromoAward $award): RedirectResponse
     {
         if ($award->status === TradePromoAward::STATUS_SETTLED) {
-            return back()->with('error', 'Award already settled.');
+            return back()->with('error', __('promotions.messages.award_already_settled'));
         }
 
         $award->update([
@@ -19,6 +19,6 @@ class PromoAwardController extends Controller
             'settled_at' => now(),
         ]);
 
-        return back()->with('success', 'Award settled.');
+        return back()->with('success', __('promotions.messages.award_settled'));
     }
 }

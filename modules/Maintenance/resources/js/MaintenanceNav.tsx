@@ -1,15 +1,17 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Dashboard', route: 'maintenance.index', pattern: 'maintenance.index' },
-    { label: 'Work Orders', route: 'maintenance.work-orders.index', pattern: 'maintenance.work-orders.*' },
-    { label: 'Jadwal', route: 'maintenance.schedules.index', pattern: 'maintenance.schedules.*' },
-    { label: 'Kategori', route: 'maintenance.categories.index', pattern: 'maintenance.categories.*' },
-];
+    { labelKey: 'maintenance.nav.dashboard', route: 'maintenance.index', pattern: 'maintenance.index' },
+    { labelKey: 'maintenance.nav.work_orders', route: 'maintenance.work-orders.index', pattern: 'maintenance.work-orders.*' },
+    { labelKey: 'maintenance.nav.schedules', route: 'maintenance.schedules.index', pattern: 'maintenance.schedules.*' },
+    { labelKey: 'maintenance.nav.categories', route: 'maintenance.categories.index', pattern: 'maintenance.categories.*' },
+] as const;
 
 export default function MaintenanceNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -25,7 +27,7 @@ export default function MaintenanceNav(): JSX.Element {
                                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                 }`}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Link>
                     );
                 })}

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 
 interface Visit { id: number; salesperson: { id: number; name: string }; partner: { name: string }; checked_in_at: string; checked_out_at: string | null; outcome: string; }
@@ -15,34 +16,44 @@ const outcomeColor = (o: string) => ({
     callback: 'bg-purple-100 text-purple-700',
 })[o] ?? 'bg-gray-100 text-gray-500';
 
+const OUTCOMES = ['pending', 'contacted', 'interested', 'not_interested', 'no_contact', 'callback'] as const;
+
 export default function VisitsIndex({ visits, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     const filter = (key: string, value: string) => {
         router.get(prefixedRoute('canvassing.visits.index'), { ...filters, [key]: value }, { preserveState: true, replace: true });
     };
 
+    const columns = [
+        t('canvassing.visits.columns.partner'),
+        t('canvassing.visits.columns.salesperson'),
+        t('canvassing.visits.columns.check_in'),
+        t('canvassing.visits.columns.duration'),
+        t('canvassing.visits.columns.outcome'),
+        '',
+    ];
+
     return (
-        <DynamicLayout header="Canvassing">
-            <Head title="All Visits" />
+        <DynamicLayout header={t('canvassing.title')}>
+            <Head title={t('canvassing.visits.head')} />
             <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
                 <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <Link href={prefixedRoute('canvassing.index')} className="mb-1 block text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">← Dashboard</Link>
-                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">All Visits</h1>
+                        <Link href={prefixedRoute('canvassing.index')} className="mb-1 block text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">{t('canvassing.nav.dashboard')}</Link>
+                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t('canvassing.visits.title')}</h1>
                     </div>
                 </div>
 
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <input type="date" value={filters.date ?? ''} onChange={(e) => filter('date', e.target.value)} className="rounded-md border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                     <select value={filters.outcome ?? ''} onChange={(e) => filter('outcome', e.target.value)} className="rounded-md border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                        <option value="">All outcomes</option>
-                        <option value="pending">In Progress</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="interested">Interested</option>
-                        <option value="not_interested">Not Interested</option>
-                        <option value="no_contact">No Contact</option>
-                        <option value="callback">Callback</option>
+                        <option value="">{t('canvassing.visits.all_outcomes')}</option>
+                        {OUTCOMES.map((o) => (
+                            <option key={o} value={o}>{t(`canvassing.outcomes.${o}`, undefined, o)}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -50,32 +61,32 @@ export default function VisitsIndex({ visits, filters }: Props): JSX.Element {
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                {['Partner', 'Salesperson', 'Check In', 'Duration', 'Outcome', ''].map((h) => (
-                                    <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{h}</th>
+                                {columns.map((h, i) => (
+                                    <th key={i} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {visits.data.length === 0 && (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">No visits found.</td></tr>
+                                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">{t('canvassing.visits.empty')}</td></tr>
                             )}
                             {visits.data.map((v) => {
                                 const duration = v.checked_out_at
-                                    ? Math.round((new Date(v.checked_out_at).getTime() - new Date(v.checked_in_at).getTime()) / 60000) + ' min'
-                                    : <span className="text-orange-500">Open</span>;
+                                    ? t('canvassing.visits.duration_min', { count: Math.round((new Date(v.checked_out_at).getTime() - new Date(v.checked_in_at).getTime()) / 60000) })
+                                    : <span className="text-orange-500">{t('canvassing.status.open')}</span>;
                                 return (
                                     <tr key={v.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{v.partner.name}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                                             <Link href={prefixedRoute('canvassing.salespeople.show', v.salesperson.id)} className="hover:underline">{v.salesperson.name}</Link>
                                         </td>
-                                        <td className="px-4 py-3 text-sm tabular-nums text-gray-600 dark:text-gray-300">{new Date(v.checked_in_at).toLocaleString('id-ID')}</td>
+                                        <td className="px-4 py-3 text-sm tabular-nums text-gray-600 dark:text-gray-300">{new Date(v.checked_in_at).toLocaleString(localeTag)}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{duration}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${outcomeColor(v.outcome)}`}>{v.outcome.replace('_', ' ')}</span>
+                                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${outcomeColor(v.outcome)}`}>{t(`canvassing.outcomes.${v.outcome}`, undefined, v.outcome)}</span>
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <Link href={prefixedRoute('canvassing.visits.show', v.id)} className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">View</Link>
+                                            <Link href={prefixedRoute('canvassing.visits.show', v.id)} className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">{t('canvassing.visits.view')}</Link>
                                         </td>
                                     </tr>
                                 );

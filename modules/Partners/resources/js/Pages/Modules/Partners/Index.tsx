@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
@@ -55,17 +56,6 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-const getRoleBadges = (partner: Partner) => {
-    const badges: Array<{ label: string; className: string }> = [];
-    if (partner.customer_rank > 0) {
-        badges.push({ label: 'Customer', className: 'bg-blue-100 text-blue-800' });
-    }
-    if (partner.supplier_rank > 0) {
-        badges.push({ label: 'Supplier', className: 'bg-purple-100 text-purple-800' });
-    }
-    return badges;
-};
-
 const getStatusBadgeColor = (status: string) => {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 };
@@ -91,10 +81,22 @@ const TrashIcon = () => (
 
 export default function Index({ partners, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [partnerToDelete, setPartnerToDelete] = useState<Partner | null>(null);
     const [processing, setProcessing] = useState(false);
+
+    const getRoleBadges = (partner: Partner) => {
+        const badges: Array<{ key: string; label: string; className: string }> = [];
+        if (partner.customer_rank > 0) {
+            badges.push({ key: 'customer', label: t('partners.role.customer'), className: 'bg-blue-100 text-blue-800' });
+        }
+        if (partner.supplier_rank > 0) {
+            badges.push({ key: 'supplier', label: t('partners.role.supplier'), className: 'bg-purple-100 text-purple-800' });
+        }
+        return badges;
+    };
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -138,16 +140,16 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Partners</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('partners.index.head')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('partners.create')}>
-                            <PrimaryButton>Tambah Partner</PrimaryButton>
+                            <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Partners" />
+            <Head title={t('partners.title')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -155,7 +157,7 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Cari nama, kode, telepon, email, NPWP..."
+                                placeholder={t('partners.placeholders.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -165,42 +167,42 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                             className="w-40"
                             value={filters.role || ''}
                             onChange={(value) => handleFilter('role', value)}
-                            placeholder="Semua peran"
+                            placeholder={t('partners.role.all')}
                             options={[
-                                { value: '', label: 'Semua peran' },
-                                { value: 'customer', label: 'Customer' },
-                                { value: 'supplier', label: 'Supplier' },
+                                { value: '', label: t('partners.role.all') },
+                                { value: 'customer', label: t('partners.role.customer') },
+                                { value: 'supplier', label: t('partners.role.supplier') },
                             ]}
                         />
                         <Select
                             className="w-40"
                             value={filters.account_type || ''}
                             onChange={(value) => handleFilter('account_type', value)}
-                            placeholder="Semua tipe"
+                            placeholder={t('partners.account_type.all')}
                             options={[
-                                { value: '', label: 'Semua tipe' },
-                                { value: 'company', label: 'Perusahaan' },
-                                { value: 'individual', label: 'Individu' },
+                                { value: '', label: t('partners.account_type.all') },
+                                { value: 'company', label: t('partners.account_type.company') },
+                                { value: 'individual', label: t('partners.account_type.individual') },
                             ]}
                         />
                         <Select
                             className="w-36"
                             value={filters.status || ''}
                             onChange={(value) => handleFilter('status', value)}
-                            placeholder="Semua status"
+                            placeholder={t('partners.status.all')}
                             options={[
-                                { value: '', label: 'Semua status' },
-                                { value: 'active', label: 'Active' },
-                                { value: 'inactive', label: 'Inactive' },
+                                { value: '', label: t('partners.status.all') },
+                                { value: 'active', label: t('partners.status.active') },
+                                { value: 'inactive', label: t('partners.status.inactive') },
                             ]}
                         />
-                        <PrimaryButton type="submit">Cari</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {partners.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">Belum ada partner</h3>
-                            <p className="mt-1 text-sm text-gray-500">Mulai dengan menambahkan partner baru.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('partners.index.empty_title')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('partners.index.empty_hint')}</p>
                         </div>
                     ) : (
                         <>
@@ -208,13 +210,13 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Kode</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Peran</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Telepon</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Industri</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Aksi</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.code')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.name')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.role')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.phone')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.industry')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -224,13 +226,13 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <div className="text-sm font-medium text-gray-900">{partner.name}</div>
                                                     <div className="text-xs text-gray-500">
-                                                        {partner.account_type === 'company' ? 'Perusahaan' : 'Individu'}
+                                                        {t(`partners.account_type.${partner.account_type}`)}
                                                     </div>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <div className="flex gap-1">
                                                         {getRoleBadges(partner).map((badge) => (
-                                                            <span key={badge.label} className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
+                                                            <span key={badge.key} className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
                                                                 {badge.label}
                                                             </span>
                                                         ))}
@@ -244,7 +246,7 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(partner.status)}`}>
-                                                        {partner.status}
+                                                        {t(`partners.status.${partner.status}`, undefined, partner.status)}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -252,7 +254,6 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('partners.show', partner.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title="Lihat"
                                                         >
                                                             <EyeIcon />
                                                         </Link>
@@ -260,7 +261,7 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                             <Link
                                                                 href={prefixedRoute('partners.edit', partner.id)}
                                                                 className="text-indigo-600 hover:text-indigo-900"
-                                                                title="Edit"
+                                                                title={t('common.edit')}
                                                             >
                                                                 <PencilIcon />
                                                             </Link>
@@ -269,7 +270,7 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                             <button
                                                                 onClick={() => openDeleteDialog(partner)}
                                                                 className="text-red-600 hover:text-red-900"
-                                                                title="Hapus"
+                                                                title={t('common.delete')}
                                                             >
                                                                 <TrashIcon />
                                                             </button>
@@ -285,8 +286,11 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                             {partners.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Menampilkan {(partners.current_page - 1) * partners.per_page + 1} s/d{' '}
-                                        {Math.min(partners.current_page * partners.per_page, partners.total)} dari {partners.total}
+                                        {t('common.showing_results', {
+                                            from: (partners.current_page - 1) * partners.per_page + 1,
+                                            to: Math.min(partners.current_page * partners.per_page, partners.total),
+                                            total: partners.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {partners.links.map((link, index) => (
@@ -317,11 +321,11 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Partner"
+                title={t('partners.index.delete_title')}
                 message={
                     partnerToDelete
-                        ? `Apakah Anda yakin ingin menghapus "${partnerToDelete.name}" (${partnerToDelete.code})? Tindakan ini tidak dapat dibatalkan.`
-                        : 'Apakah Anda yakin ingin menghapus partner ini?'
+                        ? t('partners.index.delete_confirm', { name: partnerToDelete.name, code: partnerToDelete.code })
+                        : t('partners.index.delete_confirm_generic')
                 }
             />
         </DynamicLayout>

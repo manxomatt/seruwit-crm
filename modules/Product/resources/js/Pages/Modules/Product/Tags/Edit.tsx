@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ProductNav from '../../../../ProductNav';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -8,7 +9,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useMemo } from 'react';
 
 interface ProductTag {
     id: number;
@@ -20,24 +21,20 @@ interface Props {
     tag: ProductTag;
 }
 
-const COLOR_OPTIONS = [
-    { value: '', label: 'Tanpa warna' },
-    { value: 'red', label: 'Merah' },
-    { value: 'blue', label: 'Biru' },
-    { value: 'green', label: 'Hijau' },
-    { value: 'yellow', label: 'Kuning' },
-    { value: 'purple', label: 'Ungu' },
-    { value: 'orange', label: 'Oranye' },
-    { value: 'pink', label: 'Pink' },
-    { value: 'gray', label: 'Abu-abu' },
-];
+const TAG_COLOR_VALUES = ['', 'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'gray'] as const;
 
 export default function Edit({ tag }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         name: tag.name,
         color: tag.color || '',
     });
+
+    const colorOptions = useMemo(
+        () => TAG_COLOR_VALUES.map((c) => ({ value: c, label: t(`products.tag_colors.${c || 'none'}`) })),
+        [t],
+    );
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -45,8 +42,8 @@ export default function Edit({ tag }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Tag</h2>}>
-            <Head title="Edit Tag" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.tags.edit.title')}</h2>}>
+            <Head title={t('products.tags.edit.title')} />
             <ProductNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -54,21 +51,21 @@ export default function Edit({ tag }: Props): JSX.Element {
                     <form onSubmit={submit} className="max-w-2xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="name" value="Nama Tag" />
+                                <InputLabel htmlFor="name" value={t('products.fields.name')} />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required autoFocus />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="color" value="Warna" />
-                                <Select id="color" className="mt-1" value={data.color} onChange={(value) => setData('color', value)} options={COLOR_OPTIONS} />
+                                <InputLabel htmlFor="color" value={t('products.fields.color')} />
+                                <Select id="color" className="mt-1" value={data.color} onChange={(value) => setData('color', value)} options={colorOptions} />
                                 <InputError message={errors.color} className="mt-2" />
                             </div>
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing}>Simpan</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('products.tags.edit.submit')}</PrimaryButton>
                             <Link href={prefixedRoute('products.tags.index')}>
-                                <SecondaryButton type="button">Batal</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

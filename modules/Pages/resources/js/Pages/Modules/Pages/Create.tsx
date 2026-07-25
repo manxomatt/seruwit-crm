@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
@@ -14,6 +15,7 @@ const ArrowLeftIcon = () => (
 
 export default function Create(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         slug: '',
@@ -43,18 +45,18 @@ export default function Create(): JSX.Element {
                         <ArrowLeftIcon />
                     </Link>
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        Create New Page
+                        {t('pages.create.title')}
                     </h1>
                 </div>
             }
         >
-            <Head title="Create Page" />
+            <Head title={t('pages.create.head')} />
 
             <div className="max-w-2xl">
                 <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <form onSubmit={submit} className="p-6 space-y-6">
                         <div>
-                            <InputLabel htmlFor="title" value="Page Title" />
+                            <InputLabel htmlFor="title" value={t('pages.create.page_title')} />
                             <TextInput
                                 id="title"
                                 type="text"
@@ -63,14 +65,14 @@ export default function Create(): JSX.Element {
                                 className="mt-1 block w-full"
                                 autoComplete="off"
                                 isFocused={true}
-                                placeholder="Enter page title"
+                                placeholder={t('pages.create.title_placeholder')}
                                 onChange={(e) => setData('title', e.target.value)}
                             />
                             <InputError message={errors.title} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="slug" value="URL Slug" />
+                            <InputLabel htmlFor="slug" value={t('pages.create.slug')} />
                             <div className="mt-1 flex rounded-md shadow-sm">
                                 <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
                                     /p/
@@ -82,12 +84,12 @@ export default function Create(): JSX.Element {
                                     value={data.slug}
                                     className="block w-full rounded-l-none"
                                     autoComplete="off"
-                                    placeholder="page-url-slug"
+                                    placeholder={t('pages.create.slug_placeholder')}
                                     onChange={(e) => setData('slug', e.target.value)}
                                 />
                             </div>
                             <p className="mt-2 text-sm text-gray-500">
-                                This will be the URL path for your page.
+                                {t('pages.create.slug_hint')}
                             </p>
                             <InputError message={errors.slug} className="mt-2" />
                         </div>
@@ -97,14 +99,14 @@ export default function Create(): JSX.Element {
                                 href={prefixedRoute('pages.index')}
                                 className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
                                 className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                             >
-                                {processing ? 'Creating...' : 'Create & Open Editor'}
+                                {processing ? t('pages.create.creating') : t('pages.create.submit')}
                             </button>
                         </div>
                     </form>

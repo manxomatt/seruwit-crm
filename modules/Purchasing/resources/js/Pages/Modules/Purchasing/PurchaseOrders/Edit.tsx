@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -53,6 +54,7 @@ interface Props {
 
 export default function Edit({ order, suppliers, warehouses, products }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     const { data, setData, patch, processing, errors } = useForm({
         partner_id: String(order.partner_id),
@@ -113,9 +115,9 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Purchase Order</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('purchasing.purchase_orders.edit.title')}</h2>}
         >
-            <Head title="Edit Purchase Order" />
+            <Head title={t('purchasing.purchase_orders.edit.title')} />
             <PurchasingNav />
 
             <form onSubmit={submit} className="space-y-6">
@@ -123,11 +125,12 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
                     <div className="space-y-6 p-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel value="Supplier *" />
+                                <InputLabel value={`${t('purchasing.fields.supplier')} *`} />
                                 <Select
                                     className="mt-1"
                                     value={data.partner_id}
                                     onChange={(value) => setData('partner_id', value)}
+                                    placeholder={t('purchasing.placeholders.select_supplier')}
                                     options={suppliers.map((s) => ({
                                         value: String(s.id),
                                         label: s.code ? `${s.code} — ${s.name}` : s.name,
@@ -136,17 +139,18 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
                                 <InputError message={errors.partner_id} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel value="Gudang Tujuan *" />
+                                <InputLabel value={`${t('purchasing.fields.destination_warehouse')} *`} />
                                 <Select
                                     className="mt-1"
                                     value={data.warehouse_id}
                                     onChange={(value) => setData('warehouse_id', value)}
+                                    placeholder={t('purchasing.placeholders.select_warehouse')}
                                     options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))}
                                 />
                                 <InputError message={errors.warehouse_id} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel value="Tanggal Order *" />
+                                <InputLabel value={`${t('purchasing.fields.ordered_at')} *`} />
                                 <TextInput
                                     type="date"
                                     className="mt-1 block w-full"
@@ -156,7 +160,7 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
                                 />
                             </div>
                             <div>
-                                <InputLabel value="Estimasi Tiba" />
+                                <InputLabel value={t('purchasing.fields.expected_at')} />
                                 <TextInput
                                     type="date"
                                     className="mt-1 block w-full"
@@ -165,7 +169,7 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
                                 />
                             </div>
                             <div className="sm:col-span-2">
-                                <InputLabel value="Catatan" />
+                                <InputLabel value={t('purchasing.fields.notes')} />
                                 <textarea
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     rows={2}
@@ -179,9 +183,9 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                        <h3 className="text-sm font-semibold text-gray-900">Item Pesanan</h3>
+                        <h3 className="text-sm font-semibold text-gray-900">{t('purchasing.purchase_orders.create.items_section')}</h3>
                         <SecondaryButton type="button" onClick={addItem}>
-                            + Tambah Item
+                            {t('purchasing.purchase_orders.create.add_item')}
                         </SecondaryButton>
                     </div>
                     <div className="space-y-4 p-6">
@@ -191,6 +195,7 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
                                     <Select
                                         value={item.product_id}
                                         onChange={(value) => updateItem(index, 'product_id', value)}
+                                        placeholder={t('purchasing.placeholders.select_product')}
                                         options={products.map((p) => ({
                                             value: String(p.id),
                                             label: p.code ? `${p.code} — ${p.name}` : p.name,
@@ -237,9 +242,9 @@ export default function Edit({ order, suppliers, warehouses, products }: Props):
                         <p className="text-lg font-bold tabular-nums">{formatMoney(grandTotal)}</p>
                         <div className="flex gap-3">
                             <Link href={prefixedRoute('purchasing.purchase-orders.show', order.id)}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
-                            <PrimaryButton disabled={processing}>Save Changes</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('purchasing.purchase_orders.edit.save')}</PrimaryButton>
                         </div>
                     </div>
                 </div>

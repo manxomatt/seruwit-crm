@@ -1,5 +1,6 @@
 import LeafletMap from '@/Components/Map/LeafletMap';
 import VehicleMarker from '@/Components/Map/VehicleMarker';
+import { useTrans } from '@/hooks/useTrans';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
 import { Head, usePage } from '@inertiajs/react';
 
@@ -26,48 +27,47 @@ interface Props {
     livePosition: LivePosition | null;
 }
 
-const STEPS: Array<{ key: string; label: string }> = [
-    { key: 'confirmed', label: 'Dikonfirmasi' },
-    { key: 'assigned', label: 'Dijadwalkan' },
-    { key: 'in_transit', label: 'Dalam perjalanan' },
-    { key: 'delivered', label: 'Terkirim' },
-];
-
 const ORDER = ['confirmed', 'assigned', 'in_transit', 'delivered'];
 
 export default function Show({ order, livePosition }: Props): JSX.Element {
+    const { t } = useTrans();
     const settings = (usePage().props as any).settings as Record<string, string> | undefined;
-    const siteName = settings?.['general.site_name'] ?? 'Lacak Kiriman';
+    const siteName = settings?.['general.site_name'] ?? t('orders.track.default_site');
+
+    const steps = ORDER.map((key) => ({
+        key,
+        label: t(`orders.track.steps.${key}`),
+    }));
 
     const currentIndex = ORDER.indexOf(order.status);
     const live = livePosition ? toLatLng(livePosition.latitude, livePosition.longitude) : null;
 
     return (
         <div className="min-h-screen bg-gray-100 py-10">
-            <Head title={`Lacak ${order.code}`} />
+            <Head title={t('orders.track.head', { code: order.code })} />
 
             <div className="mx-auto max-w-2xl px-4">
                 <div className="mb-6 text-center">
                     <h1 className="text-lg font-semibold text-gray-900">{siteName}</h1>
-                    <p className="text-sm text-gray-500">Pelacakan kiriman</p>
+                    <p className="text-sm text-gray-500">{t('orders.track.subtitle')}</p>
                 </div>
 
                 <div className="overflow-hidden rounded-lg bg-white shadow-sm">
                     <div className="border-b border-gray-100 p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs uppercase tracking-wide text-gray-400">Nomor kiriman</p>
+                                <p className="text-xs uppercase tracking-wide text-gray-400">{t('orders.track.shipment_number')}</p>
                                 <p className="text-lg font-semibold text-gray-900">{order.code}</p>
                             </div>
                             <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${order.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                                {STEPS.find((s) => s.key === order.status)?.label ?? order.status.replace('_', ' ')}
+                                {steps.find((s) => s.key === order.status)?.label ?? t(`orders.status.${order.status}`, undefined, order.status)}
                             </span>
                         </div>
                     </div>
 
                     <div className="p-6">
                         <ol className="space-y-4">
-                            {STEPS.map((step, index) => {
+                            {steps.map((step, index) => {
                                 const done = index <= currentIndex;
                                 return (
                                     <li key={step.key} className="flex items-start gap-3">
@@ -80,7 +80,7 @@ export default function Show({ order, livePosition }: Props): JSX.Element {
                                                 <>
                                                     <p className="text-xs text-gray-500">{order.delivered_at}</p>
                                                     {order.recipient_name && (
-                                                        <p className="text-xs text-gray-500">Diterima oleh {order.recipient_name}</p>
+                                                        <p className="text-xs text-gray-500">{t('orders.track.received_by', { name: order.recipient_name })}</p>
                                                     )}
                                                 </>
                                             )}
@@ -95,11 +95,11 @@ export default function Show({ order, livePosition }: Props): JSX.Element {
 
                         <dl className="mt-6 grid grid-cols-1 gap-4 border-t border-gray-100 pt-6 sm:grid-cols-2">
                             <div>
-                                <dt className="text-xs uppercase tracking-wide text-gray-400">Dari</dt>
+                                <dt className="text-xs uppercase tracking-wide text-gray-400">{t('orders.track.from')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.pickup_address}</dd>
                             </div>
                             <div>
-                                <dt className="text-xs uppercase tracking-wide text-gray-400">Tujuan</dt>
+                                <dt className="text-xs uppercase tracking-wide text-gray-400">{t('orders.track.to')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.delivery_address}</dd>
                             </div>
                         </dl>
@@ -108,17 +108,17 @@ export default function Show({ order, livePosition }: Props): JSX.Element {
                     {live && (
                         <div className="border-t border-gray-100 p-6">
                             <div className="mb-3 flex items-center justify-between">
-                                <h2 className="text-sm font-medium text-gray-900">Posisi kendaraan</h2>
+                                <h2 className="text-sm font-medium text-gray-900">{t('orders.track.vehicle_position')}</h2>
                                 <span className="text-xs text-gray-500">{formatSpeedKph(livePosition?.speed_kph)} — {livePosition?.recorded_at}</span>
                             </div>
                             <LeafletMap bounds={[live]} height="320px">
-                                <VehicleMarker position={live} label="Kendaraan" tone={Number(livePosition?.speed_kph ?? 0) > 3 ? 'moving' : 'idle'} />
+                                <VehicleMarker position={live} label={t('orders.track.vehicle')} tone={Number(livePosition?.speed_kph ?? 0) > 3 ? 'moving' : 'idle'} />
                             </LeafletMap>
                         </div>
                     )}
                 </div>
 
-                <p className="mt-4 text-center text-xs text-gray-400">Ditenagai oleh {siteName}</p>
+                <p className="mt-4 text-center text-xs text-gray-400">{t('orders.track.powered_by', { name: siteName })}</p>
             </div>
         </div>
     );

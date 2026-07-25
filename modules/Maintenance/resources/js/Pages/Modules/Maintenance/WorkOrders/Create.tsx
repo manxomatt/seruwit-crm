@@ -8,16 +8,17 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     MaintenanceCategory,
     WorkOrderVehicle,
     WorkOrderItem,
     SparePartOption,
-    STATUS_OPTIONS,
-    PRIORITY_OPTIONS,
-    TYPE_OPTIONS,
-    ITEM_TYPE_OPTIONS,
+    statusOptions,
+    priorityOptions,
+    typeOptions,
+    itemTypeOptions,
     formatCurrency,
 } from '../../../../maintenanceUtils';
 
@@ -58,6 +59,8 @@ const TrashIcon = () => (
 
 export default function Create({ vehicles, categories, spareParts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     const { data, setData, post, processing, errors } = useForm<FormData>({
         vehicle_id: '',
@@ -141,29 +144,29 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Work Order Baru</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.work_orders.create_title')}</h2>
                     <Link href={prefixedRoute('maintenance.work-orders.index')}>
-                        <SecondaryButton>← Kembali</SecondaryButton>
+                        <SecondaryButton>{t('maintenance.actions.back')}</SecondaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title="Work Order Baru" />
+            <Head title={t('maintenance.work_orders.create_title')} />
             <MaintenanceNav />
 
             <form onSubmit={submit} className="space-y-6">
                 {/* Main Info */}
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="mb-4 font-semibold text-gray-900">Informasi Pekerjaan</h3>
+                    <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.work_orders.job_info')}</h3>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div className="sm:col-span-2">
-                            <InputLabel htmlFor="title" value="Judul Pekerjaan *" />
+                            <InputLabel htmlFor="title" value={t('maintenance.work_orders.title')} />
                             <TextInput
                                 id="title"
                                 className="mt-1 block w-full"
                                 value={data.title}
                                 onChange={(e) => setData('title', e.target.value)}
-                                placeholder="Misal: Ganti Oli Mesin + Filter"
+                                placeholder={t('maintenance.work_orders.title_placeholder')}
                                 required
                                 autoFocus
                             />
@@ -171,72 +174,76 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="vehicle_id" value="Kendaraan *" />
+                            <InputLabel htmlFor="vehicle_id" value={t('maintenance.work_orders.vehicle')} />
                             <Select
                                 id="vehicle_id"
                                 className="mt-1"
                                 value={data.vehicle_id}
                                 onChange={(val) => setData('vehicle_id', val)}
                                 options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))}
-                                placeholder="Pilih kendaraan..."
+                                placeholder={t('maintenance.work_orders.select_vehicle')}
                             />
                             {selectedVehicle && (
-                                <p className="mt-1 text-xs text-gray-500">Odometer: {new Intl.NumberFormat('id-ID').format(selectedVehicle.odometer_km)} km</p>
+                                <p className="mt-1 text-xs text-gray-500">
+                                    {t('maintenance.work_orders.odometer_hint', {
+                                        value: new Intl.NumberFormat(localeTag).format(selectedVehicle.odometer_km),
+                                    })}
+                                </p>
                             )}
                             <InputError message={errors.vehicle_id} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="category_id" value="Kategori *" />
+                            <InputLabel htmlFor="category_id" value={t('maintenance.work_orders.category')} />
                             <Select
                                 id="category_id"
                                 className="mt-1"
                                 value={data.category_id}
                                 onChange={(val) => setData('category_id', val)}
                                 options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
-                                placeholder="Pilih kategori..."
+                                placeholder={t('maintenance.work_orders.select_category')}
                             />
                             <InputError message={errors.category_id} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="status" value="Status" />
+                            <InputLabel htmlFor="status" value={t('maintenance.work_orders.status_label')} />
                             <Select
                                 id="status"
                                 className="mt-1"
                                 value={data.status}
                                 onChange={(val) => setData('status', val)}
-                                options={STATUS_OPTIONS}
+                                options={statusOptions(t)}
                             />
                             <InputError message={errors.status} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="priority" value="Prioritas" />
+                            <InputLabel htmlFor="priority" value={t('maintenance.work_orders.priority_label')} />
                             <Select
                                 id="priority"
                                 className="mt-1"
                                 value={data.priority}
                                 onChange={(val) => setData('priority', val)}
-                                options={PRIORITY_OPTIONS}
+                                options={priorityOptions(t)}
                             />
                             <InputError message={errors.priority} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="type" value="Tipe" />
+                            <InputLabel htmlFor="type" value={t('maintenance.work_orders.type_label')} />
                             <Select
                                 id="type"
                                 className="mt-1"
                                 value={data.type}
                                 onChange={(val) => setData('type', val)}
-                                options={TYPE_OPTIONS}
+                                options={typeOptions(t)}
                             />
                             <InputError message={errors.type} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="scheduled_date" value="Tanggal Jadwal" />
+                            <InputLabel htmlFor="scheduled_date" value={t('maintenance.work_orders.scheduled_date')} />
                             <TextInput
                                 id="scheduled_date"
                                 type="date"
@@ -248,7 +255,7 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="odometer_at_service" value="Odometer Saat Servis (km)" />
+                            <InputLabel htmlFor="odometer_at_service" value={t('maintenance.work_orders.odometer_at_service')} />
                             <TextInput
                                 id="odometer_at_service"
                                 type="number"
@@ -261,31 +268,31 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="vendor_name" value="Bengkel / Vendor" />
+                            <InputLabel htmlFor="vendor_name" value={t('maintenance.work_orders.vendor')} />
                             <TextInput
                                 id="vendor_name"
                                 className="mt-1 block w-full"
                                 value={data.vendor_name}
                                 onChange={(e) => setData('vendor_name', e.target.value)}
-                                placeholder="Nama bengkel atau vendor"
+                                placeholder={t('maintenance.work_orders.vendor_placeholder')}
                             />
                             <InputError message={errors.vendor_name} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="mechanic_name" value="Mekanik" />
+                            <InputLabel htmlFor="mechanic_name" value={t('maintenance.work_orders.mechanic')} />
                             <TextInput
                                 id="mechanic_name"
                                 className="mt-1 block w-full"
                                 value={data.mechanic_name}
                                 onChange={(e) => setData('mechanic_name', e.target.value)}
-                                placeholder="Nama mekanik"
+                                placeholder={t('maintenance.work_orders.mechanic_placeholder')}
                             />
                             <InputError message={errors.mechanic_name} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="estimated_cost" value="Estimasi Biaya (Rp)" />
+                            <InputLabel htmlFor="estimated_cost" value={t('maintenance.work_orders.estimated_cost')} />
                             <TextInput
                                 id="estimated_cost"
                                 type="number"
@@ -298,27 +305,27 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                         </div>
 
                         <div className="sm:col-span-2">
-                            <InputLabel htmlFor="description" value="Deskripsi / Keluhan" />
+                            <InputLabel htmlFor="description" value={t('maintenance.work_orders.description')} />
                             <textarea
                                 id="description"
                                 rows={3}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 value={data.description}
                                 onChange={(e) => setData('description', e.target.value)}
-                                placeholder="Jelaskan keluhan atau pekerjaan yang perlu dilakukan..."
+                                placeholder={t('maintenance.work_orders.description_placeholder')}
                             />
                             <InputError message={errors.description} className="mt-2" />
                         </div>
 
                         <div className="sm:col-span-2">
-                            <InputLabel htmlFor="notes" value="Catatan" />
+                            <InputLabel htmlFor="notes" value={t('maintenance.work_orders.notes')} />
                             <textarea
                                 id="notes"
                                 rows={2}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 value={data.notes}
                                 onChange={(e) => setData('notes', e.target.value)}
-                                placeholder="Catatan tambahan..."
+                                placeholder={t('maintenance.work_orders.notes_placeholder')}
                             />
                             <InputError message={errors.notes} className="mt-2" />
                         </div>
@@ -328,33 +335,33 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                 {/* Items */}
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-900">Suku Cadang & Jasa</h3>
+                        <h3 className="font-semibold text-gray-900">{t('maintenance.work_orders.parts_and_labor')}</h3>
                         <button
                             type="button"
                             onClick={addItem}
                             className="flex items-center gap-1 rounded-lg border border-dashed border-indigo-400 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50"
                         >
                             <PlusIcon />
-                            Tambah Item
+                            {t('maintenance.work_orders.add_item')}
                         </button>
                     </div>
 
                     {data.items.length === 0 ? (
                         <p className="py-6 text-center text-sm text-gray-400">
-                            Belum ada item — klik "Tambah Item" untuk menambahkan suku cadang atau jasa.
+                            {t('maintenance.work_orders.items_empty')}
                         </p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full">
                                 <thead>
                                     <tr className="border-b border-gray-200 text-xs text-gray-500">
-                                        <th className="pb-2 text-left font-medium">Tipe</th>
-                                        <th className="pb-2 text-left font-medium">Sparepart (Inventory)</th>
-                                        <th className="pb-2 text-left font-medium">Nama</th>
-                                        <th className="pb-2 text-left font-medium">Qty</th>
-                                        <th className="pb-2 text-left font-medium">Satuan</th>
-                                        <th className="pb-2 text-right font-medium">Harga Satuan</th>
-                                        <th className="pb-2 text-right font-medium">Total</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.type')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.spare_part')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.name')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.qty')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.unit')}</th>
+                                        <th className="pb-2 text-right font-medium">{t('maintenance.work_orders.item_columns.unit_price')}</th>
+                                        <th className="pb-2 text-right font-medium">{t('maintenance.work_orders.item_columns.total')}</th>
                                         <th className="pb-2"></th>
                                     </tr>
                                 </thead>
@@ -367,7 +374,7 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                                                     onChange={(e) => updateItem(i, 'item_type', e.target.value)}
                                                     className="rounded border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                                 >
-                                                    {ITEM_TYPE_OPTIONS.map((o) => (
+                                                    {itemTypeOptions(t).map((o) => (
                                                         <option key={o.value} value={o.value}>{o.label}</option>
                                                     ))}
                                                 </select>
@@ -381,7 +388,7 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                                                         disabled={spareParts.length === 0}
                                                     >
                                                         <option value="">
-                                                            {spareParts.length === 0 ? '— tidak ada sparepart —' : '— manual (tanpa stok) —'}
+                                                            {spareParts.length === 0 ? t('maintenance.work_orders.no_spare_parts') : t('maintenance.work_orders.manual_no_stock')}
                                                         </option>
                                                         {spareParts.map((p) => (
                                                             <option key={p.id} value={p.id}>{p.name}</option>
@@ -396,7 +403,7 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                                                     className="w-48"
                                                     value={item.name}
                                                     onChange={(e) => updateItem(i, 'name', e.target.value)}
-                                                    placeholder="Nama item"
+                                                    placeholder={t('maintenance.work_orders.item_name_placeholder')}
                                                 />
                                             </td>
                                             <td className="py-2 pr-2">
@@ -424,7 +431,7 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                                                 />
                                             </td>
                                             <td className="py-2 pr-2 text-right text-sm font-medium text-gray-900">
-                                                {formatCurrency(item.total_price)}
+                                                {formatCurrency(item.total_price, localeTag)}
                                             </td>
                                             <td className="py-2">
                                                 <button
@@ -440,8 +447,8 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                                 </tbody>
                                 <tfoot>
                                     <tr className="border-t-2 border-gray-300">
-                                        <td colSpan={6} className="pt-3 text-right text-sm font-semibold text-gray-700">Total Estimasi</td>
-                                        <td className="pt-3 text-right text-sm font-bold text-gray-900">{formatCurrency(totalEstimated)}</td>
+                                        <td colSpan={6} className="pt-3 text-right text-sm font-semibold text-gray-700">{t('maintenance.work_orders.total_estimate')}</td>
+                                        <td className="pt-3 text-right text-sm font-bold text-gray-900">{formatCurrency(totalEstimated, localeTag)}</td>
                                         <td></td>
                                     </tr>
                                 </tfoot>
@@ -453,10 +460,10 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                 {/* Actions */}
                 <div className="flex justify-end gap-3">
                     <Link href={prefixedRoute('maintenance.work-orders.index')}>
-                        <SecondaryButton type="button">Batal</SecondaryButton>
+                        <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                     </Link>
                     <PrimaryButton disabled={processing}>
-                        {processing ? 'Menyimpan...' : 'Buat Work Order'}
+                        {processing ? t('maintenance.actions.saving') : t('maintenance.work_orders.submit_create')}
                     </PrimaryButton>
                 </div>
             </form>

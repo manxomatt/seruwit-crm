@@ -24,13 +24,13 @@ class PickListGenerator
             DeliveryOrder::STATUS_IN_TRANSIT,
         ], true)) {
             throw ValidationException::withMessages([
-                'delivery_order_id' => 'Pick list can only be generated for confirmed, assigned, or in-transit orders.',
+                'delivery_order_id' => __('outbound.messages.do_status_invalid'),
             ]);
         }
 
         if ($order->items->isEmpty()) {
             throw ValidationException::withMessages([
-                'delivery_order_id' => 'Delivery order has no items to pick.',
+                'delivery_order_id' => __('outbound.messages.do_no_items'),
             ]);
         }
 
@@ -41,7 +41,7 @@ class PickListGenerator
 
         if ($activeExists) {
             throw ValidationException::withMessages([
-                'delivery_order_id' => 'An active pick list already exists for this delivery order.',
+                'delivery_order_id' => __('outbound.messages.active_pick_list_exists'),
             ]);
         }
 
@@ -81,7 +81,7 @@ class PickListGenerator
 
             if ($pickList->items()->count() === 0) {
                 throw ValidationException::withMessages([
-                    'delivery_order_id' => 'No pickable (non-service) products on this delivery order.',
+                    'delivery_order_id' => __('outbound.messages.no_pickable_products'),
                 ]);
             }
 

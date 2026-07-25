@@ -19,4 +19,5 @@ return [
     'yes' => 'Yes',
     'no' => 'No',
     'locale_updated' => 'Language updated.',
+    'showing_results' => 'Showing :from to :to of :total results',
 ];

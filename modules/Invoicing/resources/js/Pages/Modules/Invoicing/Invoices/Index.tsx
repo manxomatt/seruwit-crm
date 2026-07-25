@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -34,7 +35,7 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-const STATUSES = ['draft', 'issued', 'paid', 'void'];
+const STATUSES = ['draft', 'issued', 'partially_paid', 'paid', 'void'];
 
 const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -42,6 +43,8 @@ const getStatusBadgeColor = (status: string) => {
             return 'bg-gray-100 text-gray-800';
         case 'issued':
             return 'bg-blue-100 text-blue-800';
+        case 'partially_paid':
+            return 'bg-amber-100 text-amber-800';
         case 'paid':
             return 'bg-green-100 text-green-800';
         default:
@@ -51,6 +54,7 @@ const getStatusBadgeColor = (status: string) => {
 
 export default function Index({ invoices, summary, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
 
     const handleSearch: FormEventHandler = (e) => {
@@ -72,34 +76,34 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Invoicing</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('invoicing.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('invoicing.invoices.create')}>
-                            <PrimaryButton>New Invoice</PrimaryButton>
+                            <PrimaryButton>{t('invoicing.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Invoices" />
+            <Head title={t('invoicing.index.head')} />
 
             <InvoicingNav />
 
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                    <p className="text-sm font-medium text-gray-500">Outstanding</p>
+                    <p className="text-sm font-medium text-gray-500">{t('invoicing.index.outstanding')}</p>
                     <p className="mt-1 text-2xl font-semibold text-gray-900">{formatMoney(summary.outstanding)}</p>
-                    <p className="mt-1 text-xs text-gray-500">Invoice issued yang belum dibayar</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('invoicing.index.outstanding_hint')}</p>
                 </div>
                 <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                    <p className="text-sm font-medium text-gray-500">Paid bulan ini</p>
+                    <p className="text-sm font-medium text-gray-500">{t('invoicing.index.paid_month')}</p>
                     <p className="mt-1 text-2xl font-semibold text-gray-900">{formatMoney(summary.paid_this_month)}</p>
-                    <p className="mt-1 text-xs text-gray-500">Pembayaran diterima bulan berjalan</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('invoicing.index.paid_month_hint')}</p>
                 </div>
                 <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                    <p className="text-sm font-medium text-gray-500">Draft</p>
+                    <p className="text-sm font-medium text-gray-500">{t('invoicing.index.draft')}</p>
                     <p className="mt-1 text-2xl font-semibold text-gray-900">{summary.draft_count}</p>
-                    <p className="mt-1 text-xs text-gray-500">Invoice yang belum diterbitkan</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('invoicing.index.draft_hint')}</p>
                 </div>
             </div>
 
@@ -109,7 +113,7 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Search by code..."
+                                placeholder={t('invoicing.index.search_placeholder')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -119,19 +123,22 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                             className="w-44"
                             value={filters.status || ''}
                             onChange={handleStatusFilter}
-                            placeholder="All statuses"
+                            placeholder={t('invoicing.status.all')}
                             options={[
-                                { value: '', label: 'All statuses' },
-                                ...STATUSES.map((status) => ({ value: status, label: status })),
+                                { value: '', label: t('invoicing.status.all') },
+                                ...STATUSES.map((status) => ({
+                                    value: status,
+                                    label: t(`invoicing.status.${status}`, undefined, status),
+                                })),
                             ]}
                         />
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {invoices.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No invoices found</h3>
-                            <p className="mt-1 text-sm text-gray-500">Create an invoice from delivered orders.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('invoicing.index.empty_title')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('invoicing.index.empty_hint')}</p>
                         </div>
                     ) : (
                         <>
@@ -139,12 +146,12 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Code</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Issue Date</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Due Date</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Total</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.index.columns.code')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.index.columns.partner')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.index.columns.issue_date')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.index.columns.due_date')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.index.columns.total')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.index.columns.status')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -161,7 +168,7 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">{formatMoney(invoice.total)}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(invoice.status)}`}>
-                                                        {invoice.status}
+                                                        {t(`invoicing.status.${invoice.status}`, undefined, invoice.status)}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -173,8 +180,11 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
                             {invoices.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(invoices.current_page - 1) * invoices.per_page + 1} to{' '}
-                                        {Math.min(invoices.current_page * invoices.per_page, invoices.total)} of {invoices.total} results
+                                        {t('common.showing_results', {
+                                            from: (invoices.current_page - 1) * invoices.per_page + 1,
+                                            to: Math.min(invoices.current_page * invoices.per_page, invoices.total),
+                                            total: invoices.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {invoices.links.map((link, index) => (

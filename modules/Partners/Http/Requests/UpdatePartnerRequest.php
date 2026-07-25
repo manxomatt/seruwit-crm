@@ -45,8 +45,8 @@ class UpdatePartnerRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'account_type.in' => 'Tipe akun harus perusahaan atau individu.',
-            'status.in' => 'Pilih status yang valid.',
+            'account_type.in' => __('partners.validation.account_type_in'),
+            'status.in' => __('partners.validation.status_in'),
         ];
     }
 }

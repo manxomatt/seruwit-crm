@@ -66,7 +66,7 @@ class TariffController extends Controller
         Tariff::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.billing.tariffs.index')
-            ->with('success', 'Tariff created.');
+            ->with('success', __('billing.messages.tariff_created'));
     }
 
     /**
@@ -77,7 +77,7 @@ class TariffController extends Controller
         $tariff->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.billing.tariffs.index')
-            ->with('success', 'Tariff updated.');
+            ->with('success', __('billing.messages.tariff_updated'));
     }
 
     /**
@@ -89,6 +89,6 @@ class TariffController extends Controller
         $tariff->delete();
 
         return redirect()->route($this->getRoutePrefix().'.billing.tariffs.index')
-            ->with('success', 'Tariff deleted.');
+            ->with('success', __('billing.messages.tariff_deleted'));
     }
 }

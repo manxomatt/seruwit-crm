@@ -42,6 +42,6 @@ class PromoRealizationController extends Controller
     {
         $rows = $service->syncProgram($program);
 
-        return back()->with('success', "Synced {$rows->count()} distributor realization(s).");
+        return back()->with('success', __('promotions.messages.synced', ['count' => $rows->count()]));
     }
 }

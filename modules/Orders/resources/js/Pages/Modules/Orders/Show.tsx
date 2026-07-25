@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -113,6 +114,7 @@ const getStatusBadgeColor = (status: string) => {
 
 export default function Show({ order, products, assignableTrips, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showItemModal, setShowItemModal] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -187,34 +189,34 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">{order.code}</h2>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(order.status)}`}>
-                            {order.status.replace('_', ' ')}
+                            {t(`orders.status.${order.status}`, undefined, order.status)}
                         </span>
                     </div>
                     <div className="flex gap-2">
                         {can.update && isDraft && (
-                            <PrimaryButton onClick={confirm}>Confirm Order</PrimaryButton>
+                            <PrimaryButton onClick={confirm}>{t('orders.show.confirm')}</PrimaryButton>
                         )}
                         {can.update && isConfirmed && (
-                            <PrimaryButton onClick={() => setShowAssignModal(true)}>Assign to Trip</PrimaryButton>
+                            <PrimaryButton onClick={() => setShowAssignModal(true)}>{t('orders.show.assign_trip')}</PrimaryButton>
                         )}
                         {can.update && canUnassign && (
-                            <SecondaryButton onClick={unassign}>Unassign Trip</SecondaryButton>
+                            <SecondaryButton onClick={unassign}>{t('orders.show.unassign_trip')}</SecondaryButton>
                         )}
                         {hasSuratJalan && (
                             <a href={prefixedRoute('orders.surat-jalan', order.id)} target="_blank" rel="noreferrer">
-                                <SecondaryButton type="button">Surat Jalan</SecondaryButton>
+                                <SecondaryButton type="button">{t('orders.show.surat_jalan')}</SecondaryButton>
                             </a>
                         )}
                         {can.update && isDraft && (
                             <Link href={prefixedRoute('orders.edit', order.id)}>
-                                <SecondaryButton type="button">Edit</SecondaryButton>
+                                <SecondaryButton type="button">{t('orders.show.edit')}</SecondaryButton>
                             </Link>
                         )}
                         {can.update && (isDraft || isConfirmed) && (
-                            <DangerButton onClick={() => setShowCancelModal(true)}>Cancel Order</DangerButton>
+                            <DangerButton onClick={() => setShowCancelModal(true)}>{t('orders.show.cancel_order')}</DangerButton>
                         )}
                         <Link href={prefixedRoute('orders.index')}>
-                            <SecondaryButton>Back to List</SecondaryButton>
+                            <SecondaryButton>{t('orders.show.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -227,7 +229,7 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                     <div className="p-6">
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('orders.show.partner')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     <Link href={prefixedRoute('partners.show', order.partner.id)} className="text-indigo-600 hover:text-indigo-900">
                                         {order.partner.name}
@@ -236,34 +238,34 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Order Date</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('orders.show.order_date')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.order_date}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Confirmed At</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('orders.show.confirmed_at')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.confirmed_at || '—'}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Pickup Address</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('orders.show.pickup_address')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.pickup_address}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Delivery Address</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('orders.show.delivery_address')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.delivery_address}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Delivered At</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('orders.show.delivered_at')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.delivered_at || '—'}</dd>
                             </div>
                             {order.cancelled_reason && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Cancellation Reason</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.cancellation_reason')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{order.cancelled_reason}</dd>
                                 </div>
                             )}
                             {order.notes && (
                                 <div className="sm:col-span-3">
-                                    <dt className="text-sm font-medium text-gray-500">Notes</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.notes')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{order.notes}</dd>
                                 </div>
                             )}
@@ -274,8 +276,8 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                 {!['draft', 'cancelled'].includes(order.status) && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-2 text-lg font-medium text-gray-900">Link Pelacakan Partner</h3>
-                            <p className="mb-3 text-sm text-gray-500">Bagikan tautan ini agar partner dapat memantau kirimannya tanpa login.</p>
+                            <h3 className="mb-2 text-lg font-medium text-gray-900">{t('orders.show.tracking.title')}</h3>
+                            <p className="mb-3 text-sm text-gray-500">{t('orders.show.tracking.hint')}</p>
                             <div className="flex items-center gap-2">
                                 <input
                                     readOnly
@@ -287,10 +289,10 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                                     type="button"
                                     onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/track/${order.tracking_token}`)}
                                 >
-                                    Salin
+                                    {t('orders.show.tracking.copy')}
                                 </SecondaryButton>
                                 <a href={`/track/${order.tracking_token}`} target="_blank" rel="noreferrer">
-                                    <SecondaryButton type="button">Buka</SecondaryButton>
+                                    <SecondaryButton type="button">{t('orders.show.tracking.open')}</SecondaryButton>
                                 </a>
                             </div>
                         </div>
@@ -300,25 +302,25 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                 {order.trip && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Trip</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">{t('orders.show.trip.title')}</h3>
                             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Code</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.trip.code')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">
                                         <Link href={prefixedRoute('transportation.trips.show', order.trip.id)} className="text-indigo-600 hover:text-indigo-900">
                                             {order.trip.code}
                                         </Link>{' '}
-                                        ({order.trip.status.replace('_', ' ')})
+                                        ({t(`orders.trip_status.${order.trip.status}`, undefined, order.trip.status)})
                                     </dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Vehicle / Driver</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.trip.vehicle_driver')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">
                                         {order.trip.vehicle.name} ({order.trip.vehicle.plate_number}) / {order.trip.driver.name}
                                     </dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Scheduled At</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.trip.scheduled_at')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{order.trip.scheduled_at}</dd>
                                 </div>
                             </dl>
@@ -329,13 +331,13 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">Items</h3>
+                            <h3 className="text-lg font-medium text-gray-900">{t('orders.show.items.title')}</h3>
                             {can.create && isDraft && (
-                                <PrimaryButton onClick={() => setShowItemModal(true)}>Add Item</PrimaryButton>
+                                <PrimaryButton onClick={() => setShowItemModal(true)}>{t('orders.show.items.add')}</PrimaryButton>
                             )}
                         </div>
                         {order.items.length === 0 ? (
-                            <p className="text-sm text-gray-500">No items yet. Add at least one item before confirming.</p>
+                            <p className="text-sm text-gray-500">{t('orders.show.items.empty')}</p>
                         ) : (
                             <ul className="space-y-3">
                                 {order.items.map((item) => (
@@ -351,7 +353,7 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                                         </div>
                                         {can.delete && isDraft && (
                                             <button onClick={() => deleteItem(item.id)} className="text-sm text-red-600 hover:text-red-900">
-                                                Delete
+                                                {t('orders.show.items.delete')}
                                             </button>
                                         )}
                                     </li>
@@ -364,28 +366,28 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                 {order.pod && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="text-lg font-medium text-gray-900">Bukti Pengiriman</h3>
+                            <h3 className="text-lg font-medium text-gray-900">{t('orders.show.pod.title')}</h3>
                             <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Diterima oleh</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.pod.recipient')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{order.pod.recipient_name}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Waktu</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.pod.time')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{order.pod.delivered_at}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Diinput oleh</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.pod.submitted_by')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{order.pod.submitter?.name ?? '—'}</dd>
                                 </div>
                             </dl>
 
                             {order.pod.signature_url && (
                                 <div className="mt-4">
-                                    <p className="text-sm font-medium text-gray-500">Tanda Tangan</p>
+                                    <p className="text-sm font-medium text-gray-500">{t('orders.show.pod.signature')}</p>
                                     <img
                                         src={order.pod.signature_url}
-                                        alt="Tanda tangan penerima"
+                                        alt={t('orders.show.pod.signature_alt')}
                                         className="mt-1 h-32 rounded-md border border-gray-200 bg-white object-contain"
                                     />
                                 </div>
@@ -393,11 +395,11 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
 
                             {order.pod.photos.length > 0 && (
                                 <div className="mt-4">
-                                    <p className="text-sm font-medium text-gray-500">Foto</p>
+                                    <p className="text-sm font-medium text-gray-500">{t('orders.show.pod.photos')}</p>
                                     <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-4">
                                         {order.pod.photos.map((photo) => (
                                             <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer">
-                                                <img src={photo.url} alt="Foto bukti" className="h-24 w-full rounded-md object-cover" />
+                                                <img src={photo.url} alt={t('orders.show.pod.photo_alt')} className="h-24 w-full rounded-md object-cover" />
                                             </a>
                                         ))}
                                     </div>
@@ -408,11 +410,11 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                                     <thead>
                                         <tr className="text-left text-xs font-medium uppercase text-gray-500">
-                                            <th className="py-2 pr-4">Barang</th>
-                                            <th className="py-2 pr-4">Diterima</th>
-                                            <th className="py-2 pr-4">Ditolak</th>
-                                            <th className="py-2 pr-4">Retur</th>
-                                            <th className="py-2">Alasan</th>
+                                            <th className="py-2 pr-4">{t('orders.show.pod.columns.product')}</th>
+                                            <th className="py-2 pr-4">{t('orders.show.pod.columns.accepted')}</th>
+                                            <th className="py-2 pr-4">{t('orders.show.pod.columns.rejected')}</th>
+                                            <th className="py-2 pr-4">{t('orders.show.pod.columns.returned')}</th>
+                                            <th className="py-2">{t('orders.show.pod.columns.reason')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
@@ -431,21 +433,21 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
 
                             {order.pod.notes && (
                                 <div className="mt-4">
-                                    <p className="text-sm font-medium text-gray-500">Catatan</p>
+                                    <p className="text-sm font-medium text-gray-500">{t('orders.show.pod.notes')}</p>
                                     <p className="mt-1 text-sm text-gray-900">{order.pod.notes}</p>
                                 </div>
                             )}
 
                             {order.pod.latitude && order.pod.longitude && (
                                 <div className="mt-4">
-                                    <p className="text-sm font-medium text-gray-500">Lokasi</p>
+                                    <p className="text-sm font-medium text-gray-500">{t('orders.show.pod.location')}</p>
                                     <a
                                         href={`https://www.openstreetmap.org/?mlat=${order.pod.latitude}&mlon=${order.pod.longitude}#map=17/${order.pod.latitude}/${order.pod.longitude}`}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="mt-1 inline-block text-sm text-indigo-600 hover:text-indigo-900"
                                     >
-                                        {order.pod.latitude}, {order.pod.longitude} — lihat di peta
+                                        {order.pod.latitude}, {order.pod.longitude} — {t('orders.show.pod.view_map')}
                                     </a>
                                 </div>
                             )}
@@ -457,11 +459,11 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="flex items-center justify-between p-6">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900">Delete this order</h3>
-                                <p className="text-sm text-gray-500">This cannot be undone once confirmed.</p>
+                                <h3 className="text-sm font-medium text-gray-900">{t('orders.show.delete.title')}</h3>
+                                <p className="text-sm text-gray-500">{t('orders.show.delete.hint')}</p>
                             </div>
                             <button onClick={deleteOrder} className="text-sm font-medium text-red-600 hover:text-red-900">
-                                Delete Order
+                                {t('orders.show.delete.action')}
                             </button>
                         </div>
                     </div>
@@ -470,16 +472,16 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
 
             <Modal show={showItemModal} onClose={() => setShowItemModal(false)} maxWidth="md">
                 <form onSubmit={submitItem} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Add Item</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{t('orders.show.modals.add_item')}</h3>
                     <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="i_product_id" value="Product" />
+                            <InputLabel htmlFor="i_product_id" value={t('orders.show.modals.product')} />
                             <Select
                                 id="i_product_id"
                                 className="mt-1"
                                 value={itemForm.data.product_id}
                                 onChange={(value) => itemForm.setData('product_id', value)}
-                                placeholder="Select a product"
+                                placeholder={t('orders.show.modals.select_product')}
                                 options={products.map((product) => ({
                                     value: String(product.id),
                                     label: `${product.name} (${product.code})`,
@@ -488,37 +490,37 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                             <InputError message={itemForm.errors.product_id} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="i_quantity" value="Quantity" />
+                            <InputLabel htmlFor="i_quantity" value={t('orders.show.modals.quantity')} />
                             <TextInput id="i_quantity" type="number" step="0.01" min="0.01" className="mt-1 block w-full" value={itemForm.data.quantity} onChange={(e) => itemForm.setData('quantity', e.target.value)} required />
                             <InputError message={itemForm.errors.quantity} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="i_notes" value="Notes (optional)" />
+                            <InputLabel htmlFor="i_notes" value={t('orders.create.notes')} />
                             <TextInput id="i_notes" className="mt-1 block w-full" value={itemForm.data.notes} onChange={(e) => itemForm.setData('notes', e.target.value)} />
                             <InputError message={itemForm.errors.notes} className="mt-2" />
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowItemModal(false)}>Cancel</SecondaryButton>
-                        <PrimaryButton disabled={itemForm.processing}>Save</PrimaryButton>
+                        <SecondaryButton type="button" onClick={() => setShowItemModal(false)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={itemForm.processing}>{t('orders.show.modals.save')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
             <Modal show={showAssignModal} onClose={() => setShowAssignModal(false)} maxWidth="md">
                 <form onSubmit={submitAssign} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Assign to Trip</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{t('orders.show.modals.assign_title')}</h3>
                     {assignableTrips.length === 0 ? (
-                        <p className="text-sm text-gray-500">No scheduled trips available. Dispatch a trip first.</p>
+                        <p className="text-sm text-gray-500">{t('orders.show.modals.assign_empty')}</p>
                     ) : (
                         <div>
-                            <InputLabel htmlFor="a_trip_id" value="Trip" />
+                            <InputLabel htmlFor="a_trip_id" value={t('orders.show.trip.title')} />
                             <Select
                                 id="a_trip_id"
                                 className="mt-1"
                                 value={assignForm.data.trip_id}
                                 onChange={(value) => assignForm.setData('trip_id', value)}
-                                placeholder="Select a scheduled trip"
+                                placeholder={t('orders.show.modals.select_trip')}
                                 options={assignableTrips.map((trip) => ({
                                     value: String(trip.id),
                                     label: `${trip.code} — ${trip.origin} → ${trip.destination} (${trip.vehicle?.name || '?'} / ${trip.driver?.name || '?'})`,
@@ -528,9 +530,9 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                         </div>
                     )}
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowAssignModal(false)}>Cancel</SecondaryButton>
+                        <SecondaryButton type="button" onClick={() => setShowAssignModal(false)}>{t('common.cancel')}</SecondaryButton>
                         {assignableTrips.length > 0 && (
-                            <PrimaryButton disabled={assignForm.processing}>Assign</PrimaryButton>
+                            <PrimaryButton disabled={assignForm.processing}>{t('orders.show.modals.assign')}</PrimaryButton>
                         )}
                     </div>
                 </form>
@@ -538,13 +540,13 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
 
             <Modal show={showCancelModal} onClose={() => setShowCancelModal(false)} maxWidth="md">
                 <form onSubmit={submitCancel} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Cancel Order</h3>
-                    <InputLabel htmlFor="cancelled_reason" value="Reason" />
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{t('orders.show.modals.cancel_title')}</h3>
+                    <InputLabel htmlFor="cancelled_reason" value={t('orders.show.modals.reason')} />
                     <TextInput id="cancelled_reason" className="mt-1 block w-full" value={cancelForm.data.cancelled_reason} onChange={(e) => cancelForm.setData('cancelled_reason', e.target.value)} required />
                     <InputError message={cancelForm.errors.cancelled_reason} className="mt-2" />
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowCancelModal(false)}>Back</SecondaryButton>
-                        <DangerButton disabled={cancelForm.processing}>Confirm Cancellation</DangerButton>
+                        <SecondaryButton type="button" onClick={() => setShowCancelModal(false)}>{t('common.back')}</SecondaryButton>
+                        <DangerButton disabled={cancelForm.processing}>{t('orders.show.modals.confirm_cancellation')}</DangerButton>
                     </div>
                 </form>
             </Modal>

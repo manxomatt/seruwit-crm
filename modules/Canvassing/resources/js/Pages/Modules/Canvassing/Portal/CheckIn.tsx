@@ -1,5 +1,6 @@
 import CanvassingLayout from '@/Layouts/CanvassingLayout';
 import InputError from '@/Components/InputError';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
@@ -10,6 +11,7 @@ interface Salesperson { id: number; name: string; }
 interface Props { salesperson: Salesperson; partners: Partner[]; todayPlan: Plan | null; }
 
 export default function CheckIn({ salesperson, partners, todayPlan }: Props): JSX.Element {
+    const { t } = useTrans();
     const [search, setSearch] = useState('');
     const [gpsLoading, setGpsLoading] = useState(false);
 
@@ -42,9 +44,15 @@ export default function CheckIn({ salesperson, partners, todayPlan }: Props): JS
         post(route('module.canvassing.portal.checkin.store'));
     };
 
+    const gpsLabel = gpsLoading
+        ? t('canvassing.portal.gps_loading')
+        : data.latitude
+            ? t('canvassing.portal.gps_ready', { lat: parseFloat(data.latitude).toFixed(5), lng: parseFloat(data.longitude).toFixed(5) })
+            : t('canvassing.portal.gps_unavailable');
+
     return (
-        <CanvassingLayout salespersonName={salesperson.name} title="Mulai Kunjungan" back={route('module.canvassing.portal.today')}>
-            <Head title="Mulai Kunjungan" />
+        <CanvassingLayout salespersonName={salesperson.name} title={t('canvassing.portal.checkin_title')} back={route('module.canvassing.portal.today')}>
+            <Head title={t('canvassing.portal.checkin_head')} />
 
             <form onSubmit={submit} className="space-y-4">
                 {/* GPS indicator */}
@@ -53,21 +61,21 @@ export default function CheckIn({ salesperson, partners, todayPlan }: Props): JS
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    {gpsLoading ? 'Mengambil lokasi GPS…' : data.latitude ? `GPS: ${parseFloat(data.latitude).toFixed(5)}, ${parseFloat(data.longitude).toFixed(5)}` : 'Lokasi GPS tidak tersedia'}
+                    {gpsLabel}
                 </div>
 
                 {/* Partner selection */}
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <label className="mb-2 block text-sm font-semibold text-gray-700">Pilih Pelanggan / Prospek *</label>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">{t('canvassing.portal.select_partner')}</label>
                     <input
                         type="text"
-                        placeholder="Cari nama…"
+                        placeholder={t('canvassing.portal.search_partner')}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="mb-2 w-full rounded-md border-gray-300 text-sm"
                     />
                     <div className="max-h-48 overflow-y-auto rounded-md border border-gray-200">
-                        {filteredPartners.length === 0 && <p className="px-3 py-4 text-center text-sm text-gray-400">Tidak ditemukan</p>}
+                        {filteredPartners.length === 0 && <p className="px-3 py-4 text-center text-sm text-gray-400">{t('canvassing.portal.not_found')}</p>}
                         {filteredPartners.slice(0, 30).map((p) => (
                             <button
                                 key={p.id}
@@ -85,13 +93,13 @@ export default function CheckIn({ salesperson, partners, todayPlan }: Props): JS
 
                 {/* Notes */}
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <label htmlFor="notes" className="mb-1 block text-sm font-semibold text-gray-700">Catatan (opsional)</label>
+                    <label htmlFor="notes" className="mb-1 block text-sm font-semibold text-gray-700">{t('canvassing.portal.notes_optional')}</label>
                     <textarea
                         id="notes"
                         rows={3}
                         value={data.notes}
                         onChange={(e) => setData('notes', e.target.value)}
-                        placeholder="Tujuan kunjungan, catatan awal…"
+                        placeholder={t('canvassing.portal.notes_placeholder')}
                         className="w-full rounded-md border-gray-300 text-sm"
                     />
                 </div>
@@ -101,7 +109,7 @@ export default function CheckIn({ salesperson, partners, todayPlan }: Props): JS
                     disabled={processing || !data.partner_id}
                     className="w-full rounded-xl bg-emerald-600 py-4 text-base font-bold text-white shadow-md disabled:opacity-50 active:bg-emerald-700"
                 >
-                    {processing ? 'Memproses…' : 'Check In Sekarang'}
+                    {processing ? t('canvassing.portal.processing') : t('canvassing.portal.checkin_now')}
                 </button>
             </form>
         </CanvassingLayout>

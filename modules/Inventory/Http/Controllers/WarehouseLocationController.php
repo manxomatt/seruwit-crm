@@ -33,7 +33,7 @@ class WarehouseLocationController extends Controller
         $warehouse->locations()->create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.show', $warehouse)
-            ->with('success', 'Lokasi berhasil ditambahkan.');
+            ->with('success', __('inventory.messages.location_created'));
     }
 
     public function edit(Warehouse $warehouse, WarehouseLocation $location)
@@ -55,26 +55,26 @@ class WarehouseLocationController extends Controller
         $location->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.show', $warehouse)
-            ->with('success', 'Lokasi berhasil diperbarui.');
+            ->with('success', __('inventory.messages.location_updated'));
     }
 
     public function destroy(Warehouse $warehouse, WarehouseLocation $location): RedirectResponse
     {
         if ($location->is_default) {
-            return back()->with('error', 'Lokasi default tidak bisa dihapus.');
+            return back()->with('error', __('inventory.messages.location_default'));
         }
 
         if ($location->stockLevels()->where('on_hand', '>', 0)->exists()) {
-            return back()->with('error', 'Lokasi dengan stok tidak bisa dihapus.');
+            return back()->with('error', __('inventory.messages.location_has_stock'));
         }
 
         if ($location->children()->exists()) {
-            return back()->with('error', 'Lokasi yang memiliki sub-lokasi tidak bisa dihapus.');
+            return back()->with('error', __('inventory.messages.location_has_children'));
         }
 
         $location->delete();
 
         return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.show', $warehouse)
-            ->with('success', 'Lokasi berhasil dihapus.');
+            ->with('success', __('inventory.messages.location_deleted'));
     }
 }

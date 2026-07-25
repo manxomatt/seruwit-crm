@@ -27,7 +27,7 @@ class VehicleMaintenanceLogController extends Controller
         $vehicle->maintenanceLogs()->create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
-            ->with('success', 'Maintenance log added.');
+            ->with('success', __('fleet.messages.maintenance_added'));
     }
 
     /**
@@ -42,7 +42,7 @@ class VehicleMaintenanceLogController extends Controller
         $maintenanceLog->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
-            ->with('success', 'Maintenance log updated.');
+            ->with('success', __('fleet.messages.maintenance_updated'));
     }
 
     /**
@@ -57,6 +57,6 @@ class VehicleMaintenanceLogController extends Controller
         $maintenanceLog->delete();
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
-            ->with('success', 'Maintenance log deleted.');
+            ->with('success', __('fleet.messages.maintenance_deleted'));
     }
 }

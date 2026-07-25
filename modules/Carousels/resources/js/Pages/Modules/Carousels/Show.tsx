@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
@@ -34,6 +35,7 @@ interface Props {
 
 export default function Show({ carousel }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [currentIndex, setCurrentIndex] = useState(0);
     const activeImages = carousel.images.filter((img) => img.is_active);
 
@@ -63,30 +65,30 @@ export default function Show({ carousel }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Preview: {carousel.name}
+                        {t('carousels.preview_title', { name: carousel.name })}
                     </h2>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('carousels.edit', carousel.id)}>
-                            <SecondaryButton>Edit Carousel</SecondaryButton>
+                            <SecondaryButton>{t('carousels.edit_carousel')}</SecondaryButton>
                         </Link>
                         <Link href={prefixedRoute('carousels.index')}>
-                            <SecondaryButton>Back to List</SecondaryButton>
+                            <SecondaryButton>{t('carousels.back_list')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
             }
         >
-            <Head title={`Preview: ${carousel.name}`} />
+            <Head title={t('carousels.preview_title', { name: carousel.name })} />
 
             <div className="space-y-6">
                 {/* Carousel Preview */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Carousel Preview</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('carousels.show.preview')}</h3>
                         
                         {activeImages.length === 0 ? (
                             <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-                                <p className="text-gray-500">No active images to display</p>
+                                <p className="text-gray-500">{t('carousels.show.no_active')}</p>
                             </div>
                         ) : (
                             <div className="relative">
@@ -101,7 +103,7 @@ export default function Show({ carousel }: Props): JSX.Element {
                                         >
                                             <img
                                                 src={`/storage/${image.image_path}`}
-                                                alt={image.title || 'Carousel image'}
+                                                alt={image.title || t('carousels.images.alt')}
                                                 className="w-full h-full object-cover"
                                             />
                                             {/* Overlay Content */}
@@ -180,18 +182,18 @@ export default function Show({ carousel }: Props): JSX.Element {
                 {/* Carousel Info */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Carousel Information</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('carousels.show.info')}</h3>
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Name</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('carousels.show.name')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{carousel.name}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Slug</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('carousels.show.slug')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{carousel.slug}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('carousels.show.status')}</dt>
                                 <dd className="mt-1">
                                     <span
                                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -200,25 +202,25 @@ export default function Show({ carousel }: Props): JSX.Element {
                                                 : 'bg-red-100 text-red-800'
                                         }`}
                                     >
-                                        {carousel.is_active ? 'Active' : 'Inactive'}
+                                        {carousel.is_active ? t('carousels.active') : t('carousels.inactive')}
                                     </span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Autoplay Interval</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('carousels.show.autoplay')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{carousel.autoplay_interval}ms</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Total Images</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('carousels.show.total_images')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{carousel.images.length}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Active Images</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('carousels.show.active_images')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{activeImages.length}</dd>
                             </div>
                             {carousel.description && (
                                 <div className="sm:col-span-2">
-                                    <dt className="text-sm font-medium text-gray-500">Description</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('carousels.show.description')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{carousel.description}</dd>
                                 </div>
                             )}
@@ -229,9 +231,9 @@ export default function Show({ carousel }: Props): JSX.Element {
                 {/* Embed Code */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Embed Code</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('carousels.show.embed')}</h3>
                         <p className="text-sm text-gray-500 mb-2">
-                            Use this code to embed the carousel in your pages:
+                            {t('carousels.show.embed_hint')}
                         </p>
                         <div className="bg-gray-100 rounded-md p-4">
                             <code className="text-sm text-gray-800">

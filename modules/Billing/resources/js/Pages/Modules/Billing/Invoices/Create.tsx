@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -33,6 +34,7 @@ interface Props {
 
 export default function Create({ partners, selectedPartnerId, invoiceableOrders }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm<{
         partner_id: string;
         order_ids: number[];
@@ -67,9 +69,9 @@ export default function Create({ partners, selectedPartnerId, invoiceableOrders 
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">New Invoice</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.invoices.head')}</h2>}
         >
-            <Head title="New Invoice" />
+            <Head title={t('billing.invoices.title')} />
 
             <BillingNav />
 
@@ -78,13 +80,13 @@ export default function Create({ partners, selectedPartnerId, invoiceableOrders 
                     <form onSubmit={submit} className="max-w-3xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="partner_id" value="Partner" />
+                                <InputLabel htmlFor="partner_id" value={t('billing.invoices.partner')} />
                                 <Select
                                     id="partner_id"
                                     className="mt-1"
                                     value={data.partner_id}
                                     onChange={selectPartner}
-                                    placeholder="Select a partner"
+                                    placeholder={t('billing.invoices.select_partner')}
                                     options={partners.map((partner) => ({
                                         value: String(partner.id),
                                         label: `${partner.name} (${partner.code})`,
@@ -96,10 +98,10 @@ export default function Create({ partners, selectedPartnerId, invoiceableOrders 
 
                         {data.partner_id && (
                             <div>
-                                <InputLabel value="Delivered orders belum tertagih" />
+                                <InputLabel value={t('billing.invoices.orders_label')} />
                                 <InputError message={errors.order_ids} className="mt-2" />
                                 {invoiceableOrders.length === 0 ? (
-                                    <p className="mt-2 text-sm text-gray-500">Tidak ada order delivered yang belum tertagih untuk partner ini.</p>
+                                    <p className="mt-2 text-sm text-gray-500">{t('billing.invoices.orders_empty')}</p>
                                 ) : (
                                     <ul className="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
                                         {invoiceableOrders.map((order) => (
@@ -118,7 +120,7 @@ export default function Create({ partners, selectedPartnerId, invoiceableOrders 
                                                 </label>
                                                 <span className="text-sm text-gray-900">
                                                     {order.charge && Number(order.charge.amount) > 0 ? formatMoney(order.charge.amount) : (
-                                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">harga belum diisi</span>
+                                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{t('billing.charges.price_missing')}</span>
                                                     )}
                                                 </span>
                                             </li>
@@ -127,16 +129,19 @@ export default function Create({ partners, selectedPartnerId, invoiceableOrders 
                                 )}
                                 {data.order_ids.length > 0 && (
                                     <p className="mt-3 text-right text-sm font-medium text-gray-900">
-                                        Subtotal ({data.order_ids.length} order): {formatMoney(subtotal)}
+                                        {t('billing.invoices.subtotal', {
+                                            count: data.order_ids.length,
+                                            amount: formatMoney(subtotal),
+                                        })}
                                     </p>
                                 )}
                             </div>
                         )}
 
                         <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing || data.order_ids.length === 0}>Create Draft Invoice</PrimaryButton>
+                            <PrimaryButton disabled={processing || data.order_ids.length === 0}>{t('billing.invoices.create_draft')}</PrimaryButton>
                             <Link href={prefixedRoute('billing.charges.index')}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

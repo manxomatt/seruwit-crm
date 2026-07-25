@@ -119,7 +119,7 @@ class PurchaseOrderController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $po)
-            ->with('success', $shouldSubmit ? 'Purchase order submitted.' : 'Draft purchase order saved.');
+            ->with('success', $shouldSubmit ? __('purchasing.messages.po_submitted_on_create') : __('purchasing.messages.po_draft_saved'));
     }
 
     public function show(PurchaseOrder $po): Response
@@ -145,7 +145,7 @@ class PurchaseOrderController extends Controller
     {
         if ($po->status !== PurchaseOrder::STATUS_DRAFT) {
             return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $po)
-                ->with('error', 'Only draft purchase orders can be edited.');
+                ->with('error', __('purchasing.messages.po_edit_draft_only'));
         }
 
         $po->load(['items.product:id,name,code,unit']);
@@ -173,7 +173,7 @@ class PurchaseOrderController extends Controller
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $po): RedirectResponse
     {
         if ($po->status !== PurchaseOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Only draft purchase orders can be updated.');
+            return back()->with('error', __('purchasing.messages.po_update_draft_only'));
         }
 
         $validated = $request->validated();
@@ -204,17 +204,17 @@ class PurchaseOrderController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $po)
-            ->with('success', 'Purchase order updated.');
+            ->with('success', __('purchasing.messages.po_updated'));
     }
 
     public function submit(PurchaseOrder $po): RedirectResponse
     {
         if ($po->status !== PurchaseOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Only a draft purchase order can be submitted.');
+            return back()->with('error', __('purchasing.messages.po_submit_draft_only'));
         }
 
         if (! $po->items()->exists()) {
-            return back()->with('error', 'Add at least one item before submitting.');
+            return back()->with('error', __('purchasing.messages.po_submit_need_items'));
         }
 
         if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)) {
@@ -228,58 +228,58 @@ class PurchaseOrderController extends Controller
             );
 
             if (! $gate['allowed']) {
-                return back()->with('error', $gate['message'] ?? 'Approval required before submit.');
+                return back()->with('error', $gate['message'] ?? __('purchasing.messages.po_approval_required'));
             }
         }
 
         $po->update(['status' => PurchaseOrder::STATUS_SUBMITTED]);
 
-        return back()->with('success', 'Purchase order submitted to supplier.');
+        return back()->with('success', __('purchasing.messages.po_submitted'));
     }
 
     public function approve(PurchaseOrder $po): RedirectResponse
     {
         if ($po->status !== PurchaseOrder::STATUS_SUBMITTED) {
-            return back()->with('error', 'Only a submitted purchase order can be approved.');
+            return back()->with('error', __('purchasing.messages.po_approve_submitted_only'));
         }
 
         $po->update(['status' => PurchaseOrder::STATUS_APPROVED]);
 
-        return back()->with('success', 'Purchase order approved.');
+        return back()->with('success', __('purchasing.messages.po_approved'));
     }
 
     public function cancel(PurchaseOrder $po): RedirectResponse
     {
         if (! $po->canBeCancelled()) {
-            return back()->with('error', 'This purchase order can no longer be cancelled.');
+            return back()->with('error', __('purchasing.messages.po_cancel_not_allowed'));
         }
 
         $po->update(['status' => PurchaseOrder::STATUS_CANCELLED]);
 
-        return back()->with('success', 'Purchase order cancelled.');
+        return back()->with('success', __('purchasing.messages.po_cancelled'));
     }
 
     public function close(PurchaseOrder $po): RedirectResponse
     {
         if ($po->status !== PurchaseOrder::STATUS_FULLY_RECEIVED) {
-            return back()->with('error', 'Only a fully received purchase order can be closed.');
+            return back()->with('error', __('purchasing.messages.po_close_fully_received_only'));
         }
 
         $po->update(['status' => PurchaseOrder::STATUS_CLOSED]);
 
-        return back()->with('success', 'Purchase order closed.');
+        return back()->with('success', __('purchasing.messages.po_closed'));
     }
 
     public function destroy(PurchaseOrder $po): RedirectResponse
     {
         if ($po->status !== PurchaseOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Only draft purchase orders can be deleted.');
+            return back()->with('error', __('purchasing.messages.po_delete_draft_only'));
         }
 
         $po->delete();
 
         return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.index')
-            ->with('success', 'Purchase order deleted.');
+            ->with('success', __('purchasing.messages.po_deleted'));
     }
 
     /**

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
@@ -71,6 +72,7 @@ const getStatusBadgeColor = (status: string) => {
 
 export default function Index({ orders, tariffs, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [pricing, setPricing] = useState<Order | null>(null);
 
@@ -90,7 +92,7 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
 
     const applyTariff = (tariffId: string) => {
         form.setData('tariff_id', tariffId);
-        const tariff = tariffs.find((t) => String(t.id) === tariffId);
+        const tariff = tariffs.find((item) => String(item.id) === tariffId);
         if (tariff) {
             form.setData((data) => ({ ...data, tariff_id: tariffId, amount: tariff.price }));
         }
@@ -124,9 +126,9 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Billing</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.title')}</h2>}
         >
-            <Head title="Order Charges" />
+            <Head title={t('billing.charges.head')} />
 
             <BillingNav />
 
@@ -136,7 +138,7 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Search by code or address..."
+                                placeholder={t('billing.charges.search_placeholder')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -146,10 +148,13 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                             className="w-44"
                             value={filters.status || ''}
                             onChange={(status) => applyFilters({ status: status || undefined })}
-                            placeholder="All statuses"
+                            placeholder={t('billing.status.all')}
                             options={[
-                                { value: '', label: 'All statuses' },
-                                ...STATUSES.map((status) => ({ value: status, label: status.replace('_', ' ') })),
+                                { value: '', label: t('billing.status.all') },
+                                ...STATUSES.map((status) => ({
+                                    value: status,
+                                    label: t(`billing.status.${status}`, undefined, status.replace('_', ' ')),
+                                })),
                             ]}
                         />
                         <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -159,15 +164,15 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                                 checked={filters.uninvoiced}
                                 onChange={(e) => applyFilters({ uninvoiced: e.target.checked || undefined })}
                             />
-                            Uninvoiced only
+                            {t('billing.charges.uninvoiced_only')}
                         </label>
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {orders.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No billable orders</h3>
-                            <p className="mt-1 text-sm text-gray-500">Confirmed orders appear here to be priced.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('billing.charges.empty_title')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('billing.charges.empty_hint')}</p>
                         </div>
                     ) : (
                         <>
@@ -175,13 +180,13 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Order</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Invoice</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.charges.columns.order')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.charges.columns.partner')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.charges.columns.route')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.charges.columns.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.charges.columns.amount')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.charges.columns.invoice')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -192,26 +197,26 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                                                 <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-500">{order.pickup_address} → {order.delivery_address}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(order.status)}`}>
-                                                        {order.status.replace('_', ' ')}
+                                                        {t(`billing.status.${order.status}`, undefined, order.status.replace('_', ' '))}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">
                                                     {order.charge ? (
                                                         Number(order.charge.amount) > 0 ? formatMoney(order.charge.amount) : (
-                                                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">harga belum diisi</span>
+                                                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{t('billing.charges.price_missing')}</span>
                                                         )
                                                     ) : (
-                                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">harga belum diisi</span>
+                                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">{t('billing.charges.price_missing')}</span>
                                                     )}
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.charge?.invoice?.code || '—'}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     {can.update && !isLocked(order) && (
                                                         <button onClick={() => openPricing(order)} className="text-indigo-600 hover:text-indigo-900">
-                                                            Set harga
+                                                            {t('billing.charges.set_price')}
                                                         </button>
                                                     )}
-                                                    {isLocked(order) && <span className="text-xs text-gray-400">locked</span>}
+                                                    {isLocked(order) && <span className="text-xs text-gray-400">{t('billing.charges.locked')}</span>}
                                                 </td>
                                             </tr>
                                         ))}
@@ -222,8 +227,11 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                             {orders.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(orders.current_page - 1) * orders.per_page + 1} to{' '}
-                                        {Math.min(orders.current_page * orders.per_page, orders.total)} of {orders.total} results
+                                        {t('common.showing_results', {
+                                            from: (orders.current_page - 1) * orders.per_page + 1,
+                                            to: Math.min(orders.current_page * orders.per_page, orders.total),
+                                            total: orders.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {orders.links.map((link, index) => (
@@ -251,18 +259,20 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
 
             <Modal show={pricing !== null} onClose={() => setPricing(null)} maxWidth="md">
                 <form onSubmit={submit} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Set harga — {pricing?.code}</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        {t('billing.charges.set_price_title', { code: pricing?.code ?? '' })}
+                    </h3>
                     <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="c_tariff_id" value="Tarif (opsional)" />
+                            <InputLabel htmlFor="c_tariff_id" value={t('billing.charges.tariff_optional')} />
                             <Select
                                 id="c_tariff_id"
                                 className="mt-1"
                                 value={form.data.tariff_id}
                                 onChange={applyTariff}
-                                placeholder="Harga manual"
+                                placeholder={t('billing.charges.manual_price')}
                                 options={[
-                                    { value: '', label: 'Harga manual' },
+                                    { value: '', label: t('billing.charges.manual_price') },
                                     ...tariffs.map((tariff) => ({
                                         value: String(tariff.id),
                                         label: `${tariff.origin} → ${tariff.destination} — ${formatMoney(tariff.price)}`,
@@ -272,7 +282,7 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                             <InputError message={form.errors.tariff_id} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="c_amount" value="Amount (Rp)" />
+                            <InputLabel htmlFor="c_amount" value={t('billing.charges.amount')} />
                             <TextInput
                                 id="c_amount"
                                 type="number"
@@ -286,8 +296,8 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setPricing(null)}>Cancel</SecondaryButton>
-                        <PrimaryButton disabled={form.processing}>Save</PrimaryButton>
+                        <SecondaryButton type="button" onClick={() => setPricing(null)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={form.processing}>{t('common.save')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>

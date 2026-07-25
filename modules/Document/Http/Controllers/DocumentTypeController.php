@@ -43,7 +43,7 @@ class DocumentTypeController extends Controller
 
         DocumentType::query()->create($validated);
 
-        return back()->with('success', 'Document type created.');
+        return back()->with('success', __('document.messages.type_created'));
     }
 
     public function update(Request $request, DocumentType $type): RedirectResponse
@@ -61,17 +61,17 @@ class DocumentTypeController extends Controller
 
         $type->update($validated);
 
-        return back()->with('success', 'Document type updated.');
+        return back()->with('success', __('document.messages.type_updated'));
     }
 
     public function destroy(DocumentType $type): RedirectResponse
     {
         if ($type->documents()->exists()) {
-            return back()->with('error', 'Cannot delete a document type that has existing documents.');
+            return back()->with('error', __('document.messages.type_in_use'));
         }
 
         $type->delete();
 
-        return back()->with('success', 'Document type deleted.');
+        return back()->with('success', __('document.messages.type_deleted'));
     }
 }

@@ -1,8 +1,10 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 export default function OutboundNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const active = isCurrentRoute('outbound.*');
 
     return (
@@ -16,7 +18,7 @@ export default function OutboundNav(): JSX.Element {
                             : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                     }`}
                 >
-                    Pick Lists
+                    {t('outbound.nav.pick_lists')}
                 </Link>
             </nav>
         </div>

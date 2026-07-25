@@ -112,7 +112,7 @@ class PodController extends Controller
 
         return redirect()
             ->route('module.driver.trip', $order->trip_id)
-            ->with('success', 'Bukti pengiriman tersimpan.');
+            ->with('success', __('orders.messages.pod_saved'));
     }
 
     protected function ensureOrderBelongsToDriver(DeliveryOrder $order, \Modules\Fleet\Models\Driver $driver): void

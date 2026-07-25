@@ -17,7 +17,7 @@ class InvoicePdfController extends Controller
     public function show(Invoice $invoice): Response|RedirectResponse
     {
         if (! in_array($invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_PAID], true)) {
-            return back()->with('error', 'Only an issued or paid invoice can be printed.');
+            return back()->with('error', __('invoicing.messages.print_issued_only'));
         }
 
         $invoice->load(['partner:id,code,name', 'lines']);

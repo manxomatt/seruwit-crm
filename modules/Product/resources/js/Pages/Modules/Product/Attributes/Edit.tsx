@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ProductNav from '../../../../ProductNav';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -8,7 +9,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useMemo } from 'react';
 
 interface Option {
     id: number;
@@ -38,8 +39,11 @@ interface Props {
     attribute: ProductAttribute;
 }
 
+const ATTRIBUTE_TYPES = ['select', 'color', 'radio', 'checkbox'] as const;
+
 export default function Edit({ attribute }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm<{
         name: string;
         type: string;
@@ -57,6 +61,11 @@ export default function Edit({ attribute }: Props): JSX.Element {
             sort: o.sort !== null ? String(o.sort) : '',
         })),
     });
+
+    const typeOptions = useMemo(
+        () => ATTRIBUTE_TYPES.map((type) => ({ value: type, label: t(`products.attribute_types.${type}`) })),
+        [t],
+    );
 
     const addOption = () => {
         setData('options', [...data.options, { id: null, name: '', color: '', extra_price: '', sort: String(data.options.length) }]);
@@ -78,8 +87,8 @@ export default function Edit({ attribute }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Atribut</h2>}>
-            <Head title="Edit Atribut" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.attributes.edit.title')}</h2>}>
+            <Head title={t('products.attributes.edit.title')} />
             <ProductNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -87,22 +96,17 @@ export default function Edit({ attribute }: Props): JSX.Element {
                     <form onSubmit={submit} className="max-w-3xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                             <div className="sm:col-span-2">
-                                <InputLabel htmlFor="name" value="Nama Atribut" />
+                                <InputLabel htmlFor="name" value={t('products.fields.name')} />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required autoFocus />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="type" value="Tipe" />
-                                <Select id="type" className="mt-1" value={data.type} onChange={(value) => setData('type', value)} options={[
-                                    { value: 'select', label: 'Select' },
-                                    { value: 'color', label: 'Color' },
-                                    { value: 'radio', label: 'Radio' },
-                                    { value: 'checkbox', label: 'Checkbox' },
-                                ]} />
+                                <InputLabel htmlFor="type" value={t('products.fields.type')} />
+                                <Select id="type" className="mt-1" value={data.type} onChange={(value) => setData('type', value)} options={typeOptions} />
                                 <InputError message={errors.type} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="sort" value="Urutan" />
+                                <InputLabel htmlFor="sort" value={t('products.fields.sort_order')} />
                                 <TextInput id="sort" type="number" className="mt-1 block w-full" value={data.sort} onChange={(e) => setData('sort', e.target.value)} />
                                 <InputError message={errors.sort} className="mt-2" />
                             </div>
@@ -110,8 +114,8 @@ export default function Edit({ attribute }: Props): JSX.Element {
 
                         <div>
                             <div className="mb-3 flex items-center justify-between">
-                                <InputLabel value="Opsi Atribut" />
-                                <SecondaryButton type="button" onClick={addOption}>+ Tambah Opsi</SecondaryButton>
+                                <InputLabel value={t('products.fields.options')} />
+                                <SecondaryButton type="button" onClick={addOption}>+ {t('products.attributes.edit.add_option')}</SecondaryButton>
                             </div>
 
                             {data.options.length > 0 && (
@@ -119,7 +123,7 @@ export default function Edit({ attribute }: Props): JSX.Element {
                                     {data.options.map((opt, i) => (
                                         <div key={i} className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
                                             <div className="flex-1">
-                                                <TextInput placeholder="Nama opsi" className="w-full" value={opt.name} onChange={(e) => updateOption(i, 'name', e.target.value)} required />
+                                                <TextInput placeholder={t('products.fields.name')} className="w-full" value={opt.name} onChange={(e) => updateOption(i, 'name', e.target.value)} required />
                                                 <InputError message={(errors as Record<string, string>)[`options.${i}.name`]} className="mt-1" />
                                             </div>
                                             {data.type === 'color' && (
@@ -128,10 +132,10 @@ export default function Edit({ attribute }: Props): JSX.Element {
                                                 </div>
                                             )}
                                             <div className="w-32">
-                                                <TextInput type="number" placeholder="Harga extra" className="w-full" value={opt.extra_price} onChange={(e) => updateOption(i, 'extra_price', e.target.value)} />
+                                                <TextInput type="number" placeholder={t('products.fields.price')} className="w-full" value={opt.extra_price} onChange={(e) => updateOption(i, 'extra_price', e.target.value)} />
                                             </div>
                                             <div className="w-20">
-                                                <TextInput type="number" placeholder="Urutan" className="w-full" value={opt.sort} onChange={(e) => updateOption(i, 'sort', e.target.value)} />
+                                                <TextInput type="number" placeholder={t('products.fields.sort_order')} className="w-full" value={opt.sort} onChange={(e) => updateOption(i, 'sort', e.target.value)} />
                                             </div>
                                             <button type="button" onClick={() => removeOption(i)} className="mt-2 text-red-500 hover:text-red-700">
                                                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -143,9 +147,9 @@ export default function Edit({ attribute }: Props): JSX.Element {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing}>Simpan</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('products.attributes.edit.submit')}</PrimaryButton>
                             <Link href={prefixedRoute('products.attributes.index')}>
-                                <SecondaryButton type="button">Batal</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

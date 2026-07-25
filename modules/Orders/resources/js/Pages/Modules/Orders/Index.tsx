@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -65,6 +66,7 @@ const EyeIcon = () => (
 
 export default function Index({ orders, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
 
     const handleSearch: FormEventHandler = (e) => {
@@ -86,16 +88,16 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Orders</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('orders.index.head')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('orders.create')}>
-                            <PrimaryButton>New Order</PrimaryButton>
+                            <PrimaryButton>{t('orders.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Orders" />
+            <Head title={t('orders.title')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -103,7 +105,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Search by code or address..."
+                                placeholder={t('orders.index.search_placeholder')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -113,19 +115,22 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                             className="w-48"
                             value={filters.status || ''}
                             onChange={handleStatusFilter}
-                            placeholder="All statuses"
+                            placeholder={t('orders.status.all')}
                             options={[
-                                { value: '', label: 'All statuses' },
-                                ...STATUSES.map((status) => ({ value: status, label: status.replace('_', ' ') })),
+                                { value: '', label: t('orders.status.all') },
+                                ...STATUSES.map((status) => ({
+                                    value: status,
+                                    label: t(`orders.status.${status}`, undefined, status),
+                                })),
                             ]}
                         />
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {orders.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No orders found</h3>
-                            <p className="mt-1 text-sm text-gray-500">Create an order to get started.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('orders.index.empty_title')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('orders.index.empty_hint')}</p>
                         </div>
                     ) : (
                         <>
@@ -133,13 +138,13 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Code</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Order Date</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Trip</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.code')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.partner')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.route')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.order_date')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.trip')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -152,7 +157,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.trip?.code || '—'}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(order.status)}`}>
-                                                        {order.status.replace('_', ' ')}
+                                                        {t(`orders.status.${order.status}`, undefined, order.status)}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -160,7 +165,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('orders.show', order.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title="View"
+                                                            title={t('orders.index.view')}
                                                         >
                                                             <EyeIcon />
                                                         </Link>
@@ -175,8 +180,11 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                             {orders.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(orders.current_page - 1) * orders.per_page + 1} to{' '}
-                                        {Math.min(orders.current_page * orders.per_page, orders.total)} of {orders.total} results
+                                        {t('common.showing_results', {
+                                            from: (orders.current_page - 1) * orders.per_page + 1,
+                                            to: Math.min(orders.current_page * orders.per_page, orders.total),
+                                            total: orders.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {orders.links.map((link, index) => (

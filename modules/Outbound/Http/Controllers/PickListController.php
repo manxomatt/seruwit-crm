@@ -85,7 +85,7 @@ class PickListController extends Controller
 
         return redirect()
             ->route($this->getRoutePrefix().'.outbound.pick-lists.show', $pickList)
-            ->with('success', 'Pick list generated.');
+            ->with('success', __('outbound.messages.pick_list_generated'));
     }
 
     public function show(PickList $pickList): Response
@@ -121,21 +121,21 @@ class PickListController extends Controller
 
         PickPackWorkflow::confirmItem($item, $request->validated());
 
-        return back()->with('success', 'Pick line confirmed.');
+        return back()->with('success', __('outbound.messages.pick_line_confirmed'));
     }
 
     public function completePicking(PickList $pickList): RedirectResponse
     {
         PickPackWorkflow::completePicking($pickList);
 
-        return back()->with('success', 'Picking completed.');
+        return back()->with('success', __('outbound.messages.picking_completed'));
     }
 
     public function dispatch(PickList $pickList): RedirectResponse
     {
         PickPackWorkflow::dispatch($pickList);
 
-        return back()->with('success', 'Outbound dispatched — stock deducted.');
+        return back()->with('success', __('outbound.messages.dispatched'));
     }
 
     public function cancel(PickList $pickList): RedirectResponse
@@ -144,7 +144,7 @@ class PickListController extends Controller
 
         return redirect()
             ->route($this->getRoutePrefix().'.outbound.pick-lists.index')
-            ->with('success', 'Pick list cancelled.');
+            ->with('success', __('outbound.messages.pick_list_cancelled'));
     }
 
     /**

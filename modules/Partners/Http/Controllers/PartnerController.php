@@ -98,7 +98,7 @@ class PartnerController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.partners.show', $partner)
-            ->with('success', 'Partner berhasil dibuat.');
+            ->with('success', __('partners.messages.created'));
     }
 
     public function show(Partner $partner): Response
@@ -164,7 +164,7 @@ class PartnerController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.partners.show', $partner)
-            ->with('success', 'Partner berhasil diperbarui.');
+            ->with('success', __('partners.messages.updated'));
     }
 
     public function destroy(Partner $partner): RedirectResponse
@@ -172,10 +172,10 @@ class PartnerController extends Controller
         try {
             DB::transaction(fn () => $partner->delete());
         } catch (QueryException) {
-            return back()->with('error', 'Partner ini masih direferensikan oleh data lain dan tidak dapat dihapus.');
+            return back()->with('error', __('partners.messages.delete_referenced'));
         }
 
         return redirect()->route($this->getRoutePrefix().'.partners.index')
-            ->with('success', 'Partner berhasil dihapus.');
+            ->with('success', __('partners.messages.deleted'));
     }
 }

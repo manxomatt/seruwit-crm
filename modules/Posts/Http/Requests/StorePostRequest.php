@@ -40,11 +40,11 @@ class StorePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'The post title is required.',
-            'title.max' => 'The post title must not exceed 255 characters.',
-            'slug.required' => 'The post slug is required.',
-            'slug.unique' => 'This slug is already in use.',
-            'excerpt.max' => 'The excerpt must not exceed 500 characters.',
+            'title.required' => __('posts.validation.title_required'),
+            'title.max' => __('posts.validation.title_max'),
+            'slug.required' => __('posts.validation.slug_required'),
+            'slug.unique' => __('posts.validation.slug_unique'),
+            'excerpt.max' => __('posts.validation.excerpt_max'),
         ];
     }
 }

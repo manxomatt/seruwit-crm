@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
@@ -10,33 +11,44 @@ interface Props { salespeople: Paginated; filters: { search?: string; active?: s
 
 export default function SalespeopleIndex({ salespeople, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     const search = (e: React.ChangeEvent<HTMLInputElement>) => {
         router.get(prefixedRoute('canvassing.salespeople.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true });
     };
 
+    const columns = [
+        t('canvassing.salespeople.columns.name'),
+        t('canvassing.salespeople.columns.code'),
+        t('canvassing.salespeople.columns.area'),
+        t('canvassing.salespeople.columns.phone'),
+        t('canvassing.salespeople.columns.visits'),
+        t('canvassing.salespeople.columns.status'),
+        '',
+    ];
+
     return (
-        <DynamicLayout header="Canvassing">
-            <Head title="Salespeople" />
+        <DynamicLayout header={t('canvassing.title')}>
+            <Head title={t('canvassing.salespeople.head')} />
             <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
                 <div className="mb-6 flex items-center justify-between gap-4">
                     <div>
-                        <Link href={prefixedRoute('canvassing.index')} className="mb-1 block text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">← Dashboard</Link>
-                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Salespeople</h1>
+                        <Link href={prefixedRoute('canvassing.index')} className="mb-1 block text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">{t('canvassing.nav.dashboard')}</Link>
+                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t('canvassing.salespeople.title')}</h1>
                     </div>
-                    <Link href={prefixedRoute('canvassing.salespeople.create')}><PrimaryButton>Add Salesperson</PrimaryButton></Link>
+                    <Link href={prefixedRoute('canvassing.salespeople.create')}><PrimaryButton>{t('canvassing.salespeople.add')}</PrimaryButton></Link>
                 </div>
 
                 <div className="mb-4 flex items-center gap-3">
-                    <TextInput placeholder="Search name or area…" defaultValue={filters.search ?? ''} onChange={search} className="w-64" />
+                    <TextInput placeholder={t('canvassing.salespeople.search')} defaultValue={filters.search ?? ''} onChange={search} className="w-64" />
                     <select
                         value={filters.active ?? ''}
                         onChange={(e) => router.get(prefixedRoute('canvassing.salespeople.index'), { ...filters, active: e.target.value }, { preserveState: true, replace: true })}
                         className="rounded-md border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     >
-                        <option value="">All status</option>
-                        <option value="1">Active</option>
-                        <option value="0">Inactive</option>
+                        <option value="">{t('canvassing.status.all')}</option>
+                        <option value="1">{t('canvassing.status.active')}</option>
+                        <option value="0">{t('canvassing.status.inactive')}</option>
                     </select>
                 </div>
 
@@ -44,14 +56,14 @@ export default function SalespeopleIndex({ salespeople, filters }: Props): JSX.E
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                {['Name', 'Code', 'Area', 'Phone', 'Visits', 'Status', ''].map((h) => (
-                                    <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{h}</th>
+                                {columns.map((h, i) => (
+                                    <th key={i} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {salespeople.data.length === 0 && (
-                                <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">No salespeople found.</td></tr>
+                                <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">{t('canvassing.salespeople.empty')}</td></tr>
                             )}
                             {salespeople.data.map((sp) => (
                                 <tr key={sp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
@@ -64,11 +76,11 @@ export default function SalespeopleIndex({ salespeople, filters }: Props): JSX.E
                                     <td className="px-4 py-3 text-sm tabular-nums text-gray-600 dark:text-gray-300">{sp.visits_count}</td>
                                     <td className="px-4 py-3">
                                         <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                            {sp.is_active ? 'Active' : 'Inactive'}
+                                            {sp.is_active ? t('canvassing.status.active') : t('canvassing.status.inactive')}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right text-sm">
-                                        <Link href={prefixedRoute('canvassing.salespeople.edit', sp.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Edit</Link>
+                                        <Link href={prefixedRoute('canvassing.salespeople.edit', sp.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">{t('common.edit')}</Link>
                                     </td>
                                 </tr>
                             ))}

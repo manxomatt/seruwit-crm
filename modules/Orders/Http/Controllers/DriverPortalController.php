@@ -63,14 +63,14 @@ class DriverPortalController extends Controller
         $this->ensureTripBelongsToDriver($trip, $driver);
 
         if ($trip->status !== Trip::STATUS_SCHEDULED) {
-            return back()->with('error', 'This trip has already been started.');
+            return back()->with('error', __('orders.messages.trip_already_started'));
         }
 
         // Eloquent update so TripObserver fires and advances the orders from
         // assigned to in_transit (and notifies staff).
         $trip->update(['status' => Trip::STATUS_IN_PROGRESS]);
 
-        return back()->with('success', 'Trip started.');
+        return back()->with('success', __('orders.messages.trip_started'));
     }
 
     public function arriveStop(Trip $trip, TripStop $stop, TripStopTransitions $transitions): RedirectResponse

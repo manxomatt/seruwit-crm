@@ -18,11 +18,11 @@ class GrnConfirmationService
             $grn->load(['items.purchaseOrderItem', 'purchaseOrder.items']);
 
             if ($grn->status !== GoodReceiptNote::STATUS_DRAFT) {
-                throw new RuntimeException('Only a draft GRN can be confirmed.');
+                throw new RuntimeException(__('purchasing.messages.grn_confirm_draft_only'));
             }
 
             if ($grn->items->isEmpty()) {
-                throw new RuntimeException('Add at least one item before confirming the GRN.');
+                throw new RuntimeException(__('purchasing.messages.grn_confirm_need_items'));
             }
 
             foreach ($grn->items as $grnItem) {

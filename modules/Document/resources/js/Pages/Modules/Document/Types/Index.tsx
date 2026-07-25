@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
@@ -24,7 +25,7 @@ interface TypeForm {
     is_required: boolean;
     has_expiry: boolean;
     typical_validity_days: string;
-    reminder_days: string; // comma-separated
+    reminder_days: string;
 }
 
 const emptyForm = (): TypeForm => ({
@@ -37,17 +38,18 @@ const emptyForm = (): TypeForm => ({
     reminder_days: '30,14,7',
 });
 
-const entityLabel = (entityType: string): string =>
-    entityType === 'vehicle' ? 'Kendaraan' : 'Pengemudi';
-
 export default function Index({ types, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [showCreate, setShowCreate] = useState(false);
     const [editing, setEditing] = useState<DocumentType | null>(null);
     const [toDelete, setToDelete] = useState<DocumentType | null>(null);
 
     const form = useForm<TypeForm>(emptyForm());
     const deleting = useForm({});
+
+    const entityLabel = (entityType: string): string =>
+        t(`document.entity.${entityType}`, undefined, entityType);
 
     const openCreate = () => {
         form.reset();
@@ -96,21 +98,35 @@ export default function Index({ types, can }: Props): JSX.Element {
         });
     };
 
-    const vehicleTypes = types.filter((t) => t.entity_type === 'vehicle');
-    const driverTypes = types.filter((t) => t.entity_type === 'driver');
+    const vehicleTypes = types.filter((type) => type.entity_type === 'vehicle');
+    const driverTypes = types.filter((type) => type.entity_type === 'driver');
 
     const renderTable = (list: DocumentType[]) => (
         <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                     <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Key</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Wajib</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Exp.</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Validitas</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Reminder (hari)</th>
-                        <th className="relative px-6 py-3"><span className="sr-only">Aksi</span></th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('document.types.columns.name')}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('document.types.columns.key')}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('document.types.columns.required')}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('document.types.columns.expiry')}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('document.types.columns.validity')}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('document.types.columns.reminder')}
+                        </th>
+                        <th className="relative px-6 py-3">
+                            <span className="sr-only">{t('common.actions')}</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
@@ -133,7 +149,9 @@ export default function Index({ types, can }: Props): JSX.Element {
                                 )}
                             </td>
                             <td className="px-6 py-4 text-gray-700">
-                                {type.typical_validity_days ? `${type.typical_validity_days} hr` : '—'}
+                                {type.typical_validity_days
+                                    ? t('document.types.validity_days', { count: type.typical_validity_days })
+                                    : '—'}
                             </td>
                             <td className="px-6 py-4">
                                 <div className="flex flex-wrap gap-1">
@@ -151,7 +169,7 @@ export default function Index({ types, can }: Props): JSX.Element {
                                             onClick={() => openEdit(type)}
                                             className="text-xs text-indigo-600 hover:text-indigo-800"
                                         >
-                                            Edit
+                                            {t('common.edit')}
                                         </button>
                                     )}
                                     {can.delete && (
@@ -159,7 +177,7 @@ export default function Index({ types, can }: Props): JSX.Element {
                                             onClick={() => setToDelete(type)}
                                             className="text-xs text-red-500 hover:text-red-700"
                                         >
-                                            Hapus
+                                            {t('common.delete')}
                                         </button>
                                     )}
                                 </div>
@@ -169,7 +187,7 @@ export default function Index({ types, can }: Props): JSX.Element {
                     {list.length === 0 && (
                         <tr>
                             <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
-                                Tidak ada jenis dokumen
+                                {t('document.types.empty')}
                             </td>
                         </tr>
                     )}
@@ -183,47 +201,44 @@ export default function Index({ types, can }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Jenis Dokumen
+                        {t('document.types.title')}
                     </h2>
                     {can.create && (
-                        <PrimaryButton onClick={openCreate}>+ Tambah Jenis</PrimaryButton>
+                        <PrimaryButton onClick={openCreate}>{t('document.types.add')}</PrimaryButton>
                     )}
                 </div>
             }
         >
-            <Head title="Jenis Dokumen" />
+            <Head title={t('document.types.head')} />
 
             <DocumentNav />
 
             <div className="space-y-6">
-                {/* Vehicle types */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="border-b border-gray-200 px-6 py-4">
-                        <h3 className="font-semibold text-gray-900">Dokumen Kendaraan</h3>
+                        <h3 className="font-semibold text-gray-900">{t('document.types.vehicle_section')}</h3>
                     </div>
                     {renderTable(vehicleTypes)}
                 </div>
 
-                {/* Driver types */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="border-b border-gray-200 px-6 py-4">
-                        <h3 className="font-semibold text-gray-900">Dokumen Pengemudi</h3>
+                        <h3 className="font-semibold text-gray-900">{t('document.types.driver_section')}</h3>
                     </div>
                     {renderTable(driverTypes)}
                 </div>
             </div>
 
-            {/* Create / Edit modal */}
             <Modal show={showCreate} onClose={closeModal} maxWidth="lg">
                 <form onSubmit={submit} className="p-6">
                     <h3 className="mb-6 text-lg font-semibold text-gray-900">
-                        {editing ? 'Edit Jenis Dokumen' : 'Tambah Jenis Dokumen'}
+                        {editing ? t('document.types.edit_title') : t('document.types.create_title')}
                     </h3>
 
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="name" value="Nama *" />
+                                <InputLabel htmlFor="name" value={t('document.types.name')} />
                                 <TextInput
                                     id="name"
                                     value={form.data.name}
@@ -234,13 +249,13 @@ export default function Index({ types, can }: Props): JSX.Element {
                                 <InputError message={form.errors.name} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="key" value="Key (kode unik) *" />
+                                <InputLabel htmlFor="key" value={t('document.types.key')} />
                                 <TextInput
                                     id="key"
                                     value={form.data.key}
                                     onChange={(e) => form.setData('key', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                                     className="mt-1 w-full font-mono text-sm"
-                                    placeholder="cth. stnk"
+                                    placeholder={t('document.types.key_placeholder')}
                                     disabled={!!editing}
                                 />
                                 <InputError message={form.errors.key} className="mt-1" />
@@ -248,7 +263,7 @@ export default function Index({ types, can }: Props): JSX.Element {
                         </div>
 
                         <div>
-                            <InputLabel value="Berlaku Untuk *" />
+                            <InputLabel value={t('document.types.applies_to')} />
                             <div className="mt-2 flex gap-4">
                                 {['vehicle', 'driver'].map((et) => (
                                     <label key={et} className="flex cursor-pointer items-center gap-2">
@@ -276,7 +291,7 @@ export default function Index({ types, can }: Props): JSX.Element {
                                     onChange={(e) => form.setData('is_required', e.target.checked)}
                                     className="rounded text-indigo-600"
                                 />
-                                <span className="text-sm">Wajib dimiliki</span>
+                                <span className="text-sm">{t('document.types.required')}</span>
                             </label>
                             <label className="flex cursor-pointer items-center gap-2">
                                 <input
@@ -285,12 +300,12 @@ export default function Index({ types, can }: Props): JSX.Element {
                                     onChange={(e) => form.setData('has_expiry', e.target.checked)}
                                     className="rounded text-indigo-600"
                                 />
-                                <span className="text-sm">Ada tanggal expire</span>
+                                <span className="text-sm">{t('document.types.has_expiry')}</span>
                             </label>
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="typical_validity_days" value="Masa berlaku lazim (hari)" />
+                            <InputLabel htmlFor="typical_validity_days" value={t('document.types.validity')} />
                             <TextInput
                                 id="typical_validity_days"
                                 type="number"
@@ -298,33 +313,39 @@ export default function Index({ types, can }: Props): JSX.Element {
                                 value={form.data.typical_validity_days}
                                 onChange={(e) => form.setData('typical_validity_days', e.target.value)}
                                 className="mt-1 w-full"
-                                placeholder="cth. 365"
+                                placeholder={t('document.types.validity_placeholder')}
                                 disabled={!form.data.has_expiry}
                             />
                             <InputError message={form.errors.typical_validity_days} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="reminder_days" value="Hari pengingat (pisahkan dengan koma)" />
+                            <InputLabel htmlFor="reminder_days" value={t('document.types.reminder')} />
                             <TextInput
                                 id="reminder_days"
                                 value={form.data.reminder_days}
                                 onChange={(e) => form.setData('reminder_days', e.target.value)}
                                 className="mt-1 w-full"
-                                placeholder="cth. 30,14,7"
+                                placeholder={t('document.types.reminder_placeholder')}
                                 disabled={!form.data.has_expiry}
                             />
                             <p className="mt-1 text-xs text-gray-400">
-                                Notifikasi akan dikirim N hari sebelum expire
+                                {t('document.types.reminder_hint')}
                             </p>
                             <InputError message={form.errors.reminder_days} className="mt-1" />
                         </div>
                     </div>
 
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={closeModal}>Batal</SecondaryButton>
+                        <SecondaryButton type="button" onClick={closeModal}>
+                            {t('common.cancel')}
+                        </SecondaryButton>
                         <PrimaryButton disabled={form.processing}>
-                            {form.processing ? 'Menyimpan…' : editing ? 'Simpan Perubahan' : 'Tambah'}
+                            {form.processing
+                                ? t('document.types.saving')
+                                : editing
+                                  ? t('document.types.save')
+                                  : t('document.types.create')}
                         </PrimaryButton>
                     </div>
                 </form>
@@ -332,10 +353,10 @@ export default function Index({ types, can }: Props): JSX.Element {
 
             <ConfirmDeleteDialog
                 show={toDelete !== null}
-                title="Hapus Jenis Dokumen"
-                message={`Hapus jenis dokumen "${toDelete?.name ?? ''}"? Jenis dokumen yang sudah digunakan tidak dapat dihapus.`}
+                title={t('document.types.delete_title')}
+                message={t('document.types.delete_message', { name: toDelete?.name ?? '' })}
                 onConfirm={confirmDelete}
-                onCancel={() => setToDelete(null)}
+                onClose={() => setToDelete(null)}
                 processing={deleting.processing}
             />
         </DynamicLayout>

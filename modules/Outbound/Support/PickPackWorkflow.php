@@ -25,7 +25,7 @@ class PickPackWorkflow
 
             if (! in_array($pickList->status, [PickList::STATUS_OPEN, PickList::STATUS_PICKING], true)) {
                 throw ValidationException::withMessages([
-                    'pick_list' => 'Picking is closed for this pick list.',
+                    'pick_list' => __('outbound.messages.picking_closed'),
                 ]);
             }
 
@@ -33,13 +33,13 @@ class PickPackWorkflow
 
             if ($qty < 0) {
                 throw ValidationException::withMessages([
-                    'quantity_picked' => 'Picked quantity cannot be negative.',
+                    'quantity_picked' => __('outbound.messages.qty_negative'),
                 ]);
             }
 
             if ($qty - (float) $item->quantity_requested > 0.009) {
                 throw ValidationException::withMessages([
-                    'quantity_picked' => 'Cannot pick more than requested.',
+                    'quantity_picked' => __('outbound.messages.qty_over_requested'),
                 ]);
             }
 
@@ -76,7 +76,7 @@ class PickPackWorkflow
 
             if (! in_array($pickList->status, [PickList::STATUS_OPEN, PickList::STATUS_PICKING], true)) {
                 throw ValidationException::withMessages([
-                    'pick_list' => 'Pick list is not in a picking state.',
+                    'pick_list' => __('outbound.messages.pick_list_not_picking'),
                 ]);
             }
 
@@ -84,7 +84,7 @@ class PickPackWorkflow
 
             if ($pending) {
                 throw ValidationException::withMessages([
-                    'pick_list' => 'Confirm every line before completing picking.',
+                    'pick_list' => __('outbound.messages.confirm_all_lines'),
                 ]);
             }
 
@@ -93,7 +93,7 @@ class PickPackWorkflow
 
             if (! $anyPicked) {
                 throw ValidationException::withMessages([
-                    'pick_list' => 'At least one line must have a picked quantity.',
+                    'pick_list' => __('outbound.messages.need_picked_qty'),
                 ]);
             }
 
@@ -116,7 +116,7 @@ class PickPackWorkflow
 
             if (! in_array($pickList->status, [PickList::STATUS_PICKED, PickList::STATUS_PACKING, PickList::STATUS_PACKED], true)) {
                 throw ValidationException::withMessages([
-                    'pick_list' => 'Packing requires a completed pick list.',
+                    'pick_list' => __('outbound.messages.packing_requires_picked'),
                 ]);
             }
 
@@ -124,7 +124,7 @@ class PickPackWorkflow
 
             if ($items->isEmpty()) {
                 throw ValidationException::withMessages([
-                    'items' => 'Add at least one picked line to the pack.',
+                    'items' => __('outbound.messages.pack_items_required'),
                 ]);
             }
 
@@ -144,7 +144,7 @@ class PickPackWorkflow
 
                 if ((int) $pickItem->pick_list_id !== (int) $pickList->id) {
                     throw ValidationException::withMessages([
-                        'items' => 'Pack items must belong to this pick list.',
+                        'items' => __('outbound.messages.pack_items_wrong_list'),
                     ]);
                 }
 
@@ -152,7 +152,7 @@ class PickPackWorkflow
 
                 if ($qty <= 0 || $qty - (float) $pickItem->quantity_picked > 0.009) {
                     throw ValidationException::withMessages([
-                        'items' => "Invalid pack quantity for item #{$pickItem->id}.",
+                        'items' => __('outbound.messages.pack_qty_invalid', ['id' => $pickItem->id]),
                     ]);
                 }
 
@@ -162,7 +162,7 @@ class PickPackWorkflow
 
                 if ($alreadyPacked + $qty - (float) $pickItem->quantity_picked > 0.009) {
                     throw ValidationException::withMessages([
-                        'items' => "Pack quantity exceeds remaining picked qty for item #{$pickItem->id}.",
+                        'items' => __('outbound.messages.pack_qty_exceeds', ['id' => $pickItem->id]),
                     ]);
                 }
 
@@ -188,7 +188,7 @@ class PickPackWorkflow
 
             if ($pack->status !== Pack::STATUS_OPEN) {
                 throw ValidationException::withMessages([
-                    'pack' => 'Only an open pack can be sealed.',
+                    'pack' => __('outbound.messages.pack_seal_open_only'),
                 ]);
             }
 
@@ -229,7 +229,7 @@ class PickPackWorkflow
 
             if ($pickList->status !== PickList::STATUS_PACKED) {
                 throw ValidationException::withMessages([
-                    'pick_list' => 'Dispatch requires a fully packed pick list (all packs sealed).',
+                    'pick_list' => __('outbound.messages.dispatch_requires_packed'),
                 ]);
             }
 
@@ -248,7 +248,7 @@ class PickPackWorkflow
                     'source_type' => 'outbound_dispatch',
                     'source_id' => $pickList->id,
                     'reference_code' => $pickList->code,
-                    'notes' => 'Outbound pick/pack dispatch for '.$pickList->deliveryOrder?->code,
+                    'notes' => __('outbound.messages.dispatch_notes', ['code' => $pickList->deliveryOrder?->code]),
                     'recorded_by' => Auth::id(),
                     'recorded_at' => now(),
                 ];
@@ -294,7 +294,7 @@ class PickPackWorkflow
     {
         if (! $pickList->isCancellable()) {
             throw ValidationException::withMessages([
-                'pick_list' => 'This pick list cannot be cancelled.',
+                'pick_list' => __('outbound.messages.pick_list_not_cancellable'),
             ]);
         }
 

@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import grapesjs, { Editor as GrapesEditor } from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import gjsBlocksBasic from 'grapesjs-blocks-basic';
@@ -24,6 +25,8 @@ interface Props {
 
 export default function Editor({ page }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const editorRef = useRef<HTMLDivElement>(null);
     const [editor, setEditor] = useState<GrapesEditor | null>(null); 
     const [isSaving, setIsSaving] = useState(false);
@@ -1360,7 +1363,7 @@ export default function Editor({ page }: Props): JSX.Element {
 
     return (
         <>
-            <Head title={`Edit: ${page.title}`} />
+            <Head title={t('pages.editor.title', { title: page.title })} />
 
             <div className="h-screen flex flex-col">
                 {/* Top Toolbar */}
@@ -1373,7 +1376,7 @@ export default function Editor({ page }: Props): JSX.Element {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            Back to Pages
+                            {t('pages.editor.back')}
                         </Link>
                         <span className="text-indigo-400">|</span>
                         <span className="font-medium">{page.title}</span>
@@ -1384,7 +1387,7 @@ export default function Editor({ page }: Props): JSX.Element {
                     <div className="flex items-center gap-4">
                         {lastSaved && (
                             <span className="text-indigo-200 text-sm">
-                                Last saved: {lastSaved.toLocaleTimeString()}
+                                {t('pages.editor.last_saved', { time: lastSaved.toLocaleTimeString(localeTag) })}
                             </span>
                         )}
                         <button
@@ -1392,7 +1395,7 @@ export default function Editor({ page }: Props): JSX.Element {
                             disabled={isSaving}
                             className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50 border border-white/20"
                         >
-                            {isSaving ? 'Saving...' : 'Save'}
+                            {isSaving ? t('pages.editor.saving') : t('pages.editor.save')}
                         </button>
                         <button
                             onClick={handlePublishToggle}
@@ -1402,14 +1405,14 @@ export default function Editor({ page }: Props): JSX.Element {
                                     : 'bg-green-500 hover:bg-green-600 text-white'
                             }`}
                         >
-                            {page.is_published ? 'Unpublish' : 'Publish'}
+                            {page.is_published ? t('pages.editor.unpublish') : t('pages.editor.publish')}
                         </button>
                         <Link
                             href={prefixedRoute('pages.show', page.id)}
                             target="_blank"
                             className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition border border-white/20"
                         >
-                            Preview
+                            {t('pages.editor.preview')}
                         </Link>
                     </div>
                 </div>

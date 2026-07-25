@@ -73,7 +73,7 @@ class DriverController extends Controller
         $driver = Driver::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.drivers.show', $driver)
-            ->with('success', 'Driver created successfully.');
+            ->with('success', __('fleet.messages.driver_created'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DriverController extends Controller
         $driver->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.drivers.show', $driver)
-            ->with('success', 'Driver updated successfully.');
+            ->with('success', __('fleet.messages.driver_updated'));
     }
 
     /**
@@ -130,10 +130,10 @@ class DriverController extends Controller
         try {
             DB::transaction(fn () => $driver->delete());
         } catch (QueryException) {
-            return back()->with('error', 'This driver is still referenced by other records and cannot be deleted.');
+            return back()->with('error', __('fleet.messages.driver_in_use'));
         }
 
         return redirect()->route($this->getRoutePrefix().'.fleet.drivers.index')
-            ->with('success', 'Driver deleted successfully.');
+            ->with('success', __('fleet.messages.driver_deleted'));
     }
 }

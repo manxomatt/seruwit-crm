@@ -99,7 +99,7 @@ class PageController extends Controller
 
         $page->update($request->validated());
 
-        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', 'Page updated successfully.');
+        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', __('pages.messages.updated'));
     }
 
     /**
@@ -113,7 +113,7 @@ class PageController extends Controller
 
         $page->delete();
 
-        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', 'Page deleted successfully.');
+        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', __('pages.messages.deleted'));
     }
 
     /**
@@ -148,6 +148,6 @@ class PageController extends Controller
         Page::query()->where('is_homepage', true)->update(['is_homepage' => false]);
         $page->update(['is_homepage' => true, 'is_published' => true]);
 
-        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', 'Homepage set successfully.');
+        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', __('pages.messages.homepage_set'));
     }
 }

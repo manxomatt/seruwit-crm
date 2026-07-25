@@ -72,7 +72,7 @@ class ApprovalRequestController extends Controller
 
         ApprovalDecisionService::approve($approvalRequest, Auth::user(), $request->input('note'));
 
-        return back()->with('success', 'Approved.');
+        return back()->with('success', __('approvals.messages.approved'));
     }
 
     public function reject(Request $request, ApprovalRequest $approvalRequest): RedirectResponse
@@ -81,7 +81,7 @@ class ApprovalRequestController extends Controller
 
         ApprovalDecisionService::reject($approvalRequest, Auth::user(), $request->input('note'));
 
-        return back()->with('success', 'Rejected.');
+        return back()->with('success', __('approvals.messages.rejected'));
     }
 
     /**

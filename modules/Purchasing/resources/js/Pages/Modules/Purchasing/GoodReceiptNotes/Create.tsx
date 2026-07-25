@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -57,6 +58,7 @@ interface GrnLine {
 
 export default function Create({ order, receivableItems, warehouses, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const today = new Date().toISOString().slice(0, 10);
 
     const { data, setData, post, processing, errors, transform } = useForm({
@@ -103,33 +105,33 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Buat GRN</h2>}>
-            <Head title={`GRN — ${order.po_number}`} />
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('purchasing.grn.create.title')}</h2>}>
+            <Head title={t('purchasing.grn.create.head', { po_number: order.po_number })} />
             <PurchasingNav />
 
             <div className="mb-4">
                 <Link href={prefixedRoute('purchasing.purchase-orders.show', order.id)} className="text-sm text-gray-500 hover:text-gray-700">
-                    ← Kembali ke {order.po_number}
+                    {t('purchasing.grn.create.back', { po_number: order.po_number })}
                 </Link>
             </div>
 
             <form onSubmit={submitDraft} className="space-y-6">
                 <div className="rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-gray-700">
                     <span className="mr-4">
-                        PO: <strong className="text-indigo-700">{order.po_number}</strong>
+                        {t('purchasing.grn.create.po')} <strong className="text-indigo-700">{order.po_number}</strong>
                     </span>
                     <span className="mr-4">
-                        Supplier: <strong className="text-indigo-700">{order.partner.name}</strong>
+                        {t('purchasing.grn.create.supplier')} <strong className="text-indigo-700">{order.partner.name}</strong>
                     </span>
                     <span>
-                        Gudang: <strong className="text-indigo-700">{order.warehouse.name}</strong>
+                        {t('purchasing.grn.create.warehouse')} <strong className="text-indigo-700">{order.warehouse.name}</strong>
                     </span>
                 </div>
 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2">
                         <div>
-                            <InputLabel value="Tanggal Terima *" />
+                            <InputLabel value={`${t('purchasing.fields.received_at')} *`} />
                             <TextInput
                                 type="date"
                                 className="mt-1 block w-full"
@@ -140,7 +142,7 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                             <InputError message={errors.received_at} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel value="No. Surat Jalan Supplier" />
+                            <InputLabel value={t('purchasing.fields.supplier_do_number')} />
                             <TextInput
                                 className="mt-1 block w-full"
                                 value={data.supplier_do_number}
@@ -148,17 +150,18 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                             />
                         </div>
                         <div>
-                            <InputLabel value="Gudang Penerima *" />
+                            <InputLabel value={`${t('purchasing.fields.receiving_warehouse')} *`} />
                             <Select
                                 className="mt-1"
                                 value={data.warehouse_id}
                                 onChange={(value) => setData('warehouse_id', value)}
+                                placeholder={t('purchasing.placeholders.select_warehouse')}
                                 options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))}
                             />
                             <InputError message={errors.warehouse_id} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel value="Catatan" />
+                            <InputLabel value={t('purchasing.fields.notes')} />
                             <TextInput
                                 className="mt-1 block w-full"
                                 value={data.notes}
@@ -171,7 +174,8 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="border-b border-gray-200 px-6 py-4">
                         <h3 className="text-sm font-semibold text-gray-900">
-                            Item Diterima <span className="font-normal text-gray-500">— hanya item yang masih ada sisa</span>
+                            {t('purchasing.grn.create.items_section')}{' '}
+                            <span className="font-normal text-gray-500">{t('purchasing.grn.create.items_hint')}</span>
                         </h3>
                     </div>
                     <div className="overflow-x-auto p-4">
@@ -179,12 +183,14 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                             <thead>
                                 <tr className="border-b border-gray-200 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
                                     <th className="px-2 py-2"></th>
-                                    <th className="px-2 py-2">Produk</th>
-                                    <th className="px-2 py-2 text-right">Dipesan</th>
-                                    <th className="px-2 py-2 text-right">Sisa</th>
-                                    <th className="px-2 py-2">Lokasi / Bin</th>
-                                    <th className="px-2 py-2">Batch · Exp</th>
-                                    <th className="px-2 py-2 text-right">Diterima</th>
+                                    <th className="px-2 py-2">{t('purchasing.fields.product')}</th>
+                                    <th className="px-2 py-2 text-right">{t('purchasing.fields.ordered')}</th>
+                                    <th className="px-2 py-2 text-right">{t('purchasing.fields.remaining')}</th>
+                                    <th className="px-2 py-2">{t('purchasing.fields.location')}</th>
+                                    <th className="px-2 py-2">
+                                        {t('purchasing.fields.batch')} · {t('purchasing.fields.expiry')}
+                                    </th>
+                                    <th className="px-2 py-2 text-right">{t('purchasing.fields.received')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -204,7 +210,7 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                                             <Select
                                                 value={data.items[index]?.location_id || ''}
                                                 onChange={(value) => updateLine(index, 'location_id', value)}
-                                                placeholder="Lokasi"
+                                                placeholder={t('purchasing.placeholders.select_location')}
                                                 options={locations.map((l) => ({
                                                     value: String(l.id),
                                                     label: l.code ? `${l.code} — ${l.name}` : l.name,
@@ -215,7 +221,7 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                                             <div className="space-y-1">
                                                 <TextInput
                                                     className="block w-full text-xs"
-                                                    placeholder="Batch"
+                                                    placeholder={t('purchasing.placeholders.batch')}
                                                     value={data.items[index]?.batch_number || ''}
                                                     onChange={(e) => updateLine(index, 'batch_number', e.target.value)}
                                                 />
@@ -247,20 +253,19 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                     </div>
 
                     <div className="mx-4 mb-4 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-gray-700">
-                        Setelah dikonfirmasi, sistem akan otomatis membuat <strong>StockMovement in</strong> untuk setiap baris
-                        dan memperbarui <strong>StockLevel</strong> di lokasi yang dipilih.
+                        {t('purchasing.grn.create.confirm_hint')}
                     </div>
 
                     <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
                         <Link href={prefixedRoute('purchasing.purchase-orders.show', order.id)}>
-                            <SecondaryButton type="button">Cancel</SecondaryButton>
+                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                         </Link>
                         <SecondaryButton type="submit" disabled={processing}>
-                            Simpan Draft
+                            {t('purchasing.grn.create.save_draft')}
                         </SecondaryButton>
                         {can.receive && (
                             <PrimaryButton type="button" disabled={processing} onClick={() => save(true)}>
-                                Konfirmasi Penerimaan →
+                                {t('purchasing.grn.create.confirm')}
                             </PrimaryButton>
                         )}
                     </div>

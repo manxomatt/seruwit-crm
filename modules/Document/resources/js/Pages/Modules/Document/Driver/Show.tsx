@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link, router } from '@inertiajs/react';
@@ -21,7 +22,9 @@ interface Props {
 
 export default function Show({ driver, document: doc, history, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
-    const badge = getStatusBadge(doc.status);
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
+    const badge = getStatusBadge(doc.status, t);
 
     const handleVerify = () => {
         router.post(prefixedRoute('fleet.drivers.documents.verify', [driver.id, doc.id]), {}, {
@@ -44,11 +47,11 @@ export default function Show({ driver, document: doc, history, can }: Props): JS
                             <Link
                                 href={`${prefixedRoute('fleet.drivers.documents.create', driver.id)}?type=${doc.document_type_id}`}
                             >
-                                <PrimaryButton>Upload Baru</PrimaryButton>
+                                <PrimaryButton>{t('document.show.upload_new')}</PrimaryButton>
                             </Link>
                         )}
                         <Link href={prefixedRoute('fleet.drivers.documents.index', driver.id)}>
-                            <SecondaryButton>← Kembali</SecondaryButton>
+                            <SecondaryButton>{t('document.entity_docs.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -62,7 +65,7 @@ export default function Show({ driver, document: doc, history, can }: Props): JS
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="border-b border-gray-200 px-6 py-4">
                         <div className="flex items-center gap-3">
-                            <h3 className="font-semibold text-gray-900">Detail Dokumen Aktif</h3>
+                            <h3 className="font-semibold text-gray-900">{t('document.show.active_detail')}</h3>
                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.classes}`}>
                                 {badge.label}
                             </span>
@@ -71,42 +74,42 @@ export default function Show({ driver, document: doc, history, can }: Props): JS
                     <div className="p-6">
                         <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Jenis</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('document.show.type')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{doc.document_type.name}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">No. Dokumen</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('document.show.number')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{doc.document_number ?? '—'}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Tanggal Terbit</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{formatDate(doc.issued_at)}</dd>
+                                <dt className="text-sm font-medium text-gray-500">{t('document.show.issued')}</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{formatDate(doc.issued_at, localeTag)}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Berlaku Hingga</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('document.show.expires')}</dt>
                                 <dd className={`mt-1 text-sm ${doc.status === 'expired' ? 'font-medium text-red-600' : doc.status === 'expiring_soon' ? 'font-medium text-yellow-700' : 'text-gray-900'}`}>
-                                    {formatDate(doc.expires_at)}
+                                    {formatDate(doc.expires_at, localeTag)}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Diupload oleh</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('document.show.uploaded_by')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{doc.uploader?.name ?? '—'}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Diverifikasi oleh</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('document.show.verified_by')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     {doc.verified_at ? (
                                         <span className="text-green-700">
-                                            ✓ {doc.verifier?.name ?? '—'} ({formatDate(doc.verified_at)})
+                                            ✓ {doc.verifier?.name ?? '—'} ({formatDate(doc.verified_at, localeTag)})
                                         </span>
                                     ) : (
-                                        <span className="text-gray-400">Belum diverifikasi</span>
+                                        <span className="text-gray-400">{t('document.show.not_verified')}</span>
                                     )}
                                 </dd>
                             </div>
                             {doc.notes && (
                                 <div className="sm:col-span-2">
-                                    <dt className="text-sm font-medium text-gray-500">Catatan</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('document.show.notes')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{doc.notes}</dd>
                                 </div>
                             )}
@@ -114,7 +117,7 @@ export default function Show({ driver, document: doc, history, can }: Props): JS
 
                         {doc.media && (
                             <div className="mt-6 border-t border-gray-100 pt-4">
-                                <p className="text-sm font-medium text-gray-500">File Dokumen</p>
+                                <p className="text-sm font-medium text-gray-500">{t('document.show.file')}</p>
                                 <a
                                     href={doc.media.url}
                                     target="_blank"
@@ -135,7 +138,7 @@ export default function Show({ driver, document: doc, history, can }: Props): JS
                                     onClick={handleVerify}
                                     className="inline-flex items-center gap-2 rounded-lg bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100"
                                 >
-                                    ✓ Tandai Sudah Diverifikasi
+                                    {t('document.show.mark_verified')}
                                 </button>
                             </div>
                         )}
@@ -145,18 +148,21 @@ export default function Show({ driver, document: doc, history, can }: Props): JS
                 {history.length > 0 && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="border-b border-gray-200 px-6 py-4">
-                            <h3 className="font-semibold text-gray-900">Riwayat Sebelumnya</h3>
+                            <h3 className="font-semibold text-gray-900">{t('document.show.history')}</h3>
                         </div>
                         <div className="divide-y divide-gray-100">
                             {history.map((h) => (
                                 <div key={h.id} className="flex items-center justify-between px-6 py-4">
                                     <div>
                                         <p className="text-sm text-gray-700">
-                                            {h.document_number ?? 'Tanpa nomor'}
+                                            {h.document_number ?? t('document.show.no_number')}
                                         </p>
                                         <p className="text-xs text-gray-400">
-                                            Berlaku: {formatDate(h.issued_at)} → {formatDate(h.expires_at)}
-                                            {h.uploader && ` · Upload: ${h.uploader.name}`}
+                                            {t('document.show.validity_range', {
+                                                from: formatDate(h.issued_at, localeTag),
+                                                to: formatDate(h.expires_at, localeTag),
+                                            })}
+                                            {h.uploader && t('document.show.upload_by', { name: h.uploader.name })}
                                         </p>
                                     </div>
                                     {h.media && (
@@ -166,7 +172,7 @@ export default function Show({ driver, document: doc, history, can }: Props): JS
                                             rel="noopener noreferrer"
                                             className="text-xs text-indigo-600 hover:text-indigo-800"
                                         >
-                                            Lihat file
+                                            {t('document.show.view_file')}
                                         </a>
                                     )}
                                 </div>

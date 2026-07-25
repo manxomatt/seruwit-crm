@@ -76,7 +76,7 @@ class PromoProgramController extends Controller
 
         return redirect()
             ->route('module.promotions.programs.show', $program)
-            ->with('success', "Program {$program->code} created.");
+            ->with('success', __('promotions.messages.program_created', ['code' => $program->code]));
     }
 
     public function show(Request $request, TradePromoProgram $program): Response
@@ -117,7 +117,7 @@ class PromoProgramController extends Controller
     public function update(UpdatePromoProgramRequest $request, TradePromoProgram $program): RedirectResponse
     {
         if ($program->status === TradePromoProgram::STATUS_CLOSED) {
-            return back()->with('error', 'Closed programs cannot be edited.');
+            return back()->with('error', __('promotions.messages.closed_cannot_edit'));
         }
 
         DB::transaction(function () use ($request, $program): void {
@@ -140,34 +140,34 @@ class PromoProgramController extends Controller
 
         return redirect()
             ->route('module.promotions.programs.show', $program)
-            ->with('success', 'Program updated.');
+            ->with('success', __('promotions.messages.program_updated'));
     }
 
     public function activate(TradePromoProgram $program): RedirectResponse
     {
         $program->update(['status' => TradePromoProgram::STATUS_ACTIVE]);
 
-        return back()->with('success', 'Program activated.');
+        return back()->with('success', __('promotions.messages.program_activated'));
     }
 
     public function close(TradePromoProgram $program): RedirectResponse
     {
         $program->update(['status' => TradePromoProgram::STATUS_CLOSED]);
 
-        return back()->with('success', 'Program closed.');
+        return back()->with('success', __('promotions.messages.program_closed'));
     }
 
     public function destroy(TradePromoProgram $program): RedirectResponse
     {
         if ($program->status === TradePromoProgram::STATUS_ACTIVE) {
-            return back()->with('error', 'Deactivate or close the program before deleting.');
+            return back()->with('error', __('promotions.messages.deactivate_before_delete'));
         }
 
         $program->delete();
 
         return redirect()
             ->route('module.promotions.programs.index')
-            ->with('success', 'Program deleted.');
+            ->with('success', __('promotions.messages.program_deleted'));
     }
 
     /**

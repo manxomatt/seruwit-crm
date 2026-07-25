@@ -10,6 +10,7 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, useForm, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     MaintenanceCategory,
@@ -61,6 +62,8 @@ const TrashIcon = () => (
 
 export default function Index({ schedules, vehicles, categories, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showModal, setShowModal] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<MaintenanceSchedule | null>(null);
     const [deletingSchedule, setDeletingSchedule] = useState<MaintenanceSchedule | null>(null);
@@ -131,18 +134,28 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
         });
     };
 
+    const formatInterval = (schedule: MaintenanceSchedule): string => {
+        if (schedule.interval_type === 'mileage') {
+            return t('maintenance.interval.every_km', {
+                value: new Intl.NumberFormat(localeTag).format(schedule.interval_value),
+            });
+        }
+
+        return t('maintenance.interval.every_days', { value: schedule.interval_value });
+    };
+
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Maintenance</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.title')}</h2>
                     {can.create && (
-                        <PrimaryButton onClick={openCreate}>+ Jadwal Baru</PrimaryButton>
+                        <PrimaryButton onClick={openCreate}>{t('maintenance.schedules.new')}</PrimaryButton>
                     )}
                 </div>
             }
         >
-            <Head title="Jadwal Maintenance" />
+            <Head title={t('maintenance.schedules.head')} />
             <MaintenanceNav />
 
             {/* Filters */}
@@ -152,7 +165,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                     onChange={(e) => applyFilter('vehicle_id', e.target.value)}
                     className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
-                    <option value="">Semua Kendaraan</option>
+                    <option value="">{t('maintenance.schedules.all_vehicles')}</option>
                     {vehicles.map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.plate_number}</option>
                     ))}
@@ -163,34 +176,34 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                     onChange={(e) => applyFilter('is_active', e.target.value)}
                     className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
-                    <option value="">Semua Status</option>
-                    <option value="1">Aktif</option>
-                    <option value="0">Non-aktif</option>
+                    <option value="">{t('maintenance.status.all')}</option>
+                    <option value="1">{t('maintenance.status.active')}</option>
+                    <option value="0">{t('maintenance.status.inactive')}</option>
                 </select>
             </div>
 
             {/* Table */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-200 px-6 py-3 text-sm text-gray-500">
-                    {schedules.total} jadwal ditemukan
+                    {t('maintenance.schedules.found', { count: schedules.total })}
                 </div>
 
                 {schedules.data.length === 0 ? (
                     <div className="py-16 text-center text-gray-500">
-                        <p className="text-sm">Belum ada jadwal maintenance</p>
+                        <p className="text-sm">{t('maintenance.schedules.empty')}</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Kendaraan</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Jadwal</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Interval</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Servis Terakhir</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Servis Berikutnya</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                    <th className="relative px-6 py-3"><span className="sr-only">Aksi</span></th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.vehicle')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.schedule')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.interval')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.last_service')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.next_service')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.status')}</th>
+                                    <th className="relative px-6 py-3"><span className="sr-only">{t('common.actions')}</span></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -217,30 +230,28 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                                 </div>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                                                {s.interval_type === 'mileage'
-                                                    ? `Setiap ${new Intl.NumberFormat('id-ID').format(s.interval_value)} km`
-                                                    : `Setiap ${s.interval_value} hari`}
+                                                {formatInterval(s)}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                                 {s.interval_type === 'mileage'
-                                                    ? formatOdometer(s.last_service_odometer)
-                                                    : formatDate(s.last_service_date)}
+                                                    ? formatOdometer(s.last_service_odometer, localeTag)
+                                                    : formatDate(s.last_service_date, localeTag)}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm">
                                                 {s.interval_type === 'mileage' ? (
                                                     <span className={due ? 'font-semibold text-amber-700' : 'text-gray-700'}>
-                                                        {formatOdometer(s.next_service_odometer)}
+                                                        {formatOdometer(s.next_service_odometer, localeTag)}
                                                     </span>
                                                 ) : (
                                                     <span className={due ? 'font-semibold text-amber-700' : 'text-gray-700'}>
-                                                        {formatDate(s.next_service_date)}
+                                                        {formatDate(s.next_service_date, localeTag)}
                                                     </span>
                                                 )}
-                                                {due && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Jatuh Tempo</span>}
+                                                {due && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">{t('maintenance.schedules.due')}</span>}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
                                                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                    {s.is_active ? 'Aktif' : 'Non-aktif'}
+                                                    {s.is_active ? t('maintenance.status.active') : t('maintenance.status.inactive')}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
@@ -250,7 +261,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                                             type="button"
                                                             onClick={() => openEdit(s)}
                                                             className="text-indigo-600 hover:text-indigo-900"
-                                                            title="Edit"
+                                                            title={t('common.edit')}
                                                         >
                                                             <PencilIcon />
                                                         </button>
@@ -260,7 +271,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                                             type="button"
                                                             onClick={() => setDeletingSchedule(s)}
                                                             className="text-red-600 hover:text-red-900"
-                                                            title="Hapus"
+                                                            title={t('common.delete')}
                                                         >
                                                             <TrashIcon />
                                                         </button>
@@ -277,7 +288,9 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
 
                 {schedules.last_page > 1 && (
                     <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
-                        <p className="text-sm text-gray-500">Hal {schedules.current_page} dari {schedules.last_page}</p>
+                        <p className="text-sm text-gray-500">
+                            {t('maintenance.page_of', { current: schedules.current_page, last: schedules.last_page })}
+                        </p>
                         <div className="flex gap-1">
                             {schedules.links.map((link, i) => (
                                 <Link key={i} href={link.url ?? '#'} preserveState
@@ -294,44 +307,44 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
             <Modal show={showModal} onClose={closeModal} maxWidth="lg">
                 <form onSubmit={handleSubmit} className="p-6">
                     <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                        {editingSchedule ? 'Edit Jadwal' : 'Jadwal Maintenance Baru'}
+                        {editingSchedule ? t('maintenance.schedules.edit_title') : t('maintenance.schedules.create_title')}
                     </h3>
 
                     <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="vehicle_id" value="Kendaraan *" />
+                            <InputLabel htmlFor="vehicle_id" value={t('maintenance.schedules.vehicle')} />
                             <Select
                                 id="vehicle_id"
                                 className="mt-1"
                                 value={data.vehicle_id}
                                 onChange={(val) => setData('vehicle_id', val)}
                                 options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))}
-                                placeholder="Pilih kendaraan..."
+                                placeholder={t('maintenance.schedules.select_vehicle')}
                             />
                             <InputError message={errors.vehicle_id} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="category_id" value="Kategori *" />
+                            <InputLabel htmlFor="category_id" value={t('maintenance.schedules.category')} />
                             <Select
                                 id="category_id"
                                 className="mt-1"
                                 value={data.category_id}
                                 onChange={(val) => setData('category_id', val)}
                                 options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
-                                placeholder="Pilih kategori..."
+                                placeholder={t('maintenance.schedules.select_category')}
                             />
                             <InputError message={errors.category_id} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="name" value="Nama Jadwal *" />
+                            <InputLabel htmlFor="name" value={t('maintenance.schedules.name')} />
                             <TextInput
                                 id="name"
                                 className="mt-1 block w-full"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                placeholder="Misal: Ganti Oli Setiap 5.000 km"
+                                placeholder={t('maintenance.schedules.name_placeholder')}
                                 required
                             />
                             <InputError message={errors.name} className="mt-2" />
@@ -339,21 +352,21 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="interval_type" value="Tipe Interval" />
+                                <InputLabel htmlFor="interval_type" value={t('maintenance.schedules.interval_type')} />
                                 <Select
                                     id="interval_type"
                                     className="mt-1"
                                     value={data.interval_type}
                                     onChange={(val) => setData('interval_type', val)}
                                     options={[
-                                        { value: 'mileage', label: 'Jarak (km)' },
-                                        { value: 'calendar', label: 'Kalender (hari)' },
+                                        { value: 'mileage', label: t('maintenance.interval.mileage') },
+                                        { value: 'calendar', label: t('maintenance.interval.calendar') },
                                     ]}
                                 />
                                 <InputError message={errors.interval_type} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="interval_value" value={data.interval_type === 'mileage' ? 'Interval (km)' : 'Interval (hari)'} />
+                                <InputLabel htmlFor="interval_value" value={data.interval_type === 'mileage' ? t('maintenance.schedules.interval_km') : t('maintenance.schedules.interval_days')} />
                                 <TextInput
                                     id="interval_value"
                                     type="number"
@@ -368,7 +381,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
 
                         {data.interval_type === 'mileage' ? (
                             <div>
-                                <InputLabel htmlFor="last_service_odometer" value="Odometer Servis Terakhir (km)" />
+                                <InputLabel htmlFor="last_service_odometer" value={t('maintenance.schedules.last_odometer')} />
                                 <TextInput
                                     id="last_service_odometer"
                                     type="number"
@@ -380,7 +393,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                             </div>
                         ) : (
                             <div>
-                                <InputLabel htmlFor="last_service_date" value="Tanggal Servis Terakhir" />
+                                <InputLabel htmlFor="last_service_date" value={t('maintenance.schedules.last_date')} />
                                 <TextInput
                                     id="last_service_date"
                                     type="date"
@@ -393,7 +406,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                         )}
 
                         <div>
-                            <InputLabel htmlFor="notes" value="Catatan" />
+                            <InputLabel htmlFor="notes" value={t('maintenance.schedules.notes')} />
                             <textarea
                                 id="notes"
                                 rows={2}
@@ -406,9 +419,9 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                     </div>
 
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={closeModal}>Batal</SecondaryButton>
+                        <SecondaryButton type="button" onClick={closeModal}>{t('common.cancel')}</SecondaryButton>
                         <PrimaryButton disabled={processing}>
-                            {processing ? 'Menyimpan...' : editingSchedule ? 'Simpan' : 'Tambah Jadwal'}
+                            {processing ? t('maintenance.actions.saving') : editingSchedule ? t('common.save') : t('maintenance.schedules.submit_create')}
                         </PrimaryButton>
                     </div>
                 </form>
@@ -416,11 +429,11 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
 
             <ConfirmDeleteDialog
                 show={!!deletingSchedule}
-                title="Hapus Jadwal"
-                description={`Yakin ingin menghapus jadwal "${deletingSchedule?.name}"?`}
+                title={t('maintenance.schedules.delete_title')}
+                message={t('maintenance.schedules.delete_confirm', { name: deletingSchedule?.name ?? '' })}
                 processing={deleting}
                 onConfirm={confirmDelete}
-                onCancel={() => setDeletingSchedule(null)}
+                onClose={() => setDeletingSchedule(null)}
             />
         </DynamicLayout>
     );

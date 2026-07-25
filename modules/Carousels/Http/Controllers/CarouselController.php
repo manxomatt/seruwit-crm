@@ -60,7 +60,7 @@ class CarouselController extends Controller
         $carousel = Auth::user()->carousels()->create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
-            ->with('success', 'Carousel created successfully.');
+            ->with('success', __('carousels.messages.created'));
     }
 
     /**
@@ -107,7 +107,7 @@ class CarouselController extends Controller
         $carousel->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
-            ->with('success', 'Carousel updated successfully.');
+            ->with('success', __('carousels.messages.updated'));
     }
 
     /**
@@ -122,6 +122,6 @@ class CarouselController extends Controller
         $carousel->delete();
 
         return redirect()->route($this->getRoutePrefix().'.carousels.index')
-            ->with('success', 'Carousel deleted successfully.');
+            ->with('success', __('carousels.messages.deleted'));
     }
 }

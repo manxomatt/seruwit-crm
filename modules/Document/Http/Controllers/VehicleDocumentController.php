@@ -87,7 +87,7 @@ class VehicleDocumentController extends Controller
         ]);
 
         return redirect()->route('module.fleet.vehicles.documents.index', $vehicle)
-            ->with('success', 'Document uploaded successfully.');
+            ->with('success', __('document.messages.uploaded'));
     }
 
     public function show(Vehicle $vehicle, Document $document): Response
@@ -131,7 +131,7 @@ class VehicleDocumentController extends Controller
 
         $document->update($validated);
 
-        return back()->with('success', 'Document updated.');
+        return back()->with('success', __('document.messages.updated'));
     }
 
     public function destroy(Vehicle $vehicle, Document $document): RedirectResponse
@@ -139,7 +139,7 @@ class VehicleDocumentController extends Controller
         $document->delete();
 
         return redirect()->route('module.fleet.vehicles.documents.index', $vehicle)
-            ->with('success', 'Document removed.');
+            ->with('success', __('document.messages.removed'));
     }
 
     public function verify(Vehicle $vehicle, Document $document): RedirectResponse
@@ -149,6 +149,6 @@ class VehicleDocumentController extends Controller
             'verified_at' => now(),
         ]);
 
-        return back()->with('success', 'Document marked as verified.');
+        return back()->with('success', __('document.messages.verified'));
     }
 }

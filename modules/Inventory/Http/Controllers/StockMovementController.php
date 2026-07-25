@@ -71,7 +71,7 @@ class StockMovementController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.inventory.stock-movements.index')
-            ->with('success', 'Stock movement recorded');
+            ->with('success', __('inventory.messages.movement_recorded'));
     }
 
     public function createTransfer()
@@ -117,6 +117,6 @@ class StockMovementController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.inventory.stock-movements.index')
-            ->with('success', "Transfer {$result['reference_code']} recorded (out + in).");
+            ->with('success', __('inventory.messages.transfer_recorded', ['code' => $result['reference_code']]));
     }
 }

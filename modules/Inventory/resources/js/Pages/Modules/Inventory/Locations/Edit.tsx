@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -30,19 +31,20 @@ interface Props {
     parentOptions: ParentOption[];
 }
 
-const LOCATION_TYPES = [
-    { value: 'internal', label: 'Internal (Penyimpanan)' },
-    { value: 'input', label: 'Input (Penerimaan)' },
-    { value: 'output', label: 'Output (Pengiriman)' },
-    { value: 'quality_control', label: 'Quality Control' },
-    { value: 'transit', label: 'Transit' },
-    { value: 'production', label: 'Produksi' },
-    { value: 'scrap', label: 'Scrap (Buangan)' },
-    { value: 'view', label: 'View (Virtual Parent)' },
-];
+const LOCATION_TYPE_VALUES = [
+    'internal',
+    'input',
+    'output',
+    'quality_control',
+    'transit',
+    'production',
+    'scrap',
+    'view',
+] as const;
 
 export default function Edit({ warehouse, location, parentOptions }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         name: location.name,
         code: location.code,
@@ -56,27 +58,29 @@ export default function Edit({ warehouse, location, parentOptions }: Props): JSX
         patch(prefixedRoute('inventory.warehouses.locations.update', [warehouse.id, location.id]));
     };
 
+    const title = t('inventory.locations.edit_title', { name: location.name });
+
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Edit Lokasi — {location.name}
+                        {title}
                     </h2>
                     <Link href={prefixedRoute('inventory.warehouses.show', warehouse.id)}>
-                        <SecondaryButton>Kembali</SecondaryButton>
+                        <SecondaryButton>{t('inventory.locations.back')}</SecondaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title={`Edit Lokasi — ${location.name}`} />
+            <Head title={title} />
             <InventoryNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <form onSubmit={submit} className="space-y-6 p-6">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
-                            <InputLabel htmlFor="name" value="Nama Lokasi" />
+                            <InputLabel htmlFor="name" value={t('inventory.locations.name')} />
                             <TextInput
                                 id="name"
                                 value={data.name}
@@ -88,7 +92,7 @@ export default function Edit({ warehouse, location, parentOptions }: Props): JSX
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="code" value="Kode" />
+                            <InputLabel htmlFor="code" value={t('inventory.locations.code')} />
                             <TextInput
                                 id="code"
                                 value={data.code}
@@ -100,7 +104,7 @@ export default function Edit({ warehouse, location, parentOptions }: Props): JSX
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="type" value="Tipe Lokasi" />
+                            <InputLabel htmlFor="type" value={t('inventory.locations.type')} />
                             <select
                                 id="type"
                                 value={data.type}
@@ -108,22 +112,22 @@ export default function Edit({ warehouse, location, parentOptions }: Props): JSX
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 disabled={location.is_default}
                             >
-                                {LOCATION_TYPES.map((t) => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                {LOCATION_TYPE_VALUES.map((value) => (
+                                    <option key={value} value={value}>{t(`inventory.location_types.${value}`)}</option>
                                 ))}
                             </select>
                             <InputError message={errors.type} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="parent_id" value="Parent Lokasi (Opsional)" />
+                            <InputLabel htmlFor="parent_id" value={t('inventory.locations.parent')} />
                             <select
                                 id="parent_id"
                                 value={data.parent_id}
                                 onChange={(e) => setData('parent_id', e.target.value ? Number(e.target.value) : '')}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             >
-                                <option value="">— Tanpa Parent —</option>
+                                <option value="">{t('inventory.locations.no_parent')}</option>
                                 {parentOptions.map((p) => (
                                     <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
                                 ))}
@@ -132,7 +136,7 @@ export default function Edit({ warehouse, location, parentOptions }: Props): JSX
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="sort_order" value="Urutan" />
+                            <InputLabel htmlFor="sort_order" value={t('inventory.locations.sort')} />
                             <TextInput
                                 id="sort_order"
                                 type="number"
@@ -145,11 +149,11 @@ export default function Edit({ warehouse, location, parentOptions }: Props): JSX
                     </div>
 
                     {location.is_default && (
-                        <p className="text-sm text-amber-600">Lokasi default hanya bisa diubah urutan dan parent-nya.</p>
+                        <p className="text-sm text-amber-600">{t('inventory.locations.default_hint')}</p>
                     )}
 
                     <div className="flex justify-end">
-                        <PrimaryButton disabled={processing}>Simpan Perubahan</PrimaryButton>
+                        <PrimaryButton disabled={processing}>{t('inventory.locations.save_changes')}</PrimaryButton>
                     </div>
                 </form>
             </div>

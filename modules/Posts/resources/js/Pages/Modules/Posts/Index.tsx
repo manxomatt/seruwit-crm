@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -52,6 +53,8 @@ const DocumentIcon = () => (
 
 export default function Index({ posts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
     const [processing, setProcessing] = useState(false);
@@ -82,7 +85,7 @@ export default function Index({ posts }: Props): JSX.Element {
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('id-ID', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -94,27 +97,27 @@ export default function Index({ posts }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        Posts
+                        {t('posts.index.head')}
                     </h1>
                     <Link
                         href={prefixedRoute('posts.create')}
                         className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PlusIcon />
-                        <span className="ml-2">Create Post</span>
+                        <span className="ml-2">{t('posts.index.create')}</span>
                     </Link>
                 </div>
             }
         >
-            <Head title="Posts" />
+            <Head title={t('posts.index.head')} />
 
             {posts.length === 0 ? (
                 <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <div className="text-center py-16">
                         <DocumentIcon />
-                        <h3 className="mt-4 text-lg font-semibold text-gray-900">No posts yet</h3>
+                        <h3 className="mt-4 text-lg font-semibold text-gray-900">{t('posts.index.empty_title')}</h3>
                         <p className="mt-2 text-sm text-gray-500">
-                            Get started by creating your first blog post.
+                            {t('posts.index.empty_hint')}
                         </p>
                         <div className="mt-6">
                             <Link
@@ -122,7 +125,7 @@ export default function Index({ posts }: Props): JSX.Element {
                                 className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 <PlusIcon />
-                                <span className="ml-2">Create Post</span>
+                                <span className="ml-2">{t('posts.index.create')}</span>
                             </Link>
                         </div>
                     </div>
@@ -133,19 +136,19 @@ export default function Index({ posts }: Props): JSX.Element {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Title
+                                    {t('posts.index.columns.title')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Slug
+                                    {t('posts.index.columns.slug')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
+                                    {t('posts.index.columns.status')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Published
+                                    {t('posts.index.columns.published')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
+                                    {t('common.actions')}
                                 </th>
                             </tr>
                         </thead>
@@ -166,7 +169,7 @@ export default function Index({ posts }: Props): JSX.Element {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <code className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                            /blog/{post.slug}
+                                            {t('posts.hints.slug_prefix')}{post.slug}
                                         </code>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -178,7 +181,7 @@ export default function Index({ posts }: Props): JSX.Element {
                                                     : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                                             }`}
                                         >
-                                            {post.is_published ? 'Published' : 'Draft'}
+                                            {post.is_published ? t('posts.status.published') : t('posts.status.draft')}
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -189,21 +192,21 @@ export default function Index({ posts }: Props): JSX.Element {
                                             <Link
                                                 href={prefixedRoute('posts.show', post.id)}
                                                 className="text-gray-600 hover:text-gray-900"
-                                                title="Preview"
+                                                title={t('posts.index.preview')}
                                             >
                                                 <EyeIcon />
                                             </Link>
                                             <Link
                                                 href={prefixedRoute('posts.edit', post.id)}
                                                 className="text-indigo-600 hover:text-indigo-900"
-                                                title="Edit"
+                                                title={t('common.edit')}
                                             >
                                                 <PencilIcon />
                                             </Link>
                                             <button
                                                 onClick={() => openDeleteDialog(post)}
                                                 className="text-red-600 hover:text-red-900"
-                                                title="Delete"
+                                                title={t('common.delete')}
                                             >
                                                 <TrashIcon />
                                             </button>
@@ -221,17 +224,11 @@ export default function Index({ posts }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Post"
+                title={t('posts.index.delete_title')}
                 message={
-                    postToDelete ? (
-                        <>
-                            Apakah Anda yakin ingin menghapus post{' '}
-                            <strong>"{postToDelete.title}"</strong>? Tindakan ini tidak dapat
-                            dibatalkan.
-                        </>
-                    ) : (
-                        'Apakah Anda yakin ingin menghapus post ini?'
-                    )
+                    postToDelete
+                        ? t('posts.index.delete_confirm', { title: postToDelete.title })
+                        : t('posts.index.delete_confirm_generic')
                 }
             />
         </DynamicLayout>

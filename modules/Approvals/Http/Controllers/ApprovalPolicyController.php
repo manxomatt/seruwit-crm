@@ -65,7 +65,7 @@ class ApprovalPolicyController extends Controller
 
         return redirect()
             ->route($this->getRoutePrefix().'.approvals.policies.index')
-            ->with('success', 'Approval policy created.');
+            ->with('success', __('approvals.messages.policy_created'));
     }
 
     public function edit(ApprovalPolicy $policy): Response
@@ -103,20 +103,20 @@ class ApprovalPolicyController extends Controller
 
         return redirect()
             ->route($this->getRoutePrefix().'.approvals.policies.index')
-            ->with('success', 'Approval policy updated.');
+            ->with('success', __('approvals.messages.policy_updated'));
     }
 
     public function destroy(ApprovalPolicy $policy): RedirectResponse
     {
         if ($policy->requests()->where('status', 'pending')->exists()) {
-            return back()->with('error', 'Cannot delete a policy with pending requests.');
+            return back()->with('error', __('approvals.messages.policy_has_pending'));
         }
 
         $policy->delete();
 
         return redirect()
             ->route($this->getRoutePrefix().'.approvals.policies.index')
-            ->with('success', 'Approval policy deleted.');
+            ->with('success', __('approvals.messages.policy_deleted'));
     }
 
     /**

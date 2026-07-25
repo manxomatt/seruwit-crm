@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import axios from 'axios';
+import { useTrans } from '@/hooks/useTrans';
 
 interface MediaItem {
     id: number;
@@ -30,6 +31,7 @@ export default function CarouselImageUploader({
     isEditing = false,
     className = '',
 }: CarouselImageUploaderProps): JSX.Element {
+    const { t } = useTrans();
     const [activeTab, setActiveTab] = useState<TabType>('upload');
     const [urlValue, setUrlValue] = useState(currentImageUrl);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -52,11 +54,11 @@ export default function CarouselImageUploader({
             });
             setMediaLibrary(response.data.data || []);
         } catch {
-            setError('Failed to load media library');
+            setError(t('carousels.uploader.error_library'));
         } finally {
             setIsLoadingLibrary(false);
         }
-    }, [searchQuery]);
+    }, [searchQuery, t]);
 
     useEffect(() => {
         if (activeTab === 'library') {
@@ -74,7 +76,7 @@ export default function CarouselImageUploader({
         }
 
         if (!file.type.startsWith('image/')) {
-            setError('Please select an image file');
+            setError(t('carousels.uploader.error_image'));
             return;
         }
 
@@ -141,7 +143,7 @@ export default function CarouselImageUploader({
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
-                        Upload
+                        {t('carousels.uploader.upload')}
                     </span>
                 </button>
                 <button
@@ -153,7 +155,7 @@ export default function CarouselImageUploader({
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
-                        URL
+                        {t('carousels.uploader.url')}
                     </span>
                 </button>
                 <button
@@ -165,7 +167,7 @@ export default function CarouselImageUploader({
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        Library
+                        {t('carousels.uploader.library')}
                     </span>
                 </button>
             </div>
@@ -198,7 +200,7 @@ export default function CarouselImageUploader({
                                 <div className="space-y-3">
                                     <img
                                         src={previewUrl}
-                                        alt="Preview"
+                                        alt={t('carousels.uploader.preview')}
                                         className="max-h-32 mx-auto rounded-lg border border-gray-200"
                                     />
                                     <p className="text-sm text-gray-600">{selectedFile?.name}</p>
@@ -208,14 +210,14 @@ export default function CarouselImageUploader({
                                             onClick={() => fileInputRef.current?.click()}
                                             className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
                                         >
-                                            Change
+                                            {t('carousels.uploader.change')}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={clearSelection}
                                             className="text-red-600 hover:text-red-700 text-sm font-medium"
                                         >
-                                            Remove
+                                            {t('carousels.uploader.remove')}
                                         </button>
                                     </div>
                                 </div>
@@ -230,17 +232,17 @@ export default function CarouselImageUploader({
                                             onClick={() => fileInputRef.current?.click()}
                                             className="text-indigo-600 hover:text-indigo-700 font-medium"
                                         >
-                                            Click to upload
+                                            {t('carousels.uploader.click_upload')}
                                         </button>
-                                        <span className="text-gray-500"> or drag and drop</span>
+                                        <span className="text-gray-500">{t('carousels.uploader.or_drag')}</span>
                                     </div>
-                                    <p className="text-sm text-gray-500">PNG, JPG, GIF, WebP up to 10MB</p>
+                                    <p className="text-sm text-gray-500">{t('carousels.uploader.formats')}</p>
                                 </div>
                             )}
                         </div>
                         {isEditing && !previewUrl && (
                             <p className="text-sm text-gray-500 text-center">
-                                Leave empty to keep the current image
+                                {t('carousels.uploader.keep_current')}
                             </p>
                         )}
                     </div>
@@ -254,18 +256,18 @@ export default function CarouselImageUploader({
                                 type="text"
                                 value={urlValue}
                                 onChange={(e) => handleUrlChange(e.target.value)}
-                                placeholder="https://example.com/image.jpg"
+                                placeholder={t('carousels.uploader.url_placeholder')}
                                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             />
                             <p className="mt-2 text-sm text-gray-500">
-                                Enter the URL of an external image.
+                                {t('carousels.uploader.url_hint')}
                             </p>
                         </div>
                         {urlValue && (
                             <div className="relative">
                                 <img
                                     src={urlValue}
-                                    alt="Preview"
+                                    alt={t('carousels.uploader.preview')}
                                     className="max-h-32 rounded-lg border border-gray-200"
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -275,7 +277,7 @@ export default function CarouselImageUploader({
                                     type="button"
                                     onClick={() => handleUrlChange('')}
                                     className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                                    title="Remove image"
+                                    title={t('carousels.uploader.remove_image')}
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -294,7 +296,7 @@ export default function CarouselImageUploader({
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search images..."
+                                placeholder={t('carousels.uploader.search_placeholder')}
                                 className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             />
                             <button
@@ -302,7 +304,7 @@ export default function CarouselImageUploader({
                                 onClick={loadMediaLibrary}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
                             >
-                                Search
+                                {t('carousels.uploader.search')}
                             </button>
                         </div>
 
@@ -315,8 +317,8 @@ export default function CarouselImageUploader({
                                 <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
-                                <p>No images found in your library.</p>
-                                <p className="text-sm mt-1">Upload some images first!</p>
+                                <p>{t('carousels.uploader.library_empty')}</p>
+                                <p className="text-sm mt-1">{t('carousels.uploader.library_empty_hint')}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-48 overflow-y-auto">

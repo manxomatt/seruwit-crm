@@ -1,0 +1,155 @@
+<?php
+
+return [
+    'title' => 'Outbound',
+
+    'nav' => [
+        'pick_lists' => 'Pick Lists',
+    ],
+
+    'pick_list_status' => [
+        'open' => 'Open',
+        'picking' => 'Picking',
+        'picked' => 'Picked',
+        'packing' => 'Packing',
+        'packed' => 'Packed',
+        'dispatched' => 'Dispatched',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'pick_item_status' => [
+        'pending' => 'Pending',
+        'picked' => 'Picked',
+        'short' => 'Short',
+    ],
+
+    'pack_status' => [
+        'open' => 'Open',
+        'sealed' => 'Sealed',
+    ],
+
+    'actions' => [
+        'generate' => 'Generate',
+        'complete_picking' => 'Complete Picking',
+        'create_pack' => 'Create Pack',
+        'create_pack_label' => 'Create Pack + Label',
+        'dispatch' => 'Dispatch',
+        'seal_pack' => 'Seal Pack',
+        'print_label' => 'Print Label',
+        'print' => 'Print',
+        'confirm' => 'Confirm',
+        'back_to_pick_list' => 'Back to Pick List',
+        'cancel_pick_list' => 'Cancel',
+    ],
+
+    'pick_lists' => [
+        'index' => [
+            'head' => 'Outbound Pick / Pack',
+            'title' => 'Pick Lists',
+            'generate' => 'Generate Pick List',
+            'search_placeholder' => 'Search PL / DO…',
+            'empty' => 'No pick lists yet.',
+            'columns' => [
+                'pick_list' => 'Pick List',
+                'do' => 'DO',
+                'partner' => 'Partner',
+                'warehouse' => 'Warehouse',
+                'lines' => 'Lines',
+                'status' => 'Status',
+            ],
+        ],
+        'create' => [
+            'title' => 'Generate Pick List',
+            'delivery_order' => 'Delivery Order *',
+            'select_do' => '— select DO —',
+            'no_eligible_do' => 'No eligible DOs (confirmed/assigned/in transit without an active pick list).',
+            'source_warehouse' => 'Source warehouse *',
+            'notes' => 'Notes',
+            'order_option' => ':code · :partner · :count item · :status',
+        ],
+        'show' => [
+            'delivery_order' => 'Delivery Order',
+            'warehouse' => 'Warehouse',
+            'do_status' => 'DO Status',
+            'notes' => 'Notes',
+            'pick_lines' => 'Pick lines',
+            'packs' => 'Packs',
+            'no_packs' => 'No packs yet.',
+            'columns' => [
+                'product' => 'Product',
+                'req' => 'Req',
+                'suggest' => 'Suggest',
+                'pick_qty' => 'Pick Qty',
+                'location' => 'Location',
+                'batch' => 'Batch',
+                'status' => 'Status',
+            ],
+            'confirm_dispatch' => 'Dispatch and deduct stock?',
+            'confirm_cancel' => 'Cancel this pick list?',
+        ],
+    ],
+
+    'packs' => [
+        'create' => [
+            'title' => 'Create Pack — :code',
+            'head' => 'Create Pack',
+            'hint' => 'DO :code · defaults to remaining picked qty in one pack.',
+            'columns' => [
+                'product' => 'Product',
+                'remaining' => 'Remaining',
+                'pack_qty' => 'Pack Qty',
+            ],
+            'weight_kg' => 'Weight (kg)',
+            'notes' => 'Notes',
+        ],
+        'show' => [
+            'label' => 'Label',
+            'pick_list_do' => 'Pick List / DO',
+            'warehouse' => 'Warehouse',
+            'weight' => 'Weight',
+            'weight_value' => ':weight kg',
+            'columns' => [
+                'product' => 'Product',
+                'batch' => 'Batch',
+                'qty' => 'Qty',
+            ],
+        ],
+        'label' => [
+            'title' => 'Label :code',
+            'shipping_label' => 'Shipping Label',
+            'ship_to' => 'Ship to',
+            'contents' => 'Contents',
+            'do' => 'DO :code',
+            'weight' => 'Weight: :weight kg',
+        ],
+    ],
+
+    'messages' => [
+        'pick_list_generated' => 'Pick list generated.',
+        'pick_line_confirmed' => 'Pick line confirmed.',
+        'picking_completed' => 'Picking completed.',
+        'dispatched' => 'Outbound dispatched — stock deducted.',
+        'pick_list_cancelled' => 'Pick list cancelled.',
+        'pack_created' => 'Pack created with label.',
+        'pack_sealed' => 'Pack sealed.',
+        'do_status_invalid' => 'Pick list can only be generated for confirmed, assigned, or in-transit orders.',
+        'do_no_items' => 'Delivery order has no items to pick.',
+        'active_pick_list_exists' => 'An active pick list already exists for this delivery order.',
+        'no_pickable_products' => 'No pickable (non-service) products on this delivery order.',
+        'picking_closed' => 'Picking is closed for this pick list.',
+        'qty_negative' => 'Picked quantity cannot be negative.',
+        'qty_over_requested' => 'Cannot pick more than requested.',
+        'pick_list_not_picking' => 'Pick list is not in a picking state.',
+        'confirm_all_lines' => 'Confirm every line before completing picking.',
+        'need_picked_qty' => 'At least one line must have a picked quantity.',
+        'packing_requires_picked' => 'Packing requires a completed pick list.',
+        'pack_items_required' => 'Add at least one picked line to the pack.',
+        'pack_items_wrong_list' => 'Pack items must belong to this pick list.',
+        'pack_qty_invalid' => 'Invalid pack quantity for item #:id.',
+        'pack_qty_exceeds' => 'Pack quantity exceeds remaining picked qty for item #:id.',
+        'pack_seal_open_only' => 'Only an open pack can be sealed.',
+        'dispatch_requires_packed' => 'Dispatch requires a fully packed pick list (all packs sealed).',
+        'pick_list_not_cancellable' => 'This pick list cannot be cancelled.',
+        'dispatch_notes' => 'Outbound pick/pack dispatch for :code',
+    ],
+];

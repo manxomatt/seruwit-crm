@@ -37,7 +37,7 @@ class WarehouseController extends Controller
         $warehouse->createDefaultLocations();
 
         return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.index')
-            ->with('success', 'Warehouse created successfully');
+            ->with('success', __('inventory.messages.warehouse_created'));
     }
 
     public function show(Warehouse $warehouse)
@@ -56,7 +56,7 @@ class WarehouseController extends Controller
     {
         $warehouse->update($request->validated());
 
-        return back()->with('success', 'Warehouse updated successfully');
+        return back()->with('success', __('inventory.messages.warehouse_updated'));
     }
 
     public function destroy(Warehouse $warehouse): RedirectResponse
@@ -64,6 +64,6 @@ class WarehouseController extends Controller
         $warehouse->delete();
 
         return redirect()->route($this->getRoutePrefix().'.inventory.warehouses.index')
-            ->with('success', 'Warehouse deleted successfully');
+            ->with('success', __('inventory.messages.warehouse_deleted'));
     }
 }

@@ -94,7 +94,7 @@ class InvoiceController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.invoicing.invoices.show', $invoice)
-            ->with('success', 'Draft invoice created.');
+            ->with('success', __('invoicing.messages.draft_created'));
     }
 
     /**
@@ -123,13 +123,13 @@ class InvoiceController extends Controller
     public function update(UpdateInvoiceRequest $request, Invoice $invoice): RedirectResponse
     {
         if ($invoice->status !== Invoice::STATUS_DRAFT) {
-            return back()->with('error', 'Only a draft invoice can be edited.');
+            return back()->with('error', __('invoicing.messages.edit_draft_only'));
         }
 
         $invoice->update($request->validated());
         $invoice->recalculate();
 
-        return back()->with('success', 'Invoice updated.');
+        return back()->with('success', __('invoicing.messages.updated'));
     }
 
     /**
@@ -139,13 +139,13 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice): RedirectResponse
     {
         if ($invoice->status !== Invoice::STATUS_DRAFT) {
-            return back()->with('error', 'Only a draft invoice can be deleted.');
+            return back()->with('error', __('invoicing.messages.delete_draft_only'));
         }
 
         $invoice->delete();
 
         return redirect()->route($this->getRoutePrefix().'.invoicing.invoices.index')
-            ->with('success', 'Invoice deleted.');
+            ->with('success', __('invoicing.messages.deleted'));
     }
 
     /**
@@ -154,11 +154,11 @@ class InvoiceController extends Controller
     public function issue(Invoice $invoice): RedirectResponse
     {
         if ($invoice->status !== Invoice::STATUS_DRAFT) {
-            return back()->with('error', 'Only a draft invoice can be issued.');
+            return back()->with('error', __('invoicing.messages.issue_draft_only'));
         }
 
         if (! $invoice->lines()->exists()) {
-            return back()->with('error', 'Add at least one line before issuing.');
+            return back()->with('error', __('invoicing.messages.need_lines'));
         }
 
         $invoice->loadMissing('partner');
@@ -180,16 +180,16 @@ class InvoiceController extends Controller
                 );
 
                 if (! $gate['allowed']) {
-                    return back()->with('error', $gate['message'] ?? 'Credit limit approval required before issuing.');
+                    return back()->with('error', $gate['message'] ?? __('invoicing.messages.credit_approval'));
                 }
             } else {
-                return back()->with('error', 'Issuing this invoice would exceed the partner credit limit.');
+                return back()->with('error', __('invoicing.messages.credit_exceeded'));
             }
         }
 
         $invoice->update(['status' => Invoice::STATUS_ISSUED]);
 
-        return back()->with('success', 'Invoice issued.');
+        return back()->with('success', __('invoicing.messages.issued'));
     }
 
     /**
@@ -198,13 +198,13 @@ class InvoiceController extends Controller
     public function pay(Invoice $invoice): RedirectResponse
     {
         if (! $invoice->isOpen()) {
-            return back()->with('error', 'Only an open invoice can be marked as paid.');
+            return back()->with('error', __('invoicing.messages.paid_open_only'));
         }
 
         if (Schema::hasTable('payments') && class_exists(PaymentRecorder::class)) {
             PaymentRecorder::settleInvoice($invoice);
 
-            return back()->with('success', 'Payment recorded and invoice settled.');
+            return back()->with('success', __('invoicing.messages.payment_settled'));
         }
 
         $invoice->update([
@@ -213,7 +213,7 @@ class InvoiceController extends Controller
             'paid_at' => now(),
         ]);
 
-        return back()->with('success', 'Invoice marked as paid.');
+        return back()->with('success', __('invoicing.messages.marked_paid'));
     }
 
     /**
@@ -224,11 +224,11 @@ class InvoiceController extends Controller
     public function void(Invoice $invoice): RedirectResponse
     {
         if (! in_array($invoice->status, [Invoice::STATUS_DRAFT, Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID], true)) {
-            return back()->with('error', 'A paid invoice cannot be voided.');
+            return back()->with('error', __('invoicing.messages.void_paid'));
         }
 
         if ((float) ($invoice->amount_paid ?? 0) > 0) {
-            return back()->with('error', 'Void payments first before voiding a partially paid invoice.');
+            return back()->with('error', __('invoicing.messages.void_payments_first'));
         }
 
         DB::transaction(function () use ($invoice) {
@@ -236,7 +236,7 @@ class InvoiceController extends Controller
             $invoice->update(['status' => Invoice::STATUS_VOID]);
         });
 
-        return back()->with('success', 'Invoice voided.');
+        return back()->with('success', __('invoicing.messages.voided'));
     }
 
     /**

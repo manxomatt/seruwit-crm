@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -24,6 +25,7 @@ interface Props {
 
 export default function Create({ pickList, deliveryOrder, lines }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [qty, setQty] = useState<Record<number, string>>(() => {
         const init: Record<number, string> = {};
         lines.forEach((line) => {
@@ -55,23 +57,27 @@ export default function Create({ pickList, deliveryOrder, lines }: Props): JSX.E
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Create Pack — {pickList.code}</h2>}>
-            <Head title="Create Pack" />
+        <DynamicLayout
+            header={
+                <h2 className="text-xl font-semibold text-gray-800">
+                    {t('outbound.packs.create.title', { code: pickList.code })}
+                </h2>
+            }
+        >
+            <Head title={t('outbound.packs.create.head')} />
             <div className="py-6">
                 <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <OutboundNav />
-                    <p className="text-sm text-gray-600">
-                        DO {deliveryOrder.code} · default fills remaining picked qty into one pack.
-                    </p>
+                    <p className="text-sm text-gray-600">{t('outbound.packs.create.hint', { code: deliveryOrder.code })}</p>
 
                     <form onSubmit={submit} className="space-y-5 rounded-lg border border-gray-200 bg-white p-6">
                         <div className="overflow-hidden rounded-md border border-gray-200">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Product</th>
-                                        <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Remaining</th>
-                                        <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Pack Qty</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.packs.create.columns.product')}</th>
+                                        <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('outbound.packs.create.columns.remaining')}</th>
+                                        <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('outbound.packs.create.columns.pack_qty')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -102,7 +108,7 @@ export default function Create({ pickList, deliveryOrder, lines }: Props): JSX.E
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel value="Weight (kg)" />
+                                <InputLabel value={t('outbound.packs.create.weight_kg')} />
                                 <TextInput
                                     type="number"
                                     step="0.01"
@@ -112,16 +118,16 @@ export default function Create({ pickList, deliveryOrder, lines }: Props): JSX.E
                                 />
                             </div>
                             <div>
-                                <InputLabel value="Notes" />
+                                <InputLabel value={t('outbound.packs.create.notes')} />
                                 <TextInput className="mt-1 block w-full" value={notes} onChange={(e) => setNotes(e.target.value)} />
                             </div>
                         </div>
 
                         <div className="flex justify-end gap-2">
                             <Link href={prefixedRoute('outbound.pick-lists.show', pickList.id)}>
-                                <SecondaryButton type="button">Batal</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
-                            <PrimaryButton disabled={packable.length === 0}>Create Pack + Label</PrimaryButton>
+                            <PrimaryButton disabled={packable.length === 0}>{t('outbound.actions.create_pack_label')}</PrimaryButton>
                         </div>
                     </form>
                 </div>

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout'
 import { useRoutePrefix } from '@/hooks/useRoutePrefix'
+import { useLocaleTag, useTrans } from '@/hooks/useTrans'
 import PrimaryButton from '@/Components/PrimaryButton'
 import SecondaryButton from '@/Components/SecondaryButton'
 import { Head, Link } from '@inertiajs/react'
@@ -32,6 +33,8 @@ interface Props {
 
 export default function StockMovementsIndex({ movements }: Props) {
   const { prefixedRoute } = useRoutePrefix()
+  const { t } = useTrans()
+  const localeTag = useLocaleTag()
   const typeColors = {
     in: 'bg-green-100 text-green-800',
     out: 'bg-red-100 text-red-800',
@@ -43,19 +46,19 @@ export default function StockMovementsIndex({ movements }: Props) {
     <DynamicLayout
       header={
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory</h2>
+          <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('inventory.title')}</h2>
           <div className="flex gap-2">
             <Link href={prefixedRoute('inventory.stock-movements.transfer.create')}>
-              <SecondaryButton>Transfer Antar Gudang</SecondaryButton>
+              <SecondaryButton>{t('inventory.movements.transfer')}</SecondaryButton>
             </Link>
             <Link href={prefixedRoute('inventory.stock-movements.create')}>
-              <PrimaryButton>Record Movement</PrimaryButton>
+              <PrimaryButton>{t('inventory.movements.record')}</PrimaryButton>
             </Link>
           </div>
         </div>
       }
     >
-      <Head title="Stock Movements" />
+      <Head title={t('inventory.movements.head')} />
 
       <InventoryNav />
 
@@ -64,23 +67,23 @@ export default function StockMovementsIndex({ movements }: Props) {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Product</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Warehouse</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Lokasi</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Qty</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Source</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Reference</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Batch</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">By</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.product')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.warehouse')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.location')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.type')}</th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.qty')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.source')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.reference')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.batch')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.by')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.movements.columns.date')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {movements.data.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No movements recorded yet.
+                    {t('inventory.movements.empty')}
                   </td>
                 </tr>
               ) : (
@@ -91,7 +94,7 @@ export default function StockMovementsIndex({ movements }: Props) {
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-gray-500">{movement.location?.code ?? '—'}</td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${typeColors[movement.type as keyof typeof typeColors]}`}>
-                        {movement.type}
+                        {t(`inventory.movement_types.${movement.type}`)}
                       </span>
                     </td>
                     <td className={`whitespace-nowrap px-4 py-3 text-right font-medium ${movement.type === 'out' ? 'text-red-600' : 'text-green-600'}`}>
@@ -103,12 +106,12 @@ export default function StockMovementsIndex({ movements }: Props) {
                       {movement.batch_number || '—'}
                       {movement.expiry_date ? (
                         <span className="block text-[10px] text-gray-400">
-                          exp {new Date(movement.expiry_date).toLocaleDateString('id-ID')}
+                          exp {new Date(movement.expiry_date).toLocaleDateString(localeTag)}
                         </span>
                       ) : null}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-500">{movement.recorded_by?.name ?? '—'}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{new Date(movement.recorded_at).toLocaleDateString('id-ID')}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{new Date(movement.recorded_at).toLocaleDateString(localeTag)}</td>
                   </tr>
                 ))
               )}

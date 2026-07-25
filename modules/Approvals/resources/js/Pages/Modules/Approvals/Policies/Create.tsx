@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -40,6 +41,7 @@ interface Props {
 
 export default function PolicyForm({ triggers, roles, users, policy }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const editing = Boolean(policy);
 
     const { data, setData, post, patch, processing, errors } = useForm({
@@ -61,7 +63,14 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                   approver_type: l.approver_type,
                   approver_value: l.approver_value,
               }))
-            : [{ level: 1, name: 'Level 1', approver_type: 'permission', approver_value: 'approvals.decide' }],
+            : [
+                  {
+                      level: 1,
+                      name: t('approvals.form.level_n', { n: 1 }),
+                      approver_type: 'permission',
+                      approver_value: 'approvals.decide',
+                  },
+              ],
     });
 
     const trigger = triggers[data.trigger_type];
@@ -81,9 +90,11 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
         setData('levels', levels);
     };
 
+    const title = editing ? t('approvals.form.edit_title') : t('approvals.form.new_title');
+
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{editing ? 'Edit Policy' : 'New Policy'}</h2>}>
-            <Head title={editing ? 'Edit Policy' : 'New Policy'} />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{title}</h2>}>
+            <Head title={title} />
             <div className="py-6">
                 <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <ApprovalsNav />
@@ -91,7 +102,7 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                     <form onSubmit={submit} className="space-y-5 rounded-lg border border-gray-200 bg-white p-6">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel value="Key *" />
+                                <InputLabel value={t('approvals.form.key')} />
                                 <TextInput
                                     className="mt-1 block w-full"
                                     value={data.key}
@@ -101,7 +112,7 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                                 <InputError message={errors.key} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel value="Name *" />
+                                <InputLabel value={t('approvals.form.name')} />
                                 <TextInput
                                     className="mt-1 block w-full"
                                     value={data.name}
@@ -112,7 +123,7 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                         </div>
 
                         <div>
-                            <InputLabel value="Trigger *" />
+                            <InputLabel value={t('approvals.form.trigger')} />
                             <select
                                 className="mt-1 w-full rounded-md border-gray-300 shadow-sm"
                                 value={data.trigger_type}
@@ -133,7 +144,7 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                                 checked={data.is_active}
                                 onChange={(e) => setData('is_active', e.target.checked)}
                             />
-                            Active
+                            {t('approvals.form.active')}
                         </label>
 
                         {trigger?.condition_fields?.map((field) => (
@@ -151,7 +162,7 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                                                 })
                                             }
                                         />
-                                        Ya
+                                        {t('approvals.form.yes')}
                                     </label>
                                 ) : (
                                     <TextInput
@@ -171,7 +182,7 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
 
                         <div>
                             <div className="mb-2 flex items-center justify-between">
-                                <InputLabel value="Levels *" />
+                                <InputLabel value={t('approvals.form.levels')} />
                                 <button
                                     type="button"
                                     className="text-sm text-indigo-600 hover:underline"
@@ -180,14 +191,14 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                                             ...data.levels,
                                             {
                                                 level: data.levels.length + 1,
-                                                name: `Level ${data.levels.length + 1}`,
+                                                name: t('approvals.form.level_n', { n: data.levels.length + 1 }),
                                                 approver_type: 'role',
                                                 approver_value: roles[0]?.slug ?? 'admin',
                                             },
                                         ])
                                     }
                                 >
-                                    + Level
+                                    {t('approvals.form.add_level')}
                                 </button>
                             </div>
                             <div className="space-y-3">
@@ -197,21 +208,23 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
                                             type="number"
                                             value={level.level}
                                             onChange={(e) => updateLevel(index, 'level', Number(e.target.value))}
-                                            placeholder="Level #"
+                                            placeholder={t('approvals.form.level_number')}
                                         />
                                         <TextInput
                                             value={level.name}
                                             onChange={(e) => updateLevel(index, 'name', e.target.value)}
-                                            placeholder="Name"
+                                            placeholder={t('approvals.form.level_name')}
                                         />
                                         <select
                                             className="rounded-md border-gray-300 text-sm"
                                             value={level.approver_type}
                                             onChange={(e) => updateLevel(index, 'approver_type', e.target.value)}
                                         >
-                                            <option value="permission">permission</option>
-                                            <option value="role">role</option>
-                                            <option value="user">user</option>
+                                            <option value="permission">
+                                                {t('approvals.form.approver_types.permission')}
+                                            </option>
+                                            <option value="role">{t('approvals.form.approver_types.role')}</option>
+                                            <option value="user">{t('approvals.form.approver_types.user')}</option>
                                         </select>
                                         {level.approver_type === 'role' ? (
                                             <select
@@ -252,9 +265,11 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
 
                         <div className="flex justify-end gap-2">
                             <Link href={prefixedRoute('approvals.policies.index')}>
-                                <SecondaryButton type="button">Batal</SecondaryButton>
+                                <SecondaryButton type="button">{t('approvals.form.cancel')}</SecondaryButton>
                             </Link>
-                            <PrimaryButton disabled={processing}>{editing ? 'Update' : 'Create'}</PrimaryButton>
+                            <PrimaryButton disabled={processing}>
+                                {editing ? t('approvals.form.update') : t('approvals.form.create')}
+                            </PrimaryButton>
                         </div>
                     </form>
                 </div>

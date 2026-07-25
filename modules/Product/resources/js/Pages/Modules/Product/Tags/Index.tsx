@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ProductNav from '../../../../ProductNav';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -42,6 +43,7 @@ const TAG_COLORS: Record<string, string> = {
 
 export default function Index({ tags, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [toDelete, setToDelete] = useState<ProductTag | null>(null);
@@ -71,31 +73,30 @@ export default function Index({ tags, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Tags Produk</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.tags.index.head')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('products.tags.create')}>
-                            <PrimaryButton>Tambah Tag</PrimaryButton>
+                            <PrimaryButton>{t('products.tags.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Tags Produk" />
+            <Head title={t('products.tags.index.head')} />
             <ProductNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
                     <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
                         <div className="min-w-[220px] flex-1">
-                            <TextInput type="text" placeholder="Cari nama tag..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full" />
+                            <TextInput type="text" placeholder={t('products.placeholders.search')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full" />
                         </div>
-                        <PrimaryButton type="submit">Cari</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {tags.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">Belum ada tag</h3>
-                            <p className="mt-1 text-sm text-gray-500">Mulai dengan menambahkan tag produk baru.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('products.tags.index.empty')}</h3>
                         </div>
                     ) : (
                         <>
@@ -103,10 +104,10 @@ export default function Index({ tags, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Warna</th>
-                                            <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Produk</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Aksi</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.tags.index.columns.name')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.tags.index.columns.color')}</th>
+                                            <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.nav.products')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -117,15 +118,15 @@ export default function Index({ tags, filters, can }: Props): JSX.Element {
                                                         {tag.name}
                                                     </span>
                                                 </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{tag.color || '—'}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{tag.color ? t(`products.tag_colors.${tag.color}`) : '—'}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-gray-500">{tag.products_count}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-3">
                                                         {can.update && (
-                                                            <Link href={prefixedRoute('products.tags.edit', tag.id)} className="text-indigo-600 hover:text-indigo-900">Edit</Link>
+                                                            <Link href={prefixedRoute('products.tags.edit', tag.id)} className="text-indigo-600 hover:text-indigo-900">{t('common.edit')}</Link>
                                                         )}
                                                         {can.delete && (
-                                                            <button onClick={() => { setToDelete(tag); setShowDeleteDialog(true); }} className="text-red-600 hover:text-red-900">Hapus</button>
+                                                            <button onClick={() => { setToDelete(tag); setShowDeleteDialog(true); }} className="text-red-600 hover:text-red-900">{t('common.delete')}</button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -138,8 +139,11 @@ export default function Index({ tags, filters, can }: Props): JSX.Element {
                             {tags.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Menampilkan {(tags.current_page - 1) * tags.per_page + 1} s/d{' '}
-                                        {Math.min(tags.current_page * tags.per_page, tags.total)} dari {tags.total}
+                                        {t('common.showing_results', {
+                                            from: (tags.current_page - 1) * tags.per_page + 1,
+                                            to: Math.min(tags.current_page * tags.per_page, tags.total),
+                                            total: tags.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {tags.links.map((link, i) => (
@@ -161,8 +165,8 @@ export default function Index({ tags, filters, can }: Props): JSX.Element {
                 onClose={() => { setShowDeleteDialog(false); setToDelete(null); }}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Tag"
-                message={toDelete ? `Yakin ingin menghapus tag "${toDelete.name}"?` : ''}
+                title={t('products.tags.index.delete_title')}
+                message={toDelete ? t('products.tags.index.delete_confirm', { name: toDelete.name }) : ''}
             />
         </DynamicLayout>
     );

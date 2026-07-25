@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 
 interface Page {
@@ -43,6 +44,7 @@ const DocumentIcon = () => (
 
 export default function Show({ page }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     return (
         <DynamicLayout
             header={
@@ -56,10 +58,10 @@ export default function Show({ page }: Props): JSX.Element {
                         </Link>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                                Preview: {page.title}
+                                {t('pages.show.preview_title', { title: page.title })}
                             </h1>
                             <p className="mt-1 text-sm text-gray-500">
-                                View how your page will appear to visitors
+                                {t('pages.show.preview_hint')}
                             </p>
                         </div>
                     </div>
@@ -71,27 +73,27 @@ export default function Show({ page }: Props): JSX.Element {
                                     : 'bg-yellow-100 text-yellow-800'
                             }`}
                         >
-                            {page.is_published ? 'Published' : 'Draft'}
+                            {page.is_published ? t('pages.status.published') : t('pages.status.draft')}
                         </span>
                         <Link
                             href={prefixedRoute('pages.edit', page.id)}
                             className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         >
                             <PencilIcon />
-                            Edit Page
+                            {t('pages.show.edit_page')}
                         </Link>
                     </div>
                 </div>
             }
         >
-            <Head title={`Preview: ${page.title}`} />
+            <Head title={t('pages.show.preview_title', { title: page.title })} />
 
             <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
                 {/* URL Bar */}
                 <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">URL:</span>
+                            <span className="text-sm text-gray-500">{t('pages.show.url')}</span>
                             <code className="bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-700">
                                 /p/{page.slug}
                             </code>
@@ -103,7 +105,7 @@ export default function Show({ page }: Props): JSX.Element {
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-500"
                             >
-                                View Live Page
+                                {t('pages.show.view_live')}
                                 <ExternalLinkIcon />
                             </a>
                         )}
@@ -121,9 +123,9 @@ export default function Show({ page }: Props): JSX.Element {
                     ) : (
                         <div className="text-center py-16">
                             <DocumentIcon />
-                            <h3 className="mt-4 text-lg font-semibold text-gray-900">No content yet</h3>
+                            <h3 className="mt-4 text-lg font-semibold text-gray-900">{t('pages.show.empty_title')}</h3>
                             <p className="mt-2 text-sm text-gray-500">
-                                This page doesn't have any content. Open the editor to start building.
+                                {t('pages.show.empty_hint')}
                             </p>
                             <div className="mt-6">
                                 <Link
@@ -131,7 +133,7 @@ export default function Show({ page }: Props): JSX.Element {
                                     className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                 >
                                     <PencilIcon />
-                                    Open Editor
+                                    {t('pages.show.open_editor')}
                                 </Link>
                             </div>
                         </div>

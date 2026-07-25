@@ -48,7 +48,7 @@ class CanvassingPlanController extends Controller
         CanvassingPlan::query()->create($data);
 
         return redirect()->route('module.canvassing.plans.index')
-            ->with('success', 'Plan created.');
+            ->with('success', __('canvassing.messages.plan_created'));
     }
 
     public function update(Request $request, CanvassingPlan $plan): RedirectResponse
@@ -60,7 +60,7 @@ class CanvassingPlanController extends Controller
 
         $plan->update($data);
 
-        return redirect()->back()->with('success', 'Plan updated.');
+        return redirect()->back()->with('success', __('canvassing.messages.plan_updated'));
     }
 
     public function destroy(CanvassingPlan $plan): RedirectResponse
@@ -68,6 +68,6 @@ class CanvassingPlanController extends Controller
         $plan->delete();
 
         return redirect()->route('module.canvassing.plans.index')
-            ->with('success', 'Plan removed.');
+            ->with('success', __('canvassing.messages.plan_removed'));
     }
 }

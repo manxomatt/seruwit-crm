@@ -61,7 +61,7 @@ class ProductAttributeController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.products.attributes.index')
-            ->with('success', 'Atribut berhasil dibuat.');
+            ->with('success', __('products.messages.attribute_created'));
     }
 
     public function edit(ProductAttribute $attribute): Response
@@ -92,7 +92,7 @@ class ProductAttributeController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.products.attributes.index')
-            ->with('success', 'Atribut berhasil diperbarui.');
+            ->with('success', __('products.messages.attribute_updated'));
     }
 
     public function destroy(ProductAttribute $attribute): RedirectResponse
@@ -100,6 +100,6 @@ class ProductAttributeController extends Controller
         $attribute->delete();
 
         return redirect()->route($this->getRoutePrefix().'.products.attributes.index')
-            ->with('success', 'Atribut berhasil dihapus.');
+            ->with('success', __('products.messages.attribute_deleted'));
     }
 }

@@ -34,22 +34,34 @@ export interface DocumentItem {
     deleted_at: string | null;
 }
 
-export function getStatusBadge(status: DocumentStatus): { label: string; classes: string } {
+type Translate = (key: string, params?: Record<string, string | number>, fallback?: string) => string;
+
+export function getStatusBadgeClasses(status: DocumentStatus): string {
     switch (status) {
         case 'expired':
-            return { label: 'Expired', classes: 'bg-red-100 text-red-800' };
+            return 'bg-red-100 text-red-800';
         case 'expiring_soon':
-            return { label: 'Segera Expire', classes: 'bg-yellow-100 text-yellow-800' };
+            return 'bg-yellow-100 text-yellow-800';
         case 'permanent':
-            return { label: 'Permanen', classes: 'bg-blue-100 text-blue-800' };
+            return 'bg-blue-100 text-blue-800';
         default:
-            return { label: 'Valid', classes: 'bg-green-100 text-green-800' };
+            return 'bg-green-100 text-green-800';
     }
 }
 
-export function formatDate(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('id-ID', {
+export function getStatusBadge(status: DocumentStatus, t: Translate): { label: string; classes: string } {
+    return {
+        label: t(`document.status.${status}`, undefined, status),
+        classes: getStatusBadgeClasses(status),
+    };
+}
+
+export function formatDate(value: string | null, localeTag = 'id-ID'): string {
+    if (!value) {
+        return '—';
+    }
+
+    return new Date(value).toLocaleDateString(localeTag, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -57,15 +69,29 @@ export function formatDate(value: string | null): string {
 }
 
 export function daysUntil(value: string | null): number | null {
-    if (!value) return null;
+    if (!value) {
+        return null;
+    }
+
     const diff = new Date(value).getTime() - Date.now();
+
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-export function formatDaysUntil(value: string | null): string {
+export function formatDaysUntil(value: string | null, t: Translate): string {
     const days = daysUntil(value);
-    if (days === null) return '—';
-    if (days < 0) return `${Math.abs(days)} hari lalu`;
-    if (days === 0) return 'Hari ini';
-    return `${days} hari lagi`;
+
+    if (days === null) {
+        return '—';
+    }
+
+    if (days < 0) {
+        return t('document.days.ago', { count: Math.abs(days) });
+    }
+
+    if (days === 0) {
+        return t('document.days.today');
+    }
+
+    return t('document.days.left', { count: days });
 }

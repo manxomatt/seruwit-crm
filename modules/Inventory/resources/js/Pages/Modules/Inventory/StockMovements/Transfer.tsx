@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -37,6 +38,7 @@ interface Props {
 
 export default function Transfer({ products, warehouses, locations }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const flash = usePage().props.flash as { error?: string } | undefined;
 
     const { data, setData, post, processing, errors } = useForm({
@@ -62,15 +64,14 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Transfer Stok Antar Gudang</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('inventory.movements.transfer_title')}</h2>}
         >
-            <Head title="Transfer Stok" />
+            <Head title={t('inventory.movements.transfer_head')} />
             <InventoryNav />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 <p className="text-sm text-gray-600">
-                    Transfer mencatat dua pergerakan sekaligus: <strong>out</strong> dari gudang sumber dan{' '}
-                    <strong>in</strong> ke gudang tujuan, dengan satu nomor referensi.
+                    {t('inventory.movements.intro')}
                 </p>
 
                 {flash?.error && (
@@ -79,19 +80,19 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
 
                 {warehouses.length < 2 && (
                     <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                        Minimal dua gudang aktif dibutuhkan untuk transfer antar gudang.
+                        {t('inventory.movements.need_two')}
                     </div>
                 )}
 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <form onSubmit={submit} className="space-y-6 p-6">
                         <div>
-                            <InputLabel value="Produk *" />
+                            <InputLabel value={t('inventory.movements.product_required')} />
                             <Select
                                 className="mt-1"
                                 value={data.product_id}
                                 onChange={(value) => setData('product_id', value)}
-                                placeholder="Pilih produk"
+                                placeholder={t('inventory.movements.select_product')}
                                 options={products.map((p) => ({
                                     value: String(p.id),
                                     label: p.unit ? `${p.name} (${p.unit})` : p.name,
@@ -102,9 +103,9 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
 
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div className="space-y-4 rounded-lg border border-red-100 bg-red-50/40 p-4">
-                                <h3 className="text-sm font-semibold text-red-800">Dari (Out)</h3>
+                                <h3 className="text-sm font-semibold text-red-800">{t('inventory.movements.from')}</h3>
                                 <div>
-                                    <InputLabel value="Gudang sumber *" />
+                                    <InputLabel value={t('inventory.movements.source_warehouse')} />
                                     <Select
                                         className="mt-1"
                                         value={data.from_warehouse_id}
@@ -117,13 +118,13 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                                     <InputError message={errors.from_warehouse_id} className="mt-2" />
                                 </div>
                                 <div>
-                                    <InputLabel value="Lokasi sumber (opsional)" />
+                                    <InputLabel value={t('inventory.movements.source_location')} />
                                     <select
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         value={data.from_location_id}
                                         onChange={(e) => setData('from_location_id', e.target.value)}
                                     >
-                                        <option value="">— Tanpa lokasi spesifik —</option>
+                                        <option value="">{t('inventory.movements.no_specific')}</option>
                                         {fromLocations.map((l) => (
                                             <option key={l.id} value={String(l.id)}>
                                                 {l.code} — {l.name}
@@ -135,9 +136,9 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                             </div>
 
                             <div className="space-y-4 rounded-lg border border-emerald-100 bg-emerald-50/40 p-4">
-                                <h3 className="text-sm font-semibold text-emerald-800">Ke (In)</h3>
+                                <h3 className="text-sm font-semibold text-emerald-800">{t('inventory.movements.to')}</h3>
                                 <div>
-                                    <InputLabel value="Gudang tujuan *" />
+                                    <InputLabel value={t('inventory.movements.dest_warehouse')} />
                                     <Select
                                         className="mt-1"
                                         value={data.to_warehouse_id}
@@ -150,13 +151,13 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                                     <InputError message={errors.to_warehouse_id} className="mt-2" />
                                 </div>
                                 <div>
-                                    <InputLabel value="Lokasi tujuan (opsional)" />
+                                    <InputLabel value={t('inventory.movements.dest_location')} />
                                     <select
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         value={data.to_location_id}
                                         onChange={(e) => setData('to_location_id', e.target.value)}
                                     >
-                                        <option value="">— Tanpa lokasi spesifik —</option>
+                                        <option value="">{t('inventory.movements.no_specific')}</option>
                                         {toLocations.map((l) => (
                                             <option key={l.id} value={String(l.id)}>
                                                 {l.code} — {l.name}
@@ -170,7 +171,7 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
 
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel value="Quantity *" />
+                                <InputLabel value={t('inventory.movements.quantity_required')} />
                                 <TextInput
                                     type="number"
                                     step="0.01"
@@ -182,31 +183,31 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                                 />
                                 <InputError message={errors.quantity} className="mt-2" />
                                 {!data.batch_number && (
-                                    <p className="mt-1 text-xs text-gray-500">Tanpa batch: sumber dialokasi FEFO otomatis.</p>
+                                    <p className="mt-1 text-xs text-gray-500">{t('inventory.movements.fefo_hint')}</p>
                                 )}
                             </div>
                             <div>
-                                <InputLabel value="No. Referensi (opsional)" />
+                                <InputLabel value={t('inventory.movements.reference_auto')} />
                                 <TextInput
                                     className="mt-1 block w-full"
-                                    placeholder="Otomatis TRF-YYYY-#### jika kosong"
+                                    placeholder={t('inventory.movements.reference_auto_hint')}
                                     value={data.reference_code}
                                     onChange={(e) => setData('reference_code', e.target.value)}
                                 />
                                 <InputError message={errors.reference_code} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel value="Batch / Lot (opsional)" />
+                                <InputLabel value={t('inventory.movements.batch_optional')} />
                                 <TextInput
                                     className="mt-1 block w-full"
                                     value={data.batch_number}
                                     onChange={(e) => setData('batch_number', e.target.value)}
-                                    placeholder="Kosongkan untuk FEFO"
+                                    placeholder={t('inventory.movements.batch_fefo')}
                                 />
                                 <InputError message={errors.batch_number} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel value="Expiry (opsional)" />
+                                <InputLabel value={t('inventory.movements.expiry_optional')} />
                                 <TextInput
                                     type="date"
                                     className="mt-1 block w-full"
@@ -218,7 +219,7 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                         </div>
 
                         <div>
-                            <InputLabel value="Catatan" />
+                            <InputLabel value={t('inventory.movements.notes')} />
                             <textarea
                                 rows={3}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -229,9 +230,9 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <PrimaryButton disabled={processing || warehouses.length < 2}>Transfer Stok</PrimaryButton>
+                            <PrimaryButton disabled={processing || warehouses.length < 2}>{t('inventory.movements.submit_transfer')}</PrimaryButton>
                             <Link href={prefixedRoute('inventory.stock-movements.index')}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

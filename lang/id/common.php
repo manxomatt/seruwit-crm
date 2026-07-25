@@ -19,4 +19,5 @@ return [
     'yes' => 'Ya',
     'no' => 'Tidak',
     'locale_updated' => 'Bahasa diperbarui.',
+    'showing_results' => 'Menampilkan :from sampai :to dari :total hasil',
 ];

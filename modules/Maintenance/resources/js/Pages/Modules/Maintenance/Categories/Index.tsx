@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import { MaintenanceCategory } from '../../../../maintenanceUtils';
 
@@ -40,6 +41,7 @@ const TrashIcon = () => (
 
 export default function Index({ categories }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<CategoryWithCount | null>(null);
     const [deletingCategory, setDeletingCategory] = useState<CategoryWithCount | null>(null);
@@ -103,19 +105,19 @@ export default function Index({ categories }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Maintenance</h2>
-                    <PrimaryButton onClick={openCreate}>+ Kategori Baru</PrimaryButton>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.title')}</h2>
+                    <PrimaryButton onClick={openCreate}>{t('maintenance.categories.new')}</PrimaryButton>
                 </div>
             }
         >
-            <Head title="Kategori Maintenance" />
+            <Head title={t('maintenance.categories.head')} />
             <MaintenanceNav />
 
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-200 px-6 py-4">
-                    <h3 className="font-semibold text-gray-900">Kategori Pekerjaan</h3>
+                    <h3 className="font-semibold text-gray-900">{t('maintenance.categories.section_title')}</h3>
                     <p className="mt-1 text-sm text-gray-500">
-                        Klasifikasi jenis pekerjaan maintenance. Warna digunakan untuk identifikasi visual di seluruh modul.
+                        {t('maintenance.categories.section_hint')}
                     </p>
                 </div>
 
@@ -137,28 +139,28 @@ export default function Index({ categories }: Props): JSX.Element {
                             </div>
                             <div className="flex-shrink-0 text-center">
                                 <p className="text-lg font-bold text-gray-900">{cat.work_orders_count}</p>
-                                <p className="text-xs text-gray-400">Work Orders</p>
+                                <p className="text-xs text-gray-400">{t('maintenance.categories.work_orders')}</p>
                             </div>
                             <div className="flex-shrink-0 flex items-center gap-3">
                                 <button
                                     type="button"
                                     onClick={() => openEdit(cat)}
                                     className="text-indigo-600 hover:text-indigo-900"
-                                    title="Edit"
+                                    title={t('common.edit')}
                                 >
                                     <PencilIcon />
                                 </button>
                                 {/*
                                     Icon-only leaves the tooltip carrying the whole explanation, so
                                     the disabled reason has to stay in it rather than fall back to a
-                                    bare "Hapus".
+                                    bare delete label.
                                 */}
                                 <button
                                     type="button"
                                     onClick={() => setDeletingCategory(cat)}
                                     className="text-red-600 hover:text-red-900 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:text-gray-300"
                                     disabled={cat.work_orders_count > 0}
-                                    title={cat.work_orders_count > 0 ? 'Tidak dapat dihapus: masih digunakan' : 'Hapus'}
+                                    title={cat.work_orders_count > 0 ? t('maintenance.categories.cannot_delete') : t('common.delete')}
                                 >
                                     <TrashIcon />
                                 </button>
@@ -172,19 +174,19 @@ export default function Index({ categories }: Props): JSX.Element {
             <Modal show={showModal} onClose={closeModal} maxWidth="lg">
                 <form onSubmit={handleSubmit} className="p-6">
                     <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                        {editingCategory ? 'Edit Kategori' : 'Tambah Kategori'}
+                        {editingCategory ? t('maintenance.categories.edit_title') : t('maintenance.categories.create_title')}
                     </h3>
 
                     <div className="space-y-4">
                         {!editingCategory && (
                             <div>
-                                <InputLabel htmlFor="key" value="Key (unik, huruf kecil & underscore)" />
+                                <InputLabel htmlFor="key" value={t('maintenance.categories.key')} />
                                 <TextInput
                                     id="key"
                                     className="mt-1 block w-full"
                                     value={data.key}
                                     onChange={(e) => setData('key', e.target.value)}
-                                    placeholder="contoh: oil_change"
+                                    placeholder={t('maintenance.categories.key_placeholder')}
                                     pattern="[a-z0-9_]+"
                                     required
                                 />
@@ -193,7 +195,7 @@ export default function Index({ categories }: Props): JSX.Element {
                         )}
 
                         <div>
-                            <InputLabel htmlFor="name" value="Nama Kategori" />
+                            <InputLabel htmlFor="name" value={t('maintenance.categories.name')} />
                             <TextInput
                                 id="name"
                                 className="mt-1 block w-full"
@@ -206,7 +208,7 @@ export default function Index({ categories }: Props): JSX.Element {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="description" value="Deskripsi" />
+                            <InputLabel htmlFor="description" value={t('maintenance.categories.description')} />
                             <textarea
                                 id="description"
                                 rows={2}
@@ -218,7 +220,7 @@ export default function Index({ categories }: Props): JSX.Element {
                         </div>
 
                         <div>
-                            <InputLabel value="Warna" />
+                            <InputLabel value={t('maintenance.categories.color')} />
                             <div className="mt-2 flex flex-wrap gap-2">
                                 {COLOR_PRESETS.map((color) => (
                                     <button
@@ -235,7 +237,7 @@ export default function Index({ categories }: Props): JSX.Element {
                         </div>
 
                         <div className="w-32">
-                            <InputLabel htmlFor="sort_order" value="Urutan" />
+                            <InputLabel htmlFor="sort_order" value={t('maintenance.categories.sort_order')} />
                             <TextInput
                                 id="sort_order"
                                 type="number"
@@ -248,9 +250,9 @@ export default function Index({ categories }: Props): JSX.Element {
                     </div>
 
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={closeModal}>Batal</SecondaryButton>
+                        <SecondaryButton type="button" onClick={closeModal}>{t('common.cancel')}</SecondaryButton>
                         <PrimaryButton disabled={processing}>
-                            {processing ? 'Menyimpan...' : editingCategory ? 'Simpan' : 'Tambah'}
+                            {processing ? t('maintenance.actions.saving') : editingCategory ? t('common.save') : t('maintenance.actions.add')}
                         </PrimaryButton>
                     </div>
                 </form>
@@ -258,11 +260,11 @@ export default function Index({ categories }: Props): JSX.Element {
 
             <ConfirmDeleteDialog
                 show={!!deletingCategory}
-                title="Hapus Kategori"
-                description={`Yakin ingin menghapus kategori "${deletingCategory?.name}"?`}
+                title={t('maintenance.categories.delete_title')}
+                message={t('maintenance.categories.delete_confirm', { name: deletingCategory?.name ?? '' })}
                 processing={deleting}
                 onConfirm={confirmDelete}
-                onCancel={() => setDeletingCategory(null)}
+                onClose={() => setDeletingCategory(null)}
             />
         </DynamicLayout>
     );

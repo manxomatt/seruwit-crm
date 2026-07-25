@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 
 interface Post {
@@ -33,9 +34,12 @@ const PencilIcon = () => (
 
 export default function Show({ post }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
+
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('id-ID', {
+        return new Date(dateString).toLocaleString(localeTag, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -57,10 +61,10 @@ export default function Show({ post }: Props): JSX.Element {
                         </Link>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                                Preview Post
+                                {t('posts.show.head')}
                             </h1>
                             <p className="text-sm text-gray-500">
-                                {post.is_published ? 'Published' : 'Draft'} • Last updated: {formatDate(post.updated_at)}
+                                {post.is_published ? t('posts.status.published') : t('posts.status.draft')} • {t('posts.show.last_updated', { time: formatDate(post.updated_at) })}
                             </p>
                         </div>
                     </div>
@@ -69,40 +73,40 @@ export default function Show({ post }: Props): JSX.Element {
                         className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PencilIcon />
-                        Edit Post
+                        {t('posts.show.edit_post')}
                     </Link>
                 </div>
             }
         >
-            <Head title={`Preview: ${post.title}`} />
+            <Head title={t('posts.show.title', { title: post.title })} />
 
             <div className="max-w-4xl">
                 {/* Post Meta */}
                 <div className="mb-6 rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
                     <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
-                            <dt className="text-sm font-medium text-gray-500">Status</dt>
+                            <dt className="text-sm font-medium text-gray-500">{t('posts.index.columns.status')}</dt>
                             <dd className="mt-1">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                     post.is_published
                                         ? 'bg-green-100 text-green-800'
                                         : 'bg-yellow-100 text-yellow-800'
                                 }`}>
-                                    {post.is_published ? 'Published' : 'Draft'}
+                                    {post.is_published ? t('posts.status.published') : t('posts.status.draft')}
                                 </span>
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-sm font-medium text-gray-500">Published Date</dt>
+                            <dt className="text-sm font-medium text-gray-500">{t('posts.fields.published_date')}</dt>
                             <dd className="mt-1 text-sm text-gray-900">
                                 {formatDate(post.published_at)}
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-sm font-medium text-gray-500">URL Slug</dt>
+                            <dt className="text-sm font-medium text-gray-500">{t('posts.fields.slug')}</dt>
                             <dd className="mt-1">
                                 <code className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                    /blog/{post.slug}
+                                    {t('posts.hints.slug_prefix')}{post.slug}
                                 </code>
                             </dd>
                         </div>
@@ -144,12 +148,12 @@ export default function Show({ post }: Props): JSX.Element {
                             </div>
                         ) : (
                             <div className="text-center py-12 text-gray-500">
-                                <p>No content yet.</p>
+                                <p>{t('posts.show.empty_content')}</p>
                                 <Link
                                     href={prefixedRoute('posts.edit', post.id)}
                                     className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500"
                                 >
-                                    Add content →
+                                    {t('posts.show.add_content')}
                                 </Link>
                             </div>
                         )}
@@ -162,14 +166,14 @@ export default function Show({ post }: Props): JSX.Element {
                         href={prefixedRoute('posts.index')}
                         className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Back to Posts
+                        {t('posts.show.back')}
                     </Link>
                     <Link
                         href={prefixedRoute('posts.edit', post.id)}
                         className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PencilIcon />
-                        Edit Post
+                        {t('posts.show.edit_post')}
                     </Link>
                 </div>
             </div>

@@ -62,8 +62,8 @@ class StoreProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'status.in' => 'Select a valid product status.',
-            'category.in' => 'Select a valid inventory category.',
+            'status.in' => __('products.validation.status_in'),
+            'category.in' => __('products.validation.category_in'),
         ];
     }
 }

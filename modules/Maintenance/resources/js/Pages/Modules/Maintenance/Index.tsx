@@ -2,6 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link } from '@inertiajs/react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../MaintenanceNav';
 import {
     WorkOrder,
@@ -59,10 +60,12 @@ const CurrencyIcon = () => (
 
 export default function Index({ summary, recentWorkOrders, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     const summaryCards = [
         {
-            label: 'Sedang Dikerjakan',
+            label: t('maintenance.dashboard.in_progress'),
             value: summary.in_progress,
             icon: <WrenchIcon />,
             bg: 'bg-indigo-50',
@@ -70,7 +73,7 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
             textColor: 'text-indigo-700',
         },
         {
-            label: 'Menunggu Persetujuan',
+            label: t('maintenance.dashboard.awaiting_approval'),
             value: summary.pending + summary.approved,
             icon: <ClockIcon />,
             bg: 'bg-yellow-50',
@@ -78,7 +81,7 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
             textColor: 'text-yellow-700',
         },
         {
-            label: 'Terlambat',
+            label: t('maintenance.dashboard.overdue'),
             value: summary.overdue,
             icon: <ExclamationIcon />,
             bg: 'bg-red-50',
@@ -86,7 +89,7 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
             textColor: 'text-red-700',
         },
         {
-            label: 'Selesai Bulan Ini',
+            label: t('maintenance.dashboard.completed_month'),
             value: summary.completed_this_month,
             icon: <CheckIcon />,
             bg: 'bg-green-50',
@@ -94,8 +97,8 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
             textColor: 'text-green-700',
         },
         {
-            label: 'Biaya Bulan Ini',
-            value: formatCurrency(summary.total_cost_this_month),
+            label: t('maintenance.dashboard.cost_month'),
+            value: formatCurrency(summary.total_cost_this_month, localeTag),
             icon: <CurrencyIcon />,
             bg: 'bg-blue-50',
             iconBg: 'bg-blue-500',
@@ -108,16 +111,16 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Maintenance</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.dashboard.head')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('maintenance.work-orders.create')}>
-                            <PrimaryButton>+ Work Order Baru</PrimaryButton>
+                            <PrimaryButton>{t('maintenance.dashboard.new_wo')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Maintenance" />
+            <Head title={t('maintenance.title')} />
 
             <MaintenanceNav />
 
@@ -141,25 +144,25 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
             {/* Active Work Orders */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                    <h3 className="font-semibold text-gray-900">Work Order Aktif</h3>
+                    <h3 className="font-semibold text-gray-900">{t('maintenance.dashboard.active_orders')}</h3>
                     <Link
                         href={prefixedRoute('maintenance.work-orders.index')}
                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                     >
-                        Lihat Semua →
+                        {t('maintenance.dashboard.view_all')}
                     </Link>
                 </div>
 
                 {recentWorkOrders.length === 0 ? (
                     <div className="py-12 text-center text-gray-500">
                         <WrenchIcon />
-                        <p className="mt-2 text-sm">Tidak ada work order aktif</p>
+                        <p className="mt-2 text-sm">{t('maintenance.dashboard.empty_active')}</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-100">
                         {recentWorkOrders.map((wo) => {
-                            const statusBadge = getStatusBadge(wo.status);
-                            const priorityBadge = getPriorityBadge(wo.priority);
+                            const statusBadge = getStatusBadge(wo.status, t);
+                            const priorityBadge = getPriorityBadge(wo.priority, t);
                             return (
                                 <Link
                                     key={wo.id}
@@ -189,9 +192,9 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
                                     </div>
 
                                     <div className="flex-shrink-0 text-right">
-                                        <p className="text-sm text-gray-500">{formatDate(wo.scheduled_date)}</p>
+                                        <p className="text-sm text-gray-500">{formatDate(wo.scheduled_date, localeTag)}</p>
                                         {wo.estimated_cost && (
-                                            <p className="text-sm font-medium text-gray-700">{formatCurrency(wo.estimated_cost)}</p>
+                                            <p className="text-sm font-medium text-gray-700">{formatCurrency(wo.estimated_cost, localeTag)}</p>
                                         )}
                                     </div>
                                 </Link>

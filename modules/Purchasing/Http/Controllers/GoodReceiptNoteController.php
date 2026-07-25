@@ -24,7 +24,7 @@ class GoodReceiptNoteController extends Controller
     {
         if (! $po->canReceive()) {
             return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $po)
-                ->with('error', 'This purchase order cannot receive goods right now.');
+                ->with('error', __('purchasing.messages.grn_cannot_receive'));
         }
 
         $po->load(['partner:id,name,code', 'warehouse:id,name', 'items.product:id,name,code,unit']);
@@ -61,14 +61,14 @@ class GoodReceiptNoteController extends Controller
     public function store(StoreGoodReceiptNoteRequest $request, PurchaseOrder $po): RedirectResponse
     {
         if (! $po->canReceive()) {
-            return back()->with('error', 'This purchase order cannot receive goods right now.');
+            return back()->with('error', __('purchasing.messages.grn_cannot_receive'));
         }
 
         $validated = $request->validated();
         $shouldConfirm = (bool) ($validated['confirm'] ?? false);
 
         if ($shouldConfirm && ! auth()->user()?->hasPermissionFor('purchasing', 'receive')) {
-            return back()->with('error', 'You do not have permission to confirm goods receipt.');
+            return back()->with('error', __('purchasing.messages.grn_confirm_forbidden'));
         }
 
         $grn = DB::transaction(function () use ($validated, $po) {
@@ -106,11 +106,11 @@ class GoodReceiptNoteController extends Controller
             }
 
             return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $po)
-                ->with('success', 'Goods receipt confirmed and stock updated.');
+                ->with('success', __('purchasing.messages.grn_confirmed'));
         }
 
         return redirect()->route($this->getRoutePrefix().'.purchasing.grn.show', $grn)
-            ->with('success', 'Draft goods receipt saved.');
+            ->with('success', __('purchasing.messages.grn_draft_saved'));
     }
 
     public function show(GoodReceiptNote $grn): Response
@@ -140,6 +140,6 @@ class GoodReceiptNoteController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $grn->purchase_order_id)
-            ->with('success', 'Goods receipt confirmed and stock updated.');
+            ->with('success', __('purchasing.messages.grn_confirmed'));
     }
 }

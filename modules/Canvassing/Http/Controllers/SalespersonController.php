@@ -77,7 +77,7 @@ class SalespersonController extends Controller
         Salesperson::query()->create($request->validated());
 
         return redirect()->route('module.canvassing.salespeople.index')
-            ->with('success', 'Salesperson created.');
+            ->with('success', __('canvassing.messages.salesperson_created'));
     }
 
     public function show(Salesperson $salesperson): Response
@@ -125,7 +125,7 @@ class SalespersonController extends Controller
         $salesperson->update($request->validated());
 
         return redirect()->route('module.canvassing.salespeople.show', $salesperson)
-            ->with('success', 'Salesperson updated.');
+            ->with('success', __('canvassing.messages.salesperson_updated'));
     }
 
     public function destroy(Salesperson $salesperson): RedirectResponse
@@ -133,6 +133,6 @@ class SalespersonController extends Controller
         $salesperson->delete();
 
         return redirect()->route('module.canvassing.salespeople.index')
-            ->with('success', 'Salesperson removed.');
+            ->with('success', __('canvassing.messages.salesperson_removed'));
     }
 }

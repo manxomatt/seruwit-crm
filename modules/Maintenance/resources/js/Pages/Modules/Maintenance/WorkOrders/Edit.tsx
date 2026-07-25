@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     MaintenanceCategory,
@@ -15,10 +16,10 @@ import {
     WorkOrderVehicle,
     WorkOrderItem,
     SparePartOption,
-    STATUS_OPTIONS,
-    PRIORITY_OPTIONS,
-    TYPE_OPTIONS,
-    ITEM_TYPE_OPTIONS,
+    statusOptions,
+    priorityOptions,
+    typeOptions,
+    itemTypeOptions,
     formatCurrency,
 } from '../../../../maintenanceUtils';
 
@@ -43,6 +44,8 @@ const TrashIcon = () => (
 
 export default function Edit({ workOrder: wo, vehicles, categories, spareParts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     const { data, setData, patch, processing, errors } = useForm({
         vehicle_id: String(wo.vehicle_id),
@@ -131,105 +134,107 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">Edit Work Order</h2>
+                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.work_orders.edit_title')}</h2>
                         <p className="mt-1 font-mono text-sm text-gray-500">{wo.reference_number}</p>
                     </div>
                     <Link href={prefixedRoute('maintenance.work-orders.show', wo.id)}>
-                        <SecondaryButton>← Kembali</SecondaryButton>
+                        <SecondaryButton>{t('maintenance.actions.back')}</SecondaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title={`Edit — ${wo.reference_number}`} />
+            <Head title={`${t('maintenance.work_orders.edit_title')} — ${wo.reference_number}`} />
             <MaintenanceNav />
 
             <form onSubmit={submit} className="space-y-6">
                 {/* Main Info */}
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="mb-4 font-semibold text-gray-900">Informasi Pekerjaan</h3>
+                    <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.work_orders.job_info')}</h3>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div className="sm:col-span-2">
-                            <InputLabel htmlFor="title" value="Judul Pekerjaan *" />
+                            <InputLabel htmlFor="title" value={t('maintenance.work_orders.title')} />
                             <TextInput id="title" className="mt-1 block w-full" value={data.title} onChange={(e) => setData('title', e.target.value)} required />
                             <InputError message={errors.title} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="vehicle_id" value="Kendaraan *" />
+                            <InputLabel htmlFor="vehicle_id" value={t('maintenance.work_orders.vehicle')} />
                             <Select id="vehicle_id" className="mt-1" value={data.vehicle_id} onChange={(val) => setData('vehicle_id', val)}
-                                options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))} />
+                                options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))}
+                                placeholder={t('maintenance.work_orders.select_vehicle')} />
                             <InputError message={errors.vehicle_id} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="category_id" value="Kategori *" />
+                            <InputLabel htmlFor="category_id" value={t('maintenance.work_orders.category')} />
                             <Select id="category_id" className="mt-1" value={data.category_id} onChange={(val) => setData('category_id', val)}
-                                options={categories.map((c) => ({ value: String(c.id), label: c.name }))} />
+                                options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
+                                placeholder={t('maintenance.work_orders.select_category')} />
                             <InputError message={errors.category_id} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="status" value="Status" />
-                            <Select id="status" className="mt-1" value={data.status} onChange={(val) => setData('status', val)} options={STATUS_OPTIONS} />
+                            <InputLabel htmlFor="status" value={t('maintenance.work_orders.status_label')} />
+                            <Select id="status" className="mt-1" value={data.status} onChange={(val) => setData('status', val)} options={statusOptions(t)} />
                             <InputError message={errors.status} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="priority" value="Prioritas" />
-                            <Select id="priority" className="mt-1" value={data.priority} onChange={(val) => setData('priority', val)} options={PRIORITY_OPTIONS} />
+                            <InputLabel htmlFor="priority" value={t('maintenance.work_orders.priority_label')} />
+                            <Select id="priority" className="mt-1" value={data.priority} onChange={(val) => setData('priority', val)} options={priorityOptions(t)} />
                             <InputError message={errors.priority} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="type" value="Tipe" />
-                            <Select id="type" className="mt-1" value={data.type} onChange={(val) => setData('type', val)} options={TYPE_OPTIONS} />
+                            <InputLabel htmlFor="type" value={t('maintenance.work_orders.type_label')} />
+                            <Select id="type" className="mt-1" value={data.type} onChange={(val) => setData('type', val)} options={typeOptions(t)} />
                             <InputError message={errors.type} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="scheduled_date" value="Tanggal Jadwal" />
+                            <InputLabel htmlFor="scheduled_date" value={t('maintenance.work_orders.scheduled_date')} />
                             <TextInput id="scheduled_date" type="date" className="mt-1 block w-full" value={data.scheduled_date} onChange={(e) => setData('scheduled_date', e.target.value)} />
                             <InputError message={errors.scheduled_date} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="started_at" value="Tanggal Mulai" />
+                            <InputLabel htmlFor="started_at" value={t('maintenance.work_orders.started_at')} />
                             <TextInput id="started_at" type="datetime-local" className="mt-1 block w-full" value={data.started_at} onChange={(e) => setData('started_at', e.target.value)} />
                             <InputError message={errors.started_at} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="completed_at" value="Tanggal Selesai" />
+                            <InputLabel htmlFor="completed_at" value={t('maintenance.work_orders.completed_at')} />
                             <TextInput id="completed_at" type="datetime-local" className="mt-1 block w-full" value={data.completed_at} onChange={(e) => setData('completed_at', e.target.value)} />
                             <InputError message={errors.completed_at} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="odometer_at_service" value="Odometer (km)" />
+                            <InputLabel htmlFor="odometer_at_service" value={t('maintenance.work_orders.odometer')} />
                             <TextInput id="odometer_at_service" type="number" className="mt-1 block w-full" value={data.odometer_at_service} onChange={(e) => setData('odometer_at_service', e.target.value)} />
                             <InputError message={errors.odometer_at_service} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="vendor_name" value="Bengkel / Vendor" />
+                            <InputLabel htmlFor="vendor_name" value={t('maintenance.work_orders.vendor')} />
                             <TextInput id="vendor_name" className="mt-1 block w-full" value={data.vendor_name} onChange={(e) => setData('vendor_name', e.target.value)} />
                             <InputError message={errors.vendor_name} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="mechanic_name" value="Mekanik" />
+                            <InputLabel htmlFor="mechanic_name" value={t('maintenance.work_orders.mechanic')} />
                             <TextInput id="mechanic_name" className="mt-1 block w-full" value={data.mechanic_name} onChange={(e) => setData('mechanic_name', e.target.value)} />
                             <InputError message={errors.mechanic_name} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="invoice_number" value="No. Invoice" />
+                            <InputLabel htmlFor="invoice_number" value={t('maintenance.work_orders.invoice_number')} />
                             <TextInput id="invoice_number" className="mt-1 block w-full" value={data.invoice_number} onChange={(e) => setData('invoice_number', e.target.value)} />
                             <InputError message={errors.invoice_number} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="estimated_cost" value="Estimasi Biaya (Rp)" />
+                            <InputLabel htmlFor="estimated_cost" value={t('maintenance.work_orders.estimated_cost')} />
                             <TextInput id="estimated_cost" type="number" className="mt-1 block w-full" value={String(data.estimated_cost)} onChange={(e) => setData('estimated_cost', e.target.value)} />
                             <InputError message={errors.estimated_cost} className="mt-2" />
                         </div>
@@ -237,12 +242,12 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                         {isCompleted && (
                             <>
                                 <div>
-                                    <InputLabel htmlFor="actual_labor_cost" value="Biaya Jasa Aktual (Rp)" />
+                                    <InputLabel htmlFor="actual_labor_cost" value={t('maintenance.work_orders.actual_labor')} />
                                     <TextInput id="actual_labor_cost" type="number" className="mt-1 block w-full" value={String(data.actual_labor_cost)} onChange={(e) => setData('actual_labor_cost', e.target.value)} />
                                     <InputError message={errors.actual_labor_cost} className="mt-2" />
                                 </div>
                                 <div>
-                                    <InputLabel htmlFor="actual_parts_cost" value="Biaya Suku Cadang Aktual (Rp)" />
+                                    <InputLabel htmlFor="actual_parts_cost" value={t('maintenance.work_orders.actual_parts')} />
                                     <TextInput id="actual_parts_cost" type="number" className="mt-1 block w-full" value={String(data.actual_parts_cost)} onChange={(e) => setData('actual_parts_cost', e.target.value)} />
                                     <InputError message={errors.actual_parts_cost} className="mt-2" />
                                 </div>
@@ -250,14 +255,14 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                         )}
 
                         <div className="sm:col-span-2">
-                            <InputLabel htmlFor="description" value="Deskripsi / Keluhan" />
+                            <InputLabel htmlFor="description" value={t('maintenance.work_orders.description')} />
                             <textarea id="description" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 value={data.description} onChange={(e) => setData('description', e.target.value)} />
                             <InputError message={errors.description} className="mt-2" />
                         </div>
 
                         <div className="sm:col-span-2">
-                            <InputLabel htmlFor="notes" value="Catatan" />
+                            <InputLabel htmlFor="notes" value={t('maintenance.work_orders.notes')} />
                             <textarea id="notes" rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
                             <InputError message={errors.notes} className="mt-2" />
@@ -265,7 +270,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
 
                         {isCompleted && (
                             <div className="sm:col-span-2">
-                                <InputLabel htmlFor="resolution_notes" value="Catatan Penyelesaian" />
+                                <InputLabel htmlFor="resolution_notes" value={t('maintenance.work_orders.resolution_notes')} />
                                 <textarea id="resolution_notes" rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                     value={data.resolution_notes} onChange={(e) => setData('resolution_notes', e.target.value)} />
                                 <InputError message={errors.resolution_notes} className="mt-2" />
@@ -277,27 +282,27 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                 {/* Items */}
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-900">Suku Cadang & Jasa</h3>
+                        <h3 className="font-semibold text-gray-900">{t('maintenance.work_orders.parts_and_labor')}</h3>
                         <button type="button" onClick={addItem}
                             className="flex items-center gap-1 rounded-lg border border-dashed border-indigo-400 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50">
-                            <PlusIcon /> Tambah Item
+                            <PlusIcon /> {t('maintenance.work_orders.add_item')}
                         </button>
                     </div>
 
                     {data.items.length === 0 ? (
-                        <p className="py-6 text-center text-sm text-gray-400">Belum ada item.</p>
+                        <p className="py-6 text-center text-sm text-gray-400">{t('maintenance.work_orders.items_empty_short')}</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full">
                                 <thead>
                                     <tr className="border-b border-gray-200 text-xs text-gray-500">
-                                        <th className="pb-2 text-left font-medium">Tipe</th>
-                                        <th className="pb-2 text-left font-medium">Sparepart (Inventory)</th>
-                                        <th className="pb-2 text-left font-medium">Nama</th>
-                                        <th className="pb-2 text-left font-medium">Qty</th>
-                                        <th className="pb-2 text-left font-medium">Satuan</th>
-                                        <th className="pb-2 text-right font-medium">Harga Satuan</th>
-                                        <th className="pb-2 text-right font-medium">Total</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.type')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.spare_part')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.name')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.qty')}</th>
+                                        <th className="pb-2 text-left font-medium">{t('maintenance.work_orders.item_columns.unit')}</th>
+                                        <th className="pb-2 text-right font-medium">{t('maintenance.work_orders.item_columns.unit_price')}</th>
+                                        <th className="pb-2 text-right font-medium">{t('maintenance.work_orders.item_columns.total')}</th>
                                         <th className="pb-2"></th>
                                     </tr>
                                 </thead>
@@ -307,7 +312,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                                             <td className="py-2 pr-2">
                                                 <select value={item.item_type} onChange={(e) => updateItem(i, 'item_type', e.target.value)}
                                                     className="rounded border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                    {ITEM_TYPE_OPTIONS.map((o) => (
+                                                    {itemTypeOptions(t).map((o) => (
                                                         <option key={o.value} value={o.value}>{o.label}</option>
                                                     ))}
                                                 </select>
@@ -321,7 +326,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                                                         disabled={spareParts.length === 0}
                                                     >
                                                         <option value="">
-                                                            {spareParts.length === 0 ? '— tidak ada sparepart —' : '— manual (tanpa stok) —'}
+                                                            {spareParts.length === 0 ? t('maintenance.work_orders.no_spare_parts') : t('maintenance.work_orders.manual_no_stock')}
                                                         </option>
                                                         {spareParts.map((p) => (
                                                             <option key={p.id} value={p.id}>{p.name}</option>
@@ -332,7 +337,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                                                 )}
                                             </td>
                                             <td className="py-2 pr-2">
-                                                <TextInput className="w-48" value={item.name} onChange={(e) => updateItem(i, 'name', e.target.value)} placeholder="Nama item" />
+                                                <TextInput className="w-48" value={item.name} onChange={(e) => updateItem(i, 'name', e.target.value)} placeholder={t('maintenance.work_orders.item_name_placeholder')} />
                                             </td>
                                             <td className="py-2 pr-2">
                                                 <TextInput type="number" className="w-20" value={String(item.quantity)} onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))} />
@@ -343,7 +348,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                                             <td className="py-2 pr-2">
                                                 <TextInput type="number" className="w-32 text-right" value={String(item.unit_price)} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} />
                                             </td>
-                                            <td className="py-2 pr-2 text-right text-sm font-medium text-gray-900">{formatCurrency(item.total_price)}</td>
+                                            <td className="py-2 pr-2 text-right text-sm font-medium text-gray-900">{formatCurrency(item.total_price, localeTag)}</td>
                                             <td className="py-2">
                                                 <button type="button" onClick={() => removeItem(i)} className="text-red-500 hover:text-red-700"><TrashIcon /></button>
                                             </td>
@@ -352,8 +357,8 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                                 </tbody>
                                 <tfoot>
                                     <tr className="border-t-2 border-gray-300">
-                                        <td colSpan={6} className="pt-3 text-right text-sm font-semibold text-gray-700">Total</td>
-                                        <td className="pt-3 text-right text-sm font-bold text-gray-900">{formatCurrency(totalItems)}</td>
+                                        <td colSpan={6} className="pt-3 text-right text-sm font-semibold text-gray-700">{t('maintenance.work_orders.total')}</td>
+                                        <td className="pt-3 text-right text-sm font-bold text-gray-900">{formatCurrency(totalItems, localeTag)}</td>
                                         <td></td>
                                     </tr>
                                 </tfoot>
@@ -364,10 +369,10 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
 
                 <div className="flex justify-end gap-3">
                     <Link href={prefixedRoute('maintenance.work-orders.show', wo.id)}>
-                        <SecondaryButton type="button">Batal</SecondaryButton>
+                        <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                     </Link>
                     <PrimaryButton disabled={processing}>
-                        {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                        {processing ? t('maintenance.actions.saving') : t('maintenance.work_orders.submit_update')}
                     </PrimaryButton>
                 </div>
             </form>

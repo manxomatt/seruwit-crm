@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link, router } from '@inertiajs/react';
@@ -60,6 +61,7 @@ interface Props {
 
 export default function Show({ program, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <DynamicLayout
@@ -67,27 +69,27 @@ export default function Show({ program, can }: Props): JSX.Element {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-800">{program.code}</h2>
-                        <p className="text-sm text-gray-500">{program.name} · {program.status}</p>
+                        <p className="text-sm text-gray-500">{program.name} · {t(`promotions.status.${program.status}`, undefined, program.status)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {can.update && program.status === 'draft' && (
                             <PrimaryButton onClick={() => router.post(prefixedRoute('promotions.programs.activate', program.id))}>
-                                Activate
+                                {t('promotions.programs.show.activate')}
                             </PrimaryButton>
                         )}
                         {can.update && (
                             <PrimaryButton onClick={() => router.post(prefixedRoute('promotions.programs.sync', program.id))}>
-                                Sync realization
+                                {t('promotions.programs.show.sync')}
                             </PrimaryButton>
                         )}
                         {can.update && program.status !== 'closed' && (
                             <Link href={prefixedRoute('promotions.programs.edit', program.id)}>
-                                <SecondaryButton type="button">Edit</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.edit')}</SecondaryButton>
                             </Link>
                         )}
                         {can.update && program.status === 'active' && (
                             <SecondaryButton onClick={() => router.post(prefixedRoute('promotions.programs.close', program.id))}>
-                                Close
+                                {t('promotions.programs.show.close')}
                             </SecondaryButton>
                         )}
                     </div>
@@ -101,23 +103,23 @@ export default function Show({ program, can }: Props): JSX.Element {
 
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Type</div>
-                            <div className="font-semibold capitalize">{program.type.replaceAll('_', ' ')}</div>
+                            <div className="text-xs text-gray-500">{t('promotions.fields.type')}</div>
+                            <div className="font-semibold">{t(`promotions.types.${program.type}`, undefined, program.type)}</div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Period</div>
+                            <div className="text-xs text-gray-500">{t('promotions.fields.period')}</div>
                             <div className="text-xs font-medium">
                                 {program.starts_at?.slice(0, 10)} → {program.ends_at?.slice(0, 10)}
                             </div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Target</div>
+                            <div className="text-xs text-gray-500">{t('promotions.fields.target')}</div>
                             <div className="font-semibold">
-                                {program.target_amount ?? '—'} {program.target_metric}
+                                {program.target_amount ?? '—'} {t(`promotions.metrics.${program.target_metric}`, undefined, program.target_metric)}
                             </div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Principal</div>
+                            <div className="text-xs text-gray-500">{t('promotions.fields.principal')}</div>
                             <div className="font-semibold">{program.principal?.name ?? '—'}</div>
                         </div>
                     </div>
@@ -126,20 +128,20 @@ export default function Show({ program, can }: Props): JSX.Element {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <h3 className="mb-2 font-medium">Distributors</h3>
+                            <h3 className="mb-2 font-medium">{t('promotions.programs.show.distributors')}</h3>
                             <ul className="space-y-1 text-sm text-gray-700">
                                 {program.partners.length === 0 ? (
-                                    <li className="text-gray-500">All customers</li>
+                                    <li className="text-gray-500">{t('promotions.programs.show.all_customers')}</li>
                                 ) : (
                                     program.partners.map((p) => <li key={p.id}>{p.name}</li>)
                                 )}
                             </ul>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <h3 className="mb-2 font-medium">Products</h3>
+                            <h3 className="mb-2 font-medium">{t('promotions.programs.show.products')}</h3>
                             <ul className="space-y-1 text-sm text-gray-700">
                                 {program.products.length === 0 ? (
-                                    <li className="text-gray-500">All products</li>
+                                    <li className="text-gray-500">{t('promotions.programs.show.all_products')}</li>
                                 ) : (
                                     program.products.map((p) => <li key={p.id}>{p.name}</li>)
                                 )}
@@ -149,14 +151,14 @@ export default function Show({ program, can }: Props): JSX.Element {
 
                     {program.tiers.length > 0 && (
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <h3 className="mb-2 font-medium">Tiers</h3>
+                            <h3 className="mb-2 font-medium">{t('promotions.programs.show.tiers')}</h3>
                             <ul className="space-y-2 text-sm">
                                 {program.tiers.map((tier) => (
                                     <li key={tier.id} className="flex justify-between border-b border-gray-50 pb-2">
-                                        <span>Min qty {tier.min_qty ?? '—'}</span>
+                                        <span>{t('promotions.programs.show.min_qty', { qty: tier.min_qty ?? '—' })}</span>
                                         <span>
-                                            {tier.discount_percent != null && `${tier.discount_percent}% off`}
-                                            {tier.free_qty != null && ` free ${tier.free_qty} ${tier.free_product?.name ?? ''}`}
+                                            {tier.discount_percent != null && t('promotions.programs.show.discount_off', { percent: tier.discount_percent })}
+                                            {tier.free_qty != null && t('promotions.programs.show.free_goods', { qty: tier.free_qty, product: tier.free_product?.name ?? '' })}
                                         </span>
                                     </li>
                                 ))}
@@ -166,32 +168,32 @@ export default function Show({ program, can }: Props): JSX.Element {
 
                     {program.rebate_rule && (
                         <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm">
-                            <h3 className="mb-2 font-medium">Rebate rule</h3>
+                            <h3 className="mb-2 font-medium">{t('promotions.programs.show.rebate_rule')}</h3>
                             <p>
                                 {program.rebate_rule.rebate_percent != null && `${program.rebate_rule.rebate_percent}% `}
                                 {program.rebate_rule.rebate_per_unit != null && `Rp ${program.rebate_rule.rebate_per_unit}/unit `}
-                                · basis {program.rebate_rule.calc_basis}
+                                {t('promotions.programs.show.rebate_basis', { basis: t(`promotions.calc_basis.${program.rebate_rule.calc_basis}`, undefined, program.rebate_rule.calc_basis) })}
                             </p>
                         </div>
                     )}
 
                     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b px-4 py-3 font-medium">Realization vs target</div>
+                        <div className="border-b px-4 py-3 font-medium">{t('promotions.programs.show.realization_title')}</div>
                         <table className="min-w-full divide-y divide-gray-100 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">Distributor</th>
-                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">Qty</th>
-                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">Value</th>
-                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">Achievement</th>
-                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">Awards</th>
+                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">{t('promotions.fields.distributor')}</th>
+                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">{t('promotions.fields.qty')}</th>
+                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">{t('promotions.fields.value')}</th>
+                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">{t('promotions.fields.achievement')}</th>
+                                    <th className="px-4 py-2 text-left text-xs uppercase text-gray-500">{t('promotions.fields.awards')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {program.realizations.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                            Belum ada realisasi. Klik Sync setelah ada DO dalam periode.
+                                            {t('promotions.programs.show.empty_realization')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -215,7 +217,7 @@ export default function Show({ program, can }: Props): JSX.Element {
                                                         <span>
                                                             {a.award_type}
                                                             {a.amount != null ? ` Rp ${Number(a.amount).toLocaleString()}` : ''}
-                                                            {a.free_qty != null ? ` ×${a.free_qty}` : ''} · {a.status}
+                                                            {a.free_qty != null ? ` ×${a.free_qty}` : ''} · {t(`promotions.status.${a.status}`, undefined, a.status)}
                                                         </span>
                                                         {can.settle && a.status === 'accrued' && (
                                                             <button
@@ -223,7 +225,7 @@ export default function Show({ program, can }: Props): JSX.Element {
                                                                 className="text-indigo-600 hover:underline"
                                                                 onClick={() => router.post(prefixedRoute('promotions.awards.settle', a.id))}
                                                             >
-                                                                Settle
+                                                                {t('promotions.programs.show.settle')}
                                                             </button>
                                                         )}
                                                     </div>

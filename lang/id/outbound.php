@@ -1,0 +1,155 @@
+<?php
+
+return [
+    'title' => 'Outbound',
+
+    'nav' => [
+        'pick_lists' => 'Pick Lists',
+    ],
+
+    'pick_list_status' => [
+        'open' => 'Open',
+        'picking' => 'Picking',
+        'picked' => 'Picked',
+        'packing' => 'Packing',
+        'packed' => 'Packed',
+        'dispatched' => 'Dispatched',
+        'cancelled' => 'Dibatalkan',
+    ],
+
+    'pick_item_status' => [
+        'pending' => 'Pending',
+        'picked' => 'Picked',
+        'short' => 'Short',
+    ],
+
+    'pack_status' => [
+        'open' => 'Open',
+        'sealed' => 'Sealed',
+    ],
+
+    'actions' => [
+        'generate' => 'Generate',
+        'complete_picking' => 'Selesai Picking',
+        'create_pack' => 'Buat Pack',
+        'create_pack_label' => 'Buat Pack + Label',
+        'dispatch' => 'Dispatch',
+        'seal_pack' => 'Seal Pack',
+        'print_label' => 'Cetak Label',
+        'print' => 'Cetak',
+        'confirm' => 'Konfirmasi',
+        'back_to_pick_list' => 'Kembali ke Pick List',
+        'cancel_pick_list' => 'Batalkan',
+    ],
+
+    'pick_lists' => [
+        'index' => [
+            'head' => 'Outbound Pick / Pack',
+            'title' => 'Pick Lists',
+            'generate' => 'Generate Pick List',
+            'search_placeholder' => 'Cari PL / DO…',
+            'empty' => 'Belum ada pick list.',
+            'columns' => [
+                'pick_list' => 'Pick List',
+                'do' => 'DO',
+                'partner' => 'Partner',
+                'warehouse' => 'Gudang',
+                'lines' => 'Baris',
+                'status' => 'Status',
+            ],
+        ],
+        'create' => [
+            'title' => 'Generate Pick List',
+            'delivery_order' => 'Delivery Order *',
+            'select_do' => '— pilih DO —',
+            'no_eligible_do' => 'Tidak ada DO eligible (confirmed/assigned/in_transit tanpa pick list aktif).',
+            'source_warehouse' => 'Gudang sumber *',
+            'notes' => 'Catatan',
+            'order_option' => ':code · :partner · :count item · :status',
+        ],
+        'show' => [
+            'delivery_order' => 'Delivery Order',
+            'warehouse' => 'Gudang',
+            'do_status' => 'Status DO',
+            'notes' => 'Catatan',
+            'pick_lines' => 'Baris pick',
+            'packs' => 'Packs',
+            'no_packs' => 'Belum ada pack.',
+            'columns' => [
+                'product' => 'Produk',
+                'req' => 'Req',
+                'suggest' => 'Saran',
+                'pick_qty' => 'Qty Pick',
+                'location' => 'Lokasi',
+                'batch' => 'Batch',
+                'status' => 'Status',
+            ],
+            'confirm_dispatch' => 'Dispatch dan potong stok?',
+            'confirm_cancel' => 'Batalkan pick list ini?',
+        ],
+    ],
+
+    'packs' => [
+        'create' => [
+            'title' => 'Buat Pack — :code',
+            'head' => 'Buat Pack',
+            'hint' => 'DO :code · default mengisi sisa qty picked ke satu pack.',
+            'columns' => [
+                'product' => 'Produk',
+                'remaining' => 'Sisa',
+                'pack_qty' => 'Qty Pack',
+            ],
+            'weight_kg' => 'Berat (kg)',
+            'notes' => 'Catatan',
+        ],
+        'show' => [
+            'label' => 'Label',
+            'pick_list_do' => 'Pick List / DO',
+            'warehouse' => 'Gudang',
+            'weight' => 'Berat',
+            'weight_value' => ':weight kg',
+            'columns' => [
+                'product' => 'Produk',
+                'batch' => 'Batch',
+                'qty' => 'Qty',
+            ],
+        ],
+        'label' => [
+            'title' => 'Label :code',
+            'shipping_label' => 'Shipping Label',
+            'ship_to' => 'Kirim ke',
+            'contents' => 'Isi',
+            'do' => 'DO :code',
+            'weight' => 'Berat: :weight kg',
+        ],
+    ],
+
+    'messages' => [
+        'pick_list_generated' => 'Pick list dibuat.',
+        'pick_line_confirmed' => 'Baris pick dikonfirmasi.',
+        'picking_completed' => 'Picking selesai.',
+        'dispatched' => 'Outbound di-dispatch — stok dipotong.',
+        'pick_list_cancelled' => 'Pick list dibatalkan.',
+        'pack_created' => 'Pack dibuat beserta label.',
+        'pack_sealed' => 'Pack di-seal.',
+        'do_status_invalid' => 'Pick list hanya bisa dibuat untuk order confirmed, assigned, atau in-transit.',
+        'do_no_items' => 'Delivery order tidak punya item untuk di-pick.',
+        'active_pick_list_exists' => 'Sudah ada pick list aktif untuk delivery order ini.',
+        'no_pickable_products' => 'Tidak ada produk pickable (non-service) pada delivery order ini.',
+        'picking_closed' => 'Picking sudah ditutup untuk pick list ini.',
+        'qty_negative' => 'Qty picked tidak boleh negatif.',
+        'qty_over_requested' => 'Tidak boleh pick lebih dari yang diminta.',
+        'pick_list_not_picking' => 'Pick list tidak dalam status picking.',
+        'confirm_all_lines' => 'Konfirmasi semua baris sebelum menyelesaikan picking.',
+        'need_picked_qty' => 'Minimal satu baris harus punya qty picked.',
+        'packing_requires_picked' => 'Packing membutuhkan pick list yang sudah selesai.',
+        'pack_items_required' => 'Tambahkan minimal satu baris picked ke pack.',
+        'pack_items_wrong_list' => 'Item pack harus milik pick list ini.',
+        'pack_qty_invalid' => 'Qty pack tidak valid untuk item #:id.',
+        'pack_qty_exceeds' => 'Qty pack melebihi sisa qty picked untuk item #:id.',
+        'pack_seal_open_only' => 'Hanya pack open yang bisa di-seal.',
+        'dispatch_requires_packed' => 'Dispatch membutuhkan pick list yang fully packed (semua pack sealed).',
+        'pick_list_not_cancellable' => 'Pick list ini tidak bisa dibatalkan.',
+        'dispatch_notes' => 'Outbound pick/pack dispatch untuk :code',
+    ],
+];

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link, router } from '@inertiajs/react';
@@ -42,6 +43,7 @@ interface Props {
 
 export default function Show({ grn, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const isDraft = grn.status === 'draft';
 
     const confirm = () => {
@@ -59,14 +61,16 @@ export default function Show({ grn, can }: Props): JSX.Element {
                                 isDraft ? 'bg-gray-100 text-gray-700' : 'bg-emerald-50 text-emerald-700'
                             }`}
                         >
-                            {isDraft ? 'Draft' : 'Confirmed'}
+                            {t(`purchasing.status.${grn.status}`, undefined, grn.status)}
                         </span>
                     </div>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('purchasing.purchase-orders.show', grn.purchase_order.id)}>
-                            <SecondaryButton>Lihat PO</SecondaryButton>
+                            <SecondaryButton>{t('purchasing.grn.show.view_po')}</SecondaryButton>
                         </Link>
-                        {can.receive && isDraft && <PrimaryButton onClick={confirm}>Konfirmasi Penerimaan</PrimaryButton>}
+                        {can.receive && isDraft && (
+                            <PrimaryButton onClick={confirm}>{t('purchasing.grn.show.confirm')}</PrimaryButton>
+                        )}
                     </div>
                 </div>
             }
@@ -76,19 +80,19 @@ export default function Show({ grn, can }: Props): JSX.Element {
 
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-lg bg-white p-4 shadow-sm">
-                    <p className="text-xs text-gray-500">Purchase Order</p>
+                    <p className="text-xs text-gray-500">{t('purchasing.fields.po_number')}</p>
                     <p className="mt-1 font-semibold text-indigo-600">{grn.purchase_order.po_number}</p>
                 </div>
                 <div className="rounded-lg bg-white p-4 shadow-sm">
-                    <p className="text-xs text-gray-500">Supplier</p>
+                    <p className="text-xs text-gray-500">{t('purchasing.fields.supplier')}</p>
                     <p className="mt-1 font-semibold text-gray-900">{grn.purchase_order.partner.name}</p>
                 </div>
                 <div className="rounded-lg bg-white p-4 shadow-sm">
-                    <p className="text-xs text-gray-500">Gudang</p>
+                    <p className="text-xs text-gray-500">{t('purchasing.fields.warehouse')}</p>
                     <p className="mt-1 font-semibold text-gray-900">{grn.warehouse.name}</p>
                 </div>
                 <div className="rounded-lg bg-white p-4 shadow-sm">
-                    <p className="text-xs text-gray-500">Tanggal Terima</p>
+                    <p className="text-xs text-gray-500">{t('purchasing.fields.received_at')}</p>
                     <p className="mt-1 font-semibold text-gray-900">{new Date(grn.received_at).toLocaleDateString('id-ID')}</p>
                 </div>
             </div>
@@ -97,13 +101,15 @@ export default function Show({ grn, can }: Props): JSX.Element {
                 <div className="mb-6 rounded-lg bg-white p-4 text-sm shadow-sm">
                     {grn.supplier_do_number && (
                         <p>
-                            <span className="text-gray-500">No. SJ Supplier:</span>{' '}
+                            <span className="text-gray-500">{t('purchasing.grn.show.supplier_do')}</span>{' '}
                             <span className="font-semibold">{grn.supplier_do_number}</span>
                         </p>
                     )}
                     {grn.notes && <p className="mt-1 text-gray-600">{grn.notes}</p>}
                     {grn.received_by && (
-                        <p className="mt-1 text-xs text-gray-500">Diterima oleh {grn.received_by.name}</p>
+                        <p className="mt-1 text-xs text-gray-500">
+                            {t('purchasing.grn.show.received_by', { name: grn.received_by.name })}
+                        </p>
                     )}
                 </div>
             )}
@@ -113,11 +119,11 @@ export default function Show({ grn, can }: Props): JSX.Element {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead>
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Produk</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Lokasi</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Batch</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Expiry</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Qty</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.product')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.location')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.batch')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.expiry')}</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.quantity')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">

@@ -85,7 +85,7 @@ class DeliveryOrderController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.orders.show', $order)
-            ->with('success', 'Delivery order created. Add its items below.');
+            ->with('success', __('orders.messages.created'));
     }
 
     /**
@@ -130,7 +130,7 @@ class DeliveryOrderController extends Controller
     {
         if ($order->status !== DeliveryOrder::STATUS_DRAFT) {
             return redirect()->route($this->getRoutePrefix().'.orders.show', $order)
-                ->with('error', 'Only a draft order can be edited.');
+                ->with('error', __('orders.messages.edit_draft_only'));
         }
 
         return Inertia::render('Modules/Orders/Edit', [
@@ -145,13 +145,13 @@ class DeliveryOrderController extends Controller
     public function update(UpdateDeliveryOrderRequest $request, DeliveryOrder $order): RedirectResponse
     {
         if ($order->status !== DeliveryOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Only a draft order can be edited.');
+            return back()->with('error', __('orders.messages.edit_draft_only'));
         }
 
         $order->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.orders.show', $order)
-            ->with('success', 'Delivery order updated.');
+            ->with('success', __('orders.messages.updated'));
     }
 
     /**
@@ -160,13 +160,13 @@ class DeliveryOrderController extends Controller
     public function destroy(DeliveryOrder $order): RedirectResponse
     {
         if ($order->status !== DeliveryOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Only a draft order can be deleted.');
+            return back()->with('error', __('orders.messages.delete_draft_only'));
         }
 
         $order->delete();
 
         return redirect()->route($this->getRoutePrefix().'.orders.index')
-            ->with('success', 'Delivery order deleted.');
+            ->with('success', __('orders.messages.deleted'));
     }
 
     /**
@@ -175,11 +175,11 @@ class DeliveryOrderController extends Controller
     public function confirm(DeliveryOrder $order): RedirectResponse
     {
         if ($order->status !== DeliveryOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Only a draft order can be confirmed.');
+            return back()->with('error', __('orders.messages.confirm_draft_only'));
         }
 
         if (! $order->items()->exists()) {
-            return back()->with('error', 'Add at least one item before confirming.');
+            return back()->with('error', __('orders.messages.need_items'));
         }
 
         if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)) {
@@ -197,7 +197,7 @@ class DeliveryOrderController extends Controller
                 );
 
                 if (! $gate['allowed']) {
-                    $messages[] = $gate['message'] ?? 'Discount approval required.';
+                    $messages[] = $gate['message'] ?? __('orders.messages.discount_approval');
                 }
             }
 
@@ -217,7 +217,7 @@ class DeliveryOrderController extends Controller
                 );
 
                 if (! $gate['allowed']) {
-                    $messages[] = $gate['message'] ?? 'SLA exception approval required.';
+                    $messages[] = $gate['message'] ?? __('orders.messages.sla_approval');
                 }
             }
 
@@ -235,7 +235,7 @@ class DeliveryOrderController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Delivery order confirmed.');
+        return back()->with('success', __('orders.messages.confirmed'));
     }
 
     /**
@@ -244,7 +244,7 @@ class DeliveryOrderController extends Controller
     public function cancel(Request $request, DeliveryOrder $order): RedirectResponse
     {
         if (! in_array($order->status, [DeliveryOrder::STATUS_DRAFT, DeliveryOrder::STATUS_CONFIRMED], true)) {
-            return back()->with('error', 'This order can no longer be cancelled.');
+            return back()->with('error', __('orders.messages.cannot_cancel'));
         }
 
         $request->validate([
@@ -262,7 +262,7 @@ class DeliveryOrderController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Delivery order cancelled.');
+        return back()->with('success', __('orders.messages.cancelled'));
     }
 
     /**
@@ -272,7 +272,7 @@ class DeliveryOrderController extends Controller
     public function assignTrip(AssignTripRequest $request, DeliveryOrder $order): RedirectResponse
     {
         if ($order->status !== DeliveryOrder::STATUS_CONFIRMED) {
-            return back()->with('error', 'Only a confirmed order can be assigned to a trip.');
+            return back()->with('error', __('orders.messages.assign_confirmed_only'));
         }
 
         $trip = Trip::findOrFail($request->validated()['trip_id']);
@@ -294,7 +294,7 @@ class DeliveryOrderController extends Controller
             ]);
         });
 
-        return back()->with('success', "Order assigned to trip {$trip->code}.");
+        return back()->with('success', __('orders.messages.assigned', ['code' => $trip->code]));
     }
 
     /**
@@ -304,11 +304,11 @@ class DeliveryOrderController extends Controller
     public function unassignTrip(DeliveryOrder $order): RedirectResponse
     {
         if ($order->status !== DeliveryOrder::STATUS_ASSIGNED) {
-            return back()->with('error', 'Only an assigned order can be detached from its trip.');
+            return back()->with('error', __('orders.messages.unassign_assigned_only'));
         }
 
         if ($order->trip && $order->trip->status !== Trip::STATUS_SCHEDULED) {
-            return back()->with('error', 'Cannot detach from a trip that has already started.');
+            return back()->with('error', __('orders.messages.unassign_trip_started'));
         }
 
         DB::transaction(function () use ($order) {
@@ -323,6 +323,6 @@ class DeliveryOrderController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Order detached from its trip.');
+        return back()->with('success', __('orders.messages.unassigned'));
     }
 }

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -103,14 +104,9 @@ const getStatusBadgeColor = (status: string) => {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 };
 
-const addressTypeLabel: Record<string, string> = {
-    shipping: 'Pengiriman',
-    billing: 'Penagihan',
-    warehouse: 'Gudang',
-};
-
 function AddressForm({ partnerId, onCancel }: { partnerId: number; onCancel: () => void }) {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors, reset } = useForm({
         type: 'shipping',
         label: '',
@@ -134,46 +130,46 @@ function AddressForm({ partnerId, onCancel }: { partnerId: number; onCancel: () 
         <form onSubmit={submit} className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                    <InputLabel htmlFor="addr_type" value="Tipe" />
+                    <InputLabel htmlFor="addr_type" value={t('partners.fields.type')} />
                     <Select id="addr_type" className="mt-1" value={data.type} onChange={(value) => setData('type', value)} options={[
-                        { value: 'shipping', label: 'Pengiriman' },
-                        { value: 'billing', label: 'Penagihan' },
-                        { value: 'warehouse', label: 'Gudang' },
+                        { value: 'shipping', label: t('partners.address_type.shipping') },
+                        { value: 'billing', label: t('partners.address_type.billing') },
+                        { value: 'warehouse', label: t('partners.address_type.warehouse') },
                     ]} />
                 </div>
                 <div>
-                    <InputLabel htmlFor="addr_label" value="Label" />
-                    <TextInput id="addr_label" className="mt-1 block w-full" value={data.label} onChange={(e) => setData('label', e.target.value)} placeholder="cth: Kantor Pusat" />
+                    <InputLabel htmlFor="addr_label" value={t('partners.fields.label')} />
+                    <TextInput id="addr_label" className="mt-1 block w-full" value={data.label} onChange={(e) => setData('label', e.target.value)} placeholder={t('partners.placeholders.address_label')} />
                 </div>
                 <div className="flex items-end">
                     <label className="flex items-center gap-2">
                         <input type="checkbox" checked={data.is_default} onChange={(e) => setData('is_default', e.target.checked)} className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
-                        <span className="text-sm text-gray-700">Default</span>
+                        <span className="text-sm text-gray-700">{t('partners.fields.is_default')}</span>
                     </label>
                 </div>
             </div>
             <div>
-                <InputLabel htmlFor="addr_street" value="Alamat" />
+                <InputLabel htmlFor="addr_street" value={t('partners.fields.street')} />
                 <TextInput id="addr_street" className="mt-1 block w-full" value={data.street} onChange={(e) => setData('street', e.target.value)} required />
                 <InputError message={errors.street} className="mt-1" />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                    <InputLabel htmlFor="addr_city" value="Kota" />
+                    <InputLabel htmlFor="addr_city" value={t('partners.fields.city')} />
                     <TextInput id="addr_city" className="mt-1 block w-full" value={data.city} onChange={(e) => setData('city', e.target.value)} />
                 </div>
                 <div>
-                    <InputLabel htmlFor="addr_province" value="Provinsi" />
+                    <InputLabel htmlFor="addr_province" value={t('partners.fields.province')} />
                     <TextInput id="addr_province" className="mt-1 block w-full" value={data.province} onChange={(e) => setData('province', e.target.value)} />
                 </div>
                 <div>
-                    <InputLabel htmlFor="addr_zip" value="Kode Pos" />
+                    <InputLabel htmlFor="addr_zip" value={t('partners.fields.zip')} />
                     <TextInput id="addr_zip" className="mt-1 block w-full" value={data.zip} onChange={(e) => setData('zip', e.target.value)} />
                 </div>
             </div>
             <div className="flex gap-2">
-                <PrimaryButton disabled={processing}>Simpan Alamat</PrimaryButton>
-                <SecondaryButton type="button" onClick={onCancel}>Batal</SecondaryButton>
+                <PrimaryButton disabled={processing}>{t('partners.show.save_address')}</PrimaryButton>
+                <SecondaryButton type="button" onClick={onCancel}>{t('common.cancel')}</SecondaryButton>
             </div>
         </form>
     );
@@ -181,6 +177,7 @@ function AddressForm({ partnerId, onCancel }: { partnerId: number; onCancel: () 
 
 function BankAccountForm({ partnerId, onCancel }: { partnerId: number; onCancel: () => void }) {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors, reset } = useForm({
         bank_name: '',
         account_number: '',
@@ -198,24 +195,24 @@ function BankAccountForm({ partnerId, onCancel }: { partnerId: number; onCancel:
         <form onSubmit={submit} className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                    <InputLabel htmlFor="bank_name" value="Nama Bank" />
+                    <InputLabel htmlFor="bank_name" value={t('partners.fields.bank_name')} />
                     <TextInput id="bank_name" className="mt-1 block w-full" value={data.bank_name} onChange={(e) => setData('bank_name', e.target.value)} required />
                     <InputError message={errors.bank_name} className="mt-1" />
                 </div>
                 <div>
-                    <InputLabel htmlFor="account_number" value="No. Rekening" />
+                    <InputLabel htmlFor="account_number" value={t('partners.fields.account_number')} />
                     <TextInput id="account_number" className="mt-1 block w-full" value={data.account_number} onChange={(e) => setData('account_number', e.target.value)} required />
                     <InputError message={errors.account_number} className="mt-1" />
                 </div>
                 <div>
-                    <InputLabel htmlFor="account_holder_name" value="Atas Nama" />
+                    <InputLabel htmlFor="account_holder_name" value={t('partners.fields.account_holder')} />
                     <TextInput id="account_holder_name" className="mt-1 block w-full" value={data.account_holder_name} onChange={(e) => setData('account_holder_name', e.target.value)} required />
                     <InputError message={errors.account_holder_name} className="mt-1" />
                 </div>
             </div>
             <div className="flex gap-2">
-                <PrimaryButton disabled={processing}>Simpan Rekening</PrimaryButton>
-                <SecondaryButton type="button" onClick={onCancel}>Batal</SecondaryButton>
+                <PrimaryButton disabled={processing}>{t('partners.show.save_bank_account')}</PrimaryButton>
+                <SecondaryButton type="button" onClick={onCancel}>{t('common.cancel')}</SecondaryButton>
             </div>
         </form>
     );
@@ -223,6 +220,8 @@ function BankAccountForm({ partnerId, onCancel }: { partnerId: number; onCancel:
 
 export default function Show({ partner, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [showAddressForm, setShowAddressForm] = useState(false);
@@ -243,12 +242,12 @@ export default function Show({ partner, can }: Props): JSX.Element {
         router.delete(prefixedRoute('partners.bank-accounts.destroy', [partner.id, bankAccountId]));
     };
 
-    const roleBadges: Array<{ label: string; className: string }> = [];
+    const roleBadges: Array<{ key: string; label: string; className: string }> = [];
     if (partner.customer_rank > 0) {
-        roleBadges.push({ label: 'Customer', className: 'bg-blue-100 text-blue-800' });
+        roleBadges.push({ key: 'customer', label: t('partners.role.customer'), className: 'bg-blue-100 text-blue-800' });
     }
     if (partner.supplier_rank > 0) {
-        roleBadges.push({ label: 'Supplier', className: 'bg-purple-100 text-purple-800' });
+        roleBadges.push({ key: 'supplier', label: t('partners.role.supplier'), className: 'bg-purple-100 text-purple-800' });
     }
 
     return (
@@ -262,11 +261,11 @@ export default function Show({ partner, can }: Props): JSX.Element {
                     <div className="flex gap-2">
                         {can.update && (
                             <Link href={prefixedRoute('partners.edit', partner.id)}>
-                                <SecondaryButton>Edit</SecondaryButton>
+                                <SecondaryButton>{t('common.edit')}</SecondaryButton>
                             </Link>
                         )}
                         <Link href={prefixedRoute('partners.index')}>
-                            <SecondaryButton>Kembali</SecondaryButton>
+                            <SecondaryButton>{t('common.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -278,47 +277,47 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 {/* Informasi Utama */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="mb-4 text-lg font-medium text-gray-900">Informasi Umum</h3>
+                        <h3 className="mb-4 text-lg font-medium text-gray-900">{t('partners.show.general')}</h3>
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Tipe</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('partners.fields.type')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {partner.account_type === 'company' ? 'Perusahaan' : 'Individu'}
+                                    {t(`partners.account_type.${partner.account_type}`)}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Peran</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('partners.index.columns.role')}</dt>
                                 <dd className="mt-1 flex gap-1">
                                     {roleBadges.length > 0 ? roleBadges.map((badge) => (
-                                        <span key={badge.label} className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}>
+                                        <span key={badge.key} className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}>
                                             {badge.label}
                                         </span>
                                     )) : <span className="text-sm text-gray-400">—</span>}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('partners.fields.status')}</dt>
                                 <dd className="mt-1">
                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(partner.status)}`}>
-                                        {partner.status}
+                                        {t(`partners.status.${partner.status}`, undefined, partner.status)}
                                     </span>
                                 </dd>
                             </div>
                             {partner.title && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Sapaan</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.title')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{partner.title.short_name} ({partner.title.name})</dd>
                                 </div>
                             )}
                             {partner.job_title && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Jabatan</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.job_title')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{partner.job_title}</dd>
                                 </div>
                             )}
                             {partner.parent && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Perusahaan Induk</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.parent_company')}</dt>
                                     <dd className="mt-1">
                                         <Link href={prefixedRoute('partners.show', partner.parent.id)} className="text-sm text-indigo-600 hover:text-indigo-900">
                                             {partner.parent.name}
@@ -328,21 +327,21 @@ export default function Show({ partner, can }: Props): JSX.Element {
                             )}
                             {partner.industry && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Industri</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.industry')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{partner.industry.name}</dd>
                                 </div>
                             )}
                             {partner.tax_id && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">NPWP</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.tax_id')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{partner.tax_id}</dd>
                                 </div>
                             )}
                             {partner.credit_limit && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Batas Kredit</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.credit_limit')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">
-                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(partner.credit_limit))}
+                                        {new Intl.NumberFormat(localeTag, { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(partner.credit_limit))}
                                     </dd>
                                 </div>
                             )}
@@ -350,7 +349,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
 
                         {partner.tags.length > 0 && (
                             <div className="mt-4">
-                                <dt className="text-sm font-medium text-gray-500">Tags</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('partners.fields.tags')}</dt>
                                 <dd className="mt-1 flex flex-wrap gap-1">
                                     {partner.tags.map((tag) => (
                                         <span key={tag.id} className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
@@ -366,29 +365,29 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 {/* Kontak */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="mb-4 text-lg font-medium text-gray-900">Kontak</h3>
+                        <h3 className="mb-4 text-lg font-medium text-gray-900">{t('partners.show.contact')}</h3>
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Telepon</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('partners.fields.phone')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{partner.phone || '—'}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">HP / WhatsApp</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('partners.fields.mobile')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{partner.mobile || '—'}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('partners.fields.email')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{partner.email || '—'}</dd>
                             </div>
                             {partner.website && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Website</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.website')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{partner.website}</dd>
                                 </div>
                             )}
                             {partner.address && (
                                 <div className="sm:col-span-3">
-                                    <dt className="text-sm font-medium text-gray-500">Alamat Utama</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.address')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{partner.address}</dd>
                                 </div>
                             )}
@@ -400,10 +399,10 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">Alamat</h3>
+                            <h3 className="text-lg font-medium text-gray-900">{t('partners.show.addresses')}</h3>
                             {can.update && !showAddressForm && (
                                 <button onClick={() => setShowAddressForm(true)} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                                    + Tambah Alamat
+                                    {t('partners.show.add_address')}
                                 </button>
                             )}
                         </div>
@@ -415,7 +414,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
                         )}
 
                         {partner.addresses.length === 0 ? (
-                            <p className="text-sm text-gray-500">Belum ada alamat.</p>
+                            <p className="text-sm text-gray-500">{t('partners.show.empty_addresses')}</p>
                         ) : (
                             <div className="space-y-3">
                                 {partner.addresses.map((addr) => (
@@ -423,11 +422,11 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs font-medium uppercase text-gray-500">
-                                                    {addressTypeLabel[addr.type] || addr.type}
+                                                    {t(`partners.address_type.${addr.type}`, undefined, addr.type)}
                                                 </span>
                                                 {addr.label && <span className="text-xs text-gray-400">({addr.label})</span>}
                                                 {addr.is_default && (
-                                                    <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">Default</span>
+                                                    <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">{t('partners.fields.is_default')}</span>
                                                 )}
                                             </div>
                                             <p className="mt-1 text-sm text-gray-900">
@@ -436,7 +435,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                         </div>
                                         {can.update && (
                                             <button onClick={() => deleteAddress(addr.id)} className="text-sm text-red-600 hover:text-red-900">
-                                                Hapus
+                                                {t('common.delete')}
                                             </button>
                                         )}
                                     </div>
@@ -450,10 +449,10 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">Rekening Bank</h3>
+                            <h3 className="text-lg font-medium text-gray-900">{t('partners.show.bank_accounts')}</h3>
                             {can.update && !showBankForm && (
                                 <button onClick={() => setShowBankForm(true)} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                                    + Tambah Rekening
+                                    {t('partners.show.add_bank_account')}
                                 </button>
                             )}
                         </div>
@@ -465,17 +464,17 @@ export default function Show({ partner, can }: Props): JSX.Element {
                         )}
 
                         {partner.bank_accounts.length === 0 ? (
-                            <p className="text-sm text-gray-500">Belum ada rekening bank.</p>
+                            <p className="text-sm text-gray-500">{t('partners.show.empty_bank_accounts')}</p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Bank</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">No. Rekening</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Atas Nama</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('partners.show.bank_columns.bank')}</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('partners.show.bank_columns.account_number')}</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('partners.show.bank_columns.account_holder')}</th>
                                             {can.update && (
-                                                <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">Aksi</th>
+                                                <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('common.actions')}</th>
                                             )}
                                         </tr>
                                     </thead>
@@ -488,7 +487,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                                 {can.update && (
                                                     <td className="whitespace-nowrap px-4 py-2 text-right">
                                                         <button onClick={() => deleteBankAccount(ba.id)} className="text-sm text-red-600 hover:text-red-900">
-                                                            Hapus
+                                                            {t('common.delete')}
                                                         </button>
                                                     </td>
                                                 )}
@@ -505,7 +504,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 {partner.children.length > 0 && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Kontak Person</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">{t('partners.show.contacts')}</h3>
                             <div className="space-y-2">
                                 {partner.children.map((child) => (
                                     <div key={child.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
@@ -526,16 +525,16 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 {(partner.notes || partner.comment) && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Catatan</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">{t('partners.show.notes_section')}</h3>
                             {partner.notes && (
                                 <div className="mb-3">
-                                    <dt className="text-sm font-medium text-gray-500">Catatan</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.notes')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900 whitespace-pre-line">{partner.notes}</dd>
                                 </div>
                             )}
                             {partner.comment && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Komentar Internal</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('partners.fields.comment')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900 whitespace-pre-line">{partner.comment}</dd>
                                 </div>
                             )}
@@ -548,11 +547,11 @@ export default function Show({ partner, can }: Props): JSX.Element {
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="flex items-center justify-between p-6">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900">Hapus partner ini</h3>
-                                <p className="text-sm text-gray-500">Tindakan ini tidak dapat dibatalkan.</p>
+                                <h3 className="text-sm font-medium text-gray-900">{t('partners.show.delete_zone_title')}</h3>
+                                <p className="text-sm text-gray-500">{t('partners.show.delete_zone_hint')}</p>
                             </div>
                             <button onClick={() => setShowDeleteDialog(true)} className="text-sm font-medium text-red-600 hover:text-red-900">
-                                Hapus Partner
+                                {t('partners.show.delete_action')}
                             </button>
                         </div>
                     </div>
@@ -564,8 +563,8 @@ export default function Show({ partner, can }: Props): JSX.Element {
                 onClose={() => setShowDeleteDialog(false)}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Partner"
-                message={`Apakah Anda yakin ingin menghapus "${partner.name}" (${partner.code})? Tindakan ini tidak dapat dibatalkan.`}
+                title={t('partners.show.delete_title')}
+                message={t('partners.show.delete_confirm', { name: partner.name, code: partner.code })}
             />
         </DynamicLayout>
     );

@@ -84,7 +84,7 @@ class OrderInvoiceController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.invoicing.invoices.show', $invoice)
-            ->with('success', 'Draft invoice created.');
+            ->with('success', __('billing.messages.draft_invoice_created'));
     }
 
     /**
@@ -93,7 +93,7 @@ class OrderInvoiceController extends Controller
     public function attach(AttachOrdersRequest $request, Invoice $invoice): RedirectResponse
     {
         if ($invoice->status !== Invoice::STATUS_DRAFT) {
-            return back()->with('error', 'Orders can only be added to a draft invoice.');
+            return back()->with('error', __('billing.messages.orders_draft_only'));
         }
 
         $orders = DeliveryOrder::query()
@@ -107,7 +107,7 @@ class OrderInvoiceController extends Controller
 
         DB::transaction(fn () => $this->addLinesFor($invoice, $orders));
 
-        return back()->with('success', 'Orders added to the invoice.');
+        return back()->with('success', __('billing.messages.orders_added'));
     }
 
     /**
@@ -119,15 +119,15 @@ class OrderInvoiceController extends Controller
     {
         foreach ($orders as $order) {
             if ($order->partner_id !== $partnerId) {
-                return "Order {$order->code} belongs to another partner.";
+                return __('billing.messages.order_other_partner', ['code' => $order->code]);
             }
 
             if ($order->status !== DeliveryOrder::STATUS_DELIVERED) {
-                return "Order {$order->code} has not been delivered yet.";
+                return __('billing.messages.order_not_delivered', ['code' => $order->code]);
             }
 
             if ($order->charge?->invoiceLine !== null) {
-                return "Order {$order->code} is already invoiced.";
+                return __('billing.messages.order_already_invoiced', ['code' => $order->code]);
             }
         }
 

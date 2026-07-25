@@ -1,5 +1,6 @@
 import DriverLayout from '@/Layouts/DriverLayout';
 import InputError from '@/Components/InputError';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 import { ChangeEvent, FormEventHandler, useEffect, useRef, useState } from 'react';
 
@@ -62,6 +63,7 @@ function downscale(file: File, maxEdge = 1280, quality = 0.7): Promise<string> {
 }
 
 export default function PodForm({ driverName, order }: Props): JSX.Element {
+    const { t } = useTrans();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const drawing = useRef(false);
     const hasDrawn = useRef(false);
@@ -187,9 +189,12 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
         post(route('module.driver.pod.store', order.id));
     };
 
+    const podTitle = t('orders.driver.pod.title');
+    const podHead = t('orders.driver.pod.head', { code: order.code });
+
     return (
-        <DriverLayout driverName={driverName} title="Serah Terima" back={route('module.driver.trip', order.trip_id ?? 0)}>
-            <Head title={`POD ${order.code}`} />
+        <DriverLayout driverName={driverName} title={podTitle} back={route('module.driver.trip', order.trip_id ?? 0)}>
+            <Head title={podHead} />
 
             <form onSubmit={submit} className="space-y-5">
                 <div className="rounded-lg bg-white p-4 shadow-sm">
@@ -199,7 +204,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
 
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <label htmlFor="recipient_name" className="block text-sm font-medium text-gray-700">
-                        Nama Penerima
+                        {t('orders.driver.pod.recipient_name')}
                     </label>
                     <input
                         id="recipient_name"
@@ -213,9 +218,9 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
 
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Tanda Tangan</span>
+                        <span className="text-sm font-medium text-gray-700">{t('orders.driver.pod.signature')}</span>
                         <button type="button" onClick={clearSignature} className="text-xs font-medium text-indigo-600">
-                            Hapus
+                            {t('orders.driver.pod.clear')}
                         </button>
                     </div>
                     <canvas
@@ -230,16 +235,16 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                 </div>
 
                 <div className="rounded-lg bg-white p-4 shadow-sm">
-                    <span className="text-sm font-medium text-gray-700">Foto Bukti</span>
+                    <span className="text-sm font-medium text-gray-700">{t('orders.driver.pod.photos')}</span>
                     <div className="mt-2 grid grid-cols-3 gap-2">
                         {data.photos.map((photo, index) => (
                             <div key={index} className="relative">
-                                <img src={photo} alt={`Foto ${index + 1}`} className="h-20 w-full rounded object-cover" />
+                                <img src={photo} alt={t('orders.driver.pod.photo_alt', { n: index + 1 })} className="h-20 w-full rounded object-cover" />
                                 <button
                                     type="button"
                                     onClick={() => removePhoto(index)}
                                     className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
-                                    aria-label="Hapus foto"
+                                    aria-label={t('orders.driver.pod.remove_photo')}
                                 >
                                     ×
                                 </button>
@@ -263,7 +268,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                 </div>
 
                 <div className="rounded-lg bg-white p-4 shadow-sm">
-                    <span className="text-sm font-medium text-gray-700">Barang</span>
+                    <span className="text-sm font-medium text-gray-700">{t('orders.driver.pod.items')}</span>
                     <div className="mt-2 space-y-4">
                         {order.items.map((item, index) => {
                             const input = data.items[index];
@@ -271,11 +276,11 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                                 Number(input.rejected_quantity) > 0 || Number(input.returned_quantity) > 0;
                             return (
                                 <div key={item.id} className="rounded-md border border-gray-200 p-3">
-                                    <p className="text-sm font-medium text-gray-900">{item.product?.name ?? 'Barang'}</p>
-                                    <p className="text-xs text-gray-500">Dipesan: {item.quantity}</p>
+                                    <p className="text-sm font-medium text-gray-900">{item.product?.name ?? t('orders.driver.pod.product_fallback')}</p>
+                                    <p className="text-xs text-gray-500">{t('orders.driver.pod.ordered', { qty: item.quantity })}</p>
                                     <div className="mt-2 grid grid-cols-3 gap-2">
                                         <label className="text-xs text-gray-600">
-                                            Diterima
+                                            {t('orders.driver.pod.accepted')}
                                             <input
                                                 type="number"
                                                 min="0"
@@ -286,7 +291,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                                             />
                                         </label>
                                         <label className="text-xs text-gray-600">
-                                            Ditolak
+                                            {t('orders.driver.pod.rejected')}
                                             <input
                                                 type="number"
                                                 min="0"
@@ -297,7 +302,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                                             />
                                         </label>
                                         <label className="text-xs text-gray-600">
-                                            Retur
+                                            {t('orders.driver.pod.returned')}
                                             <input
                                                 type="number"
                                                 min="0"
@@ -311,7 +316,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                                     {showReason && (
                                         <input
                                             type="text"
-                                            placeholder="Alasan tolak / retur"
+                                            placeholder={t('orders.driver.pod.reason_placeholder')}
                                             value={input.reason}
                                             onChange={(e) => updateItem(index, 'reason', e.target.value)}
                                             className="mt-2 block w-full rounded-md border-gray-300 text-sm shadow-sm"
@@ -328,7 +333,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
 
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-                        Catatan
+                        {t('orders.driver.pod.notes')}
                     </label>
                     <textarea
                         id="notes"
@@ -339,7 +344,10 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                     />
                     {data.latitude !== null && (
                         <p className="mt-1 text-xs text-gray-400">
-                            Lokasi: {data.latitude.toFixed(5)}, {data.longitude?.toFixed(5)}
+                            {t('orders.driver.pod.location', {
+                                lat: data.latitude.toFixed(5),
+                                lng: data.longitude?.toFixed(5) ?? '',
+                            })}
                         </p>
                     )}
                 </div>
@@ -349,7 +357,7 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
                     disabled={processing}
                     className="w-full rounded-md bg-indigo-600 py-3 text-sm font-semibold text-white active:bg-indigo-700 disabled:opacity-50"
                 >
-                    Simpan Bukti Pengiriman
+                    {t('orders.driver.pod.submit')}
                 </button>
             </form>
         </DriverLayout>

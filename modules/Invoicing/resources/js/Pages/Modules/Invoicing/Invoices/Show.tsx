@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -70,6 +71,7 @@ const getStatusBadgeColor = (status: string) => {
 
 export default function Show({ invoice, credit, can, canRecordPayment = false }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [showLineModal, setShowLineModal] = useState(false);
     const [showVoidModal, setShowVoidModal] = useState(false);
 
@@ -128,33 +130,33 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">{invoice.code}</h2>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(invoice.status)}`}>
-                            {invoice.status}
+                            {t(`invoicing.status.${invoice.status}`, undefined, invoice.status)}
                         </span>
                     </div>
                     <div className="flex gap-2">
-                        {can.update && isDraft && <PrimaryButton onClick={issue}>Issue</PrimaryButton>}
+                        {can.update && isDraft && <PrimaryButton onClick={issue}>{t('invoicing.show.issue')}</PrimaryButton>}
                         {can.update && isOpen && (
                             <PrimaryButton onClick={pay}>
-                                {isPartiallyPaid ? 'Settle Remaining' : 'Mark Paid'}
+                                {isPartiallyPaid ? t('invoicing.show.settle_remaining') : t('invoicing.show.mark_paid')}
                             </PrimaryButton>
                         )}
                         {canRecordPayment && isOpen && (
                             <Link
                                 href={`${prefixedRoute('receivables.payments.create')}?partner_id=${invoice.partner.id}&invoice_id=${invoice.id}`}
                             >
-                                <SecondaryButton type="button">Record Payment</SecondaryButton>
+                                <SecondaryButton type="button">{t('invoicing.show.record_payment')}</SecondaryButton>
                             </Link>
                         )}
                         {printable && (
                             <a href={prefixedRoute('invoicing.invoices.pdf', invoice.id)} target="_blank" rel="noreferrer">
-                                <SecondaryButton type="button">Print PDF</SecondaryButton>
+                                <SecondaryButton type="button">{t('invoicing.show.print_pdf')}</SecondaryButton>
                             </a>
                         )}
                         {can.update && (isDraft || isIssued) && (
-                            <DangerButton onClick={() => setShowVoidModal(true)}>Void</DangerButton>
+                            <DangerButton onClick={() => setShowVoidModal(true)}>{t('invoicing.show.void')}</DangerButton>
                         )}
                         <Link href={prefixedRoute('invoicing.invoices.index')}>
-                            <SecondaryButton>Back to List</SecondaryButton>
+                            <SecondaryButton>{t('invoicing.show.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -169,26 +171,26 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                     <div className="p-6">
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('invoicing.show.partner')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{invoice.partner.name} ({invoice.partner.code})</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Issue Date</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('invoicing.show.issue_date')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{invoice.issue_date}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Due Date</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('invoicing.show.due_date')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{invoice.due_date || '—'}</dd>
                             </div>
                             {invoice.paid_at && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Paid At</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('invoicing.show.paid_at')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{invoice.paid_at}</dd>
                                 </div>
                             )}
                             {invoice.notes && (
                                 <div className="sm:col-span-3">
-                                    <dt className="text-sm font-medium text-gray-500">Notes</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('invoicing.show.notes')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{invoice.notes}</dd>
                                 </div>
                             )}
@@ -199,21 +201,21 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">Item</h3>
+                            <h3 className="text-lg font-medium text-gray-900">{t('invoicing.show.items')}</h3>
                             {canEditLines && (
-                                <PrimaryButton onClick={() => setShowLineModal(true)}>Tambah Item</PrimaryButton>
+                                <PrimaryButton onClick={() => setShowLineModal(true)}>{t('invoicing.show.add_item')}</PrimaryButton>
                             )}
                         </div>
                         {invoice.lines.length === 0 ? (
-                            <p className="text-sm text-gray-500">Belum ada item pada invoice ini.</p>
+                            <p className="text-sm text-gray-500">{t('invoicing.show.items_empty')}</p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">No</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Keterangan</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Jumlah</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.show.columns.no')}</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.show.columns.description')}</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('invoicing.show.columns.amount')}</th>
                                             {canEditLines && <th className="px-4 py-3" />}
                                         </tr>
                                     </thead>
@@ -225,7 +227,7 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                                                 <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">{formatMoney(line.amount)}</td>
                                                 {canEditLines && (
                                                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                                                        <button onClick={() => removeLine(line.id)} className="text-red-600 hover:text-red-900">Remove</button>
+                                                        <button onClick={() => removeLine(line.id)} className="text-red-600 hover:text-red-900">{t('invoicing.show.remove')}</button>
                                                     </td>
                                                 )}
                                             </tr>
@@ -238,7 +240,7 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                         <div className="mt-6 flex justify-end">
                             <dl className="w-full max-w-xs space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <dt className="text-sm text-gray-500">Subtotal</dt>
+                                    <dt className="text-sm text-gray-500">{t('invoicing.show.subtotal')}</dt>
                                     <dd className="text-sm text-gray-900">{formatMoney(invoice.subtotal)}</dd>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -251,22 +253,22 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                                                 onChange={toggleTax}
                                             />
                                         )}
-                                        PPN ({Number(invoice.tax_rate)}%)
+                                        {t('invoicing.show.tax', { rate: Number(invoice.tax_rate) })}
                                     </dt>
                                     <dd className="text-sm text-gray-900">{invoice.tax_enabled ? formatMoney(invoice.tax_amount) : '—'}</dd>
                                 </div>
                                 <div className="flex items-center justify-between border-t border-gray-200 pt-2">
-                                    <dt className="text-sm font-semibold text-gray-900">Total</dt>
+                                    <dt className="text-sm font-semibold text-gray-900">{t('invoicing.show.total')}</dt>
                                     <dd className="text-sm font-semibold text-gray-900">{formatMoney(invoice.total)}</dd>
                                 </div>
                                 {(isOpen || invoice.status === 'paid') && (
                                     <>
                                         <div className="flex items-center justify-between">
-                                            <dt className="text-sm text-gray-500">Paid</dt>
+                                            <dt className="text-sm text-gray-500">{t('invoicing.show.paid')}</dt>
                                             <dd className="text-sm text-gray-900">{formatMoney(invoice.amount_paid || 0)}</dd>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <dt className="text-sm font-semibold text-gray-900">Balance Due</dt>
+                                            <dt className="text-sm font-semibold text-gray-900">{t('invoicing.show.balance')}</dt>
                                             <dd className="text-sm font-semibold text-gray-900">{formatMoney(balanceDue)}</dd>
                                         </div>
                                     </>
@@ -284,9 +286,12 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                                 : 'border-gray-200 bg-white text-gray-700'
                         }`}
                     >
-                        Credit limit {formatMoney(credit.limit)} · Outstanding {formatMoney(credit.outstanding)}
-                        {credit.available !== null && <> · Available {formatMoney(credit.available)}</>}
-                        {credit.utilization !== null && <> · {credit.utilization.toFixed(1)}% used</>}
+                        {t('invoicing.show.credit', {
+                            limit: formatMoney(credit.limit),
+                            outstanding: formatMoney(credit.outstanding),
+                            available: credit.available !== null ? formatMoney(credit.available) : '—',
+                            pct: credit.utilization !== null ? credit.utilization.toFixed(1) : '0',
+                        })}
                     </div>
                 )}
 
@@ -294,11 +299,11 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="flex items-center justify-between p-6">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900">Delete this draft</h3>
-                                <p className="text-sm text-gray-500">Draft invoice beserta itemnya akan dihapus.</p>
+                                <h3 className="text-sm font-medium text-gray-900">{t('invoicing.show.delete_title')}</h3>
+                                <p className="text-sm text-gray-500">{t('invoicing.show.delete_hint')}</p>
                             </div>
                             <button onClick={deleteInvoice} className="text-sm font-medium text-red-600 hover:text-red-900">
-                                Delete Invoice
+                                {t('invoicing.show.delete_action')}
                             </button>
                         </div>
                     </div>
@@ -308,10 +313,10 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
             {canEditLines && (
                 <Modal show={showLineModal} onClose={() => setShowLineModal(false)} maxWidth="md">
                     <form onSubmit={submitLine} className="p-6">
-                        <h3 className="mb-4 text-lg font-medium text-gray-900">Tambah Item</h3>
+                        <h3 className="mb-4 text-lg font-medium text-gray-900">{t('invoicing.show.add_modal_title')}</h3>
                         <div className="space-y-4">
                             <div>
-                                <InputLabel htmlFor="line_description" value="Keterangan" />
+                                <InputLabel htmlFor="line_description" value={t('invoicing.show.description')} />
                                 <TextInput
                                     id="line_description"
                                     type="text"
@@ -322,7 +327,7 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                                 <InputError message={lineForm.errors.description} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="line_amount" value="Jumlah" />
+                                <InputLabel htmlFor="line_amount" value={t('invoicing.show.amount')} />
                                 <TextInput
                                     id="line_amount"
                                     type="number"
@@ -336,8 +341,8 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                             </div>
                         </div>
                         <div className="mt-6 flex justify-end gap-3">
-                            <SecondaryButton type="button" onClick={() => setShowLineModal(false)}>Cancel</SecondaryButton>
-                            <PrimaryButton disabled={lineForm.processing}>Add</PrimaryButton>
+                            <SecondaryButton type="button" onClick={() => setShowLineModal(false)}>{t('common.cancel')}</SecondaryButton>
+                            <PrimaryButton disabled={lineForm.processing}>{t('invoicing.show.add')}</PrimaryButton>
                         </div>
                     </form>
                 </Modal>
@@ -345,13 +350,13 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
 
             <Modal show={showVoidModal} onClose={() => setShowVoidModal(false)} maxWidth="sm">
                 <div className="p-6">
-                    <h3 className="mb-2 text-lg font-medium text-gray-900">Void Invoice</h3>
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">{t('invoicing.show.void_title')}</h3>
                     <p className="text-sm text-gray-500">
-                        Void {invoice.code}? Its orders become invoiceable again and the code will not be reused.
+                        {t('invoicing.show.void_confirm', { code: invoice.code })}
                     </p>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowVoidModal(false)}>Cancel</SecondaryButton>
-                        <DangerButton onClick={confirmVoid}>Void</DangerButton>
+                        <SecondaryButton type="button" onClick={() => setShowVoidModal(false)}>{t('common.cancel')}</SecondaryButton>
+                        <DangerButton onClick={confirmVoid}>{t('invoicing.show.void')}</DangerButton>
                     </div>
                 </div>
             </Modal>

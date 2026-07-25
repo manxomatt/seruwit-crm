@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -7,7 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useMemo } from 'react';
 import PromotionsNav from '../../../../PromotionsNav';
 
 interface Option {
@@ -33,8 +34,13 @@ type Tier = {
     free_qty: string;
 };
 
+const PROGRAM_TYPES = ['volume_discount', 'free_goods', 'rebate'] as const;
+const TARGET_METRICS = ['volume', 'value'] as const;
+const CALC_BASIS_OPTIONS = ['qty', 'net_value'] as const;
+
 export default function Create({ partners, products, principals }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
@@ -53,6 +59,21 @@ export default function Create({ partners, products, principals }: Props): JSX.E
         calc_basis: 'qty',
     });
 
+    const typeOptions = useMemo(
+        () => PROGRAM_TYPES.map((type) => ({ value: type, label: t(`promotions.types.${type}`) })),
+        [t],
+    );
+
+    const metricOptions = useMemo(
+        () => TARGET_METRICS.map((metric) => ({ value: metric, label: t(`promotions.metrics.${metric}`) })),
+        [t],
+    );
+
+    const calcBasisOptions = useMemo(
+        () => CALC_BASIS_OPTIONS.map((basis) => ({ value: basis, label: t(`promotions.calc_basis.${basis}`) })),
+        [t],
+    );
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(prefixedRoute('promotions.programs.store'));
@@ -69,33 +90,29 @@ export default function Create({ partners, products, principals }: Props): JSX.E
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">New Promo Program</h2>}>
-            <Head title="New Promo Program" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.programs.create.title')}</h2>}>
+            <Head title={t('promotions.programs.create.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <PromotionsNav />
                     <form onSubmit={submit} className="space-y-6 rounded-lg border border-gray-200 bg-white p-6">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="sm:col-span-2">
-                                <InputLabel value="Name" />
+                                <InputLabel value={t('promotions.fields.name')} />
                                 <TextInput className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />
                                 <InputError message={errors.name} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel value="Type" />
+                                <InputLabel value={t('promotions.fields.type')} />
                                 <Select
                                     className="mt-1"
                                     value={data.type}
                                     onChange={(value) => setData('type', value)}
-                                    options={[
-                                        { value: 'volume_discount', label: 'Volume discount' },
-                                        { value: 'free_goods', label: 'Free goods' },
-                                        { value: 'rebate', label: 'Rebate / rabat' },
-                                    ]}
+                                    options={typeOptions}
                                 />
                             </div>
                             <div>
-                                <InputLabel value="Principal (optional)" />
+                                <InputLabel value={t('promotions.fields.principal_optional')} />
                                 <Select
                                     className="mt-1"
                                     value={data.principal_id}
@@ -105,33 +122,30 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                                 />
                             </div>
                             <div>
-                                <InputLabel value="Starts at" />
+                                <InputLabel value={t('promotions.fields.starts_at')} />
                                 <TextInput type="datetime-local" className="mt-1 block w-full" value={data.starts_at} onChange={(e) => setData('starts_at', e.target.value)} required />
                                 <InputError message={errors.starts_at} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel value="Ends at" />
+                                <InputLabel value={t('promotions.fields.ends_at')} />
                                 <TextInput type="datetime-local" className="mt-1 block w-full" value={data.ends_at} onChange={(e) => setData('ends_at', e.target.value)} required />
                                 <InputError message={errors.ends_at} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel value="Target metric" />
+                                <InputLabel value={t('promotions.fields.target_metric')} />
                                 <Select
                                     className="mt-1"
                                     value={data.target_metric}
                                     onChange={(value) => setData('target_metric', value)}
-                                    options={[
-                                        { value: 'volume', label: 'Volume (qty)' },
-                                        { value: 'value', label: 'Value (Rp)' },
-                                    ]}
+                                    options={metricOptions}
                                 />
                             </div>
                             <div>
-                                <InputLabel value="Target amount" />
+                                <InputLabel value={t('promotions.fields.target_amount')} />
                                 <TextInput type="number" className="mt-1 block w-full" value={data.target_amount} onChange={(e) => setData('target_amount', e.target.value)} />
                             </div>
                             <div className="sm:col-span-2">
-                                <InputLabel value="Description" />
+                                <InputLabel value={t('promotions.fields.description')} />
                                 <textarea
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     rows={3}
@@ -142,7 +156,7 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                         </div>
 
                         <div>
-                            <h3 className="mb-2 text-sm font-medium">Eligible distributors (empty = all customers)</h3>
+                            <h3 className="mb-2 text-sm font-medium">{t('promotions.programs.create.eligible_distributors')}</h3>
                             <div className="max-h-40 overflow-y-auto rounded border border-gray-200">
                                 {partners.map((p) => (
                                     <label key={p.id} className="flex items-center gap-2 border-b border-gray-50 px-3 py-2 text-sm">
@@ -154,7 +168,7 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                         </div>
 
                         <div>
-                            <h3 className="mb-2 text-sm font-medium">Eligible products (empty = all)</h3>
+                            <h3 className="mb-2 text-sm font-medium">{t('promotions.programs.create.eligible_products')}</h3>
                             <div className="max-h-40 overflow-y-auto rounded border border-gray-200">
                                 {products.map((p) => (
                                     <label key={p.id} className="flex items-center gap-2 border-b border-gray-50 px-3 py-2 text-sm">
@@ -168,7 +182,7 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                         {data.type !== 'rebate' && (
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-medium">Tiers</h3>
+                                    <h3 className="text-sm font-medium">{t('promotions.programs.create.tiers')}</h3>
                                     <SecondaryButton
                                         type="button"
                                         onClick={() =>
@@ -178,24 +192,24 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                                             ])
                                         }
                                     >
-                                        Add tier
+                                        {t('promotions.programs.create.add_tier')}
                                     </SecondaryButton>
                                 </div>
                                 {data.tiers.map((tier, index) => (
                                     <div key={index} className="grid grid-cols-2 gap-3 rounded border border-gray-100 p-3 sm:grid-cols-3">
                                         <div>
-                                            <InputLabel value="Min qty" />
+                                            <InputLabel value={t('promotions.fields.min_qty')} />
                                             <TextInput className="mt-1 block w-full" value={tier.min_qty} onChange={(e) => updateTier(index, 'min_qty', e.target.value)} />
                                         </div>
                                         {data.type === 'volume_discount' ? (
                                             <div>
-                                                <InputLabel value="Discount %" />
+                                                <InputLabel value={t('promotions.fields.discount_percent')} />
                                                 <TextInput className="mt-1 block w-full" value={tier.discount_percent} onChange={(e) => updateTier(index, 'discount_percent', e.target.value)} />
                                             </div>
                                         ) : (
                                             <>
                                                 <div>
-                                                    <InputLabel value="Free product" />
+                                                    <InputLabel value={t('promotions.fields.free_product')} />
                                                     <Select
                                                         className="mt-1"
                                                         value={tier.free_product_id}
@@ -205,7 +219,7 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                                                     />
                                                 </div>
                                                 <div>
-                                                    <InputLabel value="Free qty" />
+                                                    <InputLabel value={t('promotions.fields.free_qty')} />
                                                     <TextInput className="mt-1 block w-full" value={tier.free_qty} onChange={(e) => updateTier(index, 'free_qty', e.target.value)} />
                                                 </div>
                                             </>
@@ -218,32 +232,29 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                         {data.type === 'rebate' && (
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
-                                    <InputLabel value="Rebate %" />
+                                    <InputLabel value={t('promotions.fields.rebate_percent')} />
                                     <TextInput className="mt-1 block w-full" value={data.rebate_percent} onChange={(e) => setData('rebate_percent', e.target.value)} />
                                 </div>
                                 <div>
-                                    <InputLabel value="Rebate per unit" />
+                                    <InputLabel value={t('promotions.fields.rebate_per_unit')} />
                                     <TextInput className="mt-1 block w-full" value={data.rebate_per_unit} onChange={(e) => setData('rebate_per_unit', e.target.value)} />
                                 </div>
                                 <div>
-                                    <InputLabel value="Calc basis" />
+                                    <InputLabel value={t('promotions.fields.calc_basis')} />
                                     <Select
                                         className="mt-1"
                                         value={data.calc_basis}
                                         onChange={(value) => setData('calc_basis', value)}
-                                        options={[
-                                            { value: 'qty', label: 'Per unit qty' },
-                                            { value: 'net_value', label: '% of value' },
-                                        ]}
+                                        options={calcBasisOptions}
                                     />
                                 </div>
                             </div>
                         )}
 
                         <div className="flex gap-3">
-                            <PrimaryButton disabled={processing}>Create program</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('promotions.programs.create.submit')}</PrimaryButton>
                             <Link href={prefixedRoute('promotions.programs.index')}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
@@ -48,6 +49,7 @@ const statusBadge = (status: string): string => {
 
 export default function Index({ pickLists, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search ?? '');
 
     const submit: FormEventHandler = (e) => {
@@ -59,16 +61,16 @@ export default function Index({ pickLists, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-800">Outbound Pick / Pack</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">{t('outbound.pick_lists.index.head')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('outbound.pick-lists.create')}>
-                            <PrimaryButton>Generate Pick List</PrimaryButton>
+                            <PrimaryButton>{t('outbound.pick_lists.index.generate')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Pick Lists" />
+            <Head title={t('outbound.pick_lists.index.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <OutboundNav />
@@ -77,29 +79,29 @@ export default function Index({ pickLists, filters, can }: Props): JSX.Element {
                         <TextInput
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Cari PL / DO…"
+                            placeholder={t('outbound.pick_lists.index.search_placeholder')}
                             className="max-w-sm"
                         />
-                        <PrimaryButton type="submit">Cari</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Pick List</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">DO</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Partner</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Warehouse</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Lines</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.index.columns.pick_list')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.index.columns.do')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.index.columns.partner')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.index.columns.warehouse')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.index.columns.lines')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.index.columns.status')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {pickLists.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                                            Belum ada pick list.
+                                            {t('outbound.pick_lists.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -119,7 +121,7 @@ export default function Index({ pickLists, filters, can }: Props): JSX.Element {
                                             <td className="px-4 py-3 text-right tabular-nums">{pl.items_count}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge(pl.status)}`}>
-                                                    {pl.status}
+                                                    {t(`outbound.pick_list_status.${pl.status}`, undefined, pl.status)}
                                                 </span>
                                             </td>
                                         </tr>

@@ -1,12 +1,14 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Invoices', route: 'invoicing.invoices.index', pattern: 'invoicing.invoices.*' },
-];
+    { labelKey: 'invoicing.nav.invoices', route: 'invoicing.invoices.index', pattern: 'invoicing.invoices.*' },
+] as const;
 
 export default function InvoicingNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -23,7 +25,7 @@ export default function InvoicingNav(): JSX.Element {
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Link>
                     );
                 })}

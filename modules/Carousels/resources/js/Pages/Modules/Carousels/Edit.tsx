@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -42,6 +43,7 @@ interface Props {
 
 export default function Edit({ carousel }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [editingImage, setEditingImage] = useState<CarouselImage | null>(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -166,21 +168,21 @@ export default function Edit({ carousel }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Edit Carousel: {carousel.name}
+                        {t('carousels.edit_title', { name: carousel.name })}
                     </h2>
                 </div>
             }
         >
-            <Head title={`Edit Carousel: ${carousel.name}`} />
+            <Head title={t('carousels.edit_title', { name: carousel.name })} />
 
             <div className="space-y-6">
                 {/* Carousel Settings */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Carousel Settings</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('carousels.form.settings')}</h3>
                         <form onSubmit={submit} className="space-y-6 max-w-2xl">
                             <div>
-                                <InputLabel htmlFor="name" value="Name" />
+                                <InputLabel htmlFor="name" value={t('carousels.form.name')} />
                                 <TextInput
                                     id="name"
                                     type="text"
@@ -193,7 +195,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="slug" value="Slug" />
+                                <InputLabel htmlFor="slug" value={t('carousels.form.slug')} />
                                 <TextInput
                                     id="slug"
                                     type="text"
@@ -206,7 +208,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="description" value="Description (optional)" />
+                                <InputLabel htmlFor="description" value={t('carousels.form.description')} />
                                 <textarea
                                     id="description"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -218,7 +220,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="autoplay_interval" value="Autoplay Interval (ms)" />
+                                <InputLabel htmlFor="autoplay_interval" value={t('carousels.form.autoplay')} />
                                 <TextInput
                                     id="autoplay_interval"
                                     type="number"
@@ -242,7 +244,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         onChange={(e) => setData('is_active', e.target.checked)}
                                     />
                                     <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                                        Active
+                                        {t('carousels.form.active')}
                                     </label>
                                 </div>
 
@@ -255,7 +257,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         onChange={(e) => setData('show_navigation', e.target.checked)}
                                     />
                                     <label htmlFor="show_navigation" className="ml-2 block text-sm text-gray-900">
-                                        Show Navigation Arrows
+                                        {t('carousels.form.show_navigation')}
                                     </label>
                                 </div>
 
@@ -268,17 +270,17 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         onChange={(e) => setData('show_indicators', e.target.checked)}
                                     />
                                     <label htmlFor="show_indicators" className="ml-2 block text-sm text-gray-900">
-                                        Show Slide Indicators
+                                        {t('carousels.form.show_indicators')}
                                     </label>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-4">
                                 <PrimaryButton disabled={processing}>
-                                    Save Settings
+                                    {t('carousels.form.save_settings')}
                                 </PrimaryButton>
                                 <Link href={prefixedRoute('carousels.index')}>
-                                    <SecondaryButton type="button">Back to List</SecondaryButton>
+                                    <SecondaryButton type="button">{t('carousels.back_list')}</SecondaryButton>
                                 </Link>
                             </div>
                         </form>
@@ -289,9 +291,9 @@ export default function Edit({ carousel }: Props): JSX.Element {
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-medium text-gray-900">Carousel Images</h3>
+                            <h3 className="text-lg font-medium text-gray-900">{t('carousels.images.title')}</h3>
                             <PrimaryButton onClick={openAddImageModal}>
-                                Add Image
+                                {t('carousels.images.add')}
                             </PrimaryButton>
                         </div>
 
@@ -310,12 +312,12 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                                     />
                                 </svg>
-                                <p className="mt-2 text-sm text-gray-500">No images added yet</p>
+                                <p className="mt-2 text-sm text-gray-500">{t('carousels.images.empty')}</p>
                                 <button
                                     onClick={openAddImageModal}
                                     className="mt-4 text-indigo-600 hover:text-indigo-500 text-sm font-medium"
                                 >
-                                    Add your first image
+                                    {t('carousels.images.add_first')}
                                 </button>
                             </div>
                         ) : (
@@ -329,7 +331,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                     >
                                         <img
                                             src={image.image_path.startsWith('http') ? image.image_path : `/storage/${image.image_path}`}
-                                            alt={image.title || 'Carousel image'}
+                                            alt={image.title || t('carousels.images.alt')}
                                             className="w-full h-48 object-cover"
                                         />
                                         <div className="p-3">
@@ -340,7 +342,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                             )}
                                             <div className="flex items-center justify-between mt-2">
                                                 <span className="text-xs text-gray-500">
-                                                    Order: {image.sort_order + 1}
+                                                    {t('carousels.images.order', { n: image.sort_order + 1 })}
                                                 </span>
                                                 <span
                                                     className={`text-xs px-2 py-0.5 rounded ${
@@ -349,7 +351,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                                             : 'bg-red-100 text-red-800'
                                                     }`}
                                                 >
-                                                    {image.is_active ? 'Active' : 'Inactive'}
+                                                    {image.is_active ? t('carousels.active') : t('carousels.inactive')}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between mt-3 pt-3 border-t">
@@ -358,7 +360,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                                         onClick={() => moveImage(image, 'up')}
                                                         disabled={index === 0}
                                                         className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                                        title="Move up"
+                                                        title={t('carousels.images.move_up')}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -368,7 +370,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                                         onClick={() => moveImage(image, 'down')}
                                                         disabled={index === carousel.images.length - 1}
                                                         className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                                        title="Move down"
+                                                        title={t('carousels.images.move_down')}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -380,13 +382,13 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                                         onClick={() => openEditImageModal(image)}
                                                         className="text-indigo-600 hover:text-indigo-900 text-sm"
                                                     >
-                                                        Edit
+                                                        {t('common.edit')}
                                                     </button>
                                                     <button
                                                         onClick={() => openDeleteDialog(image)}
                                                         className="text-red-600 hover:text-red-900 text-sm"
                                                     >
-                                                        Delete
+                                                        {t('common.delete')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -404,19 +406,12 @@ export default function Edit({ carousel }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDeleteImage}
                 processing={deleteProcessing}
-                title="Hapus Gambar"
-                message={
-                    <>
-                        Apakah Anda yakin ingin menghapus gambar
-                        {imageToDelete?.title && (
-                            <>
-                                {' '}<strong>"{imageToDelete.title}"</strong>
-                            </>
-                        )}
-                        ? Gambar akan dihapus secara permanen dari carousel.
-                        Tindakan ini tidak dapat dibatalkan.
-                    </>
-                }
+                title={t('carousels.delete.image_title')}
+                message={t('carousels.delete.image_message', {
+                    name_part: imageToDelete?.title
+                        ? t('carousels.delete.image_named', { name: imageToDelete.title })
+                        : '',
+                })}
             />
 
             {/* Image Modal */}
@@ -431,11 +426,11 @@ export default function Edit({ carousel }: Props): JSX.Element {
                             <form onSubmit={submitImage}>
                                 <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                        {editingImage ? 'Edit Image' : 'Add Image'}
+                                        {editingImage ? t('carousels.images.edit') : t('carousels.images.add')}
                                     </h3>
                                     <div className="space-y-4">
                                         <div>
-                                            <InputLabel htmlFor="image" value={editingImage ? 'Replace Image (optional)' : 'Image'} />
+                                            <InputLabel htmlFor="image" value={editingImage ? t('carousels.images.replace') : t('carousels.images.image')} />
                                             <CarouselImageUploader
                                                 onFileSelect={(file) => imageForm.setData('image', file)}
                                                 onUrlSelect={(url) => imageForm.setData('image_url', url)}
@@ -447,7 +442,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         </div>
 
                                         <div>
-                                            <InputLabel htmlFor="image_title" value="Title (optional)" />
+                                            <InputLabel htmlFor="image_title" value={t('carousels.images.title_optional')} />
                                             <TextInput
                                                 id="image_title"
                                                 type="text"
@@ -458,7 +453,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         </div>
 
                                         <div>
-                                            <InputLabel htmlFor="image_description" value="Description (optional)" />
+                                            <InputLabel htmlFor="image_description" value={t('carousels.images.description_optional')} />
                                             <textarea
                                                 id="image_description"
                                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -469,7 +464,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         </div>
 
                                         <div>
-                                            <InputLabel htmlFor="link_url" value="Link URL (optional)" />
+                                            <InputLabel htmlFor="link_url" value={t('carousels.images.link_url')} />
                                             <TextInput
                                                 id="link_url"
                                                 type="url"
@@ -481,28 +476,28 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         </div>
 
                                         <div>
-                                            <InputLabel htmlFor="link_target" value="Link Target" />
+                                            <InputLabel htmlFor="link_target" value={t('carousels.images.link_target')} />
                                             <Select
                                                 id="link_target"
                                                 className="mt-1"
                                                 value={imageForm.data.link_target}
                                                 onChange={(value) => imageForm.setData('link_target', value)}
                                                 options={[
-                                                    { value: '_self', label: 'Same Window' },
-                                                    { value: '_blank', label: 'New Window' },
+                                                    { value: '_self', label: t('carousels.images.same_window') },
+                                                    { value: '_blank', label: t('carousels.images.new_window') },
                                                 ]}
                                             />
                                         </div>
 
                                         <div>
-                                            <InputLabel htmlFor="button_text" value="Button Text (optional)" />
+                                            <InputLabel htmlFor="button_text" value={t('carousels.images.button_text')} />
                                             <TextInput
                                                 id="button_text"
                                                 type="text"
                                                 className="mt-1 block w-full"
                                                 value={imageForm.data.button_text}
                                                 onChange={(e) => imageForm.setData('button_text', e.target.value)}
-                                                placeholder="Learn More"
+                                                placeholder={t('carousels.images.button_placeholder')}
                                             />
                                         </div>
 
@@ -515,7 +510,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                                 onChange={(e) => imageForm.setData('is_active', e.target.checked)}
                                             />
                                             <label htmlFor="image_is_active" className="ml-2 block text-sm text-gray-900">
-                                                Active
+                                                {t('carousels.images.active')}
                                             </label>
                                         </div>
                                     </div>
@@ -526,14 +521,14 @@ export default function Edit({ carousel }: Props): JSX.Element {
                                         className="w-full sm:ml-3 sm:w-auto"
                                         disabled={imageForm.processing}
                                     >
-                                        {editingImage ? 'Update Image' : 'Add Image'}
+                                        {editingImage ? t('carousels.images.update') : t('carousels.images.add')}
                                     </PrimaryButton>
                                     <SecondaryButton
                                         type="button"
                                         className="mt-3 w-full sm:mt-0 sm:w-auto"
                                         onClick={closeImageModal}
                                     >
-                                        Cancel
+                                        {t('common.cancel')}
                                     </SecondaryButton>
                                 </div>
                             </form>

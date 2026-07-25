@@ -62,7 +62,7 @@ class ProductTypeController extends Controller
         ProductType::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.products.product-types.index')
-            ->with('success', 'Tipe produk berhasil dibuat.');
+            ->with('success', __('products.messages.type_created'));
     }
 
     public function edit(ProductType $productType): Response
@@ -85,22 +85,22 @@ class ProductTypeController extends Controller
         $productType->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.products.product-types.index')
-            ->with('success', 'Tipe produk berhasil diperbarui.');
+            ->with('success', __('products.messages.type_updated'));
     }
 
     public function destroy(ProductType $productType): RedirectResponse
     {
         if ($productType->products()->exists()) {
-            return back()->with('error', 'Tipe produk masih digunakan oleh produk dan tidak bisa dihapus.');
+            return back()->with('error', __('products.messages.type_has_products'));
         }
 
         if ($productType->children()->exists()) {
-            return back()->with('error', 'Tipe produk masih memiliki sub-tipe dan tidak bisa dihapus.');
+            return back()->with('error', __('products.messages.type_has_children'));
         }
 
         $productType->delete();
 
         return redirect()->route($this->getRoutePrefix().'.products.product-types.index')
-            ->with('success', 'Tipe produk berhasil dihapus.');
+            ->with('success', __('products.messages.type_deleted'));
     }
 }

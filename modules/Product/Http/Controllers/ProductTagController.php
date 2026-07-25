@@ -54,7 +54,7 @@ class ProductTagController extends Controller
         ProductTag::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.products.tags.index')
-            ->with('success', 'Tag berhasil dibuat.');
+            ->with('success', __('products.messages.tag_created'));
     }
 
     public function edit(ProductTag $tag): Response
@@ -69,18 +69,18 @@ class ProductTagController extends Controller
         $tag->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.products.tags.index')
-            ->with('success', 'Tag berhasil diperbarui.');
+            ->with('success', __('products.messages.tag_updated'));
     }
 
     public function destroy(ProductTag $tag): RedirectResponse
     {
         if ($tag->products()->exists()) {
-            return back()->with('error', 'Tag masih digunakan oleh produk dan tidak bisa dihapus.');
+            return back()->with('error', __('products.messages.tag_in_use'));
         }
 
         $tag->delete();
 
         return redirect()->route($this->getRoutePrefix().'.products.tags.index')
-            ->with('success', 'Tag berhasil dihapus.');
+            ->with('success', __('products.messages.tag_deleted'));
     }
 }

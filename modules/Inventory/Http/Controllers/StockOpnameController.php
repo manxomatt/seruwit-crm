@@ -71,7 +71,7 @@ class StockOpnameController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.inventory.stock-opnames.show', $opname)
-            ->with('success', 'Stock opname created. Enter your physical counts.');
+            ->with('success', __('inventory.messages.opname_created'));
     }
 
     public function show(StockOpname $opname)
@@ -97,7 +97,7 @@ class StockOpnameController extends Controller
             }
         });
 
-        return back()->with('success', 'Counts saved');
+        return back()->with('success', __('inventory.messages.counts_saved'));
     }
 
     public function finalize(FinalizeStockOpnameRequest $request, StockOpname $opname): RedirectResponse
@@ -129,6 +129,6 @@ class StockOpnameController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.inventory.stock-opnames.show', $opname)
-            ->with('success', 'Stock opname finalized and adjustments recorded');
+            ->with('success', __('inventory.messages.opname_finalized'));
     }
 }

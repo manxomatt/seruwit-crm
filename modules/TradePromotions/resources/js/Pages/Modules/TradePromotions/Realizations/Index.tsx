@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
 import PromotionsNav from '../../../../PromotionsNav';
@@ -23,10 +24,11 @@ interface Props {
 
 export default function Index({ realizations, programs, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Promo Realizations</h2>}>
-            <Head title="Promo Realizations" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.realizations.index.title')}</h2>}>
+            <Head title={t('promotions.realizations.index.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <PromotionsNav />
@@ -38,7 +40,7 @@ export default function Index({ realizations, programs, filters }: Props): JSX.E
                                 program_id: value || undefined,
                             })
                         }
-                        placeholder="All programs"
+                        placeholder={t('promotions.realizations.index.all_programs')}
                         options={programs.map((p) => ({ value: String(p.id), label: `${p.code} — ${p.name}` }))}
                     />
 
@@ -46,19 +48,19 @@ export default function Index({ realizations, programs, filters }: Props): JSX.E
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Program</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Distributor</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Qty</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Value</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Achievement</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.program')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.distributor')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.qty')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.value')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.achievement')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.status')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {realizations.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                                            No realizations yet.
+                                            {t('promotions.realizations.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -80,7 +82,7 @@ export default function Index({ realizations, programs, filters }: Props): JSX.E
                                             <td className="px-4 py-3">{row.realized_qty}</td>
                                             <td className="px-4 py-3">Rp {Number(row.realized_value).toLocaleString()}</td>
                                             <td className="px-4 py-3 font-semibold">{row.achievement_percent}%</td>
-                                            <td className="px-4 py-3 capitalize">{row.status}</td>
+                                            <td className="px-4 py-3">{t(`promotions.status.${row.status}`, undefined, row.status)}</td>
                                         </tr>
                                     ))
                                 )}

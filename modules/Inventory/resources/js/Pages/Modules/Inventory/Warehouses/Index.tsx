@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout'
 import { useRoutePrefix } from '@/hooks/useRoutePrefix'
+import { useTrans } from '@/hooks/useTrans'
 import PrimaryButton from '@/Components/PrimaryButton'
 import { Head, Link } from '@inertiajs/react'
 import InventoryNav from '../../../../InventoryNav'
@@ -19,19 +20,20 @@ interface Props {
 
 export default function WarehousesIndex({ warehouses }: Props) {
   const { prefixedRoute } = useRoutePrefix()
+  const { t } = useTrans()
 
   return (
     <DynamicLayout
       header={
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory</h2>
+          <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('inventory.title')}</h2>
           <Link href={prefixedRoute('inventory.warehouses.create')}>
-            <PrimaryButton>Add Warehouse</PrimaryButton>
+            <PrimaryButton>{t('inventory.warehouses.add')}</PrimaryButton>
           </Link>
         </div>
       }
     >
-      <Head title="Warehouses" />
+      <Head title={t('inventory.warehouses.head')} />
 
       <InventoryNav />
 
@@ -39,10 +41,10 @@ export default function WarehousesIndex({ warehouses }: Props) {
         <div className="p-6">
           {warehouses.length === 0 ? (
             <div className="py-12 text-center">
-              <h3 className="text-sm font-medium text-gray-900">No warehouses found</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by creating your first warehouse.</p>
+              <h3 className="text-sm font-medium text-gray-900">{t('inventory.warehouses.empty_title')}</h3>
+              <p className="mt-1 text-sm text-gray-500">{t('inventory.warehouses.empty_hint')}</p>
               <Link href={prefixedRoute('inventory.warehouses.create')} className="mt-4 inline-block">
-                <PrimaryButton>Add Warehouse</PrimaryButton>
+                <PrimaryButton>{t('inventory.warehouses.add')}</PrimaryButton>
               </Link>
             </div>
           ) : (
@@ -50,11 +52,11 @@ export default function WarehousesIndex({ warehouses }: Props) {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Location</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Zones</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.warehouses.columns.name')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.warehouses.columns.location')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.warehouses.columns.zones')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('inventory.warehouses.columns.status')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -71,7 +73,7 @@ export default function WarehousesIndex({ warehouses }: Props) {
                               : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {warehouse.status}
+                          {t(`inventory.status.${warehouse.status}`)}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
@@ -79,7 +81,7 @@ export default function WarehousesIndex({ warehouses }: Props) {
                           href={prefixedRoute('inventory.warehouses.show', warehouse.id)}
                           className="text-indigo-600 hover:text-indigo-900"
                         >
-                          View
+                          {t('inventory.warehouses.view')}
                         </Link>
                       </td>
                     </tr>

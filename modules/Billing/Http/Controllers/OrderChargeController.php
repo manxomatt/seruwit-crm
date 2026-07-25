@@ -83,13 +83,13 @@ class OrderChargeController extends Controller
     public function update(UpdateOrderChargeRequest $request, DeliveryOrder $order): RedirectResponse
     {
         if (! in_array($order->status, self::BILLABLE_STATUSES, true)) {
-            return back()->with('error', 'Only a confirmed order can be priced.');
+            return back()->with('error', __('billing.messages.charge_not_confirmed'));
         }
 
         $existing = OrderCharge::query()->firstWhere('delivery_order_id', $order->id);
 
         if ($existing && $existing->isLocked()) {
-            return back()->with('error', 'This charge is on an issued invoice and can no longer be changed.');
+            return back()->with('error', __('billing.messages.charge_locked'));
         }
 
         $validated = $request->validated();
@@ -113,6 +113,6 @@ class OrderChargeController extends Controller
             $line->invoice->recalculate();
         }
 
-        return back()->with('success', 'Charge updated.');
+        return back()->with('success', __('billing.messages.charge_updated'));
     }
 }

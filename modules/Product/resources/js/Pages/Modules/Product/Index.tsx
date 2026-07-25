@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ProductNav from '../../../ProductNav';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -29,7 +30,7 @@ interface Product {
     unit: string;
     price: string | null;
     status: string;
-    brand: (Brand) | null;
+    brand: Brand | null;
     product_type: { id: number; name: string } | null;
 }
 
@@ -58,12 +59,15 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
+const CATEGORIES = ['merchandise', 'fleet_sparepart', 'service'] as const;
+
 const getStatusBadgeColor = (status: string) => {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 };
 
 export default function Index({ products, brands, productTypes, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -98,16 +102,16 @@ export default function Index({ products, brands, productTypes, filters, can }: 
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Products</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.products.index.head')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('products.create')}>
-                            <PrimaryButton>Add Product</PrimaryButton>
+                            <PrimaryButton>{t('products.products.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Products" />
+            <Head title={t('products.products.index.head')} />
             <ProductNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -116,7 +120,7 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Cari nama, kode, SKU, barcode..."
+                                placeholder={t('products.placeholders.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -126,9 +130,9 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                             className="w-48"
                             value={filters.brand_id || ''}
                             onChange={(v) => applyFilters({ brand_id: v || undefined })}
-                            placeholder="Semua brand"
+                            placeholder={t('products.placeholders.select_brand')}
                             options={[
-                                { value: '', label: 'Semua brand' },
+                                { value: '', label: t('products.placeholders.select_brand') },
                                 ...brands.map((b) => ({ value: String(b.id), label: b.name })),
                             ]}
                         />
@@ -136,9 +140,9 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                             className="w-48"
                             value={filters.product_type_id || ''}
                             onChange={(v) => applyFilters({ product_type_id: v || undefined })}
-                            placeholder="Semua tipe"
+                            placeholder={t('products.placeholders.select_type')}
                             options={[
-                                { value: '', label: 'Semua tipe' },
+                                { value: '', label: t('products.placeholders.select_type') },
                                 ...productTypes.map((pt) => ({ value: String(pt.id), label: pt.name })),
                             ]}
                         />
@@ -146,32 +150,29 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                             className="w-40"
                             value={filters.category || ''}
                             onChange={(v) => applyFilters({ category: v || undefined })}
-                            placeholder="Semua kategori"
+                            placeholder={t('products.categories.all')}
                             options={[
-                                { value: '', label: 'Semua kategori' },
-                                { value: 'merchandise', label: 'Barang' },
-                                { value: 'fleet_sparepart', label: 'Sparepart' },
-                                { value: 'service', label: 'Jasa' },
+                                { value: '', label: t('products.categories.all') },
+                                ...CATEGORIES.map((cat) => ({ value: cat, label: t(`products.categories.${cat}`) })),
                             ]}
                         />
                         <Select
                             className="w-40"
                             value={filters.status || ''}
                             onChange={(v) => applyFilters({ status: v || undefined })}
-                            placeholder="Semua status"
+                            placeholder={t('products.status.all')}
                             options={[
-                                { value: '', label: 'Semua status' },
-                                { value: 'active', label: 'Active' },
-                                { value: 'inactive', label: 'Inactive' },
+                                { value: '', label: t('products.status.all') },
+                                { value: 'active', label: t('products.status.active') },
+                                { value: 'inactive', label: t('products.status.inactive') },
                             ]}
                         />
-                        <PrimaryButton type="submit">Cari</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {products.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">Belum ada produk</h3>
-                            <p className="mt-1 text-sm text-gray-500">Mulai dengan menambahkan produk baru.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('products.products.index.empty')}</h3>
                         </div>
                     ) : (
                         <>
@@ -179,14 +180,14 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Kode</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Brand</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tipe</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">SKU</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Satuan</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Aksi</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.products.index.columns.code')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.products.index.columns.name')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.products.index.columns.brand')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.product_type')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.sku')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.unit')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.products.index.columns.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -204,16 +205,16 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{product.unit}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(product.status)}`}>
-                                                        {product.status}
+                                                        {t(`products.status.${product.status}`, undefined, product.status)}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-3">
                                                         {can.update && (
-                                                            <Link href={prefixedRoute('products.edit', product.id)} className="text-indigo-600 hover:text-indigo-900">Edit</Link>
+                                                            <Link href={prefixedRoute('products.edit', product.id)} className="text-indigo-600 hover:text-indigo-900">{t('common.edit')}</Link>
                                                         )}
                                                         {can.delete && (
-                                                            <button onClick={() => { setProductToDelete(product); setShowDeleteDialog(true); }} className="text-red-600 hover:text-red-900">Hapus</button>
+                                                            <button onClick={() => { setProductToDelete(product); setShowDeleteDialog(true); }} className="text-red-600 hover:text-red-900">{t('common.delete')}</button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -226,8 +227,11 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                             {products.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Menampilkan {(products.current_page - 1) * products.per_page + 1} s/d{' '}
-                                        {Math.min(products.current_page * products.per_page, products.total)} dari {products.total}
+                                        {t('common.showing_results', {
+                                            from: (products.current_page - 1) * products.per_page + 1,
+                                            to: Math.min(products.current_page * products.per_page, products.total),
+                                            total: products.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {products.links.map((link, index) => (
@@ -258,8 +262,8 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                 onClose={() => { setShowDeleteDialog(false); setProductToDelete(null); }}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Product"
-                message={productToDelete ? `Yakin ingin menghapus "${productToDelete.name}" (${productToDelete.code})?` : ''}
+                title={t('products.products.index.delete_title')}
+                message={productToDelete ? t('products.products.index.delete_confirm', { name: productToDelete.name, code: productToDelete.code }) : ''}
             />
         </DynamicLayout>
     );

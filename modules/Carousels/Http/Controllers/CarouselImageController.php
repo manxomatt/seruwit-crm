@@ -54,7 +54,7 @@ class CarouselImageController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
-            ->with('success', 'Image added successfully.');
+            ->with('success', __('carousels.messages.image_added'));
     }
 
     /**
@@ -90,7 +90,7 @@ class CarouselImageController extends Controller
         $image->update($data);
 
         return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
-            ->with('success', 'Image updated successfully.');
+            ->with('success', __('carousels.messages.image_updated'));
     }
 
     /**
@@ -114,7 +114,7 @@ class CarouselImageController extends Controller
         $image->delete();
 
         return redirect()->route($this->getRoutePrefix().'.carousels.edit', $carousel)
-            ->with('success', 'Image deleted successfully.');
+            ->with('success', __('carousels.messages.image_deleted'));
     }
 
     /**

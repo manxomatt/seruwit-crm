@@ -5,6 +5,7 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     WorkOrder,
@@ -14,8 +15,8 @@ import {
     getTypeBadge,
     formatDate,
     formatCurrency,
-    STATUS_OPTIONS,
-    PRIORITY_OPTIONS,
+    statusOptions,
+    priorityOptions,
 } from '../../../../maintenanceUtils';
 
 interface PaginatedWorkOrders {
@@ -62,6 +63,8 @@ const TrashIcon = () => (
 
 export default function Index({ workOrders, vehicles, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [search, setSearch] = useState(filters.search ?? '');
     const [deletingWo, setDeletingWo] = useState<WorkOrder | null>(null);
     const [processing, setProcessing] = useState(false);
@@ -92,16 +95,16 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Maintenance</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('maintenance.work-orders.create')}>
-                            <PrimaryButton>+ Work Order Baru</PrimaryButton>
+                            <PrimaryButton>{t('maintenance.work_orders.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Work Orders" />
+            <Head title={t('maintenance.work_orders.head')} />
             <MaintenanceNav />
 
             {/* Filters */}
@@ -110,10 +113,10 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                     <TextInput
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Cari referensi, judul, kendaraan..."
+                        placeholder={t('maintenance.work_orders.search_placeholder')}
                         className="w-72"
                     />
-                    <PrimaryButton type="submit">Cari</PrimaryButton>
+                    <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                 </form>
 
                 <select
@@ -121,8 +124,8 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                     onChange={(e) => applyFilters({ status: e.target.value || undefined })}
                     className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
-                    <option value="">Semua Status</option>
-                    {STATUS_OPTIONS.map((o) => (
+                    <option value="">{t('maintenance.status.all')}</option>
+                    {statusOptions(t).map((o) => (
                         <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                 </select>
@@ -132,8 +135,8 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                     onChange={(e) => applyFilters({ priority: e.target.value || undefined })}
                     className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
-                    <option value="">Semua Prioritas</option>
-                    {PRIORITY_OPTIONS.map((o) => (
+                    <option value="">{t('maintenance.priority.all')}</option>
+                    {priorityOptions(t).map((o) => (
                         <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                 </select>
@@ -143,7 +146,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                     onChange={(e) => applyFilters({ vehicle_id: e.target.value || undefined })}
                     className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
-                    <option value="">Semua Kendaraan</option>
+                    <option value="">{t('maintenance.work_orders.all_vehicles')}</option>
                     {vehicles.map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.plate_number}</option>
                     ))}
@@ -153,31 +156,32 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
             {/* Table */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-200 px-6 py-3 text-sm text-gray-500">
-                    {workOrders.total} work order ditemukan
+                    {t('maintenance.work_orders.found', { count: workOrders.total })}
                 </div>
 
                 {workOrders.data.length === 0 ? (
                     <div className="py-16 text-center text-gray-500">
-                        <p className="text-sm">Tidak ada work order</p>
+                        <p className="text-sm">{t('maintenance.work_orders.empty')}</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Referensi</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Kendaraan</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Pekerjaan</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Jadwal</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Estimasi</th>
-                                    <th className="relative px-6 py-3"><span className="sr-only">Aksi</span></th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.reference')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.vehicle')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.job')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.status')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.schedule')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.estimate')}</th>
+                                    <th className="relative px-6 py-3"><span className="sr-only">{t('common.actions')}</span></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
                                 {workOrders.data.map((wo) => {
-                                    const statusBadge = getStatusBadge(wo.status);
-                                    const priorityBadge = getPriorityBadge(wo.priority);
+                                    const statusBadge = getStatusBadge(wo.status, t);
+                                    const priorityBadge = getPriorityBadge(wo.priority, t);
+                                    const typeBadge = getTypeBadge(wo.type, t);
                                     return (
                                         <tr key={wo.id} className="hover:bg-gray-50">
                                             <td className="whitespace-nowrap px-6 py-4">
@@ -197,24 +201,24 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                                                 <p className="max-w-xs truncate text-sm font-medium text-gray-900">{wo.title}</p>
                                                 <div className="mt-1 flex gap-1">
                                                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityBadge.classes}`}>{priorityBadge.label}</span>
-                                                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getTypeBadge(wo.type).classes}`}>{getTypeBadge(wo.type).label}</span>
+                                                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeBadge.classes}`}>{typeBadge.label}</span>
                                                 </div>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
                                                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusBadge.classes}`}>{statusBadge.label}</span>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                {formatDate(wo.scheduled_date)}
+                                                {formatDate(wo.scheduled_date, localeTag)}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                                                {formatCurrency(wo.estimated_cost)}
+                                                {formatCurrency(wo.estimated_cost, localeTag)}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                                                 <div className="flex items-center justify-end gap-3">
                                                     <Link
                                                         href={prefixedRoute('maintenance.work-orders.show', wo.id)}
                                                         className="text-blue-600 hover:text-blue-900"
-                                                        title="Detail"
+                                                        title={t('maintenance.work_orders.show_title')}
                                                     >
                                                         <EyeIcon />
                                                     </Link>
@@ -222,7 +226,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                                                         <Link
                                                             href={prefixedRoute('maintenance.work-orders.edit', wo.id)}
                                                             className="text-indigo-600 hover:text-indigo-900"
-                                                            title="Edit"
+                                                            title={t('common.edit')}
                                                         >
                                                             <PencilIcon />
                                                         </Link>
@@ -232,7 +236,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                                                             type="button"
                                                             onClick={() => setDeletingWo(wo)}
                                                             className="text-red-600 hover:text-red-900"
-                                                            title="Hapus"
+                                                            title={t('common.delete')}
                                                         >
                                                             <TrashIcon />
                                                         </button>
@@ -251,7 +255,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                 {workOrders.last_page > 1 && (
                     <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
                         <p className="text-sm text-gray-500">
-                            Hal {workOrders.current_page} dari {workOrders.last_page}
+                            {t('maintenance.page_of', { current: workOrders.current_page, last: workOrders.last_page })}
                         </p>
                         <div className="flex gap-1">
                             {workOrders.links.map((link, i) => (
@@ -275,11 +279,14 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
 
             <ConfirmDeleteDialog
                 show={!!deletingWo}
-                title="Hapus Work Order"
-                description={`Yakin ingin menghapus work order "${deletingWo?.reference_number} — ${deletingWo?.title}"? Tindakan ini tidak dapat dibatalkan.`}
+                title={t('maintenance.work_orders.delete_title')}
+                message={t('maintenance.work_orders.delete_confirm', {
+                    ref: deletingWo?.reference_number ?? '',
+                    title: deletingWo?.title ?? '',
+                })}
                 processing={processing}
                 onConfirm={confirmDelete}
-                onCancel={() => setDeletingWo(null)}
+                onClose={() => setDeletingWo(null)}
             />
         </DynamicLayout>
     );

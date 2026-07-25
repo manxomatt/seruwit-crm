@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -38,6 +39,7 @@ interface Props {
 
 export default function Show({ approvalRequest, triggers, canDecide }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [note, setNote] = useState('');
 
     return (
@@ -47,11 +49,11 @@ export default function Show({ approvalRequest, triggers, canDecide }: Props): J
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold text-gray-800">{approvalRequest.code}</h2>
                         <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium capitalize">
-                            {approvalRequest.status}
+                            {t(`approvals.status.${approvalRequest.status}`, undefined, approvalRequest.status)}
                         </span>
                     </div>
                     <Link href={prefixedRoute('approvals.requests.index')}>
-                        <SecondaryButton>Back</SecondaryButton>
+                        <SecondaryButton>{t('approvals.request.back')}</SecondaryButton>
                     </Link>
                 </div>
             }
@@ -63,32 +65,32 @@ export default function Show({ approvalRequest, triggers, canDecide }: Props): J
 
                     <div className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2">
                         <div>
-                            <p className="text-xs text-gray-500">Policy</p>
+                            <p className="text-xs text-gray-500">{t('approvals.request.policy')}</p>
                             <p className="font-medium">{approvalRequest.policy.name}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Trigger</p>
+                            <p className="text-xs text-gray-500">{t('approvals.request.trigger')}</p>
                             <p className="font-medium">
                                 {triggers[approvalRequest.trigger_type]?.label ?? approvalRequest.trigger_type}
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Current level</p>
+                            <p className="text-xs text-gray-500">{t('approvals.request.current_level')}</p>
                             <p className="font-medium">{approvalRequest.current_level}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Requested by</p>
+                            <p className="text-xs text-gray-500">{t('approvals.request.requested_by')}</p>
                             <p className="font-medium">{approvalRequest.requester?.name ?? '—'}</p>
                         </div>
                         <div className="sm:col-span-2">
-                            <p className="text-xs text-gray-500">Subject</p>
+                            <p className="text-xs text-gray-500">{t('approvals.request.subject')}</p>
                             <p className="font-mono text-sm">
                                 {approvalRequest.subject_type} #{approvalRequest.subject_id}
                             </p>
                         </div>
                         {approvalRequest.payload && (
                             <div className="sm:col-span-2">
-                                <p className="text-xs text-gray-500">Payload</p>
+                                <p className="text-xs text-gray-500">{t('approvals.request.payload')}</p>
                                 <pre className="mt-1 overflow-auto rounded bg-gray-50 p-3 text-xs text-gray-700">
                                     {JSON.stringify(approvalRequest.payload, null, 2)}
                                 </pre>
@@ -97,13 +99,14 @@ export default function Show({ approvalRequest, triggers, canDecide }: Props): J
                     </div>
 
                     <div className="rounded-lg border border-gray-200 bg-white p-5">
-                        <h3 className="text-sm font-semibold text-gray-900">Levels</h3>
+                        <h3 className="text-sm font-semibold text-gray-900">{t('approvals.request.levels')}</h3>
                         <ul className="mt-3 space-y-2 text-sm">
                             {approvalRequest.policy.levels.map((level) => (
                                 <li
                                     key={level.level}
                                     className={`rounded border px-3 py-2 ${
-                                        level.level === approvalRequest.current_level && approvalRequest.status === 'pending'
+                                        level.level === approvalRequest.current_level &&
+                                        approvalRequest.status === 'pending'
                                             ? 'border-indigo-300 bg-indigo-50'
                                             : 'border-gray-200'
                                     }`}
@@ -116,12 +119,15 @@ export default function Show({ approvalRequest, triggers, canDecide }: Props): J
 
                     {approvalRequest.actions.length > 0 && (
                         <div className="rounded-lg border border-gray-200 bg-white p-5">
-                            <h3 className="text-sm font-semibold text-gray-900">History</h3>
+                            <h3 className="text-sm font-semibold text-gray-900">{t('approvals.request.history')}</h3>
                             <ul className="mt-3 space-y-2 text-sm">
                                 {approvalRequest.actions.map((action) => (
                                     <li key={action.id} className="border-b border-gray-100 pb-2">
-                                        <span className="font-medium capitalize">{action.action}</span> by{' '}
-                                        {action.actor?.name ?? '—'} (L{action.level})
+                                        {t('approvals.request.history_line', {
+                                            action: t(`approvals.status.${action.action}`, undefined, action.action),
+                                            actor: action.actor?.name ?? '—',
+                                            level: action.level,
+                                        })}
                                         {action.note ? <span className="block text-gray-500">{action.note}</span> : null}
                                     </li>
                                 ))}
@@ -133,7 +139,7 @@ export default function Show({ approvalRequest, triggers, canDecide }: Props): J
                         <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">
                             <TextInput
                                 className="w-full"
-                                placeholder="Catatan (opsional)"
+                                placeholder={t('approvals.request.note_placeholder')}
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                             />
@@ -145,7 +151,7 @@ export default function Show({ approvalRequest, triggers, canDecide }: Props): J
                                         })
                                     }
                                 >
-                                    Approve
+                                    {t('approvals.request.approve')}
                                 </PrimaryButton>
                                 <DangerButton
                                     onClick={() =>
@@ -154,7 +160,7 @@ export default function Show({ approvalRequest, triggers, canDecide }: Props): J
                                         })
                                     }
                                 >
-                                    Reject
+                                    {t('approvals.request.reject')}
                                 </DangerButton>
                             </div>
                         </div>

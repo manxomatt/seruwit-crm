@@ -22,7 +22,7 @@ class InvoiceLineController extends Controller
     public function store(StoreInvoiceLineRequest $request, Invoice $invoice): RedirectResponse
     {
         if ($invoice->status !== Invoice::STATUS_DRAFT) {
-            return back()->with('error', 'Lines can only be changed on a draft invoice.');
+            return back()->with('error', __('invoicing.messages.lines_draft_only'));
         }
 
         DB::transaction(function () use ($request, $invoice) {
@@ -30,7 +30,7 @@ class InvoiceLineController extends Controller
             $invoice->recalculate();
         });
 
-        return back()->with('success', 'Line added.');
+        return back()->with('success', __('invoicing.messages.line_added'));
     }
 
     public function destroy(Invoice $invoice, InvoiceLine $line): RedirectResponse
@@ -40,7 +40,7 @@ class InvoiceLineController extends Controller
         }
 
         if ($invoice->status !== Invoice::STATUS_DRAFT) {
-            return back()->with('error', 'Lines can only be changed on a draft invoice.');
+            return back()->with('error', __('invoicing.messages.lines_draft_only'));
         }
 
         DB::transaction(function () use ($invoice, $line) {
@@ -48,6 +48,6 @@ class InvoiceLineController extends Controller
             $invoice->recalculate();
         });
 
-        return back()->with('success', 'Line removed.');
+        return back()->with('success', __('invoicing.messages.line_removed'));
     }
 }

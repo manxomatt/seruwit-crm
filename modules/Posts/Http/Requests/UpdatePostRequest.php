@@ -41,9 +41,9 @@ class UpdatePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.max' => 'The post title must not exceed 255 characters.',
-            'slug.unique' => 'This slug is already in use.',
-            'excerpt.max' => 'The excerpt must not exceed 500 characters.',
+            'title.max' => __('posts.validation.title_max'),
+            'slug.unique' => __('posts.validation.slug_unique'),
+            'excerpt.max' => __('posts.validation.excerpt_max'),
         ];
     }
 }

@@ -27,7 +27,7 @@ class PartnerAddressController extends Controller
 
         $partner->addresses()->create($validated);
 
-        return back()->with('success', 'Alamat berhasil ditambahkan.');
+        return back()->with('success', __('partners.messages.address_created'));
     }
 
     public function destroy(Partner $partner, PartnerAddress $address): RedirectResponse
@@ -36,6 +36,6 @@ class PartnerAddressController extends Controller
 
         $address->delete();
 
-        return back()->with('success', 'Alamat berhasil dihapus.');
+        return back()->with('success', __('partners.messages.address_deleted'));
     }
 }

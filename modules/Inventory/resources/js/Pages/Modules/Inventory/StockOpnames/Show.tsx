@@ -1,6 +1,7 @@
 import { Link, router, useForm } from '@inertiajs/react'
 import ModuleLayout from '@/Layouts/ModuleLayout'
 import { useRoutePrefix } from '@/hooks/useRoutePrefix'
+import { useLocaleTag, useTrans } from '@/hooks/useTrans'
 import Modal from '@/Components/Modal'
 import PrimaryButton from '@/Components/PrimaryButton'
 import SecondaryButton from '@/Components/SecondaryButton'
@@ -36,6 +37,8 @@ const statusColors: Record<string, string> = {
 
 export default function StockOpnameShow({ opname }: Props) {
   const { prefixedRoute } = useRoutePrefix()
+  const { t } = useTrans()
+  const localeTag = useLocaleTag()
   const editable = opname.status !== 'completed'
 
   const { data, setData, patch, processing } = useForm<{
@@ -83,19 +86,21 @@ export default function StockOpnameShow({ opname }: Props) {
     })
   }
 
+  const showTitle = t('inventory.opnames.show_title', { id: opname.id })
+
   return (
-    <ModuleLayout title={`Opname #${opname.id}`}>
+    <ModuleLayout title={showTitle}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Stock Opname #{opname.id}</h1>
+            <h1 className="text-3xl font-bold">{showTitle}</h1>
             <p className="text-sm text-gray-600">{opname.warehouse.name}</p>
           </div>
           <Link
             href={prefixedRoute('inventory.stock-opnames.index')}
             className="rounded border px-4 py-2 hover:bg-gray-50"
           >
-            Back to List
+            {t('inventory.opnames.back')}
           </Link>
         </div>
 
@@ -103,19 +108,19 @@ export default function StockOpnameShow({ opname }: Props) {
           <div className="rounded-lg border bg-white p-4">
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-semibold text-gray-600">STATUS</p>
+                <p className="text-xs font-semibold text-gray-600">{t('inventory.opnames.status')}</p>
                 <span
                   className={`inline-block rounded px-2 py-1 text-sm font-semibold ${statusColors[opname.status]}`}
                 >
-                  {opname.status}
+                  {t(`inventory.status.${opname.status}`)}
                 </span>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-600">OPNAME DATE</p>
-                <p>{new Date(opname.opname_date).toLocaleDateString('id-ID')}</p>
+                <p className="text-xs font-semibold text-gray-600">{t('inventory.opnames.opname_date')}</p>
+                <p>{new Date(opname.opname_date).toLocaleDateString(localeTag)}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-600">CREATED BY</p>
+                <p className="text-xs font-semibold text-gray-600">{t('inventory.opnames.created_by')}</p>
                 <p>{opname.created_by?.name ?? '—'}</p>
               </div>
             </div>
@@ -124,11 +129,11 @@ export default function StockOpnameShow({ opname }: Props) {
           <div className="rounded-lg border bg-white p-4">
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-semibold text-gray-600">TOTAL ITEMS</p>
+                <p className="text-xs font-semibold text-gray-600">{t('inventory.opnames.total_items')}</p>
                 <p className="text-2xl font-bold">{opname.items.length}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-600">TOTAL VARIANCE</p>
+                <p className="text-xs font-semibold text-gray-600">{t('inventory.opnames.total_variance')}</p>
                 <p
                   className={`text-lg font-bold ${
                     totalVariance > 0 ? 'text-green-600' : totalVariance < 0 ? 'text-red-600' : ''
@@ -147,10 +152,10 @@ export default function StockOpnameShow({ opname }: Props) {
             <table className="w-full">
               <thead className="border-b bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold">Product</th>
-                  <th className="px-6 py-3 text-right font-semibold">System Qty</th>
-                  <th className="px-6 py-3 text-right font-semibold">Actual Qty</th>
-                  <th className="px-6 py-3 text-right font-semibold">Variance</th>
+                  <th className="px-6 py-3 text-left font-semibold">{t('inventory.opnames.product')}</th>
+                  <th className="px-6 py-3 text-right font-semibold">{t('inventory.opnames.system_qty')}</th>
+                  <th className="px-6 py-3 text-right font-semibold">{t('inventory.opnames.actual_qty')}</th>
+                  <th className="px-6 py-3 text-right font-semibold">{t('inventory.opnames.variance')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -162,7 +167,7 @@ export default function StockOpnameShow({ opname }: Props) {
                         {item.product?.name ?? '—'}
                         {item.product?.category === 'fleet_sparepart' && (
                           <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
-                            Sparepart
+                            {t('inventory.categories.fleet_sparepart')}
                           </span>
                         )}
                       </td>
@@ -198,14 +203,14 @@ export default function StockOpnameShow({ opname }: Props) {
 
           {editable && (
             <div className="flex items-center gap-4">
-              <PrimaryButton disabled={processing}>Save Counts</PrimaryButton>
+              <PrimaryButton disabled={processing}>{t('inventory.opnames.save_counts')}</PrimaryButton>
               {opname.status === 'in_progress' && (
                 <SecondaryButton type="button" onClick={() => setShowFinalize(true)}>
-                  Finalize & Record Adjustments
+                  {t('inventory.opnames.finalize')}
                 </SecondaryButton>
               )}
               <p className="text-xs text-gray-500">
-                Save your counts first, then finalize to post the variances as stock adjustments.
+                {t('inventory.opnames.hint')}
               </p>
             </div>
           )}
@@ -221,10 +226,9 @@ export default function StockOpnameShow({ opname }: Props) {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900">Finalize stock opname?</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('inventory.opnames.finalize_title')}</h3>
               <p className="mt-1 text-sm text-gray-500">
-                The variances below will be posted to the ledger as stock adjustments. This closes the
-                opname and <span className="font-medium text-gray-700">cannot be undone</span>.
+                {t('inventory.opnames.finalize_body')}
               </p>
             </div>
           </div>
@@ -232,21 +236,20 @@ export default function StockOpnameShow({ opname }: Props) {
           <div className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4">
             {itemsWithVariance === 0 ? (
               <p className="text-sm text-gray-600">
-                No variances detected — no adjustments will be recorded. The opname will simply be
-                marked as completed.
+                {t('inventory.opnames.finalize_no_variance')}
               </p>
             ) : (
               <dl className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">Adjustments</dt>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{t('inventory.opnames.adjustments')}</dt>
                   <dd className="mt-1 text-2xl font-bold text-gray-900">{itemsWithVariance}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">Stock In</dt>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{t('inventory.opnames.stock_in')}</dt>
                   <dd className="mt-1 text-2xl font-bold text-green-600">+{increases}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">Stock Out</dt>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{t('inventory.opnames.stock_out')}</dt>
                   <dd className="mt-1 text-2xl font-bold text-red-600">−{decreases}</dd>
                 </div>
               </dl>
@@ -255,10 +258,10 @@ export default function StockOpnameShow({ opname }: Props) {
 
           <div className="mt-6 flex justify-end gap-3">
             <SecondaryButton type="button" onClick={() => setShowFinalize(false)} disabled={finalizing}>
-              Cancel
+              {t('common.cancel')}
             </SecondaryButton>
             <PrimaryButton type="button" onClick={confirmFinalize} disabled={finalizing}>
-              {finalizing ? 'Finalizing…' : 'Finalize'}
+              {finalizing ? t('inventory.opnames.finalizing') : t('inventory.opnames.confirm_finalize')}
             </PrimaryButton>
           </div>
         </div>

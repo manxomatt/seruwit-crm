@@ -35,7 +35,7 @@ class MaintenanceCategoryController extends Controller
 
         MaintenanceCategory::create($validated);
 
-        return back()->with('success', 'Kategori berhasil ditambahkan.');
+        return back()->with('success', __('maintenance.messages.category_created'));
     }
 
     public function update(Request $request, MaintenanceCategory $category): RedirectResponse
@@ -49,17 +49,17 @@ class MaintenanceCategoryController extends Controller
 
         $category->update($validated);
 
-        return back()->with('success', 'Kategori berhasil diperbarui.');
+        return back()->with('success', __('maintenance.messages.category_updated'));
     }
 
     public function destroy(MaintenanceCategory $category): RedirectResponse
     {
         if ($category->workOrders()->exists()) {
-            return back()->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh work order.');
+            return back()->with('error', __('maintenance.messages.category_in_use'));
         }
 
         $category->delete();
 
-        return back()->with('success', 'Kategori berhasil dihapus.');
+        return back()->with('success', __('maintenance.messages.category_deleted'));
     }
 }

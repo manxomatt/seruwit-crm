@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -10,6 +11,7 @@ import { FormEventHandler } from 'react';
 
 export default function Create(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         slug: '',
@@ -46,18 +48,18 @@ export default function Create(): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Create Carousel
+                        {t('carousels.create_title')}
                     </h2>
                 </div>
             }
         >
-            <Head title="Create Carousel" />
+            <Head title={t('carousels.create_title')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
                     <form onSubmit={submit} className="space-y-6 max-w-2xl">
                         <div>
-                            <InputLabel htmlFor="name" value="Name" />
+                            <InputLabel htmlFor="name" value={t('carousels.form.name')} />
                             <TextInput
                                 id="name"
                                 type="text"
@@ -71,7 +73,7 @@ export default function Create(): JSX.Element {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="slug" value="Slug" />
+                            <InputLabel htmlFor="slug" value={t('carousels.form.slug')} />
                             <TextInput
                                 id="slug"
                                 type="text"
@@ -84,7 +86,7 @@ export default function Create(): JSX.Element {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="description" value="Description (optional)" />
+                            <InputLabel htmlFor="description" value={t('carousels.form.description')} />
                             <textarea
                                 id="description"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -96,7 +98,7 @@ export default function Create(): JSX.Element {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="autoplay_interval" value="Autoplay Interval (ms)" />
+                            <InputLabel htmlFor="autoplay_interval" value={t('carousels.form.autoplay')} />
                             <TextInput
                                 id="autoplay_interval"
                                 type="number"
@@ -108,7 +110,7 @@ export default function Create(): JSX.Element {
                                 step={500}
                             />
                             <p className="mt-1 text-sm text-gray-500">
-                                Time between slides in milliseconds (1000-30000)
+                                {t('carousels.form.autoplay_hint')}
                             </p>
                             <InputError message={errors.autoplay_interval} className="mt-2" />
                         </div>
@@ -123,7 +125,7 @@ export default function Create(): JSX.Element {
                                     onChange={(e) => setData('is_active', e.target.checked)}
                                 />
                                 <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                                    Active
+                                    {t('carousels.form.active')}
                                 </label>
                             </div>
 
@@ -136,7 +138,7 @@ export default function Create(): JSX.Element {
                                     onChange={(e) => setData('show_navigation', e.target.checked)}
                                 />
                                 <label htmlFor="show_navigation" className="ml-2 block text-sm text-gray-900">
-                                    Show Navigation Arrows
+                                    {t('carousels.form.show_navigation')}
                                 </label>
                             </div>
 
@@ -149,17 +151,17 @@ export default function Create(): JSX.Element {
                                     onChange={(e) => setData('show_indicators', e.target.checked)}
                                 />
                                 <label htmlFor="show_indicators" className="ml-2 block text-sm text-gray-900">
-                                    Show Slide Indicators
+                                    {t('carousels.form.show_indicators')}
                                 </label>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-4">
                             <PrimaryButton disabled={processing}>
-                                Create Carousel
+                                {t('carousels.form.create')}
                             </PrimaryButton>
                             <Link href={prefixedRoute('carousels.index')}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

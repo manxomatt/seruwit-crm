@@ -1,4 +1,5 @@
 import CanvassingLayout from '@/Layouts/CanvassingLayout';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 
 interface Salesperson { id: number; name: string; area: string | null; }
@@ -22,25 +23,18 @@ const outcomeColor = (o: string) => ({
     callback: 'border-l-purple-400 bg-purple-50',
 })[o] ?? 'border-l-gray-300 bg-gray-50';
 
-const outcomeLabel = (o: string) => ({
-    pending: 'Sedang Berlangsung',
-    contacted: 'Terhubung',
-    interested: 'Tertarik',
-    not_interested: 'Tidak Tertarik',
-    no_contact: 'Tidak Ada Kontak',
-    callback: 'Callback',
-})[o] ?? o;
-
 export default function Today({ salesperson, todayVisits, openVisit, todayPlan }: Props): JSX.Element {
-    const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
+    const today = new Date().toLocaleDateString(localeTag, { weekday: 'long', day: 'numeric', month: 'long' });
 
     return (
         <CanvassingLayout salespersonName={salesperson.name}>
-            <Head title="Hari Ini" />
+            <Head title={t('canvassing.portal.today_head')} />
 
             <div className="mb-4">
                 <p className="text-xs text-gray-500">{today}</p>
-                <h2 className="text-lg font-semibold text-gray-900">Aktivitas Hari Ini</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t('canvassing.portal.activity_today')}</h2>
                 {salesperson.area && <p className="text-sm text-gray-500">{salesperson.area}</p>}
             </div>
 
@@ -49,12 +43,12 @@ export default function Today({ salesperson, todayVisits, openVisit, todayPlan }
                 <div className="mb-4 rounded-lg border-2 border-orange-400 bg-orange-50 p-4">
                     <div className="flex items-start justify-between gap-2">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-orange-600">Kunjungan Aktif</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-orange-600">{t('canvassing.portal.active_visit')}</p>
                             <p className="mt-0.5 text-base font-bold text-gray-900">{openVisit.partner.name}</p>
-                            <p className="text-xs text-gray-500">Check-in: {new Date(openVisit.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-xs text-gray-500">{t('canvassing.portal.check_in_at', { time: new Date(openVisit.checked_in_at).toLocaleTimeString(localeTag, { hour: '2-digit', minute: '2-digit' }) })}</p>
                         </div>
                         <Link href={route('module.canvassing.portal.visits.show', openVisit.id)} className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white">
-                            Lanjutkan
+                            {t('canvassing.portal.continue')}
                         </Link>
                     </div>
                 </div>
@@ -69,27 +63,27 @@ export default function Today({ salesperson, todayVisits, openVisit, todayPlan }
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    Mulai Kunjungan
+                    {t('canvassing.portal.start_visit')}
                 </Link>
             )}
 
             {/* Today's plan */}
             {todayPlan && (
                 <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Rencana Hari Ini</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t('canvassing.portal.today_plan')}</p>
                     {todayPlan.notes && <p className="mt-1 text-sm text-gray-700">{todayPlan.notes}</p>}
                 </div>
             )}
 
             {/* Visit list */}
             <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-700">Kunjungan ({todayVisits.length})</h3>
+                <h3 className="text-sm font-semibold text-gray-700">{t('canvassing.portal.visits_heading', { count: todayVisits.length })}</h3>
             </div>
 
             {todayVisits.length === 0 && !openVisit && (
                 <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">
-                    <p className="text-sm text-gray-400">Belum ada kunjungan hari ini.</p>
-                    <p className="mt-1 text-xs text-gray-400">Tekan tombol di atas untuk memulai.</p>
+                    <p className="text-sm text-gray-400">{t('canvassing.portal.no_visits')}</p>
+                    <p className="mt-1 text-xs text-gray-400">{t('canvassing.portal.no_visits_hint')}</p>
                 </div>
             )}
 
@@ -104,11 +98,11 @@ export default function Today({ salesperson, todayVisits, openVisit, todayPlan }
                             <div className="min-w-0">
                                 <p className="truncate font-medium text-gray-900">{v.partner.name}</p>
                                 <p className="text-xs text-gray-500">
-                                    {new Date(v.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                    {v.checked_out_at && ` — ${new Date(v.checked_out_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}
+                                    {new Date(v.checked_in_at).toLocaleTimeString(localeTag, { hour: '2-digit', minute: '2-digit' })}
+                                    {v.checked_out_at && ` — ${new Date(v.checked_out_at).toLocaleTimeString(localeTag, { hour: '2-digit', minute: '2-digit' })}`}
                                 </p>
                             </div>
-                            <span className="shrink-0 text-xs font-medium text-gray-600">{outcomeLabel(v.outcome)}</span>
+                            <span className="shrink-0 text-xs font-medium text-gray-600">{t(`canvassing.outcomes.${v.outcome}`, undefined, v.outcome)}</span>
                         </div>
                     </Link>
                 ))}

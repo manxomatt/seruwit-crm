@@ -82,7 +82,7 @@ class TripAllowanceController extends Controller
         $trip = Trip::findOrFail($request->validated()['trip_id']);
 
         if ($trip->status === Trip::STATUS_CANCELLED) {
-            return back()->with('error', 'A cancelled trip cannot receive an allowance.');
+            return back()->with('error', __('billing.messages.allowance_cancelled_trip'));
         }
 
         $allowance = TripAllowance::create([
@@ -92,7 +92,7 @@ class TripAllowanceController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.billing.allowances.show', $allowance)
-            ->with('success', 'Allowance issued.');
+            ->with('success', __('billing.messages.allowance_issued'));
     }
 
     /**
@@ -123,13 +123,13 @@ class TripAllowanceController extends Controller
     public function destroy(TripAllowance $allowance): RedirectResponse
     {
         if ($allowance->status !== TripAllowance::STATUS_ISSUED) {
-            return back()->with('error', 'A settled allowance cannot be deleted.');
+            return back()->with('error', __('billing.messages.allowance_settled_locked'));
         }
 
         $allowance->delete();
 
         return redirect()->route($this->getRoutePrefix().'.billing.allowances.index')
-            ->with('success', 'Allowance deleted.');
+            ->with('success', __('billing.messages.allowance_deleted'));
     }
 
     /**
@@ -138,12 +138,12 @@ class TripAllowanceController extends Controller
     public function storeExpense(StoreAllowanceExpenseRequest $request, TripAllowance $allowance): RedirectResponse
     {
         if ($allowance->status !== TripAllowance::STATUS_ISSUED) {
-            return back()->with('error', 'Expenses can no longer be changed after settlement.');
+            return back()->with('error', __('billing.messages.expenses_locked'));
         }
 
         $allowance->expenses()->create($request->validated());
 
-        return back()->with('success', 'Expense recorded.');
+        return back()->with('success', __('billing.messages.expense_recorded'));
     }
 
     /**
@@ -156,12 +156,12 @@ class TripAllowanceController extends Controller
         }
 
         if ($allowance->status !== TripAllowance::STATUS_ISSUED) {
-            return back()->with('error', 'Expenses can no longer be changed after settlement.');
+            return back()->with('error', __('billing.messages.expenses_locked'));
         }
 
         $expense->delete();
 
-        return back()->with('success', 'Expense removed.');
+        return back()->with('success', __('billing.messages.expense_removed'));
     }
 
     /**
@@ -172,7 +172,7 @@ class TripAllowanceController extends Controller
     public function settle(TripAllowance $allowance): RedirectResponse
     {
         if ($allowance->status !== TripAllowance::STATUS_ISSUED) {
-            return back()->with('error', 'This allowance has already been settled.');
+            return back()->with('error', __('billing.messages.allowance_already_settled'));
         }
 
         $allowance->update([
@@ -184,7 +184,7 @@ class TripAllowanceController extends Controller
         $formatted = number_format(abs($balance), 0, ',', '.');
 
         return back()->with('success', $balance >= 0
-            ? "Allowance settled. Driver returns Rp {$formatted}."
-            : "Allowance settled. Company reimburses Rp {$formatted}.");
+            ? __('billing.messages.allowance_settled_return', ['amount' => $formatted])
+            : __('billing.messages.allowance_settled_reimburse', ['amount' => $formatted]));
     }
 }

@@ -62,7 +62,7 @@ class PrincipalController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.products.principals.index')
-            ->with('success', 'Principal berhasil dibuat.');
+            ->with('success', __('products.messages.principal_created'));
     }
 
     public function edit(Principal $principal): Response
@@ -77,18 +77,18 @@ class PrincipalController extends Controller
         $principal->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.products.principals.index')
-            ->with('success', 'Principal berhasil diperbarui.');
+            ->with('success', __('products.messages.principal_updated'));
     }
 
     public function destroy(Principal $principal): RedirectResponse
     {
         if ($principal->brands()->exists()) {
-            return back()->with('error', 'Principal masih memiliki brand dan tidak bisa dihapus.');
+            return back()->with('error', __('products.messages.principal_has_brands'));
         }
 
         $principal->delete();
 
         return redirect()->route($this->getRoutePrefix().'.products.principals.index')
-            ->with('success', 'Principal berhasil dihapus.');
+            ->with('success', __('products.messages.principal_deleted'));
     }
 }

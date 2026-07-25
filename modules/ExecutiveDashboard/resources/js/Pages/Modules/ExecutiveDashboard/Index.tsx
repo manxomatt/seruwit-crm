@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
 import { Head, router } from '@inertiajs/react';
 import type { ReactNode } from 'react';
@@ -75,31 +76,7 @@ interface Props {
     range: { start: string; end: string };
 }
 
-const PERIOD_OPTIONS = [
-    { key: 'today', label: 'Hari ini' },
-    { key: 'week', label: 'Minggu ini' },
-    { key: 'month', label: 'Bulan ini' },
-] as const;
-
-const BUCKET_LABELS: Record<string, string> = {
-    current: 'Current',
-    '1_30': '1–30',
-    '31_60': '31–60',
-    '61_90': '61–90',
-    '90_plus': '90+',
-};
-
-function deltaText(current: number | null, previous: number | null, unit = 'pp'): string | null {
-    if (current === null || previous === null) {
-        return null;
-    }
-    const diff = Math.round((current - previous) * 10) / 10;
-    if (diff === 0) {
-        return `Sama vs periode lalu`;
-    }
-    const sign = diff > 0 ? '+' : '';
-    return `${sign}${diff}${unit} vs periode lalu`;
-}
+const PERIOD_KEYS = ['today', 'week', 'month'] as const;
 
 function KpiCard({
     title,
@@ -107,18 +84,22 @@ function KpiCard({
     subtitle,
     delta,
     unavailable,
+    unavailableLabel,
 }: {
     title: string;
     value: string;
     subtitle?: string;
     delta?: string | null;
     unavailable?: boolean;
+    unavailableLabel: string;
 }): JSX.Element {
     return (
-        <div className={`rounded-lg border bg-white p-5 ${unavailable ? 'border-dashed border-gray-200 opacity-70' : 'border-gray-200'}`}>
+        <div
+            className={`rounded-lg border bg-white p-5 ${unavailable ? 'border-dashed border-gray-200 opacity-70' : 'border-gray-200'}`}
+        >
             <p className="text-xs font-medium uppercase tracking-wider text-gray-500">{title}</p>
             {unavailable ? (
-                <p className="mt-3 text-sm text-gray-400">Modul sumber belum terpasang</p>
+                <p className="mt-3 text-sm text-gray-400">{unavailableLabel}</p>
             ) : (
                 <>
                     <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-gray-900">{value}</p>
@@ -165,76 +146,141 @@ function Bar({ label, value, max, tone = 'indigo' }: { label: string; value: num
 }
 
 export default function Index({ period, metrics }: Props): JSX.Element {
-    const { otd, fleet_utilization: fleet, aging_ar: aging, inventory_turnover: inventory, revenue_per_route: revenue } = metrics;
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
+    const { otd, fleet_utilization: fleet, aging_ar: aging, inventory_turnover: inventory, revenue_per_route: revenue } =
+        metrics;
+
+    const deltaText = (current: number | null, previous: number | null, unit = 'pp'): string | null => {
+        if (current === null || previous === null) {
+            return null;
+        }
+
+        const diff = Math.round((current - previous) * 10) / 10;
+
+        if (diff === 0) {
+            return t('bi.delta.same');
+        }
+
+        const sign = diff > 0 ? '+' : '';
+
+        return t('bi.delta.change', { sign, diff, unit });
+    };
 
     return (
         <DynamicLayout
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-800">Dashboard Eksekutif</h2>
-                        <p className="text-sm text-gray-500">OTD · utilisasi armada · aging AR · turnover · revenue per rute</p>
+                        <h2 className="text-xl font-semibold text-gray-800">{t('bi.title')}</h2>
+                        <p className="text-sm text-gray-500">{t('bi.subtitle')}</p>
                     </div>
                     <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
-                        {PERIOD_OPTIONS.map((option) => (
+                        {PERIOD_KEYS.map((key) => (
                             <button
-                                key={option.key}
+                                key={key}
                                 type="button"
-                                onClick={() => router.get(route('module.bi.dashboard'), { period: option.key }, { preserveState: true })}
+                                onClick={() =>
+                                    router.get(route('module.bi.dashboard'), { period: key }, { preserveState: true })
+                                }
                                 className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                                    period === option.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                                    period === key
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
                                 }`}
                             >
-                                {option.label}
+                                {t(`bi.periods.${key}`)}
                             </button>
                         ))}
                     </div>
                 </div>
             }
         >
-            <Head title="Dashboard Eksekutif" />
+            <Head title={t('bi.title')} />
 
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                         <KpiCard
-                            title="OTD Rate"
+                            title={t('bi.kpis.otd')}
                             unavailable={!otd}
+                            unavailableLabel={t('bi.unavailable')}
                             value={otd?.rate !== null && otd?.rate !== undefined ? `${otd.rate}%` : '—'}
-                            subtitle={otd ? `${otd.on_time}/${otd.with_sla} on-time · ${otd.delivered} delivered` : undefined}
+                            subtitle={
+                                otd
+                                    ? t('bi.kpis.otd_subtitle', {
+                                          on_time: otd.on_time,
+                                          with_sla: otd.with_sla,
+                                          delivered: otd.delivered,
+                                      })
+                                    : undefined
+                            }
                             delta={otd ? deltaText(otd.rate, otd.previous_rate) : null}
                         />
                         <KpiCard
-                            title="Fleet Utilization"
+                            title={t('bi.kpis.fleet')}
                             unavailable={!fleet}
+                            unavailableLabel={t('bi.unavailable')}
                             value={fleet?.rate !== null && fleet?.rate !== undefined ? `${fleet.rate}%` : '—'}
                             subtitle={
                                 fleet
-                                    ? fleet.note ?? `${fleet.trip_days} trip-days / ${fleet.capacity_days} capacity`
+                                    ? (fleet.note ??
+                                      t('bi.kpis.fleet_subtitle', {
+                                          trip_days: fleet.trip_days,
+                                          capacity_days: fleet.capacity_days,
+                                      }))
                                     : undefined
                             }
                             delta={fleet ? deltaText(fleet.rate, fleet.previous_rate) : null}
                         />
                         <KpiCard
-                            title="Aging AR (Overdue)"
+                            title={t('bi.kpis.aging')}
                             unavailable={!aging}
+                            unavailableLabel={t('bi.unavailable')}
                             value={aging ? formatMoney(aging.overdue_amount) : '—'}
-                            subtitle={aging ? `${aging.overdue_count} invoice · outstanding ${formatMoney(aging.outstanding)}` : undefined}
+                            subtitle={
+                                aging
+                                    ? t('bi.kpis.aging_subtitle', {
+                                          count: aging.overdue_count,
+                                          amount: formatMoney(aging.outstanding),
+                                      })
+                                    : undefined
+                            }
                         />
                         <KpiCard
-                            title="Inventory Turnover"
+                            title={t('bi.kpis.inventory')}
                             unavailable={!inventory}
-                            value={inventory?.turnover !== null && inventory?.turnover !== undefined ? `${inventory.turnover}×` : '—'}
-                            subtitle={inventory ? `COGS ${formatMoney(inventory.cogs)} / stock ${formatMoney(inventory.inventory_value)}` : undefined}
+                            unavailableLabel={t('bi.unavailable')}
+                            value={
+                                inventory?.turnover !== null && inventory?.turnover !== undefined
+                                    ? `${inventory.turnover}×`
+                                    : '—'
+                            }
+                            subtitle={
+                                inventory
+                                    ? t('bi.kpis.inventory_subtitle', {
+                                          cogs: formatMoney(inventory.cogs),
+                                          stock: formatMoney(inventory.inventory_value),
+                                      })
+                                    : undefined
+                            }
                             delta={inventory ? deltaText(inventory.turnover, inventory.previous_turnover, '×') : null}
                         />
                         <KpiCard
-                            title="Revenue / Route"
+                            title={t('bi.kpis.revenue')}
                             unavailable={!revenue}
-                            value={revenue?.average !== null && revenue?.average !== undefined ? formatMoney(revenue.average) : '—'}
+                            unavailableLabel={t('bi.unavailable')}
+                            value={
+                                revenue?.average !== null && revenue?.average !== undefined
+                                    ? formatMoney(revenue.average)
+                                    : '—'
+                            }
                             subtitle={
                                 revenue
-                                    ? `${revenue.route_count} rute · total ${formatMoney(revenue.total_revenue)}`
+                                    ? t('bi.kpis.revenue_subtitle', {
+                                          count: revenue.route_count,
+                                          total: formatMoney(revenue.total_revenue),
+                                      })
                                     : undefined
                             }
                             delta={revenue ? deltaText(revenue.average, revenue.previous_average, '') : null}
@@ -242,56 +288,68 @@ export default function Index({ period, metrics }: Props): JSX.Element {
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-2">
-                        <Section title="AR Aging Buckets">
+                        <Section title={t('bi.sections.aging')}>
                             {!aging ? (
-                                <p className="text-sm text-gray-500">Pasang modul Receivables & Invoicing untuk melihat aging.</p>
+                                <p className="text-sm text-gray-500">{t('bi.sections.aging_unavailable')}</p>
                             ) : (
                                 <div className="space-y-3">
                                     {Object.entries(aging.buckets).map(([key, value]) => (
                                         <Bar
                                             key={key}
-                                            label={BUCKET_LABELS[key] ?? key}
+                                            label={t(`bi.buckets.${key}`, undefined, key)}
                                             value={value}
                                             max={Math.max(...Object.values(aging.buckets), 1)}
-                                            tone={key === 'current' ? 'green' : key === '90_plus' ? 'red' : key.startsWith('6') || key.startsWith('9') ? 'amber' : 'indigo'}
+                                            tone={
+                                                key === 'current'
+                                                    ? 'green'
+                                                    : key === '90_plus'
+                                                      ? 'red'
+                                                      : key.startsWith('6') || key.startsWith('9')
+                                                        ? 'amber'
+                                                        : 'indigo'
+                                            }
                                         />
                                     ))}
                                 </div>
                             )}
                         </Section>
 
-                        <Section title="Delivery Performance">
+                        <Section title={t('bi.sections.delivery')}>
                             {!otd ? (
-                                <p className="text-sm text-gray-500">Pasang modul Orders untuk OTD.</p>
+                                <p className="text-sm text-gray-500">{t('bi.sections.delivery_unavailable')}</p>
                             ) : otd.with_sla === 0 ? (
-                                <p className="text-sm text-gray-500">
-                                    Belum ada DO delivered dengan <code className="text-xs">promised_at</code> di periode ini.
-                                </p>
+                                <p className="text-sm text-gray-500">{t('bi.sections.delivery_empty')}</p>
                             ) : (
                                 <div className="grid grid-cols-3 gap-4 text-center">
                                     <div>
                                         <p className="text-2xl font-semibold tabular-nums text-green-600">{otd.on_time}</p>
-                                        <p className="text-xs uppercase tracking-wide text-gray-500">On time</p>
+                                        <p className="text-xs uppercase tracking-wide text-gray-500">
+                                            {t('bi.sections.on_time')}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-2xl font-semibold tabular-nums text-red-600">{otd.late}</p>
-                                        <p className="text-xs uppercase tracking-wide text-gray-500">Late</p>
+                                        <p className="text-xs uppercase tracking-wide text-gray-500">
+                                            {t('bi.sections.late')}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-2xl font-semibold tabular-nums text-gray-800">{otd.delivered}</p>
-                                        <p className="text-xs uppercase tracking-wide text-gray-500">Delivered</p>
+                                        <p className="text-xs uppercase tracking-wide text-gray-500">
+                                            {t('bi.sections.delivered')}
+                                        </p>
                                     </div>
                                 </div>
                             )}
                         </Section>
 
-                        <Section title="Fleet Snapshot">
+                        <Section title={t('bi.sections.fleet')}>
                             {!fleet ? (
-                                <p className="text-sm text-gray-500">Pasang modul Fleet untuk utilisasi.</p>
+                                <p className="text-sm text-gray-500">{t('bi.sections.fleet_unavailable')}</p>
                             ) : (
                                 <div className="space-y-4">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Kendaraan aktif</span>
+                                        <span className="text-gray-600">{t('bi.sections.active_vehicles')}</span>
                                         <span className="font-medium tabular-nums">
                                             {fleet.active_vehicles} / {fleet.vehicles_total}
                                         </span>
@@ -309,25 +367,29 @@ export default function Index({ period, metrics }: Props): JSX.Element {
                             )}
                         </Section>
 
-                        <Section title="Inventory">
+                        <Section title={t('bi.sections.inventory')}>
                             {!inventory ? (
-                                <p className="text-sm text-gray-500">Pasang Inventory & Products untuk turnover.</p>
+                                <p className="text-sm text-gray-500">{t('bi.sections.inventory_unavailable')}</p>
                             ) : (
                                 <dl className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
-                                        <dt className="text-gray-500">COGS (periode)</dt>
+                                        <dt className="text-gray-500">{t('bi.sections.cogs')}</dt>
                                         <dd className="mt-1 font-semibold tabular-nums">{formatMoney(inventory.cogs)}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-gray-500">Nilai stok saat ini</dt>
-                                        <dd className="mt-1 font-semibold tabular-nums">{formatMoney(inventory.inventory_value)}</dd>
+                                        <dt className="text-gray-500">{t('bi.sections.stock_value')}</dt>
+                                        <dd className="mt-1 font-semibold tabular-nums">
+                                            {formatMoney(inventory.inventory_value)}
+                                        </dd>
                                     </div>
                                     <div>
-                                        <dt className="text-gray-500">Qty keluar</dt>
-                                        <dd className="mt-1 font-semibold tabular-nums">{inventory.out_qty.toLocaleString('id-ID')}</dd>
+                                        <dt className="text-gray-500">{t('bi.sections.out_qty')}</dt>
+                                        <dd className="mt-1 font-semibold tabular-nums">
+                                            {inventory.out_qty.toLocaleString(localeTag)}
+                                        </dd>
                                     </div>
                                     <div>
-                                        <dt className="text-gray-500">Turnover</dt>
+                                        <dt className="text-gray-500">{t('bi.sections.turnover')}</dt>
                                         <dd className="mt-1 font-semibold tabular-nums">
                                             {inventory.turnover !== null ? `${inventory.turnover}×` : '—'}
                                         </dd>
@@ -337,26 +399,36 @@ export default function Index({ period, metrics }: Props): JSX.Element {
                         </Section>
                     </div>
 
-                    <Section title="Top Revenue per Route">
+                    <Section title={t('bi.sections.revenue')}>
                         {!revenue ? (
-                            <p className="text-sm text-gray-500">Pasang modul Routing untuk revenue per rute.</p>
+                            <p className="text-sm text-gray-500">{t('bi.sections.revenue_unavailable')}</p>
                         ) : !revenue.billing_available ? (
-                            <p className="text-sm text-gray-500">
-                                Routing tersedia, tapi Billing belum terpasang — revenue charge tidak dapat dihitung.
-                            </p>
+                            <p className="text-sm text-gray-500">{t('bi.sections.revenue_no_billing')}</p>
                         ) : revenue.routes.length === 0 ? (
-                            <p className="text-sm text-gray-500">Belum ada route plan applied di periode ini.</p>
+                            <p className="text-sm text-gray-500">{t('bi.sections.revenue_empty')}</p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Plan</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Tanggal</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Kendaraan</th>
-                                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Stops</th>
-                                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Km</th>
-                                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Revenue</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                                {t('bi.table.plan')}
+                                            </th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                                {t('bi.table.date')}
+                                            </th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                                {t('bi.table.vehicle')}
+                                            </th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">
+                                                {t('bi.table.stops')}
+                                            </th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">
+                                                {t('bi.table.km')}
+                                            </th>
+                                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">
+                                                {t('bi.table.revenue')}
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
@@ -365,13 +437,17 @@ export default function Index({ period, metrics }: Props): JSX.Element {
                                                 <td className="px-3 py-2 font-medium text-gray-900">{row.plan_code}</td>
                                                 <td className="px-3 py-2 text-gray-600">
                                                     {row.planned_date
-                                                        ? new Date(row.planned_date).toLocaleDateString('id-ID')
+                                                        ? new Date(row.planned_date).toLocaleDateString(localeTag)
                                                         : '—'}
                                                 </td>
                                                 <td className="px-3 py-2 text-gray-600">{row.vehicle ?? '—'}</td>
                                                 <td className="px-3 py-2 text-right tabular-nums">{row.stops}</td>
-                                                <td className="px-3 py-2 text-right tabular-nums">{row.distance_km.toLocaleString('id-ID')}</td>
-                                                <td className="px-3 py-2 text-right font-medium tabular-nums">{formatMoney(row.revenue)}</td>
+                                                <td className="px-3 py-2 text-right tabular-nums">
+                                                    {row.distance_km.toLocaleString(localeTag)}
+                                                </td>
+                                                <td className="px-3 py-2 text-right font-medium tabular-nums">
+                                                    {formatMoney(row.revenue)}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

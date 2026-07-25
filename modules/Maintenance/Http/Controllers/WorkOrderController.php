@@ -124,7 +124,7 @@ class WorkOrderController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
-            ->with('success', 'Work order berhasil dibuat.');
+            ->with('success', __('maintenance.messages.wo_created'));
     }
 
     public function show(WorkOrder $workOrder): Response
@@ -215,7 +215,7 @@ class WorkOrderController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
-            ->with('success', 'Work order berhasil diperbarui.');
+            ->with('success', __('maintenance.messages.wo_updated'));
     }
 
     public function destroy(WorkOrder $workOrder): RedirectResponse
@@ -223,6 +223,6 @@ class WorkOrderController extends Controller
         $workOrder->delete();
 
         return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.index')
-            ->with('success', 'Work order berhasil dihapus.');
+            ->with('success', __('maintenance.messages.wo_deleted'));
     }
 }

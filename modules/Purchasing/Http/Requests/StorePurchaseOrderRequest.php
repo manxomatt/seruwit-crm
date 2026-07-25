@@ -43,9 +43,9 @@ class StorePurchaseOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'partner_id.exists' => 'Select a valid supplier.',
-            'items.required' => 'Add at least one item.',
-            'items.min' => 'Add at least one item.',
+            'partner_id.exists' => __('purchasing.validation.supplier_invalid'),
+            'items.required' => __('purchasing.validation.items_required'),
+            'items.min' => __('purchasing.validation.items_required'),
         ];
     }
 }

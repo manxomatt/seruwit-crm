@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -47,6 +48,7 @@ interface Props {
 
 export default function Index({ tariffs, partners, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState<Tariff | null>(null);
@@ -123,12 +125,12 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Billing</h2>
-                    {can.create && <PrimaryButton onClick={openCreate}>New Tariff</PrimaryButton>}
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.title')}</h2>
+                    {can.create && <PrimaryButton onClick={openCreate}>{t('billing.tariffs.new')}</PrimaryButton>}
                 </div>
             }
         >
-            <Head title="Tariffs" />
+            <Head title={t('billing.tariffs.head')} />
 
             <BillingNav />
 
@@ -138,7 +140,7 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Search by origin or destination..."
+                                placeholder={t('billing.tariffs.search_placeholder')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -148,19 +150,19 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                             className="w-56"
                             value={filters.partner_id || ''}
                             onChange={handlePartnerFilter}
-                            placeholder="All partners"
+                            placeholder={t('billing.tariffs.all_partners')}
                             options={[
-                                { value: '', label: 'All partners' },
+                                { value: '', label: t('billing.tariffs.all_partners') },
                                 ...partners.map((partner) => ({ value: String(partner.id), label: partner.name })),
                             ]}
                         />
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {tariffs.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No tariffs found</h3>
-                            <p className="mt-1 text-sm text-gray-500">Create a tariff so confirmed orders get priced automatically.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('billing.tariffs.empty_title')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('billing.tariffs.empty_hint')}</p>
                         </div>
                     ) : (
                         <>
@@ -168,11 +170,11 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Price</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.tariffs.columns.route')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.tariffs.columns.partner')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.tariffs.columns.price')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.tariffs.columns.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -183,22 +185,22 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                                     {tariff.partner ? tariff.partner.name : (
-                                                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Umum</span>
+                                                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">{t('billing.tariffs.general')}</span>
                                                     )}
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-900">{formatMoney(tariff.price)}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${tariff.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                        {tariff.is_active ? 'active' : 'inactive'}
+                                                        {tariff.is_active ? t('billing.status.active') : t('billing.status.inactive')}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-3">
                                                         {can.update && (
-                                                            <button onClick={() => openEdit(tariff)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                                            <button onClick={() => openEdit(tariff)} className="text-indigo-600 hover:text-indigo-900">{t('common.edit')}</button>
                                                         )}
                                                         {can.delete && (
-                                                            <button onClick={() => setDeleting(tariff)} className="text-red-600 hover:text-red-900">Delete</button>
+                                                            <button onClick={() => setDeleting(tariff)} className="text-red-600 hover:text-red-900">{t('common.delete')}</button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -211,8 +213,11 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                             {tariffs.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(tariffs.current_page - 1) * tariffs.per_page + 1} to{' '}
-                                        {Math.min(tariffs.current_page * tariffs.per_page, tariffs.total)} of {tariffs.total} results
+                                        {t('common.showing_results', {
+                                            from: (tariffs.current_page - 1) * tariffs.per_page + 1,
+                                            to: Math.min(tariffs.current_page * tariffs.per_page, tariffs.total),
+                                            total: tariffs.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {tariffs.links.map((link, index) => (
@@ -240,18 +245,18 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
 
             <Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="md">
                 <form onSubmit={submit} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">{editing ? 'Edit Tariff' : 'New Tariff'}</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{editing ? t('billing.tariffs.edit') : t('billing.tariffs.new')}</h3>
                     <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="t_partner_id" value="Partner (kosongkan untuk tarif umum)" />
+                            <InputLabel htmlFor="t_partner_id" value={t('billing.tariffs.partner_optional')} />
                             <Select
                                 id="t_partner_id"
                                 className="mt-1"
                                 value={form.data.partner_id}
                                 onChange={(value) => form.setData('partner_id', value)}
-                                placeholder="Tarif umum"
+                                placeholder={t('billing.tariffs.general_tariff')}
                                 options={[
-                                    { value: '', label: 'Tarif umum' },
+                                    { value: '', label: t('billing.tariffs.general_tariff') },
                                     ...partners.map((partner) => ({ value: String(partner.id), label: `${partner.name} (${partner.code})` })),
                                 ]}
                             />
@@ -259,18 +264,18 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="t_origin" value="Origin" />
+                                <InputLabel htmlFor="t_origin" value={t('billing.tariffs.origin')} />
                                 <TextInput id="t_origin" className="mt-1 block w-full" value={form.data.origin} onChange={(e) => form.setData('origin', e.target.value)} required />
                                 <InputError message={form.errors.origin} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="t_destination" value="Destination" />
+                                <InputLabel htmlFor="t_destination" value={t('billing.tariffs.destination')} />
                                 <TextInput id="t_destination" className="mt-1 block w-full" value={form.data.destination} onChange={(e) => form.setData('destination', e.target.value)} required />
                                 <InputError message={form.errors.destination} className="mt-2" />
                             </div>
                         </div>
                         <div>
-                            <InputLabel htmlFor="t_price" value="Price (Rp)" />
+                            <InputLabel htmlFor="t_price" value={t('billing.tariffs.price')} />
                             <TextInput id="t_price" type="number" min={0} step="0.01" className="mt-1 block w-full" value={form.data.price} onChange={(e) => form.setData('price', e.target.value)} required />
                             <InputError message={form.errors.price} className="mt-2" />
                         </div>
@@ -281,25 +286,27 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                                 checked={form.data.is_active}
                                 onChange={(e) => form.setData('is_active', e.target.checked)}
                             />
-                            Active
+                            {t('billing.tariffs.active')}
                         </label>
                     </div>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowModal(false)}>Cancel</SecondaryButton>
-                        <PrimaryButton disabled={form.processing}>Save</PrimaryButton>
+                        <SecondaryButton type="button" onClick={() => setShowModal(false)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={form.processing}>{t('common.save')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
             <Modal show={deleting !== null} onClose={() => setDeleting(null)} maxWidth="sm">
                 <div className="p-6">
-                    <h3 className="mb-2 text-lg font-medium text-gray-900">Delete Tariff</h3>
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">{t('billing.tariffs.delete_title')}</h3>
                     <p className="text-sm text-gray-500">
-                        Delete the tariff {deleting?.origin} → {deleting?.destination}? Existing charges keep their amounts.
+                        {deleting
+                            ? t('billing.tariffs.delete_confirm', { origin: deleting.origin, destination: deleting.destination })
+                            : ''}
                     </p>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setDeleting(null)}>Cancel</SecondaryButton>
-                        <DangerButton onClick={confirmDelete}>Delete</DangerButton>
+                        <SecondaryButton type="button" onClick={() => setDeleting(null)}>{t('common.cancel')}</SecondaryButton>
+                        <DangerButton onClick={confirmDelete}>{t('common.delete')}</DangerButton>
                     </div>
                 </div>
             </Modal>

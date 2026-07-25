@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
@@ -32,16 +33,7 @@ interface Props {
     can: { create: boolean; update: boolean; receive: boolean };
 }
 
-const STATUS_FILTERS = [
-    { value: '', label: 'Semua' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'submitted', label: 'Submitted' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'partial_received', label: 'Partial' },
-    { value: 'fully_received', label: 'Fully Received' },
-    { value: 'closed', label: 'Closed' },
-    { value: 'cancelled', label: 'Cancelled' },
-];
+const STATUS_FILTER_VALUES = ['', 'draft', 'submitted', 'approved', 'partial_received', 'fully_received', 'closed', 'cancelled'] as const;
 
 const statusBadge = (status: string): string => {
     switch (status) {
@@ -64,16 +56,9 @@ const statusBadge = (status: string): string => {
     }
 };
 
-const statusLabel = (status: string): string => {
-    const map: Record<string, string> = {
-        partial_received: 'Partial',
-        fully_received: 'Received',
-    };
-    return map[status] ?? status.charAt(0).toUpperCase() + status.slice(1);
-};
-
 export default function Index({ orders, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
 
     const applyFilters = (status: string, searchValue: string) => {
@@ -96,40 +81,40 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('purchasing.purchase_orders.index.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('purchasing.purchase-orders.create')}>
-                            <PrimaryButton>New PO</PrimaryButton>
+                            <PrimaryButton>{t('purchasing.purchase_orders.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Purchase Orders" />
+            <Head title={t('purchasing.purchase_orders.index.title')} />
             <PurchasingNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="border-b border-gray-200 p-4">
                     <div className="mb-4 flex flex-wrap gap-2">
-                        {STATUS_FILTERS.map((filter) => (
+                        {STATUS_FILTER_VALUES.map((value) => (
                             <button
-                                key={filter.value || 'all'}
+                                key={value || 'all'}
                                 type="button"
-                                onClick={() => applyFilters(filter.value, search)}
+                                onClick={() => applyFilters(value, search)}
                                 className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                                    (filters.status || '') === filter.value
+                                    (filters.status || '') === value
                                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                                         : 'border-gray-300 text-gray-600 hover:border-gray-400'
                                 }`}
                             >
-                                {filter.label}
+                                {value === '' ? t('purchasing.status.all') : t(`purchasing.status.${value}`, undefined, value)}
                             </button>
                         ))}
                     </div>
                     <form onSubmit={handleSearch} className="max-w-sm">
                         <TextInput
                             type="text"
-                            placeholder="Search PO number or supplier..."
+                            placeholder={t('purchasing.placeholders.search_po')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-full"
@@ -141,14 +126,14 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead>
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">No. PO</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Supplier</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Gudang</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tgl Order</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Exp. Tiba</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Total</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Progress</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.po_number')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.supplier')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.warehouse')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.ordered_at')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.expected_at')}</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.total')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.progress')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.status')}</th>
                                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500"></th>
                             </tr>
                         </thead>
@@ -156,7 +141,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                             {orders.data.length === 0 ? (
                                 <tr>
                                     <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
-                                        No purchase orders yet.
+                                        {t('purchasing.purchase_orders.index.empty')}
                                     </td>
                                 </tr>
                             ) : (
@@ -186,7 +171,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3">
                                             <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadge(order.status)}`}>
-                                                {statusLabel(order.status)}
+                                                {t(`purchasing.status.${order.status}`, undefined, order.status)}
                                             </span>
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
@@ -200,14 +185,14 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                                     )}
                                                     className="font-medium text-indigo-600 hover:text-indigo-900"
                                                 >
-                                                    {order.status === 'draft' ? 'Edit' : 'Lihat'}
+                                                    {order.status === 'draft' ? t('common.edit') : t('purchasing.purchase_orders.index.view')}
                                                 </Link>
                                                 {can.create && ['approved', 'partial_received'].includes(order.status) && (
                                                     <Link
                                                         href={prefixedRoute('purchasing.purchase-orders.grn.create', order.id)}
                                                         className="font-medium text-indigo-600 hover:text-indigo-900"
                                                     >
-                                                        GRN
+                                                        {t('purchasing.purchase_orders.index.grn')}
                                                     </Link>
                                                 )}
                                                 {can.update && order.status === 'draft' && (
@@ -218,7 +203,7 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                                             router.post(prefixedRoute('purchasing.purchase-orders.submit', order.id), {}, { preserveScroll: true })
                                                         }
                                                     >
-                                                        Submit
+                                                        {t('purchasing.purchase_orders.index.submit')}
                                                     </button>
                                                 )}
                                             </div>

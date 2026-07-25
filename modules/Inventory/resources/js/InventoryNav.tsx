@@ -1,15 +1,17 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Warehouses', route: 'inventory.warehouses.index', pattern: 'inventory.warehouses.*' },
-    { label: 'Stock Levels', route: 'inventory.stock-levels.index', pattern: 'inventory.stock-levels.*' },
-    { label: 'Stock Movements', route: 'inventory.stock-movements.index', pattern: 'inventory.stock-movements.*' },
-    { label: 'Stock Opnames', route: 'inventory.stock-opnames.index', pattern: 'inventory.stock-opnames.*' },
-];
+    { labelKey: 'inventory.nav.warehouses', route: 'inventory.warehouses.index', pattern: 'inventory.warehouses.*' },
+    { labelKey: 'inventory.nav.stock_levels', route: 'inventory.stock-levels.index', pattern: 'inventory.stock-levels.*' },
+    { labelKey: 'inventory.nav.stock_movements', route: 'inventory.stock-movements.index', pattern: 'inventory.stock-movements.*' },
+    { labelKey: 'inventory.nav.stock_opnames', route: 'inventory.stock-opnames.index', pattern: 'inventory.stock-opnames.*' },
+] as const;
 
 export default function InventoryNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -26,7 +28,7 @@ export default function InventoryNav(): JSX.Element {
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Link>
                     );
                 })}

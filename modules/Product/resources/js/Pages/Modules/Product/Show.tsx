@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ProductNav from '../../../ProductNav';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -92,26 +93,21 @@ const TAG_COLORS: Record<string, string> = {
     gray: 'bg-gray-100 text-gray-800',
 };
 
-const TRACKING_LABELS: Record<string, string> = {
-    qty: 'By Quantity',
-    serial: 'By Serial',
-    lot: 'By Lot',
-    none: 'No Tracking',
-};
-
 const getStatusBadgeColor = (status: string) => {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 };
 
-const formatCurrency = (value: string | null) => {
-    if (!value) return '—';
-    return new Intl.NumberFormat('id-ID').format(Number(value));
-};
-
 export default function Show({ product, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
+
+    const formatCurrency = (value: string | null) => {
+        if (!value) return '—';
+        return new Intl.NumberFormat(localeTag).format(Number(value));
+    };
 
     const confirmDelete = () => {
         setProcessing(true);
@@ -131,11 +127,11 @@ export default function Show({ product, can }: Props): JSX.Element {
                     <div className="flex gap-2">
                         {can.update && (
                             <Link href={prefixedRoute('products.edit', product.id)}>
-                                <SecondaryButton>Edit</SecondaryButton>
+                                <SecondaryButton>{t('products.products.show.edit')}</SecondaryButton>
                             </Link>
                         )}
                         <Link href={prefixedRoute('products.index')}>
-                            <SecondaryButton>Kembali</SecondaryButton>
+                            <SecondaryButton>{t('products.products.show.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -147,57 +143,57 @@ export default function Show({ product, can }: Props): JSX.Element {
             <div className="space-y-6">
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Informasi Produk</h3>
+                        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{t('products.products.show.general')}</h3>
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Kode</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.code')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{product.code}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.status')}</dt>
                                 <dd className="mt-1">
                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(product.status)}`}>
-                                        {product.status}
+                                        {t(`products.status.${product.status}`, undefined, product.status)}
                                     </span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Satuan</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.unit')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{product.unit}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Kategori</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.category')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {product.category === 'service' ? 'Jasa (Service)' : product.category === 'fleet_sparepart' ? 'Fleet Sparepart' : 'Barang (Merchandise)'}
+                                    {product.category ? t(`products.categories.${product.category}`, undefined, product.category) : '—'}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Harga Jual</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.price')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatCurrency(product.price)}</dd>
                             </div>
                             {product.category !== 'service' && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Harga Beli</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('products.fields.cost')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{formatCurrency(product.cost)}</dd>
                                 </div>
                             )}
                             {product.category !== 'service' && (
                                 <>
                                     <div>
-                                        <dt className="text-sm font-medium text-gray-500">Berat</dt>
+                                        <dt className="text-sm font-medium text-gray-500">{t('products.fields.weight')}</dt>
                                         <dd className="mt-1 text-sm text-gray-900">{product.weight ? `${product.weight} kg` : '—'}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-sm font-medium text-gray-500">Volume</dt>
+                                        <dt className="text-sm font-medium text-gray-500">{t('products.fields.volume')}</dt>
                                         <dd className="mt-1 text-sm text-gray-900">{product.volume ? `${product.volume} m³` : '—'}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-sm font-medium text-gray-500">Tracking</dt>
-                                        <dd className="mt-1 text-sm text-gray-900">{TRACKING_LABELS[product.tracking || 'qty']}</dd>
+                                        <dt className="text-sm font-medium text-gray-500">{t('products.fields.tracking')}</dt>
+                                        <dd className="mt-1 text-sm text-gray-900">{t(`products.tracking.${product.tracking || 'qty'}`)}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-sm font-medium text-gray-500">Storable</dt>
-                                        <dd className="mt-1 text-sm text-gray-900">{product.is_storable ? 'Ya' : 'Tidak'}</dd>
+                                        <dt className="text-sm font-medium text-gray-500">{t('products.fields.is_inventoried')}</dt>
+                                        <dd className="mt-1 text-sm text-gray-900">{product.is_storable ? t('common.yes') : t('common.no')}</dd>
                                     </div>
                                 </>
                             )}
@@ -205,7 +201,7 @@ export default function Show({ product, can }: Props): JSX.Element {
 
                         {product.tags.length > 0 && (
                             <div className="mt-4">
-                                <dt className="text-sm font-medium text-gray-500">Tags</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.tags')}</dt>
                                 <dd className="mt-2 flex flex-wrap gap-2">
                                     {product.tags.map((tag) => (
                                         <span key={tag.id} className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${TAG_COLORS[tag.color || ''] || 'bg-gray-100 text-gray-800'}`}>
@@ -218,19 +214,19 @@ export default function Show({ product, can }: Props): JSX.Element {
 
                         {product.description && (
                             <div className="mt-4">
-                                <dt className="text-sm font-medium text-gray-500">Deskripsi</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.description')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{product.description}</dd>
                             </div>
                         )}
                         {product.description_sale && (
                             <div className="mt-4">
-                                <dt className="text-sm font-medium text-gray-500">Deskripsi Penjualan</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.description')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{product.description_sale}</dd>
                             </div>
                         )}
                         {product.description_purchase && (
                             <div className="mt-4">
-                                <dt className="text-sm font-medium text-gray-500">Deskripsi Pembelian</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('products.fields.notes')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{product.description_purchase}</dd>
                             </div>
                         )}
@@ -240,26 +236,26 @@ export default function Show({ product, can }: Props): JSX.Element {
                 {product.category !== 'service' ? (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Katalog</h3>
+                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{t('products.products.show.general')}</h3>
                             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Principal</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('products.fields.principal')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{product.brand?.principal?.name || '—'}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Brand</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('products.fields.brand')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{product.brand?.name || '—'}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Tipe Produk</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('products.fields.product_type')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{product.product_type?.name || '—'}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">SKU</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('products.fields.sku')}</dt>
                                     <dd className="mt-1 font-mono text-sm text-gray-900">{product.sku || '—'}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Barcode</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('products.fields.barcode')}</dt>
                                     <dd className="mt-1 font-mono text-sm text-gray-900">{product.barcode || '—'}</dd>
                                 </div>
                             </dl>
@@ -268,17 +264,17 @@ export default function Show({ product, can }: Props): JSX.Element {
                 ) : (product.sku || product.barcode) && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Identifikasi</h3>
+                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{t('products.fields.code')}</h3>
                             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 {product.sku && (
                                     <div>
-                                        <dt className="text-sm font-medium text-gray-500">SKU</dt>
+                                        <dt className="text-sm font-medium text-gray-500">{t('products.fields.sku')}</dt>
                                         <dd className="mt-1 font-mono text-sm text-gray-900">{product.sku}</dd>
                                     </div>
                                 )}
                                 {product.barcode && (
                                     <div>
-                                        <dt className="text-sm font-medium text-gray-500">Barcode</dt>
+                                        <dt className="text-sm font-medium text-gray-500">{t('products.fields.barcode')}</dt>
                                         <dd className="mt-1 font-mono text-sm text-gray-900">{product.barcode}</dd>
                                     </div>
                                 )}
@@ -290,14 +286,14 @@ export default function Show({ product, can }: Props): JSX.Element {
                 {product.packagings.length > 0 && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Kemasan</h3>
+                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{t('products.products.show.packagings')}</h3>
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Barcode</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Qty / Pack</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.name')}</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.barcode')}</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.unit')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -318,7 +314,7 @@ export default function Show({ product, can }: Props): JSX.Element {
                 {product.product_attributes.length > 0 && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Atribut</h3>
+                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{t('products.products.show.attributes')}</h3>
                             <div className="space-y-3">
                                 {product.product_attributes.map((pa) => (
                                     <div key={pa.id} className="flex items-start gap-4">
@@ -341,16 +337,16 @@ export default function Show({ product, can }: Props): JSX.Element {
                 {product.variants.length > 0 && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Varian ({product.variants.length})</h3>
+                            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{t('products.fields.variants')} ({product.variants.length})</h3>
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Kode</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">SKU</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Harga</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.code')}</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.name')}</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.sku')}</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.price')}</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.status')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -363,7 +359,7 @@ export default function Show({ product, can }: Props): JSX.Element {
                                                 <td className="whitespace-nowrap px-4 py-3 font-mono text-sm text-gray-500">{v.sku || '—'}</td>
                                                 <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">{formatCurrency(v.price)}</td>
                                                 <td className="whitespace-nowrap px-4 py-3">
-                                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeColor(v.status)}`}>{v.status}</span>
+                                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeColor(v.status)}`}>{t(`products.status.${v.status}`, undefined, v.status)}</span>
                                                 </td>
                                             </tr>
                                         ))}
@@ -378,11 +374,11 @@ export default function Show({ product, can }: Props): JSX.Element {
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="flex items-center justify-between p-6">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900">Hapus produk ini</h3>
-                                <p className="text-sm text-gray-500">Tindakan ini tidak bisa dibatalkan.</p>
+                                <h3 className="text-sm font-medium text-gray-900">{t('products.products.show.delete_zone_title')}</h3>
+                                <p className="text-sm text-gray-500">{t('products.products.show.delete_zone_hint')}</p>
                             </div>
                             <button onClick={() => setShowDeleteDialog(true)} className="text-sm font-medium text-red-600 hover:text-red-900">
-                                Hapus Produk
+                                {t('products.products.show.delete_action')}
                             </button>
                         </div>
                     </div>
@@ -394,8 +390,8 @@ export default function Show({ product, can }: Props): JSX.Element {
                 onClose={() => setShowDeleteDialog(false)}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Product"
-                message={`Yakin ingin menghapus "${product.name}" (${product.code})?`}
+                title={t('products.products.show.delete_title')}
+                message={t('products.products.show.delete_confirm', { name: product.name, code: product.code })}
             />
         </DynamicLayout>
     );

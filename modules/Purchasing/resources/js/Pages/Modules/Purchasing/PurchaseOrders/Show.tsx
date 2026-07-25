@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -68,16 +69,9 @@ const statusBadge = (status: string): string => {
     }
 };
 
-const statusLabel = (status: string): string => {
-    const map: Record<string, string> = {
-        partial_received: 'Partial',
-        fully_received: 'Fully Received',
-    };
-    return map[status] ?? status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
-};
-
 export default function Show({ order, progress, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     const postAction = (action: string) => {
         router.post(prefixedRoute(`purchasing.purchase-orders.${action}`, order.id), {}, { preserveScroll: true });
@@ -96,31 +90,31 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">{order.po_number}</h2>
                         <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadge(order.status)}`}>
-                            {statusLabel(order.status)}
+                            {t(`purchasing.status.${order.status}`, undefined, order.status)}
                         </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {can.update && order.status === 'draft' && (
                             <>
                                 <Link href={prefixedRoute('purchasing.purchase-orders.edit', order.id)}>
-                                    <SecondaryButton>Edit</SecondaryButton>
+                                    <SecondaryButton>{t('common.edit')}</SecondaryButton>
                                 </Link>
-                                <PrimaryButton onClick={() => postAction('submit')}>Submit ke Supplier</PrimaryButton>
+                                <PrimaryButton onClick={() => postAction('submit')}>{t('purchasing.purchase_orders.show.submit')}</PrimaryButton>
                             </>
                         )}
                         {can.update && order.status === 'submitted' && (
-                            <PrimaryButton onClick={() => postAction('approve')}>Approve</PrimaryButton>
+                            <PrimaryButton onClick={() => postAction('approve')}>{t('purchasing.purchase_orders.show.approve')}</PrimaryButton>
                         )}
                         {can.create && canReceive && (
                             <Link href={prefixedRoute('purchasing.purchase-orders.grn.create', order.id)}>
-                                <PrimaryButton>+ Buat GRN</PrimaryButton>
+                                <PrimaryButton>{t('purchasing.purchase_orders.show.create_grn')}</PrimaryButton>
                             </Link>
                         )}
                         {can.update && order.status === 'fully_received' && (
-                            <PrimaryButton onClick={() => postAction('close')}>Close</PrimaryButton>
+                            <PrimaryButton onClick={() => postAction('close')}>{t('purchasing.purchase_orders.show.close')}</PrimaryButton>
                         )}
                         {can.update && ['draft', 'submitted', 'approved'].includes(order.status) && (
-                            <DangerButton onClick={() => postAction('cancel')}>Cancel</DangerButton>
+                            <DangerButton onClick={() => postAction('cancel')}>{t('common.cancel')}</DangerButton>
                         )}
                     </div>
                 </div>
@@ -131,7 +125,7 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
 
             <div className="mb-4">
                 <Link href={prefixedRoute('purchasing.purchase-orders.index')} className="text-sm text-gray-500 hover:text-gray-700">
-                    ← Kembali ke PO List
+                    {t('purchasing.purchase_orders.show.back')}
                 </Link>
             </div>
 
@@ -139,18 +133,18 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                 <div className="space-y-6 lg:col-span-2">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">
-                            Item Pesanan
+                            {t('purchasing.purchase_orders.show.items_section')}
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead>
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Produk</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Dipesan</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Diterima</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Sisa</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Harga</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Subtotal</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.product')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.ordered')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.received')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.remaining')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.price')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('purchasing.fields.subtotal')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
@@ -172,15 +166,21 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                             </table>
                         </div>
                         <div className="flex justify-end border-t border-gray-200 px-4 py-3">
-                            <span className="text-sm font-bold tabular-nums text-gray-900">Total: {formatMoney(order.total_amount)}</span>
+                            <span className="text-sm font-bold tabular-nums text-gray-900">
+                                {t('purchasing.purchase_orders.show.total', { amount: formatMoney(order.total_amount) })}
+                            </span>
                         </div>
                     </div>
 
                     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                         <div className="mb-2 flex justify-between text-xs text-gray-500">
-                            <span>Penerimaan</span>
+                            <span>{t('purchasing.purchase_orders.show.receiving')}</span>
                             <span>
-                                {progress.percent}% ({progress.received}/{progress.ordered} unit)
+                                {t('purchasing.purchase_orders.show.receiving_progress', {
+                                    percent: progress.percent,
+                                    received: progress.received,
+                                    ordered: progress.ordered,
+                                })}
                             </span>
                         </div>
                         <div className="h-2 overflow-hidden rounded-full bg-gray-200">
@@ -195,29 +195,29 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                 <div className="space-y-6">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">
-                            Informasi PO
+                            {t('purchasing.purchase_orders.show.info_section')}
                         </div>
                         <div className="space-y-2 p-4 text-sm">
                             <div className="flex justify-between border-b border-gray-100 py-1">
-                                <span className="text-gray-500">Supplier</span>
+                                <span className="text-gray-500">{t('purchasing.fields.supplier')}</span>
                                 <span className="font-semibold text-gray-900">{order.partner.name}</span>
                             </div>
                             <div className="flex justify-between border-b border-gray-100 py-1">
-                                <span className="text-gray-500">Gudang</span>
+                                <span className="text-gray-500">{t('purchasing.fields.warehouse')}</span>
                                 <span className="font-semibold text-gray-900">{order.warehouse.name}</span>
                             </div>
                             <div className="flex justify-between border-b border-gray-100 py-1">
-                                <span className="text-gray-500">Tgl Order</span>
+                                <span className="text-gray-500">{t('purchasing.fields.ordered_at')}</span>
                                 <span className="font-semibold text-gray-900">{new Date(order.ordered_at).toLocaleDateString('id-ID')}</span>
                             </div>
                             <div className="flex justify-between border-b border-gray-100 py-1">
-                                <span className="text-gray-500">Exp. Tiba</span>
+                                <span className="text-gray-500">{t('purchasing.fields.expected_at')}</span>
                                 <span className="font-semibold text-amber-700">
                                     {order.expected_at ? new Date(order.expected_at).toLocaleDateString('id-ID') : '—'}
                                 </span>
                             </div>
                             <div className="flex justify-between py-1">
-                                <span className="text-gray-500">Dibuat oleh</span>
+                                <span className="text-gray-500">{t('purchasing.fields.created_by')}</span>
                                 <span className="font-semibold text-gray-900">{order.created_by?.name ?? '—'}</span>
                             </div>
                             {order.notes && (
@@ -228,11 +228,11 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
 
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">
-                            Good Receipt Notes
+                            {t('purchasing.purchase_orders.show.grn_section')}
                         </div>
                         <div className="space-y-3 p-4">
                             {order.good_receipt_notes.length === 0 ? (
-                                <p className="text-sm text-gray-500">Belum ada GRN.</p>
+                                <p className="text-sm text-gray-500">{t('purchasing.purchase_orders.show.grn_empty')}</p>
                             ) : (
                                 order.good_receipt_notes.map((grn) => (
                                     <Link
@@ -245,9 +245,11 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                                             <div className="text-xs text-gray-500">{new Date(grn.received_at).toLocaleDateString('id-ID')}</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-sm tabular-nums text-gray-700">{grnQty(grn)} unit</div>
+                                            <div className="text-sm tabular-nums text-gray-700">
+                                                {t('purchasing.purchase_orders.show.grn_units', { qty: grnQty(grn) })}
+                                            </div>
                                             <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge(grn.status)}`}>
-                                                {statusLabel(grn.status)}
+                                                {t(`purchasing.status.${grn.status}`, undefined, grn.status)}
                                             </span>
                                         </div>
                                     </Link>
@@ -255,7 +257,7 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                             )}
                             {can.create && canReceive && (
                                 <Link href={prefixedRoute('purchasing.purchase-orders.grn.create', order.id)}>
-                                    <PrimaryButton className="mt-1 w-full justify-center">+ Buat GRN Berikutnya</PrimaryButton>
+                                    <PrimaryButton className="mt-1 w-full justify-center">{t('purchasing.purchase_orders.show.create_next_grn')}</PrimaryButton>
                                 </Link>
                             )}
                         </div>

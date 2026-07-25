@@ -1,5 +1,6 @@
 import ModuleLayout from '@/Layouts/ModuleLayout'
 import { useRoutePrefix } from '@/hooks/useRoutePrefix'
+import { useTrans } from '@/hooks/useTrans'
 import InputError from '@/Components/InputError'
 import InputLabel from '@/Components/InputLabel'
 import PrimaryButton from '@/Components/PrimaryButton'
@@ -11,6 +12,7 @@ import { FormEventHandler } from 'react'
 
 export default function WarehouseCreate(): JSX.Element {
   const { prefixedRoute } = useRoutePrefix()
+  const { t } = useTrans()
   const { data, setData, post, processing, errors } = useForm({
     name: '',
     location: '',
@@ -23,16 +25,16 @@ export default function WarehouseCreate(): JSX.Element {
   }
 
   return (
-    <ModuleLayout title="Add Warehouse">
-      <Head title="Add Warehouse" />
+    <ModuleLayout title={t('inventory.warehouses.add_title')}>
+      <Head title={t('inventory.warehouses.add_title')} />
 
       <div className="max-w-2xl space-y-6">
-        <h1 className="text-3xl font-bold">Add Warehouse</h1>
+        <h1 className="text-3xl font-bold">{t('inventory.warehouses.add_title')}</h1>
 
         <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
           <form onSubmit={submit} className="space-y-6 p-6">
             <div>
-              <InputLabel htmlFor="name" value="Name" />
+              <InputLabel htmlFor="name" value={t('inventory.warehouses.name')} />
               <TextInput
                 id="name"
                 className="mt-1 block w-full"
@@ -45,7 +47,7 @@ export default function WarehouseCreate(): JSX.Element {
             </div>
 
             <div>
-              <InputLabel htmlFor="location" value="Location" />
+              <InputLabel htmlFor="location" value={t('inventory.warehouses.location')} />
               <TextInput
                 id="location"
                 className="mt-1 block w-full"
@@ -57,24 +59,24 @@ export default function WarehouseCreate(): JSX.Element {
             </div>
 
             <div>
-              <InputLabel htmlFor="status" value="Status" />
+              <InputLabel htmlFor="status" value={t('inventory.warehouses.status')} />
               <Select
                 id="status"
                 className="mt-1"
                 value={data.status}
                 onChange={(value) => setData('status', value)}
                 options={[
-                  { value: 'active', label: 'Active' },
-                  { value: 'inactive', label: 'Inactive' },
+                  { value: 'active', label: t('inventory.status.active') },
+                  { value: 'inactive', label: t('inventory.status.inactive') },
                 ]}
               />
               <InputError message={errors.status} className="mt-2" />
             </div>
 
             <div className="flex items-center gap-4">
-              <PrimaryButton disabled={processing}>Save Warehouse</PrimaryButton>
+              <PrimaryButton disabled={processing}>{t('inventory.warehouses.save')}</PrimaryButton>
               <Link href={prefixedRoute('inventory.warehouses.index')}>
-                <SecondaryButton type="button">Cancel</SecondaryButton>
+                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
               </Link>
             </div>
           </form>

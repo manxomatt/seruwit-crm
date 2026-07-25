@@ -1,4 +1,5 @@
 import DriverLayout from '@/Layouts/DriverLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -40,9 +41,8 @@ interface Props {
     trip: Trip;
 }
 
-const typeLabel: Record<string, string> = { pickup: 'Ambil', dropoff: 'Antar' };
-
 export default function TripPage({ driverName, trip }: Props): JSX.Element {
+    const { t } = useTrans();
     const [processing, setProcessing] = useState(false);
 
     const startTrip = () => {
@@ -77,12 +77,12 @@ export default function TripPage({ driverName, trip }: Props): JSX.Element {
                         disabled={processing}
                         className="mt-4 w-full rounded-md bg-indigo-600 py-3 text-sm font-semibold text-white active:bg-indigo-700 disabled:opacity-50"
                     >
-                        Mulai Trip
+                        {t('orders.driver.trip.start')}
                     </button>
                 )}
             </div>
 
-            <h2 className="mb-2 mt-6 text-sm font-semibold text-gray-700">Pemberhentian</h2>
+            <h2 className="mb-2 mt-6 text-sm font-semibold text-gray-700">{t('orders.driver.trip.stops_heading')}</h2>
             <ol className="space-y-3">
                 {trip.stops.map((stop) => {
                     const order = stop.delivery_order;
@@ -105,14 +105,14 @@ export default function TripPage({ driverName, trip }: Props): JSX.Element {
                                             {stop.sequence}
                                         </span>
                                         <span className="text-xs font-medium uppercase text-gray-500">
-                                            {typeLabel[stop.type] ?? stop.type}
+                                            {t(`orders.stop_type.${stop.type}`, undefined, stop.type)}
                                         </span>
                                     </div>
                                     <p className="mt-1 text-sm text-gray-900">{stop.address}</p>
                                     {order && <p className="text-xs text-gray-500">{order.code} · {order.partner?.name}</p>}
                                 </div>
                                 {done && (
-                                    <span className="text-green-600" aria-label="Selesai">
+                                    <span className="text-green-600" aria-label={t('orders.driver.trip.done')}>
                                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
@@ -122,7 +122,7 @@ export default function TripPage({ driverName, trip }: Props): JSX.Element {
 
                             {order?.pod && (
                                 <p className="mt-2 rounded bg-green-50 px-2 py-1 text-xs text-green-700">
-                                    Diterima oleh {order.pod.recipient_name}
+                                    {t('orders.driver.trip.received_by', { name: order.pod.recipient_name })}
                                 </p>
                             )}
 
@@ -133,7 +133,7 @@ export default function TripPage({ driverName, trip }: Props): JSX.Element {
                                         disabled={processing}
                                         className="flex-1 rounded-md border border-indigo-600 py-2 text-sm font-semibold text-indigo-600 active:bg-indigo-50 disabled:opacity-50"
                                     >
-                                        Sampai
+                                        {t('orders.driver.trip.arrive')}
                                     </button>
                                 )}
                                 {canPod && (
@@ -141,7 +141,7 @@ export default function TripPage({ driverName, trip }: Props): JSX.Element {
                                         href={route('module.driver.pod.create', order!.id)}
                                         className="flex-1 rounded-md bg-indigo-600 py-2 text-center text-sm font-semibold text-white active:bg-indigo-700"
                                     >
-                                        Serah Terima (POD)
+                                        {t('orders.driver.trip.pod')}
                                     </Link>
                                 )}
                             </div>

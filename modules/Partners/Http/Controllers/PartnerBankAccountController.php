@@ -19,7 +19,7 @@ class PartnerBankAccountController extends Controller
     {
         $partner->bankAccounts()->create($request->validated());
 
-        return back()->with('success', 'Rekening bank berhasil ditambahkan.');
+        return back()->with('success', __('partners.messages.bank_account_created'));
     }
 
     public function destroy(Partner $partner, PartnerBankAccount $bankAccount): RedirectResponse
@@ -28,6 +28,6 @@ class PartnerBankAccountController extends Controller
 
         $bankAccount->delete();
 
-        return back()->with('success', 'Rekening bank berhasil dihapus.');
+        return back()->with('success', __('partners.messages.bank_account_deleted'));
     }
 }

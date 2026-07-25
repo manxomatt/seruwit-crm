@@ -24,13 +24,13 @@ class OrderItemController extends Controller
     public function store(StoreOrderItemRequest $request, DeliveryOrder $order): RedirectResponse
     {
         if ($order->status !== DeliveryOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Items can only be changed while the order is a draft.');
+            return back()->with('error', __('orders.messages.items_draft_only'));
         }
 
         $order->items()->create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.orders.show', $order)
-            ->with('success', 'Item added.');
+            ->with('success', __('orders.messages.item_added'));
     }
 
     /**
@@ -43,12 +43,12 @@ class OrderItemController extends Controller
         }
 
         if ($order->status !== DeliveryOrder::STATUS_DRAFT) {
-            return back()->with('error', 'Items can only be changed while the order is a draft.');
+            return back()->with('error', __('orders.messages.items_draft_only'));
         }
 
         $item->delete();
 
         return redirect()->route($this->getRoutePrefix().'.orders.show', $order)
-            ->with('success', 'Item removed.');
+            ->with('success', __('orders.messages.item_removed'));
     }
 }

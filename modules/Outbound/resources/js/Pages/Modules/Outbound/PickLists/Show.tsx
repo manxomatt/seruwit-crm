@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -61,6 +62,7 @@ interface Props {
 
 export default function Show({ pickList, locations, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [drafts, setDrafts] = useState<Record<number, { qty: string; location_id: string; batch_number: string }>>(() => {
         const initial: Record<number, { qty: string; location_id: string; batch_number: string }> = {};
         pickList.items.forEach((item) => {
@@ -98,8 +100,8 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold text-gray-800">{pickList.code}</h2>
-                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium capitalize text-gray-700">
-                            {pickList.status}
+                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                            {t(`outbound.pick_list_status.${pickList.status}`, undefined, pickList.status)}
                         </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -109,34 +111,34 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
                                     router.post(prefixedRoute('outbound.pick-lists.complete-picking', pickList.id), {}, { preserveScroll: true })
                                 }
                             >
-                                Complete Picking
+                                {t('outbound.actions.complete_picking')}
                             </PrimaryButton>
                         )}
                         {canPack && (
                             <Link href={prefixedRoute('outbound.packs.create', pickList.id)}>
-                                <SecondaryButton type="button">Create Pack</SecondaryButton>
+                                <SecondaryButton type="button">{t('outbound.actions.create_pack')}</SecondaryButton>
                             </Link>
                         )}
                         {canDispatch && (
                             <PrimaryButton
                                 onClick={() => {
-                                    if (confirm('Dispatch & deduct stock?')) {
+                                    if (confirm(t('outbound.pick_lists.show.confirm_dispatch'))) {
                                         router.post(prefixedRoute('outbound.pick-lists.dispatch', pickList.id), {}, { preserveScroll: true });
                                     }
                                 }}
                             >
-                                Dispatch
+                                {t('outbound.actions.dispatch')}
                             </PrimaryButton>
                         )}
                         {can.delete && pickList.status !== 'dispatched' && pickList.status !== 'cancelled' && (
                             <DangerButton
                                 onClick={() => {
-                                    if (confirm('Cancel this pick list?')) {
+                                    if (confirm(t('outbound.pick_lists.show.confirm_cancel'))) {
                                         router.post(prefixedRoute('outbound.pick-lists.cancel', pickList.id));
                                     }
                                 }}
                             >
-                                Cancel
+                                {t('outbound.actions.cancel_pick_list')}
                             </DangerButton>
                         )}
                     </div>
@@ -150,33 +152,35 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
 
                     <div className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-3">
                         <div>
-                            <p className="text-xs text-gray-500">Delivery Order</p>
+                            <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.delivery_order')}</p>
                             <p className="font-medium">
                                 {pickList.delivery_order.code} · {pickList.delivery_order.partner.name}
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Warehouse</p>
+                            <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.warehouse')}</p>
                             <p className="font-medium">{pickList.warehouse.name}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">DO Status</p>
-                            <p className="font-medium capitalize">{pickList.delivery_order.status.replace('_', ' ')}</p>
+                            <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.do_status')}</p>
+                            <p className="font-medium">
+                                {t(`orders.status.${pickList.delivery_order.status}`, undefined, pickList.delivery_order.status)}
+                            </p>
                         </div>
                     </div>
 
                     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">Pick lines</div>
+                        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">{t('outbound.pick_lists.show.pick_lines')}</div>
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Product</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Req</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Suggest</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Pick Qty</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Location</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Batch</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.product')}</th>
+                                    <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.req')}</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.suggest')}</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.pick_qty')}</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.location')}</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.batch')}</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.status')}</th>
                                     <th className="px-3 py-2" />
                                 </tr>
                             </thead>
@@ -252,7 +256,9 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
                                                     item.batch_number || '—'
                                                 )}
                                             </td>
-                                            <td className="px-3 py-2 capitalize">{item.status}</td>
+                                            <td className="px-3 py-2">
+                                                {t(`outbound.pick_item_status.${item.status}`, undefined, item.status)}
+                                            </td>
                                             <td className="px-3 py-2 text-right">
                                                 {canPick && (
                                                     <button
@@ -260,7 +266,7 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
                                                         className="text-sm font-medium text-indigo-600 hover:underline"
                                                         onClick={() => confirmItem(item)}
                                                     >
-                                                        Confirm
+                                                        {t('outbound.actions.confirm')}
                                                     </button>
                                                 )}
                                             </td>
@@ -273,7 +279,7 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
 
                     {pickList.packs.length > 0 && (
                         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                            <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">Packs</div>
+                            <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">{t('outbound.pick_lists.show.packs')}</div>
                             <ul className="divide-y divide-gray-100">
                                 {pickList.packs.map((pack) => (
                                     <li key={pack.id} className="flex items-center justify-between px-4 py-3 text-sm">
@@ -285,10 +291,12 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
                                                 {pack.code}
                                             </Link>
                                             <span className="ml-2 text-gray-500">{pack.label_code}</span>
-                                            <span className="ml-2 capitalize text-gray-600">· {pack.status}</span>
+                                            <span className="ml-2 text-gray-600">
+                                                · {t(`outbound.pack_status.${pack.status}`, undefined, pack.status)}
+                                            </span>
                                         </div>
                                         <Link href={prefixedRoute('outbound.packs.label', pack.id)}>
-                                            <SecondaryButton type="button">Label</SecondaryButton>
+                                            <SecondaryButton type="button">{t('outbound.packs.show.label')}</SecondaryButton>
                                         </Link>
                                     </li>
                                 ))}

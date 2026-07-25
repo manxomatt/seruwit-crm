@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link, router } from '@inertiajs/react';
@@ -38,6 +39,7 @@ interface Props {
 
 export default function Show({ pack, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <DynamicLayout
@@ -45,21 +47,23 @@ export default function Show({ pack, can }: Props): JSX.Element {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold text-gray-800">{pack.code}</h2>
-                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium capitalize">{pack.status}</span>
+                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium">
+                            {t(`outbound.pack_status.${pack.status}`, undefined, pack.status)}
+                        </span>
                     </div>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('outbound.packs.label', pack.id)}>
-                            <SecondaryButton type="button">Print Label</SecondaryButton>
+                            <SecondaryButton type="button">{t('outbound.actions.print_label')}</SecondaryButton>
                         </Link>
                         {can.pack && pack.status === 'open' && (
                             <PrimaryButton
                                 onClick={() => router.post(prefixedRoute('outbound.packs.seal', pack.id), {}, { preserveScroll: true })}
                             >
-                                Seal Pack
+                                {t('outbound.actions.seal_pack')}
                             </PrimaryButton>
                         )}
                         <Link href={prefixedRoute('outbound.pick-lists.show', pack.pick_list.id)}>
-                            <SecondaryButton type="button">Back to Pick List</SecondaryButton>
+                            <SecondaryButton type="button">{t('outbound.actions.back_to_pick_list')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -72,22 +76,24 @@ export default function Show({ pack, can }: Props): JSX.Element {
 
                     <div className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-2">
                         <div>
-                            <p className="text-xs text-gray-500">Label</p>
+                            <p className="text-xs text-gray-500">{t('outbound.packs.show.label')}</p>
                             <p className="font-mono text-lg font-semibold tracking-wide">{pack.label_code}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Pick List / DO</p>
+                            <p className="text-xs text-gray-500">{t('outbound.packs.show.pick_list_do')}</p>
                             <p className="font-medium">
                                 {pack.pick_list.code} · {pack.pick_list.delivery_order.code}
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Warehouse</p>
+                            <p className="text-xs text-gray-500">{t('outbound.packs.show.warehouse')}</p>
                             <p className="font-medium">{pack.pick_list.warehouse.name}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Weight</p>
-                            <p className="font-medium">{pack.weight_kg ? `${pack.weight_kg} kg` : '—'}</p>
+                            <p className="text-xs text-gray-500">{t('outbound.packs.show.weight')}</p>
+                            <p className="font-medium">
+                                {pack.weight_kg ? t('outbound.packs.show.weight_value', { weight: pack.weight_kg }) : '—'}
+                            </p>
                         </div>
                     </div>
 
@@ -95,9 +101,9 @@ export default function Show({ pack, can }: Props): JSX.Element {
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Product</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Batch</th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">Qty</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.packs.show.columns.product')}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.packs.show.columns.batch')}</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('outbound.packs.show.columns.qty')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">

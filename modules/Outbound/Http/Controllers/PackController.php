@@ -58,7 +58,7 @@ class PackController extends Controller
 
         return redirect()
             ->route($this->getRoutePrefix().'.outbound.packs.show', $pack)
-            ->with('success', 'Pack created with label.');
+            ->with('success', __('outbound.messages.pack_created'));
     }
 
     public function show(Pack $pack): Response
@@ -93,7 +93,7 @@ class PackController extends Controller
     {
         PickPackWorkflow::sealPack($pack);
 
-        return back()->with('success', 'Pack sealed.');
+        return back()->with('success', __('outbound.messages.pack_sealed'));
     }
 
     /**

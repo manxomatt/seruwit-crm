@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -23,6 +24,7 @@ interface Props {
 
 export default function Create({ partners, selectedPartnerId }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm<{
         partner_id: string;
         issue_date: string;
@@ -42,9 +44,9 @@ export default function Create({ partners, selectedPartnerId }: Props): JSX.Elem
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">New Invoice</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('invoicing.create.head')}</h2>}
         >
-            <Head title="New Invoice" />
+            <Head title={t('invoicing.create.title')} />
 
             <InvoicingNav />
 
@@ -53,13 +55,13 @@ export default function Create({ partners, selectedPartnerId }: Props): JSX.Elem
                     <form onSubmit={submit} className="max-w-3xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                             <div>
-                                <InputLabel htmlFor="partner_id" value="Partner" />
+                                <InputLabel htmlFor="partner_id" value={t('invoicing.create.partner')} />
                                 <Select
                                     id="partner_id"
                                     className="mt-1"
                                     value={data.partner_id}
                                     onChange={(value) => setData('partner_id', value)}
-                                    placeholder="Select a partner"
+                                    placeholder={t('invoicing.create.select_partner')}
                                     options={partners.map((partner) => ({
                                         value: String(partner.id),
                                         label: `${partner.name} (${partner.code})`,
@@ -68,27 +70,27 @@ export default function Create({ partners, selectedPartnerId }: Props): JSX.Elem
                                 <InputError message={errors.partner_id} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="issue_date" value="Issue Date (default hari ini)" />
+                                <InputLabel htmlFor="issue_date" value={t('invoicing.create.issue_date')} />
                                 <TextInput id="issue_date" type="date" className="mt-1 block w-full" value={data.issue_date} onChange={(e) => setData('issue_date', e.target.value)} />
                                 <InputError message={errors.issue_date} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="due_date" value="Due Date (opsional)" />
+                                <InputLabel htmlFor="due_date" value={t('invoicing.create.due_date')} />
                                 <TextInput id="due_date" type="date" className="mt-1 block w-full" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
                                 <InputError message={errors.due_date} className="mt-2" />
                             </div>
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="notes" value="Notes (opsional)" />
+                            <InputLabel htmlFor="notes" value={t('invoicing.create.notes')} />
                             <textarea id="notes" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
                             <InputError message={errors.notes} className="mt-2" />
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing || !data.partner_id}>Create Draft Invoice</PrimaryButton>
+                            <PrimaryButton disabled={processing || !data.partner_id}>{t('invoicing.create.submit')}</PrimaryButton>
                             <Link href={prefixedRoute('invoicing.invoices.index')}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

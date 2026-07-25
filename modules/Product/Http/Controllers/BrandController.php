@@ -73,7 +73,7 @@ class BrandController extends Controller
         Brand::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.products.brands.index')
-            ->with('success', 'Brand berhasil dibuat.');
+            ->with('success', __('products.messages.brand_created'));
     }
 
     public function edit(Brand $brand): Response
@@ -94,18 +94,18 @@ class BrandController extends Controller
         $brand->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.products.brands.index')
-            ->with('success', 'Brand berhasil diperbarui.');
+            ->with('success', __('products.messages.brand_updated'));
     }
 
     public function destroy(Brand $brand): RedirectResponse
     {
         if ($brand->products()->exists()) {
-            return back()->with('error', 'Brand masih memiliki produk dan tidak bisa dihapus.');
+            return back()->with('error', __('products.messages.brand_has_products'));
         }
 
         $brand->delete();
 
         return redirect()->route($this->getRoutePrefix().'.products.brands.index')
-            ->with('success', 'Brand berhasil dihapus.');
+            ->with('success', __('products.messages.brand_deleted'));
     }
 }

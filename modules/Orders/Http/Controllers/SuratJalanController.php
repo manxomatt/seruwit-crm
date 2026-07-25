@@ -24,7 +24,7 @@ class SuratJalanController extends Controller
         ];
 
         if (! in_array($order->status, $printable, true)) {
-            return back()->with('error', 'A surat jalan is only available once the order is assigned to a trip.');
+            return back()->with('error', __('orders.messages.surat_jalan_assigned_only'));
         }
 
         $order->load(['partner', 'items.product', 'trip.vehicle', 'trip.driver']);

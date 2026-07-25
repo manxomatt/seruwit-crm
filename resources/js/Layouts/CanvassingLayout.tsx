@@ -1,3 +1,4 @@
+import { useTrans } from '@/hooks/useTrans';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode } from 'react';
 
@@ -14,6 +15,7 @@ interface Props {
 
 export default function CanvassingLayout({ salespersonName, title, back, header, children }: PropsWithChildren<Props>): JSX.Element {
     const { flash } = usePage().props as unknown as FlashProps;
+    const { t } = useTrans();
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -21,14 +23,14 @@ export default function CanvassingLayout({ salespersonName, title, back, header,
                 <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2">
                         {back && (
-                            <Link href={back} className="-ml-1 rounded-full p-1 hover:bg-emerald-600" aria-label="Kembali">
+                            <Link href={back} className="-ml-1 rounded-full p-1 hover:bg-emerald-600" aria-label={t('canvassing.nav.back')}>
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                                 </svg>
                             </Link>
                         )}
                         <div>
-                            <p className="text-xs text-emerald-200">Portal Canvassing</p>
+                            <p className="text-xs text-emerald-200">{t('canvassing.portal_title')}</p>
                             <h1 className="text-base font-semibold leading-tight">{title ?? salespersonName}</h1>
                         </div>
                     </div>
@@ -37,7 +39,7 @@ export default function CanvassingLayout({ salespersonName, title, back, header,
                             href={route('module.canvassing.portal.today')}
                             className="rounded-md px-2 py-1 text-sm font-medium text-emerald-100 hover:bg-emerald-600"
                         >
-                            Hari Ini
+                            {t('canvassing.nav.today')}
                         </Link>
                         <Link
                             href={route('logout')}
@@ -45,7 +47,7 @@ export default function CanvassingLayout({ salespersonName, title, back, header,
                             as="button"
                             className="rounded-md px-2 py-1 text-sm font-medium text-emerald-100 hover:bg-emerald-600"
                         >
-                            Keluar
+                            {t('canvassing.nav.logout')}
                         </Link>
                     </div>
                 </div>

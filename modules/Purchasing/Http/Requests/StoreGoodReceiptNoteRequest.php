@@ -53,7 +53,7 @@ class StoreGoodReceiptNoteRequest extends FormRequest
                     ->first();
 
                 if (! $poItem) {
-                    $validator->errors()->add("items.{$index}.po_item_id", 'Item does not belong to this purchase order.');
+                    $validator->errors()->add("items.{$index}.po_item_id", __('purchasing.validation.po_item_not_on_order'));
 
                     continue;
                 }
@@ -62,7 +62,7 @@ class StoreGoodReceiptNoteRequest extends FormRequest
                 if ($qty > $remaining) {
                     $validator->errors()->add(
                         "items.{$index}.quantity_received",
-                        "Quantity exceeds remaining ({$remaining})."
+                        __('purchasing.validation.quantity_exceeds_remaining', ['remaining' => $remaining])
                     );
                 }
 
@@ -76,7 +76,7 @@ class StoreGoodReceiptNoteRequest extends FormRequest
                     if (! $belongs) {
                         $validator->errors()->add(
                             "items.{$index}.location_id",
-                            'Location must belong to the selected warehouse.'
+                            __('purchasing.validation.location_wrong_warehouse')
                         );
                     }
                 }

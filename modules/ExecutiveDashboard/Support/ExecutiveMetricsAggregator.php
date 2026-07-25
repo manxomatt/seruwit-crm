@@ -120,7 +120,7 @@ class ExecutiveMetricsAggregator
                 'capacity_days' => 0,
                 'previous_rate' => null,
                 'available' => true,
-                'note' => 'Install Transportation to measure trip-day utilization.',
+                'note' => __('bi.notes.transportation_required'),
             ];
         }
 

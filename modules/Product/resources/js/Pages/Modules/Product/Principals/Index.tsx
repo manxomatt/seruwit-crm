@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ProductNav from '../../../../ProductNav';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -36,6 +37,7 @@ interface Props {
 
 export default function Index({ principals, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [toDelete, setToDelete] = useState<Principal | null>(null);
@@ -69,42 +71,41 @@ export default function Index({ principals, filters, can }: Props): JSX.Element 
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Principals</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.principals.index.head')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('products.principals.create')}>
-                            <PrimaryButton>Add Principal</PrimaryButton>
+                            <PrimaryButton>{t('products.principals.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Principals" />
+            <Head title={t('products.principals.index.head')} />
             <ProductNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
                     <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
                         <div className="min-w-[220px] flex-1">
-                            <TextInput type="text" placeholder="Cari nama atau kode..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full" />
+                            <TextInput type="text" placeholder={t('products.placeholders.search')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full" />
                         </div>
                         <Select
                             className="w-48"
                             value={filters.status || ''}
                             onChange={handleStatusFilter}
-                            placeholder="Semua status"
+                            placeholder={t('products.status.all')}
                             options={[
-                                { value: '', label: 'Semua status' },
-                                { value: 'active', label: 'Active' },
-                                { value: 'inactive', label: 'Inactive' },
+                                { value: '', label: t('products.status.all') },
+                                { value: 'active', label: t('products.status.active') },
+                                { value: 'inactive', label: t('products.status.inactive') },
                             ]}
                         />
-                        <PrimaryButton type="submit">Cari</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {principals.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">Belum ada principal</h3>
-                            <p className="mt-1 text-sm text-gray-500">Mulai dengan menambahkan principal baru.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('products.principals.index.empty')}</h3>
                         </div>
                     ) : (
                         <>
@@ -112,13 +113,13 @@ export default function Index({ principals, filters, can }: Props): JSX.Element 
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Kode</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Kontak</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Telepon</th>
-                                            <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Brands</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Aksi</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.principals.index.columns.code')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.principals.index.columns.name')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.contact')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.phone')}</th>
+                                            <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.nav.brands')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.principals.index.columns.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -131,16 +132,16 @@ export default function Index({ principals, filters, can }: Props): JSX.Element 
                                                 <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-gray-500">{p.brands_count}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${p.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                        {p.status}
+                                                        {t(`products.status.${p.status}`, undefined, p.status)}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-3">
                                                         {can.update && (
-                                                            <Link href={prefixedRoute('products.principals.edit', p.id)} className="text-indigo-600 hover:text-indigo-900">Edit</Link>
+                                                            <Link href={prefixedRoute('products.principals.edit', p.id)} className="text-indigo-600 hover:text-indigo-900">{t('common.edit')}</Link>
                                                         )}
                                                         {can.delete && (
-                                                            <button onClick={() => { setToDelete(p); setShowDeleteDialog(true); }} className="text-red-600 hover:text-red-900">Hapus</button>
+                                                            <button onClick={() => { setToDelete(p); setShowDeleteDialog(true); }} className="text-red-600 hover:text-red-900">{t('common.delete')}</button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -153,8 +154,11 @@ export default function Index({ principals, filters, can }: Props): JSX.Element 
                             {principals.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Menampilkan {(principals.current_page - 1) * principals.per_page + 1} s/d{' '}
-                                        {Math.min(principals.current_page * principals.per_page, principals.total)} dari {principals.total}
+                                        {t('common.showing_results', {
+                                            from: (principals.current_page - 1) * principals.per_page + 1,
+                                            to: Math.min(principals.current_page * principals.per_page, principals.total),
+                                            total: principals.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {principals.links.map((link, i) => (
@@ -176,8 +180,8 @@ export default function Index({ principals, filters, can }: Props): JSX.Element 
                 onClose={() => { setShowDeleteDialog(false); setToDelete(null); }}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Principal"
-                message={toDelete ? `Yakin ingin menghapus "${toDelete.name}"? Tindakan ini tidak bisa dibatalkan.` : ''}
+                title={t('products.principals.index.delete_title')}
+                message={toDelete ? t('products.principals.index.delete_confirm', { name: toDelete.name }) : ''}
             />
         </DynamicLayout>
     );

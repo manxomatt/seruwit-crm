@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
@@ -40,6 +41,7 @@ interface Props {
 
 export default function Index({ allowances, summary, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     const handleStatusFilter = (status: string) => {
         router.get(prefixedRoute('billing.allowances.index'), { status: status || undefined }, { preserveState: true, replace: true });
@@ -49,29 +51,29 @@ export default function Index({ allowances, summary, filters, can }: Props): JSX
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Billing</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('billing.allowances.create')}>
-                            <PrimaryButton>Issue Allowance</PrimaryButton>
+                            <PrimaryButton>{t('billing.allowances.issue')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Uang Jalan" />
+            <Head title={t('billing.allowances.head')} />
 
             <BillingNav />
 
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                    <p className="text-sm font-medium text-gray-500">Belum settle</p>
+                    <p className="text-sm font-medium text-gray-500">{t('billing.allowances.unsettled')}</p>
                     <p className="mt-1 text-2xl font-semibold text-gray-900">{summary.unsettled_count}</p>
-                    <p className="mt-1 text-xs text-gray-500">Uang jalan yang masih berjalan</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('billing.allowances.unsettled_hint')}</p>
                 </div>
                 <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                    <p className="text-sm font-medium text-gray-500">Kasbon beredar</p>
+                    <p className="text-sm font-medium text-gray-500">{t('billing.allowances.outstanding')}</p>
                     <p className="mt-1 text-2xl font-semibold text-gray-900">{formatMoney(summary.outstanding_advance)}</p>
-                    <p className="mt-1 text-xs text-gray-500">Total advance yang belum di-settle</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('billing.allowances.outstanding_hint')}</p>
                 </div>
             </div>
 
@@ -82,19 +84,19 @@ export default function Index({ allowances, summary, filters, can }: Props): JSX
                             className="w-44"
                             value={filters.status || ''}
                             onChange={handleStatusFilter}
-                            placeholder="All statuses"
+                            placeholder={t('billing.status.all')}
                             options={[
-                                { value: '', label: 'All statuses' },
-                                { value: 'issued', label: 'issued' },
-                                { value: 'settled', label: 'settled' },
+                                { value: '', label: t('billing.status.all') },
+                                { value: 'issued', label: t('billing.status.issued') },
+                                { value: 'settled', label: t('billing.status.settled') },
                             ]}
                         />
                     </div>
 
                     {allowances.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No allowances found</h3>
-                            <p className="mt-1 text-sm text-gray-500">Issue an allowance for a trip to get started.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('billing.allowances.empty_title')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('billing.allowances.empty_hint')}</p>
                         </div>
                     ) : (
                         <>
@@ -102,12 +104,12 @@ export default function Index({ allowances, summary, filters, can }: Props): JSX
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Trip</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Driver</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Advance</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Expenses</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Balance</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.allowances.columns.trip')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.allowances.columns.driver')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.allowances.columns.advance')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.allowances.columns.expenses')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.allowances.columns.balance')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('billing.allowances.columns.status')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -132,7 +134,7 @@ export default function Index({ allowances, summary, filters, can }: Props): JSX
                                                     </td>
                                                     <td className="whitespace-nowrap px-6 py-4">
                                                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${allowance.status === 'settled' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                                                            {allowance.status}
+                                                            {t(`billing.status.${allowance.status}`, undefined, allowance.status)}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -145,8 +147,11 @@ export default function Index({ allowances, summary, filters, can }: Props): JSX
                             {allowances.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(allowances.current_page - 1) * allowances.per_page + 1} to{' '}
-                                        {Math.min(allowances.current_page * allowances.per_page, allowances.total)} of {allowances.total} results
+                                        {t('common.showing_results', {
+                                            from: (allowances.current_page - 1) * allowances.per_page + 1,
+                                            to: Math.min(allowances.current_page * allowances.per_page, allowances.total),
+                                            total: allowances.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {allowances.links.map((link, index) => (

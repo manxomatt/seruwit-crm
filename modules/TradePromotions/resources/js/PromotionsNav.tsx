@@ -1,13 +1,15 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Programs', route: 'promotions.programs.index', pattern: 'promotions.programs.*' },
-    { label: 'Realizations', route: 'promotions.realizations.index', pattern: 'promotions.realizations.*' },
-];
+    { labelKey: 'promotions.nav.programs', route: 'promotions.programs.index', pattern: 'promotions.programs.*' },
+    { labelKey: 'promotions.nav.realizations', route: 'promotions.realizations.index', pattern: 'promotions.realizations.*' },
+] as const;
 
 export default function PromotionsNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -22,7 +24,7 @@ export default function PromotionsNav(): JSX.Element {
                                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                         }`}
                     >
-                        {tab.label}
+                        {t(tab.labelKey)}
                     </Link>
                 ))}
             </nav>

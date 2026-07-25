@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router } from '@inertiajs/react';
 import PromotionsNav from '../../../../PromotionsNav';
@@ -25,32 +26,35 @@ interface Props {
     can: { create: boolean };
 }
 
+const STATUS_FILTERS = ['', 'draft', 'active', 'paused', 'closed'] as const;
+
 export default function Index({ programs, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-800">Trade Promotions</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">{t('promotions.programs.index.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('promotions.programs.create')}>
-                            <PrimaryButton>New Program</PrimaryButton>
+                            <PrimaryButton>{t('promotions.programs.index.new')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Trade Promotions" />
+            <Head title={t('promotions.programs.index.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <PromotionsNav />
                     <p className="text-sm text-gray-600">
-                        Program promo distributor: diskon volume, free goods, rabat — periode aktif & realisasi vs target.
+                        {t('promotions.programs.index.subtitle')}
                     </p>
 
                     <div className="flex flex-wrap gap-2">
-                        {['', 'draft', 'active', 'paused', 'closed'].map((status) => (
+                        {STATUS_FILTERS.map((status) => (
                             <button
                                 key={status || 'all'}
                                 type="button"
@@ -66,7 +70,7 @@ export default function Index({ programs, filters, can }: Props): JSX.Element {
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                             >
-                                {status || 'all'}
+                                {t(`promotions.status.${status || 'all'}`)}
                             </button>
                         ))}
                     </div>
@@ -75,19 +79,19 @@ export default function Index({ programs, filters, can }: Props): JSX.Element {
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Code</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Type</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Period</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Target</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.code')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.name')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.type')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.period')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.target')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('promotions.fields.status')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {programs.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                                            Belum ada program promo.
+                                            {t('promotions.programs.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -105,16 +109,16 @@ export default function Index({ programs, filters, can }: Props): JSX.Element {
                                                 <div>{row.name}</div>
                                                 {row.principal && <div className="text-xs text-gray-500">{row.principal.name}</div>}
                                             </td>
-                                            <td className="px-4 py-3 capitalize">{row.type.replaceAll('_', ' ')}</td>
+                                            <td className="px-4 py-3">{t(`promotions.types.${row.type}`, undefined, row.type)}</td>
                                             <td className="px-4 py-3 text-xs text-gray-600">
                                                 {row.starts_at?.slice(0, 10)} → {row.ends_at?.slice(0, 10)}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {row.target_amount ?? '—'} {row.target_metric}
+                                                {row.target_amount ?? '—'} {t(`promotions.metrics.${row.target_metric}`, undefined, row.target_metric)}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize">{row.status}</span>
-                                                <span className="ml-2 text-xs text-gray-400">{row.realizations_count} real.</span>
+                                                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs">{t(`promotions.status.${row.status}`, undefined, row.status)}</span>
+                                                <span className="ml-2 text-xs text-gray-400">{t('promotions.programs.index.realizations_abbr', { count: row.realizations_count })}</span>
                                             </td>
                                         </tr>
                                     ))

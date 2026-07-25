@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -57,6 +58,8 @@ const DocumentIcon = () => (
 
 export default function Index({ pages }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<Page | null>(null);
     const [processing, setProcessing] = useState(false);
@@ -88,7 +91,7 @@ export default function Index({ pages }: Props): JSX.Element {
     };
 
     const setAsHomepage = (page: Page) => {
-        if (confirm('Set this page as the homepage? This will replace the current homepage.')) {
+        if (confirm(t('pages.index.set_homepage_confirm'))) {
             router.patch(prefixedRoute('pages.set-homepage', page.id));
         }
     };
@@ -98,27 +101,27 @@ export default function Index({ pages }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        Pages
+                        {t('pages.index.head')}
                     </h1>
                     <Link
                         href={prefixedRoute('pages.create')}
                         className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PlusIcon />
-                        <span className="ml-2">Create Page</span>
+                        <span className="ml-2">{t('pages.index.create')}</span>
                     </Link>
                 </div>
             }
         >
-            <Head title="Pages" />
+            <Head title={t('pages.index.head')} />
 
             {pages.length === 0 ? (
                 <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <div className="text-center py-16">
                         <DocumentIcon />
-                        <h3 className="mt-4 text-lg font-semibold text-gray-900">No pages yet</h3>
+                        <h3 className="mt-4 text-lg font-semibold text-gray-900">{t('pages.index.empty_title')}</h3>
                         <p className="mt-2 text-sm text-gray-500">
-                            Get started by creating your first page.
+                            {t('pages.index.empty_hint')}
                         </p>
                         <div className="mt-6">
                             <Link
@@ -126,7 +129,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                 className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 <PlusIcon />
-                                <span className="ml-2">Create Page</span>
+                                <span className="ml-2">{t('pages.index.create')}</span>
                             </Link>
                         </div>
                     </div>
@@ -137,19 +140,19 @@ export default function Index({ pages }: Props): JSX.Element {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Title
+                                    {t('pages.index.columns.title')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Slug
+                                    {t('pages.index.columns.slug')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
+                                    {t('pages.index.columns.status')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Updated
+                                    {t('pages.index.columns.updated')}
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
+                                    {t('common.actions')}
                                 </th>
                             </tr>
                         </thead>
@@ -164,7 +167,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                             {page.is_homepage && (
                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                                                     <HomeIcon />
-                                                    Homepage
+                                                    {t('pages.index.homepage')}
                                                 </span>
                                             )}
                                         </div>
@@ -183,25 +186,25 @@ export default function Index({ pages }: Props): JSX.Element {
                                                     : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                                             }`}
                                         >
-                                            {page.is_published ? 'Published' : 'Draft'}
+                                            {page.is_published ? t('pages.status.published') : t('pages.status.draft')}
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(page.updated_at).toLocaleDateString()}
+                                        {new Date(page.updated_at).toLocaleDateString(localeTag)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Link
                                                 href={prefixedRoute('pages.show', page.id)}
                                                 className="text-gray-600 hover:text-gray-900"
-                                                title="Preview"
+                                                title={t('pages.index.preview')}
                                             >
                                                 <EyeIcon />
                                             </Link>
                                             <Link
                                                 href={prefixedRoute('pages.edit', page.id)}
                                                 className="text-indigo-600 hover:text-indigo-900"
-                                                title="Edit"
+                                                title={t('common.edit')}
                                             >
                                                 <PencilIcon />
                                             </Link>
@@ -209,7 +212,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                                 <button
                                                     onClick={() => setAsHomepage(page)}
                                                     className="text-blue-600 hover:text-blue-900"
-                                                    title="Set as Homepage"
+                                                    title={t('pages.index.set_homepage')}
                                                 >
                                                     <HomeIcon />
                                                 </button>
@@ -217,7 +220,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                             <button
                                                 onClick={() => openDeleteDialog(page)}
                                                 className="text-red-600 hover:text-red-900"
-                                                title="Delete"
+                                                title={t('common.delete')}
                                             >
                                                 <TrashIcon />
                                             </button>
@@ -235,17 +238,11 @@ export default function Index({ pages }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Halaman"
+                title={t('pages.index.delete_title')}
                 message={
-                    pageToDelete ? (
-                        <>
-                            Apakah Anda yakin ingin menghapus halaman{' '}
-                            <strong>"{pageToDelete.title}"</strong>? Tindakan ini tidak dapat
-                            dibatalkan.
-                        </>
-                    ) : (
-                        'Apakah Anda yakin ingin menghapus halaman ini?'
-                    )
+                    pageToDelete
+                        ? t('pages.index.delete_confirm', { title: pageToDelete.title })
+                        : t('pages.index.delete_confirm_generic')
                 }
             />
         </DynamicLayout>

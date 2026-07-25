@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
@@ -74,6 +75,7 @@ const TrashIcon = () => (
 
 export default function Index({ vehicles, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
@@ -117,16 +119,16 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Transportation</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.vehicles.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('fleet.vehicles.create')}>
-                            <PrimaryButton>Add Vehicle</PrimaryButton>
+                            <PrimaryButton>{t('fleet.vehicles.add')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Vehicles" />
+            <Head title={t('fleet.vehicles.title')} />
 
             <FleetNav />
 
@@ -136,7 +138,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Search by name, plate, or brand..."
+                                placeholder={t('fleet.vehicles.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -146,19 +148,21 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                             className="w-48"
                             value={filters.status || ''}
                             onChange={handleStatusFilter}
-                            placeholder="All statuses"
+                            placeholder={t('fleet.vehicles.all_statuses')}
                             options={[
-                                { value: '', label: 'All statuses' },
-                                ...STATUSES.map((status) => ({ value: status, label: status.replace('_', ' ') })),
+                                { value: '', label: t('fleet.vehicles.all_statuses') },
+                                ...STATUSES.map((status) => ({
+                                    value: status,
+                                    label: t(`fleet.status.${status}`),
+                                })),
                             ]}
                         />
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {vehicles.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No vehicles found</h3>
-                            <p className="mt-1 text-sm text-gray-500">Get started by adding a vehicle to the fleet.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('fleet.vehicles.empty')}</h3>
                         </div>
                     ) : (
                         <>
@@ -166,12 +170,12 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Vehicle</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Plate</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Odometer</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.name')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.plate')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.type')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.odometer')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -186,7 +190,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{vehicle.odometer_km.toLocaleString()} km</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
-                                                        {vehicle.status.replace('_', ' ')}
+                                                        {t(`fleet.status.${vehicle.status}`)}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -194,7 +198,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title="View"
+                                                            title={t('fleet.vehicles.show')}
                                                         >
                                                             <EyeIcon />
                                                         </Link>
@@ -202,7 +206,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                                             <Link
                                                                 href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}
                                                                 className="text-indigo-600 hover:text-indigo-900"
-                                                                title="Edit"
+                                                                title={t('common.edit')}
                                                             >
                                                                 <PencilIcon />
                                                             </Link>
@@ -211,7 +215,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                                             <button
                                                                 onClick={() => openDeleteDialog(vehicle)}
                                                                 className="text-red-600 hover:text-red-900"
-                                                                title="Delete"
+                                                                title={t('common.delete')}
                                                             >
                                                                 <TrashIcon />
                                                             </button>
@@ -259,11 +263,10 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Delete Vehicle"
                 message={
                     vehicleToDelete
-                        ? `Are you sure you want to delete "${vehicleToDelete.name}" (${vehicleToDelete.plate_number})? This action cannot be undone.`
-                        : 'Are you sure you want to delete this vehicle?'
+                        ? t('fleet.vehicles.delete_confirm', { name: vehicleToDelete.name })
+                        : undefined
                 }
             />
         </DynamicLayout>

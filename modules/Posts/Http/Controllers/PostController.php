@@ -109,7 +109,7 @@ class PostController extends Controller
 
         $post->update($data);
 
-        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', 'Post updated successfully.');
+        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', __('posts.messages.updated'));
     }
 
     /**
@@ -123,7 +123,7 @@ class PostController extends Controller
 
         $post->delete();
 
-        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', 'Post deleted successfully.');
+        return redirect()->route($this->getRoutePrefix().'.posts.index')->with('success', __('posts.messages.deleted'));
     }
 
     /**

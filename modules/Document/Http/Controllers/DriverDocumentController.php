@@ -86,7 +86,7 @@ class DriverDocumentController extends Controller
         ]);
 
         return redirect()->route('module.fleet.drivers.documents.index', $driver)
-            ->with('success', 'Document uploaded successfully.');
+            ->with('success', __('document.messages.uploaded'));
     }
 
     public function show(Driver $driver, Document $document): Response
@@ -129,7 +129,7 @@ class DriverDocumentController extends Controller
 
         $document->update($validated);
 
-        return back()->with('success', 'Document updated.');
+        return back()->with('success', __('document.messages.updated'));
     }
 
     public function destroy(Driver $driver, Document $document): RedirectResponse
@@ -137,7 +137,7 @@ class DriverDocumentController extends Controller
         $document->delete();
 
         return redirect()->route('module.fleet.drivers.documents.index', $driver)
-            ->with('success', 'Document removed.');
+            ->with('success', __('document.messages.removed'));
     }
 
     public function verify(Driver $driver, Document $document): RedirectResponse
@@ -147,6 +147,6 @@ class DriverDocumentController extends Controller
             'verified_at' => now(),
         ]);
 
-        return back()->with('success', 'Document marked as verified.');
+        return back()->with('success', __('document.messages.verified'));
     }
 }

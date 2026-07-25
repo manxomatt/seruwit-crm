@@ -1,3 +1,4 @@
+import { useTrans } from '@/hooks/useTrans';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode } from 'react';
 
@@ -18,6 +19,7 @@ interface Props {
  * held in the field.
  */
 export default function DriverLayout({ driverName, title, back, header, children }: PropsWithChildren<Props>): JSX.Element {
+    const { t } = useTrans();
     const { flash } = usePage().props as unknown as FlashProps;
 
     return (
@@ -26,14 +28,14 @@ export default function DriverLayout({ driverName, title, back, header, children
                 <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2">
                         {back && (
-                            <Link href={back} className="-ml-1 rounded-full p-1 hover:bg-indigo-600" aria-label="Kembali">
+                            <Link href={back} className="-ml-1 rounded-full p-1 hover:bg-indigo-600" aria-label={t('orders.driver.layout.back')}>
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                                 </svg>
                             </Link>
                         )}
                         <div>
-                            <p className="text-xs text-indigo-200">Portal Driver</p>
+                            <p className="text-xs text-indigo-200">{t('orders.driver.layout.portal')}</p>
                             <h1 className="text-base font-semibold leading-tight">{title ?? driverName}</h1>
                         </div>
                     </div>
@@ -43,7 +45,7 @@ export default function DriverLayout({ driverName, title, back, header, children
                         as="button"
                         className="rounded-md px-2 py-1 text-sm font-medium text-indigo-100 hover:bg-indigo-600"
                     >
-                        Keluar
+                        {t('orders.driver.layout.logout')}
                     </Link>
                 </div>
                 {header}

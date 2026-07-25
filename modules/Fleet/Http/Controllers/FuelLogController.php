@@ -54,10 +54,9 @@ class FuelLogController extends Controller
     ): RedirectResponse {
         $log = $recorder->record($vehicle, $request->validated());
 
-        $message = 'Fuel log added.';
-        if ($log->hasAnomalies()) {
-            $message .= ' Anomaly detected — review the fill details.';
-        }
+        $message = $log->hasAnomalies()
+            ? __('fleet.messages.fuel_added_anomaly')
+            : __('fleet.messages.fuel_added');
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
             ->with($log->hasAnomalies() ? 'warning' : 'success', $message);
@@ -72,7 +71,7 @@ class FuelLogController extends Controller
         $fuelLog->delete();
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
-            ->with('success', 'Fuel log deleted.');
+            ->with('success', __('fleet.messages.fuel_deleted'));
     }
 
     /**

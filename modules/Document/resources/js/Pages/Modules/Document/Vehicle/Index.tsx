@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
@@ -24,10 +25,11 @@ interface Props {
 
 export default function Index({ vehicle, types, documents, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [toDelete, setToDelete] = useState<DocumentItem | null>(null);
     const [processing, setProcessing] = useState(false);
 
-    // Group documents by type (show only the latest active per type)
     const activeByType = new Map<number, DocumentItem>();
     const historyByType = new Map<number, DocumentItem[]>();
 
@@ -72,17 +74,17 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                     <div className="flex gap-2">
                         {can.create && (
                             <Link href={prefixedRoute('fleet.vehicles.documents.create', vehicle.id)}>
-                                <PrimaryButton>Upload Dokumen</PrimaryButton>
+                                <PrimaryButton>{t('document.entity_docs.upload')}</PrimaryButton>
                             </Link>
                         )}
                         <Link href={prefixedRoute('fleet.vehicles.show', vehicle.id)}>
-                            <SecondaryButton>← Kembali</SecondaryButton>
+                            <SecondaryButton>{t('document.entity_docs.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
             }
         >
-            <Head title={`Dokumen – ${vehicle.name}`} />
+            <Head title={t('document.entity_docs.docs_head', { name: vehicle.name })} />
 
             <DocumentNav />
 
@@ -90,7 +92,7 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                 {types.map((type) => {
                     const active = activeByType.get(type.id);
                     const history = historyByType.get(type.id) ?? [];
-                    const badge = active ? getStatusBadge(active.status) : null;
+                    const badge = active ? getStatusBadge(active.status, t) : null;
 
                     return (
                         <div key={type.id} className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -99,7 +101,7 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                                     <span className="font-medium text-gray-900">{type.name}</span>
                                     {type.is_required && (
                                         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                                            Wajib
+                                            {t('document.entity_docs.required_badge')}
                                         </span>
                                     )}
                                     {badge && (
@@ -109,7 +111,7 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                                     )}
                                     {!active && (
                                         <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-500">
-                                            Belum ada
+                                            {t('document.entity_docs.none')}
                                         </span>
                                     )}
                                 </div>
@@ -118,7 +120,7 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                                         href={`${prefixedRoute('fleet.vehicles.documents.create', vehicle.id)}?type=${type.id}`}
                                         className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
                                     >
-                                        {active ? 'Perbarui' : 'Upload'}
+                                        {active ? t('document.entity_docs.renew') : t('document.entity_docs.upload_action')}
                                     </Link>
                                 )}
                             </div>
@@ -127,31 +129,31 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                                 <div className="px-6 py-4">
                                     <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                                         <div>
-                                            <dt className="text-xs font-medium text-gray-500">No. Dokumen</dt>
+                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.number')}</dt>
                                             <dd className="mt-1 text-sm text-gray-900">{active.document_number ?? '—'}</dd>
                                         </div>
                                         <div>
-                                            <dt className="text-xs font-medium text-gray-500">Diterbitkan</dt>
-                                            <dd className="mt-1 text-sm text-gray-900">{formatDate(active.issued_at)}</dd>
+                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.issued')}</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{formatDate(active.issued_at, localeTag)}</dd>
                                         </div>
                                         <div>
-                                            <dt className="text-xs font-medium text-gray-500">Berlaku Hingga</dt>
+                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.expires')}</dt>
                                             <dd className={`mt-1 text-sm ${active.status === 'expired' ? 'font-medium text-red-600' : active.status === 'expiring_soon' ? 'font-medium text-yellow-700' : 'text-gray-900'}`}>
-                                                {formatDate(active.expires_at)}
+                                                {formatDate(active.expires_at, localeTag)}
                                                 {active.expires_at && (
                                                     <span className="ml-1 text-xs font-normal text-gray-400">
-                                                        ({formatDaysUntil(active.expires_at)})
+                                                        ({formatDaysUntil(active.expires_at, t)})
                                                     </span>
                                                 )}
                                             </dd>
                                         </div>
                                         <div>
-                                            <dt className="text-xs font-medium text-gray-500">Diverifikasi</dt>
+                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.verified')}</dt>
                                             <dd className="mt-1 text-sm text-gray-900">
                                                 {active.verified_at ? (
                                                     <span className="text-green-700">✓ {active.verifier?.name}</span>
                                                 ) : (
-                                                    <span className="text-gray-400">Belum</span>
+                                                    <span className="text-gray-400">{t('document.entity_docs.not_verified')}</span>
                                                 )}
                                             </dd>
                                         </div>
@@ -178,14 +180,14 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                                             href={prefixedRoute('fleet.vehicles.documents.show', [vehicle.id, active.id])}
                                             className="text-xs text-gray-500 hover:text-gray-700"
                                         >
-                                            Detail &amp; Riwayat
+                                            {t('document.entity_docs.detail_history')}
                                         </Link>
                                         {can.verify && !active.verified_at && (
                                             <button
                                                 onClick={() => handleVerify(active)}
                                                 className="text-xs text-green-600 hover:text-green-800"
                                             >
-                                                Tandai Terverifikasi
+                                                {t('document.entity_docs.mark_verified')}
                                             </button>
                                         )}
                                         {can.delete && (
@@ -193,7 +195,7 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                                                 onClick={() => setToDelete(active)}
                                                 className="text-xs text-red-500 hover:text-red-700"
                                             >
-                                                Hapus
+                                                {t('common.delete')}
                                             </button>
                                         )}
                                     </div>
@@ -202,7 +204,9 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
 
                             {history.length > 0 && (
                                 <div className="border-t border-gray-100 bg-gray-50 px-6 py-3">
-                                    <p className="text-xs text-gray-400">{history.length} riwayat sebelumnya</p>
+                                    <p className="text-xs text-gray-400">
+                                        {t('document.entity_docs.history_count', { count: history.length })}
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -212,10 +216,12 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
 
             <ConfirmDeleteDialog
                 show={toDelete !== null}
-                title="Hapus Dokumen"
-                message={`Hapus dokumen ${toDelete?.document_type?.name ?? ''} ini? Data akan masuk arsip (bisa dipulihkan).`}
+                title={t('document.entity_docs.delete_title')}
+                message={t('document.entity_docs.delete_message', {
+                    type: toDelete?.document_type?.name ?? '',
+                })}
                 onConfirm={confirmDelete}
-                onCancel={() => setToDelete(null)}
+                onClose={() => setToDelete(null)}
                 processing={processing}
             />
         </DynamicLayout>

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
@@ -31,6 +32,8 @@ const ArrowLeftIcon = () => (
 
 export default function Edit({ post }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const { data, setData, patch, processing, errors } = useForm({
         title: post.title,
         slug: post.slug,
@@ -45,6 +48,14 @@ export default function Edit({ post }: Props): JSX.Element {
         patch(prefixedRoute('posts.update', post.id));
     };
 
+    const updatedAt = new Date(post.updated_at).toLocaleString(localeTag, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
     return (
         <DynamicLayout
             header={
@@ -57,29 +68,23 @@ export default function Edit({ post }: Props): JSX.Element {
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                            Edit Post
+                            {t('posts.edit.head')}
                         </h1>
                         <p className="text-sm text-gray-500">
-                            Last updated: {new Date(post.updated_at).toLocaleDateString('id-ID', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                            })}
+                            {t('posts.edit.last_updated', { time: updatedAt })}
                         </p>
                     </div>
                 </div>
             }
         >
-            <Head title={`Edit: ${post.title}`} />
+            <Head title={t('posts.edit.title', { title: post.title })} />
 
             <div className="max-w-4xl">
                 <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <form onSubmit={submit} className="p-6 space-y-6">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="title" value="Post Title" />
+                                <InputLabel htmlFor="title" value={t('posts.fields.title')} />
                                 <TextInput
                                     id="title"
                                     type="text"
@@ -88,17 +93,17 @@ export default function Edit({ post }: Props): JSX.Element {
                                     className="mt-1 block w-full"
                                     autoComplete="off"
                                     isFocused={true}
-                                    placeholder="Enter post title"
+                                    placeholder={t('posts.placeholders.title')}
                                     onChange={(e) => setData('title', e.target.value)}
                                 />
                                 <InputError message={errors.title} className="mt-2" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="slug" value="URL Slug" />
+                                <InputLabel htmlFor="slug" value={t('posts.fields.slug')} />
                                 <div className="mt-1 flex rounded-md shadow-sm">
                                     <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                                        /blog/
+                                        {t('posts.hints.slug_prefix')}
                                     </span>
                                     <TextInput
                                         id="slug"
@@ -107,7 +112,7 @@ export default function Edit({ post }: Props): JSX.Element {
                                         value={data.slug}
                                         className="block w-full rounded-l-none"
                                         autoComplete="off"
-                                        placeholder="post-url-slug"
+                                        placeholder={t('posts.placeholders.slug')}
                                         onChange={(e) => setData('slug', e.target.value)}
                                     />
                                 </div>
@@ -116,38 +121,38 @@ export default function Edit({ post }: Props): JSX.Element {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="excerpt" value="Excerpt" />
+                            <InputLabel htmlFor="excerpt" value={t('posts.fields.excerpt')} />
                             <textarea
                                 id="excerpt"
                                 name="excerpt"
                                 value={data.excerpt}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 rows={3}
-                                placeholder="Brief description of the post..."
+                                placeholder={t('posts.placeholders.excerpt')}
                                 onChange={(e) => setData('excerpt', e.target.value)}
                             />
                             <p className="mt-2 text-sm text-gray-500">
-                                A short summary that appears in post listings.
+                                {t('posts.hints.excerpt')}
                             </p>
                             <InputError message={errors.excerpt} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="content" value="Content" />
+                            <InputLabel htmlFor="content" value={t('posts.fields.content')} />
                             <textarea
                                 id="content"
                                 name="content"
                                 value={data.content}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 rows={12}
-                                placeholder="Write your post content here..."
+                                placeholder={t('posts.placeholders.content')}
                                 onChange={(e) => setData('content', e.target.value)}
                             />
                             <InputError message={errors.content} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="featured_image" value="Featured Image URL" />
+                            <InputLabel htmlFor="featured_image" value={t('posts.fields.featured_image')} />
                             <TextInput
                                 id="featured_image"
                                 type="text"
@@ -155,11 +160,11 @@ export default function Edit({ post }: Props): JSX.Element {
                                 value={data.featured_image}
                                 className="mt-1 block w-full"
                                 autoComplete="off"
-                                placeholder="https://example.com/image.jpg"
+                                placeholder={t('posts.placeholders.featured_image')}
                                 onChange={(e) => setData('featured_image', e.target.value)}
                             />
                             <p className="mt-2 text-sm text-gray-500">
-                                URL to the featured image for this post.
+                                {t('posts.hints.featured_image')}
                             </p>
                             <InputError message={errors.featured_image} className="mt-2" />
                         </div>
@@ -175,15 +180,17 @@ export default function Edit({ post }: Props): JSX.Element {
                                     className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                                 <label htmlFor="is_published" className="ml-2 block text-sm text-gray-900">
-                                    Published
+                                    {t('posts.fields.published')}
                                 </label>
                             </div>
                             {post.published_at && (
                                 <span className="text-sm text-gray-500">
-                                    Published on: {new Date(post.published_at).toLocaleDateString('id-ID', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
+                                    {t('posts.edit.published_on', {
+                                        date: new Date(post.published_at).toLocaleDateString(localeTag, {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                        }),
                                     })}
                                 </span>
                             )}
@@ -194,20 +201,20 @@ export default function Edit({ post }: Props): JSX.Element {
                                 href={prefixedRoute('posts.index')}
                                 className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </Link>
                             <Link
                                 href={prefixedRoute('posts.show', post.id)}
                                 className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
-                                Preview
+                                {t('posts.edit.preview')}
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
                                 className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                             >
-                                {processing ? 'Saving...' : 'Save Changes'}
+                                {processing ? t('posts.edit.saving') : t('posts.edit.submit')}
                             </button>
                         </div>
                     </form>

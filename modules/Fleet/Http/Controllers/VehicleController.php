@@ -78,7 +78,7 @@ class VehicleController extends Controller
         $vehicle = Vehicle::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
-            ->with('success', 'Vehicle created successfully.');
+            ->with('success', __('fleet.messages.vehicle_created'));
     }
 
     /**
@@ -188,7 +188,7 @@ class VehicleController extends Controller
         $vehicle->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.show', $vehicle)
-            ->with('success', 'Vehicle updated successfully.');
+            ->with('success', __('fleet.messages.vehicle_updated'));
     }
 
     /**
@@ -206,10 +206,10 @@ class VehicleController extends Controller
         try {
             DB::transaction(fn () => $vehicle->delete());
         } catch (QueryException) {
-            return back()->with('error', 'This vehicle is still referenced by other records and cannot be deleted.');
+            return back()->with('error', __('fleet.messages.vehicle_in_use'));
         }
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.index')
-            ->with('success', 'Vehicle deleted successfully.');
+            ->with('success', __('fleet.messages.vehicle_deleted'));
     }
 }

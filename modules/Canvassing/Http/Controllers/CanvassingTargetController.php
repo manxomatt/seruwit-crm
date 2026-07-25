@@ -30,7 +30,7 @@ class CanvassingTargetController extends Controller
             $data
         );
 
-        return redirect()->back()->with('success', 'Target saved.');
+        return redirect()->back()->with('success', __('canvassing.messages.target_saved'));
     }
 
     public function update(Request $request, CanvassingTarget $target): RedirectResponse
@@ -43,13 +43,13 @@ class CanvassingTargetController extends Controller
 
         $target->update($data);
 
-        return redirect()->back()->with('success', 'Target updated.');
+        return redirect()->back()->with('success', __('canvassing.messages.target_updated'));
     }
 
     public function destroy(CanvassingTarget $target): RedirectResponse
     {
         $target->delete();
 
-        return redirect()->back()->with('success', 'Target removed.');
+        return redirect()->back()->with('success', __('canvassing.messages.target_removed'));
     }
 }
