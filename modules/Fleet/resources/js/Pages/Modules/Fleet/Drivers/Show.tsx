@@ -158,7 +158,7 @@ export default function Show({ driver, can }: Props): JSX.Element {
                                     <p className="text-sm text-green-800">{t('fleet.drivers.login_created')}</p>
                                     <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                                         <div>
-                                            <dt className="font-medium text-gray-500">Username</dt>
+                                            <dt className="font-medium text-gray-500">{t('fleet.drivers.account_username')}</dt>
                                             <dd className="text-gray-900">{driver.user.username || '—'}</dd>
                                         </div>
                                         <div>
@@ -182,7 +182,7 @@ export default function Show({ driver, can }: Props): JSX.Element {
                                             <InputError message={accountForm.errors.name} className="mt-1" />
                                         </div>
                                         <div>
-                                            <InputLabel htmlFor="account_username" value="Username" />
+                                            <InputLabel htmlFor="account_username" value={t('fleet.drivers.account_username')} />
                                             <TextInput
                                                 id="account_username"
                                                 className="mt-1 block w-full"
@@ -205,7 +205,7 @@ export default function Show({ driver, can }: Props): JSX.Element {
                                             <InputError message={accountForm.errors.email} className="mt-1" />
                                         </div>
                                         <div>
-                                            <InputLabel htmlFor="account_password" value="Password" />
+                                            <InputLabel htmlFor="account_password" value={t('fleet.drivers.account_password')} />
                                             <TextInput
                                                 id="account_password"
                                                 type="password"

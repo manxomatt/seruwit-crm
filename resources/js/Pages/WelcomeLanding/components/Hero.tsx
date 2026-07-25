@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTrans } from '@/hooks/useTrans';
 
 interface Settings {
   'general.site_tagline'?: string;
@@ -10,15 +11,16 @@ interface HeroProps {
   settings?: Settings;
 }
 
-const pipelineStages = [
-  { label: 'Prospek', count: 48, width: 'w-full', color: 'bg-sky-200' },
-  { label: 'Negosiasi', count: 26, width: 'w-3/4', color: 'bg-sky-300' },
-  { label: 'Penawaran', count: 14, width: 'w-1/2', color: 'bg-sky-400' },
-  { label: 'Deal', count: 9, width: 'w-1/3', color: 'bg-sky-500' },
-];
-
 const Hero: React.FC<HeroProps> = ({ settings }) => {
-  const tagline = settings?.['general.site_tagline'] || 'Kelola pelanggan, pipeline, dan tim penjualan Anda dalam satu platform yang sederhana.';
+  const { t } = useTrans();
+  const tagline = settings?.['general.site_tagline'] || t('landing.hero.tagline_fallback');
+
+  const pipelineStages = [
+    { label: t('landing.hero.mock.stage_prospect'), count: 48, width: 'w-full', color: 'bg-sky-200' },
+    { label: t('landing.hero.mock.stage_negotiation'), count: 26, width: 'w-3/4', color: 'bg-sky-300' },
+    { label: t('landing.hero.mock.stage_offer'), count: 14, width: 'w-1/2', color: 'bg-sky-400' },
+    { label: t('landing.hero.mock.stage_deal'), count: 9, width: 'w-1/3', color: 'bg-sky-500' },
+  ];
 
   return (
     <section className="relative overflow-hidden bg-white">
@@ -32,12 +34,12 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
           <div className="text-center lg:text-left">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-sky-50 px-4 py-1.5 text-sm font-medium text-sky-600 ring-1 ring-inset ring-sky-100">
               <span className="h-2 w-2 rounded-full bg-sky-500" />
-              CRM modern untuk bisnis yang bertumbuh
+              {t('landing.hero.badge')}
             </div>
 
             <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Bangun Hubungan Pelanggan yang{' '}
-              <span className="text-sky-500">Lebih Dekat</span>
+              {t('landing.hero.title_line1')}{' '}
+              <span className="text-sky-500">{t('landing.hero.title_highlight')}</span>
             </h1>
 
             <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-slate-500 lg:mx-0">
@@ -49,7 +51,7 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
                 href="/register"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-sky-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-sky-500/25 transition-colors hover:bg-sky-600"
               >
-                Mulai Gratis
+                {t('landing.hero.cta_primary')}
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5-5 5M6 12h12" />
                 </svg>
@@ -58,7 +60,7 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
                 href="#fitur"
                 className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-8 py-3.5 text-base font-semibold text-slate-700 transition-colors hover:border-sky-200 hover:text-sky-600"
               >
-                Lihat Fitur
+                {t('landing.hero.cta_secondary')}
               </a>
             </div>
 
@@ -67,13 +69,13 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
                 <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                Tanpa kartu kredit
+                {t('landing.hero.trust_no_card')}
               </span>
               <span className="flex items-center gap-1.5">
                 <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                Siap pakai dalam 5 menit
+                {t('landing.hero.trust_setup_time')}
               </span>
             </div>
           </div>
@@ -82,11 +84,11 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/60">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-400">Pipeline Penjualan</p>
-                  <p className="text-2xl font-bold text-slate-900">Rp 128,5 jt</p>
+                  <p className="text-sm font-medium text-slate-400">{t('landing.hero.mock.pipeline_label')}</p>
+                  <p className="text-2xl font-bold text-slate-900">{t('landing.hero.mock.pipeline_value')}</p>
                 </div>
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                  +18% bulan ini
+                  {t('landing.hero.mock.pipeline_growth')}
                 </span>
               </div>
 
@@ -95,7 +97,7 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
                   <div key={stage.label}>
                     <div className="mb-1.5 flex items-center justify-between text-sm">
                       <span className="font-medium text-slate-600">{stage.label}</span>
-                      <span className="text-slate-400">{stage.count} kontak</span>
+                      <span className="text-slate-400">{stage.count} {t('landing.hero.mock.contacts_suffix')}</span>
                     </div>
                     <div className="h-2.5 rounded-full bg-slate-100">
                       <div className={`h-2.5 rounded-full ${stage.color} ${stage.width}`} />
@@ -106,16 +108,16 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
 
               <div className="mt-6 grid grid-cols-3 gap-3 border-t border-slate-100 pt-6 text-center">
                 <div>
-                  <p className="text-lg font-bold text-slate-900">1.240</p>
-                  <p className="text-xs text-slate-400">Kontak</p>
+                  <p className="text-lg font-bold text-slate-900">{t('landing.hero.mock.stat_contacts_value')}</p>
+                  <p className="text-xs text-slate-400">{t('landing.hero.mock.stat_contacts_label')}</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900">97</p>
-                  <p className="text-xs text-slate-400">Deal Aktif</p>
+                  <p className="text-lg font-bold text-slate-900">{t('landing.hero.mock.stat_deals_value')}</p>
+                  <p className="text-xs text-slate-400">{t('landing.hero.mock.stat_deals_label')}</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900">32%</p>
-                  <p className="text-xs text-slate-400">Konversi</p>
+                  <p className="text-lg font-bold text-slate-900">{t('landing.hero.mock.stat_conversion_value')}</p>
+                  <p className="text-xs text-slate-400">{t('landing.hero.mock.stat_conversion_label')}</p>
                 </div>
               </div>
             </div>
@@ -127,8 +129,8 @@ const Hero: React.FC<HeroProps> = ({ settings }) => {
                 </svg>
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Pelanggan baru</p>
-                <p className="text-xs text-slate-400">PT Maju Bersama</p>
+                <p className="text-sm font-semibold text-slate-900">{t('landing.hero.mock.new_customer_label')}</p>
+                <p className="text-xs text-slate-400">{t('landing.hero.mock.new_customer_name')}</p>
               </div>
             </div>
           </div>

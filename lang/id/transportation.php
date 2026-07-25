@@ -8,6 +8,7 @@ return [
         'schedules' => 'Jadwal',
         'calendar' => 'Kalender',
         'reports' => 'Laporan',
+        'back_to_list' => 'Kembali ke Daftar',
     ],
 
     'status' => [
@@ -66,6 +67,21 @@ return [
         'code' => 'Kode',
         'status' => 'Status',
         'date' => 'Tanggal',
+        'recorded_at' => 'Waktu Tercatat',
+        'note' => 'Catatan',
+        'notes' => 'Catatan',
+        'time_of_day' => 'Waktu',
+        'active_hint' => 'Aktif (generate trip saat diminta)',
+    ],
+
+    'placeholders' => [
+        'search_trips' => 'Cari berdasarkan kode, asal, atau tujuan...',
+        'search_schedules' => 'Cari berdasarkan asal atau tujuan...',
+        'all_statuses' => 'Semua status',
+        'select_vehicle' => 'Pilih kendaraan',
+        'select_driver' => 'Pilih driver',
+        'select_partner' => 'Pilih pelanggan',
+        'select_product' => 'Pilih produk',
     ],
 
     'actions' => [
@@ -81,6 +97,7 @@ return [
         'arrive' => 'Tiba',
         'complete_stop' => 'Selesai',
         'confirm_cancel' => 'Konfirmasi Pembatalan',
+        'delete_schedule' => 'Hapus Jadwal',
     ],
 
     'pages' => [
@@ -94,6 +111,8 @@ return [
             'create' => 'Tambah Jadwal',
             'edit' => 'Edit Jadwal',
             'empty' => 'Belum ada jadwal.',
+            'delete_title' => 'Hapus jadwal ini',
+            'delete_hint' => 'Trip yang sudah dibuat dari jadwal ini tetap disimpan.',
         ],
         'calendar' => [
             'title' => 'Kalender Trip',
@@ -154,6 +173,8 @@ return [
         'driver_not_available' => 'Driver :name berstatus :status, bukan tersedia.',
         'driver_has_trip' => 'Driver :name sudah punya trip pada tanggal ini.',
         'driver_sim_expired' => 'Driver :name memiliki SIM kedaluwarsa.',
+        'delete_schedule_confirm' => 'Apakah Anda yakin ingin menghapus jadwal ":origin → :destination"? Trip yang sudah dibuat dari jadwal ini tetap disimpan.',
+        'delete_schedule_confirm_generic' => 'Apakah Anda yakin ingin menghapus jadwal ini?',
     ],
 
     'validation' => [

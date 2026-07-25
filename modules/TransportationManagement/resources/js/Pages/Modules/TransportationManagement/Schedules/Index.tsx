@@ -153,7 +153,7 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Search by origin or destination..."
+                                placeholder={t('transportation.placeholders.search_schedules')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -202,7 +202,7 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('transportation.schedules.show', schedule.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title="View"
+                                                            title={t('common.view')}
                                                         >
                                                             <EyeIcon />
                                                         </Link>
@@ -235,8 +235,11 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                             {schedules.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(schedules.current_page - 1) * schedules.per_page + 1} to{' '}
-                                        {Math.min(schedules.current_page * schedules.per_page, schedules.total)} of {schedules.total} results
+                                        {t('common.showing_results', {
+                                            from: (schedules.current_page - 1) * schedules.per_page + 1,
+                                            to: Math.min(schedules.current_page * schedules.per_page, schedules.total),
+                                            total: schedules.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {schedules.links.map((link, index) => (
@@ -267,11 +270,14 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Delete Schedule"
+                title={t('transportation.actions.delete_schedule')}
                 message={
                     scheduleToDelete
-                        ? `Are you sure you want to delete the schedule "${scheduleToDelete.origin} → ${scheduleToDelete.destination}"? Trips already generated from it are kept.`
-                        : 'Are you sure you want to delete this schedule?'
+                        ? t('transportation.messages.delete_schedule_confirm', {
+                              origin: scheduleToDelete.origin,
+                              destination: scheduleToDelete.destination,
+                          })
+                        : t('transportation.messages.delete_schedule_confirm_generic')
                 }
             />
         </DynamicLayout>

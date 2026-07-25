@@ -35,6 +35,10 @@ return [
         'status' => 'Status',
     ],
 
+    'placeholders' => [
+        'select_vehicle' => 'Pilih kendaraan',
+    ],
+
     'actions' => [
         'sync' => 'Sync dari Traccar',
         'pair' => 'Pair',

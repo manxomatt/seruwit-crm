@@ -44,6 +44,7 @@ return [
         'brand' => 'Brand',
         'model_year' => 'Model year',
         'capacity' => 'Capacity',
+        'capacity_kg' => 'Capacity kg (for routing)',
         'fuel_type' => 'Fuel type',
         'odometer' => 'Odometer',
         'status' => 'Status',
@@ -98,6 +99,8 @@ return [
         'create_login' => 'Create login',
         'login_created' => 'Has login account',
         'no_login' => 'No login account',
+        'account_username' => 'Username',
+        'account_password' => 'Password',
     ],
 
     'fuel' => [

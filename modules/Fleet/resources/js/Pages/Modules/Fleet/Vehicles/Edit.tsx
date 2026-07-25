@@ -138,7 +138,7 @@ export default function Edit({ vehicle }: Props): JSX.Element {
                                 <InputError message={errors.capacity} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="capacity_kg" value="Capacity kg (for routing)" />
+                                <InputLabel htmlFor="capacity_kg" value={t('fleet.vehicles.capacity_kg')} />
                                 <TextInput id="capacity_kg" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.capacity_kg} onChange={(e) => setData('capacity_kg', e.target.value)} />
                                 <InputError message={errors.capacity_kg} className="mt-2" />
                             </div>

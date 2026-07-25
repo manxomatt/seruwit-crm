@@ -1,5 +1,6 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 
 interface Post {
     id: number;
@@ -40,11 +41,13 @@ interface BlogIndexProps {
 }
 
 const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const siteName = settings?.['general.site_name'] || 'Seruwit CMS';
     const siteLogo = settings?.['site.logo'];
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('id-ID', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -53,7 +56,7 @@ const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
 
     return (
         <>
-            <Head title="Blog" />
+            <Head title={t('blog.nav.blog')} />
             
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
                 {/* Header */}
@@ -70,12 +73,12 @@ const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
                             </a>
                             
                             <nav className="hidden md:flex space-x-10">
-                                <a className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/">Beranda</a>
-                                <Link className="text-base font-semibold text-indigo-600" href="/blog">Blog</Link>
+                                <a className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/">{t('blog.nav.home')}</a>
+                                <Link className="text-base font-semibold text-indigo-600" href="/blog">{t('blog.nav.blog')}</Link>
                             </nav>
                             
                             <div className="flex items-center gap-4">
-                                <Link className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/login">Masuk</Link>
+                                <Link className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/login">{t('blog.nav.login')}</Link>
                             </div>
                         </div>
                     </div>
@@ -89,10 +92,10 @@ const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
                     }}></div>
                     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6">
-                            Blog &amp; Artikel
+                            {t('blog.index.hero_title')}
                         </h1>
                         <p className="text-xl text-white/80 max-w-2xl mx-auto">
-                            Temukan artikel terbaru, tips, dan insight menarik dari tim kami
+                            {t('blog.index.hero_subtitle')}
                         </p>
                     </div>
                 </section>
@@ -103,8 +106,8 @@ const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
                         {posts.data.length === 0 ? (
                             <div className="text-center py-20">
                                 <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">article</span>
-                                <h3 className="text-xl font-semibold text-slate-600 mb-2">Belum ada artikel</h3>
-                                <p className="text-slate-500">Artikel akan segera hadir. Nantikan update terbaru dari kami!</p>
+                                <h3 className="text-xl font-semibold text-slate-600 mb-2">{t('blog.index.empty_title')}</h3>
+                                <p className="text-slate-500">{t('blog.index.empty_description')}</p>
                             </div>
                         ) : (
                             <>
@@ -142,7 +145,7 @@ const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
                                                         {post.excerpt}
                                                     </p>
                                                     <span className="inline-flex items-center gap-1 text-indigo-600 font-semibold group-hover:gap-2 transition-all">
-                                                        Baca selengkapnya
+                                                        {t('blog.index.read_more')}
                                                         <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                                     </span>
                                                 </div>
@@ -196,7 +199,7 @@ const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
                                 <span className="text-xl font-bold">{siteName}</span>
                             </div>
                             <p className="text-slate-400 text-sm">
-                                © {new Date().getFullYear()} {siteName}. All rights reserved.
+                                {t('blog.footer.copyright', { year: new Date().getFullYear(), name: siteName })}
                             </p>
                         </div>
                     </div>

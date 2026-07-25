@@ -166,7 +166,7 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
                                 className="mt-1"
                                 value={form.data.vehicle_id}
                                 onChange={(value) => form.setData('vehicle_id', value)}
-                                placeholder="Select a vehicle"
+                                placeholder={t('tracking.placeholders.select_vehicle')}
                                 options={pairableVehicles.map((vehicle) => ({
                                     value: String(vehicle.id),
                                     label: `${vehicle.name} (${vehicle.plate_number}) — ${vehicle.odometer_km.toLocaleString('id-ID')} km`,

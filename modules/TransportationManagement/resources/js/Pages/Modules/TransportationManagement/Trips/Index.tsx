@@ -105,7 +105,7 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
-                                placeholder="Search by code, origin, or destination..."
+                                placeholder={t('transportation.placeholders.search_trips')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -115,9 +115,9 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                             className="w-48"
                             value={filters.status || ''}
                             onChange={handleStatusFilter}
-                            placeholder="All statuses"
+                            placeholder={t('transportation.placeholders.all_statuses')}
                             options={[
-                                { value: '', label: 'All statuses' },
+                                { value: '', label: t('transportation.placeholders.all_statuses') },
                                 ...STATUSES.map((status) => ({ value: status, label: t(`transportation.status.${status}`, undefined, status) })),
                             ]}
                         />
@@ -164,7 +164,7 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('transportation.trips.show', trip.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title="View"
+                                                            title={t('common.view')}
                                                         >
                                                             <EyeIcon />
                                                         </Link>
@@ -179,8 +179,11 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                             {trips.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(trips.current_page - 1) * trips.per_page + 1} to{' '}
-                                        {Math.min(trips.current_page * trips.per_page, trips.total)} of {trips.total} results
+                                        {t('common.showing_results', {
+                                            from: (trips.current_page - 1) * trips.per_page + 1,
+                                            to: Math.min(trips.current_page * trips.per_page, trips.total),
+                                            total: trips.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {trips.links.map((link, index) => (

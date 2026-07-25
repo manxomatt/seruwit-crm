@@ -7,6 +7,7 @@ return [
     'edit' => 'Ubah',
     'create' => 'Buat',
     'back' => 'Kembali',
+    'view' => 'Lihat',
     'search' => 'Cari',
     'actions' => 'Aksi',
     'confirm_delete_title' => 'Konfirmasi Hapus',

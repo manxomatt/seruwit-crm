@@ -35,6 +35,10 @@ return [
         'status' => 'Status',
     ],
 
+    'placeholders' => [
+        'select_vehicle' => 'Select a vehicle',
+    ],
+
     'actions' => [
         'sync' => 'Sync from Traccar',
         'pair' => 'Pair',

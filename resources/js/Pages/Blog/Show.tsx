@@ -1,5 +1,6 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 
 interface Post {
     id: number;
@@ -29,11 +30,13 @@ interface BlogShowProps {
 }
 
 const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => {
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const siteName = settings?.['general.site_name'] || 'Seruwit CMS';
     const siteLogo = settings?.['site.logo'];
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('id-ID', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -59,12 +62,12 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
                             </a>
                             
                             <nav className="hidden md:flex space-x-10">
-                                <a className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/">Beranda</a>
-                                <Link className="text-base font-semibold text-indigo-600" href="/blog">Blog</Link>
+                                <a className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/">{t('blog.nav.home')}</a>
+                                <Link className="text-base font-semibold text-indigo-600" href="/blog">{t('blog.nav.blog')}</Link>
                             </nav>
                             
                             <div className="flex items-center gap-4">
-                                <Link className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/login">Masuk</Link>
+                                <Link className="text-base font-semibold text-slate-600 hover:text-indigo-600 transition-colors" href="/login">{t('blog.nav.login')}</Link>
                             </div>
                         </div>
                     </div>
@@ -82,7 +85,7 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
                             className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6 transition-colors"
                         >
                             <span className="material-symbols-outlined text-sm">arrow_back</span>
-                            Kembali ke Blog
+                            {t('blog.show.back_to_blog')}
                         </Link>
                         <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
                             {post.title}
@@ -132,7 +135,7 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
 
                             {/* Share Section */}
                             <div className="mt-12 pt-8 border-t border-slate-100">
-                                <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Bagikan Artikel</h4>
+                                <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">{t('blog.show.share_title')}</h4>
                                 <div className="flex gap-3">
                                     <a 
                                         href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(window.location.href)}`}
@@ -141,7 +144,7 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
                                         className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
                                     >
                                         <span className="material-symbols-outlined text-sm">share</span>
-                                        Twitter
+                                        {t('blog.show.share_twitter')}
                                     </a>
                                     <a 
                                         href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
@@ -150,14 +153,14 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
                                         className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
                                     >
                                         <span className="material-symbols-outlined text-sm">share</span>
-                                        Facebook
+                                        {t('blog.show.share_facebook')}
                                     </a>
                                     <button 
                                         onClick={() => navigator.clipboard.writeText(window.location.href)}
                                         className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
                                     >
                                         <span className="material-symbols-outlined text-sm">content_copy</span>
-                                        Salin Link
+                                        {t('blog.show.share_copy_link')}
                                     </button>
                                 </div>
                             </div>
@@ -170,7 +173,7 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
                     <section className="py-16 bg-white border-t border-slate-100">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-8">
-                                Artikel Terkait
+                                {t('blog.show.related_title')}
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 {relatedPosts.map((relatedPost) => (
@@ -221,7 +224,7 @@ const BlogShow: React.FC<BlogShowProps> = ({ post, relatedPosts, settings }) => 
                                 <span className="text-xl font-bold">{siteName}</span>
                             </div>
                             <p className="text-slate-400 text-sm">
-                                © {new Date().getFullYear()} {siteName}. All rights reserved.
+                                {t('blog.footer.copyright', { year: new Date().getFullYear(), name: siteName })}
                             </p>
                         </div>
                     </div>

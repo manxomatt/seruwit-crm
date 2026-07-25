@@ -42,6 +42,12 @@ return [
         'amount' => 'Jumlah',
     ],
 
+    'placeholders' => [
+        'all_drivers' => 'Semua driver',
+        'all_vehicles' => 'Semua kendaraan',
+        'all_types' => 'Semua tipe',
+    ],
+
     'actions' => [
         'save_settings' => 'Simpan pengaturan',
         'create_rule' => 'Buat aturan',

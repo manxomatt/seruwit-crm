@@ -52,21 +52,21 @@ export default function Index({ events, drivers, vehicles, filters }: Props): JS
                             className="min-w-[12rem]"
                             value={filters.driver_id ? String(filters.driver_id) : ''}
                             onChange={(value) => reload({ driver_id: value || undefined })}
-                            placeholder="All drivers"
+                            placeholder={t('scoring.placeholders.all_drivers')}
                             options={drivers.map((d) => ({ value: String(d.id), label: d.name }))}
                         />
                         <Select
                             className="min-w-[12rem]"
                             value={filters.vehicle_id ? String(filters.vehicle_id) : ''}
                             onChange={(value) => reload({ vehicle_id: value || undefined })}
-                            placeholder="All vehicles"
+                            placeholder={t('scoring.placeholders.all_vehicles')}
                             options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} (${v.plate_number})` }))}
                         />
                         <Select
                             className="min-w-[10rem]"
                             value={filters.type || ''}
                             onChange={(value) => reload({ type: value || undefined })}
-                            placeholder="All types"
+                            placeholder={t('scoring.placeholders.all_types')}
                             options={EVENT_TYPES.map((type) => ({
                                 value: type,
                                 label: eventTypeLabel(type),

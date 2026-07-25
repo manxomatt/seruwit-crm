@@ -8,6 +8,7 @@ return [
         'schedules' => 'Schedules',
         'calendar' => 'Calendar',
         'reports' => 'Reports',
+        'back_to_list' => 'Back to List',
     ],
 
     'status' => [
@@ -66,6 +67,21 @@ return [
         'code' => 'Code',
         'status' => 'Status',
         'date' => 'Date',
+        'recorded_at' => 'Recorded At',
+        'note' => 'Note',
+        'notes' => 'Notes',
+        'time_of_day' => 'Time of Day',
+        'active_hint' => 'Active (generates trips when requested)',
+    ],
+
+    'placeholders' => [
+        'search_trips' => 'Search by code, origin, or destination...',
+        'search_schedules' => 'Search by origin or destination...',
+        'all_statuses' => 'All statuses',
+        'select_vehicle' => 'Select a vehicle',
+        'select_driver' => 'Select a driver',
+        'select_partner' => 'Select a partner',
+        'select_product' => 'Select a product',
     ],
 
     'actions' => [
@@ -81,6 +97,7 @@ return [
         'arrive' => 'Arrive',
         'complete_stop' => 'Complete',
         'confirm_cancel' => 'Confirm Cancellation',
+        'delete_schedule' => 'Delete Schedule',
     ],
 
     'pages' => [
@@ -94,6 +111,8 @@ return [
             'create' => 'Add Schedule',
             'edit' => 'Edit Schedule',
             'empty' => 'No schedules yet.',
+            'delete_title' => 'Delete this schedule',
+            'delete_hint' => 'Trips already generated from it are kept.',
         ],
         'calendar' => [
             'title' => 'Trip Calendar',
@@ -154,6 +173,8 @@ return [
         'driver_not_available' => 'Driver :name is :status, not available.',
         'driver_has_trip' => 'Driver :name already has a trip on this date.',
         'driver_sim_expired' => 'Driver :name has an expired SIM.',
+        'delete_schedule_confirm' => 'Are you sure you want to delete the schedule ":origin → :destination"? Trips already generated from it are kept.',
+        'delete_schedule_confirm_generic' => 'Are you sure you want to delete this schedule?',
     ],
 
     'validation' => [

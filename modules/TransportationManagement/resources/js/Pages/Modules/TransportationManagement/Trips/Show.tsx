@@ -302,7 +302,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             <DangerButton onClick={() => setShowCancelModal(true)}>{t('transportation.actions.cancel')}</DangerButton>
                         )}
                         <Link href={prefixedRoute('transportation.trips.index')}>
-                            <SecondaryButton>Back to List</SecondaryButton>
+                            <SecondaryButton>{t('transportation.nav.back_to_list')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -637,12 +637,12 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             </div>
                         </div>
                         <div>
-                            <InputLabel htmlFor="c_recorded_at" value="Recorded At" />
+                            <InputLabel htmlFor="c_recorded_at" value={t('transportation.fields.recorded_at')} />
                             <TextInput id="c_recorded_at" type="datetime-local" className="mt-1 block w-full" value={checkpointForm.data.recorded_at} onChange={(e) => checkpointForm.setData('recorded_at', e.target.value)} required />
                             <InputError message={checkpointForm.errors.recorded_at} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="c_note" value="Note (optional)" />
+                            <InputLabel htmlFor="c_note" value={`${t('transportation.fields.note')} (optional)`} />
                             <TextInput id="c_note" className="mt-1 block w-full" value={checkpointForm.data.note} onChange={(e) => checkpointForm.setData('note', e.target.value)} />
                             <InputError message={checkpointForm.errors.note} className="mt-2" />
                         </div>
@@ -665,7 +665,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                 className="mt-1"
                                 value={itemForm.data.product_id}
                                 onChange={(value) => itemForm.setData('product_id', value)}
-                                placeholder="Select a product"
+                                placeholder={t('transportation.placeholders.select_product')}
                                 options={products.map((product) => ({
                                     value: String(product.id),
                                     label: `${product.name} (${product.code})`,
@@ -679,7 +679,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             <InputError message={itemForm.errors.quantity} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="i_notes" value="Notes (optional)" />
+                            <InputLabel htmlFor="i_notes" value={`${t('transportation.fields.notes')} (optional)`} />
                             <TextInput id="i_notes" className="mt-1 block w-full" value={itemForm.data.notes} onChange={(e) => itemForm.setData('notes', e.target.value)} />
                             <InputError message={itemForm.errors.notes} className="mt-2" />
                         </div>

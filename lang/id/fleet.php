@@ -44,6 +44,7 @@ return [
         'brand' => 'Merek',
         'model_year' => 'Tahun model',
         'capacity' => 'Kapasitas',
+        'capacity_kg' => 'Kapasitas kg (untuk routing)',
         'fuel_type' => 'Jenis BBM',
         'odometer' => 'Odometer',
         'status' => 'Status',
@@ -98,6 +99,8 @@ return [
         'create_login' => 'Buat akun login',
         'login_created' => 'Sudah punya akun login',
         'no_login' => 'Belum ada akun login',
+        'account_username' => 'Username',
+        'account_password' => 'Password',
     ],
 
     'fuel' => [

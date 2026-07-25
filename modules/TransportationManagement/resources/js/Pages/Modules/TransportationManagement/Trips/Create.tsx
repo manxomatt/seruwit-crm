@@ -75,7 +75,7 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                                     className="mt-1"
                                     value={data.vehicle_id}
                                     onChange={(value) => setData('vehicle_id', value)}
-                                    placeholder="Select a vehicle"
+                                    placeholder={t('transportation.placeholders.select_vehicle')}
                                     options={vehicles.map((vehicle) => ({
                                         value: String(vehicle.id),
                                         label: `${vehicle.name} (${vehicle.plate_number})${vehicle.status !== 'active' ? ` — ${t(`transportation.status.${vehicle.status}`, undefined, vehicle.status)}` : ''}`,
@@ -91,7 +91,7 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                                     className="mt-1"
                                     value={data.driver_id}
                                     onChange={(value) => setData('driver_id', value)}
-                                    placeholder="Select a driver"
+                                    placeholder={t('transportation.placeholders.select_driver')}
                                     options={drivers.map((driver) => ({
                                         value: String(driver.id),
                                         label: `${driver.name} (${driver.license_number})${driver.status !== 'available' ? ` — ${driver.status.replace('_', ' ')}` : ''}`,
@@ -107,7 +107,7 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                                     className="mt-1"
                                     value={data.partner_id}
                                     onChange={(value) => setData('partner_id', value)}
-                                    placeholder="Select a partner"
+                                    placeholder={t('transportation.placeholders.select_partner')}
                                     options={partners.map((partner) => ({
                                         value: String(partner.id),
                                         label: `${partner.name} (${partner.code})`,

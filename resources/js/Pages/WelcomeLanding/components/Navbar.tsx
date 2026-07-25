@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTrans } from '@/hooks/useTrans';
 
 interface Settings {
   'general.site_name'?: string;
@@ -10,17 +11,18 @@ interface NavbarProps {
   settings?: Settings;
 }
 
-const navLinks = [
-  { label: 'Fitur', href: '#fitur' },
-  { label: 'Keunggulan', href: '#keunggulan' },
-  { label: 'Kontak', href: '#kontak' },
-];
-
 const Navbar: React.FC<NavbarProps> = ({ settings }) => {
+  const { t } = useTrans();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const siteName = settings?.['general.site_name'] || 'Seruwit CRM';
   const siteLogo = settings?.['site.logo'];
+
+  const navLinks = [
+    { label: t('landing.nav.features'), href: '#fitur' },
+    { label: t('landing.nav.benefits'), href: '#keunggulan' },
+    { label: t('landing.nav.contact'), href: '#kontak' },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
@@ -56,18 +58,18 @@ const Navbar: React.FC<NavbarProps> = ({ settings }) => {
               href="/login"
               className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-sky-500 sm:block"
             >
-              Masuk
+              {t('landing.nav.login')}
             </a>
             <a
               href="/register"
               className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-500/30 transition-colors hover:bg-sky-600"
             >
-              Coba Gratis
+              {t('landing.nav.cta')}
             </a>
             <button
               className="p-2 text-slate-600 md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Buka menu"
+              aria-label={t('landing.nav.menu_toggle')}
             >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 {isMenuOpen ? (
@@ -98,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ settings }) => {
             className="block rounded-lg px-3 py-2 text-base font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600"
             onClick={() => setIsMenuOpen(false)}
           >
-            Masuk
+            {t('landing.nav.login')}
           </a>
         </div>
       )}

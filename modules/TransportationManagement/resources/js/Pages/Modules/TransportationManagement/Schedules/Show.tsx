@@ -56,7 +56,7 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                             </Link>
                         )}
                         <Link href={prefixedRoute('transportation.schedules.index')}>
-                            <SecondaryButton>Back to List</SecondaryButton>
+                            <SecondaryButton>{t('transportation.nav.back_to_list')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -154,11 +154,11 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="flex items-center justify-between p-6">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900">Delete this schedule</h3>
-                                <p className="text-sm text-gray-500">Trips already generated from it are kept.</p>
+                                <h3 className="text-sm font-medium text-gray-900">{t('transportation.pages.schedules.delete_title')}</h3>
+                                <p className="text-sm text-gray-500">{t('transportation.pages.schedules.delete_hint')}</p>
                             </div>
                             <button onClick={() => setShowDeleteDialog(true)} className="text-sm font-medium text-red-600 hover:text-red-900">
-                                Delete Schedule
+                                {t('transportation.actions.delete_schedule')}
                             </button>
                         </div>
                     </div>
@@ -170,8 +170,11 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                 onClose={() => setShowDeleteDialog(false)}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Delete Schedule"
-                message={`Are you sure you want to delete the schedule "${schedule.origin} → ${schedule.destination}"? Trips already generated from it are kept.`}
+                title={t('transportation.actions.delete_schedule')}
+                message={t('transportation.messages.delete_schedule_confirm', {
+                    origin: schedule.origin,
+                    destination: schedule.destination,
+                })}
             />
         </DynamicLayout>
     );

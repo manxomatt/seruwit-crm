@@ -42,6 +42,12 @@ return [
         'amount' => 'Amount',
     ],
 
+    'placeholders' => [
+        'all_drivers' => 'All drivers',
+        'all_vehicles' => 'All vehicles',
+        'all_types' => 'All types',
+    ],
+
     'actions' => [
         'save_settings' => 'Save settings',
         'create_rule' => 'Create rule',

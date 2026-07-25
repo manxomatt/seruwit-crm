@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTrans } from '@/hooks/useTrans';
 
 interface Settings {
   'general.site_name'?: string;
@@ -17,11 +18,13 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ settings }) => {
+  const { t } = useTrans();
   const siteName = settings?.['general.site_name'] || 'Seruwit CRM';
   const siteDescription = settings?.['general.site_description']
-    || 'Platform CRM sederhana untuk membantu bisnis Anda membangun hubungan pelanggan yang lebih baik.';
+    || t('landing.footer.description_fallback');
   const siteLogo = settings?.['site.logo'];
-  const copyright = settings?.['site.copyright'] || `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`;
+  const copyright = settings?.['site.copyright']
+    || t('landing.footer.copyright_fallback', { year: new Date().getFullYear(), name: siteName });
   const phone = settings?.['site.phone'];
   const address = settings?.['site.address'];
   const contactEmail = settings?.['site.contact_email'];
@@ -48,17 +51,17 @@ const Footer: React.FC<FooterProps> = ({ settings }) => {
           </div>
 
           <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-900">Produk</h4>
+            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-900">{t('landing.footer.product_heading')}</h4>
             <ul className="space-y-3 text-slate-500">
-              <li><a className="transition-colors hover:text-sky-500" href="#fitur">Fitur</a></li>
-              <li><a className="transition-colors hover:text-sky-500" href="#keunggulan">Keunggulan</a></li>
-              <li><a className="transition-colors hover:text-sky-500" href="/blog">Blog</a></li>
-              <li><a className="transition-colors hover:text-sky-500" href="/login">Masuk</a></li>
+              <li><a className="transition-colors hover:text-sky-500" href="#fitur">{t('landing.footer.features_link')}</a></li>
+              <li><a className="transition-colors hover:text-sky-500" href="#keunggulan">{t('landing.footer.benefits_link')}</a></li>
+              <li><a className="transition-colors hover:text-sky-500" href="/blog">{t('landing.footer.blog_link')}</a></li>
+              <li><a className="transition-colors hover:text-sky-500" href="/login">{t('landing.footer.login_link')}</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-900">Kontak</h4>
+            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-900">{t('landing.footer.contact_heading')}</h4>
             <ul className="space-y-3 text-slate-500">
               {contactEmail && (
                 <li>

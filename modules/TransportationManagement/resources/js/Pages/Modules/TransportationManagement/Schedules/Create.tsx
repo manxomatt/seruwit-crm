@@ -95,7 +95,7 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                                     className="mt-1"
                                     value={data.vehicle_id}
                                     onChange={(value) => setData('vehicle_id', value)}
-                                    placeholder="Select a vehicle"
+                                    placeholder={t('transportation.placeholders.select_vehicle')}
                                     options={vehicles.map((vehicle) => ({ value: String(vehicle.id), label: `${vehicle.name} (${vehicle.plate_number})` }))}
                                 />
                                 <InputError message={errors.vehicle_id} className="mt-2" />
@@ -107,7 +107,7 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                                     className="mt-1"
                                     value={data.driver_id}
                                     onChange={(value) => setData('driver_id', value)}
-                                    placeholder="Select a driver"
+                                    placeholder={t('transportation.placeholders.select_driver')}
                                     options={drivers.map((driver) => ({ value: String(driver.id), label: `${driver.name} (${driver.license_number})` }))}
                                 />
                                 <InputError message={errors.driver_id} className="mt-2" />
@@ -119,7 +119,7 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                                     className="mt-1"
                                     value={data.partner_id}
                                     onChange={(value) => setData('partner_id', value)}
-                                    placeholder="Select a partner"
+                                    placeholder={t('transportation.placeholders.select_partner')}
                                     options={partners.map((partner) => ({ value: String(partner.id), label: `${partner.name} (${partner.code})` }))}
                                 />
                                 <InputError message={errors.partner_id} className="mt-2" />
@@ -135,7 +135,7 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                                 <InputError message={errors.destination} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="time_of_day" value="Time of Day" />
+                                <InputLabel htmlFor="time_of_day" value={t('transportation.fields.time_of_day')} />
                                 <TextInput id="time_of_day" type="time" className="mt-1 block w-full" value={data.time_of_day} onChange={(e) => setData('time_of_day', e.target.value)} required />
                                 <InputError message={errors.time_of_day} className="mt-2" />
                             </div>
