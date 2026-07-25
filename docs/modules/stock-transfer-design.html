@@ -1,0 +1,839 @@
+<title>Transfer Stok Antar Gudang — Module Design</title>
+<style>
+  :root {
+    --bg: #EEF2F7;
+    --surface: #FFFFFF;
+    --surface-2: #F5F8FB;
+    --border: #D1DCE8;
+    --border-light: #E4ECF3;
+    --text: #0F1D2E;
+    --text-2: #2C4059;
+    --muted: #5E7490;
+    --accent: #1A5C8A;
+    --accent-soft: #EBF3FA;
+    --accent-mid: #B3CDE0;
+    --transit: #C87C0A;
+    --transit-bg: #FEF6E6;
+    --transit-mid: #F5D9A0;
+
+    --s-draft-c: #5E7490; --s-draft-bg: #EEF2F7;
+    --s-requested-c: #1A5C8A; --s-requested-bg: #EBF3FA;
+    --s-transit-c: #C87C0A; --s-transit-bg: #FEF6E6;
+    --s-completed-c: #1A6B45; --s-completed-bg: #E8F7EF;
+    --s-cancelled-c: #A52020; --s-cancelled-bg: #FDEAEA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0C1520; --surface: #14202E; --surface-2: #0C1520;
+      --border: #243549; --border-light: #1B2A3B;
+      --text: #D8E6F2; --text-2: #A8BDD0; --muted: #607890;
+      --accent: #5BA3D0; --accent-soft: #0D2236; --accent-mid: #1D4060;
+      --transit: #E8A830; --transit-bg: #1E1500; --transit-mid: #3D2A00;
+      --s-draft-c: #7A96B0; --s-draft-bg: #1B2A3B;
+      --s-requested-c: #5BA3D0; --s-requested-bg: #0D2236;
+      --s-transit-c: #E8A830; --s-transit-bg: #1E1500;
+      --s-completed-c: #3DB870; --s-completed-bg: #0A2018;
+      --s-cancelled-c: #E05555; --s-cancelled-bg: #200A0A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0C1520; --surface: #14202E; --surface-2: #0C1520;
+    --border: #243549; --border-light: #1B2A3B;
+    --text: #D8E6F2; --text-2: #A8BDD0; --muted: #607890;
+    --accent: #5BA3D0; --accent-soft: #0D2236; --accent-mid: #1D4060;
+    --transit: #E8A830; --transit-bg: #1E1500; --transit-mid: #3D2A00;
+    --s-draft-c: #7A96B0; --s-draft-bg: #1B2A3B;
+    --s-requested-c: #5BA3D0; --s-requested-bg: #0D2236;
+    --s-transit-c: #E8A830; --s-transit-bg: #1E1500;
+    --s-completed-c: #3DB870; --s-completed-bg: #0A2018;
+    --s-cancelled-c: #E05555; --s-cancelled-bg: #200A0A;
+  }
+  :root[data-theme="light"] {
+    --bg: #EEF2F7; --surface: #FFFFFF; --surface-2: #F5F8FB;
+    --border: #D1DCE8; --border-light: #E4ECF3;
+    --text: #0F1D2E; --text-2: #2C4059; --muted: #5E7490;
+    --accent: #1A5C8A; --accent-soft: #EBF3FA; --accent-mid: #B3CDE0;
+    --transit: #C87C0A; --transit-bg: #FEF6E6; --transit-mid: #F5D9A0;
+    --s-draft-c: #5E7490; --s-draft-bg: #EEF2F7;
+    --s-requested-c: #1A5C8A; --s-requested-bg: #EBF3FA;
+    --s-transit-c: #C87C0A; --s-transit-bg: #FEF6E6;
+    --s-completed-c: #1A6B45; --s-completed-bg: #E8F7EF;
+    --s-cancelled-c: #A52020; --s-cancelled-bg: #FDEAEA;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 24px 20px 48px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ── Masthead ── */
+  .masthead { border-bottom: 2px solid var(--accent); padding-bottom: 14px; margin-bottom: 28px; }
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .masthead h1 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+  .masthead-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .masthead-meta { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+  .meta-item { font-size: 11px; color: var(--muted); }
+  .meta-item strong { color: var(--text-2); }
+
+  /* ── Section ── */
+  .section { margin-bottom: 32px; }
+  .sec-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+  /* ── ERD ── */
+  .erd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(218px, 1fr)); gap: 12px; }
+  .erd-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .erd-card.new { border-color: var(--accent-mid); }
+  .erd-head {
+    background: var(--accent); color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    padding: 7px 12px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .erd-card.existing .erd-head { background: var(--muted); }
+  .erd-tag { font-size: 9px; font-weight: 600; opacity: .75; text-transform: uppercase; letter-spacing: .06em; }
+  .erd-body { padding: 6px 0; }
+  .erd-f { display: flex; align-items: center; gap: 8px; padding: 3px 12px; font-size: 11px; }
+  .erd-f:hover { background: var(--surface-2); }
+  .pk { font-weight: 700; color: var(--accent); font-size: 10px; min-width: 22px; }
+  .fk { color: var(--transit); font-size: 10px; min-width: 22px; }
+  .fn { color: var(--text-2); flex: 1; }
+  .ft { font-size: 10px; color: var(--muted); }
+  .erd-div { height: 1px; background: var(--border-light); margin: 4px 0; }
+  .new-pill {
+    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; padding: 1px 6px; border-radius: 3px;
+    background: var(--accent); color: #fff; margin-left: 6px; vertical-align: middle;
+  }
+  .ext-pill {
+    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; padding: 1px 6px; border-radius: 3px;
+    background: var(--muted); color: #fff; margin-left: 6px; vertical-align: middle;
+  }
+
+  /* ── Status badge ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: .04em;
+    padding: 3px 9px; border-radius: 4px; white-space: nowrap;
+  }
+  .b-draft { background: var(--s-draft-bg); color: var(--s-draft-c); }
+  .b-requested { background: var(--s-requested-bg); color: var(--s-requested-c); }
+  .b-transit { background: var(--s-transit-bg); color: var(--s-transit-c); }
+  .b-completed { background: var(--s-completed-bg); color: var(--s-completed-c); }
+  .b-cancelled { background: var(--s-cancelled-bg); color: var(--s-cancelled-c); }
+
+  /* ── Status machine ── */
+  .flow-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px; }
+  .flow-main { display: flex; align-items: flex-start; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+  .flow-node { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+  .flow-desc { font-size: 9px; color: var(--muted); text-align: center; max-width: 72px; line-height: 1.35; margin-top: 2px; }
+  .flow-arr { flex-shrink: 0; width: 32px; text-align: center; font-size: 14px; color: var(--muted); padding-top: 3px; }
+  .flow-cancel { display: flex; align-items: center; margin-top: 12px; margin-left: 32px; gap: 0; }
+  .cancel-arr { font-size: 11px; color: var(--s-cancelled-c); width: 24px; text-align: center; }
+
+  /* Two-leg diagram */
+  .two-leg {
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light);
+  }
+  .two-leg-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; }
+  .leg-diagram { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0; align-items: center; }
+  .leg-box {
+    border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+    background: var(--surface-2); text-align: center;
+  }
+  .leg-box-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; }
+  .leg-box-name { font-size: 12px; font-weight: 700; color: var(--text); }
+  .leg-box-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .leg-arrow { text-align: center; padding: 0 8px; }
+  .leg-arrow-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .leg-arrow-line {
+    width: 60px; height: 2px; position: relative;
+    background: var(--border);
+  }
+  .leg-arrow-line::after {
+    content: '▶'; position: absolute; right: -6px; top: -7px;
+    font-size: 10px; color: var(--muted);
+  }
+  .leg-action { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 3px; }
+  .act-out { background: var(--s-cancelled-bg); color: var(--s-cancelled-c); }
+  .act-in { background: var(--s-completed-bg); color: var(--s-completed-c); }
+  .leg-timing { font-size: 9px; color: var(--muted); margin-top: 2px; text-align: center; }
+  .transit-zone {
+    grid-column: 1 / -1; margin-top: 10px;
+    border: 1.5px dashed var(--transit-mid); border-radius: 6px; padding: 8px 12px;
+    background: var(--transit-bg); display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .transit-label { font-size: 11px; font-weight: 700; color: var(--transit); }
+  .transit-desc { font-size: 10px; color: var(--muted); }
+
+  .flow-note {
+    font-size: 10px; color: var(--muted); margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--border-light); line-height: 1.6;
+  }
+  .flow-note strong { color: var(--text-2); }
+
+  /* ── Screens ── */
+  .screen-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 20px; }
+  .screen-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .page-title { font-size: 15px; font-weight: 700; }
+  .btn { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 4px; border: 1px solid; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-transit { background: var(--transit-bg); color: var(--transit); border-color: var(--transit-mid); }
+  .btn-success { background: var(--s-completed-bg); color: var(--s-completed-c); border-color: color-mix(in srgb, var(--s-completed-c) 30%, transparent); }
+  .btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+  .btn-danger { background: var(--s-cancelled-bg); color: var(--s-cancelled-c); border-color: color-mix(in srgb, var(--s-cancelled-c) 30%, transparent); }
+
+  /* filter chips */
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; }
+  .chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  /* table */
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .tbl td { font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border-light); color: var(--text-2); vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: var(--surface-2); }
+  .td-p { color: var(--text) !important; font-weight: 600; }
+  .td-num { font-variant-numeric: tabular-nums; }
+  .td-act { display: flex; gap: 8px; justify-content: flex-end; }
+  .lnk { font-size: 11px; color: var(--accent); font-weight: 500; cursor: pointer; }
+  .lnk-warn { color: var(--transit); }
+
+  /* route visual */
+  .route-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; background: var(--surface-2); border: 1px solid var(--border-light);
+    border-radius: 4px; padding: 2px 8px;
+  }
+  .route-pill .sep { color: var(--muted); font-size: 10px; }
+
+  /* form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .full { grid-column: 1 / -1; }
+  .fg { display: flex; flex-direction: column; gap: 4px; }
+  .flabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .fctl { padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--surface); color: var(--text-2); }
+  .fctl:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .warehouse-pair {
+    display: grid; grid-template-columns: 1fr 32px 1fr; gap: 0; align-items: end;
+    background: var(--accent-soft); border: 1px solid var(--accent-mid); border-radius: 6px; padding: 12px;
+  }
+  .wp-sep { text-align: center; font-size: 18px; color: var(--accent); padding-bottom: 2px; }
+
+  /* items grid */
+  .item-head { display: grid; grid-template-columns: 2fr 90px 90px auto; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .item-row { display: grid; grid-template-columns: 2fr 90px 90px auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-light); }
+  .item-row:last-child { border-bottom: none; }
+  .ih { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .rm { font-size: 16px; color: var(--muted); cursor: pointer; }
+  .rm:hover { color: var(--s-cancelled-c); }
+
+  /* show layout */
+  .show-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .info-card { background: var(--surface-2); border: 1px solid var(--border-light); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+  .ic-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 7px 12px; border-bottom: 1px solid var(--border-light); background: var(--surface); }
+  .ic-body { padding: 10px 12px; }
+  .kv { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--border-light); }
+  .kv:last-child { border-bottom: none; }
+  .kk { font-size: 11px; color: var(--muted); }
+  .kv-val { font-size: 11px; font-weight: 600; color: var(--text); }
+
+  /* timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 10px; position: relative; }
+  .tl-item:not(:last-child)::before {
+    content: ''; position: absolute; left: 11px; top: 22px;
+    width: 1px; height: calc(100% - 4px); background: var(--border-light);
+  }
+  .tl-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; font-weight: 700; margin-top: 2px; }
+  .tl-dot.done { background: var(--s-completed-bg); color: var(--s-completed-c); border: 1.5px solid var(--s-completed-c); }
+  .tl-dot.current { background: var(--transit-bg); color: var(--transit); border: 1.5px solid var(--transit); }
+  .tl-dot.todo { background: var(--surface-2); color: var(--muted); border: 1.5px solid var(--border); }
+  .tl-content { padding-bottom: 14px; }
+  .tl-title { font-size: 11px; font-weight: 700; color: var(--text); }
+  .tl-sub { font-size: 10px; color: var(--muted); }
+
+  /* action panel */
+  .action-panel { padding: 12px; background: var(--transit-bg); border: 1.5px solid var(--transit-mid); border-radius: 6px; }
+  .ap-title { font-size: 11px; font-weight: 700; color: var(--transit); margin-bottom: 8px; }
+  .ap-desc { font-size: 11px; color: var(--text-2); margin-bottom: 10px; line-height: 1.5; }
+
+  /* receive form inline */
+  .recv-row { display: grid; grid-template-columns: 2fr 80px 80px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-light); font-size: 11px; }
+  .recv-row:last-child { border-bottom: none; }
+  .qty-sent { font-variant-numeric: tabular-nums; color: var(--transit); font-weight: 600; }
+
+  /* impl */
+  .impl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .impl-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .impl-head { padding: 7px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-2); background: var(--surface-2); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 6px; }
+  .impl-num { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .impl-body { padding: 8px 12px; }
+  .impl-file { font-size: 10px; color: var(--muted); padding: 2px 0; font-family: ui-monospace, 'SF Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .impl-file::before { content: '▸ '; color: var(--accent); }
+  .impl-note { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+  .int-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-top: 10px; }
+  .int-row { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-light); font-size: 11px; }
+  .int-row:last-child { border-bottom: none; }
+  .int-from { font-weight: 700; color: var(--accent); min-width: 130px; font-family: ui-monospace, 'SF Mono', monospace; font-size: 10px; flex-shrink: 0; }
+  .int-desc { color: var(--text-2); line-height: 1.5; }
+  .int-arr { color: var(--muted); flex-shrink: 0; }
+  code { font-family: ui-monospace, 'SF Mono', monospace; font-size: 10px; background: var(--surface-2); padding: 1px 4px; border-radius: 3px; }
+</style>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="eyebrow">Module Design Document</div>
+  <h1>Transfer Stok Antar Gudang</h1>
+  <div class="masthead-sub">Pemindahan inventory dari satu gudang ke gudang lain — dua kaki movement dengan status in-transit</div>
+  <div class="masthead-meta">
+    <span class="meta-item"><strong>Module:</strong> Inventory (extend)</span>
+    <span class="meta-item"><strong>New tables:</strong> 2</span>
+    <span class="meta-item"><strong>Modified:</strong> StockMovementRecorder, stock_movements</span>
+    <span class="meta-item"><strong>New pages:</strong> 3</span>
+  </div>
+</div>
+
+<!-- 1. ERD -->
+<div class="section">
+  <div class="sec-label">1 · Entity Relationship</div>
+  <div class="erd-grid">
+
+    <div class="erd-card new">
+      <div class="erd-head">stock_transfers <span class="erd-tag">NEW · Header</span></div>
+      <div class="erd-body">
+        <div class="erd-f"><span class="pk">PK</span><span class="fn">id</span><span class="ft">bigint</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">from_warehouse_id</span><span class="ft">→ warehouses</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">from_location_id</span><span class="ft">nullable</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">to_warehouse_id</span><span class="ft">→ warehouses</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">to_location_id</span><span class="ft">nullable</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">requested_by</span><span class="ft">→ users</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">approved_by</span><span class="ft">nullable</span></div>
+        <div class="erd-div"></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">transfer_number</span><span class="ft">varchar unique</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">status</span><span class="ft">enum</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">dispatched_at</span><span class="ft">datetime nullable</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">completed_at</span><span class="ft">datetime nullable</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">expected_at</span><span class="ft">date nullable</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">notes</span><span class="ft">text nullable</span></div>
+      </div>
+    </div>
+
+    <div class="erd-card new">
+      <div class="erd-head">stock_transfer_items <span class="erd-tag">NEW · Lines</span></div>
+      <div class="erd-body">
+        <div class="erd-f"><span class="pk">PK</span><span class="fn">id</span><span class="ft">bigint</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">stock_transfer_id</span><span class="ft">cascadeDelete</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">product_id</span><span class="ft">→ products</span></div>
+        <div class="erd-div"></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">quantity_requested</span><span class="ft">decimal(10,2)</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">quantity_sent</span><span class="ft">decimal(10,2) def 0</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">quantity_received</span><span class="ft">decimal(10,2) def 0</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">notes</span><span class="ft">text nullable</span></div>
+      </div>
+    </div>
+
+    <div class="erd-card existing">
+      <div class="erd-head">stock_movements <span class="erd-tag">EXISTING · extend</span></div>
+      <div class="erd-body">
+        <div class="erd-f"><span class="pk">PK</span><span class="fn">id</span><span class="ft">bigint</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">product_id</span><span class="ft"></span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">warehouse_id</span><span class="ft">sumber atau tujuan</span></div>
+        <div class="erd-f"><span class="fk">FK</span><span class="fn">location_id</span><span class="ft">nullable</span></div>
+        <div class="erd-div"></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">type</span><span class="ft">'in' | 'out' | …</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">source_type</span><span class="ft">'transfer' ← dipakai</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">source_id</span><span class="ft">→ stock_transfers.id</span></div>
+        <div class="erd-f"><span class="pk" style="visibility:hidden">PK</span><span class="fn">reference_code</span><span class="ft">TRF-YYYY-SEQ</span></div>
+        <div class="erd-div"></div>
+        <div class="erd-f" style="font-size:10px;color:var(--s-transit-c);padding:4px 12px">⚠ Tidak perlu kolom baru — <br>dua movement per item, beda warehouse_id</div>
+      </div>
+    </div>
+
+    <div class="erd-card existing">
+      <div class="erd-head">StockMovementRecorder <span class="erd-tag">EXISTING · fix</span></div>
+      <div class="erd-body">
+        <div class="erd-f" style="font-size:10px;padding:6px 12px;color:var(--muted);line-height:1.6">
+          Saat ini: <code>transfer => null</code><br>
+          Perlu diubah: type tetap dipakai secara internal sebagai label movement — logic stok (<em>in</em> / <em>out</em>) ditentukan berdasarkan arah (sumber vs tujuan), bukan dari type 'transfer'.<br><br>
+          <strong style="color:var(--text-2)">Fix:</strong> <code>StockTransferService</code> memanggil <code>StockMovementRecorder::record()</code> dua kali dengan type <code>'out'</code> dan <code>'in'</code>, bukan type 'transfer'. Enum 'transfer' di kolom dapat digunakan sebagai fallback label atau dihapus.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 2. STATUS MACHINE -->
+<div class="section">
+  <div class="sec-label">2 · Status Machine &amp; Dua-Kaki Movement</div>
+  <div class="flow-wrap">
+
+    <!-- Status flow -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Status Transfer</div>
+    <div class="flow-main">
+      <div class="flow-node">
+        <span class="badge b-draft">Draft</span>
+        <span class="flow-desc">dibuat, belum diajukan</span>
+      </div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node">
+        <span class="badge b-requested">Requested</span>
+        <span class="flow-desc">diajukan, menunggu persetujuan</span>
+      </div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node">
+        <span class="badge b-transit">In Transit</span>
+        <span class="flow-desc">barang dikirim, stok sumber sudah berkurang</span>
+      </div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node">
+        <span class="badge b-completed">Completed</span>
+        <span class="flow-desc">diterima di tujuan, stok tujuan bertambah</span>
+      </div>
+    </div>
+    <div class="flow-cancel">
+      <span class="cancel-arr">↳</span>
+      <div class="flow-node" style="margin-left:6px">
+        <span class="badge b-cancelled">Cancelled</span>
+        <span class="flow-desc">dari draft/requested; jika in_transit → stok sumber dikembalikan</span>
+      </div>
+    </div>
+
+    <!-- Two-leg diagram -->
+    <div class="two-leg">
+      <div class="two-leg-title">Diagram Dua-Kaki Movement</div>
+      <div class="leg-diagram">
+        <div class="leg-box">
+          <div class="leg-box-title">Gudang Sumber</div>
+          <div class="leg-box-name">Gudang Utama</div>
+          <div class="leg-box-sub">on_hand berkurang saat dispatch</div>
+        </div>
+        <div class="leg-arrow">
+          <div class="leg-arrow-inner">
+            <span class="leg-action act-out">OUT movement</span>
+            <div class="leg-arrow-line"></div>
+            <span class="leg-timing">saat Dispatch</span>
+          </div>
+        </div>
+        <div class="leg-box" style="border-color:var(--transit-mid);background:var(--transit-bg)">
+          <div class="leg-box-title" style="color:var(--transit)">In Transit</div>
+          <div class="leg-box-name" style="color:var(--transit)">Stok "di udara"</div>
+          <div class="leg-box-sub">tidak ada di kedua gudang</div>
+        </div>
+        <div class="leg-arrow">
+          <div class="leg-arrow-inner">
+            <span class="leg-action act-in">IN movement</span>
+            <div class="leg-arrow-line"></div>
+            <span class="leg-timing">saat Receive</span>
+          </div>
+        </div>
+        <div class="leg-box">
+          <div class="leg-box-title">Gudang Tujuan</div>
+          <div class="leg-box-name">Gudang Bekasi</div>
+          <div class="leg-box-sub">on_hand bertambah saat receive</div>
+        </div>
+        <div class="transit-zone">
+          <span class="transit-label">⚡ Cancel setelah Dispatch</span>
+          <span class="transit-desc">→ reverse movement: buat StockMovement <code>in</code> kembali ke gudang sumber dengan reference <code>TRF-…-CANCEL</code></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-note">
+      <strong>StockTransferService::dispatch():</strong> Dalam satu DB::transaction — buat 2 StockMovement per item (<code>type:'out'</code> di from_warehouse, <code>type:'in'</code> di to_warehouse), update <code>quantity_sent</code>, set <code>status='in_transit'</code>, set <code>dispatched_at=now()</code>. Kedua movement punya <code>source_type:'transfer'</code> dan <code>source_id: $transfer->id</code>.<br>
+      <strong>StockTransferService::receive():</strong> Hanya buat movement <code>in</code> di to_warehouse untuk qty yang benar-benar diterima (bisa kurang dari sent), update <code>quantity_received</code>, set <code>status='completed'</code>.
+    </div>
+  </div>
+</div>
+
+<!-- 3. UI SCREENS -->
+<div class="section">
+  <div class="sec-label">3 · Layar Utama</div>
+
+  <!-- Index -->
+  <div class="screen-wrap">
+    <div class="screen-label">3a — Transfer Index</div>
+    <div class="toolbar">
+      <span class="page-title">Transfer Stok</span>
+      <button class="btn btn-primary">+ Transfer Baru</button>
+    </div>
+    <div class="chips">
+      <span class="chip on">Semua</span>
+      <span class="chip">Draft</span>
+      <span class="chip">Requested</span>
+      <span class="chip">In Transit</span>
+      <span class="chip">Completed</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>No. Transfer</th>
+            <th>Rute</th>
+            <th>Item</th>
+            <th>Tgl Kirim</th>
+            <th>Exp. Tiba</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-p">TRF-2026-0012</td>
+            <td>
+              <span class="route-pill">Gdg Utama <span class="sep">→</span> Gdg Bekasi</span>
+            </td>
+            <td class="td-num">3 produk · 500 unit</td>
+            <td>22 Jul 2026</td>
+            <td class="td-num" style="color:var(--transit)">25 Jul 2026</td>
+            <td><span class="badge b-transit">In Transit</span></td>
+            <td class="td-act"><span class="lnk">Lihat</span><span class="lnk lnk-warn">Terima</span></td>
+          </tr>
+          <tr>
+            <td class="td-p">TRF-2026-0011</td>
+            <td>
+              <span class="route-pill">Gdg Bekasi <span class="sep">→</span> Gdg Surabaya</span>
+            </td>
+            <td class="td-num">5 produk · 1.200 unit</td>
+            <td>20 Jul 2026</td>
+            <td class="td-num">21 Jul 2026</td>
+            <td><span class="badge b-completed">Completed</span></td>
+            <td class="td-act"><span class="lnk">Lihat</span></td>
+          </tr>
+          <tr>
+            <td class="td-p">TRF-2026-0010</td>
+            <td>
+              <span class="route-pill">Gdg Utama <span class="sep">→</span> Gdg Surabaya</span>
+            </td>
+            <td class="td-num">2 produk · 200 unit</td>
+            <td>—</td>
+            <td class="td-num">26 Jul 2026</td>
+            <td><span class="badge b-requested">Requested</span></td>
+            <td class="td-act"><span class="lnk">Lihat</span><span class="lnk lnk-warn">Dispatch</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create -->
+  <div class="screen-wrap">
+    <div class="screen-label">3b — Buat Transfer</div>
+    <div class="toolbar" style="margin-bottom:16px">
+      <span class="page-title">Transfer Stok Baru</span>
+    </div>
+
+    <div class="warehouse-pair" style="margin-bottom:16px">
+      <div class="fg">
+        <label class="flabel">Gudang Asal *</label>
+        <div class="fctl" style="color:var(--muted)">Pilih gudang…</div>
+        <div style="margin-top:6px">
+          <label class="flabel">Lokasi / Bin (opsional)</label>
+          <div class="fctl" style="color:var(--muted)">Pilih lokasi…</div>
+        </div>
+      </div>
+      <div class="wp-sep">→</div>
+      <div class="fg">
+        <label class="flabel">Gudang Tujuan *</label>
+        <div class="fctl" style="color:var(--muted)">Pilih gudang…</div>
+        <div style="margin-top:6px">
+          <label class="flabel">Lokasi / Bin (opsional)</label>
+          <div class="fctl" style="color:var(--muted)">Pilih lokasi…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="fg">
+        <label class="flabel">Estimasi Tiba</label>
+        <div class="fctl" style="color:var(--muted)">Tanggal…</div>
+      </div>
+      <div class="fg">
+        <label class="flabel">Catatan</label>
+        <div class="fctl" style="color:var(--muted)">Opsional…</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:700">Item Transfer</span>
+      <button class="btn btn-ghost">+ Tambah Produk</button>
+    </div>
+
+    <div class="item-head">
+      <div class="ih">Produk</div>
+      <div class="ih" style="text-align:right">Stok Tersedia</div>
+      <div class="ih" style="text-align:right">Qty Transfer</div>
+      <div></div>
+    </div>
+    <div class="item-row">
+      <div class="fctl" style="font-size:11px">Minyak Goreng Bimoli 2L</div>
+      <div style="text-align:right;font-size:11px;font-variant-numeric:tabular-nums;color:var(--muted)">240 karton</div>
+      <div><div class="fctl" style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums">100</div></div>
+      <div class="rm">×</div>
+    </div>
+    <div class="item-row">
+      <div class="fctl" style="font-size:11px">Gula Pasir Gulaku 1kg</div>
+      <div style="text-align:right;font-size:11px;font-variant-numeric:tabular-nums;color:var(--muted)">500 pack</div>
+      <div><div class="fctl" style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums">200</div></div>
+      <div class="rm">×</div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-light)">
+      <button class="btn btn-ghost">Simpan Draft</button>
+      <button class="btn btn-primary">Ajukan Transfer →</button>
+    </div>
+  </div>
+
+  <!-- Show -->
+  <div class="screen-wrap">
+    <div class="screen-label">3c — Detail Transfer (status: In Transit)</div>
+    <div class="toolbar" style="margin-bottom:14px">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">← Kembali ke Transfer List</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="page-title">TRF-2026-0012</span>
+          <span class="badge b-transit">In Transit</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-danger">Batalkan</button>
+        <button class="btn btn-success">✓ Konfirmasi Penerimaan</button>
+      </div>
+    </div>
+
+    <div class="show-grid">
+      <!-- Left: items + receive form -->
+      <div>
+        <div class="info-card">
+          <div class="ic-head">Item Transfer</div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Produk</th>
+                  <th style="text-align:right">Diminta</th>
+                  <th style="text-align:right">Dikirim</th>
+                  <th style="text-align:right">Diterima</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-p">Minyak Goreng Bimoli 2L</td>
+                  <td class="td-num" style="text-align:right">100</td>
+                  <td class="td-num qty-sent" style="text-align:right">100</td>
+                  <td class="td-num" style="text-align:right;color:var(--muted)">—</td>
+                </tr>
+                <tr>
+                  <td class="td-p">Gula Pasir Gulaku 1kg</td>
+                  <td class="td-num" style="text-align:right">200</td>
+                  <td class="td-num qty-sent" style="text-align:right">200</td>
+                  <td class="td-num" style="text-align:right;color:var(--muted)">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Receive form (shown when in_transit) -->
+        <div class="action-panel" style="margin-top:12px">
+          <div class="ap-title">Konfirmasi Penerimaan di Gudang Bekasi</div>
+          <div class="ap-desc">Masukkan qty yang benar-benar diterima. Boleh berbeda dari qty yang dikirim (rusak, hilang dalam pengiriman).</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Item</div>
+          <div class="recv-row" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">
+            <div>Produk</div><div style="text-align:right">Dikirim</div><div style="text-align:right">Diterima</div>
+          </div>
+          <div class="recv-row">
+            <div style="font-size:12px;font-weight:600">Minyak Goreng Bimoli 2L</div>
+            <div class="qty-sent" style="text-align:right">100</div>
+            <div><div class="fctl" style="text-align:right;font-variant-numeric:tabular-nums">100</div></div>
+          </div>
+          <div class="recv-row">
+            <div style="font-size:12px;font-weight:600">Gula Pasir Gulaku 1kg</div>
+            <div class="qty-sent" style="text-align:right">200</div>
+            <div><div class="fctl" style="text-align:right;font-variant-numeric:tabular-nums">198</div></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <button class="btn btn-success">✓ Konfirmasi (298 unit diterima)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: info + timeline -->
+      <div>
+        <div class="info-card">
+          <div class="ic-head">Informasi</div>
+          <div class="ic-body">
+            <div class="kv"><span class="kk">Dari</span><span class="kv-val">Gudang Utama</span></div>
+            <div class="kv"><span class="kk">Ke</span><span class="kv-val">Gudang Bekasi</span></div>
+            <div class="kv"><span class="kk">Dikirim</span><span class="kv-val">22 Jul 2026, 09:14</span></div>
+            <div class="kv"><span class="kk">Exp. Tiba</span><span class="kv-val" style="color:var(--transit)">25 Jul 2026</span></div>
+            <div class="kv"><span class="kk">Dibuat oleh</span><span class="kv-val">Ahmad Subarjo</span></div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="ic-head">Progress</div>
+          <div class="ic-body">
+            <div class="timeline">
+              <div class="tl-item">
+                <div class="tl-dot done">✓</div>
+                <div class="tl-content">
+                  <div class="tl-title">Transfer dibuat</div>
+                  <div class="tl-sub">21 Jul · Ahmad Subarjo</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot done">✓</div>
+                <div class="tl-content">
+                  <div class="tl-title">Diajukan &amp; disetujui</div>
+                  <div class="tl-sub">21 Jul · Manager Gudang</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot done">✓</div>
+                <div class="tl-content">
+                  <div class="tl-title">Barang dikirim (Dispatch)</div>
+                  <div class="tl-sub">22 Jul 09:14 · Stok Gdg Utama −300 unit</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot current">⋯</div>
+                <div class="tl-content">
+                  <div class="tl-title" style="color:var(--transit)">Dalam pengiriman</div>
+                  <div class="tl-sub">Exp. tiba 25 Jul 2026</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot todo">○</div>
+                <div class="tl-content">
+                  <div class="tl-title" style="color:var(--muted)">Diterima di Gudang Bekasi</div>
+                  <div class="tl-sub">Menunggu konfirmasi</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. IMPLEMENTATION -->
+<div class="section">
+  <div class="sec-label">4 · Rencana Implementasi</div>
+  <div class="impl-grid">
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">1</div>Migrations</div>
+      <div class="impl-body">
+        <div class="impl-file">create_stock_transfers_table</div>
+        <div class="impl-file">create_stock_transfer_items_table</div>
+        <div class="impl-note">Tidak perlu ubah stock_movements — dua movement terpisah sudah cukup. Enum 'transfer' boleh tetap ada.</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">2</div>Models + Factories</div>
+      <div class="impl-body">
+        <div class="impl-file">Inventory/Models/StockTransfer.php</div>
+        <div class="impl-file">Inventory/Models/StockTransferItem.php</div>
+        <div class="impl-note">Relasi: StockTransfer hasMany items, belongsTo fromWarehouse/toWarehouse, scopeInTransit(), canDispatch(), canReceive().</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">3</div>StockTransferService</div>
+      <div class="impl-body">
+        <div class="impl-file">Inventory/Support/StockTransferService.php</div>
+        <div class="impl-note">Methods: dispatch($transfer), receive($transfer, array $receivedQtys), cancel($transfer). Tiap method dalam DB::transaction.</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">4</div>HTTP Layer</div>
+      <div class="impl-body">
+        <div class="impl-file">Http/Controllers/StockTransferController.php</div>
+        <div class="impl-file">Http/Requests/StoreStockTransferRequest.php</div>
+        <div class="impl-file">Http/Requests/ReceiveStockTransferRequest.php</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">5</div>Frontend Pages</div>
+      <div class="impl-body">
+        <div class="impl-file">Inventory/StockTransfers/Index.tsx</div>
+        <div class="impl-file">Inventory/StockTransfers/Create.tsx</div>
+        <div class="impl-file">Inventory/StockTransfers/Show.tsx</div>
+        <div class="impl-note">Show.tsx menampilkan receive form inline saat status in_transit.</div>
+      </div>
+    </div>
+
+    <div class="impl-card">
+      <div class="impl-head"><div class="impl-num">6</div>Tests</div>
+      <div class="impl-body">
+        <div class="impl-file">Tests/Feature/Inventory/StockTransferTest.php</div>
+        <div class="impl-note">Happy path: create → dispatch → receive. Edge cases: cancel after dispatch, partial receive, stok sumber tidak cukup, gudang sama diblokir.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="int-box">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">Titik Integrasi &amp; Keputusan Kode</div>
+    <div class="int-row">
+      <span class="int-from">dispatch()</span>
+      <span class="int-arr">→</span>
+      <span class="int-desc">Validasi <code>StockLevel.on_hand ≥ quantity_requested</code> sebelum execute. Buat movement <code>out</code> di from_warehouse (decrement on_hand), lalu movement <code>in</code> di to_warehouse (increment on_hand). Keduanya <code>source_type:'transfer'</code>.</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">receive()</span>
+      <span class="int-arr">→</span>
+      <span class="int-desc">Qty diterima sudah dibuat saat dispatch (movement <code>in</code>). Jika qty_received ≠ qty_sent (barang rusak/hilang), buat movement <code>out</code> di to_warehouse sebesar selisihnya dengan reference <code>TRF-…-LOSS</code>. Update <code>quantity_received</code>, set <code>completed_at</code>.</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">cancel() setelah dispatch</span>
+      <span class="int-arr">→</span>
+      <span class="int-desc">Buat reverse movement <code>in</code> di from_warehouse sebesar <code>quantity_sent</code> dengan reference <code>TRF-…-CANCEL</code>. Stok tujuan tidak perlu diubah (movement <code>in</code> ke tujuan tidak pernah dibuat saat dispatch).</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">Validasi gudang</span>
+      <span class="int-arr">→</span>
+      <span class="int-desc"><code>from_warehouse_id !== to_warehouse_id</code> — diblokir di <code>StoreStockTransferRequest</code> dengan rule <code>different:from_warehouse_id</code>.</span>
+    </div>
+    <div class="int-row">
+      <span class="int-from">StockMovementRecorder</span>
+      <span class="int-arr">→</span>
+      <span class="int-desc">Dipakai langsung oleh <code>StockTransferService</code> — tidak ada perubahan ke kelas ini. Type yang dipakai adalah <code>'in'</code> dan <code>'out'</code>, bukan <code>'transfer'</code>.</span>
+    </div>
+  </div>
+
+  <!-- Routes -->
+  <div class="int-box" style="margin-top:10px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">Routes (tambah ke InventoryModule.php)</div>
+    <div style="font-family:ui-monospace,'SF Mono',monospace;font-size:11px;color:var(--text-2);line-height:2;overflow-x:auto">
+      GET &nbsp; /inventory/transfers &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ index<br>
+      GET &nbsp; /inventory/transfers/create &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ create<br>
+      POST &nbsp;/inventory/transfers &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ store<br>
+      GET &nbsp; /inventory/transfers/{t} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ show<br>
+      POST &nbsp;/inventory/transfers/{t}/request &nbsp;&nbsp;→ request (draft → requested)<br>
+      POST &nbsp;/inventory/transfers/{t}/dispatch &nbsp;→ dispatch (→ in_transit + OUT movement)<br>
+      POST &nbsp;/inventory/transfers/{t}/receive &nbsp;&nbsp;→ receive (→ completed + IN movement)<br>
+      POST &nbsp;/inventory/transfers/{t}/cancel &nbsp;&nbsp;&nbsp;→ cancel (reverse jika in_transit)
+    </div>
+  </div>
+</div>

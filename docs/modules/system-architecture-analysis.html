@@ -1,0 +1,1014 @@
+
+<title>Seruwit CRM — Analisis Arsitektur Modul</title>
+<style>
+  /* ── Design tokens ───────────────────────────────────────── */
+  :root {
+    --bg:          #F0F4F8;
+    --surface:     #FFFFFF;
+    --surface-2:   #EBF0F6;
+    --border:      #D1DCE8;
+    --text:        #0A1628;
+    --text-2:      #334155;
+    --muted:       #64748B;
+    --accent:      #1D4ED8;
+    --accent-soft: #DBEAFE;
+
+    /* cluster colors */
+    --c-data:    #6366F1;
+    --c-proc:    #D97706;
+    --c-fleet:   #0284C7;
+    --c-dist:    #059669;
+    --c-sales:   #DB2777;
+    --c-intel:   #7C3AED;
+    --c-cms:     #64748B;
+
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-md: 0 2px 8px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:          #0D1117;
+      --surface:     #161B22;
+      --surface-2:   #1C2333;
+      --border:      #30363D;
+      --text:        #E6EDF3;
+      --text-2:      #C9D1D9;
+      --muted:       #8B949E;
+      --accent:      #58A6FF;
+      --accent-soft: #1C2F4A;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#F0F4F8;--surface:#FFFFFF;--surface-2:#EBF0F6;--border:#D1DCE8;
+    --text:#0A1628;--text-2:#334155;--muted:#64748B;--accent:#1D4ED8;--accent-soft:#DBEAFE;
+  }
+  :root[data-theme="dark"] {
+    --bg:#0D1117;--surface:#161B22;--surface-2:#1C2333;--border:#30363D;
+    --text:#E6EDF3;--text-2:#C9D1D9;--muted:#8B949E;--accent:#58A6FF;--accent-soft:#1C2F4A;
+  }
+
+  /* ── Reset & base ────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+
+  /* ── Header / Nav ────────────────────────────────────────── */
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    height: 56px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 0 var(--border);
+  }
+  .site-header .logo {
+    display: flex; align-items: center; gap: .6rem;
+    font-weight: 700; font-size: 1rem; color: var(--text); text-decoration: none;
+  }
+  .site-header .logo span {
+    display: inline-block; width: 28px; height: 28px; border-radius: 7px;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 800;
+  }
+  .header-nav { display: flex; gap: 1.5rem; list-style: none; }
+  .header-nav a {
+    text-decoration: none; color: var(--muted); font-size: .85rem; font-weight: 500;
+    transition: color .15s;
+  }
+  .header-nav a:hover { color: var(--accent); }
+  .header-meta { font-size: .8rem; color: var(--muted); }
+
+  /* ── Container ───────────────────────────────────────────── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── Hero ────────────────────────────────────────────────── */
+  .hero {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-eyebrow {
+    font-size: .75rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: .75rem;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15;
+    color: var(--text); margin-bottom: 1rem; text-wrap: balance;
+  }
+  .hero p {
+    font-size: 1.05rem; color: var(--text-2); max-width: 600px;
+    line-height: 1.7; margin-bottom: 2rem;
+  }
+  .stats-row {
+    display: flex; flex-wrap: wrap; gap: 2rem;
+  }
+  .stat {
+    display: flex; flex-direction: column;
+  }
+  .stat-value {
+    font-size: 2.25rem; font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(135deg, var(--accent), #7C3AED);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label { font-size: .78rem; color: var(--muted); font-weight: 500; margin-top: .25rem; }
+
+  /* ── Section titles ──────────────────────────────────────── */
+  .section { padding: 3.5rem 0; }
+  .section + .section { border-top: 1px solid var(--border); }
+  .section-header { margin-bottom: 2rem; }
+  .section-header h2 {
+    font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: .4rem;
+  }
+  .section-header p { color: var(--muted); font-size: .9rem; }
+
+  /* ── Architecture Map ────────────────────────────────────── */
+  .arch-map-wrap { overflow-x: auto; }
+  .arch-map {
+    min-width: 760px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+
+  /* ── Cluster grid ────────────────────────────────────────── */
+  .clusters { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 800px) { .clusters { grid-template-columns: 1fr; } }
+
+  .cluster-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .cluster-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 1rem;
+  }
+  .cluster-icon {
+    width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+  }
+  .cluster-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+  .cluster-desc { font-size: .8rem; color: var(--muted); margin-top: .2rem; line-height: 1.5; }
+  .cluster-body { padding: 1rem 1.5rem; }
+
+  /* module row inside cluster */
+  .module-row {
+    display: flex; align-items: flex-start; gap: .75rem;
+    padding: .6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-row:last-child { border-bottom: none; }
+  .module-key {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: .72rem; font-weight: 600; padding: .15rem .45rem;
+    border-radius: 4px; white-space: nowrap; flex-shrink: 0; margin-top: .1rem;
+  }
+  .module-info { flex: 1; min-width: 0; }
+  .module-name { font-weight: 600; font-size: .88rem; color: var(--text); }
+  .module-desc { font-size: .77rem; color: var(--muted); margin-top: .15rem; line-height: 1.4; }
+  .module-deps { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .4rem; }
+  .dep-chip {
+    font-size: .68rem; padding: .1rem .4rem;
+    border-radius: 4px; background: var(--surface-2);
+    color: var(--muted); border: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .status-badge {
+    font-size: .67rem; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; padding: .15rem .45rem; border-radius: 5px;
+    flex-shrink: 0; white-space: nowrap; margin-top: .1rem;
+  }
+  .status-mature { background: #D1FAE5; color: #065F46; }
+  .status-new    { background: #FEF3C7; color: #92400E; }
+  .status-active { background: #DBEAFE; color: #1E40AF; }
+  @media (prefers-color-scheme: dark) {
+    .status-mature { background: #064E3B; color: #6EE7B7; }
+    .status-new    { background: #451A03; color: #FCD34D; }
+    .status-active { background: #1E3A5F; color: #93C5FD; }
+  }
+  :root[data-theme="dark"] .status-mature { background: #064E3B; color: #6EE7B7; }
+  :root[data-theme="dark"] .status-new    { background: #451A03; color: #FCD34D; }
+  :root[data-theme="dark"] .status-active { background: #1E3A5F; color: #93C5FD; }
+  :root[data-theme="light"] .status-mature { background: #D1FAE5; color: #065F46; }
+  :root[data-theme="light"] .status-new    { background: #FEF3C7; color: #92400E; }
+  :root[data-theme="light"] .status-active { background: #DBEAFE; color: #1E40AF; }
+
+  /* cluster color themes */
+  .c-data  { --cc: var(--c-data);  }
+  .c-proc  { --cc: var(--c-proc);  }
+  .c-fleet { --cc: var(--c-fleet); }
+  .c-dist  { --cc: var(--c-dist);  }
+  .c-sales { --cc: var(--c-sales); }
+  .c-intel { --cc: var(--c-intel); }
+  .c-cms   { --cc: var(--c-cms);   }
+
+  .cluster-card { border-left: 4px solid var(--cc, var(--border)); }
+  .cluster-icon { background: color-mix(in srgb, var(--cc, var(--accent)) 15%, transparent); }
+  .module-key   { background: color-mix(in srgb, var(--cc, var(--accent)) 12%, transparent);
+                  color: var(--cc, var(--accent)); }
+
+  /* ── Dependency Matrix ───────────────────────────────────── */
+  .matrix-wrap { overflow-x: auto; }
+  .dep-matrix { width: 100%; border-collapse: collapse; font-size: .78rem; }
+  .dep-matrix th, .dep-matrix td {
+    padding: .5rem .75rem; border: 1px solid var(--border); text-align: left;
+  }
+  .dep-matrix thead th {
+    background: var(--surface-2); font-weight: 700; font-size: .75rem;
+    text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
+    position: sticky; top: 0;
+  }
+  .dep-matrix tbody tr:nth-child(even) { background: var(--surface-2); }
+  .dep-matrix td:first-child { font-weight: 600; white-space: nowrap; }
+
+  /* ── Roadmap ─────────────────────────────────────────────── */
+  .roadmap { display: flex; flex-direction: column; gap: 1rem; }
+  .road-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: grid; grid-template-columns: 240px 1fr;
+    gap: 1.5rem; align-items: start;
+    box-shadow: var(--shadow);
+  }
+  @media (max-width: 700px) {
+    .road-item { grid-template-columns: 1fr; }
+  }
+  .road-cluster { display: flex; align-items: center; gap: .6rem; }
+  .road-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cc); flex-shrink: 0; }
+  .road-cluster-name { font-weight: 700; font-size: .9rem; color: var(--text); }
+  .road-priority {
+    font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    padding: .15rem .45rem; border-radius: 4px; flex-shrink: 0;
+  }
+  .pri-high   { background: #FEE2E2; color: #991B1B; }
+  .pri-med    { background: #FEF3C7; color: #78350F; }
+  .pri-low    { background: #F0FDF4; color: #166534; }
+  @media (prefers-color-scheme: dark) {
+    .pri-high { background: #450A0A; color: #FCA5A5; }
+    .pri-med  { background: #431407; color: #FCD34D; }
+    .pri-low  { background: #052E16; color: #86EFAC; }
+  }
+  :root[data-theme="dark"] .pri-high { background: #450A0A; color: #FCA5A5; }
+  :root[data-theme="dark"] .pri-med  { background: #431407; color: #FCD34D; }
+  :root[data-theme="dark"] .pri-low  { background: #052E16; color: #86EFAC; }
+  :root[data-theme="light"] .pri-high { background: #FEE2E2; color: #991B1B; }
+  :root[data-theme="light"] .pri-med  { background: #FEF3C7; color: #78350F; }
+  :root[data-theme="light"] .pri-low  { background: #F0FDF4; color: #166534; }
+
+  .road-recs { list-style: none; display: flex; flex-direction: column; gap: .4rem; }
+  .road-recs li {
+    font-size: .85rem; color: var(--text-2); display: flex; gap: .5rem; align-items: flex-start;
+  }
+  .road-recs li::before { content: '→'; color: var(--cc); flex-shrink: 0; }
+
+  /* ── Cross-cutting box ───────────────────────────────────── */
+  .cross-cut {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+  }
+  @media (max-width: 700px) { .cross-cut { grid-template-columns: 1fr; } }
+  .cross-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .cross-card h3 {
+    font-size: .95rem; font-weight: 700; color: var(--text); margin-bottom: .5rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .cross-card h3 span {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  }
+  .cross-card p { font-size: .83rem; color: var(--muted); line-height: 1.6; }
+  .cross-card ul { margin-top: .75rem; list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+  .cross-card ul li { font-size: .82rem; color: var(--text-2); display: flex; gap: .4rem; }
+  .cross-card ul li::before { content: '•'; color: var(--accent); }
+
+  /* ── footer ──────────────────────────────────────────────── */
+  .page-footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: .8rem;
+  }
+
+  /* ── SVG diagram ─────────────────────────────────────────── */
+  .diagram-svg { width: 100%; height: auto; }
+</style>
+
+<!-- HEADER -->
+<header class="site-header">
+  <a class="logo" href="#top">
+    <span>S</span>
+    Seruwit CRM
+  </a>
+  <nav>
+    <ul class="header-nav">
+      <li><a href="#clusters">Klaster</a></li>
+      <li><a href="#cross">Cross-Cutting</a></li>
+      <li><a href="#matrix">Dependensi</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+    </ul>
+  </nav>
+  <div class="header-meta">Juli 2026</div>
+</header>
+
+<!-- HERO -->
+<section id="top" class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Analisis Arsitektur Sistem</div>
+    <h1>Seruwit CRM<br>Module Architecture Analysis</h1>
+    <p>Pemetaan menyeluruh 24 modul aktif dalam platform multi-tenant untuk industri transportasi, logistik, dan FMCG — dikelompokkan ke dalam 7 klaster fungsional beserta analisis kematangan dan rekomendasi pengembangan.</p>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value">24</div>
+        <div class="stat-label">Modul Terdaftar</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">7</div>
+        <div class="stat-label">Klaster Fungsional</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Modul Mature</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Modul Baru/Active</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">4</div>
+        <div class="stat-label">Modul CMS</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE DIAGRAM -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Peta Arsitektur Klaster</h2>
+      <p>Aliran dependensi antar klaster — dari foundation data ke operational intelligence</p>
+    </div>
+    <div class="arch-map-wrap">
+      <div class="arch-map">
+        <svg class="diagram-svg" viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dependency flow between module clusters">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 Z" fill="#94A3B8"/>
+            </marker>
+            <marker id="arr-data"  markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="#6366F1"/></marker>
+            <marker id="arr-fleet" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="#0284C7"/></marker>
+            <marker id="arr-proc"  markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="#D97706"/></marker>
+          </defs>
+
+          <!-- ── cluster boxes ── -->
+          <!-- Master Data -->
+          <rect x="20" y="170" width="160" height="80" rx="10" fill="#EEF2FF" stroke="#6366F1" stroke-width="1.5"/>
+          <text x="100" y="200" text-anchor="middle" font-size="11" font-weight="700" fill="#4338CA">MASTER DATA</text>
+          <text x="100" y="218" text-anchor="middle" font-size="9.5" fill="#6366F1">Partners · Product</text>
+          <text x="100" y="234" text-anchor="middle" font-size="8.5" fill="#818CF8">2 modul</text>
+
+          <!-- Fleet & Compliance -->
+          <rect x="220" y="40" width="180" height="90" rx="10" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.5"/>
+          <text x="310" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#0369A1">FLEET &amp; COMPLIANCE</text>
+          <text x="310" y="86" text-anchor="middle" font-size="9.5" fill="#0284C7">Fleet · Maintenance · Tracking</text>
+          <text x="310" y="102" text-anchor="middle" font-size="9.5" fill="#0284C7">Document · DriverScoring</text>
+          <text x="310" y="118" text-anchor="middle" font-size="8.5" fill="#38BDF8">5 modul</text>
+
+          <!-- Procurement & Inventory -->
+          <rect x="220" y="300" width="180" height="90" rx="10" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5"/>
+          <text x="310" y="328" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E">PENGADAAN &amp; GUDANG</text>
+          <text x="310" y="346" text-anchor="middle" font-size="9.5" fill="#D97706">Purchasing · Inventory</text>
+          <text x="310" y="362" text-anchor="middle" font-size="9.5" fill="#D97706">Receivables</text>
+          <text x="310" y="378" text-anchor="middle" font-size="8.5" fill="#FCD34D">3 modul</text>
+
+          <!-- Distribution & Logistics -->
+          <rect x="460" y="140" width="200" height="100" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+          <text x="560" y="168" text-anchor="middle" font-size="11" font-weight="700" fill="#065F46">DISTRIBUSI &amp; LOGISTIK</text>
+          <text x="560" y="186" text-anchor="middle" font-size="9.5" fill="#059669">TMS · Orders · Outbound</text>
+          <text x="560" y="202" text-anchor="middle" font-size="9.5" fill="#059669">Routing · Billing · Invoicing</text>
+          <text x="560" y="222" text-anchor="middle" font-size="8.5" fill="#6EE7B7">6 modul</text>
+
+          <!-- Sales & Commercial -->
+          <rect x="460" y="300" width="180" height="90" rx="10" fill="#FDF2F8" stroke="#DB2777" stroke-width="1.5"/>
+          <text x="550" y="328" text-anchor="middle" font-size="11" font-weight="700" fill="#9D174D">SALES &amp; COMMERCIAL</text>
+          <text x="550" y="346" text-anchor="middle" font-size="9.5" fill="#DB2777">Canvassing · Rental</text>
+          <text x="550" y="362" text-anchor="middle" font-size="9.5" fill="#DB2777">TradePromotions</text>
+          <text x="550" y="378" text-anchor="middle" font-size="8.5" fill="#F9A8D4">3 modul</text>
+
+          <!-- Content CMS -->
+          <rect x="220" y="165" width="160" height="75" rx="10" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <text x="300" y="190" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">CONTENT / CMS</text>
+          <text x="300" y="208" text-anchor="middle" font-size="9.5" fill="#64748B">Pages · Posts · Carousels</text>
+          <text x="300" y="224" text-anchor="middle" font-size="8.5" fill="#94A3B8">3 modul (standalone)</text>
+
+          <!-- Intelligence & Control -->
+          <rect x="720" y="155" width="180" height="100" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+          <text x="810" y="183" text-anchor="middle" font-size="11" font-weight="700" fill="#5B21B6">INTELLIGENCE</text>
+          <text x="810" y="201" text-anchor="middle" font-size="9.5" fill="#7C3AED">Executive Dashboard</text>
+          <text x="810" y="219" text-anchor="middle" font-size="9.5" fill="#7C3AED">Approvals</text>
+          <text x="810" y="241" text-anchor="middle" font-size="8.5" fill="#A78BFA">2 modul (+DriverScoring)</text>
+
+          <!-- ── arrows ── -->
+          <!-- Master Data → Fleet -->
+          <line x1="180" y1="190" x2="220" y2="110" stroke="#6366F1" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-data)"/>
+          <!-- Master Data → Procurement -->
+          <line x1="180" y1="225" x2="220" y2="330" stroke="#6366F1" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-data)"/>
+          <!-- Master Data → Sales -->
+          <line x1="180" y1="230" x2="460" y2="330" stroke="#6366F1" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+          <!-- Fleet → Distribution -->
+          <line x1="400" y1="130" x2="460" y2="168" stroke="#0284C7" stroke-width="1.5" marker-end="url(#arr-fleet)"/>
+          <!-- Procurement → Distribution -->
+          <line x1="400" y1="330" x2="460" y2="260" stroke="#D97706" stroke-width="1.5" marker-end="url(#arr-proc)"/>
+          <!-- Distribution → Intelligence -->
+          <line x1="660" y1="195" x2="720" y2="200" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Sales → Intelligence -->
+          <line x1="640" y1="320" x2="720" y2="235" stroke="#DB2777" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+          <!-- Fleet → Intelligence (DriverScoring) -->
+          <line x1="400" y1="90" x2="720" y2="185" stroke="#0284C7" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+          <!-- Approvals cross-cut to Purchasing (bidirectional dashed) -->
+          <line x1="720" y1="240" x2="400" y2="345" stroke="#7C3AED" stroke-width="1" stroke-dasharray="3 4" marker-end="url(#arr)"/>
+
+          <!-- legend -->
+          <rect x="900" y="30" width="185" height="110" rx="8" fill="none" stroke="#D1DCE8" stroke-width="1"/>
+          <text x="910" y="50" font-size="8.5" font-weight="700" fill="#94A3B8" letter-spacing=".05em" text-transform="uppercase">LEGENDA</text>
+          <line x1="910" y1="65" x2="940" y2="65" stroke="#6366F1" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-data)"/>
+          <text x="948" y="69" font-size="8.5" fill="#64748B">Dependensi data master</text>
+          <line x1="910" y1="85" x2="940" y2="85" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="948" y="89" font-size="8.5" fill="#64748B">Dependensi operasional</text>
+          <line x1="910" y1="105" x2="940" y2="105" stroke="#7C3AED" stroke-width="1" stroke-dasharray="3 4" marker-end="url(#arr)"/>
+          <text x="948" y="109" font-size="8.5" fill="#64748B">Cross-cutting (Approvals)</text>
+          <rect x="910" y="118" width="12" height="12" rx="2" fill="none" stroke="#64748B" stroke-width="1" stroke-dasharray="4 2"/>
+          <text x="928" y="129" font-size="8.5" fill="#64748B">Standalone (tidak tergantung)</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLUSTERS DETAIL -->
+<section id="clusters" class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Detail per Klaster</h2>
+      <p>Status implementasi dan kapabilitas setiap modul</p>
+    </div>
+    <div class="clusters">
+
+      <!-- 1. Master Data -->
+      <div class="cluster-card c-data">
+        <div class="cluster-header">
+          <div class="cluster-icon">🗄️</div>
+          <div>
+            <div class="cluster-title">Master Data</div>
+            <div class="cluster-desc">Foundation data yang digunakan oleh seluruh modul operasional. Tidak memiliki dependensi.</div>
+          </div>
+        </div>
+        <div class="cluster-body">
+          <div class="module-row">
+            <div class="module-key">partners</div>
+            <div class="module-info">
+              <div class="module-name">Partners</div>
+              <div class="module-desc">Manajemen kontak terpadu: customers, suppliers, vendors. Tipe partner + credit limit + alamat multiple.</div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">products</div>
+            <div class="module-info">
+              <div class="module-name">Product</div>
+              <div class="module-desc">Katalog produk: brands, principals, tipe, atribut, varian, packaging. Hierarki principal → brand → produk.</div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Fleet & Compliance -->
+      <div class="cluster-card c-fleet">
+        <div class="cluster-header">
+          <div class="cluster-icon">🚛</div>
+          <div>
+            <div class="cluster-title">Fleet &amp; Compliance</div>
+            <div class="cluster-desc">Manajemen armada, pengemudi, kepatuhan dokumen, dan GPS tracking real-time berbasis Traccar.</div>
+          </div>
+        </div>
+        <div class="cluster-body">
+          <div class="module-row">
+            <div class="module-key">fleet</div>
+            <div class="module-info">
+              <div class="module-name">Fleet</div>
+              <div class="module-desc">Kendaraan, pengemudi (dengan akun login), log bahan bakar, maintenance, portal driver mobile.</div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">maintenance</div>
+            <div class="module-info">
+              <div class="module-name">Maintenance</div>
+              <div class="module-desc">Work orders, jadwal servis, kategori perawatan. Terintegrasi dengan inventory (suku cadang).</div>
+              <div class="module-deps"><span class="dep-chip">inventory</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">tracking</div>
+            <div class="module-info">
+              <div class="module-name">Tracking</div>
+              <div class="module-desc">GPS via Traccar, pairing device-kendaraan, VehiclePosition, event polling.</div>
+              <div class="module-deps"><span class="dep-chip">fleet</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">document</div>
+            <div class="module-info">
+              <div class="module-name">Document</div>
+              <div class="module-desc">Dokumen kepatuhan untuk kendaraan &amp; pengemudi, tracking expiry, notifikasi otomatis.</div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">scoring</div>
+            <div class="module-info">
+              <div class="module-name">Driver Scoring</div>
+              <div class="module-desc">Skor perilaku mengemudi dari GPS Traccar (rem mendadak, kecepatan, idle), leaderboard, insentif.</div>
+              <div class="module-deps"><span class="dep-chip">fleet</span><span class="dep-chip">tracking</span></div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Pengadaan & Gudang -->
+      <div class="cluster-card c-proc">
+        <div class="cluster-header">
+          <div class="cluster-icon">📦</div>
+          <div>
+            <div class="cluster-title">Pengadaan &amp; Gudang</div>
+            <div class="cluster-desc">Procurement inbound, manajemen stok multi-gudang, dan piutang usaha.</div>
+          </div>
+        </div>
+        <div class="cluster-body">
+          <div class="module-row">
+            <div class="module-key">inventory</div>
+            <div class="module-info">
+              <div class="module-name">Inventory</div>
+              <div class="module-desc">Gudang, lokasi bin, stock levels per batch/lot, StockMovementRecorder (in/out/adjust/transfer), opname, reservasi.</div>
+              <div class="module-deps"><span class="dep-chip">products</span></div>
+            </div>
+            <div class="status-badge status-active">Active Dev</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">purchasing</div>
+            <div class="module-info">
+              <div class="module-name">Purchasing</div>
+              <div class="module-desc">Purchase Orders (PO) + Goods Receipt Notes (GRN). Approval-aware via event listener. Auto stock-in saat GRN dikonfirmasi.</div>
+              <div class="module-deps"><span class="dep-chip">partners</span><span class="dep-chip">products</span><span class="dep-chip">inventory</span></div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">receivables</div>
+            <div class="module-info">
+              <div class="module-name">Receivables</div>
+              <div class="module-desc">Manajemen piutang: DP, cicilan, pelunasan, aging report, credit limit, peringatan overdue.</div>
+              <div class="module-deps"><span class="dep-chip">partners</span><span class="dep-chip">invoicing</span></div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Distribusi & Logistik -->
+      <div class="cluster-card c-dist">
+        <div class="cluster-header">
+          <div class="cluster-icon">🗺️</div>
+          <div>
+            <div class="cluster-title">Distribusi &amp; Logistik</div>
+            <div class="cluster-desc">Orkestrasi pengiriman end-to-end: perencanaan rute, eksekusi trip, pick/pack, billing, invoicing.</div>
+          </div>
+        </div>
+        <div class="cluster-body">
+          <div class="module-row">
+            <div class="module-key">transportation</div>
+            <div class="module-info">
+              <div class="module-name">Transportation Management</div>
+              <div class="module-desc">Trip, stop, checkpoint, jadwal, kalender, laporan. Engine utama operasional pengiriman.</div>
+              <div class="module-deps"><span class="dep-chip">fleet</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">orders</div>
+            <div class="module-info">
+              <div class="module-name">Orders</div>
+              <div class="module-desc">Delivery orders, POD (tanda tangan + foto + per-item), driver portal mobile, public tracking link.</div>
+              <div class="module-deps"><span class="dep-chip">transportation</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">outbound</div>
+            <div class="module-info">
+              <div class="module-name">Outbound</div>
+              <div class="module-desc">Pick list dari DO, konfirmasi pick per lokasi/batch, pack &amp; label, dispatch stock out sebelum trip.</div>
+              <div class="module-deps"><span class="dep-chip">orders</span><span class="dep-chip">inventory</span><span class="dep-chip">products</span></div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">routing</div>
+            <div class="module-info">
+              <div class="module-name">Route Optimization</div>
+              <div class="module-desc">VRP engine: auto-assign driver &amp; kendaraan ke multi-stop routes, minimasi jarak &amp; biaya BBM.</div>
+              <div class="module-deps"><span class="dep-chip">transportation</span><span class="dep-chip">orders</span></div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">billing</div>
+            <div class="module-info">
+              <div class="module-name">Billing</div>
+              <div class="module-desc">Tarif pengiriman, biaya per order, uang jalan pengemudi. Kalkulasi otomatis dari trip.</div>
+              <div class="module-deps"><span class="dep-chip">orders</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">invoicing</div>
+            <div class="module-info">
+              <div class="module-name">Invoicing</div>
+              <div class="module-desc">Invoice PDF, siklus draft/issued/paid. Terhubung ke Receivables untuk payment tracking.</div>
+              <div class="module-deps"><span class="dep-chip">billing</span><span class="dep-chip">partners</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Sales & Commercial -->
+      <div class="cluster-card c-sales">
+        <div class="cluster-header">
+          <div class="cluster-icon">🤝</div>
+          <div>
+            <div class="cluster-title">Sales &amp; Commercial</div>
+            <div class="cluster-desc">Aktivitas lapangan, monetisasi armada idle, dan program promosi principal.</div>
+          </div>
+        </div>
+        <div class="cluster-body">
+          <div class="module-row">
+            <div class="module-key">canvassing</div>
+            <div class="module-info">
+              <div class="module-name">Canvassing</div>
+              <div class="module-desc">Tenaga penjual, rencana kunjungan, check-in/out GPS, foto, target per salesperson, portal mobile.</div>
+              <div class="module-deps"><span class="dep-chip">partners</span><span class="dep-chip">products</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">rental</div>
+            <div class="module-info">
+              <div class="module-name">Rental</div>
+              <div class="module-desc">Sewa kendaraan, tarif, perpanjangan, pencatatan kerusakan. Conflict guard dengan trip aktif.</div>
+              <div class="module-deps"><span class="dep-chip">fleet</span><span class="dep-chip">partners</span></div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">promotions</div>
+            <div class="module-info">
+              <div class="module-name">Trade Promotions</div>
+              <div class="module-desc">Program promosi distributor: volume discount, free goods, rebate, realisasi vs target, settlement.</div>
+              <div class="module-deps"><span class="dep-chip">partners</span><span class="dep-chip">products</span></div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Intelligence & Control -->
+      <div class="cluster-card c-intel">
+        <div class="cluster-header">
+          <div class="cluster-icon">📊</div>
+          <div>
+            <div class="cluster-title">Intelligence &amp; Control</div>
+            <div class="cluster-desc">Lapisan pengambilan keputusan: BI eksekutif dan workflow approval multi-level yang dapat dikonfigurasi.</div>
+          </div>
+        </div>
+        <div class="cluster-body">
+          <div class="module-row">
+            <div class="module-key">bi</div>
+            <div class="module-info">
+              <div class="module-name">Executive Dashboard</div>
+              <div class="module-desc">OTD rate, utilisasi armada, AR aging, inventory turnover, revenue per rute — agregat dari modul operasional.</div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+          <div class="module-row">
+            <div class="module-key">approvals</div>
+            <div class="module-info">
+              <div class="module-name">Approvals</div>
+              <div class="module-desc">Workflow approval multi-level yang dapat dikonfigurasi per tenant. Trigger keys opaque — domain memanggil ApprovalGate tanpa tahu detail approval.</div>
+            </div>
+            <div class="status-badge status-new">Baru</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Content CMS -->
+      <div class="cluster-card c-cms" style="grid-column: 1 / -1;">
+        <div class="cluster-header">
+          <div class="cluster-icon">📝</div>
+          <div>
+            <div class="cluster-title">Content / CMS</div>
+            <div class="cluster-desc">Modul standalone untuk konten publik. Tidak memiliki dependensi ke modul operasional — dapat diinstall/uninstall secara independen.</div>
+          </div>
+        </div>
+        <div class="cluster-body" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;">
+          <div class="module-row" style="border-right: 1px solid var(--border);">
+            <div class="module-key">pages</div>
+            <div class="module-info">
+              <div class="module-name">Pages</div>
+              <div class="module-desc">Page builder untuk situs publik.</div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row" style="border-right: 1px solid var(--border); padding-left: 1rem;">
+            <div class="module-key">posts</div>
+            <div class="module-info">
+              <div class="module-name">Posts</div>
+              <div class="module-desc">Blog post / artikel.</div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+          <div class="module-row" style="padding-left: 1rem;">
+            <div class="module-key">carousels</div>
+            <div class="module-info">
+              <div class="module-name">Carousels</div>
+              <div class="module-desc">Image slider / banner.</div>
+            </div>
+            <div class="status-badge status-mature">Mature</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CROSS-CUTTING CONCERNS -->
+<section id="cross" class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Cross-Cutting Concerns</h2>
+      <p>Komponen yang melintas batas klaster dan mempengaruhi seluruh sistem</p>
+    </div>
+    <div class="cross-cut">
+      <div class="cross-card">
+        <h3><span style="background:#7C3AED"></span> Approvals — Workflow Engine</h3>
+        <p>Modul Approvals dirancang sebagai <em>trigger-agnostic engine</em>. Domain lain memanggil <code>ApprovalGate</code> dengan opaque trigger key. Saat ini sudah terhubung dengan Purchasing (PO approval). Berpotensi dikembangkan ke Receivables (credit override), Canvassing (diskon khusus), dan Outbound (dispatch besar).</p>
+        <ul>
+          <li>Purchasing sudah listen event <code>ApprovalCompleted</code> via boot()</li>
+          <li>Policy per tenant — jumlah level approval dapat dikonfigurasi</li>
+          <li>Inbox approval dengan permission khusus <code>decide</code></li>
+        </ul>
+      </div>
+      <div class="cross-card">
+        <h3><span style="background:#059669"></span> StockMovementRecorder — Shared Service</h3>
+        <p>Service tunggal yang menangani semua mutasi stok. Dipakai oleh Inventory (manual), Purchasing (GRN in), Outbound (dispatch out), dan transfer antar gudang. Pola ini mencegah double-accounting dan menjaga konsistensi <code>stock_levels</code>.</p>
+        <ul>
+          <li><code>record()</code> — in/out/adjustment manual</li>
+          <li><code>transfer()</code> — dua kaki (out source + in destination) atomik</li>
+          <li>FIFO/FEFO picking strategy untuk out tanpa explicit batch</li>
+          <li>Batch/lot tracking: batch_number + expiry_date per movement</li>
+        </ul>
+      </div>
+      <div class="cross-card">
+        <h3><span style="background:#0284C7"></span> ShipmentStatusNotifier — Event Bus</h3>
+        <p>Komponen terpusat yang mengirim notifikasi + event saat status delivery order berubah. Digunakan oleh TripObserver (transisi trip-level) dan PodController (transisi delivered). Mencegah drift antara dua jalur update.</p>
+        <ul>
+          <li>Kirim <code>GenericNotification</code> ke semua user dengan <code>orders,view</code></li>
+          <li>Dispatch <code>ShipmentStatusChanged</code> event (dapat didengarkan modul lain)</li>
+          <li>Safe dari double-announce karena <code>where status=$from</code> filter</li>
+        </ul>
+      </div>
+      <div class="cross-card">
+        <h3><span style="background:#6366F1"></span> Multi-Tenancy — Stancl Tenancy</h3>
+        <p>Setiap tenant memiliki database terpisah. Modul diinstall/uninstall per tenant. CentralUser + per-tenant User dihubungkan oleh <code>global_id</code>. Reseller dapat mengelola beberapa tenant. Storage di-isolasi per tenant.</p>
+        <ul>
+          <li>Central domain: super admin, reseller management</li>
+          <li>Tenant domain: operational modules, isolated DB</li>
+          <li><code>modules:migrate</code> untuk menjangkau tenant lama saat rilis modul baru</li>
+          <li>Purge grace period 30 hari setelah uninstall</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEPENDENCY MATRIX -->
+<section id="matrix" class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Matriks Dependensi Modul</h2>
+      <p>Kolom "Requires" — dependensi yang harus diinstall lebih dahulu</p>
+    </div>
+    <div class="matrix-wrap">
+      <table class="dep-matrix">
+        <thead>
+          <tr>
+            <th>Modul</th>
+            <th>Key</th>
+            <th>Klaster</th>
+            <th>Requires</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Partners</td><td><code>partners</code></td><td>Master Data</td><td>—</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Product</td><td><code>products</code></td><td>Master Data</td><td>—</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Fleet</td><td><code>fleet</code></td><td>Fleet &amp; Compliance</td><td>—</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Document</td><td><code>document</code></td><td>Fleet &amp; Compliance</td><td>—</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Tracking</td><td><code>tracking</code></td><td>Fleet &amp; Compliance</td><td>fleet</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Maintenance</td><td><code>maintenance</code></td><td>Fleet &amp; Compliance</td><td>inventory</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Driver Scoring</td><td><code>scoring</code></td><td>Fleet &amp; Compliance</td><td>fleet, tracking</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Inventory</td><td><code>inventory</code></td><td>Pengadaan &amp; Gudang</td><td>products</td><td><span class="status-badge status-active">Active Dev</span></td></tr>
+          <tr><td>Purchasing</td><td><code>purchasing</code></td><td>Pengadaan &amp; Gudang</td><td>partners, products, inventory</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Receivables</td><td><code>receivables</code></td><td>Pengadaan &amp; Gudang</td><td>partners, invoicing</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Transportation Mgmt</td><td><code>transportation</code></td><td>Distribusi &amp; Logistik</td><td>fleet</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Orders</td><td><code>orders</code></td><td>Distribusi &amp; Logistik</td><td>transportation</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Billing</td><td><code>billing</code></td><td>Distribusi &amp; Logistik</td><td>orders</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Invoicing</td><td><code>invoicing</code></td><td>Distribusi &amp; Logistik</td><td>billing, partners</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Outbound</td><td><code>outbound</code></td><td>Distribusi &amp; Logistik</td><td>orders, inventory, products</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Route Optimization</td><td><code>routing</code></td><td>Distribusi &amp; Logistik</td><td>transportation, orders</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Canvassing</td><td><code>canvassing</code></td><td>Sales &amp; Commercial</td><td>partners, products</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Rental</td><td><code>rental</code></td><td>Sales &amp; Commercial</td><td>fleet, partners</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Trade Promotions</td><td><code>promotions</code></td><td>Sales &amp; Commercial</td><td>partners, products</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Approvals</td><td><code>approvals</code></td><td>Intelligence</td><td>—</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Executive Dashboard</td><td><code>bi</code></td><td>Intelligence</td><td>— (soft deps)</td><td><span class="status-badge status-new">Baru</span></td></tr>
+          <tr><td>Pages</td><td><code>pages</code></td><td>Content / CMS</td><td>—</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Posts</td><td><code>posts</code></td><td>Content / CMS</td><td>—</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+          <tr><td>Carousels</td><td><code>carousels</code></td><td>Content / CMS</td><td>—</td><td><span class="status-badge status-mature">Mature</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Rekomendasi Pengembangan</h2>
+      <p>Prioritas fitur dan modul berdasarkan analisis gaps dan kebutuhan industri</p>
+    </div>
+    <div class="roadmap">
+
+      <div class="road-item c-proc">
+        <div>
+          <div class="road-cluster">
+            <div class="road-dot"></div>
+            <div class="road-cluster-name">Pengadaan &amp; Gudang</div>
+          </div>
+          <div style="margin-top:.5rem;"><span class="road-priority pri-high">Prioritas Tinggi</span></div>
+        </div>
+        <ul class="road-recs">
+          <li>Implementasi GrnConfirmationService: konfirmasi GRN → auto stock-in via StockMovementRecorder (desain sudah ada di docs/modules/po-grn-design.md)</li>
+          <li>Frontend 5 halaman PO+GRN (Index, Create, Show PO, Create GRN, Show GRN) dengan progress bar per PO</li>
+          <li>Inventory Transfer frontend (halaman sudah dirancang, StockMovementRecorder.transfer() sudah ada)</li>
+          <li>Integrasi Approvals ↔ Purchasing: PO besar otomatis trigger ApprovalGate sebelum dikirim ke supplier</li>
+          <li>Stock Reservation: link StockReservation ke Outbound pick-list (model sudah ada, belum dipakai)</li>
+        </ul>
+      </div>
+
+      <div class="road-item c-dist">
+        <div>
+          <div class="road-cluster">
+            <div class="road-dot"></div>
+            <div class="road-cluster-name">Distribusi &amp; Logistik</div>
+          </div>
+          <div style="margin-top:.5rem;"><span class="road-priority pri-high">Prioritas Tinggi</span></div>
+        </div>
+        <ul class="road-recs">
+          <li>Outbound: validasi pick quantity vs StockLevel, integrate StockMovementRecorder untuk dispatch (stock out saat pick-list dispatch)</li>
+          <li>Route Optimization: integrasi solver VRP nyata (OSRM/Google OR-Tools/Valhalla) — saat ini endpoint optimize perlu backend algorithm</li>
+          <li>Receivables: implementasi payment creation + void, aging report query (modul sudah ada, butuh UI + business logic)</li>
+          <li>Invoicing → Receivables link: saat invoice issued, auto-create outstanding di Receivables</li>
+        </ul>
+      </div>
+
+      <div class="road-item c-fleet">
+        <div>
+          <div class="road-cluster">
+            <div class="road-dot"></div>
+            <div class="road-cluster-name">Fleet &amp; Compliance</div>
+          </div>
+          <div style="margin-top:.5rem;"><span class="road-priority pri-med">Prioritas Sedang</span></div>
+        </div>
+        <ul class="road-recs">
+          <li>Driver Scoring: implementasi DetectDrivingEvents listener (harsh brake detection dari GPS delta, speeding dari speed attribute Traccar, idle dari position tanpa movement)</li>
+          <li>Driver Scoring: leaderboard page + incentive award workflow + settings konfigurasi threshold per tenant</li>
+          <li>Maintenance: prediktif scheduling dari odometer/jam pakai (kendaraan sudah punya field ini) — buat scheduled command cek threshold</li>
+          <li>Fleet: fuel efficiency analytics — konsumsi per km per kendaraan, trend bulanan</li>
+        </ul>
+      </div>
+
+      <div class="road-item c-intel">
+        <div>
+          <div class="road-cluster">
+            <div class="road-dot"></div>
+            <div class="road-cluster-name">Intelligence &amp; Control</div>
+          </div>
+          <div style="margin-top:.5rem;"><span class="road-priority pri-med">Prioritas Sedang</span></div>
+        </div>
+        <ul class="road-recs">
+          <li>Executive Dashboard: implementasi KPI query di ExecutiveDashboardController — OTD dari delivery_orders, utilisasi dari trips, aging dari Receivables, turnover dari stock_movements</li>
+          <li>Dashboard: scheduled aggregation job (daily snapshot) agar query BI tidak memperberat OLTP saat peak hours</li>
+          <li>Approvals: extend ke Receivables (credit override perlu approval), Canvassing (diskon khusus per kunjungan)</li>
+          <li>Notification center: push notification / email untuk approval pending dan overdue AR</li>
+        </ul>
+      </div>
+
+      <div class="road-item c-sales">
+        <div>
+          <div class="road-cluster">
+            <div class="road-dot"></div>
+            <div class="road-cluster-name">Sales &amp; Commercial</div>
+          </div>
+          <div style="margin-top:.5rem;"><span class="road-priority pri-med">Prioritas Sedang</span></div>
+        </div>
+        <ul class="road-recs">
+          <li>Trade Promotions: implementasi sync realisasi dari Orders (volume per produk per customer per periode) — endpoint /programs/{program}/sync sudah ada, butuh query logic</li>
+          <li>Trade Promotions: settlement flow (transfer ke rekening distributor atau credit note) + integrasi Approvals untuk settlement besar</li>
+          <li>Canvassing: integrasi order capture di lapangan — salesperson bisa input SO dari visit yang langsung masuk ke Orders</li>
+          <li>Rental: integrasi Billing untuk generate invoice rental otomatis</li>
+        </ul>
+      </div>
+
+      <div class="road-item c-data">
+        <div>
+          <div class="road-cluster">
+            <div class="road-dot"></div>
+            <div class="road-cluster-name">Master Data (Enhancement)</div>
+          </div>
+          <div style="margin-top:.5rem;"><span class="road-priority pri-low">Prioritas Rendah</span></div>
+        </div>
+        <ul class="road-recs">
+          <li>Product: price list per customer tier / kanal distribusi (dibutuhkan oleh TradePromotions dan Canvassing order capture)</li>
+          <li>Partners: customer tier / segment (key account, regular, modern trade) untuk routing promosi dan credit limit berbeda</li>
+          <li>Partners: payment terms per customer (net-30, net-60) yang dipakai Receivables untuk aging calculation</li>
+        </ul>
+      </div>
+
+      <div class="road-item" style="border-left-color: var(--muted); --cc: var(--muted);">
+        <div>
+          <div class="road-cluster">
+            <div class="road-dot" style="background: var(--muted)"></div>
+            <div class="road-cluster-name">Modul Baru yang Disarankan</div>
+          </div>
+          <div style="margin-top:.5rem;"><span class="road-priority pri-low">Future</span></div>
+        </div>
+        <ul class="road-recs">
+          <li><strong>Payables / AP</strong>: pasangan dari Receivables untuk hutang usaha ke supplier — pembayaran PO, aging hutang, due date tracking</li>
+          <li><strong>Customer Portal</strong>: web portal untuk customer track own orders, download invoice, lihat history pengiriman (perlu auth terpisah / magic-link)</li>
+          <li><strong>Sales Order (SO)</strong>: dokumen penjualan sebelum Delivery Order — untuk pipeline yang butuh order confirmation, partial delivery, backorder tracking</li>
+          <li><strong>Returns &amp; Claims</strong>: retur barang dari customer ke gudang dengan rekonsiliasi stok dan kredit nota otomatis</li>
+          <li><strong>HR / Payroll Basic</strong>: kalkulasi gaji driver dari uang jalan (Billing) + insentif DriverScoring — modul ringan bukan full HRIS</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="page-footer">
+  <div class="container">
+    <p>Seruwit CRM — Analisis Arsitektur Modul &nbsp;·&nbsp; 24 modul &nbsp;·&nbsp; 7 klaster &nbsp;·&nbsp; Juli 2026</p>
+    <p style="margin-top:.4rem; font-size:.75rem;">Laravel 12 · Inertia.js v2 · React 18 · Stancl Tenancy · Multi-tenant SaaS</p>
+  </div>
+</footer>

@@ -238,12 +238,16 @@ type MenuGroup =
     | { title: string; modules: string[] };
 
 const MENU_GROUPS: MenuGroup[] = [
-    { title: 'Konten', tier: 'content', also: ['media'] },
-    { title: 'Fondasi', tier: 'foundation' },
-    { title: 'Operasi', tier: 'vertical' },
-    { title: 'Wawasan', modules: ['analytics', 'live-updates', 'bi'] },
-    { title: 'Administrasi', modules: ['users', 'roles', 'settings', 'modules'] },
-    { title: 'Platform', modules: ['tenants', 'plans', 'module-registry'] },
+    { title: 'Intelligence',          modules: ['bi', 'approvals'] },
+    { title: 'Master Data',           modules: ['partners', 'products'] },
+    { title: 'Pengadaan & Gudang',    modules: ['purchasing', 'inventory', 'receivables'] },
+    { title: 'Fleet & Kepatuhan',     modules: ['fleet', 'document', 'maintenance', 'tracking', 'scoring'] },
+    { title: 'Distribusi & Logistik', modules: ['transportation', 'orders', 'outbound', 'routing', 'billing', 'invoicing'] },
+    { title: 'Sales & Komersial',     modules: ['canvassing', 'rental', 'promotions'] },
+    { title: 'Konten',                tier: 'content', also: ['media'] },
+    { title: 'Wawasan',               modules: ['analytics', 'live-updates'] },
+    { title: 'Administrasi',          modules: ['users', 'roles', 'settings', 'modules'] },
+    { title: 'Platform',              modules: ['tenants', 'plans', 'module-registry'] },
 ];
 
 // Module to route mapping - use module routes
@@ -254,7 +258,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'media': { route: 'module.media.index', routePattern: 'module.media.*' },
     'partners': { route: 'module.partners.index', routePattern: 'module.partners.*' },
     'products': { route: 'module.products.index', routePattern: 'module.products.*' },
-    'fleet': { route: 'module.fleet.vehicles.index', routePattern: 'module.fleet.*' },
+    'fleet': { route: 'module.fleet.dashboard', routePattern: 'module.fleet.*' },
     'document': { route: 'module.documents.index', routePattern: 'module.documents.*' },
     'maintenance': { route: 'module.maintenance.index', routePattern: 'module.maintenance.*' },
     'tracking': { route: 'module.tracking.map', routePattern: 'module.tracking.*' },

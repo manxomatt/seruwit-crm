@@ -47,6 +47,13 @@ interface FuelSummary {
     suggested_odometer_source: string;
 }
 
+interface DocumentSummary {
+    total: number;
+    expired: number;
+    expiring_soon: number;
+    nearest_expiry: string | null;
+}
+
 interface Vehicle {
     id: number;
     name: string;
@@ -71,6 +78,8 @@ interface Vehicle {
 interface Props {
     vehicle: Vehicle;
     trackingEnabled?: boolean;
+    documentsEnabled?: boolean;
+    documentSummary?: DocumentSummary | null;
     fuelSummary: FuelSummary;
     drivers: { id: number; name: string }[];
     can: { create: boolean; update: boolean; delete: boolean };
@@ -89,7 +98,15 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ vehicle, trackingEnabled = false, fuelSummary, drivers, can }: Props): JSX.Element {
+export default function Show({
+    vehicle,
+    trackingEnabled = false,
+    documentsEnabled = false,
+    documentSummary = null,
+    fuelSummary,
+    drivers,
+    can,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [showFuelModal, setShowFuelModal] = useState(false);
@@ -236,6 +253,48 @@ export default function Show({ vehicle, trackingEnabled = false, fuelSummary, dr
                         </dl>
                     </div>
                 </div>
+
+                {documentsEnabled && (
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6">
+                            <div className="mb-3 flex items-center justify-between">
+                                <h3 className="text-lg font-medium text-gray-900">Dokumen</h3>
+                                <Link
+                                    href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}
+                                    className="text-sm font-medium text-indigo-600 hover:underline"
+                                >
+                                    Kelola dokumen →
+                                </Link>
+                            </div>
+                            {!documentSummary || documentSummary.total === 0 ? (
+                                <p className="text-sm text-gray-500">Belum ada dokumen kepatuhan untuk kendaraan ini.</p>
+                            ) : (
+                                <div className="grid gap-3 sm:grid-cols-4 text-sm">
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">Total</p>
+                                        <p className="mt-1 text-xl font-semibold tabular-nums">{documentSummary.total}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">Expired</p>
+                                        <p className="mt-1 text-xl font-semibold tabular-nums text-red-700">{documentSummary.expired}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">Expiring ≤30 hari</p>
+                                        <p className="mt-1 text-xl font-semibold tabular-nums text-amber-700">{documentSummary.expiring_soon}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">Expiry terdekat</p>
+                                        <p className="mt-1 font-medium">
+                                            {documentSummary.nearest_expiry
+                                                ? new Date(documentSummary.nearest_expiry).toLocaleDateString('id-ID')
+                                                : '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">

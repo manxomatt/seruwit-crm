@@ -8,6 +8,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Http\Requests\StoreVehicleRequest;
@@ -98,6 +99,8 @@ class VehicleController extends Controller
         return Inertia::render('Modules/Fleet/Vehicles/Show', [
             'vehicle' => $vehicle,
             'trackingEnabled' => $trackingEnabled,
+            'documentsEnabled' => Modules::available('document'),
+            'documentSummary' => $this->vehicleDocumentSummary($vehicle),
             'fuelSummary' => [
                 'average_km_per_liter' => $calculator->recentAverageKmPerLiter($vehicle),
                 'expected_km_per_liter' => $vehicle->expected_km_per_liter !== null
@@ -114,6 +117,57 @@ class VehicleController extends Controller
                 'create' => $user->hasPermissionFor('fleet', 'create'),
             ],
         ]);
+    }
+
+    /**
+     * @return array{total: int, expired: int, expiring_soon: int, nearest_expiry: string|null}|null
+     */
+    private function vehicleDocumentSummary(Vehicle $vehicle): ?array
+    {
+        if (! Modules::available('document') || ! Schema::hasTable('documents')) {
+            return null;
+        }
+
+        $documents = \Modules\Document\Models\Document::query()
+            ->where('documentable_type', 'vehicle')
+            ->where('documentable_id', $vehicle->id)
+            ->get(['id', 'expires_at']);
+
+        if ($documents->isEmpty()) {
+            return [
+                'total' => 0,
+                'expired' => 0,
+                'expiring_soon' => 0,
+                'nearest_expiry' => null,
+            ];
+        }
+
+        $expired = 0;
+        $expiring = 0;
+        $nearest = null;
+
+        foreach ($documents as $document) {
+            $status = $document->status;
+            if ($status === \Modules\Document\Models\Document::STATUS_EXPIRED) {
+                $expired++;
+            } elseif ($status === \Modules\Document\Models\Document::STATUS_EXPIRING_SOON) {
+                $expiring++;
+            }
+
+            if ($document->expires_at !== null) {
+                $date = $document->expires_at->toDateString();
+                if ($nearest === null || $date < $nearest) {
+                    $nearest = $date;
+                }
+            }
+        }
+
+        return [
+            'total' => $documents->count(),
+            'expired' => $expired,
+            'expiring_soon' => $expiring,
+            'nearest_expiry' => $nearest,
+        ];
     }
 
     /**

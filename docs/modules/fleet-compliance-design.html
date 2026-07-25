@@ -1,0 +1,830 @@
+
+<title>Fleet & Compliance — Desain Pengembangan Lengkap</title>
+<style>
+  :root {
+    --bg:        #F0F4F8;
+    --surface:   #FFFFFF;
+    --s2:        #EBF1F7;
+    --border:    #D1DCE8;
+    --text:      #0A1628;
+    --text2:     #334155;
+    --muted:     #64748B;
+    --sky:       #0284C7;
+    --sky-soft:  #E0F2FE;
+    --indigo:    #4F46E5;
+    --indigo-s:  #EEF2FF;
+    --amber:     #D97706;
+    --amber-s:   #FFFBEB;
+    --emerald:   #059669;
+    --emerald-s: #ECFDF5;
+    --violet:    #7C3AED;
+    --violet-s:  #F5F3FF;
+    --rose:      #DC2626;
+    --rose-s:    #FEF2F2;
+    --slate:     #475569;
+    --slate-s:   #F8FAFC;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0D1117;--surface:#161B22;--s2:#1C2333;--border:#30363D;
+    --text:#E6EDF3;--text2:#C9D1D9;--muted:#8B949E;
+    --sky:#38BDF8;--sky-soft:#0C2A3B;
+    --indigo:#818CF8;--indigo-s:#1E1B4B;
+    --amber:#FCD34D;--amber-s:#2D1E00;
+    --emerald:#6EE7B7;--emerald-s:#022C22;
+    --violet:#C4B5FD;--violet-s:#1E1033;
+    --rose:#FCA5A5;--rose-s:#2D0808;
+    --slate:#94A3B8;--slate-s:#0F172A;
+  }}
+  :root[data-theme=dark]{--bg:#0D1117;--surface:#161B22;--s2:#1C2333;--border:#30363D;--text:#E6EDF3;--text2:#C9D1D9;--muted:#8B949E;--sky:#38BDF8;--sky-soft:#0C2A3B;--indigo:#818CF8;--indigo-s:#1E1B4B;--amber:#FCD34D;--amber-s:#2D1E00;--emerald:#6EE7B7;--emerald-s:#022C22;--violet:#C4B5FD;--violet-s:#1E1033;--rose:#FCA5A5;--rose-s:#2D0808;--slate:#94A3B8;--slate-s:#0F172A;}
+  :root[data-theme=light]{--bg:#F0F4F8;--surface:#FFFFFF;--s2:#EBF1F7;--border:#D1DCE8;--text:#0A1628;--text2:#334155;--muted:#64748B;--sky:#0284C7;--sky-soft:#E0F2FE;--indigo:#4F46E5;--indigo-s:#EEF2FF;--amber:#D97706;--amber-s:#FFFBEB;--emerald:#059669;--emerald-s:#ECFDF5;--violet:#7C3AED;--violet-s:#F5F3FF;--rose:#DC2626;--rose-s:#FEF2F2;--slate:#475569;--slate-s:#F8FAFC;}
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:14px}
+
+  /* Header */
+  .hdr{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:52px;backdrop-filter:blur(12px)}
+  .hdr-logo{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.95rem;color:var(--text)}
+  .hdr-logo .dot{width:10px;height:10px;border-radius:50%;background:var(--sky)}
+  .hdr-nav{display:flex;gap:1.5rem;list-style:none}
+  .hdr-nav a{color:var(--muted);text-decoration:none;font-size:.8rem;font-weight:500;transition:color .15s}
+  .hdr-nav a:hover{color:var(--sky)}
+
+  /* Layout */
+  .wrap{max-width:1100px;margin:0 auto;padding:0 2rem}
+  .section{padding:3rem 0;border-top:1px solid var(--border)}
+  .section:first-child{border-top:none}
+
+  /* Hero */
+  .hero{padding:3.5rem 0 2.5rem}
+  .hero-eye{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sky);margin-bottom:.6rem}
+  .hero h1{font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:800;line-height:1.15;margin-bottom:.8rem;text-wrap:balance}
+  .hero p{font-size:.95rem;color:var(--text2);max-width:580px;line-height:1.7;margin-bottom:2rem}
+  .stats{display:flex;flex-wrap:wrap;gap:2rem}
+  .stat-v{font-size:2rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .stat-l{font-size:.72rem;color:var(--muted);font-weight:500;margin-top:.2rem}
+
+  /* Section heading */
+  .sh{margin-bottom:1.5rem}
+  .sh h2{font-size:1.25rem;font-weight:700;margin-bottom:.3rem}
+  .sh p{font-size:.82rem;color:var(--muted)}
+
+  /* Module card */
+  .mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+  @media(max-width:780px){.mod-grid{grid-template-columns:1fr}}
+  .mod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;border-left:4px solid var(--cc)}
+
+  .mod-head{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:.85rem}
+  .mod-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:1.1rem;flex-shrink:0;background:color-mix(in srgb,var(--cc) 12%,transparent)}
+  .mod-title{font-size:.95rem;font-weight:700;color:var(--text)}
+  .mod-sub{font-size:.75rem;color:var(--muted);margin-top:.15rem;line-height:1.4}
+
+  .mod-body{padding:1rem 1.25rem;display:flex;flex-direction:column;gap:.9rem}
+
+  /* Done / Missing lists */
+  .check-list{display:flex;flex-direction:column;gap:.35rem}
+  .check-row{display:flex;align-items:flex-start;gap:.55rem;font-size:.8rem;color:var(--text2)}
+  .check-row .icon{flex-shrink:0;width:16px;height:16px;margin-top:.05rem}
+  .done .icon{color:var(--emerald)}
+  .miss .icon{color:var(--rose)}
+  .warn .icon{color:var(--amber)}
+
+  /* Sub-heading inside card */
+  .card-sh{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:.45rem}
+
+  /* Tags */
+  .tag{display:inline-block;font-size:.66rem;font-weight:700;padding:.12rem .4rem;border-radius:4px;white-space:nowrap}
+  .tag-sky    {background:var(--sky-soft);    color:var(--sky)}
+  .tag-indigo {background:var(--indigo-s);    color:var(--indigo)}
+  .tag-amber  {background:var(--amber-s);     color:var(--amber)}
+  .tag-emerald{background:var(--emerald-s);   color:var(--emerald)}
+  .tag-violet {background:var(--violet-s);    color:var(--violet)}
+  .tag-rose   {background:var(--rose-s);      color:var(--rose)}
+  .tag-slate  {background:var(--slate-s);     color:var(--slate)}
+  .tags{display:flex;flex-wrap:wrap;gap:.3rem}
+
+  /* Status pill */
+  .status-mature{background:#D1FAE5;color:#065F46;font-size:.65rem;font-weight:700;padding:.12rem .5rem;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+  .status-new   {background:#FEF3C7;color:#92400E;font-size:.65rem;font-weight:700;padding:.12rem .5rem;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+  .status-active{background:#DBEAFE;color:#1E40AF;font-size:.65rem;font-weight:700;padding:.12rem .5rem;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+  :root[data-theme=dark] .status-mature{background:#064E3B;color:#6EE7B7}
+  :root[data-theme=dark] .status-new{background:#451A03;color:#FCD34D}
+  :root[data-theme=dark] .status-active{background:#1E3A5F;color:#93C5FD}
+  @media(prefers-color-scheme:dark){
+    .status-mature{background:#064E3B;color:#6EE7B7}
+    .status-new{background:#451A03;color:#FCD34D}
+    .status-active{background:#1E3A5F;color:#93C5FD}
+  }
+
+  /* Schema table */
+  .schema-wrap{overflow-x:auto}
+  .schema{width:100%;border-collapse:collapse;font-size:.73rem}
+  .schema th{background:var(--s2);font-weight:700;font-size:.68rem;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--muted);padding:.35rem .6rem;text-align:left;border:1px solid var(--border);position:sticky;top:0}
+  .schema td{padding:.3rem .6rem;border:1px solid var(--border);vertical-align:top;color:var(--text2)}
+  .schema tbody tr:nth-child(even){background:var(--s2)}
+  .schema td:first-child{font-family:'SF Mono','Cascadia Code',monospace;font-weight:600;color:var(--text)}
+  .schema td code{font-family:inherit;color:var(--muted);font-size:.9em}
+
+  /* Integration map */
+  .int-svg{width:100%;height:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow)}
+
+  /* Roadmap */
+  .roadmap{display:flex;flex-direction:column;gap:1rem}
+  .road-item{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--cc);
+    border-radius:var(--radius);padding:1.1rem 1.25rem;display:grid;grid-template-columns:200px 1fr;
+    gap:1.25rem;align-items:start;box-shadow:var(--shadow)}
+  @media(max-width:700px){.road-item{grid-template-columns:1fr}}
+  .road-label{font-weight:700;font-size:.85rem;color:var(--text)}
+  .road-effort{font-size:.7rem;color:var(--muted);margin-top:.25rem;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+  .pri-high  {background:#FEE2E2;color:#991B1B;font-size:.65rem;font-weight:700;padding:.1rem .4rem;border-radius:4px}
+  .pri-med   {background:#FEF3C7;color:#78350F;font-size:.65rem;font-weight:700;padding:.1rem .4rem;border-radius:4px}
+  .pri-low   {background:#F0FDF4;color:#166534;font-size:.65rem;font-weight:700;padding:.1rem .4rem;border-radius:4px}
+  :root[data-theme=dark] .pri-high{background:#450A0A;color:#FCA5A5}
+  :root[data-theme=dark] .pri-med {background:#431407;color:#FCD34D}
+  :root[data-theme=dark] .pri-low {background:#052E16;color:#86EFAC}
+  @media(prefers-color-scheme:dark){
+    .pri-high{background:#450A0A;color:#FCA5A5}
+    .pri-med{background:#431407;color:#FCD34D}
+    .pri-low{background:#052E16;color:#86EFAC}
+  }
+  .road-items{list-style:none;display:flex;flex-direction:column;gap:.4rem}
+  .road-items li{font-size:.82rem;color:var(--text2);display:flex;gap:.5rem;align-items:flex-start}
+  .road-items li::before{content:'→';color:var(--cc);flex-shrink:0;font-weight:700}
+
+  /* Colors per module */
+  .c-sky    {--cc:var(--sky)}
+  .c-amber  {--cc:var(--amber)}
+  .c-emerald{--cc:var(--emerald)}
+  .c-indigo {--cc:var(--indigo)}
+  .c-violet {--cc:var(--violet)}
+  .c-slate  {--cc:var(--slate)}
+
+  /* Wide card */
+  .mod-card.wide{grid-column:1/-1}
+
+  /* Divider inside card */
+  .divider{border:none;border-top:1px solid var(--border);margin:.1rem 0}
+
+  /* Highlight box */
+  .highlight{background:var(--sky-soft);border:1px solid color-mix(in srgb,var(--sky) 25%,transparent);
+    border-radius:8px;padding:.9rem 1.1rem;font-size:.82rem;color:var(--text2);line-height:1.6}
+  .highlight strong{color:var(--text)}
+
+  /* Footer */
+  footer{border-top:1px solid var(--border);padding:1.5rem 0;text-align:center;color:var(--muted);font-size:.75rem}
+</style>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo"><div class="dot"></div>Seruwit CRM</div>
+  <nav><ul class="hdr-nav">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#fleet">Fleet</a></li>
+    <li><a href="#maintenance">Maintenance</a></li>
+    <li><a href="#tracking">Tracking</a></li>
+    <li><a href="#document">Document</a></li>
+    <li><a href="#scoring">Driver Scoring</a></li>
+    <li><a href="#integration">Integrasi</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul></nav>
+</header>
+
+<!-- HERO -->
+<div class="wrap">
+<section id="overview" class="hero">
+  <div class="hero-eye">Desain Pengembangan — Fleet &amp; Compliance</div>
+  <h1>Fleet &amp; Kepatuhan<br>Cluster Design Document</h1>
+  <p>Analisis kondisi implementasi 5 modul dalam klaster armada, identifikasi gaps, skema data, alur integrasi, dan roadmap prioritas pengembangan berdasarkan kode yang sudah ada.</p>
+  <div class="stats">
+    <div><div class="stat-v" style="color:var(--sky)">5</div><div class="stat-l">Modul dalam klaster</div></div>
+    <div><div class="stat-v" style="color:var(--emerald)">4</div><div class="stat-l">Modul mature (backend)</div></div>
+    <div><div class="stat-v" style="color:var(--amber)">1</div><div class="stat-l">Modul butuh frontend</div></div>
+    <div><div class="stat-v" style="color:var(--violet)">8</div><div class="stat-l">Fitur gaps teridentifikasi</div></div>
+  </div>
+</section>
+
+<!-- MODULE CARDS -->
+<section class="section">
+  <div class="sh"><h2>Status per Modul</h2><p>Apa yang sudah ada (✅), apa yang belum (❌), dan yang butuh perhatian segera (⚠️)</p></div>
+  <div class="mod-grid">
+
+    <!-- Fleet -->
+    <div id="fleet" class="mod-card c-sky">
+      <div class="mod-head">
+        <div class="mod-icon">🚛</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <div class="mod-title">Fleet</div>
+            <span class="status-mature">Mature</span>
+          </div>
+          <div class="mod-sub">Kendaraan, pengemudi, BBM, log perawatan ringan</div>
+        </div>
+      </div>
+      <div class="mod-body">
+        <div>
+          <div class="card-sh">Sudah diimplementasikan</div>
+          <div class="check-list">
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Vehicle CRUD: kapasitas, biaya/km, kapasitas tangki, km/liter expected</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Fuel logs: nama SPBU, no. struk, full-tank flag, price_per_liter</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>FuelConsumptionCalculator: km/L, L/100km, rolling average 5 fills</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>FuelAnomalyDetector: over_capacity, odometer_regression, efficiency_drop</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Driver account provisioning (link driver → user + role driver)</span></div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <div class="card-sh">Gap / Belum ada</div>
+          <div class="check-list">
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Fuel Analytics page</strong> — trend km/L per kendaraan, total biaya BBM per periode, anomaly history</span></div>
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Vehicle status board</strong> — dashboard armada (active/maintenance/inactive count, odometer update terakhir)</span></div>
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Driver fuel performance</strong> — efisiensi per driver (km/L saat driver X yang isi vs rata-rata kendaraan)</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="card-sh">Tabel kunci</div>
+          <div class="tags">
+            <span class="tag tag-sky">vehicles</span>
+            <span class="tag tag-sky">drivers</span>
+            <span class="tag tag-sky">fuel_logs</span>
+            <span class="tag tag-sky">vehicle_maintenance_logs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maintenance -->
+    <div id="maintenance" class="mod-card c-emerald">
+      <div class="mod-head">
+        <div class="mod-icon">🔧</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <div class="mod-title">Maintenance</div>
+            <span class="status-mature">Mature</span>
+          </div>
+          <div class="mod-sub">Work orders, jadwal servis, konsumsi suku cadang dari inventory</div>
+        </div>
+      </div>
+      <div class="mod-body">
+        <div>
+          <div class="card-sh">Sudah diimplementasikan</div>
+          <div class="check-list">
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Work orders full lifecycle: pending → in_progress → completed/cancelled</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>WorkOrderItem: tipe PART (terhubung ke inventory), LABOR, OTHER</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>MaintenanceStockRecorder: deduct() saat WO complete, reverse() saat cancel</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>MaintenanceSchedule: interval mileage (km) atau kalender (hari), recalculateNextService()</span></div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <div class="card-sh">Gap / Belum ada</div>
+          <div class="check-list">
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Predictive alert command</strong> — scan maintenance_schedules yang next_service_odometer ≤ (odometer_km + threshold) → notifikasi</span></div>
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Auto-create work order dari schedule</strong> — saat due date/odometer terlampaui, buat draft WO otomatis</span></div>
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Cost analytics per kendaraan</strong> — total biaya perawatan (parts + jasa) per periode, per kategori</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="card-sh">Tabel kunci</div>
+          <div class="tags">
+            <span class="tag tag-emerald">maintenance_categories</span>
+            <span class="tag tag-emerald">work_orders</span>
+            <span class="tag tag-emerald">work_order_items</span>
+            <span class="tag tag-emerald">maintenance_schedules</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tracking -->
+    <div id="tracking" class="mod-card c-indigo">
+      <div class="mod-head">
+        <div class="mod-icon">📡</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <div class="mod-title">Tracking</div>
+            <span class="status-mature">Mature</span>
+          </div>
+          <div class="mod-sub">GPS real-time via Traccar, pairing device, Leaflet map</div>
+        </div>
+      </div>
+      <div class="mod-body">
+        <div>
+          <div class="card-sh">Sudah diimplementasikan</div>
+          <div class="check-list">
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>TraccarClient: poll posisi semua device, PositionIngestor: simpan ke vehicle_positions</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>TrackingPoll command (scheduled), TrackingPrune (cleanup posisi lama)</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>VehiclePositionsRecorded event — bus untuk DriverScoring</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>GPS device management + TrackingConfig per tenant, Leaflet live map</span></div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <div class="card-sh">Gap / Belum ada</div>
+          <div class="check-list">
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Historical route playback</strong> — query vehicle_positions per kendaraan+tanggal, animasi di Leaflet Polyline</span></div>
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Geofencing</strong> — define zona polygon, deteksi enter/exit saat posisi baru masuk, alert otomatis</span></div>
+            <div class="check-row warn"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/></svg><span><strong>Trip-position link</strong> — saat ini posisi tidak di-link ke trip_id; butuh join untuk menampilkan rute aktual trip</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="card-sh">Tabel kunci</div>
+          <div class="tags">
+            <span class="tag tag-indigo">gps_devices</span>
+            <span class="tag tag-indigo">tracking_configs</span>
+            <span class="tag tag-indigo">vehicle_positions</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Document -->
+    <div id="document" class="mod-card c-amber">
+      <div class="mod-head">
+        <div class="mod-icon">📄</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <div class="mod-title">Document</div>
+            <span class="status-mature">Mature</span>
+          </div>
+          <div class="mod-sub">Dokumen kepatuhan kendaraan &amp; pengemudi, expiry tracking, notifikasi</div>
+        </div>
+      </div>
+      <div class="mod-body">
+        <div>
+          <div class="card-sh">Sudah diimplementasikan</div>
+          <div class="check-list">
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>DocumentType CRUD, Vehicle documents, Driver documents (polimorfik)</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>DocumentScanExpiring command + DocumentReminder + DocumentObserver notif</span></div>
+            <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Notifikasi otomatis saat dokumen mendekati expiry (via scheduler)</span></div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <div class="card-sh">Gap / Belum ada</div>
+          <div class="check-list">
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Compliance dashboard</strong> — berapa dokumen expiring bulan ini/kuartal ini, per tipe, per kendaraan</span></div>
+            <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>File upload</strong> — dokumen saat ini hanya menyimpan URL, belum ada upload ke storage tenant</span></div>
+            <div class="check-row warn"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/></svg><span><strong>Renewal workflow</strong> — saat dokumen hampir expired, buat task perpanjangan yang bisa di-assign ke staf</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="card-sh">Tabel kunci</div>
+          <div class="tags">
+            <span class="tag tag-amber">document_types</span>
+            <span class="tag tag-amber">documents</span>
+            <span class="tag tag-amber">document_reminders</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DriverScoring — full width -->
+    <div id="scoring" class="mod-card c-violet wide">
+      <div class="mod-head">
+        <div class="mod-icon">⭐</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <div class="mod-title">Driver Scoring</div>
+            <span class="status-active">Backend Selesai — Butuh Frontend</span>
+          </div>
+          <div class="mod-sub">Skor perilaku mengemudi dari GPS Traccar (harsh brake, speeding, idle), leaderboard, insentif</div>
+        </div>
+      </div>
+      <div class="mod-body">
+
+        <div class="highlight">
+          <strong>🎯 Priority #1 untuk diimplementasikan.</strong> Seluruh backend — schema 5 tabel, algoritma deteksi event dari GPS delta, agregasi skor harian, evaluasi insentif, dan wiring ke event VehiclePositionsRecorded — sudah selesai dan berjalan. Yang dibutuhkan hanya <strong>5 halaman frontend</strong>.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+          <div>
+            <div class="card-sh">Backend sudah selesai ✅</div>
+            <div class="check-list">
+              <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>DrivingEventDetector: harsh_brake (ΔkPh/s ≥ 11), harsh_accel (≥ 12), speeding (&gt; 80 kph), idle (&gt; 10 menit)</span></div>
+              <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>DetectDrivingEvents listener → aktif saat VehiclePositionsRecorded, per-vehicle processing</span></div>
+              <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>DriverScoreAggregator: applyEvent() update driver_daily_scores, leaderboard() dengan periode custom</span></div>
+              <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>IncentiveEvaluator: auto-evaluate aturan weekly/monthly, buat DriverIncentiveAward pending</span></div>
+              <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Semua controller tersedia: Leaderboard, DrivingEvent, IncentiveRule, IncentiveAward, Settings</span></div>
+              <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Semua routes terdaftar: leaderboard, events, drivers/{driver}, incentives, settings</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="card-sh">5 halaman yang harus dibuat ❌</div>
+            <div class="check-list">
+              <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Leaderboard/Index</strong> — ranking driver, filter periode minggu/bulan, score gauge, event count breakdown</span></div>
+              <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Driver Detail</strong> — kalender skor harian, grafik trend skor 30 hari, daftar event per hari, award history</span></div>
+              <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Driving Events</strong> — feed semua event (filter: jenis, severity, vehicle, driver, tanggal), map pin lokasi</span></div>
+              <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Incentive Rules</strong> — CRUD aturan insentif (min score, min days, reward), evaluasi manual, daftar award</span></div>
+              <div class="check-row miss"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg><span><strong>Settings</strong> — konfigurasi threshold per tenant (batas kecepatan, idle minutes, poin per event)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card-sh">Tabel kunci</div>
+          <div class="tags">
+            <span class="tag tag-violet">driver_scoring_settings</span>
+            <span class="tag tag-violet">driving_events</span>
+            <span class="tag tag-violet">driver_daily_scores</span>
+            <span class="tag tag-violet">driver_incentive_rules</span>
+            <span class="tag tag-violet">driver_incentive_awards</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /mod-grid -->
+</section>
+
+<!-- SCHEMA SECTION: DriverScoring tables detail -->
+<section class="section">
+  <div class="sh"><h2>Skema Data: Driver Scoring</h2><p>Lima tabel yang sudah ada — siap digunakan frontend</p></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <div>
+      <div class="card-sh" style="margin-bottom:.5rem">driving_events</div>
+      <div class="schema-wrap">
+        <table class="schema">
+          <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td>vehicle_id</td><td>FK</td><td>Kendaraan yang terlibat</td></tr>
+            <tr><td>driver_id</td><td>FK nullable</td><td>Dari trip aktif saat event</td></tr>
+            <tr><td>type</td><td>string</td><td><code>harsh_brake</code> / <code>harsh_accel</code> / <code>speeding</code> / <code>idle</code></td></tr>
+            <tr><td>severity</td><td>string</td><td><code>warning</code> / <code>critical</code></td></tr>
+            <tr><td>magnitude</td><td>decimal</td><td>Besaran (ΔkPh/s atau menit idle)</td></tr>
+            <tr><td>speed_kph</td><td>decimal</td><td>Kecepatan saat event</td></tr>
+            <tr><td>points_delta</td><td>int</td><td>Nilai minus yang diterapkan ke skor</td></tr>
+            <tr><td>recorded_at / ended_at</td><td>timestamp</td><td>Start &amp; end untuk event span (idle, speeding)</td></tr>
+            <tr><td>lat / lng</td><td>decimal</td><td>Lokasi GPS event</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card-sh" style="margin-bottom:.5rem">driver_daily_scores</div>
+      <div class="schema-wrap">
+        <table class="schema">
+          <thead><tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td>driver_id + score_date</td><td>UK</td><td>Satu baris per driver per hari</td></tr>
+            <tr><td>score</td><td>smallint</td><td>Skor final 0–100 (default 100)</td></tr>
+            <tr><td>harsh_brake_count</td><td>uint</td><td>Jumlah rem mendadak hari itu</td></tr>
+            <tr><td>harsh_accel_count</td><td>uint</td><td>Jumlah akselerasi kasar</td></tr>
+            <tr><td>speeding_count</td><td>uint</td><td>Jumlah episode overspeed</td></tr>
+            <tr><td>idle_count</td><td>uint</td><td>Jumlah episode idle berlebih</td></tr>
+            <tr><td>points_delta</td><td>int</td><td>Akumulasi poin yang dikurang hari itu</td></tr>
+            <tr><td>event_count</td><td>uint</td><td>Total semua event</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card-sh" style="margin-bottom:.5rem">driver_incentive_rules</div>
+      <div class="schema-wrap">
+        <table class="schema">
+          <thead><tr><th>Kolom</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td>period</td><td><code>weekly</code> / <code>monthly</code></td></tr>
+            <tr><td>min_score</td><td>Skor rata-rata minimum untuk lolos (default 85)</td></tr>
+            <tr><td>min_days</td><td>Minimal hari dengan skor aktif (default 5)</td></tr>
+            <tr><td>reward_amount</td><td>Nominal insentif (dalam rupiah)</td></tr>
+            <tr><td>reward_label</td><td>Label teks bebas ("Bonus BBM", "Voucher", dst)</td></tr>
+            <tr><td>is_active</td><td>Toggle aktif/nonaktif</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card-sh" style="margin-bottom:.5rem">driver_scoring_settings (threshold)</div>
+      <div class="schema-wrap">
+        <table class="schema">
+          <thead><tr><th>Kolom</th><th>Default</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td>harsh_brake_kph_per_s</td><td>11</td><td>Ambang batas deselerasi kasar</td></tr>
+            <tr><td>harsh_accel_kph_per_s</td><td>12</td><td>Ambang batas akselerasi kasar</td></tr>
+            <tr><td>speeding_limit_kph</td><td>80</td><td>Batas kecepatan sebelum dicatat</td></tr>
+            <tr><td>idle_minutes</td><td>10</td><td>Idle minimal sebelum dicatat sebagai event</td></tr>
+            <tr><td>daily_base_points</td><td>100</td><td>Poin awal setiap hari</td></tr>
+            <tr><td>points_harsh_brake</td><td>-5</td><td>Pengurangan per rem mendadak</td></tr>
+            <tr><td>points_speeding</td><td>-4</td><td>Pengurangan per episode overspeed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATION MAP -->
+<section id="integration" class="section">
+  <div class="sh"><h2>Peta Integrasi Antar Modul</h2><p>Aliran data dan event yang menghubungkan 5 modul dalam klaster</p></div>
+  <div style="overflow-x:auto">
+    <svg class="int-svg" viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a1" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3Z" fill="#0284C7"/></marker>
+        <marker id="a2" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3Z" fill="#7C3AED"/></marker>
+        <marker id="a3" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3Z" fill="#059669"/></marker>
+        <marker id="a4" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3Z" fill="#D97706"/></marker>
+        <marker id="ag" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3Z" fill="#94A3B8"/></marker>
+      </defs>
+
+      <!-- Fleet box -->
+      <rect x="20" y="130" width="150" height="80" rx="10" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.5"/>
+      <text x="95" y="158" text-anchor="middle" font-size="12" font-weight="700" fill="#0369A1">FLEET</text>
+      <text x="95" y="174" text-anchor="middle" font-size="9" fill="#0284C7">vehicles · drivers</text>
+      <text x="95" y="188" text-anchor="middle" font-size="9" fill="#0284C7">fuel_logs · FuelAnomalyDetector</text>
+      <text x="95" y="202" text-anchor="middle" font-size="9" fill="#38BDF8">odometer_km (FK target)</text>
+
+      <!-- Traccar (external) -->
+      <rect x="20" y="30" width="150" height="60" rx="10" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text x="95" y="55" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">TRACCAR</text>
+      <text x="95" y="71" text-anchor="middle" font-size="9" fill="#64748B">GPS server (external)</text>
+      <text x="95" y="83" text-anchor="middle" font-size="9" fill="#94A3B8">positions API</text>
+
+      <!-- Tracking box -->
+      <rect x="250" y="80" width="160" height="80" rx="10" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.5"/>
+      <text x="330" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#3730A3">TRACKING</text>
+      <text x="330" y="124" text-anchor="middle" font-size="9" fill="#4F46E5">TraccarClient · PositionIngestor</text>
+      <text x="330" y="138" text-anchor="middle" font-size="9" fill="#4F46E5">vehicle_positions</text>
+      <text x="330" y="152" text-anchor="middle" font-size="9" fill="#818CF8">VehiclePositionsRecorded ⚡</text>
+
+      <!-- DriverScoring box -->
+      <rect x="500" y="30" width="180" height="90" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+      <text x="590" y="58" text-anchor="middle" font-size="12" font-weight="700" fill="#5B21B6">DRIVER SCORING</text>
+      <text x="590" y="74" text-anchor="middle" font-size="9" fill="#7C3AED">DetectDrivingEvents listener</text>
+      <text x="590" y="88" text-anchor="middle" font-size="9" fill="#7C3AED">DrivingEventDetector</text>
+      <text x="590" y="102" text-anchor="middle" font-size="9" fill="#7C3AED">DriverScoreAggregator</text>
+      <text x="590" y="112" text-anchor="middle" font-size="8" fill="#A78BFA">driving_events · daily_scores · awards</text>
+
+      <!-- Maintenance box -->
+      <rect x="250" y="210" width="160" height="80" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+      <text x="330" y="238" text-anchor="middle" font-size="12" font-weight="700" fill="#065F46">MAINTENANCE</text>
+      <text x="330" y="254" text-anchor="middle" font-size="9" fill="#059669">work_orders · schedules</text>
+      <text x="330" y="268" text-anchor="middle" font-size="9" fill="#059669">MaintenanceStockRecorder</text>
+      <text x="330" y="282" text-anchor="middle" font-size="8" fill="#6EE7B7">next_service_odometer ← odometer</text>
+
+      <!-- Inventory (external) -->
+      <rect x="500" y="200" width="150" height="60" rx="10" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text x="575" y="226" text-anchor="middle" font-size="11" font-weight="700" fill="#92400E">INVENTORY</text>
+      <text x="575" y="242" text-anchor="middle" font-size="9" fill="#D97706">StockMovementRecorder</text>
+      <text x="575" y="254" text-anchor="middle" font-size="9" fill="#D97706">(stock out: suku cadang)</text>
+
+      <!-- Document box -->
+      <rect x="750" y="130" width="150" height="70" rx="10" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5"/>
+      <text x="825" y="158" text-anchor="middle" font-size="12" font-weight="700" fill="#92400E">DOCUMENT</text>
+      <text x="825" y="174" text-anchor="middle" font-size="9" fill="#D97706">vehicle_docs · driver_docs</text>
+      <text x="825" y="188" text-anchor="middle" font-size="9" fill="#D97706">expiry scan · notifications</text>
+
+      <!-- Arrows -->
+      <!-- Traccar → Tracking (poll) -->
+      <line x1="95" y1="90" x2="250" y2="115" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#ag)"/>
+      <text x="160" y="97" font-size="8" fill="#94A3B8">poll positions</text>
+
+      <!-- Fleet → Tracking (vehicle_id link) -->
+      <line x1="170" y1="155" x2="250" y2="135" stroke="#0284C7" stroke-width="1.5" marker-end="url(#a1)"/>
+      <text x="185" y="140" font-size="8" fill="#0284C7">vehicle_id</text>
+
+      <!-- Tracking → DriverScoring (event bus) -->
+      <line x1="410" y1="105" x2="500" y2="85" stroke="#7C3AED" stroke-width="2" marker-end="url(#a2)"/>
+      <text x="432" y="90" font-size="8.5" fill="#7C3AED">VehiclePositionsRecorded ⚡</text>
+
+      <!-- Fleet → Maintenance (vehicle_id, odometer_km) -->
+      <line x1="95" y1="210" x2="250" y2="240" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
+      <text x="100" y="235" font-size="8" fill="#059669">vehicle_id · odometer_km</text>
+
+      <!-- Maintenance → Inventory (StockMovementRecorder.deduct) -->
+      <line x1="410" y1="255" x2="500" y2="240" stroke="#D97706" stroke-width="1.5" marker-end="url(#a4)"/>
+      <text x="415" y="243" font-size="8" fill="#D97706">deduct() parts out</text>
+
+      <!-- Fleet → Document (vehicle_id) -->
+      <line x1="170" y1="175" x2="750" y2="170" stroke="#D97706" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a4)"/>
+      <text x="460" y="165" font-size="8" fill="#D97706">vehicle_id / driver_id</text>
+
+      <!-- DriverScoring → Fleet (driver link) -->
+      <line x1="500" y1="65" x2="170" y2="150" stroke="#7C3AED" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#a2)"/>
+      <text x="290" y="50" font-size="8" fill="#7C3AED">driver_id (from Fleet)</text>
+
+      <!-- Legend -->
+      <rect x="680" y="260" width="290" height="70" rx="6" fill="none" stroke="#D1DCE8" stroke-width="1"/>
+      <text x="690" y="278" font-size="8" font-weight="700" fill="#94A3B8" letter-spacing=".08em">LEGENDA</text>
+      <line x1="690" y1="290" x2="720" y2="290" stroke="#7C3AED" stroke-width="2" marker-end="url(#a2)"/>
+      <text x="728" y="294" font-size="8" fill="#64748B">Event Laravel (async)</text>
+      <line x1="690" y1="308" x2="720" y2="308" stroke="#0284C7" stroke-width="1.5" marker-end="url(#a1)"/>
+      <text x="728" y="312" font-size="8" fill="#64748B">Relasi FK (sync)</text>
+      <line x1="690" y1="323" x2="720" y2="323" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#ag)"/>
+      <text x="728" y="327" font-size="8" fill="#64748B">Eksternal / cross-module (soft)</text>
+    </svg>
+  </div>
+</section>
+
+<!-- MAINTENANCE SCHEDULE DESIGN -->
+<section class="section">
+  <div class="sh"><h2>Desain: Predictive Maintenance Alert</h2><p>Command baru yang scan jadwal servis dan kirim notifikasi proaktif — gap paling kritis di Maintenance</p></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow)">
+      <div class="card-sh">Alur command: MaintenanceScanDue</div>
+      <div class="check-list" style="margin-top:.5rem">
+        <div class="check-row"><div class="icon" style="background:var(--sky);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0">1</div><span>Query semua <code>maintenance_schedules</code> yang <code>is_active = true</code></span></div>
+        <div class="check-row"><div class="icon" style="background:var(--sky);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0">2</div><span>Untuk <code>interval_type=mileage</code>: cek <code>vehicle.odometer_km + threshold_km ≥ next_service_odometer</code></span></div>
+        <div class="check-row"><div class="icon" style="background:var(--sky);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0">3</div><span>Untuk <code>interval_type=calendar</code>: cek <code>next_service_date ≤ today + threshold_days</code></span></div>
+        <div class="check-row"><div class="icon" style="background:var(--sky);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0">4</div><span>Buat <code>GenericNotification</code> ke user dengan permission <code>maintenance,view</code></span></div>
+        <div class="check-row"><div class="icon" style="background:var(--sky);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0">5</div><span><em>(Opsional)</em> Auto-buat draft WorkOrder dari jadwal yang sudah lewat</span></div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow)">
+      <div class="card-sh">Konfigurasi threshold (per tenant di .env / config)</div>
+      <div class="schema-wrap" style="margin-top:.5rem">
+        <table class="schema">
+          <thead><tr><th>Config key</th><th>Default</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td>maintenance.alert_km_before</td><td>500</td><td>Alert saat 500 km sebelum jadwal mileage</td></tr>
+            <tr><td>maintenance.alert_days_before</td><td>14</td><td>Alert saat 14 hari sebelum jadwal kalender</td></tr>
+            <tr><td>maintenance.auto_create_wo</td><td>false</td><td>Otomatis buat draft WO saat jadwal terlampaui</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:.75rem;font-size:.78rem;color:var(--muted)">
+        Schedule di <code>routes/console.php</code>: <code>->daily()</code> — cukup sekali sehari di awal hari kerja.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DRIVER SCORING PAGES DESIGN -->
+<section class="section">
+  <div class="sh"><h2>Desain Halaman: Driver Scoring (5 pages)</h2><p>Spesifikasi content dan data per halaman React/Inertia yang perlu dibuat</p></div>
+
+  <div class="mod-grid">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border-left:3px solid var(--violet)">
+      <div class="card-sh" style="color:var(--violet)">1. Leaderboard/Index <code style="font-size:.65rem">GET /scoring/leaderboard</code></div>
+      <div class="check-list" style="margin-top:.5rem">
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Filter periode: minggu ini / bulan ini / custom range</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Kartu rank per driver: nama, foto, skor rata-rata, breakdown event</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Data: <code>DriverScoreAggregator::leaderboard($from, $to)</code></span></div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border-left:3px solid var(--violet)">
+      <div class="card-sh" style="color:var(--violet)">2. Driver Detail <code style="font-size:.65rem">GET /scoring/drivers/{driver}</code></div>
+      <div class="check-list" style="margin-top:.5rem">
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Grafik trend skor 30 hari (sparkline harian)</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Kalender heat-map: tiap hari warna sesuai skor (hijau–merah)</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Daftar event terbaru + riwayat award insentif</span></div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border-left:3px solid var(--violet)">
+      <div class="card-sh" style="color:var(--violet)">3. Driving Events <code style="font-size:.65rem">GET /scoring/events</code></div>
+      <div class="check-list" style="margin-top:.5rem">
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Feed semua event dengan filter: jenis, severity, vehicle, driver, tanggal</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Badge severity (warning/critical) dengan poin_delta yang dikurang</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Link koordinat GPS ke peta Leaflet (reuse komponen dari Tracking)</span></div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border-left:3px solid var(--violet)">
+      <div class="card-sh" style="color:var(--violet)">4. Incentive Rules <code style="font-size:.65rem">GET /scoring/incentives</code></div>
+      <div class="check-list" style="margin-top:.5rem">
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>CRUD aturan insentif: form inline (periode, min_score, min_days, reward)</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Tombol "Evaluasi Sekarang" → <code>POST /incentives/evaluate</code> → tampilkan driver yang lolos</span></div>
+        <div class="check-row done"><svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg><span>Daftar award pending — update status: <code>approved</code> / <code>paid</code></span></div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border-left:3px solid var(--violet);grid-column:1/-1">
+      <div class="card-sh" style="color:var(--violet)">5. Settings <code style="font-size:.65rem">GET /scoring/settings/edit</code></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.5rem">
+        <div class="check-list">
+          <div class="check-row"><div style="width:16px;height:16px;flex-shrink:0"></div><span>Form edit semua threshold di <code>driver_scoring_settings</code> — satu baris per field dengan label deskriptif dan satuan (kph, detik, poin)</span></div>
+          <div class="check-row"><div style="width:16px;height:16px;flex-shrink:0"></div><span>Preview dampak: "Dengan setting ini, jika driver dari 80 → 60 kph dalam 2 detik = <strong>harsh brake</strong>"</span></div>
+        </div>
+        <div class="check-list">
+          <div class="check-row"><div style="width:16px;height:16px;flex-shrink:0"></div><span>Tombol "Reset ke default" untuk kembalikan ke nilai awal sistem</span></div>
+          <div class="check-row"><div style="width:16px;height:16px;flex-shrink:0"></div><span>Perubahan setting tidak retroaktif — hanya berlaku untuk event baru ke depan</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" class="section">
+  <div class="sh"><h2>Roadmap Implementasi</h2><p>Urutan berdasarkan value / effort ratio — paling atas = paling besar dampaknya dengan effort terkecil</p></div>
+  <div class="roadmap">
+
+    <div class="road-item c-violet">
+      <div>
+        <div class="road-label">Driver Scoring Frontend</div>
+        <div class="road-effort">
+          <span class="pri-high">TINGGI</span>
+          <span>~3 hari</span>
+          <span class="tag tag-violet">DriverScoring</span>
+        </div>
+      </div>
+      <ul class="road-items">
+        <li>Buat 5 halaman React: Leaderboard, Driver Detail, Driving Events, Incentive Rules, Settings</li>
+        <li>Backend 100% siap — controller, routes, support classes semua sudah ada</li>
+        <li>Leaderboard: filter periode, kartu rank, breakdown event per driver</li>
+        <li>Driver Detail: grafik trend 30 hari + calendar heatmap + award history</li>
+        <li>Incentive Rules: CRUD + tombol evaluasi + daftar award pending/paid</li>
+      </ul>
+    </div>
+
+    <div class="road-item c-emerald">
+      <div>
+        <div class="road-label">Maintenance Predictive Alert</div>
+        <div class="road-effort">
+          <span class="pri-high">TINGGI</span>
+          <span>~1 hari</span>
+          <span class="tag tag-emerald">Maintenance</span>
+        </div>
+      </div>
+      <ul class="road-items">
+        <li>Artisan command <code>maintenance:scan-due</code> — query schedules mendekati due</li>
+        <li>Bandingkan <code>vehicle.odometer_km</code> vs <code>next_service_odometer</code> dengan buffer 500 km</li>
+        <li>Bandingkan <code>next_service_date</code> vs <code>today + 14 days</code></li>
+        <li>Kirim notifikasi ke semua user <code>maintenance,view</code> dengan detail kendaraan &amp; jadwal</li>
+        <li>Schedule daily di <code>routes/console.php</code></li>
+      </ul>
+    </div>
+
+    <div class="road-item c-sky">
+      <div>
+        <div class="road-label">Fleet Fuel Analytics</div>
+        <div class="road-effort">
+          <span class="pri-med">SEDANG</span>
+          <span>~2 hari</span>
+          <span class="tag tag-sky">Fleet</span>
+        </div>
+      </div>
+      <ul class="road-items">
+        <li>Halaman Analytics per kendaraan: grafik km/L per 10 fill terakhir (data sudah ada di <code>fuel_logs.km_per_liter</code>)</li>
+        <li>Total biaya BBM per bulan (liters × price_per_liter) dengan trend naik/turun</li>
+        <li>Tabel anomaly: highlight baris yang <code>anomaly_flags</code> tidak null dengan kode dan pesan</li>
+        <li>Perbandingan efisiensi antar kendaraan sejenis (fleet-wide ranking)</li>
+      </ul>
+    </div>
+
+    <div class="road-item c-indigo">
+      <div>
+        <div class="road-label">GPS Historical Playback</div>
+        <div class="road-effort">
+          <span class="pri-med">SEDANG</span>
+          <span>~2 hari</span>
+          <span class="tag tag-indigo">Tracking</span>
+        </div>
+      </div>
+      <ul class="road-items">
+        <li>Tambah page "Riwayat Rute" per kendaraan dengan date picker</li>
+        <li>Query <code>vehicle_positions</code> per vehicle_id + date range, urutkan by <code>recorded_at</code></li>
+        <li>Render sebagai <code>L.polyline</code> di Leaflet dengan animasi (marker bergerak sepanjang polyline)</li>
+        <li>Tampilkan driving events dari DriverScoring pada posisi yang sesuai (pin dengan warna severity)</li>
+      </ul>
+    </div>
+
+    <div class="road-item c-amber">
+      <div>
+        <div class="road-label">Document Compliance Dashboard</div>
+        <div class="road-effort">
+          <span class="pri-med">SEDANG</span>
+          <span>~1 hari</span>
+          <span class="tag tag-amber">Document</span>
+        </div>
+      </div>
+      <ul class="road-items">
+        <li>Widget ringkasan: expiring dalam 30 hari, 60 hari, sudah expired — per tipe dokumen</li>
+        <li>Tabel dokumen kritis dengan link langsung ke kendaraan/pengemudi</li>
+        <li>Integrasi di Vehicle Show: panel "Dokumen" dengan status expiry terdekat</li>
+      </ul>
+    </div>
+
+    <div class="road-item c-indigo" style="--cc:var(--indigo)">
+      <div>
+        <div class="road-label">Geofencing (Future)</div>
+        <div class="road-effort">
+          <span class="pri-low">RENDAH</span>
+          <span>~4 hari</span>
+          <span class="tag tag-indigo">Tracking</span>
+        </div>
+      </div>
+      <ul class="road-items">
+        <li>Tabel baru: <code>geofences</code> (name, polygon GeoJSON, alert_on: enter/exit/both)</li>
+        <li>PositionIngestor: setelah simpan posisi, cek apakah masuk/keluar geofence (point-in-polygon)</li>
+        <li>Trigger notifikasi ke fleet admins saat event enter/exit terdeteksi</li>
+        <li>UI: editor polygon di Leaflet (draw plugin) untuk define zona</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<footer>
+  <div class="wrap">
+    <p>Fleet &amp; Compliance Cluster — Design Document &nbsp;·&nbsp; 5 modul &nbsp;·&nbsp; Juli 2026</p>
+    <p style="margin-top:.3rem;font-size:.7rem">Laravel 12 · Inertia.js v2 · React 18 · Traccar GPS</p>
+  </div>
+</footer>

@@ -7,6 +7,8 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Fleet\Http\Controllers\DriverAccountController;
 use Modules\Fleet\Http\Controllers\DriverController;
+use Modules\Fleet\Http\Controllers\FleetDashboardController;
+use Modules\Fleet\Http\Controllers\FuelAnalyticsController;
 use Modules\Fleet\Http\Controllers\FuelLogController;
 use Modules\Fleet\Http\Controllers\VehicleController;
 use Modules\Fleet\Http\Controllers\VehicleMaintenanceLogController;
@@ -31,7 +33,7 @@ class FleetModule implements ModuleContract
 
     public function description(): string
     {
-        return 'Vehicle and driver records with fuel fills, consumption, and anomaly detection — shared by Transportation and other modules.';
+        return 'Vehicle and driver records with fuel analytics, status board, consumption, and anomaly detection — shared by Transportation and other modules.';
     }
 
     public function tier(): ModuleTier
@@ -59,7 +61,7 @@ class FleetModule implements ModuleContract
             'name' => 'Fleet',
             'slug' => 'fleet',
             'icon' => 'fleet',
-            'route_name' => 'fleet.vehicles.index',
+            'route_name' => 'fleet.dashboard',
             'permission_module' => 'fleet',
             'permission_action' => 'view',
             'sort_order' => 5,
@@ -86,6 +88,8 @@ class FleetModule implements ModuleContract
 
     public function routes(): void
     {
+        Route::get('/fleet', [FleetDashboardController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.dashboard');
+
         Route::get('/fleet/vehicles', [VehicleController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.vehicles.index');
         Route::get('/fleet/vehicles/create', [VehicleController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.vehicles.create');
         Route::post('/fleet/vehicles', [VehicleController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.store');
@@ -99,6 +103,7 @@ class FleetModule implements ModuleContract
         Route::delete('/fleet/vehicles/{vehicle}/maintenance-logs/{maintenanceLog}', [VehicleMaintenanceLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.maintenance-logs.destroy');
 
         Route::get('/fleet/fuel', [FuelLogController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.index');
+        Route::get('/fleet/fuel/analytics', [FuelAnalyticsController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.fuel.analytics');
         Route::post('/fleet/vehicles/{vehicle}/fuel-logs', [FuelLogController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.fuel-logs.store');
         Route::delete('/fleet/vehicles/{vehicle}/fuel-logs/{fuelLog}', [FuelLogController::class, 'destroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.fuel-logs.destroy');
 

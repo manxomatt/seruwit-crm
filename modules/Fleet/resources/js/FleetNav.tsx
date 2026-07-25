@@ -2,9 +2,11 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
+    { label: 'Dashboard', route: 'fleet.dashboard', pattern: 'fleet.dashboard' },
     { label: 'Vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
     { label: 'Drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
-    { label: 'Fuel', route: 'fleet.fuel.index', pattern: 'fleet.fuel.*' },
+    { label: 'Fuel', route: 'fleet.fuel.index', pattern: 'fleet.fuel.index' },
+    { label: 'Analytics', route: 'fleet.fuel.analytics', pattern: 'fleet.fuel.analytics' },
 ];
 
 export default function FleetNav(): JSX.Element {
@@ -12,7 +14,7 @@ export default function FleetNav(): JSX.Element {
 
     return (
         <div className="mb-6 border-b border-gray-200">
-            <nav className="-mb-px flex gap-6">
+            <nav className="-mb-px flex flex-wrap gap-6">
                 {TABS.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
                     return (
