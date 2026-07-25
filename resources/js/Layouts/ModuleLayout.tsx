@@ -566,10 +566,10 @@ export default function ModuleLayout({ header, children }: Props) {
                             type="button"
                             onClick={() => toggleGroup(group.title)}
                             aria-expanded={open}
-                            className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${hasActive && !open ? 'text-white' : `${theme.text} hover:text-white`
+                            className={`flex w-full items-center justify-between gap-1 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase leading-snug tracking-wide transition-colors ${hasActive && !open ? 'text-white' : `${theme.text} hover:text-white`
                                 }`}
                         >
-                            <span>{group.title}</span>
+                            <span className="min-w-0 flex-1 text-left">{group.title}</span>
                             <span className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`}>
                                 <ChevronDownIcon />
                             </span>

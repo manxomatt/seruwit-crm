@@ -3,7 +3,7 @@
 return [
     'intelligence' => 'Intelligence',
     'master_data' => 'Master Data',
-    'procurement_warehouse' => 'Procurement & Warehouse',
+    'procurement_warehouse' => 'Supply & Warehouse',
     'fleet_compliance' => 'Fleet & Compliance',
     'distribution_logistics' => 'Distribution & Logistics',
     'sales_commercial' => 'Sales & Commercial',
