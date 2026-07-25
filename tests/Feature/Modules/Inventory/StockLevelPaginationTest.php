@@ -4,6 +4,7 @@ namespace Tests\Feature\Modules\Inventory;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Inventory\Models\StockLevel;
+use Modules\Inventory\Models\StockMovement;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Product\Models\Product;
 use Tests\TestCase;
@@ -78,6 +79,42 @@ class StockLevelPaginationTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->has('stockLevels.data', 5)
                 ->where('stockLevels.current_page', 2)
+            );
+    }
+
+    public function test_warehouse_show_paginates_stock_movements(): void
+    {
+        $user = $this->createAdminUser();
+        $warehouse = Warehouse::factory()->create();
+        $product = Product::factory()->create();
+
+        StockMovement::factory()->count(20)->create([
+            'warehouse_id' => $warehouse->id,
+            'product_id' => $product->id,
+            'type' => 'in',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('module.inventory.warehouses.show', $warehouse))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Inventory/Warehouses/Show')
+                ->has('stockMovements.data', 15)
+                ->where('stockMovements.total', 20)
+                ->where('stockMovements.per_page', 15)
+                ->where('stockMovements.current_page', 1)
+                ->missing('warehouse.stock_movements')
+            );
+
+        $this->actingAs($user)
+            ->get(route('module.inventory.warehouses.show', [
+                'warehouse' => $warehouse,
+                'movement_page' => 2,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('stockMovements.data', 5)
+                ->where('stockMovements.current_page', 2)
             );
     }
 }

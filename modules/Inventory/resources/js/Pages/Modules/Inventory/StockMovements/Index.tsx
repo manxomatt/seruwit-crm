@@ -3,7 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix'
 import { useLocaleTag, useTrans } from '@/hooks/useTrans'
 import PrimaryButton from '@/Components/PrimaryButton'
 import SecondaryButton from '@/Components/SecondaryButton'
-import { Head, Link } from '@inertiajs/react'
+import { Head, Link, router } from '@inertiajs/react'
 import InventoryNav from '../../../../InventoryNav'
 
 interface StockMovement {
@@ -22,13 +22,21 @@ interface StockMovement {
   recorded_at: string
 }
 
+interface PaginatedMovements {
+  data: StockMovement[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  links: Array<{
+    url: string | null
+    label: string
+    active: boolean
+  }>
+}
+
 interface Props {
-  movements: {
-    data: StockMovement[]
-    links: any[]
-    current_page: number
-    last_page: number
-  }
+  movements: PaginatedMovements
 }
 
 export default function StockMovementsIndex({ movements }: Props) {
@@ -62,7 +70,7 @@ export default function StockMovementsIndex({ movements }: Props) {
 
       <InventoryNav />
 
-      <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+      <div className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead>
@@ -118,6 +126,35 @@ export default function StockMovementsIndex({ movements }: Props) {
             </tbody>
           </table>
         </div>
+
+        {movements.last_page > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-700">
+              {t('common.showing_results', {
+                from: (movements.current_page - 1) * movements.per_page + 1,
+                to: Math.min(movements.current_page * movements.per_page, movements.total),
+                total: movements.total,
+              })}
+            </p>
+            <div className="flex gap-1">
+              {movements.links.map((link, index) => (
+                <button
+                  key={index}
+                  onClick={() => link.url && router.get(link.url)}
+                  disabled={!link.url}
+                  className={`rounded px-3 py-1 text-sm ${
+                    link.active
+                      ? 'bg-indigo-600 text-white'
+                      : link.url
+                        ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                        : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </DynamicLayout>
   )

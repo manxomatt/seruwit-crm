@@ -48,12 +48,18 @@ class WarehouseController extends Controller
             ->paginate(15, ['*'], 'stock_page')
             ->withQueryString();
 
+        $stockMovements = $warehouse->stockMovements()
+            ->with('location:id,name,code')
+            ->latest('recorded_at')
+            ->paginate(15, ['*'], 'movement_page')
+            ->withQueryString();
+
         return inertia('Modules/Inventory/Warehouses/Show', [
             'warehouse' => $warehouse->load([
                 'locations' => fn ($q) => $q->with('parent:id,name,code')->withCount(['stockLevels', 'children'])->orderBy('sort_order'),
-                'stockMovements' => fn ($q) => $q->with('location:id,name,code')->latest()->limit(50),
             ]),
             'stockLevels' => $stockLevels,
+            'stockMovements' => $stockMovements,
         ]);
     }
 

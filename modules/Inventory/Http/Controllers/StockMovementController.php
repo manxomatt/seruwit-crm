@@ -27,7 +27,8 @@ class StockMovementController extends Controller
                 ->with(['product:id,name', 'warehouse:id,name', 'location:id,name,code', 'recordedBy:id,name'])
                 ->select('id', 'product_id', 'warehouse_id', 'location_id', 'type', 'quantity', 'source_type', 'reference_code', 'batch_number', 'expiry_date', 'notes', 'recorded_by', 'recorded_at')
                 ->latest('recorded_at')
-                ->paginate(50),
+                ->paginate(15)
+                ->withQueryString(),
         ]);
     }
 

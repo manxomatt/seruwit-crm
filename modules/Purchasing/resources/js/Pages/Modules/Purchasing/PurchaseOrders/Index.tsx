@@ -22,13 +22,17 @@ interface PurchaseOrder {
     warehouse: { id: number; name: string };
 }
 
+interface PaginatedOrders {
+    data: PurchaseOrder[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+}
+
 interface Props {
-    orders: {
-        data: PurchaseOrder[];
-        links: Array<{ url: string | null; label: string; active: boolean }>;
-        current_page: number;
-        last_page: number;
-    };
+    orders: PaginatedOrders;
     filters: { status: string; search: string };
     can: { create: boolean; update: boolean; receive: boolean };
 }
@@ -55,6 +59,31 @@ const statusBadge = (status: string): string => {
             return 'bg-gray-100 text-gray-700';
     }
 };
+
+const EyeIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+);
+
+const PencilIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+);
+
+const ClipboardIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+);
+
+const SubmitIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+    </svg>
+);
 
 export default function Index({ orders, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -122,97 +151,136 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                     </form>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead>
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.po_number')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.supplier')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.warehouse')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.ordered_at')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.expected_at')}</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.total')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.progress')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.status')}</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {orders.data.length === 0 ? (
+                <div className="p-6">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
                                 <tr>
-                                    <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
-                                        {t('purchasing.purchase_orders.index.empty')}
-                                    </td>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.po_number')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.supplier')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.warehouse')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.ordered_at')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.expected_at')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.total')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.progress')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('purchasing.fields.status')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                 </tr>
-                            ) : (
-                                orders.data.map((order) => (
-                                    <tr key={order.id} className="hover:bg-gray-50">
-                                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{order.po_number}</td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{order.partner.name}</td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{order.warehouse.name}</td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
-                                            {new Date(order.ordered_at).toLocaleDateString('id-ID')}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
-                                            {order.expected_at ? new Date(order.expected_at).toLocaleDateString('id-ID') : '—'}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-700">
-                                            {formatMoney(order.total_amount)}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3">
-                                            <div className="w-20">
-                                                <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
-                                                    <div
-                                                        className={`h-full rounded-full ${order.progress_percent >= 100 ? 'bg-emerald-500' : 'bg-indigo-600'}`}
-                                                        style={{ width: `${order.progress_percent}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3">
-                                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadge(order.status)}`}>
-                                                {t(`purchasing.status.${order.status}`, undefined, order.status)}
-                                            </span>
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                                            <div className="flex justify-end gap-3">
-                                                <Link
-                                                    href={prefixedRoute(
-                                                        order.status === 'draft'
-                                                            ? 'purchasing.purchase-orders.edit'
-                                                            : 'purchasing.purchase-orders.show',
-                                                        order.id,
-                                                    )}
-                                                    className="font-medium text-indigo-600 hover:text-indigo-900"
-                                                >
-                                                    {order.status === 'draft' ? t('common.edit') : t('purchasing.purchase_orders.index.view')}
-                                                </Link>
-                                                {can.create && ['approved', 'partial_received'].includes(order.status) && (
-                                                    <Link
-                                                        href={prefixedRoute('purchasing.purchase-orders.grn.create', order.id)}
-                                                        className="font-medium text-indigo-600 hover:text-indigo-900"
-                                                    >
-                                                        {t('purchasing.purchase_orders.index.grn')}
-                                                    </Link>
-                                                )}
-                                                {can.update && order.status === 'draft' && (
-                                                    <button
-                                                        type="button"
-                                                        className="font-medium text-indigo-600 hover:text-indigo-900"
-                                                        onClick={() =>
-                                                            router.post(prefixedRoute('purchasing.purchase-orders.submit', order.id), {}, { preserveScroll: true })
-                                                        }
-                                                    >
-                                                        {t('purchasing.purchase_orders.index.submit')}
-                                                    </button>
-                                                )}
-                                            </div>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {orders.data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                                            {t('purchasing.purchase_orders.index.empty')}
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    orders.data.map((order) => (
+                                        <tr key={order.id} className="hover:bg-gray-50">
+                                            <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{order.po_number}</td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{order.partner.name}</td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{order.warehouse.name}</td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
+                                                {new Date(order.ordered_at).toLocaleDateString('id-ID')}
+                                            </td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
+                                                {order.expected_at ? new Date(order.expected_at).toLocaleDateString('id-ID') : '—'}
+                                            </td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-700">
+                                                {formatMoney(order.total_amount)}
+                                            </td>
+                                            <td className="whitespace-nowrap px-4 py-3">
+                                                <div className="w-20">
+                                                    <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
+                                                        <div
+                                                            className={`h-full rounded-full ${order.progress_percent >= 100 ? 'bg-emerald-500' : 'bg-indigo-600'}`}
+                                                            style={{ width: `${order.progress_percent}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="whitespace-nowrap px-4 py-3">
+                                                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadge(order.status)}`}>
+                                                    {t(`purchasing.status.${order.status}`, undefined, order.status)}
+                                                </span>
+                                            </td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {order.status === 'draft' ? (
+                                                        <Link
+                                                            href={prefixedRoute('purchasing.purchase-orders.edit', order.id)}
+                                                            className="text-indigo-600 hover:text-indigo-900"
+                                                            title={t('common.edit')}
+                                                        >
+                                                            <PencilIcon />
+                                                        </Link>
+                                                    ) : (
+                                                        <Link
+                                                            href={prefixedRoute('purchasing.purchase-orders.show', order.id)}
+                                                            className="text-gray-600 hover:text-gray-900"
+                                                            title={t('common.view')}
+                                                        >
+                                                            <EyeIcon />
+                                                        </Link>
+                                                    )}
+                                                    {can.create && ['approved', 'partial_received'].includes(order.status) && (
+                                                        <Link
+                                                            href={prefixedRoute('purchasing.purchase-orders.grn.create', order.id)}
+                                                            className="text-indigo-600 hover:text-indigo-900"
+                                                            title={t('purchasing.purchase_orders.index.grn')}
+                                                        >
+                                                            <ClipboardIcon />
+                                                        </Link>
+                                                    )}
+                                                    {can.update && order.status === 'draft' && (
+                                                        <button
+                                                            type="button"
+                                                            className="text-indigo-600 hover:text-indigo-900"
+                                                            title={t('purchasing.purchase_orders.index.submit')}
+                                                            onClick={() =>
+                                                                router.post(prefixedRoute('purchasing.purchase-orders.submit', order.id), {}, { preserveScroll: true })
+                                                            }
+                                                        >
+                                                            <SubmitIcon />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {orders.last_page > 1 && (
+                        <div className="mt-6 flex items-center justify-between">
+                            <p className="text-sm text-gray-700">
+                                {t('common.showing_results', {
+                                    from: (orders.current_page - 1) * orders.per_page + 1,
+                                    to: Math.min(orders.current_page * orders.per_page, orders.total),
+                                    total: orders.total,
+                                })}
+                            </p>
+                            <div className="flex gap-1">
+                                {orders.links.map((link, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => link.url && router.get(link.url)}
+                                        disabled={!link.url}
+                                        className={`rounded px-3 py-1 text-sm ${
+                                            link.active
+                                                ? 'bg-indigo-600 text-white'
+                                                : link.url
+                                                    ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                    : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                        }`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </DynamicLayout>

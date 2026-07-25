@@ -42,7 +42,6 @@ interface Warehouse {
     location: string;
     status: 'active' | 'inactive';
     locations: Location[];
-    stock_movements: StockMovement[];
 }
 
 interface PaginatedStockLevels {
@@ -58,9 +57,23 @@ interface PaginatedStockLevels {
     }>;
 }
 
+interface PaginatedStockMovements {
+    data: StockMovement[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+}
+
 interface Props {
     warehouse: Warehouse;
     stockLevels: PaginatedStockLevels;
+    stockMovements: PaginatedStockMovements;
 }
 
 const typeColors: Record<string, string> = {
@@ -93,7 +106,7 @@ const TrashIcon = () => (
     </svg>
 );
 
-export default function WarehouseShow({ warehouse, stockLevels }: Props) {
+export default function WarehouseShow({ warehouse, stockLevels, stockMovements }: Props) {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -303,14 +316,14 @@ export default function WarehouseShow({ warehouse, stockLevels }: Props) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {warehouse.stock_movements.length === 0 ? (
+                                {stockMovements.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-6 text-center text-gray-500">
                                             {t('inventory.warehouses.movements_empty')}
                                         </td>
                                     </tr>
                                 ) : (
-                                    warehouse.stock_movements.map((movement) => (
+                                    stockMovements.data.map((movement) => (
                                         <tr key={movement.id} className="border-b hover:bg-gray-50">
                                             <td className="px-6 py-3">
                                                 <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${typeColors[movement.type] ?? 'bg-gray-100 text-gray-800'}`}>
@@ -334,6 +347,34 @@ export default function WarehouseShow({ warehouse, stockLevels }: Props) {
                             </tbody>
                         </table>
                     </div>
+                    {stockMovements.last_page > 1 && (
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm text-gray-700">
+                                {t('common.showing_results', {
+                                    from: (stockMovements.current_page - 1) * stockMovements.per_page + 1,
+                                    to: Math.min(stockMovements.current_page * stockMovements.per_page, stockMovements.total),
+                                    total: stockMovements.total,
+                                })}
+                            </p>
+                            <div className="flex gap-1">
+                                {stockMovements.links.map((link, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => link.url && router.get(link.url)}
+                                        disabled={!link.url}
+                                        className={`rounded px-3 py-1 text-sm ${
+                                            link.active
+                                                ? 'bg-indigo-600 text-white'
+                                                : link.url
+                                                    ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                    : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                        }`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </section>
             </div>
 

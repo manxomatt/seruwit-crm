@@ -41,7 +41,7 @@ class PurchaseOrderController extends Controller
             });
         }
 
-        $orders = $query->paginate(20)->withQueryString();
+        $orders = $query->paginate(15)->withQueryString();
 
         $orders->getCollection()->transform(function (PurchaseOrder $po): PurchaseOrder {
             $ordered = (float) ($po->quantity_ordered_sum ?? 0);

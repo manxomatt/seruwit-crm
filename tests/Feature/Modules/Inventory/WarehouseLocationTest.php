@@ -278,6 +278,7 @@ class WarehouseLocationTest extends TestCase
                 ->component('Modules/Inventory/Warehouses/Show')
                 ->has('warehouse.locations', 3)
                 ->has('stockLevels.data', 0)
+                ->has('stockMovements.data', 0)
             );
     }
 
