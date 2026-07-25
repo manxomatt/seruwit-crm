@@ -9,16 +9,16 @@ export interface Trip {
 
 export type CalendarView = 'week' | 'month' | 'year';
 
-export const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
-export const STATUS_CONFIG: Record<string, { label: string; dot: string; chip: string }> = {
-    scheduled: { label: 'Scheduled', dot: 'bg-gray-400', chip: 'bg-gray-50 text-gray-700 hover:bg-gray-100' },
-    in_progress: { label: 'In Progress', dot: 'bg-blue-500', chip: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
-    completed: { label: 'Completed', dot: 'bg-green-500', chip: 'bg-green-50 text-green-700 hover:bg-green-100' },
-    cancelled: { label: 'Cancelled', dot: 'bg-red-500', chip: 'bg-red-50 text-red-700 hover:bg-red-100' },
+export const STATUS_STYLES: Record<string, { dot: string; chip: string }> = {
+    scheduled: { dot: 'bg-gray-400', chip: 'bg-gray-50 text-gray-700 hover:bg-gray-100' },
+    in_progress: { dot: 'bg-blue-500', chip: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
+    completed: { dot: 'bg-green-500', chip: 'bg-green-50 text-green-700 hover:bg-green-100' },
+    cancelled: { dot: 'bg-red-500', chip: 'bg-red-50 text-red-700 hover:bg-red-100' },
 };
 
-export const statusConfig = (status: string) => STATUS_CONFIG[status] ?? STATUS_CONFIG.scheduled;
+export const statusConfig = (status: string) => STATUS_STYLES[status] ?? STATUS_STYLES.scheduled;
 
 export const ChevronLeftIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

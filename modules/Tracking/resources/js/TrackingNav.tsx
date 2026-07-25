@@ -1,14 +1,16 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Live Map', route: 'tracking.map', pattern: 'tracking.map' },
-    { label: 'Devices', route: 'tracking.devices.index', pattern: 'tracking.devices.*' },
-    { label: 'Settings', route: 'tracking.settings.edit', pattern: 'tracking.settings.*' },
-];
+    { labelKey: 'tracking.nav.map', route: 'tracking.map', pattern: 'tracking.map' },
+    { labelKey: 'tracking.nav.devices', route: 'tracking.devices.index', pattern: 'tracking.devices.*' },
+    { labelKey: 'tracking.nav.settings', route: 'tracking.settings.edit', pattern: 'tracking.settings.*' },
+] as const;
 
 export default function TrackingNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -25,7 +27,7 @@ export default function TrackingNav(): JSX.Element {
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Link>
                     );
                 })}

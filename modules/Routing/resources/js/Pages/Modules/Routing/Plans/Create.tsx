@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -36,8 +37,11 @@ interface Props {
     };
 }
 
+const OBJECTIVES = ['fuel_cost', 'distance'] as const;
+
 export default function Create({ defaults, orders, eligible_counts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const geocodedIds = orders.filter((o) => o.delivery_lat !== null && o.delivery_lng !== null).map((o) => o.id);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -75,25 +79,25 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">New Route Plan</h2>}>
-            <Head title="New Route Plan" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('routing.pages.create.title')}</h2>}>
+            <Head title={t('routing.pages.create.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Geocoded DOs</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.geocoded_dos')}</div>
                             <div className="text-lg font-semibold text-gray-900">{eligible_counts.geocoded}</div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Missing coords</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.missing_coords')}</div>
                             <div className="text-lg font-semibold text-amber-700">{eligible_counts.missing_coords}</div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Active vehicles</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.active_vehicles')}</div>
                             <div className="text-lg font-semibold text-gray-900">{eligible_counts.vehicles}</div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Available drivers</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.available_drivers')}</div>
                             <div className="text-lg font-semibold text-gray-900">{eligible_counts.drivers}</div>
                         </div>
                     </div>
@@ -101,7 +105,7 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
                     <form onSubmit={submit} className="space-y-6 rounded-lg border border-gray-200 bg-white p-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="planned_date" value="Plan date" />
+                                <InputLabel htmlFor="planned_date" value={t('routing.fields.plan_date')} />
                                 <TextInput
                                     id="planned_date"
                                     type="date"
@@ -113,21 +117,21 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
                                 <InputError message={errors.planned_date} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="objective" value="Objective" />
+                                <InputLabel htmlFor="objective" value={t('routing.fields.objective')} />
                                 <Select
                                     id="objective"
                                     className="mt-1"
                                     value={data.objective}
                                     onChange={(value) => setData('objective', value)}
-                                    options={[
-                                        { value: 'fuel_cost', label: 'Minimise fuel cost' },
-                                        { value: 'distance', label: 'Minimise distance' },
-                                    ]}
+                                    options={OBJECTIVES.map((objective) => ({
+                                        value: objective,
+                                        label: t(`routing.objective.${objective}`),
+                                    }))}
                                 />
                                 <InputError message={errors.objective} className="mt-2" />
                             </div>
                             <div className="sm:col-span-2">
-                                <InputLabel htmlFor="depot_address" value="Depot address" />
+                                <InputLabel htmlFor="depot_address" value={t('routing.fields.depot_address')} />
                                 <TextInput
                                     id="depot_address"
                                     className="mt-1 block w-full"
@@ -136,7 +140,7 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
                                 />
                             </div>
                             <div>
-                                <InputLabel htmlFor="depot_lat" value="Depot latitude" />
+                                <InputLabel htmlFor="depot_lat" value={t('routing.fields.depot_lat')} />
                                 <TextInput
                                     id="depot_lat"
                                     className="mt-1 block w-full"
@@ -147,7 +151,7 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
                                 <InputError message={errors.depot_lat} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="depot_lng" value="Depot longitude" />
+                                <InputLabel htmlFor="depot_lng" value={t('routing.fields.depot_lng')} />
                                 <TextInput
                                     id="depot_lng"
                                     className="mt-1 block w-full"
@@ -160,13 +164,11 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
                         </div>
 
                         <div>
-                            <h3 className="mb-2 text-sm font-medium text-gray-900">Confirmed delivery orders</h3>
-                            <p className="mb-3 text-xs text-gray-500">
-                                Only orders with delivery coordinates are optimizable. Add lat/lng on the order form.
-                            </p>
+                            <h3 className="mb-2 text-sm font-medium text-gray-900">{t('routing.pages.create.orders_section')}</h3>
+                            <p className="mb-3 text-xs text-gray-500">{t('routing.pages.create.orders_hint')}</p>
                             <div className="max-h-72 overflow-y-auto rounded-md border border-gray-200">
                                 {orders.length === 0 ? (
-                                    <div className="px-4 py-8 text-center text-sm text-gray-500">No confirmed orders on this date.</div>
+                                    <div className="px-4 py-8 text-center text-sm text-gray-500">{t('routing.pages.create.orders_empty')}</div>
                                 ) : (
                                     <ul className="divide-y divide-gray-100">
                                         {orders.map((order) => {
@@ -189,7 +191,7 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
                                                         <div className="text-xs text-gray-500">
                                                             {hasCoords
                                                                 ? `${order.delivery_lat}, ${order.delivery_lng} · ${order.demand_kg ?? 1} kg`
-                                                                : 'Missing coordinates'}
+                                                                : t('routing.pages.create.missing_coordinates')}
                                                         </div>
                                                     </div>
                                                 </li>
@@ -203,10 +205,10 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
 
                         <div className="flex gap-3">
                             <PrimaryButton disabled={processing || data.delivery_order_ids.length === 0}>
-                                Optimize routes
+                                {t('routing.actions.optimize_routes')}
                             </PrimaryButton>
                             <Link href={prefixedRoute('routing.plans.index')}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

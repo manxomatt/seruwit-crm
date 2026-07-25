@@ -20,7 +20,7 @@ class RentalActionController extends Controller
      */
     public function confirm(Rental $rental): RedirectResponse
     {
-        abort_if($rental->status !== Rental::STATUS_DRAFT, 422, 'Only draft rentals can be confirmed.');
+        abort_if($rental->status !== Rental::STATUS_DRAFT, 422, __('rental.errors.confirm_draft_only'));
 
         $rental->update([
             'status' => Rental::STATUS_CONFIRMED,
@@ -28,7 +28,7 @@ class RentalActionController extends Controller
             'confirmed_at' => now(),
         ]);
 
-        return back()->with('success', 'Rental confirmed.');
+        return back()->with('success', __('rental.messages.confirmed'));
     }
 
     /**
@@ -36,7 +36,7 @@ class RentalActionController extends Controller
      */
     public function checkout(Request $request, Rental $rental): RedirectResponse
     {
-        abort_if($rental->status !== Rental::STATUS_CONFIRMED, 422, 'Only confirmed rentals can be checked out.');
+        abort_if($rental->status !== Rental::STATUS_CONFIRMED, 422, __('rental.errors.checkout_confirmed_only'));
 
         $request->validate([
             'start_odometer' => ['nullable', 'integer', 'min:0'],
@@ -48,7 +48,7 @@ class RentalActionController extends Controller
             'start_odometer' => $request->start_odometer,
         ]);
 
-        return back()->with('success', 'Vehicle checked out. Rental is now active.');
+        return back()->with('success', __('rental.messages.checked_out'));
     }
 
     /**
@@ -56,7 +56,7 @@ class RentalActionController extends Controller
      */
     public function return(Request $request, Rental $rental): RedirectResponse
     {
-        abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, 'Only active rentals can be returned.');
+        abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, __('rental.errors.return_active_only'));
 
         $request->validate([
             'actual_return_date' => ['required', 'date'],
@@ -85,7 +85,7 @@ class RentalActionController extends Controller
             'returned_at' => now(),
         ]);
 
-        return back()->with('success', 'Vehicle returned. Review damages before completing.');
+        return back()->with('success', __('rental.messages.returned'));
     }
 
     /**
@@ -93,14 +93,14 @@ class RentalActionController extends Controller
      */
     public function complete(Rental $rental): RedirectResponse
     {
-        abort_if($rental->status !== Rental::STATUS_RETURNED, 422, 'Only returned rentals can be completed.');
+        abort_if($rental->status !== Rental::STATUS_RETURNED, 422, __('rental.errors.complete_returned_only'));
 
         $rental->update([
             'status' => Rental::STATUS_COMPLETED,
             'completed_at' => now(),
         ]);
 
-        return back()->with('success', 'Rental completed.');
+        return back()->with('success', __('rental.messages.completed'));
     }
 
     /**
@@ -111,7 +111,7 @@ class RentalActionController extends Controller
         abort_if(
             ! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED]),
             422,
-            'Only draft or confirmed rentals can be cancelled.',
+            __('rental.errors.cancel_draft_confirmed_only'),
         );
 
         $request->validate([
@@ -123,7 +123,7 @@ class RentalActionController extends Controller
             'cancelled_reason' => $request->cancelled_reason,
         ]);
 
-        return back()->with('success', 'Rental cancelled.');
+        return back()->with('success', __('rental.messages.cancelled'));
     }
 
     /**
@@ -131,7 +131,7 @@ class RentalActionController extends Controller
      */
     public function extend(Request $request, Rental $rental): RedirectResponse
     {
-        abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, 'Only active rentals can be extended.');
+        abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, __('rental.errors.extend_active_only'));
 
         $request->validate([
             'new_end_date' => ['required', 'date', 'after:end_date'],
@@ -162,7 +162,7 @@ class RentalActionController extends Controller
             'total_amount' => (float) $rental->total_amount + $additionalAmount,
         ]);
 
-        return back()->with('success', 'Rental extended.');
+        return back()->with('success', __('rental.messages.extended'));
     }
 
     /**
@@ -173,7 +173,7 @@ class RentalActionController extends Controller
         abort_if(
             ! in_array($rental->status, [Rental::STATUS_ACTIVE, Rental::STATUS_RETURNED]),
             422,
-            'Damages can only be recorded on active or returned rentals.',
+            __('rental.errors.damage_active_returned_only'),
         );
 
         $request->validate([
@@ -189,7 +189,7 @@ class RentalActionController extends Controller
             'reported_at' => now(),
         ]);
 
-        return back()->with('success', 'Damage recorded.');
+        return back()->with('success', __('rental.messages.damage_recorded'));
     }
 
     /**
@@ -201,6 +201,6 @@ class RentalActionController extends Controller
 
         $damage->delete();
 
-        return back()->with('success', 'Damage record removed.');
+        return back()->with('success', __('rental.messages.damage_removed'));
     }
 }

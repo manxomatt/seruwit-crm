@@ -55,7 +55,7 @@ class RoutePlanController extends Controller
             'defaults' => [
                 'planned_date' => $date,
                 'objective' => RoutePlan::OBJECTIVE_FUEL_COST,
-                'depot_address' => 'Depot',
+                'depot_address' => __('routing.defaults.depot_address'),
                 'depot_lat' => -6.2088000,
                 'depot_lng' => 106.8456000,
             ],
@@ -91,7 +91,7 @@ class RoutePlanController extends Controller
 
         return redirect()
             ->route('module.routing.plans.show', $plan)
-            ->with('success', "Plan {$plan->code} optimized.");
+            ->with('success', __('routing.messages.plan_optimized', ['code' => $plan->code]));
     }
 
     public function show(Request $request, RoutePlan $plan): Response
@@ -126,13 +126,13 @@ class RoutePlanController extends Controller
     public function optimize(RoutePlan $plan, RouteOptimizationService $optimizer): RedirectResponse
     {
         if (in_array($plan->status, [RoutePlan::STATUS_APPLIED, RoutePlan::STATUS_CANCELLED], true)) {
-            return back()->with('error', 'Cannot re-optimize an applied or cancelled plan.');
+            return back()->with('error', __('routing.errors.cannot_reoptimize'));
         }
 
         $ids = $plan->params['delivery_order_ids'] ?? null;
         $optimizer->optimize($plan, is_array($ids) ? $ids : null);
 
-        return back()->with('success', 'Plan re-optimized.');
+        return back()->with('success', __('routing.messages.plan_re_optimized'));
     }
 
     public function apply(RoutePlan $plan, RoutePlanApplier $applier): RedirectResponse
@@ -143,18 +143,18 @@ class RoutePlanController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Trips created and delivery orders assigned.');
+        return back()->with('success', __('routing.messages.trips_created'));
     }
 
     public function cancel(RoutePlan $plan): RedirectResponse
     {
         if ($plan->status === RoutePlan::STATUS_APPLIED) {
-            return back()->with('error', 'An applied plan cannot be cancelled.');
+            return back()->with('error', __('routing.errors.applied_cannot_cancel'));
         }
 
         $plan->update(['status' => RoutePlan::STATUS_CANCELLED]);
 
-        return back()->with('success', 'Plan cancelled.');
+        return back()->with('success', __('routing.messages.plan_cancelled'));
     }
 
     public function updateRoute(
@@ -167,11 +167,11 @@ class RoutePlanController extends Controller
         }
 
         if ($plan->status !== RoutePlan::STATUS_OPTIMIZED) {
-            return back()->with('error', 'Only optimized plans can be edited.');
+            return back()->with('error', __('routing.errors.only_optimized_editable'));
         }
 
         $routePlanRoute->update($request->validated());
 
-        return back()->with('success', 'Route assignment updated.');
+        return back()->with('success', __('routing.messages.route_assignment_updated'));
     }
 }

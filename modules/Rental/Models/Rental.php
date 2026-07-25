@@ -179,19 +179,22 @@ class Rental extends Model
         $reasons = [];
 
         if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
-            $reasons[] = "Vehicle {$vehicle->name} is {$vehicle->status}, not active.";
+            $reasons[] = __('rental.validation.vehicle_not_active', [
+                'name' => $vehicle->name,
+                'status' => $vehicle->status,
+            ]);
         }
 
         if (self::hasOverlapFor($vehicle->id, $start, $end, $excludingId)) {
-            $reasons[] = "Vehicle {$vehicle->name} already has a rental in this period.";
+            $reasons[] = __('rental.validation.vehicle_rental_overlap', ['name' => $vehicle->name]);
         }
 
         if ($vehicle->stnk_expires_at && $vehicle->stnk_expires_at->isPast()) {
-            $reasons[] = "Vehicle {$vehicle->name} has an expired STNK.";
+            $reasons[] = __('rental.validation.vehicle_stnk_expired', ['name' => $vehicle->name]);
         }
 
         if ($vehicle->kir_expires_at && $vehicle->kir_expires_at->isPast()) {
-            $reasons[] = "Vehicle {$vehicle->name} has an expired KIR.";
+            $reasons[] = __('rental.validation.vehicle_kir_expired', ['name' => $vehicle->name]);
         }
 
         return $reasons;

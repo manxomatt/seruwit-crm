@@ -46,9 +46,9 @@ class UpdateTripScheduleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'days_of_week.required' => 'Select at least one day of the week.',
-            'days_of_week.min' => 'Select at least one day of the week.',
-            'ends_on.after_or_equal' => 'The end date must be on or after the start date.',
+            'days_of_week.required' => __('transportation.validation.days_required'),
+            'days_of_week.min' => __('transportation.validation.days_required'),
+            'ends_on.after_or_equal' => __('transportation.validation.ends_on_after'),
         ];
     }
 }

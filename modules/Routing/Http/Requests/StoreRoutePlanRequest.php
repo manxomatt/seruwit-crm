@@ -35,9 +35,9 @@ class StoreRoutePlanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'depot_lat.required' => 'Depot latitude is required for routing.',
-            'depot_lng.required' => 'Depot longitude is required for routing.',
-            'objective.in' => 'Choose distance or fuel cost as the objective.',
+            'depot_lat.required' => __('routing.validation.depot_lat_required'),
+            'depot_lng.required' => __('routing.validation.depot_lng_required'),
+            'objective.in' => __('routing.validation.objective_in'),
         ];
     }
 }

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
@@ -72,6 +73,7 @@ function RouteEditor({
     canUpdate: boolean;
 }): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing } = useForm({
         vehicle_id: route.vehicle_id ? String(route.vehicle_id) : '',
         driver_id: route.driver_id ? String(route.driver_id) : '',
@@ -81,10 +83,16 @@ function RouteEditor({
         <div className="rounded-lg border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
                 <div>
-                    <h3 className="font-medium text-gray-900">Route #{route.sequence}</h3>
+                    <h3 className="font-medium text-gray-900">
+                        {t('routing.pages.show.route_heading', { sequence: route.sequence })}
+                    </h3>
                     <p className="text-xs text-gray-500">
-                        {route.estimated_distance_km} km · cost {route.estimated_cost} · load {route.load_kg} kg
-                        {route.trip_id ? ` · trip #${route.trip_id}` : ''}
+                        {t('routing.pages.show.route_meta', {
+                            distance: route.estimated_distance_km,
+                            cost: route.estimated_cost,
+                            load: route.load_kg,
+                        })}
+                        {route.trip_id ? t('routing.pages.show.route_trip', { id: route.trip_id }) : ''}
                     </p>
                 </div>
                 {canUpdate && (
@@ -96,7 +104,7 @@ function RouteEditor({
                         }}
                     >
                         <div>
-                            <label className="block text-xs text-gray-500">Vehicle</label>
+                            <label className="block text-xs text-gray-500">{t('routing.fields.vehicle')}</label>
                             <Select
                                 className="mt-0.5 min-w-[10rem]"
                                 value={data.vehicle_id}
@@ -108,7 +116,7 @@ function RouteEditor({
                             />
                         </div>
                         <div>
-                            <label className="block text-xs text-gray-500">Driver</label>
+                            <label className="block text-xs text-gray-500">{t('routing.fields.driver')}</label>
                             <Select
                                 className="mt-0.5 min-w-[10rem]"
                                 value={data.driver_id}
@@ -117,7 +125,7 @@ function RouteEditor({
                             />
                         </div>
                         <SecondaryButton type="submit" disabled={processing}>
-                            Save
+                            {t('common.save')}
                         </SecondaryButton>
                     </form>
                 )}
@@ -130,12 +138,17 @@ function RouteEditor({
                         </span>
                         <div className="min-w-0">
                             <div className="font-medium text-gray-900">
-                                {stop.delivery_order?.code ?? 'Stop'}
+                                {stop.delivery_order?.code ?? t('routing.pages.show.stop_fallback')}
                                 {stop.delivery_order?.partner ? ` · ${stop.delivery_order.partner.name}` : ''}
                             </div>
                             <div className="text-gray-600">{stop.address}</div>
                             <div className="text-xs text-gray-500">
-                                +{stop.distance_from_previous_km} km · {stop.demand_kg} kg · {stop.lat}, {stop.lng}
+                                {t('routing.pages.show.stop_meta', {
+                                    distance: stop.distance_from_previous_km,
+                                    demand: stop.demand_kg,
+                                    lat: stop.lat,
+                                    lng: stop.lng,
+                                })}
                             </div>
                         </div>
                     </li>
@@ -147,6 +160,7 @@ function RouteEditor({
 
 export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <DynamicLayout
@@ -155,7 +169,8 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                     <div>
                         <h2 className="text-xl font-semibold text-gray-800">{plan.code}</h2>
                         <p className="text-sm text-gray-500">
-                            {plan.planned_date} · {plan.objective} · {plan.status}
+                            {plan.planned_date} · {t(`routing.objective.${plan.objective}`, undefined, plan.objective)} ·{' '}
+                            {t(`routing.status.${plan.status}`, undefined, plan.status)}
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -163,21 +178,21 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                             <PrimaryButton
                                 onClick={() => router.post(prefixedRoute('routing.plans.optimize', plan.id))}
                             >
-                                Re-optimize
+                                {t('routing.actions.re_optimize')}
                             </PrimaryButton>
                         )}
                         {can.apply && plan.status === 'optimized' && (
                             <PrimaryButton onClick={() => router.post(prefixedRoute('routing.plans.apply', plan.id))}>
-                                Apply → create trips
+                                {t('routing.actions.apply_create_trips')}
                             </PrimaryButton>
                         )}
                         {can.delete && plan.status !== 'applied' && plan.status !== 'cancelled' && (
                             <SecondaryButton onClick={() => router.post(prefixedRoute('routing.plans.cancel', plan.id))}>
-                                Cancel plan
+                                {t('routing.actions.cancel_plan')}
                             </SecondaryButton>
                         )}
                         <Link href={prefixedRoute('routing.plans.index')}>
-                            <SecondaryButton type="button">Back</SecondaryButton>
+                            <SecondaryButton type="button">{t('routing.actions.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -188,31 +203,35 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                 <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Total distance</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.total_distance')}</div>
                             <div className="text-lg font-semibold">{plan.total_distance_km} km</div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Estimated cost</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.estimated_cost')}</div>
                             <div className="text-lg font-semibold">{plan.total_cost}</div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Routes</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.routes')}</div>
                             <div className="text-lg font-semibold">{plan.routes.length}</div>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
-                            <div className="text-xs text-gray-500">Unassigned</div>
+                            <div className="text-xs text-gray-500">{t('routing.fields.unassigned')}</div>
                             <div className="text-lg font-semibold text-amber-700">{plan.unassigned_count}</div>
                         </div>
                     </div>
 
                     <p className="text-sm text-gray-600">
-                        Depot: {plan.depot_address || '—'} ({plan.depot_lat}, {plan.depot_lng})
+                        {t('routing.pages.show.depot', {
+                            address: plan.depot_address || '—',
+                            lat: plan.depot_lat,
+                            lng: plan.depot_lng,
+                        })}
                     </p>
 
                     <div className="space-y-4">
                         {plan.routes.length === 0 ? (
                             <div className="rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500">
-                                No routes produced. Check vehicle capacity, driver availability, and order coordinates.
+                                {t('routing.pages.show.routes_empty')}
                             </div>
                         ) : (
                             plan.routes.map((route) => (

@@ -86,7 +86,7 @@ class TripController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Trip created successfully.');
+            ->with('success', __('transportation.messages.trip_created'));
     }
 
     /**
@@ -169,13 +169,13 @@ class TripController extends Controller
     public function update(UpdateTripRequest $request, Trip $trip): RedirectResponse
     {
         if ($trip->status !== Trip::STATUS_SCHEDULED) {
-            return back()->with('error', 'Only a scheduled trip can be edited.');
+            return back()->with('error', __('transportation.messages.edit_scheduled_only'));
         }
 
         $trip->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Trip updated successfully.');
+            ->with('success', __('transportation.messages.trip_updated'));
     }
 
     /**
@@ -184,13 +184,13 @@ class TripController extends Controller
     public function destroy(Trip $trip): RedirectResponse
     {
         if ($trip->status === Trip::STATUS_IN_PROGRESS) {
-            return back()->with('error', 'An in-progress trip cannot be deleted.');
+            return back()->with('error', __('transportation.messages.delete_in_progress'));
         }
 
         $trip->delete();
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.index')
-            ->with('success', 'Trip deleted successfully.');
+            ->with('success', __('transportation.messages.trip_deleted'));
     }
 
     /**
@@ -199,7 +199,7 @@ class TripController extends Controller
     public function start(Trip $trip): RedirectResponse
     {
         if ($trip->status !== Trip::STATUS_SCHEDULED) {
-            return back()->with('error', 'Only a scheduled trip can be started.');
+            return back()->with('error', __('transportation.messages.start_scheduled_only'));
         }
 
         $trip->update([
@@ -207,7 +207,7 @@ class TripController extends Controller
             'started_at' => now(),
         ]);
 
-        return back()->with('success', 'Trip started.');
+        return back()->with('success', __('transportation.messages.trip_started'));
     }
 
     /**
@@ -216,7 +216,7 @@ class TripController extends Controller
     public function complete(Trip $trip): RedirectResponse
     {
         if ($trip->status !== Trip::STATUS_IN_PROGRESS) {
-            return back()->with('error', 'Only an in-progress trip can be completed.');
+            return back()->with('error', __('transportation.messages.complete_in_progress_only'));
         }
 
         $trip->update([
@@ -224,7 +224,7 @@ class TripController extends Controller
             'completed_at' => now(),
         ]);
 
-        return back()->with('success', 'Trip completed.');
+        return back()->with('success', __('transportation.messages.trip_completed'));
     }
 
     /**
@@ -233,7 +233,7 @@ class TripController extends Controller
     public function cancel(Request $request, Trip $trip): RedirectResponse
     {
         if (! in_array($trip->status, [Trip::STATUS_SCHEDULED, Trip::STATUS_IN_PROGRESS], true)) {
-            return back()->with('error', 'This trip can no longer be cancelled.');
+            return back()->with('error', __('transportation.messages.cancel_not_allowed'));
         }
 
         $request->validate([
@@ -245,6 +245,6 @@ class TripController extends Controller
             'cancelled_reason' => $request->input('cancelled_reason'),
         ]);
 
-        return back()->with('success', 'Trip cancelled.');
+        return back()->with('success', __('transportation.messages.trip_cancelled'));
     }
 }

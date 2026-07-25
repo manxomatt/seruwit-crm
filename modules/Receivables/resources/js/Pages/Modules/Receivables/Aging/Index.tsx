@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { formatMoney } from '@/utils/money';
 import { Head, Link } from '@inertiajs/react';
@@ -26,34 +27,33 @@ interface Props {
     rows: AgingRow[];
 }
 
-const bucketLabel: Record<string, string> = {
-    current: 'Current',
-    '1_30': '1–30',
-    '31_60': '31–60',
-    '61_90': '61–90',
-    '90_plus': '90+',
-};
-
 export default function Index({ buckets, overdue_count, overdue_amount, rows }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">AR Aging</h2>}>
-            <Head title="AR Aging" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('receivables.aging.index.title')}</h2>}>
+            <Head title={t('receivables.aging.index.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <ReceivablesNav />
 
                     {overdue_count > 0 && (
                         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                            Alert: <strong>{overdue_count} overdue</strong> · {formatMoney(overdue_amount)}
+                            {t('receivables.aging.index.alert', {
+                                count: overdue_count,
+                                amount: formatMoney(overdue_amount),
+                            })}
                         </div>
                     )}
 
                     <div className="grid gap-3 sm:grid-cols-5">
                         {Object.entries(buckets).map(([key, value]) => (
                             <div key={key} className="rounded-lg border border-gray-200 bg-white p-4">
-                                <p className="text-xs uppercase tracking-wider text-gray-500">{bucketLabel[key] ?? key}</p>
+                                <p className="text-xs uppercase tracking-wider text-gray-500">
+                                    {t(`receivables.buckets.${key}`, undefined, key)}
+                                </p>
                                 <p className="mt-1 text-lg font-semibold tabular-nums">{formatMoney(value)}</p>
                             </div>
                         ))}
@@ -63,12 +63,12 @@ export default function Index({ buckets, overdue_count, overdue_amount, rows }: 
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Invoice</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Partner</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Due</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Balance</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Days PD</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Bucket</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.invoice')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.partner')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.due')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.balance')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.days_past_due')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.bucket')}</th>
                                     <th className="px-4 py-3" />
                                 </tr>
                             </thead>
@@ -76,7 +76,7 @@ export default function Index({ buckets, overdue_count, overdue_amount, rows }: 
                                 {rows.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
-                                            Tidak ada piutang terbuka.
+                                            {t('receivables.aging.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -92,16 +92,18 @@ export default function Index({ buckets, overdue_count, overdue_amount, rows }: 
                                             </td>
                                             <td className="px-4 py-3">{row.partner.name}</td>
                                             <td className="px-4 py-3 text-gray-600">
-                                                {row.due_date ? new Date(row.due_date).toLocaleDateString('id-ID') : '—'}
+                                                {row.due_date ? new Date(row.due_date).toLocaleDateString(localeTag) : '—'}
                                             </td>
                                             <td className="px-4 py-3 text-right tabular-nums">{formatMoney(row.balance)}</td>
                                             <td className="px-4 py-3 text-right tabular-nums">{row.days_past_due}</td>
-                                            <td className="px-4 py-3">{bucketLabel[row.bucket] ?? row.bucket}</td>
+                                            <td className="px-4 py-3">
+                                                {t(`receivables.buckets.${row.bucket}`, undefined, row.bucket)}
+                                            </td>
                                             <td className="px-4 py-3 text-right">
                                                 <Link
                                                     href={`${prefixedRoute('receivables.payments.create')}?partner_id=${row.partner.id}&invoice_id=${row.invoice_id}`}
                                                 >
-                                                    <PrimaryButton type="button">Bayar</PrimaryButton>
+                                                    <PrimaryButton type="button">{t('receivables.actions.pay')}</PrimaryButton>
                                                 </Link>
                                             </td>
                                         </tr>

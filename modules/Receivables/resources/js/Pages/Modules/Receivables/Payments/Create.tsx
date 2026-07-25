@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -37,12 +38,9 @@ interface Props {
     methods: string[];
 }
 
-const typeLabel: Record<string, string> = {
-    down_payment: 'DP (Down Payment)',
-    installment: 'Cicilan',
-    settlement: 'Pelunasan',
-    other: 'Lainnya',
-};
+function typeOptionKey(type: string): string {
+    return type === 'down_payment' ? 'down_payment_full' : type;
+}
 
 export default function Create({
     partners,
@@ -53,6 +51,8 @@ export default function Create({
     methods,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     const { data, setData, processing, errors, setError, clearErrors } = useForm({
         partner_id: selectedPartnerId ? String(selectedPartnerId) : '',
@@ -120,7 +120,7 @@ export default function Create({
             }));
 
         if (allocations.length === 0) {
-            setError('allocations', 'Allocate the payment to at least one invoice.');
+            setError('allocations', t('receivables.payments.create.client_allocations_required'));
             return;
         }
 
@@ -138,9 +138,9 @@ export default function Create({
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Rekam Pembayaran</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('receivables.payments.create.title')}</h2>}
         >
-            <Head title="Rekam Pembayaran" />
+            <Head title={t('receivables.payments.create.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <ReceivablesNav />
@@ -148,13 +148,13 @@ export default function Create({
                     <form onSubmit={submit} className="space-y-6 rounded-lg border border-gray-200 bg-white p-6">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel value="Partner (Customer) *" />
+                                <InputLabel value={`${t('receivables.fields.partner_customer')} *`} />
                                 <select
                                     className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={data.partner_id}
                                     onChange={(e) => changePartner(e.target.value)}
                                 >
-                                    <option value="">— pilih —</option>
+                                    <option value="">{t('receivables.placeholders.select')}</option>
                                     {partners.map((p) => (
                                         <option key={p.id} value={p.id}>
                                             {p.code} — {p.name}
@@ -164,7 +164,7 @@ export default function Create({
                                 <InputError message={errors.partner_id} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="payment_date" value="Tanggal Bayar *" />
+                                <InputLabel htmlFor="payment_date" value={`${t('receivables.fields.payment_date')} *`} />
                                 <TextInput
                                     id="payment_date"
                                     type="date"
@@ -175,37 +175,37 @@ export default function Create({
                                 <InputError message={errors.payment_date} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel value="Jenis *" />
+                                <InputLabel value={`${t('receivables.fields.type')} *`} />
                                 <select
                                     className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={data.type}
                                     onChange={(e) => setData('type', e.target.value)}
                                 >
-                                    {types.map((t) => (
-                                        <option key={t} value={t}>
-                                            {typeLabel[t] ?? t}
+                                    {types.map((type) => (
+                                        <option key={type} value={type}>
+                                            {t(`receivables.types.${typeOptionKey(type)}`, undefined, type)}
                                         </option>
                                     ))}
                                 </select>
                                 <InputError message={errors.type} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel value="Metode *" />
+                                <InputLabel value={`${t('receivables.fields.method')} *`} />
                                 <select
                                     className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={data.method}
                                     onChange={(e) => setData('method', e.target.value)}
                                 >
-                                    {methods.map((m) => (
-                                        <option key={m} value={m}>
-                                            {m}
+                                    {methods.map((method) => (
+                                        <option key={method} value={method}>
+                                            {t(`receivables.methods.${method}`, undefined, method)}
                                         </option>
                                     ))}
                                 </select>
                                 <InputError message={errors.method} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="amount" value="Jumlah Bayar *" />
+                                <InputLabel htmlFor="amount" value={`${t('receivables.fields.payment_amount')} *`} />
                                 <TextInput
                                     id="amount"
                                     type="number"
@@ -216,34 +216,34 @@ export default function Create({
                                     onChange={(e) => setData('amount', e.target.value)}
                                 />
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Alokasi: {formatMoney(allocatedTotal)}
+                                    {t('receivables.payments.create.allocation_hint', { amount: formatMoney(allocatedTotal) })}
                                     {allocatedTotal > 0 && (
                                         <button
                                             type="button"
                                             className="ml-2 text-indigo-600 hover:underline"
                                             onClick={() => setData('amount', allocatedTotal.toFixed(2))}
                                         >
-                                            samakan
+                                            {t('receivables.actions.match_amount')}
                                         </button>
                                     )}
                                 </p>
                                 <InputError message={errors.amount} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="reference_number" value="No. Referensi" />
+                                <InputLabel htmlFor="reference_number" value={t('receivables.fields.reference_number')} />
                                 <TextInput
                                     id="reference_number"
                                     className="mt-1 block w-full"
                                     value={data.reference_number}
                                     onChange={(e) => setData('reference_number', e.target.value)}
-                                    placeholder="No. transfer / giro"
+                                    placeholder={t('receivables.placeholders.reference')}
                                 />
                                 <InputError message={errors.reference_number} className="mt-2" />
                             </div>
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="notes" value="Catatan" />
+                            <InputLabel htmlFor="notes" value={t('receivables.fields.notes')} />
                             <textarea
                                 id="notes"
                                 className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -254,21 +254,21 @@ export default function Create({
                         </div>
 
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">Alokasi ke Invoice</h3>
+                            <h3 className="text-sm font-semibold text-gray-900">{t('receivables.payments.create.allocation_section')}</h3>
                             <InputError message={errors.allocations} className="mt-1" />
                             {!data.partner_id ? (
-                                <p className="mt-2 text-sm text-gray-500">Pilih partner untuk melihat invoice terbuka.</p>
+                                <p className="mt-2 text-sm text-gray-500">{t('receivables.payments.create.select_partner_hint')}</p>
                             ) : openInvoices.length === 0 ? (
-                                <p className="mt-2 text-sm text-gray-500">Tidak ada invoice terbuka untuk partner ini.</p>
+                                <p className="mt-2 text-sm text-gray-500">{t('receivables.payments.create.no_open_invoices')}</p>
                             ) : (
                                 <div className="mt-3 overflow-hidden rounded-md border border-gray-200">
                                     <table className="min-w-full divide-y divide-gray-200 text-sm">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Invoice</th>
-                                                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Due</th>
-                                                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Balance</th>
-                                                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">Alokasi</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.invoice')}</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.due')}</th>
+                                                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.balance')}</th>
+                                                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.allocation')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -279,7 +279,7 @@ export default function Create({
                                                         <td className="px-3 py-2 font-medium">{invoice.code}</td>
                                                         <td className="px-3 py-2 text-gray-600">
                                                             {invoice.due_date
-                                                                ? new Date(invoice.due_date).toLocaleDateString('id-ID')
+                                                                ? new Date(invoice.due_date).toLocaleDateString(localeTag)
                                                                 : '—'}
                                                         </td>
                                                         <td className="px-3 py-2 text-right tabular-nums">
@@ -289,7 +289,7 @@ export default function Create({
                                                                 className="ml-2 text-xs text-indigo-600 hover:underline"
                                                                 onClick={() => setAllocation(invoice.id, String(invoice.balance))}
                                                             >
-                                                                full
+                                                                {t('receivables.actions.full')}
                                                             </button>
                                                         </td>
                                                         <td className="px-3 py-2 text-right">
@@ -313,9 +313,9 @@ export default function Create({
 
                         <div className="flex justify-end gap-2">
                             <Link href={prefixedRoute('receivables.payments.index')}>
-                                <SecondaryButton type="button">Batal</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
-                            <PrimaryButton disabled={processing}>Simpan Pembayaran</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('receivables.payments.create.submit')}</PrimaryButton>
                         </div>
                     </form>
                 </div>

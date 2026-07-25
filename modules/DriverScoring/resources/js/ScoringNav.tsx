@@ -1,15 +1,17 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Leaderboard', route: 'scoring.leaderboard', pattern: 'scoring.leaderboard' },
-    { label: 'Events', route: 'scoring.events.index', pattern: 'scoring.events.*' },
-    { label: 'Incentives', route: 'scoring.incentives.index', pattern: 'scoring.incentives.*' },
-    { label: 'Settings', route: 'scoring.settings.edit', pattern: 'scoring.settings.*' },
-];
+    { labelKey: 'scoring.nav.leaderboard', route: 'scoring.leaderboard', pattern: 'scoring.leaderboard' },
+    { labelKey: 'scoring.nav.events', route: 'scoring.events.index', pattern: 'scoring.events.*' },
+    { labelKey: 'scoring.nav.incentives', route: 'scoring.incentives.index', pattern: 'scoring.incentives.*' },
+    { labelKey: 'scoring.nav.settings', route: 'scoring.settings.edit', pattern: 'scoring.settings.*' },
+] as const;
 
 export default function ScoringNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -26,7 +28,7 @@ export default function ScoringNav(): JSX.Element {
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Link>
                     );
                 })}

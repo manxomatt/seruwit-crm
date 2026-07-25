@@ -72,7 +72,7 @@ class TrackingConfigController extends Controller
 
         $config->update($validated);
 
-        return back()->with('success', 'Tracking settings saved.');
+        return back()->with('success', __('tracking.messages.settings_saved'));
     }
 
     /**
@@ -83,7 +83,7 @@ class TrackingConfigController extends Controller
         $config = TrackingConfig::current();
 
         if (! $config->isConfigured()) {
-            return back()->with('error', 'Fill in the server URL and credentials first.');
+            return back()->with('error', __('tracking.messages.fill_credentials'));
         }
 
         try {
@@ -96,6 +96,6 @@ class TrackingConfigController extends Controller
 
         $config->forceFill(['last_poll_error' => null])->save();
 
-        return back()->with('success', 'Connected to Traccar successfully.');
+        return back()->with('success', __('tracking.messages.connection_ok'));
     }
 }

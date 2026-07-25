@@ -1,5 +1,6 @@
+import { useTrans } from '@/hooks/useTrans';
 import { router } from '@inertiajs/react';
-import { Trip, statusConfig, toDateKey } from './shared';
+import { Trip, DAY_KEYS, statusConfig, toDateKey } from './shared';
 
 interface Props {
     date: Date;
@@ -7,8 +8,6 @@ interface Props {
     today: string;
     prefixedRoute: (routeName: string, params?: any) => string;
 }
-
-const MINI_WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function buildMonthGrid(year: number, monthNum: number): (Date | null)[] {
     const firstOfMonth = new Date(year, monthNum, 1);
@@ -25,6 +24,7 @@ function buildMonthGrid(year: number, monthNum: number): (Date | null)[] {
 }
 
 export default function YearView({ date, tripsByDate, today, prefixedRoute }: Props): JSX.Element {
+    const { t } = useTrans();
     const year = date.getFullYear();
 
     const goToMonth = (monthNum: number) => {
@@ -51,9 +51,9 @@ export default function YearView({ date, tripsByDate, today, prefixedRoute }: Pr
                             )}
                         </button>
                         <div className="grid grid-cols-7 gap-y-1 text-center">
-                            {MINI_WEEKDAY_LABELS.map((label, index) => (
+                            {DAY_KEYS.map((dayKey, index) => (
                                 <span key={index} className="text-[10px] font-medium text-gray-300">
-                                    {label}
+                                    {t(`transportation.days.${dayKey}`).charAt(0)}
                                 </span>
                             ))}
                             {cells.map((cellDate, index) => {

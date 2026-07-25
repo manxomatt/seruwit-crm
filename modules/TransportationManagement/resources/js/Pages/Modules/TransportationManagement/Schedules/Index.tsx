@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -8,7 +9,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import TransportationNav from '../../../../TransportationNav';
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 interface TripSchedule {
     id: number;
@@ -63,6 +64,7 @@ const TrashIcon = () => (
 
 export default function Index({ schedules, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [scheduleToDelete, setScheduleToDelete] = useState<TripSchedule | null>(null);
@@ -108,37 +110,37 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Transportation</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('transportation.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('transportation.schedules.create')}>
-                            <PrimaryButton>Add Schedule</PrimaryButton>
+                            <PrimaryButton>{t('transportation.actions.add_schedule')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Trip Schedules" />
+            <Head title={t('transportation.pages.schedules.title')} />
 
             <TransportationNav />
 
             {can.create && (
                 <div className="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="mb-3 text-sm font-medium text-gray-900">Generate Trips</h3>
+                        <h3 className="mb-3 text-sm font-medium text-gray-900">{t('transportation.actions.generate')}</h3>
                         <p className="mb-4 text-sm text-gray-500">
                             Creates real trips from every active schedule for the dates below. Safe to run more than once — dates already generated are skipped.
                         </p>
                         <form onSubmit={handleGenerate} className="flex flex-wrap items-end gap-4">
                             <div>
-                                <InputLabel htmlFor="from" value="From" />
+                                <InputLabel htmlFor="from" value={t('transportation.fields.starts_on')} />
                                 <TextInput id="from" type="date" className="mt-1 block" value={from} onChange={(e) => setFrom(e.target.value)} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="to" value="To" />
+                                <InputLabel htmlFor="to" value={t('transportation.fields.ends_on')} />
                                 <TextInput id="to" type="date" className="mt-1 block" value={to} onChange={(e) => setTo(e.target.value)} />
                             </div>
                             <PrimaryButton type="submit" disabled={generating}>
-                                {generating ? 'Generating…' : 'Generate Trips'}
+                                {generating ? 'Generating…' : t('transportation.actions.generate')}
                             </PrimaryButton>
                         </form>
                     </div>
@@ -157,12 +159,12 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                                 className="w-full"
                             />
                         </div>
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {schedules.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No schedules found</h3>
+                            <h3 className="text-sm font-medium text-gray-900">{t('transportation.pages.schedules.empty')}</h3>
                             <p className="mt-1 text-sm text-gray-500">Create a recurring schedule to generate trips automatically.</p>
                         </div>
                     ) : (
@@ -175,7 +177,7 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Vehicle / Driver</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Days</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Time</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('transportation.fields.status')}</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                                         </tr>
                                     </thead>
@@ -187,12 +189,12 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                                                     {schedule.vehicle.name} ({schedule.vehicle.plate_number}) / {schedule.driver.name}
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                    {schedule.days_of_week.map((d) => DAY_LABELS[d]).join(', ')}
+                                                    {schedule.days_of_week.map((d) => t(`transportation.days.${DAY_KEYS[d]}`)).join(', ')}
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{schedule.time_of_day.slice(0, 5)}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${schedule.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                        {schedule.is_active ? 'Active' : 'Paused'}
+                                                        {t(`transportation.status.${schedule.is_active ? 'active' : 'paused'}`, undefined, schedule.is_active ? 'active' : 'paused')}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -208,7 +210,7 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                                                             <Link
                                                                 href={prefixedRoute('transportation.schedules.edit', schedule.id)}
                                                                 className="text-indigo-600 hover:text-indigo-900"
-                                                                title="Edit"
+                                                                title={t('common.edit')}
                                                             >
                                                                 <PencilIcon />
                                                             </Link>
@@ -217,7 +219,7 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                                                             <button
                                                                 onClick={() => openDeleteDialog(schedule)}
                                                                 className="text-red-600 hover:text-red-900"
-                                                                title="Delete"
+                                                                title={t('common.delete')}
                                                             >
                                                                 <TrashIcon />
                                                             </button>

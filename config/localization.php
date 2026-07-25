@@ -65,6 +65,12 @@ return [
         'products',
         'promotions',
         'purchasing',
+        'receivables',
+        'rental',
+        'routing',
+        'scoring',
+        'tracking',
+        'transportation',
     ],
 
 ];

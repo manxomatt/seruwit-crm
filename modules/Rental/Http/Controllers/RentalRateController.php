@@ -40,7 +40,7 @@ class RentalRateController extends Controller
 
         RentalRate::create($data);
 
-        return back()->with('success', 'Rate created.');
+        return back()->with('success', __('rental.messages.rate_created'));
     }
 
     public function update(UpdateRentalRateRequest $request, RentalRate $rate): RedirectResponse
@@ -50,13 +50,13 @@ class RentalRateController extends Controller
 
         $rate->update($data);
 
-        return back()->with('success', 'Rate updated.');
+        return back()->with('success', __('rental.messages.rate_updated'));
     }
 
     public function destroy(RentalRate $rate): RedirectResponse
     {
         $rate->delete();
 
-        return back()->with('success', 'Rate deleted.');
+        return back()->with('success', __('rental.messages.rate_deleted'));
     }
 }

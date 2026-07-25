@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -30,6 +31,7 @@ interface Props {
 
 export default function Edit({ settings }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         harsh_brake_kph_per_s: String(settings.harsh_brake_kph_per_s),
         harsh_accel_kph_per_s: String(settings.harsh_accel_kph_per_s),
@@ -68,8 +70,8 @@ export default function Edit({ settings }: Props): JSX.Element {
     ];
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Scoring Settings</h2>}>
-            <Head title="Scoring Settings" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('scoring.pages.settings.title')}</h2>}>
+            <Head title={t('scoring.pages.settings.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <ScoringNav />
@@ -89,7 +91,7 @@ export default function Edit({ settings }: Props): JSX.Element {
                                 </div>
                             ))}
                         </div>
-                        <PrimaryButton disabled={processing}>Save settings</PrimaryButton>
+                        <PrimaryButton disabled={processing}>{t('scoring.actions.save_settings')}</PrimaryButton>
                     </form>
                 </div>
             </div>

@@ -128,7 +128,7 @@ class TripSchedule extends Model
             $dateString = $date->toDateString();
 
             if ($this->trips()->whereDate('scheduled_at', $dateString)->exists()) {
-                $skipped[] = ['date' => $dateString, 'reason' => 'A trip for this date was already generated.'];
+                $skipped[] = ['date' => $dateString, 'reason' => __('transportation.messages.already_generated')];
 
                 continue;
             }

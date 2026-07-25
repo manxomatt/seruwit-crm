@@ -37,27 +37,27 @@ class IncentiveRuleController extends Controller
     {
         DriverIncentiveRule::query()->create($request->validated());
 
-        return back()->with('success', 'Incentive rule created.');
+        return back()->with('success', __('scoring.messages.rule_created'));
     }
 
     public function update(UpdateIncentiveRuleRequest $request, DriverIncentiveRule $rule): RedirectResponse
     {
         $rule->update($request->validated());
 
-        return back()->with('success', 'Incentive rule updated.');
+        return back()->with('success', __('scoring.messages.rule_updated'));
     }
 
     public function destroy(DriverIncentiveRule $rule): RedirectResponse
     {
         $rule->delete();
 
-        return back()->with('success', 'Incentive rule deleted.');
+        return back()->with('success', __('scoring.messages.rule_deleted'));
     }
 
     public function evaluate(IncentiveEvaluator $evaluator): RedirectResponse
     {
         $awards = $evaluator->evaluate();
 
-        return back()->with('success', count($awards).' new incentive award(s) created.');
+        return back()->with('success', __('scoring.messages.awards_created', ['count' => count($awards)]));
     }
 }

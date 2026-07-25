@@ -45,7 +45,10 @@ class StoreRentalRequest extends FormRequest
             if (Modules::available('transportation') && $this->start_date) {
                 foreach ($this->tripDatesInRange() as $date) {
                     if (\Modules\TransportationManagement\Models\Trip::hasActiveTripOn('vehicle_id', $vehicle->id, $date)) {
-                        $reasons[] = "Vehicle {$vehicle->name} already has a trip on {$date}.";
+                        $reasons[] = __('rental.validation.vehicle_trip_conflict', [
+                            'name' => $vehicle->name,
+                            'date' => $date,
+                        ]);
                         break;
                     }
                 }

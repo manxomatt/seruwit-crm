@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -63,6 +64,7 @@ const EyeIcon = () => (
 
 export default function Index({ trips, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
 
     const handleSearch: FormEventHandler = (e) => {
@@ -84,16 +86,16 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Transportation</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('transportation.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('transportation.trips.create')}>
-                            <PrimaryButton>Dispatch Trip</PrimaryButton>
+                            <PrimaryButton>{t('transportation.actions.dispatch')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Trips" />
+            <Head title={t('transportation.pages.trips.title')} />
 
             <TransportationNav />
 
@@ -116,15 +118,15 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                             placeholder="All statuses"
                             options={[
                                 { value: '', label: 'All statuses' },
-                                ...STATUSES.map((status) => ({ value: status, label: status.replace('_', ' ') })),
+                                ...STATUSES.map((status) => ({ value: status, label: t(`transportation.status.${status}`, undefined, status) })),
                             ]}
                         />
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
 
                     {trips.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No trips found</h3>
+                            <h3 className="text-sm font-medium text-gray-900">{t('transportation.pages.trips.empty')}</h3>
                             <p className="mt-1 text-sm text-gray-500">Dispatch a trip to get started.</p>
                         </div>
                     ) : (
@@ -133,12 +135,12 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Code</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('transportation.fields.code')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Route</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Vehicle / Driver</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Partner</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('transportation.fields.partner')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Scheduled</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('transportation.fields.status')}</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                                         </tr>
                                     </thead>
@@ -154,7 +156,7 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{trip.scheduled_at}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(trip.status)}`}>
-                                                        {trip.status.replace('_', ' ')}
+                                                        {t(`transportation.status.${trip.status}`, undefined, trip.status)}
                                                     </span>
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router } from '@inertiajs/react';
 
@@ -21,31 +22,32 @@ interface Props {
     can: { create: boolean };
 }
 
+const STATUS_FILTERS = ['', 'optimized', 'applied', 'cancelled', 'draft'] as const;
+
 export default function Index({ plans, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-800">Route Plans</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">{t('routing.pages.index.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('routing.plans.create')}>
-                            <PrimaryButton>New Plan</PrimaryButton>
+                            <PrimaryButton>{t('routing.actions.new_plan')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Route Optimization" />
+            <Head title={t('routing.pages.index.head')} />
             <div className="py-6">
                 <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <p className="text-sm text-gray-600">
-                        VRP engine — assign drivers and vehicles automatically to minimise distance and fuel cost.
-                    </p>
+                    <p className="text-sm text-gray-600">{t('routing.pages.index.intro')}</p>
 
                     <div className="flex flex-wrap gap-2">
-                        {['', 'optimized', 'applied', 'cancelled', 'draft'].map((status) => (
+                        {STATUS_FILTERS.map((status) => (
                             <button
                                 key={status || 'all'}
                                 type="button"
@@ -60,7 +62,7 @@ export default function Index({ plans, filters, can }: Props): JSX.Element {
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                             >
-                                {status || 'all'}
+                                {t(`routing.status.${status || 'all'}`, undefined, status || 'all')}
                             </button>
                         ))}
                     </div>
@@ -69,19 +71,19 @@ export default function Index({ plans, filters, can }: Props): JSX.Element {
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Code</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Objective</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Distance</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Cost</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.code')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.date')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.objective')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.distance')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.cost')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.status')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {plans.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                                            No route plans yet.
+                                            {t('routing.pages.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -96,16 +98,18 @@ export default function Index({ plans, filters, can }: Props): JSX.Element {
                                                 </Link>
                                             </td>
                                             <td className="px-4 py-3 text-gray-700">{row.planned_date}</td>
-                                            <td className="px-4 py-3 text-gray-700">{row.objective}</td>
+                                            <td className="px-4 py-3 text-gray-700">
+                                                {t(`routing.objective.${row.objective}`, undefined, row.objective)}
+                                            </td>
                                             <td className="px-4 py-3 text-gray-700">{row.total_distance_km} km</td>
                                             <td className="px-4 py-3 text-gray-700">{row.total_cost}</td>
                                             <td className="px-4 py-3">
                                                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-700">
-                                                    {row.status}
+                                                    {t(`routing.status.${row.status}`, undefined, row.status)}
                                                 </span>
                                                 {row.unassigned_count > 0 && (
                                                     <span className="ml-2 text-xs text-amber-700">
-                                                        {row.unassigned_count} unassigned
+                                                        {t('routing.pages.index.unassigned', { count: row.unassigned_count })}
                                                     </span>
                                                 )}
                                             </td>

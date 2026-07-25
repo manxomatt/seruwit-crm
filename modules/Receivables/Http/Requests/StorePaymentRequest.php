@@ -38,9 +38,9 @@ class StorePaymentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'allocations.required' => 'Allocate the payment to at least one invoice.',
-            'allocations.min' => 'Allocate the payment to at least one invoice.',
-            'amount.gt' => 'Payment amount must be greater than zero.',
+            'allocations.required' => __('receivables.validation.allocations_required'),
+            'allocations.min' => __('receivables.validation.allocations_required'),
+            'amount.gt' => __('receivables.validation.amount_gt'),
         ];
     }
 }

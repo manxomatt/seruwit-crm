@@ -1,15 +1,17 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Trips', route: 'transportation.trips.index', pattern: 'transportation.trips.*' },
-    { label: 'Schedules', route: 'transportation.schedules.index', pattern: 'transportation.schedules.*' },
-    { label: 'Calendar', route: 'transportation.calendar.index', pattern: 'transportation.calendar.*' },
-    { label: 'Reports', route: 'transportation.reports.index', pattern: 'transportation.reports.*' },
-];
+    { labelKey: 'transportation.nav.trips', route: 'transportation.trips.index', pattern: 'transportation.trips.*' },
+    { labelKey: 'transportation.nav.schedules', route: 'transportation.schedules.index', pattern: 'transportation.schedules.*' },
+    { labelKey: 'transportation.nav.calendar', route: 'transportation.calendar.index', pattern: 'transportation.calendar.*' },
+    { labelKey: 'transportation.nav.reports', route: 'transportation.reports.index', pattern: 'transportation.reports.*' },
+] as const;
 
 export default function TransportationNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -26,7 +28,7 @@ export default function TransportationNav(): JSX.Element {
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Link>
                     );
                 })}

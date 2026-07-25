@@ -26,7 +26,7 @@ class TripCheckpointController extends Controller
         $trip->checkpoints()->create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Checkpoint logged.');
+            ->with('success', __('transportation.messages.checkpoint_logged'));
     }
 
     /**
@@ -41,6 +41,6 @@ class TripCheckpointController extends Controller
         $checkpoint->delete();
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Checkpoint removed.');
+            ->with('success', __('transportation.messages.checkpoint_removed'));
     }
 }

@@ -23,6 +23,6 @@ class IncentiveAwardController extends Controller
 
         $award->update(['status' => $data['status']]);
 
-        return back()->with('success', 'Award status updated.');
+        return back()->with('success', __('scoring.messages.award_status_updated'));
     }
 }

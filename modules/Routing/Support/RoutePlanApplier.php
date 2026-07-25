@@ -18,18 +18,18 @@ class RoutePlanApplier
     public function apply(RoutePlan $plan): RoutePlan
     {
         if ($plan->status !== RoutePlan::STATUS_OPTIMIZED) {
-            throw new RuntimeException('Only an optimized plan can be applied.');
+            throw new RuntimeException(__('routing.errors.only_optimized_applicable'));
         }
 
         $plan->loadMissing(['routes.stops', 'routes.vehicle', 'routes.driver']);
 
         if ($plan->routes->isEmpty()) {
-            throw new RuntimeException('Plan has no routes to apply.');
+            throw new RuntimeException(__('routing.errors.no_routes_to_apply'));
         }
 
         foreach ($plan->routes as $route) {
             if (! $route->vehicle_id || ! $route->driver_id) {
-                throw new RuntimeException('Every route needs a vehicle and driver before apply.');
+                throw new RuntimeException(__('routing.errors.route_needs_vehicle_driver'));
             }
         }
 
@@ -70,7 +70,7 @@ class RoutePlanApplier
             $order = DeliveryOrder::query()->lockForUpdate()->findOrFail($stop->delivery_order_id);
 
             if ($order->status !== DeliveryOrder::STATUS_CONFIRMED) {
-                throw new RuntimeException("Order {$order->code} is no longer confirmed.");
+                throw new RuntimeException(__('routing.errors.order_not_confirmed', ['code' => $order->code]));
             }
 
             $trip->stops()->create([

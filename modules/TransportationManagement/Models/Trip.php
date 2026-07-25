@@ -180,19 +180,22 @@ class Trip extends Model
         $reasons = [];
 
         if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
-            $reasons[] = "Vehicle {$vehicle->name} is {$vehicle->status}, not active.";
+            $reasons[] = __('transportation.messages.vehicle_not_active', [
+                'name' => $vehicle->name,
+                'status' => $vehicle->status,
+            ]);
         }
 
         if (self::hasActiveTripOn('vehicle_id', $vehicle->id, $date, $excludingTripId)) {
-            $reasons[] = "Vehicle {$vehicle->name} already has a trip on this date.";
+            $reasons[] = __('transportation.messages.vehicle_has_trip', ['name' => $vehicle->name]);
         }
 
         if ($vehicle->stnk_expires_at && $vehicle->stnk_expires_at->isPast()) {
-            $reasons[] = "Vehicle {$vehicle->name} has an expired STNK.";
+            $reasons[] = __('transportation.messages.vehicle_stnk_expired', ['name' => $vehicle->name]);
         }
 
         if ($vehicle->kir_expires_at && $vehicle->kir_expires_at->isPast()) {
-            $reasons[] = "Vehicle {$vehicle->name} has an expired KIR.";
+            $reasons[] = __('transportation.messages.vehicle_kir_expired', ['name' => $vehicle->name]);
         }
 
         return $reasons;
@@ -208,15 +211,18 @@ class Trip extends Model
         $reasons = [];
 
         if ($driver->status !== Driver::STATUS_AVAILABLE) {
-            $reasons[] = "Driver {$driver->name} is {$driver->status}, not available.";
+            $reasons[] = __('transportation.messages.driver_not_available', [
+                'name' => $driver->name,
+                'status' => $driver->status,
+            ]);
         }
 
         if (self::hasActiveTripOn('driver_id', $driver->id, $date, $excludingTripId)) {
-            $reasons[] = "Driver {$driver->name} already has a trip on this date.";
+            $reasons[] = __('transportation.messages.driver_has_trip', ['name' => $driver->name]);
         }
 
         if ($driver->license_expires_at && $driver->license_expires_at->isPast()) {
-            $reasons[] = "Driver {$driver->name} has an expired SIM.";
+            $reasons[] = __('transportation.messages.driver_sim_expired', ['name' => $driver->name]);
         }
 
         return $reasons;

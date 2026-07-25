@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
 import { Head, Link } from '@inertiajs/react';
 import ReceivablesNav from '../../../../ReceivablesNav';
@@ -22,17 +23,18 @@ interface Props {
 
 export default function Index({ partners, alerts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Credit Limits</h2>}>
-            <Head title="Credit Limits" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('receivables.credit.index.title')}</h2>}>
+            <Head title={t('receivables.credit.index.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <ReceivablesNav />
 
                     {alerts.over_limit_count > 0 && (
                         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                            <strong>{alerts.over_limit_count} partner</strong> melebihi credit limit.
+                            {t('receivables.credit.index.over_limit_alert', { count: alerts.over_limit_count })}
                         </div>
                     )}
 
@@ -40,18 +42,18 @@ export default function Index({ partners, alerts }: Props): JSX.Element {
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Partner</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Limit</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Outstanding</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Available</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Utilization</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.partner')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.limit')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.outstanding')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.available')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.utilization')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {partners.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                                            Belum ada partner dengan credit limit. Set di Partners → Edit.
+                                            {t('receivables.credit.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (

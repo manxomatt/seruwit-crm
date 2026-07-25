@@ -32,7 +32,7 @@ class PaymentRecorder
 
             if ($allocations->isEmpty()) {
                 throw ValidationException::withMessages([
-                    'allocations' => 'At least one invoice allocation is required.',
+                    'allocations' => __('receivables.validation.allocations_empty'),
                 ]);
             }
 
@@ -40,7 +40,7 @@ class PaymentRecorder
 
             if (abs($allocatedTotal - $amount) > 0.009) {
                 throw ValidationException::withMessages([
-                    'amount' => 'Payment amount must equal the sum of allocations.',
+                    'amount' => __('receivables.validation.amount_mismatch'),
                 ]);
             }
 
@@ -64,13 +64,13 @@ class PaymentRecorder
 
                 if ((int) $invoice->partner_id !== (int) $data['partner_id']) {
                     throw ValidationException::withMessages([
-                        'allocations' => "Invoice {$invoice->code} does not belong to this partner.",
+                        'allocations' => __('receivables.validation.invoice_wrong_partner', ['code' => $invoice->code]),
                     ]);
                 }
 
                 if (! in_array($invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID], true)) {
                     throw ValidationException::withMessages([
-                        'allocations' => "Invoice {$invoice->code} is not open for payment.",
+                        'allocations' => __('receivables.validation.invoice_not_open', ['code' => $invoice->code]),
                     ]);
                 }
 
@@ -78,13 +78,13 @@ class PaymentRecorder
 
                 if ($allocAmount <= 0) {
                     throw ValidationException::withMessages([
-                        'allocations' => 'Allocation amounts must be greater than zero.',
+                        'allocations' => __('receivables.validation.allocation_gt_zero'),
                     ]);
                 }
 
                 if ($allocAmount - $invoice->balanceDue() > 0.009) {
                     throw ValidationException::withMessages([
-                        'allocations' => "Allocation for {$invoice->code} exceeds the remaining balance.",
+                        'allocations' => __('receivables.validation.allocation_exceeds_balance', ['code' => $invoice->code]),
                     ]);
                 }
 
@@ -114,7 +114,7 @@ class PaymentRecorder
 
         if ($balance <= 0) {
             throw ValidationException::withMessages([
-                'invoice' => 'Invoice has no remaining balance.',
+                'invoice' => __('receivables.validation.invoice_no_balance'),
             ]);
         }
 
@@ -134,7 +134,7 @@ class PaymentRecorder
     {
         if (! $payment->isPosted()) {
             throw ValidationException::withMessages([
-                'payment' => 'Only a posted payment can be voided.',
+                'payment' => __('receivables.validation.void_posted_only'),
             ]);
         }
 

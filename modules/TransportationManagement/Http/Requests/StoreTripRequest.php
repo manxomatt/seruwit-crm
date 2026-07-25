@@ -89,12 +89,12 @@ class StoreTripRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'vehicle_id.required' => 'Select a vehicle for this trip.',
-            'vehicle_id.exists' => 'The selected vehicle does not exist.',
-            'driver_id.required' => 'Select a driver for this trip.',
-            'driver_id.exists' => 'The selected driver does not exist.',
-            'partner_id.required' => 'Select a customer for this trip.',
-            'partner_id.exists' => 'The selected customer does not exist.',
+            'vehicle_id.required' => __('transportation.validation.vehicle_required'),
+            'vehicle_id.exists' => __('transportation.validation.vehicle_exists'),
+            'driver_id.required' => __('transportation.validation.driver_required'),
+            'driver_id.exists' => __('transportation.validation.driver_exists'),
+            'partner_id.required' => __('transportation.validation.partner_required'),
+            'partner_id.exists' => __('transportation.validation.partner_exists'),
         ];
     }
 }

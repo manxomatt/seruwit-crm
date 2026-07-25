@@ -26,7 +26,7 @@ class TripStopController extends Controller
     public function store(StoreTripStopRequest $request, Trip $trip): RedirectResponse
     {
         if ($trip->status !== Trip::STATUS_SCHEDULED) {
-            return back()->with('error', 'Stops can only be added while the trip is scheduled.');
+            return back()->with('error', __('transportation.messages.stop_add_scheduled_only'));
         }
 
         $trip->stops()->create([
@@ -35,7 +35,7 @@ class TripStopController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Stop added.');
+            ->with('success', __('transportation.messages.stop_added'));
     }
 
     /**
@@ -48,17 +48,17 @@ class TripStopController extends Controller
         }
 
         if ($trip->status !== Trip::STATUS_SCHEDULED) {
-            return back()->with('error', 'Stops can only be edited while the trip is scheduled.');
+            return back()->with('error', __('transportation.messages.stop_edit_scheduled_only'));
         }
 
         if ($stop->status !== TripStop::STATUS_PENDING) {
-            return back()->with('error', 'Only a pending stop can be edited.');
+            return back()->with('error', __('transportation.messages.stop_edit_pending_only'));
         }
 
         $stop->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Stop updated.');
+            ->with('success', __('transportation.messages.stop_updated'));
     }
 
     /**
@@ -71,17 +71,17 @@ class TripStopController extends Controller
         }
 
         if ($stop->status !== TripStop::STATUS_PENDING) {
-            return back()->with('error', 'Only a pending stop can be removed.');
+            return back()->with('error', __('transportation.messages.stop_remove_pending_only'));
         }
 
         if ($stop->delivery_order_id !== null) {
-            return back()->with('error', 'This stop belongs to a delivery order; detach the order instead.');
+            return back()->with('error', __('transportation.messages.stop_belongs_to_order'));
         }
 
         $stop->delete();
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Stop removed.');
+            ->with('success', __('transportation.messages.stop_removed'));
     }
 
     /**

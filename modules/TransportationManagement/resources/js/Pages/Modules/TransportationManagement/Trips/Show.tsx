@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -148,6 +149,7 @@ const getOrderStatusBadgeColor = (status: string) => {
 
 export default function Show({ trip, products, ordersEnabled, trackingEnabled, livePosition, fuelEstimate, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCheckpointModal, setShowCheckpointModal] = useState(false);
     const [showItemModal, setShowItemModal] = useState(false);
@@ -286,18 +288,18 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">{trip.code}</h2>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(trip.status)}`}>
-                            {trip.status.replace('_', ' ')}
+                            {t(`transportation.status.${trip.status}`, undefined, trip.status)}
                         </span>
                     </div>
                     <div className="flex gap-2">
                         {can.update && trip.status === 'scheduled' && (
-                            <PrimaryButton onClick={start}>Start Trip</PrimaryButton>
+                            <PrimaryButton onClick={start}>{t('transportation.actions.start')}</PrimaryButton>
                         )}
                         {can.update && trip.status === 'in_progress' && (
-                            <PrimaryButton onClick={complete}>Complete Trip</PrimaryButton>
+                            <PrimaryButton onClick={complete}>{t('transportation.actions.complete')}</PrimaryButton>
                         )}
                         {can.update && (trip.status === 'scheduled' || trip.status === 'in_progress') && (
-                            <DangerButton onClick={() => setShowCancelModal(true)}>Cancel Trip</DangerButton>
+                            <DangerButton onClick={() => setShowCancelModal(true)}>{t('transportation.actions.cancel')}</DangerButton>
                         )}
                         <Link href={prefixedRoute('transportation.trips.index')}>
                             <SecondaryButton>Back to List</SecondaryButton>
@@ -315,7 +317,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                     <div className="p-6">
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Vehicle</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.vehicle')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     <Link href={prefixedRoute('fleet.vehicles.show', trip.vehicle.id)} className="text-indigo-600 hover:text-indigo-900">
                                         {trip.vehicle.name} ({trip.vehicle.plate_number})
@@ -323,7 +325,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Driver</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.driver')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     <Link href={prefixedRoute('fleet.drivers.show', trip.driver.id)} className="text-indigo-600 hover:text-indigo-900">
                                         {trip.driver.name}
@@ -332,7 +334,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.partner')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     {trip.partner ? (
                                         <>
@@ -367,15 +369,15 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Origin</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.origin')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{trip.origin}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Destination</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.destination')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{trip.destination}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Scheduled At</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.scheduled_at')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{trip.scheduled_at}</dd>
                             </div>
                             <div>
@@ -394,7 +396,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             )}
                             {trip.cargo_notes && (
                                 <div className="sm:col-span-3">
-                                    <dt className="text-sm font-medium text-gray-500">Cargo Notes</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.cargo_notes')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{trip.cargo_notes}</dd>
                                 </div>
                             )}
@@ -432,7 +434,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-900">Stops</h3>
                             {can.create && trip.status === 'scheduled' && (
-                                <PrimaryButton onClick={() => setShowStopModal(true)}>Add Stop</PrimaryButton>
+                                <PrimaryButton onClick={() => setShowStopModal(true)}>{t('transportation.actions.add_stop')}</PrimaryButton>
                             )}
                         </div>
                         {trip.stops.length === 0 ? (
@@ -450,7 +452,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                                     {stop.address}
                                                 </p>
                                                 <p className="text-sm text-gray-500">
-                                                    <span className="capitalize">{stop.type}</span>
+                                                    {t(`transportation.stop_types.${stop.type}`, undefined, stop.type)}
                                                     {stop.delivery_order && (
                                                         <>
                                                             {' — '}
@@ -465,21 +467,21 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStopStatusBadgeColor(stop.status)}`}>
-                                                {stop.status}
+                                                {t(`transportation.status.${stop.status}`, undefined, stop.status)}
                                             </span>
                                             {can.update && trip.status === 'in_progress' && stop.status === 'pending' && (
                                                 <button onClick={() => arriveStop(stop.id)} className="text-sm text-indigo-600 hover:text-indigo-900">
-                                                    Arrive
+                                                    {t('transportation.actions.arrive')}
                                                 </button>
                                             )}
                                             {can.update && trip.status === 'in_progress' && stop.status !== 'completed' && (
                                                 <button onClick={() => completeStop(stop.id)} className="text-sm text-green-600 hover:text-green-900">
-                                                    Complete
+                                                    {t('transportation.actions.complete_stop')}
                                                 </button>
                                             )}
                                             {can.delete && trip.status === 'scheduled' && stop.status === 'pending' && !stop.delivery_order_id && (
                                                 <button onClick={() => deleteStop(stop.id)} className="text-sm text-red-600 hover:text-red-900">
-                                                    Delete
+                                                    {t('common.delete')}
                                                 </button>
                                             )}
                                         </div>
@@ -527,7 +529,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-900">Tracking Checkpoints</h3>
                             {can.create && trip.status === 'in_progress' && (
-                                <PrimaryButton onClick={() => setShowCheckpointModal(true)}>Log Checkpoint</PrimaryButton>
+                                <PrimaryButton onClick={() => setShowCheckpointModal(true)}>{t('transportation.actions.log_checkpoint')}</PrimaryButton>
                             )}
                         </div>
                         {trip.checkpoints.length === 0 ? (
@@ -558,7 +560,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                         </div>
                                         {can.delete && (
                                             <button onClick={() => deleteCheckpoint(checkpoint.id)} className="text-sm text-red-600 hover:text-red-900">
-                                                Delete
+                                                {t('common.delete')}
                                             </button>
                                         )}
                                     </li>
@@ -573,7 +575,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-900">Cargo Items</h3>
                             {can.create && (
-                                <PrimaryButton onClick={() => setShowItemModal(true)}>Add Item</PrimaryButton>
+                                <PrimaryButton onClick={() => setShowItemModal(true)}>{t('transportation.actions.add_item')}</PrimaryButton>
                             )}
                         </div>
                         {trip.items.length === 0 ? (
@@ -593,7 +595,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                         </div>
                                         {can.delete && (
                                             <button onClick={() => deleteItem(item.id)} className="text-sm text-red-600 hover:text-red-900">
-                                                Delete
+                                                {t('common.delete')}
                                             </button>
                                         )}
                                     </li>
@@ -620,16 +622,16 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
 
             <Modal show={showCheckpointModal} onClose={() => setShowCheckpointModal(false)} maxWidth="md">
                 <form onSubmit={submitCheckpoint} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Log Checkpoint</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.actions.log_checkpoint')}</h3>
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="c_latitude" value="Latitude" />
+                                <InputLabel htmlFor="c_latitude" value={t('transportation.fields.latitude')} />
                                 <TextInput id="c_latitude" type="number" step="0.0000001" className="mt-1 block w-full" value={checkpointForm.data.latitude} onChange={(e) => checkpointForm.setData('latitude', e.target.value)} required />
                                 <InputError message={checkpointForm.errors.latitude} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="c_longitude" value="Longitude" />
+                                <InputLabel htmlFor="c_longitude" value={t('transportation.fields.longitude')} />
                                 <TextInput id="c_longitude" type="number" step="0.0000001" className="mt-1 block w-full" value={checkpointForm.data.longitude} onChange={(e) => checkpointForm.setData('longitude', e.target.value)} required />
                                 <InputError message={checkpointForm.errors.longitude} className="mt-2" />
                             </div>
@@ -646,18 +648,18 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowCheckpointModal(false)}>Cancel</SecondaryButton>
-                        <PrimaryButton disabled={checkpointForm.processing}>Save</PrimaryButton>
+                        <SecondaryButton type="button" onClick={() => setShowCheckpointModal(false)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={checkpointForm.processing}>{t('common.save')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
             <Modal show={showItemModal} onClose={() => setShowItemModal(false)} maxWidth="md">
                 <form onSubmit={submitItem} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Add Cargo Item</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.actions.add_item')}</h3>
                     <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="i_product_id" value="Product" />
+                            <InputLabel htmlFor="i_product_id" value={t('transportation.fields.product')} />
                             <Select
                                 id="i_product_id"
                                 className="mt-1"
@@ -672,7 +674,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             <InputError message={itemForm.errors.product_id} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="i_quantity" value="Quantity" />
+                            <InputLabel htmlFor="i_quantity" value={t('transportation.fields.quantity')} />
                             <TextInput id="i_quantity" type="number" step="0.01" min="0.01" className="mt-1 block w-full" value={itemForm.data.quantity} onChange={(e) => itemForm.setData('quantity', e.target.value)} required />
                             <InputError message={itemForm.errors.quantity} className="mt-2" />
                         </div>
@@ -683,15 +685,15 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowItemModal(false)}>Cancel</SecondaryButton>
-                        <PrimaryButton disabled={itemForm.processing}>Save</PrimaryButton>
+                        <SecondaryButton type="button" onClick={() => setShowItemModal(false)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={itemForm.processing}>{t('common.save')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
             <Modal show={showStopModal} onClose={() => setShowStopModal(false)} maxWidth="md">
                 <form onSubmit={submitStop} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Add Stop</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.actions.add_stop')}</h3>
                     <div className="space-y-4">
                         <div>
                             <InputLabel htmlFor="s_type" value="Type" />
@@ -701,8 +703,8 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                 value={stopForm.data.type}
                                 onChange={(value) => stopForm.setData('type', value)}
                                 options={[
-                                    { value: 'pickup', label: 'Pickup' },
-                                    { value: 'dropoff', label: 'Dropoff' },
+                                    { value: 'pickup', label: t('transportation.stop_types.pickup') },
+                                    { value: 'dropoff', label: t('transportation.stop_types.dropoff') },
                                 ]}
                             />
                             <InputError message={stopForm.errors.type} className="mt-2" />
@@ -714,33 +716,33 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="s_lat" value="Latitude (optional)" />
+                                <InputLabel htmlFor="s_lat" value={`${t('transportation.fields.latitude')} (optional)`} />
                                 <TextInput id="s_lat" type="number" step="0.0000001" className="mt-1 block w-full" value={stopForm.data.lat} onChange={(e) => stopForm.setData('lat', e.target.value)} />
                                 <InputError message={stopForm.errors.lat} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="s_lng" value="Longitude (optional)" />
+                                <InputLabel htmlFor="s_lng" value={`${t('transportation.fields.longitude')} (optional)`} />
                                 <TextInput id="s_lng" type="number" step="0.0000001" className="mt-1 block w-full" value={stopForm.data.lng} onChange={(e) => stopForm.setData('lng', e.target.value)} />
                                 <InputError message={stopForm.errors.lng} className="mt-2" />
                             </div>
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setShowStopModal(false)}>Cancel</SecondaryButton>
-                        <PrimaryButton disabled={stopForm.processing}>Save</PrimaryButton>
+                        <SecondaryButton type="button" onClick={() => setShowStopModal(false)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={stopForm.processing}>{t('common.save')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>
 
             <Modal show={showCancelModal} onClose={() => setShowCancelModal(false)} maxWidth="md">
                 <form onSubmit={submitCancel} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Cancel Trip</h3>
-                    <InputLabel htmlFor="cancelled_reason" value="Reason" />
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.actions.cancel')}</h3>
+                    <InputLabel htmlFor="cancelled_reason" value={t('transportation.fields.reason')} />
                     <TextInput id="cancelled_reason" className="mt-1 block w-full" value={cancelForm.data.cancelled_reason} onChange={(e) => cancelForm.setData('cancelled_reason', e.target.value)} required />
                     <InputError message={cancelForm.errors.cancelled_reason} className="mt-2" />
                     <div className="mt-6 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setShowCancelModal(false)}>Back</SecondaryButton>
-                        <DangerButton disabled={cancelForm.processing}>Confirm Cancellation</DangerButton>
+                        <DangerButton disabled={cancelForm.processing}>{t('transportation.actions.confirm_cancel')}</DangerButton>
                     </div>
                 </form>
             </Modal>

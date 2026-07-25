@@ -1,4 +1,5 @@
-import { Trip, TripDots, WEEKDAY_LABELS, startOfWeek, toDateKey } from './shared';
+import { useTrans } from '@/hooks/useTrans';
+import { Trip, TripDots, DAY_KEYS, startOfWeek, toDateKey } from './shared';
 
 interface Props {
     date: Date;
@@ -14,6 +15,7 @@ function buildWeekDays(date: Date): Date[] {
 }
 
 export default function WeekView({ date, tripsByDate, today, selectedDate, onSelectDate }: Props): JSX.Element {
+    const { t } = useTrans();
     const days = buildWeekDays(date);
 
     return (
@@ -35,7 +37,7 @@ export default function WeekView({ date, tripsByDate, today, selectedDate, onSel
                             }`}
                         >
                             <span className={`text-xs font-semibold uppercase tracking-wider ${isWeekend ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {WEEKDAY_LABELS[index]}
+                                {t(`transportation.days.${DAY_KEYS[index]}`)}
                             </span>
                             <span
                                 className={`flex h-9 w-9 items-center justify-center rounded-full text-base font-semibold ${

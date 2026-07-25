@@ -23,6 +23,6 @@ class ScoringSettingsController extends Controller
         $settings = DriverScoringSetting::current();
         $settings->update($request->validated());
 
-        return back()->with('success', 'Scoring thresholds updated.');
+        return back()->with('success', __('scoring.messages.thresholds_updated'));
     }
 }

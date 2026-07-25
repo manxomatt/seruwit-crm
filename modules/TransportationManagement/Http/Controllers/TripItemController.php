@@ -26,7 +26,7 @@ class TripItemController extends Controller
         $trip->items()->create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Cargo item added.');
+            ->with('success', __('transportation.messages.cargo_added'));
     }
 
     /**
@@ -41,6 +41,6 @@ class TripItemController extends Controller
         $item->delete();
 
         return redirect()->route($this->getRoutePrefix().'.transportation.trips.show', $trip)
-            ->with('success', 'Cargo item removed.');
+            ->with('success', __('transportation.messages.cargo_removed'));
     }
 }

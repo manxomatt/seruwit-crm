@@ -46,12 +46,12 @@ class StoreTripScheduleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'vehicle_id.required' => 'Select a vehicle for this schedule.',
-            'driver_id.required' => 'Select a driver for this schedule.',
-            'partner_id.required' => 'Select a customer for this schedule.',
-            'days_of_week.required' => 'Select at least one day of the week.',
-            'days_of_week.min' => 'Select at least one day of the week.',
-            'ends_on.after_or_equal' => 'The end date must be on or after the start date.',
+            'vehicle_id.required' => __('transportation.validation.schedule_vehicle_required'),
+            'driver_id.required' => __('transportation.validation.schedule_driver_required'),
+            'partner_id.required' => __('transportation.validation.schedule_partner_required'),
+            'days_of_week.required' => __('transportation.validation.days_required'),
+            'days_of_week.min' => __('transportation.validation.days_required'),
+            'ends_on.after_or_equal' => __('transportation.validation.ends_on_after'),
         ];
     }
 }

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -18,8 +19,11 @@ interface Props { rental: Rental; vehicles: Vehicle[]; drivers: Driver[]; partne
 
 const selectCls = 'mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white';
 
+const PERIOD_TYPES = ['daily', 'weekly', 'monthly'] as const;
+
 export default function Edit({ rental, vehicles, drivers, partners, rates }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         vehicle_id: String(rental.vehicle_id),
         driver_id: String(rental.driver_id ?? ''),
@@ -46,46 +50,46 @@ export default function Edit({ rental, vehicles, drivers, partners, rates }: Pro
     };
 
     return (
-        <DynamicLayout header="Rental">
-            <Head title={`Edit ${rental.code}`} />
+        <DynamicLayout header={t('rental.pages.index.head')}>
+            <Head title={t('rental.pages.edit.title', { code: rental.code })} />
             <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
                 <div className="mb-6 flex items-center gap-3">
-                    <Link href={prefixedRoute('rental.show', rental.id)} className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">← Back</Link>
+                    <Link href={prefixedRoute('rental.show', rental.id)} className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">{t('rental.nav.back')}</Link>
                 </div>
-                <h1 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">Edit Rental {rental.code}</h1>
+                <h1 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">{t('rental.pages.edit.title', { code: rental.code })}</h1>
                 <form onSubmit={submit} className="space-y-6">
                     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Booking</h2>
+                        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('rental.sections.booking')}</h2>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="partner_id" value="Customer *" />
+                                <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
                                 <select id="partner_id" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)} className={selectCls}>
                                     {partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
                                 <InputError message={errors.partner_id} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="vehicle_id" value="Vehicle *" />
+                                <InputLabel htmlFor="vehicle_id" value={`${t('rental.fields.vehicle')} *`} />
                                 <select id="vehicle_id" value={data.vehicle_id} onChange={(e) => setData('vehicle_id', e.target.value)} className={selectCls}>
                                     {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name} — {v.plate_number}</option>)}
                                 </select>
                                 <InputError message={errors.vehicle_id} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="driver_id" value="Driver" />
+                                <InputLabel htmlFor="driver_id" value={t('rental.fields.driver')} />
                                 <select id="driver_id" value={data.driver_id} onChange={(e) => setData('driver_id', e.target.value)} className={selectCls}>
-                                    <option value="">No driver</option>
+                                    <option value="">{t('rental.placeholders.no_driver')}</option>
                                     {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div />
                             <div>
-                                <InputLabel htmlFor="start_date" value="Start Date *" />
+                                <InputLabel htmlFor="start_date" value={`${t('rental.fields.start_date')} *`} />
                                 <TextInput id="start_date" type="date" value={data.start_date} onChange={(e) => setData('start_date', e.target.value)} className="mt-1 w-full" />
                                 <InputError message={errors.start_date} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="end_date" value="End Date *" />
+                                <InputLabel htmlFor="end_date" value={`${t('rental.fields.end_date')} *`} />
                                 <TextInput id="end_date" type="date" value={data.end_date} onChange={(e) => setData('end_date', e.target.value)} className="mt-1 w-full" />
                                 <InputError message={errors.end_date} className="mt-1" />
                             </div>
@@ -93,53 +97,53 @@ export default function Edit({ rental, vehicles, drivers, partners, rates }: Pro
                     </div>
                     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pricing</h2>
+                            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t('rental.sections.pricing')}</h2>
                             {rates.length > 0 && (
                                 <select
                                     onChange={(e) => applyRate(e.target.value)}
                                     defaultValue=""
                                     className="rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                 >
-                                    <option value="">Apply rate…</option>
+                                    <option value="">{t('rental.placeholders.apply_rate_short')}</option>
                                     {rates.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
                             )}
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="period_type" value="Period Type *" />
+                                <InputLabel htmlFor="period_type" value={`${t('rental.fields.period_type')} *`} />
                                 <select id="period_type" value={data.period_type} onChange={(e) => setData('period_type', e.target.value)} className={selectCls}>
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
+                                    {PERIOD_TYPES.map((type) => (
+                                        <option key={type} value={type}>{t(`rental.period_type.${type}`, undefined, type)}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
-                                <InputLabel htmlFor="rate_per_period" value="Rate per Period (Rp) *" />
+                                <InputLabel htmlFor="rate_per_period" value={`${t('rental.fields.rate_per_period')} *`} />
                                 <TextInput id="rate_per_period" type="number" min="0" value={data.rate_per_period} onChange={(e) => setData('rate_per_period', e.target.value)} className="mt-1 w-full" />
                                 <InputError message={errors.rate_per_period} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="km_limit" value="KM Limit per Period" />
+                                <InputLabel htmlFor="km_limit" value={t('rental.fields.km_limit')} />
                                 <TextInput id="km_limit" type="number" min="0" value={data.km_limit_per_period} onChange={(e) => setData('km_limit_per_period', e.target.value)} className="mt-1 w-full" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="excess_km_rate" value="Excess KM Rate (Rp/km)" />
+                                <InputLabel htmlFor="excess_km_rate" value={t('rental.fields.excess_km_rate')} />
                                 <TextInput id="excess_km_rate" type="number" min="0" value={data.excess_km_rate} onChange={(e) => setData('excess_km_rate', e.target.value)} className="mt-1 w-full" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="deposit_amount" value="Deposit (Rp)" />
+                                <InputLabel htmlFor="deposit_amount" value={t('rental.fields.deposit')} />
                                 <TextInput id="deposit_amount" type="number" min="0" value={data.deposit_amount} onChange={(e) => setData('deposit_amount', e.target.value)} className="mt-1 w-full" />
                             </div>
                         </div>
                     </div>
                     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                        <InputLabel htmlFor="notes" value="Notes" />
+                        <InputLabel htmlFor="notes" value={t('rental.fields.notes')} />
                         <textarea id="notes" rows={3} value={data.notes} onChange={(e) => setData('notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                     </div>
                     <div className="flex justify-end gap-3">
-                        <Link href={prefixedRoute('rental.show', rental.id)}><SecondaryButton type="button">Cancel</SecondaryButton></Link>
-                        <PrimaryButton disabled={processing}>Save Changes</PrimaryButton>
+                        <Link href={prefixedRoute('rental.show', rental.id)}><SecondaryButton type="button">{t('common.cancel')}</SecondaryButton></Link>
+                        <PrimaryButton disabled={processing}>{t('common.save')}</PrimaryButton>
                     </div>
                 </form>
             </div>

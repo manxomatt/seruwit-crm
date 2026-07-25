@@ -75,9 +75,9 @@ class UpdateTripRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'vehicle_id.exists' => 'The selected vehicle does not exist.',
-            'driver_id.exists' => 'The selected driver does not exist.',
-            'partner_id.exists' => 'The selected customer does not exist.',
+            'vehicle_id.exists' => __('transportation.validation.vehicle_exists'),
+            'driver_id.exists' => __('transportation.validation.driver_exists'),
+            'partner_id.exists' => __('transportation.validation.partner_exists'),
         ];
     }
 }

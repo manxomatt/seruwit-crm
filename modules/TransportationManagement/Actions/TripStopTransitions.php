@@ -17,11 +17,11 @@ class TripStopTransitions
     public function arrive(Trip $trip, TripStop $stop): TransitionResult
     {
         if ($trip->status !== Trip::STATUS_IN_PROGRESS) {
-            return TransitionResult::refused('Stops can only be worked while the trip is in progress.');
+            return TransitionResult::refused(__('transportation.messages.stop_in_progress_only'));
         }
 
         if ($stop->status !== TripStop::STATUS_PENDING) {
-            return TransitionResult::refused('Only a pending stop can be marked as arrived.');
+            return TransitionResult::refused(__('transportation.messages.stop_arrive_pending_only'));
         }
 
         // Eloquent update, never a bulk query update: Orders observes stop
@@ -32,17 +32,17 @@ class TripStopTransitions
             'arrived_at' => now(),
         ]);
 
-        return TransitionResult::ok('Arrived at stop.');
+        return TransitionResult::ok(__('transportation.messages.stop_arrived'));
     }
 
     public function complete(Trip $trip, TripStop $stop): TransitionResult
     {
         if ($trip->status !== Trip::STATUS_IN_PROGRESS) {
-            return TransitionResult::refused('Stops can only be worked while the trip is in progress.');
+            return TransitionResult::refused(__('transportation.messages.stop_in_progress_only'));
         }
 
         if (! in_array($stop->status, [TripStop::STATUS_PENDING, TripStop::STATUS_ARRIVED], true)) {
-            return TransitionResult::refused('This stop has already been completed.');
+            return TransitionResult::refused(__('transportation.messages.stop_already_completed'));
         }
 
         $stop->update([
@@ -51,6 +51,6 @@ class TripStopTransitions
             'completed_at' => now(),
         ]);
 
-        return TransitionResult::ok('Stop completed.');
+        return TransitionResult::ok(__('transportation.messages.stop_completed'));
     }
 }

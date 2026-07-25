@@ -82,7 +82,7 @@ class RentalController extends Controller
         ]));
 
         return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
-            ->with('success', 'Rental created.');
+            ->with('success', __('rental.messages.created'));
     }
 
     public function show(Rental $rental): Response
@@ -106,7 +106,7 @@ class RentalController extends Controller
         abort_if(
             ! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED]),
             403,
-            'Only draft or confirmed rentals can be edited.',
+            __('rental.errors.edit_draft_confirmed_only'),
         );
 
         $rental->load(['vehicle:id,name,plate_number,type', 'driver:id,name', 'partner:id,name,code']);
@@ -136,7 +136,7 @@ class RentalController extends Controller
         abort_if(
             ! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED]),
             403,
-            'Only draft or confirmed rentals can be edited.',
+            __('rental.errors.edit_draft_confirmed_only'),
         );
 
         $validated = $request->validated();
@@ -151,7 +151,7 @@ class RentalController extends Controller
         ]));
 
         return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
-            ->with('success', 'Rental updated.');
+            ->with('success', __('rental.messages.updated'));
     }
 
     public function destroy(Rental $rental): RedirectResponse
@@ -159,12 +159,12 @@ class RentalController extends Controller
         abort_if(
             $rental->status !== Rental::STATUS_DRAFT,
             403,
-            'Only draft rentals can be deleted.',
+            __('rental.errors.delete_draft_only'),
         );
 
         $rental->delete();
 
         return redirect()->route($this->getRoutePrefix().'.rental.index')
-            ->with('success', 'Rental deleted.');
+            ->with('success', __('rental.messages.deleted'));
     }
 }

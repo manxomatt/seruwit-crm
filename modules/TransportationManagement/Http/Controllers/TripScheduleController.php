@@ -78,7 +78,7 @@ class TripScheduleController extends Controller
         $schedule = TripSchedule::create($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.transportation.schedules.show', $schedule)
-            ->with('success', 'Schedule created successfully.');
+            ->with('success', __('transportation.messages.schedule_created'));
     }
 
     /**
@@ -121,7 +121,7 @@ class TripScheduleController extends Controller
         $schedule->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.transportation.schedules.show', $schedule)
-            ->with('success', 'Schedule updated successfully.');
+            ->with('success', __('transportation.messages.schedule_updated'));
     }
 
     /**
@@ -133,7 +133,7 @@ class TripScheduleController extends Controller
         $schedule->delete();
 
         return redirect()->route($this->getRoutePrefix().'.transportation.schedules.index')
-            ->with('success', 'Schedule deleted successfully.');
+            ->with('success', __('transportation.messages.schedule_deleted'));
     }
 
     /**
@@ -163,11 +163,16 @@ class TripScheduleController extends Controller
             }
         });
 
-        $message = "{$createdCount} trip dibuat.";
+        $message = __('transportation.messages.generate_created', ['count' => $createdCount]);
         if ($skipped !== []) {
-            $message .= ' '.count($skipped).' dilewati: '.implode('; ', array_slice($skipped, 0, 5));
+            $message .= __('transportation.messages.generate_skipped', [
+                'count' => count($skipped),
+                'reasons' => implode('; ', array_slice($skipped, 0, 5)),
+            ]);
             if (count($skipped) > 5) {
-                $message .= ' (dan '.(count($skipped) - 5).' lainnya)';
+                $message .= __('transportation.messages.generate_and_more', [
+                    'count' => count($skipped) - 5,
+                ]);
             }
         }
 

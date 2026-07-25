@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link, router } from '@inertiajs/react';
@@ -32,6 +33,7 @@ interface Props {
 
 export default function Show({ schedule, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -50,7 +52,7 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                     <div className="flex gap-2">
                         {can.update && (
                             <Link href={prefixedRoute('transportation.schedules.edit', schedule.id)}>
-                                <SecondaryButton>Edit</SecondaryButton>
+                                <SecondaryButton>{t('common.edit')}</SecondaryButton>
                             </Link>
                         )}
                         <Link href={prefixedRoute('transportation.schedules.index')}>
@@ -69,7 +71,7 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                     <div className="p-6">
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Vehicle</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.vehicle')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     <Link href={prefixedRoute('fleet.vehicles.show', schedule.vehicle.id)} className="text-indigo-600 hover:text-indigo-900">
                                         {schedule.vehicle.name} ({schedule.vehicle.plate_number})
@@ -77,7 +79,7 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Driver</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.driver')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     <Link href={prefixedRoute('fleet.drivers.show', schedule.driver.id)} className="text-indigo-600 hover:text-indigo-900">
                                         {schedule.driver.name}
@@ -85,7 +87,7 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Partner</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.partner')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
                                     {schedule.partner ? (
                                         <Link href={prefixedRoute('partners.show', schedule.partner.id)} className="text-indigo-600 hover:text-indigo-900">
@@ -97,15 +99,15 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.status')}</dt>
                                 <dd className="mt-1">
                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${schedule.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                        {schedule.is_active ? 'Active' : 'Paused'}
+                                        {t(`transportation.status.${schedule.is_active ? 'active' : 'paused'}`, undefined, schedule.is_active ? 'active' : 'paused')}
                                     </span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Days of Week</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.days_of_week')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{schedule.days_of_week.map((d) => DAY_LABELS[d]).join(', ')}</dd>
                             </div>
                             <div>
@@ -117,11 +119,11 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                                 <dd className="mt-1 text-sm text-gray-900">{schedule.distance_km ? `${schedule.distance_km} km` : '—'}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Starts On</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.starts_on')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{schedule.starts_on}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Ends On</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.ends_on')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{schedule.ends_on || 'No end date'}</dd>
                             </div>
                             <div>
@@ -130,7 +132,7 @@ export default function Show({ schedule, can }: Props): JSX.Element {
                             </div>
                             {schedule.cargo_notes && (
                                 <div className="sm:col-span-3">
-                                    <dt className="text-sm font-medium text-gray-500">Cargo Notes</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.cargo_notes')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{schedule.cargo_notes}</dd>
                                 </div>
                             )}

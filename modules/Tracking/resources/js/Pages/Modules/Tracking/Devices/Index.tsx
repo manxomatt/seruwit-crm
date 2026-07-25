@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
@@ -38,6 +39,7 @@ interface Props {
 
 export default function Index({ devices, pairableVehicles, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [pairing, setPairing] = useState<Device | null>(null);
 
     const form = useForm({ vehicle_id: '' });
@@ -67,12 +69,12 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Tracking</h2>
-                    {can.create && <PrimaryButton onClick={sync}>Sync from Traccar</PrimaryButton>}
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>
+                    {can.create && <PrimaryButton onClick={sync}>{t('tracking.actions.sync')}</PrimaryButton>}
                 </div>
             }
         >
-            <Head title="GPS Devices" />
+            <Head title={t('tracking.pages.devices.title')} />
 
             <TrackingNav />
 
@@ -80,7 +82,7 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
                 <div className="p-6">
                     {devices.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No devices yet</h3>
+                            <h3 className="text-sm font-medium text-gray-900">{t('tracking.pages.devices.empty')}</h3>
                             <p className="mt-1 text-sm text-gray-500">
                                 Use “Sync from Traccar” to import the trackers on your account.
                             </p>
@@ -90,11 +92,11 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Device</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.device')}</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">IMEI</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Vehicle</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.vehicle')}</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Fix</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.status')}</th>
                                         <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                                     </tr>
                                 </thead>
@@ -106,7 +108,7 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                                 {device.vehicle ? `${device.vehicle.name} (${device.vehicle.plate_number})` : (
                                                     <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                                                        belum ter-pair
+                                                        {t('tracking.status.unpaired')}
                                                     </span>
                                                 )}
                                             </td>
@@ -122,19 +124,19 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
                                                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${device.status === 'online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                    {device.status ?? 'unknown'}
+                                                    {device.status === 'online' ? t('tracking.status.online') : t('tracking.status.unknown')}
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-3">
                                                     {can.update && !device.vehicle && (
                                                         <button onClick={() => setPairing(device)} className="text-indigo-600 hover:text-indigo-900">
-                                                            Pair
+                                                            {t('tracking.actions.pair')}
                                                         </button>
                                                     )}
                                                     {can.update && device.vehicle && (
                                                         <button onClick={() => unpair(device)} className="text-amber-600 hover:text-amber-900">
-                                                            Unpair
+                                                            {t('tracking.actions.unpair')}
                                                         </button>
                                                     )}
                                                 </div>
@@ -150,15 +152,15 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
 
             <Modal show={pairing !== null} onClose={() => setPairing(null)} maxWidth="md">
                 <form onSubmit={submitPair} className="p-6">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">Pair {pairing?.name}</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        {t('tracking.actions.pair')} {pairing?.name}
+                    </h3>
 
                     {pairableVehicles.length === 0 ? (
-                        <p className="text-sm text-gray-500">
-                            Every vehicle already has a tracker. Unpair one first.
-                        </p>
+                        <p className="text-sm text-gray-500">{t('tracking.pages.devices.all_paired')}</p>
                     ) : (
                         <div>
-                            <InputLabel htmlFor="vehicle_id" value="Vehicle" />
+                            <InputLabel htmlFor="vehicle_id" value={t('tracking.fields.vehicle')} />
                             <Select
                                 id="vehicle_id"
                                 className="mt-1"
@@ -178,8 +180,10 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
                     )}
 
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setPairing(null)}>Cancel</SecondaryButton>
-                        {pairableVehicles.length > 0 && <PrimaryButton disabled={form.processing}>Pair</PrimaryButton>}
+                        <SecondaryButton type="button" onClick={() => setPairing(null)}>{t('common.cancel')}</SecondaryButton>
+                        {pairableVehicles.length > 0 && (
+                            <PrimaryButton disabled={form.processing}>{t('tracking.actions.pair')}</PrimaryButton>
+                        )}
                     </div>
                 </form>
             </Modal>

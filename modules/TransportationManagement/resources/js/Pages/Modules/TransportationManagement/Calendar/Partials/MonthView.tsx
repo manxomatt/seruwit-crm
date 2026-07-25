@@ -1,4 +1,5 @@
-import { Trip, TripDots, WEEKDAY_LABELS, toDateKey } from './shared';
+import { useTrans } from '@/hooks/useTrans';
+import { Trip, TripDots, DAY_KEYS, toDateKey } from './shared';
 
 interface Props {
     date: Date;
@@ -28,19 +29,20 @@ function buildMonthGrid(date: Date): (Date | null)[] {
 }
 
 export default function MonthView({ date, tripsByDate, today, selectedDate, onSelectDate }: Props): JSX.Element {
+    const { t } = useTrans();
     const cells = buildMonthGrid(date);
 
     return (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50/80">
-                {WEEKDAY_LABELS.map((label, index) => (
+                {DAY_KEYS.map((dayKey, index) => (
                     <div
-                        key={label}
+                        key={dayKey}
                         className={`px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider ${
                             index === 0 || index === 6 ? 'text-gray-400' : 'text-gray-500'
                         }`}
                     >
-                        {label}
+                        {t(`transportation.days.${dayKey}`)}
                     </div>
                 ))}
             </div>

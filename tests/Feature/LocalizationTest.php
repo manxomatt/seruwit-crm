@@ -65,6 +65,18 @@ class LocalizationTest extends TestCase
                 ->has('translations.promotions.nav.programs')
                 ->has('translations.purchasing')
                 ->has('translations.purchasing.nav.purchase_orders')
+                ->has('translations.receivables')
+                ->has('translations.receivables.nav.payments')
+                ->has('translations.rental')
+                ->has('translations.rental.pages.index.title')
+                ->has('translations.routing')
+                ->has('translations.routing.pages.index.title')
+                ->has('translations.scoring')
+                ->has('translations.scoring.nav.leaderboard')
+                ->has('translations.tracking')
+                ->has('translations.tracking.nav.map')
+                ->has('translations.transportation')
+                ->has('translations.transportation.nav.trips')
                 ->has('availableLocales', 2)
             );
     }
@@ -113,6 +125,18 @@ class LocalizationTest extends TestCase
                 ->where('translations.promotions.programs.index.new', 'New Program')
                 ->where('translations.purchasing.nav.purchase_orders', 'Purchase Orders')
                 ->where('translations.purchasing.purchase_orders.index.new', 'New PO')
+                ->where('translations.receivables.nav.payments', 'Payments')
+                ->where('translations.receivables.payments.index.record', 'Record Payment')
+                ->where('translations.rental.pages.index.title', 'Vehicle Rentals')
+                ->where('translations.rental.actions.new_rental', 'New Rental')
+                ->where('translations.routing.pages.index.title', 'Route Plans')
+                ->where('translations.routing.actions.new_plan', 'New Plan')
+                ->where('translations.scoring.nav.leaderboard', 'Leaderboard')
+                ->where('translations.scoring.actions.save_settings', 'Save settings')
+                ->where('translations.tracking.nav.map', 'Live Map')
+                ->where('translations.tracking.actions.sync', 'Sync from Traccar')
+                ->where('translations.transportation.nav.trips', 'Trips')
+                ->where('translations.transportation.actions.dispatch', 'Dispatch Trip')
             );
 
         $this->patch(route('locale.update'), ['locale' => 'id'])->assertRedirect();
@@ -157,6 +181,18 @@ class LocalizationTest extends TestCase
                 ->where('translations.promotions.programs.index.new', 'Program Baru')
                 ->where('translations.purchasing.nav.purchase_orders', 'Purchase Orders')
                 ->where('translations.purchasing.purchase_orders.index.new', 'PO Baru')
+                ->where('translations.receivables.nav.payments', 'Pembayaran')
+                ->where('translations.receivables.payments.index.record', 'Rekam Pembayaran')
+                ->where('translations.rental.pages.index.title', 'Rental Kendaraan')
+                ->where('translations.rental.actions.new_rental', 'Rental Baru')
+                ->where('translations.routing.pages.index.title', 'Rencana Rute')
+                ->where('translations.routing.actions.new_plan', 'Rencana Baru')
+                ->where('translations.scoring.nav.leaderboard', 'Leaderboard')
+                ->where('translations.scoring.actions.save_settings', 'Simpan pengaturan')
+                ->where('translations.tracking.nav.map', 'Live Map')
+                ->where('translations.tracking.actions.sync', 'Sync dari Traccar')
+                ->where('translations.transportation.nav.trips', 'Trip')
+                ->where('translations.transportation.actions.dispatch', 'Dispatch Trip')
             );
     }
 

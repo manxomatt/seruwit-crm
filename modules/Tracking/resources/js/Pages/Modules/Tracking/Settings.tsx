@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -33,6 +34,7 @@ interface Props {
 
 export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl, lastPolledAt, lastPollError, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -81,8 +83,8 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
     const usesToken = data.auth_type === 'token';
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Tracking</h2>}>
-            <Head title="Tracking Settings" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>}>
+            <Head title={t('tracking.pages.settings.title')} />
 
             <TrackingNav />
 
@@ -111,7 +113,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
 
             {lastPollError && (
                 <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800">
-                    Last poll failed: {lastPollError}
+                    {t('tracking.pages.map.last_poll_failed', { error: lastPollError })}
                 </div>
             )}
 
@@ -119,7 +121,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                 <div className="p-6">
                     <form onSubmit={submit} className="max-w-2xl space-y-6">
                         <div>
-                            <InputLabel htmlFor="base_url" value="Traccar server URL" />
+                            <InputLabel htmlFor="base_url" value={t('tracking.fields.base_url')} />
                             <TextInput
                                 id="base_url"
                                 type="url"
@@ -135,15 +137,15 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="auth_type" value="Authentication" />
+                            <InputLabel htmlFor="auth_type" value={t('tracking.fields.auth_type')} />
                             <Select
                                 id="auth_type"
                                 className="mt-1"
                                 value={data.auth_type}
                                 onChange={(value) => setData('auth_type', value)}
                                 options={[
-                                    { value: 'basic', label: 'Email & password' },
-                                    { value: 'token', label: 'API token' },
+                                    { value: 'basic', label: t('tracking.auth_types.basic') },
+                                    { value: 'token', label: t('tracking.auth_types.token') },
                                 ]}
                             />
                             <InputError message={errors.auth_type} className="mt-2" />
@@ -151,7 +153,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
 
                         {usesToken ? (
                             <div>
-                                <InputLabel htmlFor="token" value="API token" />
+                                <InputLabel htmlFor="token" value={t('tracking.fields.token')} />
                                 <TextInput
                                     id="token"
                                     type="password"
@@ -166,7 +168,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                         ) : (
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div>
-                                    <InputLabel htmlFor="email" value="Traccar user" />
+                                    <InputLabel htmlFor="email" value={t('tracking.fields.email')} />
                                     <TextInput
                                         id="email"
                                         className="mt-1 block w-full"
@@ -176,7 +178,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                     <InputError message={errors.email} className="mt-2" />
                                 </div>
                                 <div>
-                                    <InputLabel htmlFor="password" value="Password" />
+                                    <InputLabel htmlFor="password" value={t('tracking.fields.password')} />
                                     <TextInput
                                         id="password"
                                         type="password"
@@ -203,7 +205,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
 
                         <div className="grid grid-cols-1 gap-6 border-t border-gray-200 pt-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="geofence_radius_m" value="Arrival radius (m)" />
+                                <InputLabel htmlFor="geofence_radius_m" value={t('tracking.fields.geofence_radius_m')} />
                                 <TextInput
                                     id="geofence_radius_m"
                                     type="number"
@@ -218,7 +220,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                 </p>
                             </div>
                             <div>
-                                <InputLabel htmlFor="retention_days" value="Keep raw positions (days)" />
+                                <InputLabel htmlFor="retention_days" value={t('tracking.fields.retain_positions_days')} />
                                 <TextInput
                                     id="retention_days"
                                     type="number"
@@ -233,7 +235,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                 </p>
                             </div>
                             <div>
-                                <InputLabel htmlFor="checkpoint_min_distance_m" value="Trail point every (m)" />
+                                <InputLabel htmlFor="checkpoint_min_distance_m" value={t('tracking.fields.trail_every_m')} />
                                 <TextInput
                                     id="checkpoint_min_distance_m"
                                     type="number"
@@ -245,7 +247,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                 <InputError message={errors.checkpoint_min_distance_m} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="checkpoint_min_interval_minutes" value="…or every (minutes)" />
+                                <InputLabel htmlFor="checkpoint_min_interval_minutes" value={t('tracking.fields.trail_every_minutes')} />
                                 <TextInput
                                     id="checkpoint_min_interval_minutes"
                                     type="number"
@@ -260,9 +262,9 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
 
                         {can.update && (
                             <div className="flex items-center gap-4">
-                                <PrimaryButton disabled={processing}>Save Settings</PrimaryButton>
+                                <PrimaryButton disabled={processing}>{t('tracking.actions.save')}</PrimaryButton>
                                 <SecondaryButton type="button" onClick={testConnection} disabled={testing}>
-                                    {testing ? 'Testing...' : 'Test connection'}
+                                    {testing ? 'Testing...' : t('tracking.actions.test_connection')}
                                 </SecondaryButton>
                                 <span className="text-xs text-gray-500">Last poll: {lastPolledAt ?? 'never'}</span>
                             </div>

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
@@ -37,10 +38,7 @@ interface Props {
     filters: { status: string | null; search: string | null };
 }
 
-const STATUS_LABELS: Record<string, string> = {
-    draft: 'Draft', confirmed: 'Confirmed', active: 'Active',
-    returned: 'Returned', completed: 'Completed', cancelled: 'Cancelled',
-};
+const STATUSES = ['draft', 'confirmed', 'active', 'returned', 'completed', 'cancelled'] as const;
 
 const STATUS_COLORS: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
@@ -54,8 +52,12 @@ const STATUS_COLORS: Record<string, string> = {
 const formatMoney = (v: string | number) =>
     'Rp ' + Number(v).toLocaleString('id-ID');
 
+const periodUnit = (periodType: string): string =>
+    periodType === 'daily' ? 'day' : periodType === 'weekly' ? 'week' : 'month';
+
 export default function Index({ rentals, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [search, setSearch] = useState(filters.search ?? '');
 
     const applyFilters = (overrides: Record<string, string>) => {
@@ -68,23 +70,23 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header="Rental">
-            <Head title="Rental" />
+        <DynamicLayout header={t('rental.pages.index.head')}>
+            <Head title={t('rental.pages.index.head')} />
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Vehicle Rentals</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{rentals.total} total rentals</p>
+                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t('rental.pages.index.title')}</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('rental.pages.index.total', { count: rentals.total })}</p>
                     </div>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('rental.rates.index')}>
                             <button className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                Rates
+                                {t('rental.nav.rates')}
                             </button>
                         </Link>
                         <Link href={prefixedRoute('rental.create')}>
-                            <PrimaryButton>New Rental</PrimaryButton>
+                            <PrimaryButton>{t('rental.actions.new_rental')}</PrimaryButton>
                         </Link>
                     </div>
                 </div>
@@ -93,13 +95,13 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                 <div className="mb-4 flex flex-wrap gap-3">
                     <form onSubmit={handleSearch} className="flex gap-2">
                         <TextInput
-                            placeholder="Search code or partner…"
+                            placeholder={t('rental.placeholders.search')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-56"
                         />
                         <button type="submit" className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
-                            Search
+                            {t('rental.actions.search')}
                         </button>
                     </form>
                     <select
@@ -107,9 +109,9 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                         onChange={(e) => applyFilters({ status: e.target.value })}
                         className="w-40 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     >
-                        <option value="">All Status</option>
-                        {Object.entries(STATUS_LABELS).map(([v, l]) => (
-                            <option key={v} value={v}>{l}</option>
+                        <option value="">{t('rental.status.all')}</option>
+                        {STATUSES.map((status) => (
+                            <option key={status} value={status}>{t(`rental.status.${status}`, undefined, status)}</option>
                         ))}
                     </select>
                 </div>
@@ -119,7 +121,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                {['Code', 'Partner', 'Vehicle', 'Period', 'Status', 'Amount', ''].map((h) => (
+                                {[t('rental.fields.code'), t('rental.fields.partner'), t('rental.fields.vehicle'), t('rental.fields.period'), t('rental.fields.status'), t('rental.fields.amount'), ''].map((h) => (
                                     <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {h}
                                     </th>
@@ -130,7 +132,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                             {rentals.data.length === 0 && (
                                 <tr>
                                     <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">
-                                        No rentals found.
+                                        {t('rental.pages.index.empty')}
                                     </td>
                                 </tr>
                             )}
@@ -142,7 +144,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                         </span>
                                         {rental.is_overdue && (
                                             <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
-                                                Overdue
+                                                {t('rental.status.overdue')}
                                             </span>
                                         )}
                                     </td>
@@ -156,12 +158,12 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                         <div>{rental.start_date} → {rental.end_date}</div>
                                         <div className="text-xs text-gray-400">
-                                            {rental.total_periods} {rental.period_type === 'daily' ? 'day(s)' : rental.period_type === 'weekly' ? 'week(s)' : 'month(s)'}
+                                            {rental.total_periods} {t(`rental.period_type.${periodUnit(rental.period_type)}`, undefined, rental.period_type)}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_COLORS[rental.status] ?? ''}`}>
-                                            {STATUS_LABELS[rental.status]}
+                                            {t(`rental.status.${rental.status}`, undefined, rental.status)}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 tabular-nums dark:text-white">
@@ -172,7 +174,7 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                             href={prefixedRoute('rental.show', rental.id)}
                                             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
                                         >
-                                            View
+                                            {t('rental.actions.view')}
                                         </Link>
                                     </td>
                                 </tr>

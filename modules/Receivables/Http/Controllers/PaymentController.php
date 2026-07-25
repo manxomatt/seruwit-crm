@@ -108,7 +108,7 @@ class PaymentController extends Controller
 
         return redirect()
             ->route($this->getRoutePrefix().'.receivables.payments.show', $payment)
-            ->with('success', 'Payment recorded.');
+            ->with('success', __('receivables.messages.payment_recorded'));
     }
 
     public function show(Payment $payment): Response
@@ -129,7 +129,7 @@ class PaymentController extends Controller
     {
         PaymentRecorder::void($payment);
 
-        return back()->with('success', 'Payment voided.');
+        return back()->with('success', __('receivables.messages.payment_voided'));
     }
 
     /**

@@ -2,6 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import LeafletMap from '@/Components/Map/LeafletMap';
 import VehicleMarker from '@/Components/Map/VehicleMarker';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { useTrans } from '@/hooks/useTrans';
 import { formatCoordinate, formatSpeedKph, toLatLng, type LatLng } from '@/utils/geo';
 import { Head, usePoll } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
@@ -41,6 +42,7 @@ function toneFor(device: Device): 'moving' | 'idle' | 'stale' {
 }
 
 export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError }: Props): JSX.Element {
+    const { t } = useTrans();
     const [focused, setFocused] = useState<LatLng | null>(null);
 
     // The server only refreshes from Traccar once a minute, so polling faster
@@ -71,24 +73,26 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Tracking</h2>
-                    <SecondaryButton onClick={toggleLive}>{live ? 'Pause live' : 'Resume live'}</SecondaryButton>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>
+                    <SecondaryButton onClick={toggleLive}>
+                        {live ? t('tracking.actions.pause_live') : t('tracking.actions.resume_live')}
+                    </SecondaryButton>
                 </div>
             }
         >
-            <Head title="Live Map" />
+            <Head title={t('tracking.pages.map.title')} />
 
             <TrackingNav />
 
             {!pollEnabled && (
                 <div className="mb-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
-                    Polling is switched off, so positions will not refresh. Enable it on the Settings tab.
+                    {t('tracking.pages.map.polling_off')}
                 </div>
             )}
 
             {lastPollError && (
                 <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800">
-                    Last poll failed: {lastPollError}
+                    {t('tracking.pages.map.last_poll_failed', { error: lastPollError })}
                 </div>
             )}
 
@@ -117,7 +121,9 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
                                                 {device.vehicle ? (
                                                     <span className="ml-1 text-gray-500">({device.vehicle.plate_number})</span>
                                                 ) : (
-                                                    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">belum di-pair</span>
+                                                    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                                                        {t('tracking.status.unpaired')}
+                                                    </span>
                                                 )}
                                             </p>
                                             <p className="text-sm text-gray-500">

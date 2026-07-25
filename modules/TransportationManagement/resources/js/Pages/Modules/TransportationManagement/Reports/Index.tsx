@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
@@ -67,6 +68,7 @@ function Bar({ value, max }: { value: number; max: number }): JSX.Element {
 
 export default function Index({ filters, tripsByStatus, vehicleUtilization, driverUtilization, fuelCostByVehicle, maintenanceCostByVehicle }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
 
@@ -82,9 +84,9 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Transportation Reports</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('transportation.pages.reports.title')}</h2>}
         >
-            <Head title="Transportation Reports" />
+            <Head title={t('transportation.pages.reports.title')} />
 
             <TransportationNav />
 
@@ -93,28 +95,28 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
                     <div className="p-6">
                         <form onSubmit={submit} className="flex flex-wrap items-end gap-4">
                             <div>
-                                <InputLabel htmlFor="from" value="From" />
+                                <InputLabel htmlFor="from" value={t('transportation.fields.starts_on')} />
                                 <TextInput id="from" type="date" className="mt-1 block" value={from} onChange={(e) => setFrom(e.target.value)} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="to" value="To" />
+                                <InputLabel htmlFor="to" value={t('transportation.fields.ends_on')} />
                                 <TextInput id="to" type="date" className="mt-1 block" value={to} onChange={(e) => setTo(e.target.value)} />
                             </div>
-                            <PrimaryButton type="submit">Apply</PrimaryButton>
+                            <PrimaryButton type="submit">{t('common.apply')}</PrimaryButton>
                         </form>
                     </div>
                 </div>
 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="mb-4 text-lg font-medium text-gray-900">Trips by Status</h3>
+                        <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.pages.reports.by_status')}</h3>
                         {Object.keys(tripsByStatus).length === 0 ? (
                             <p className="text-sm text-gray-500">No trips scheduled in this range.</p>
                         ) : (
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                                 {Object.entries(tripsByStatus).map(([status, count]) => (
                                     <div key={status} className="rounded-md border border-gray-200 p-4">
-                                        <p className="text-sm capitalize text-gray-500">{status.replace('_', ' ')}</p>
+                                        <p className="text-sm capitalize text-gray-500">{t(`transportation.status.${status}`, undefined, status)}</p>
                                         <p className="text-2xl font-semibold text-gray-900">{count}</p>
                                     </div>
                                 ))}
@@ -126,7 +128,7 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Vehicle Utilization</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.pages.reports.vehicle_utilization')}</h3>
                             {vehicleUtilization.length === 0 ? (
                                 <p className="text-sm text-gray-500">No trips in this range.</p>
                             ) : (
@@ -147,7 +149,7 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
 
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Driver Utilization</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.pages.reports.driver_utilization')}</h3>
                             {driverUtilization.length === 0 ? (
                                 <p className="text-sm text-gray-500">No trips in this range.</p>
                             ) : (
@@ -168,7 +170,7 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
 
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Fuel Cost & Consumption by Vehicle</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.pages.reports.fuel_by_vehicle')}</h3>
                             {fuelCostByVehicle.length === 0 ? (
                                 <p className="text-sm text-gray-500">No fuel logs in this range.</p>
                             ) : (
@@ -193,7 +195,7 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
 
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h3 className="mb-4 text-lg font-medium text-gray-900">Maintenance Cost by Vehicle</h3>
+                            <h3 className="mb-4 text-lg font-medium text-gray-900">{t('transportation.pages.reports.maintenance_by_vehicle')}</h3>
                             {maintenanceCostByVehicle.length === 0 ? (
                                 <p className="text-sm text-gray-500">No completed maintenance in this range.</p>
                             ) : (

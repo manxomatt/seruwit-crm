@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import TransportationNav from '../../../../TransportationNav';
@@ -7,7 +8,7 @@ import DayTripsPanel from './Partials/DayTripsPanel';
 import MonthView from './Partials/MonthView';
 import WeekView from './Partials/WeekView';
 import YearView from './Partials/YearView';
-import { CalendarView, ChevronLeftIcon, ChevronRightIcon, STATUS_CONFIG, Trip, isSameWeek, parseDateKey, startOfWeek, toDateKey } from './Partials/shared';
+import { CalendarView, ChevronLeftIcon, ChevronRightIcon, STATUS_STYLES, Trip, isSameWeek, parseDateKey, startOfWeek, toDateKey } from './Partials/shared';
 
 interface Props {
     view: CalendarView;
@@ -15,10 +16,10 @@ interface Props {
     tripsByDate: Record<string, Trip[]>;
 }
 
-const VIEW_TABS: { key: CalendarView; label: string }[] = [
-    { key: 'week', label: 'Week' },
-    { key: 'month', label: 'Month' },
-    { key: 'year', label: 'Year' },
+const VIEW_TABS: { key: CalendarView; labelKey: string }[] = [
+    { key: 'week', labelKey: 'transportation.calendar.week' },
+    { key: 'month', labelKey: 'transportation.calendar.month' },
+    { key: 'year', labelKey: 'transportation.calendar.year' },
 ];
 
 const PERIOD_LABEL: Record<CalendarView, string> = {
@@ -54,6 +55,7 @@ function shiftDate(view: CalendarView, date: Date, offset: number): Date {
 
 export default function Index({ view, date: dateKey, tripsByDate }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const date = parseDateKey(dateKey);
     const today = toDateKey(new Date());
     const totalTrips = Object.values(tripsByDate).reduce((sum, trips) => sum + trips.length, 0);
@@ -102,7 +104,7 @@ export default function Index({ view, date: dateKey, tripsByDate }: Props): JSX.
                                         view === tab.key ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'
                                     }`}
                                 >
-                                    {tab.label}
+                                    {t(tab.labelKey)}
                                 </button>
                             ))}
                         </div>
@@ -132,16 +134,16 @@ export default function Index({ view, date: dateKey, tripsByDate }: Props): JSX.
                 </div>
             }
         >
-            <Head title="Trip Calendar" />
+            <Head title={t('transportation.pages.calendar.title')} />
 
             <TransportationNav />
 
             {/* Legend */}
             <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-500">
-                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                {Object.entries(STATUS_STYLES).map(([key, config]) => (
                     <div key={key} className="flex items-center gap-1.5">
                         <span className={`h-2 w-2 rounded-full ${config.dot}`} />
-                        {config.label}
+                        {t(`transportation.status.${key}`, undefined, key)}
                     </div>
                 ))}
             </div>

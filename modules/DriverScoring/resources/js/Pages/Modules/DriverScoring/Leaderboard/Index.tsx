@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import ScoringNav from '../../../../ScoringNav';
@@ -22,10 +23,11 @@ interface Props {
 
 export default function Index({ leaderboard, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Driver Leaderboard</h2>}>
-            <Head title="Driver Scoring" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('scoring.pages.leaderboard.title')}</h2>}>
+            <Head title={t('scoring.pages.leaderboard.head')} />
             <div className="py-6">
                 <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <ScoringNav />
@@ -61,19 +63,19 @@ export default function Index({ leaderboard, filters }: Props): JSX.Element {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">#</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Driver</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Avg score</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('scoring.fields.driver')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('scoring.fields.score')}</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Days</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Harsh brake</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Speeding</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Idle</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('scoring.types.harsh_brake')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('scoring.types.speeding')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('scoring.types.idle')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {leaderboard.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
-                                            Belum ada skor. Pastikan trip in-progress + GPS poll aktif.
+                                            {t('scoring.pages.leaderboard.empty_hint')}
                                         </td>
                                     </tr>
                                 ) : (

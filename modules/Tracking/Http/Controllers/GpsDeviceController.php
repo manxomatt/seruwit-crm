@@ -59,7 +59,7 @@ class GpsDeviceController extends Controller
         $config = TrackingConfig::current();
 
         if (! $config->isConfigured()) {
-            return back()->with('error', 'Configure the Traccar connection first.');
+            return back()->with('error', __('tracking.messages.configure_first'));
         }
 
         try {
@@ -90,7 +90,7 @@ class GpsDeviceController extends Controller
             $synced++;
         }
 
-        return back()->with('success', "Synced {$synced} device(s) from Traccar.");
+        return back()->with('success', __('tracking.messages.synced', ['count' => $synced]));
     }
 
     /**
@@ -100,13 +100,13 @@ class GpsDeviceController extends Controller
     public function pair(PairGpsDeviceRequest $request, GpsDevice $device): RedirectResponse
     {
         if ($device->vehicle_id !== null) {
-            return back()->with('error', 'This device is already paired. Unpair it first.');
+            return back()->with('error', __('tracking.messages.already_paired'));
         }
 
         $vehicle = Vehicle::findOrFail($request->validated()['vehicle_id']);
 
         if ($vehicle->gpsDevice()->exists()) {
-            return back()->with('error', 'That vehicle already has a tracker.');
+            return back()->with('error', __('tracking.messages.vehicle_has_tracker'));
         }
 
         $device->update([
@@ -119,7 +119,7 @@ class GpsDeviceController extends Controller
             'traccar_total_distance_m' => null,
         ]);
 
-        return back()->with('success', "Paired to {$vehicle->name}.");
+        return back()->with('success', __('tracking.messages.paired', ['vehicle' => $vehicle->name]));
     }
 
     /**
@@ -135,7 +135,7 @@ class GpsDeviceController extends Controller
             'traccar_total_distance_m' => null,
         ]);
 
-        return back()->with('success', 'Device unpaired.');
+        return back()->with('success', __('tracking.messages.unpaired'));
     }
 
     /**
@@ -144,12 +144,12 @@ class GpsDeviceController extends Controller
     public function destroy(GpsDevice $device): RedirectResponse
     {
         if ($device->vehicle_id !== null) {
-            return back()->with('error', 'Unpair the device from its vehicle before deleting it.');
+            return back()->with('error', __('tracking.messages.unpair_before_delete'));
         }
 
         $device->delete();
 
         return redirect()->route($this->getRoutePrefix().'.tracking.devices.index')
-            ->with('success', 'Device deleted.');
+            ->with('success', __('tracking.messages.deleted'));
     }
 }

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { formatMoney } from '@/utils/money';
@@ -40,18 +41,13 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-const typeLabel: Record<string, string> = {
-    down_payment: 'DP',
-    installment: 'Cicilan',
-    settlement: 'Lunas',
-    other: 'Lainnya',
-};
-
 export default function Show({ payment, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     const voidPayment = () => {
-        if (!confirm('Void pembayaran ini? Alokasi akan dibatalkan dari invoice.')) {
+        if (!confirm(t('receivables.payments.show.void_confirm'))) {
             return;
         }
         router.post(prefixedRoute('receivables.payments.void', payment.id), {}, { preserveScroll: true });
@@ -68,15 +64,15 @@ export default function Show({ payment, can }: Props): JSX.Element {
                                 payment.status === 'posted' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
                             }`}
                         >
-                            {payment.status}
+                            {t(`receivables.status.${payment.status}`, undefined, payment.status)}
                         </span>
                     </div>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('receivables.payments.index')}>
-                            <PrimaryButton>Kembali</PrimaryButton>
+                            <PrimaryButton>{t('receivables.actions.back')}</PrimaryButton>
                         </Link>
                         {can.delete && payment.status === 'posted' && (
-                            <DangerButton onClick={voidPayment}>Void</DangerButton>
+                            <DangerButton onClick={voidPayment}>{t('receivables.actions.void')}</DangerButton>
                         )}
                     </div>
                 </div>
@@ -89,47 +85,50 @@ export default function Show({ payment, can }: Props): JSX.Element {
 
                     <div className="grid gap-4 rounded-lg border border-gray-200 bg-white p-6 sm:grid-cols-2">
                         <div>
-                            <p className="text-xs text-gray-500">Partner</p>
+                            <p className="text-xs text-gray-500">{t('receivables.fields.partner')}</p>
                             <p className="font-medium">{payment.partner.name}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Tanggal</p>
-                            <p className="font-medium">{new Date(payment.payment_date).toLocaleDateString('id-ID')}</p>
+                            <p className="text-xs text-gray-500">{t('receivables.fields.date')}</p>
+                            <p className="font-medium">{new Date(payment.payment_date).toLocaleDateString(localeTag)}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Jenis / Metode</p>
+                            <p className="text-xs text-gray-500">{t('receivables.fields.type_method')}</p>
                             <p className="font-medium">
-                                {typeLabel[payment.type] ?? payment.type} · {payment.method}
+                                {t(`receivables.types.${payment.type}`, undefined, payment.type)} ·{' '}
+                                {t(`receivables.methods.${payment.method}`, undefined, payment.method)}
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Jumlah</p>
+                            <p className="text-xs text-gray-500">{t('receivables.fields.amount')}</p>
                             <p className="text-xl font-semibold tabular-nums">{formatMoney(payment.amount)}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Referensi</p>
+                            <p className="text-xs text-gray-500">{t('receivables.fields.reference_number')}</p>
                             <p className="font-medium">{payment.reference_number || '—'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Dicatat oleh</p>
+                            <p className="text-xs text-gray-500">{t('receivables.fields.recorded_by')}</p>
                             <p className="font-medium">{payment.recorder?.name ?? '—'}</p>
                         </div>
                         {payment.notes && (
                             <div className="sm:col-span-2">
-                                <p className="text-xs text-gray-500">Catatan</p>
+                                <p className="text-xs text-gray-500">{t('receivables.fields.notes')}</p>
                                 <p className="text-gray-700">{payment.notes}</p>
                             </div>
                         )}
                     </div>
 
                     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-800">Alokasi</div>
+                        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-800">
+                            {t('receivables.payments.show.allocations')}
+                        </div>
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Invoice</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">Allocated</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.invoice')}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.status')}</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.allocated')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
