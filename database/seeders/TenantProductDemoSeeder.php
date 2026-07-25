@@ -4,16 +4,18 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\Product\Models\Brand;
 use Modules\Product\Models\Principal;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductAttribute;
+use Modules\Product\Models\ProductAttributeValue;
+use Modules\Product\Models\ProductCombination;
 use Modules\Product\Models\ProductTag;
 use Modules\Product\Models\ProductType;
 
 /**
- * Seeds realistic Product demo data: principals, brands, product types,
- * attributes, tags, and products with relationships.
+ * Seeds 40 demo products with attribute-driven variants (child SKUs + combinations).
  *
  *   php artisan tenants:seed --class=TenantProductDemoSeeder --tenants={id}
  */
@@ -21,6 +23,12 @@ class TenantProductDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! class_exists(Product::class) || ! Schema::hasTable('products')) {
+            $this->command?->warn('products table missing. Install the products module first.');
+
+            return;
+        }
+
         $this->cleanup();
 
         // ── Product Types (hierarchical) ─────────────────────────────────
@@ -105,6 +113,12 @@ class TenantProductDemoSeeder extends Seeder
             ['name' => 'Kaleng', 'sort' => 4],
             ['name' => 'Dus', 'sort' => 5],
         ]);
+
+        $attrUkuran->load('options');
+        $attrRasa->load('options');
+        $attrWarna->load('options');
+        $attrAroma->load('options');
+        $attrKemasan->load('options');
 
         // ── Principal 1: PT Indofood CBP ─────────────────────────────────
         $p1 = Principal::query()->create([
@@ -191,23 +205,14 @@ class TenantProductDemoSeeder extends Seeder
         $this->createProduct($productNum++, $b1b, $miInstan, 'Pop Mie Ayam', 'pcs', 6500, 5200, 0.075, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal], [$attrRasa]);
-        $this->createProduct($productNum++, $b1b, $miInstan, 'Pop Mie Baso', 'pcs', 6500, 5200, 0.075, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal], [$attrRasa]);
         $this->createProduct($productNum++, $b1c, $snack, 'Chitato Sapi Panggang 68g', 'pcs', 11500, 9200, 0.068, [
             'tracking' => 'qty', 'is_storable' => true, 'barcode' => '089686610123',
         ], [$tagBestSeller, $tagHalal], [$attrUkuran, $attrRasa]);
-        $this->createProduct($productNum++, $b1c, $snack, 'Chitato Keju 68g', 'pcs', 11500, 9200, 0.068, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal], [$attrUkuran, $attrRasa]);
         $this->createProduct($productNum++, $b1d, $bumbu, 'Bimoli Minyak Goreng 1L', 'pcs', 32000, 27500, 1.0, [
             'tracking' => 'qty', 'is_storable' => true, 'barcode' => '089686210011',
         ], [$tagHalal], [$attrKemasan], [
             ['name' => 'Karton', 'barcode' => '089686210028', 'qty' => 12, 'sort' => 0],
         ]);
-        $this->createProduct($productNum++, $b1d, $bumbu, 'Bimoli Minyak Goreng 2L', 'pcs', 58000, 50000, 2.0, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal, $tagEkonomi], [$attrKemasan]);
         $this->createProduct($productNum++, $b1e, $bumbu, 'Indofood Kecap Manis 275ml', 'pcs', 15500, 12500, 0.35, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal], [$attrUkuran, $attrKemasan]);
@@ -227,24 +232,15 @@ class TenantProductDemoSeeder extends Seeder
         $this->createProduct($productNum++, $b2b, $rambut, 'Sunsilk Black Shine 170ml', 'pcs', 22000, 17500, 0.2, [
             'tracking' => 'qty', 'is_storable' => true, 'barcode' => '8999999058944',
         ], [$tagBestSeller], [$attrUkuran, $attrWarna]);
-        $this->createProduct($productNum++, $b2b, $rambut, 'Sunsilk Soft & Smooth 170ml', 'pcs', 22000, 17500, 0.2, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal], [$attrUkuran]);
         $this->createProduct($productNum++, $b2b, $rambut, 'Sunsilk Hijab Recharge 170ml', 'pcs', 24000, 19500, 0.2, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal, $tagNew], [$attrUkuran]);
-        $this->createProduct($productNum++, $b2c, $sabun, 'Dove Beauty Bar 100g', 'pcs', 12000, 9500, 0.1, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagPremium], [$attrUkuran, $attrAroma]);
         $this->createProduct($productNum++, $b2c, $sabun, 'Dove Body Wash 400ml', 'pcs', 48000, 38000, 0.45, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagPremium], [$attrUkuran, $attrAroma, $attrKemasan]);
         $this->createProduct($productNum++, $b2d, $bumbu, 'Bango Kecap Manis 275ml', 'pcs', 17000, 13500, 0.35, [
             'tracking' => 'qty', 'is_storable' => true, 'barcode' => '8999999035075',
         ], [$tagBestSeller, $tagHalal], [$attrUkuran, $attrKemasan]);
-        $this->createProduct($productNum++, $b2d, $bumbu, 'Bango Kecap Manis 550ml', 'pcs', 28000, 22500, 0.62, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal, $tagEkonomi], [$attrUkuran, $attrKemasan]);
         $this->createProduct($productNum++, $b2e, $sabun, 'Lifebuoy Sabun Batang Total 10 85g', 'pcs', 5500, 4200, 0.085, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal, $tagEkonomi], [$attrUkuran, $attrAroma], [
@@ -264,15 +260,9 @@ class TenantProductDemoSeeder extends Seeder
         $this->createProduct($productNum++, $b3a, $miInstan, 'Mie Sedaap Kuah Soto', 'pcs', 3200, 2600, 0.087, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal], [$attrUkuran, $attrRasa]);
-        $this->createProduct($productNum++, $b3a, $miInstan, 'Mie Sedaap Cup Goreng', 'pcs', 5500, 4400, 0.085, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal, $tagNew], [$attrRasa]);
         $this->createProduct($productNum++, $b3b, $deterjen, 'SoKlin Liquid 800ml', 'pcs', 24000, 19500, 0.85, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagBestSeller], [$attrUkuran, $attrAroma, $attrKemasan]);
-        $this->createProduct($productNum++, $b3b, $deterjen, 'SoKlin Pewangi 900ml', 'pcs', 18000, 14500, 0.95, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagPromo], [$attrUkuran, $attrAroma, $attrKemasan]);
         $this->createProduct($productNum++, $b3c, $sabun, 'GIV White Sabun Batang 76g', 'pcs', 4000, 3200, 0.076, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagEkonomi, $tagHalal], [$attrUkuran, $attrAroma], [
@@ -286,15 +276,9 @@ class TenantProductDemoSeeder extends Seeder
         ], [$tagEkonomi, $tagHalal], [$attrUkuran, $attrRasa], [
             ['name' => 'Karton', 'barcode' => null, 'qty' => 24, 'sort' => 0],
         ]);
-        $this->createProduct($productNum++, $b3d, $minumanKemasan, 'Ale-Ale Rasa Stroberi 200ml', 'pcs', 2500, 1900, 0.22, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal], [$attrUkuran, $attrRasa]);
         $this->createProduct($productNum++, $b3e, $sabun, 'Nuvo Family Antibacterial 80g', 'pcs', 4500, 3600, 0.08, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal, $tagEkonomi], [$attrUkuran, $attrAroma]);
-        $this->createProduct($productNum++, $b3e, $sabun, 'Nuvo Liquid Body Wash 250ml', 'pcs', 18000, 14500, 0.28, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal], [$attrUkuran, $attrAroma, $attrKemasan]);
 
         // --- Mayora brands ---
         $this->createProduct($productNum++, $b4a, $kopi, 'Kopiko Brown Coffee 25g', 'pcs', 2000, 1600, 0.025, [
@@ -306,17 +290,11 @@ class TenantProductDemoSeeder extends Seeder
         $this->createProduct($productNum++, $b4a, $kopi, 'Kopiko 78°C Coffee Latte 240ml', 'pcs', 8500, 6800, 0.26, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagBestSeller, $tagNew], [$attrUkuran, $attrRasa, $attrKemasan]);
-        $this->createProduct($productNum++, $b4a, $snack, 'Kopiko Candy Coffee 150g', 'pcs', 12000, 9600, 0.15, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal, $tagBestSeller], [$attrUkuran]);
         $this->createProduct($productNum++, $b4b, $kopi, 'Torabika Cappuccino 25g', 'pcs', 2200, 1750, 0.025, [
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal, $tagBestSeller], [$attrUkuran], [
             ['name' => 'Renceng (10)', 'barcode' => null, 'qty' => 10, 'sort' => 0],
         ]);
-        $this->createProduct($productNum++, $b4b, $kopi, 'Torabika Duo 25g', 'pcs', 1800, 1400, 0.025, [
-            'tracking' => 'qty', 'is_storable' => true,
-        ], [$tagHalal, $tagEkonomi], [$attrUkuran]);
         $this->createProduct($productNum++, $b4c, $snack, 'Roma Kelapa 300g', 'pcs', 14000, 11200, 0.3, [
             'tracking' => 'qty', 'is_storable' => true, 'barcode' => '8996001302019',
         ], [$tagBestSeller, $tagHalal], [$attrUkuran], [
@@ -348,14 +326,30 @@ class TenantProductDemoSeeder extends Seeder
             'tracking' => 'qty', 'is_storable' => true,
         ], [$tagHalal], [$attrUkuran, $attrRasa]);
 
-        // --- Service products (no brand, no type, no cost, no weight/volume/tracking) ---
-        $this->createService($productNum++, 'Jasa Pengiriman Dalam Kota', 75000, [$tagBestSeller], 'Layanan pengiriman barang dalam satu kota, termasuk pickup dan drop-off.');
-        $this->createService($productNum++, 'Jasa Pengiriman Antar Kota', 250000, [$tagBestSeller], 'Layanan pengiriman barang antar kota/provinsi via darat.');
-        $this->createService($productNum++, 'Jasa Bongkar Muat', 150000, [], 'Layanan tenaga bongkar muat di gudang/lokasi pengiriman.');
-        $this->createService($productNum++, 'Biaya Asuransi Pengiriman', 25000, [], 'Perlindungan asuransi untuk barang selama proses pengiriman.');
-        $this->createService($productNum++, 'Jasa Packing & Wrapping', 35000, [$tagNew], 'Layanan pengemasan dan pembungkusan barang sebelum pengiriman.');
+        // Extra SKUs to reach 40 parents
+        $this->createProduct($productNum++, $b1a, $miInstan, 'Indomie Soto Betawi', 'pcs', 3500, 2800, 0.088, [
+            'tracking' => 'qty', 'is_storable' => true,
+        ], [$tagHalal, $tagNew], [$attrUkuran, $attrRasa]);
+        $this->createProduct($productNum++, $b1c, $snack, 'Chitato Keju Bakar 68g', 'pcs', 11500, 9200, 0.068, [
+            'tracking' => 'qty', 'is_storable' => true,
+        ], [$tagHalal, $tagPromo], [$attrUkuran, $attrRasa]);
+        $this->createProduct($productNum++, $b2c, $sabun, 'Dove Beauty Bar 90g', 'pcs', 12500, 9800, 0.09, [
+            'tracking' => 'qty', 'is_storable' => true,
+        ], [$tagPremium], [$attrUkuran, $attrAroma]);
+        $this->createProduct($productNum++, $b3d, $minumanKemasan, 'Ale-Ale Rasa Jeruk 200ml', 'pcs', 2500, 1900, 0.22, [
+            'tracking' => 'qty', 'is_storable' => true,
+        ], [$tagHalal, $tagEkonomi], [$attrUkuran, $attrRasa], [
+            ['name' => 'Karton', 'barcode' => null, 'qty' => 24, 'sort' => 0],
+        ]);
+        $this->createProduct($productNum++, $b4a, $snack, 'Kopiko Candy Coffee 150g', 'pcs', 12000, 9600, 0.15, [
+            'tracking' => 'qty', 'is_storable' => true,
+        ], [$tagHalal, $tagBestSeller], [$attrUkuran]);
+        $this->createProduct($productNum++, $b3b, $deterjen, 'SoKlin Softener Soft & Fresh 900ml', 'pcs', 18500, 14800, 0.95, [
+            'tracking' => 'qty', 'is_storable' => true,
+        ], [$tagPromo], [$attrUkuran, $attrAroma, $attrKemasan]);
 
-        $this->command?->info("Seeded {$productNum} products (incl. services) across 4 principals, 20 brands, with types/attributes/tags.");
+        $variantCount = Product::query()->whereNotNull('parent_id')->count();
+        $this->command?->info("Seeded {$productNum} parent products with {$variantCount} variants across 4 principals.");
     }
 
     /**
@@ -378,7 +372,7 @@ class TenantProductDemoSeeder extends Seeder
         array $attributes,
         array $packagings = [],
     ): Product {
-        $product = Product::query()->create(array_merge([
+        $payload = array_merge([
             'code' => sprintf('PROD-%06d', $num + 1),
             'brand_id' => $brand->id,
             'product_type_id' => $type->id,
@@ -388,10 +382,16 @@ class TenantProductDemoSeeder extends Seeder
             'cost' => $cost,
             'weight' => $weight,
             'status' => 'active',
-            'category' => 'merchandise',
-        ], $extra));
+            'sku' => sprintf('SKU-%06d', $num + 1),
+        ], $extra);
 
-        if ($tags) {
+        if (Schema::hasColumn('products', 'category')) {
+            $payload['category'] = 'merchandise';
+        }
+
+        $product = Product::query()->create($payload);
+
+        if ($tags !== []) {
             $product->tags()->sync(array_map(fn (ProductTag $t) => $t->id, $tags));
         }
 
@@ -406,52 +406,163 @@ class TenantProductDemoSeeder extends Seeder
             $product->packagings()->create($packaging);
         }
 
-        return $product;
-    }
-
-    /** @param list<ProductTag> $tags */
-    private function createService(
-        int $num,
-        string $name,
-        float $price,
-        array $tags,
-        string $description = '',
-    ): Product {
-        $product = Product::query()->create([
-            'code' => sprintf('PROD-%06d', $num + 1),
-            'name' => $name,
-            'unit' => 'service',
-            'price' => $price,
-            'status' => 'active',
-            'category' => 'service',
-            'is_storable' => false,
-            'tracking' => 'none',
-            'description' => $description ?: null,
-        ]);
-
-        if ($tags) {
-            $product->tags()->sync(array_map(fn (ProductTag $t) => $t->id, $tags));
+        if ($attributes !== []) {
+            $this->createVariants($product, $attributes);
         }
 
         return $product;
+    }
+
+    /**
+     * @param  list<ProductAttribute>  $attributes
+     */
+    private function createVariants(Product $parent, array $attributes): void
+    {
+        $optionSets = [];
+
+        foreach ($attributes as $attribute) {
+            $options = $attribute->options->take(3)->values();
+
+            if ($options->isEmpty()) {
+                continue;
+            }
+
+            $optionSets[] = [
+                'attribute' => $attribute,
+                'options' => $options,
+            ];
+        }
+
+        if ($optionSets === []) {
+            return;
+        }
+
+        /** @var list<list<array{attribute: ProductAttribute, option: \Modules\Product\Models\ProductAttributeOption}>> $combos */
+        $combos = [[]];
+
+        foreach ($optionSets as $set) {
+            $next = [];
+
+            foreach ($combos as $combo) {
+                foreach ($set['options'] as $option) {
+                    $next[] = array_merge($combo, [[
+                        'attribute' => $set['attribute'],
+                        'option' => $option,
+                    ]]);
+                }
+            }
+
+            $combos = $next;
+
+            if (count($combos) > 6) {
+                $combos = array_slice($combos, 0, 6);
+                break;
+            }
+        }
+
+        $productAttributes = $parent->productAttributes()->get()->keyBy('attribute_id');
+
+        foreach ($combos as $index => $combo) {
+            $suffix = collect($combo)->map(fn (array $part) => $part['option']->name)->implode(' / ');
+            $extraPrice = (float) collect($combo)->sum(fn (array $part) => (float) ($part['option']->extra_price ?? 0));
+
+            $variantPayload = [
+                'parent_id' => $parent->id,
+                'code' => sprintf('%s-V%02d', $parent->code, $index + 1),
+                'sku' => sprintf('%s-%02d', $parent->sku ?? $parent->code, $index + 1),
+                'brand_id' => $parent->brand_id,
+                'product_type_id' => $parent->product_type_id,
+                'name' => $parent->name.' — '.$suffix,
+                'unit' => $parent->unit,
+                'price' => (float) $parent->price + $extraPrice,
+                'cost' => $parent->cost,
+                'weight' => $parent->weight,
+                'volume' => $parent->volume,
+                'status' => 'active',
+                'tracking' => $parent->tracking,
+                'is_storable' => $parent->is_storable,
+            ];
+
+            if (Schema::hasColumn('products', 'category')) {
+                $variantPayload['category'] = $parent->category ?? 'merchandise';
+            }
+
+            $variant = Product::query()->create($variantPayload);
+
+            foreach ($combo as $part) {
+                $productAttribute = $productAttributes->get($part['attribute']->id);
+
+                if ($productAttribute === null) {
+                    continue;
+                }
+
+                $attributeValue = ProductAttributeValue::query()->create([
+                    'product_id' => $variant->id,
+                    'attribute_id' => $part['attribute']->id,
+                    'product_attribute_id' => $productAttribute->id,
+                    'attribute_option_id' => $part['option']->id,
+                    'extra_price' => $part['option']->extra_price,
+                ]);
+
+                ProductCombination::query()->create([
+                    'product_id' => $variant->id,
+                    'product_attribute_value_id' => $attributeValue->id,
+                ]);
+            }
+        }
     }
 
     private function cleanup(): void
     {
         DB::statement('SET CONSTRAINTS ALL DEFERRED');
 
-        DB::table('product_combinations')->delete();
-        DB::table('product_attribute_values')->delete();
-        DB::table('product_product_attributes')->delete();
-        DB::table('product_packagings')->delete();
-        DB::table('product_product_tag')->delete();
-        DB::table('product_attribute_options')->delete();
-        DB::table('product_attributes')->delete();
-        DB::table('product_tags')->delete();
-        DB::table('products')->delete();
-        DB::table('brands')->delete();
-        DB::table('principals')->delete();
-        DB::table('product_types')->delete();
+        if (Schema::hasTable('product_combinations')) {
+            DB::table('product_combinations')->delete();
+        }
+
+        if (Schema::hasTable('product_attribute_values')) {
+            DB::table('product_attribute_values')->delete();
+        }
+
+        if (Schema::hasTable('product_product_attributes')) {
+            DB::table('product_product_attributes')->delete();
+        }
+
+        if (Schema::hasTable('product_packagings')) {
+            DB::table('product_packagings')->delete();
+        }
+
+        if (Schema::hasTable('product_product_tag')) {
+            DB::table('product_product_tag')->delete();
+        }
+
+        if (Schema::hasTable('product_attribute_options')) {
+            DB::table('product_attribute_options')->delete();
+        }
+
+        if (Schema::hasTable('product_attributes')) {
+            DB::table('product_attributes')->delete();
+        }
+
+        if (Schema::hasTable('product_tags')) {
+            DB::table('product_tags')->delete();
+        }
+
+        if (Schema::hasTable('products')) {
+            DB::table('products')->delete();
+        }
+
+        if (Schema::hasTable('brands')) {
+            DB::table('brands')->delete();
+        }
+
+        if (Schema::hasTable('principals')) {
+            DB::table('principals')->delete();
+        }
+
+        if (Schema::hasTable('product_types')) {
+            DB::table('product_types')->delete();
+        }
 
         DB::statement('SET CONSTRAINTS ALL IMMEDIATE');
 

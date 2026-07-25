@@ -93,17 +93,8 @@ const getIcon = (iconType: string) => {
     }
 };
 
-const getTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-        user: 'Users',
-        post: 'Posts',
-        page: 'Pages',
-        media: 'Media',
-        carousel: 'Carousels',
-        role: 'Roles',
-        setting: 'Settings',
-    };
-    return labels[type] || type;
+const getTypeLabel = (type: string, t: (key: string, params?: Record<string, string | number>, fallback?: string) => string) => {
+    return t(`shell.search.types.${type}`, undefined, type);
 };
 
 const getTypeColor = (type: string) => {
@@ -115,6 +106,29 @@ const getTypeColor = (type: string) => {
         carousel: 'bg-pink-100 text-pink-800',
         role: 'bg-indigo-100 text-indigo-800',
         setting: 'bg-gray-100 text-gray-800',
+        partner: 'bg-sky-100 text-sky-800',
+        product: 'bg-emerald-100 text-emerald-800',
+        vehicle: 'bg-orange-100 text-orange-800',
+        driver: 'bg-amber-100 text-amber-800',
+        order: 'bg-cyan-100 text-cyan-800',
+        trip: 'bg-teal-100 text-teal-800',
+        trip_schedule: 'bg-teal-100 text-teal-800',
+        invoice: 'bg-lime-100 text-lime-800',
+        purchase_order: 'bg-violet-100 text-violet-800',
+        grn: 'bg-violet-100 text-violet-800',
+        payment: 'bg-green-100 text-green-800',
+        warehouse: 'bg-stone-100 text-stone-800',
+        work_order: 'bg-rose-100 text-rose-800',
+        pick_list: 'bg-fuchsia-100 text-fuchsia-800',
+        rental: 'bg-blue-100 text-blue-800',
+        salesperson: 'bg-indigo-100 text-indigo-800',
+        route_plan: 'bg-cyan-100 text-cyan-800',
+        approval: 'bg-red-100 text-red-800',
+        promo_program: 'bg-pink-100 text-pink-800',
+        tariff: 'bg-yellow-100 text-yellow-800',
+        allowance: 'bg-yellow-100 text-yellow-800',
+        document: 'bg-slate-100 text-slate-800',
+        gps_device: 'bg-gray-100 text-gray-800',
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
 };
@@ -241,7 +255,7 @@ export default function GlobalSearch() {
                         {Object.entries(groupedResults).map(([type, items]) => (
                             <div key={type} className="border-b border-gray-100 last:border-b-0">
                                 <h3 className="bg-gray-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    {getTypeLabel(type)}
+                                    {getTypeLabel(type, t)}
                                 </h3>
                                 <ul>
                                     {items.map((result) => (
