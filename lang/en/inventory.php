@@ -128,6 +128,7 @@ return [
         'exp' => 'Exp:',
         'on_hand_label' => 'On hand:',
         'batch_empty' => 'No batch stock for this product.',
+        'empty' => 'No products to show stock levels for.',
         'legend' => 'Available = On Hand − Reserved. Click a product row to see batches/lots.',
         'legend_red' => 'Red = below reorder threshold.',
     ],

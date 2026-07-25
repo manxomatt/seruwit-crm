@@ -1,6 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout'
 import { useLocaleTag, useTrans } from '@/hooks/useTrans'
-import { Head } from '@inertiajs/react'
+import { Head, router } from '@inertiajs/react'
 import { Fragment, useState } from 'react'
 import InventoryNav from '../../../../InventoryNav'
 
@@ -38,9 +38,22 @@ interface MatrixRow {
   levels: StockLevel[]
 }
 
+interface PaginatedMatrix {
+  data: MatrixRow[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  links: Array<{
+    url: string | null
+    label: string
+    active: boolean
+  }>
+}
+
 interface Props {
   warehouses: Warehouse[]
-  matrix: MatrixRow[]
+  matrix: PaginatedMatrix
 }
 
 export default function StockLevelsIndex({ warehouses, matrix }: Props) {
@@ -83,69 +96,106 @@ export default function StockLevelsIndex({ warehouses, matrix }: Props) {
               </tr>
             </thead>
             <tbody>
-              {matrix.map((row) => (
-                <Fragment key={row.product.id}>
-                  <tr
-                    className="cursor-pointer border-b hover:bg-gray-50"
-                    onClick={() => setExpanded(expanded === row.product.id ? null : row.product.id)}
-                  >
-                    <td className="sticky left-0 z-10 bg-white px-4 py-2 font-medium">
-                      {row.product.name}
-                      {row.product.tracking === 'lot' && (
-                        <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">{t('inventory.stock_levels.lot')}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-xs">
-                      <span className={`inline-block rounded px-2 py-1 ${row.product.category === 'merchandise' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {t(`inventory.categories.${row.product.category}`)}
-                      </span>
-                    </td>
-                    {row.levels.map((level, idx) => (
-                      <td
-                        key={idx}
-                        colSpan={2}
-                        className={`px-4 py-2 text-center text-sm ${level.is_low_stock ? 'bg-red-50' : ''}`}
-                      >
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <span className={level.is_low_stock ? 'font-bold text-red-600' : ''}>{level.available}</span>
-                          <span className="text-gray-600">{level.on_hand}</span>
-                        </div>
+              {matrix.data.length === 0 ? (
+                <tr>
+                  <td colSpan={2 + warehouses.length * 2} className="px-4 py-6 text-center text-gray-500">
+                    {t('inventory.stock_levels.empty')}
+                  </td>
+                </tr>
+              ) : (
+                matrix.data.map((row) => (
+                  <Fragment key={row.product.id}>
+                    <tr
+                      className="cursor-pointer border-b hover:bg-gray-50"
+                      onClick={() => setExpanded(expanded === row.product.id ? null : row.product.id)}
+                    >
+                      <td className="sticky left-0 z-10 bg-white px-4 py-2 font-medium">
+                        {row.product.name}
+                        {row.product.tracking === 'lot' && (
+                          <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">{t('inventory.stock_levels.lot')}</span>
+                        )}
                       </td>
-                    ))}
-                  </tr>
-                  {expanded === row.product.id && (
-                    <tr className="border-b bg-slate-50">
-                      <td colSpan={2 + warehouses.length * 2} className="px-4 py-3">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('inventory.stock_levels.batch_title')}</p>
-                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                          {row.levels.flatMap((level) =>
-                            level.batches.map((batch, i) => (
-                              <div key={`${level.warehouse_id}-${i}`} className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
-                                <div className="font-semibold text-gray-900">
-                                  {batch.batch_number || t('inventory.stock_levels.no_batch')}
-                                </div>
-                                <div className="mt-1 text-gray-500">
-                                  {t('inventory.stock_levels.exp')} {batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString(localeTag) : '—'}
-                                  {batch.location ? ` · ${batch.location.code}` : ''}
-                                </div>
-                                <div className="mt-1 tabular-nums text-gray-700">
-                                  {t('inventory.stock_levels.on_hand_label')} {batch.on_hand}
-                                </div>
-                              </div>
-                            ))
-                          )}
-                          {row.levels.every((l) => l.batches.length === 0) && (
-                            <p className="text-sm text-gray-500">{t('inventory.stock_levels.batch_empty')}</p>
-                          )}
-                        </div>
+                      <td className="px-4 py-2 text-xs">
+                        <span className={`inline-block rounded px-2 py-1 ${row.product.category === 'merchandise' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {t(`inventory.categories.${row.product.category}`)}
+                        </span>
                       </td>
+                      {row.levels.map((level, idx) => (
+                        <td
+                          key={idx}
+                          colSpan={2}
+                          className={`px-4 py-2 text-center text-sm ${level.is_low_stock ? 'bg-red-50' : ''}`}
+                        >
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <span className={level.is_low_stock ? 'font-bold text-red-600' : ''}>{level.available}</span>
+                            <span className="text-gray-600">{level.on_hand}</span>
+                          </div>
+                        </td>
+                      ))}
                     </tr>
-                  )}
-                </Fragment>
-              ))}
+                    {expanded === row.product.id && (
+                      <tr className="border-b bg-slate-50">
+                        <td colSpan={2 + warehouses.length * 2} className="px-4 py-3">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('inventory.stock_levels.batch_title')}</p>
+                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {row.levels.flatMap((level) =>
+                              level.batches.map((batch, i) => (
+                                <div key={`${level.warehouse_id}-${i}`} className="rounded border border-gray-200 bg-white px-3 py-2 text-xs">
+                                  <div className="font-semibold text-gray-900">
+                                    {batch.batch_number || t('inventory.stock_levels.no_batch')}
+                                  </div>
+                                  <div className="mt-1 text-gray-500">
+                                    {t('inventory.stock_levels.exp')} {batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString(localeTag) : '—'}
+                                    {batch.location ? ` · ${batch.location.code}` : ''}
+                                  </div>
+                                  <div className="mt-1 tabular-nums text-gray-700">
+                                    {t('inventory.stock_levels.on_hand_label')} {batch.on_hand}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                            {row.levels.every((l) => l.batches.length === 0) && (
+                              <p className="text-sm text-gray-500">{t('inventory.stock_levels.batch_empty')}</p>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
+        {matrix.last_page > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-700">
+              {t('common.showing_results', {
+                from: (matrix.current_page - 1) * matrix.per_page + 1,
+                to: Math.min(matrix.current_page * matrix.per_page, matrix.total),
+                total: matrix.total,
+              })}
+            </p>
+            <div className="flex gap-1">
+              {matrix.links.map((link, index) => (
+                <button
+                  key={index}
+                  onClick={() => link.url && router.get(link.url)}
+                  disabled={!link.url}
+                  className={`rounded px-3 py-1 text-sm ${
+                    link.active
+                      ? 'bg-indigo-600 text-white'
+                      : link.url
+                        ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                        : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="text-xs text-gray-600">
           <p>{t('inventory.stock_levels.legend')}</p>

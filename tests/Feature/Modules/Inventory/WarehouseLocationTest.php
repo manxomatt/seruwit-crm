@@ -277,6 +277,7 @@ class WarehouseLocationTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Inventory/Warehouses/Show')
                 ->has('warehouse.locations', 3)
+                ->has('stockLevels.data', 0)
             );
     }
 

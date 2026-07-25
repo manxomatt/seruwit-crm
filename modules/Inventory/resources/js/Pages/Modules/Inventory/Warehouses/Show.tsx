@@ -42,12 +42,25 @@ interface Warehouse {
     location: string;
     status: 'active' | 'inactive';
     locations: Location[];
-    stock_levels: StockLevel[];
     stock_movements: StockMovement[];
+}
+
+interface PaginatedStockLevels {
+    data: StockLevel[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
 }
 
 interface Props {
     warehouse: Warehouse;
+    stockLevels: PaginatedStockLevels;
 }
 
 const typeColors: Record<string, string> = {
@@ -68,7 +81,19 @@ const locationTypeColors: Record<string, string> = {
     view: 'bg-gray-100 text-gray-800',
 };
 
-export default function WarehouseShow({ warehouse }: Props) {
+const PencilIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+);
+
+const TrashIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+);
+
+export default function WarehouseShow({ warehouse, stockLevels }: Props) {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -157,21 +182,25 @@ export default function WarehouseShow({ warehouse }: Props) {
                                                 {loc.parent ? `${loc.parent.code} — ${loc.parent.name}` : '—'}
                                             </td>
                                             <td className="px-6 py-3 text-right text-sm">{loc.children_count}</td>
-                                            <td className="whitespace-nowrap px-6 py-3 text-right text-sm">
-                                                <Link
-                                                    href={prefixedRoute('inventory.warehouses.locations.edit', [warehouse.id, loc.id])}
-                                                    className="text-indigo-600 hover:text-indigo-900"
-                                                >
-                                                    {t('common.edit')}
-                                                </Link>
-                                                {!loc.is_default && (
-                                                    <button
-                                                        onClick={() => setDeleteTarget(loc)}
-                                                        className="ml-3 text-red-600 hover:text-red-900"
+                                            <td className="whitespace-nowrap px-6 py-3 text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link
+                                                        href={prefixedRoute('inventory.warehouses.locations.edit', [warehouse.id, loc.id])}
+                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                        title={t('common.edit')}
                                                     >
-                                                        {t('common.delete')}
-                                                    </button>
-                                                )}
+                                                        <PencilIcon />
+                                                    </Link>
+                                                    {!loc.is_default && (
+                                                        <button
+                                                            onClick={() => setDeleteTarget(loc)}
+                                                            className="text-red-600 hover:text-red-900"
+                                                            title={t('common.delete')}
+                                                        >
+                                                            <TrashIcon />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -197,14 +226,14 @@ export default function WarehouseShow({ warehouse }: Props) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {warehouse.stock_levels.length === 0 ? (
+                                {stockLevels.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-6 text-center text-gray-500">
                                             {t('inventory.warehouses.stock_empty')}
                                         </td>
                                     </tr>
                                 ) : (
-                                    warehouse.stock_levels.map((level) => (
+                                    stockLevels.data.map((level) => (
                                         <tr key={level.id} className="border-b hover:bg-gray-50">
                                             <td className="px-6 py-3 font-medium">{level.product.name}</td>
                                             <td className="px-6 py-3 text-sm text-gray-500">
@@ -228,6 +257,34 @@ export default function WarehouseShow({ warehouse }: Props) {
                             </tbody>
                         </table>
                     </div>
+                    {stockLevels.last_page > 1 && (
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm text-gray-700">
+                                {t('common.showing_results', {
+                                    from: (stockLevels.current_page - 1) * stockLevels.per_page + 1,
+                                    to: Math.min(stockLevels.current_page * stockLevels.per_page, stockLevels.total),
+                                    total: stockLevels.total,
+                                })}
+                            </p>
+                            <div className="flex gap-1">
+                                {stockLevels.links.map((link, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => link.url && router.get(link.url)}
+                                        disabled={!link.url}
+                                        className={`rounded px-3 py-1 text-sm ${
+                                            link.active
+                                                ? 'bg-indigo-600 text-white'
+                                                : link.url
+                                                    ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                    : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                        }`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </section>
 
                 {/* Recent Movements Section */}

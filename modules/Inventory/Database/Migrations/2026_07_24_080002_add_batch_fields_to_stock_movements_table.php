@@ -4,6 +4,11 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Batch fields belong with Inventory — StockMovementRecorder and the stock UI
+ * already depend on them. Purchasing also ships a guarded copy for tenants that
+ * installed Purchasing before this Inventory migration existed.
+ */
 return new class extends Migration
 {
     public function up(): void
@@ -27,6 +32,19 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Inventory owns these columns when both modules are installed; leave them in place.
+        if (! Schema::hasTable('stock_movements')) {
+            return;
+        }
+
+        $columns = array_values(array_filter([
+            Schema::hasColumn('stock_movements', 'batch_number') ? 'batch_number' : null,
+            Schema::hasColumn('stock_movements', 'expiry_date') ? 'expiry_date' : null,
+        ]));
+
+        if ($columns !== []) {
+            Schema::table('stock_movements', function (Blueprint $table) use ($columns) {
+                $table->dropColumn($columns);
+            });
+        }
     }
 };

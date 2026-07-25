@@ -128,6 +128,7 @@ return [
         'exp' => 'Exp:',
         'on_hand_label' => 'On hand:',
         'batch_empty' => 'Tidak ada stok batch untuk produk ini.',
+        'empty' => 'Belum ada produk untuk ditampilkan level stoknya.',
         'legend' => 'Available = On Hand − Reserved. Klik baris produk untuk lihat batch/lot.',
         'legend_red' => 'Merah = di bawah reorder threshold.',
     ],

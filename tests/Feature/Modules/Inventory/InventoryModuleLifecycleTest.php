@@ -33,6 +33,8 @@ class InventoryModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('stock_opname_items'));
             $this->assertTrue(Schema::hasTable('stock_reservations'));
             $this->assertTrue(Schema::hasColumn('products', 'category'));
+            $this->assertTrue(Schema::hasColumn('stock_movements', 'batch_number'));
+            $this->assertTrue(Schema::hasColumn('stock_movements', 'expiry_date'));
         });
     }
 

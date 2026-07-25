@@ -25,15 +25,17 @@ class StockLevelController extends Controller
         $products = Product::query()
             ->select('id', 'name', 'category', 'stock_unit', 'reorder_threshold', 'tracking')
             ->orderBy('name')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         $stockLevels = StockLevel::query()
             ->with('location:id,name,code')
+            ->whereIn('product_id', $products->getCollection()->pluck('id'))
             ->select('product_id', 'warehouse_id', 'location_id', 'batch_number', 'expiry_date', 'on_hand', 'reserved')
             ->get()
             ->groupBy(fn ($level) => "{$level->product_id}-{$level->warehouse_id}");
 
-        $matrix = $products->map(function ($product) use ($warehouses, $stockLevels) {
+        $matrix = $products->through(function ($product) use ($warehouses, $stockLevels) {
             return [
                 'product' => [
                     'id' => $product->id,
