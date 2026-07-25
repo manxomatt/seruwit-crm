@@ -251,8 +251,8 @@ class AnalyticsController extends Controller
                         'id' => 'page_'.$page->id,
                         'type' => $page->created_at->eq($page->updated_at) ? 'page_created' : 'page_updated',
                         'description' => $page->created_at->eq($page->updated_at)
-                            ? "Page \"{$page->title}\" was created"
-                            : "Page \"{$page->title}\" was updated",
+                            ? __('analytics.activity.page_created', ['title' => $page->title])
+                            : __('analytics.activity.page_updated', ['title' => $page->title]),
                         'time' => $page->updated_at,
                         'timeForHumans' => $page->updated_at->diffForHumans(),
                     ]);
@@ -268,7 +268,7 @@ class AnalyticsController extends Controller
                 $activities->push([
                     'id' => 'user_'.$user->id,
                     'type' => 'user_registered',
-                    'description' => "User \"{$user->name}\" registered",
+                    'description' => __('analytics.activity.user_registered', ['name' => $user->name]),
                     'time' => $user->created_at,
                     'timeForHumans' => $user->created_at->diffForHumans(),
                 ]);
@@ -283,7 +283,7 @@ class AnalyticsController extends Controller
                 $activities->push([
                     'id' => 'media_'.$media->id,
                     'type' => 'media_uploaded',
-                    'description' => "Media \"{$media->name}\" was uploaded",
+                    'description' => __('analytics.activity.media_uploaded', ['name' => $media->name]),
                     'time' => $media->created_at,
                     'timeForHumans' => $media->created_at->diffForHumans(),
                 ]);
@@ -300,8 +300,8 @@ class AnalyticsController extends Controller
                         'id' => 'carousel_'.$carousel->id,
                         'type' => $carousel->created_at->eq($carousel->updated_at) ? 'carousel_created' : 'carousel_updated',
                         'description' => $carousel->created_at->eq($carousel->updated_at)
-                            ? "Carousel \"{$carousel->name}\" was created"
-                            : "Carousel \"{$carousel->name}\" was updated",
+                            ? __('analytics.activity.carousel_created', ['name' => $carousel->name])
+                            : __('analytics.activity.carousel_updated', ['name' => $carousel->name]),
                         'time' => $carousel->updated_at,
                         'timeForHumans' => $carousel->updated_at->diffForHumans(),
                     ]);

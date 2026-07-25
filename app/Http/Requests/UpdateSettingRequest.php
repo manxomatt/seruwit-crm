@@ -48,14 +48,14 @@ class UpdateSettingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'key.required' => 'The setting key is required.',
-            'key.unique' => 'This setting key already exists.',
-            'key.regex' => 'The setting key may only contain lowercase letters, numbers, underscores, and dots.',
-            'group.required' => 'The setting group is required.',
-            'group.regex' => 'The group may only contain lowercase letters, numbers, and underscores.',
-            'type.required' => 'The setting type is required.',
-            'type.in' => 'The setting type must be one of: text, textarea, boolean, number, email, url, select, json, color.',
-            'label.required' => 'The setting label is required.',
+            'key.required' => __('settings.validation.key_required'),
+            'key.unique' => __('settings.validation.key_unique'),
+            'key.regex' => __('settings.validation.key_regex'),
+            'group.required' => __('settings.validation.group_required'),
+            'group.regex' => __('settings.validation.group_regex'),
+            'type.required' => __('settings.validation.type_required'),
+            'type.in' => __('settings.validation.type_in'),
+            'label.required' => __('settings.validation.label_required'),
         ];
     }
 }

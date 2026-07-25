@@ -41,12 +41,12 @@ class StoreMediaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'file.required' => 'Please select a file to upload.',
-            'file.file' => 'The uploaded file is invalid.',
-            'file.max' => 'The file size must not exceed 50MB.',
-            'file.mimes' => 'The file type is not supported. Allowed types: images, documents, and videos.',
-            'alt_text.max' => 'The alt text must not exceed 255 characters.',
-            'description.max' => 'The description must not exceed 1000 characters.',
+            'file.required' => __('media.validation.file_required'),
+            'file.file' => __('media.validation.file_invalid'),
+            'file.max' => __('media.validation.file_max'),
+            'file.mimes' => __('media.validation.file_mimes'),
+            'alt_text.max' => __('media.validation.alt_text_max'),
+            'description.max' => __('media.validation.description_max'),
         ];
     }
 }

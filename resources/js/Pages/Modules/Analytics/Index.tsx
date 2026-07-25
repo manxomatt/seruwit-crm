@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 
 interface MediaByType {
@@ -228,14 +229,15 @@ export default function Index({
     trendsData,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Analytics</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('analytics.title')}</h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            Overview of your CMS performance and statistics
+                            {t('analytics.subtitle')}
                         </p>
                     </div>
                     <Link
@@ -245,19 +247,19 @@ export default function Index({
                         <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                         </svg>
-                        Back to Dashboard
+                        {t('analytics.back_to_dashboard')}
                     </Link>
                 </div>
             }
         >
-            <Head title="Analytics" />
+            <Head title={t('analytics.title')} />
 
             {/* Overview Stats */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                    title="Total Users"
+                    title={t('analytics.overview.total_users')}
                     value={overview.totalUsers}
-                    subtitle={`${userStats.thisMonth} this month`}
+                    subtitle={t('analytics.overview.this_month_count', { count: userStats.thisMonth })}
                     icon={
                         <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
@@ -267,9 +269,9 @@ export default function Index({
                 />
                 {overview.totalPages !== undefined && (
                     <StatCard
-                        title="Total Pages"
+                        title={t('analytics.overview.total_pages')}
                         value={overview.totalPages}
-                        subtitle={`${overview.publishedPages} published`}
+                        subtitle={t('analytics.overview.published_count', { count: overview.publishedPages ?? 0 })}
                         icon={
                             <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -279,7 +281,7 @@ export default function Index({
                     />
                 )}
                 <StatCard
-                    title="Media Files"
+                    title={t('analytics.overview.media_files')}
                     value={overview.totalMedia}
                     subtitle={mediaStats.humanStorageUsed}
                     icon={
@@ -291,9 +293,9 @@ export default function Index({
                 />
                 {overview.totalCarousels !== undefined && contentStats.carousels && (
                     <StatCard
-                        title="Carousels"
+                        title={t('analytics.overview.carousels')}
                         value={overview.totalCarousels}
-                        subtitle={`${contentStats.carousels.totalImages} images`}
+                        subtitle={t('analytics.overview.images_count', { count: contentStats.carousels.totalImages })}
                         icon={
                             <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122" />
@@ -310,7 +312,7 @@ export default function Index({
                 <div className="lg:col-span-2">
                     <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                         <div className="border-b border-gray-100 px-6 py-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Content Statistics</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">{t('analytics.content_stats.title')}</h2>
                         </div>
                         <div className="p-6">
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -318,17 +320,17 @@ export default function Index({
                                 {contentStats.pages && (
                                     <div className="rounded-lg border border-gray-200 p-4">
                                         <div className="flex items-center justify-between mb-3">
-                                            <h3 className="text-sm font-medium text-gray-900">Pages</h3>
+                                            <h3 className="text-sm font-medium text-gray-900">{t('analytics.content_stats.pages')}</h3>
                                             <span className="text-2xl font-bold text-gray-900">{contentStats.pages.total}</span>
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500">Published</span>
+                                                <span className="text-gray-500">{t('analytics.content_stats.published')}</span>
                                                 <span className="font-medium text-green-600">{contentStats.pages.published}</span>
                                             </div>
                                             <ProgressBar value={contentStats.pages.published} max={contentStats.pages.total} color="bg-green-500" />
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500">Draft</span>
+                                                <span className="text-gray-500">{t('analytics.content_stats.draft')}</span>
                                                 <span className="font-medium text-yellow-600">{contentStats.pages.draft}</span>
                                             </div>
                                             <ProgressBar value={contentStats.pages.draft} max={contentStats.pages.total} color="bg-yellow-500" />
@@ -338,7 +340,7 @@ export default function Index({
                                                 <svg className="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                Homepage configured
+                                                {t('analytics.content_stats.homepage_configured')}
                                             </div>
                                         )}
                                     </div>
@@ -348,23 +350,23 @@ export default function Index({
                                 {contentStats.carousels && (
                                     <div className="rounded-lg border border-gray-200 p-4">
                                         <div className="flex items-center justify-between mb-3">
-                                            <h3 className="text-sm font-medium text-gray-900">Carousels</h3>
+                                            <h3 className="text-sm font-medium text-gray-900">{t('analytics.content_stats.carousels')}</h3>
                                             <span className="text-2xl font-bold text-gray-900">{contentStats.carousels.total}</span>
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500">Active</span>
+                                                <span className="text-gray-500">{t('analytics.content_stats.active')}</span>
                                                 <span className="font-medium text-green-600">{contentStats.carousels.active}</span>
                                             </div>
                                             <ProgressBar value={contentStats.carousels.active} max={contentStats.carousels.total} color="bg-green-500" />
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-gray-500">Inactive</span>
+                                                <span className="text-gray-500">{t('analytics.content_stats.inactive')}</span>
                                                 <span className="font-medium text-gray-600">{contentStats.carousels.inactive}</span>
                                             </div>
                                             <ProgressBar value={contentStats.carousels.inactive} max={contentStats.carousels.total} color="bg-gray-400" />
                                         </div>
                                         <div className="mt-3 text-xs text-gray-500">
-                                            {contentStats.carousels.totalImages} total images
+                                            {t('analytics.content_stats.total_images_count', { count: contentStats.carousels.totalImages })}
                                         </div>
                                     </div>
                                 )}
@@ -372,40 +374,40 @@ export default function Index({
                                 {/* Todos */}
                                 <div className="rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-sm font-medium text-gray-900">Todos</h3>
+                                        <h3 className="text-sm font-medium text-gray-900">{t('analytics.content_stats.todos')}</h3>
                                         <span className="text-2xl font-bold text-gray-900">{contentStats.todos.total}</span>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Completed</span>
+                                            <span className="text-gray-500">{t('analytics.content_stats.completed')}</span>
                                             <span className="font-medium text-green-600">{contentStats.todos.completed}</span>
                                         </div>
                                         <ProgressBar value={contentStats.todos.completed} max={contentStats.todos.total} color="bg-green-500" />
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Pending</span>
+                                            <span className="text-gray-500">{t('analytics.content_stats.pending')}</span>
                                             <span className="font-medium text-orange-600">{contentStats.todos.pending}</span>
                                         </div>
                                         <ProgressBar value={contentStats.todos.pending} max={contentStats.todos.total} color="bg-orange-500" />
                                     </div>
                                     <div className="mt-3 text-xs text-gray-500">
-                                        {contentStats.todos.completionRate}% completion rate
+                                        {t('analytics.content_stats.completion_rate', { rate: contentStats.todos.completionRate })}
                                     </div>
                                 </div>
 
                                 {/* Live Updates */}
                                 <div className="rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-sm font-medium text-gray-900">Live Updates</h3>
+                                        <h3 className="text-sm font-medium text-gray-900">{t('analytics.content_stats.live_updates')}</h3>
                                         <span className="text-2xl font-bold text-gray-900">{contentStats.liveUpdates.total}</span>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Active</span>
+                                            <span className="text-gray-500">{t('analytics.content_stats.active')}</span>
                                             <span className="font-medium text-green-600">{contentStats.liveUpdates.active}</span>
                                         </div>
                                         <ProgressBar value={contentStats.liveUpdates.active} max={contentStats.liveUpdates.total} color="bg-green-500" />
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Inactive</span>
+                                            <span className="text-gray-500">{t('analytics.content_stats.inactive')}</span>
                                             <span className="font-medium text-gray-600">{contentStats.liveUpdates.inactive}</span>
                                         </div>
                                         <ProgressBar value={contentStats.liveUpdates.inactive} max={contentStats.liveUpdates.total} color="bg-gray-400" />
@@ -420,7 +422,7 @@ export default function Index({
                 <div className="lg:col-span-1">
                     <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                         <div className="border-b border-gray-100 px-6 py-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">{t('analytics.recent_activity.title')}</h2>
                         </div>
                         <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
                             {recentActivity.length > 0 ? (
@@ -440,7 +442,7 @@ export default function Index({
                                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <p className="mt-2 text-sm">No recent activity</p>
+                                    <p className="mt-2 text-sm">{t('analytics.recent_activity.empty')}</p>
                                 </div>
                             )}
                         </div>
@@ -453,28 +455,28 @@ export default function Index({
                 {/* Trends Chart */}
                 <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <div className="border-b border-gray-100 px-6 py-4">
-                        <h2 className="text-lg font-semibold text-gray-900">7-Day Trends</h2>
+                        <h2 className="text-lg font-semibold text-gray-900">{t('analytics.trends.title')}</h2>
                     </div>
                     <div className="p-6">
                         <div className="space-y-6">
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-gray-700">Pages Created</span>
-                                    <span className="text-sm text-gray-500">{trendsData.pages.reduce((a, b) => a + b, 0)} total</span>
+                                    <span className="text-sm font-medium text-gray-700">{t('analytics.trends.pages_created')}</span>
+                                    <span className="text-sm text-gray-500">{t('analytics.trends.total_count', { count: trendsData.pages.reduce((a, b) => a + b, 0) })}</span>
                                 </div>
                                 <SimpleBarChart data={trendsData.pages} labels={trendsData.labels} color="bg-green-500" />
                             </div>
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-gray-700">Users Registered</span>
-                                    <span className="text-sm text-gray-500">{trendsData.users.reduce((a, b) => a + b, 0)} total</span>
+                                    <span className="text-sm font-medium text-gray-700">{t('analytics.trends.users_registered')}</span>
+                                    <span className="text-sm text-gray-500">{t('analytics.trends.total_count', { count: trendsData.users.reduce((a, b) => a + b, 0) })}</span>
                                 </div>
                                 <SimpleBarChart data={trendsData.users} labels={trendsData.labels} color="bg-blue-500" />
                             </div>
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-gray-700">Media Uploaded</span>
-                                    <span className="text-sm text-gray-500">{trendsData.media.reduce((a, b) => a + b, 0)} total</span>
+                                    <span className="text-sm font-medium text-gray-700">{t('analytics.trends.media_uploaded')}</span>
+                                    <span className="text-sm text-gray-500">{t('analytics.trends.total_count', { count: trendsData.media.reduce((a, b) => a + b, 0) })}</span>
                                 </div>
                                 <SimpleBarChart data={trendsData.media} labels={trendsData.labels} color="bg-purple-500" />
                             </div>
@@ -485,15 +487,15 @@ export default function Index({
                 {/* User Statistics */}
                 <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <div className="border-b border-gray-100 px-6 py-4">
-                        <h2 className="text-lg font-semibold text-gray-900">User Statistics</h2>
+                        <h2 className="text-lg font-semibold text-gray-900">{t('analytics.user_stats.title')}</h2>
                     </div>
                     <div className="p-6">
                         {/* User Growth */}
                         <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-600">User Growth</p>
-                                    <p className="text-2xl font-bold text-gray-900">{userStats.total} users</p>
+                                    <p className="text-sm text-gray-600">{t('analytics.user_stats.growth')}</p>
+                                    <p className="text-2xl font-bold text-gray-900">{t('analytics.user_stats.users_count', { count: userStats.total })}</p>
                                 </div>
                                 <div className={`flex items-center rounded-full px-3 py-1 text-sm font-medium ${
                                     userStats.growthRate >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -511,26 +513,26 @@ export default function Index({
                                 </div>
                             </div>
                             <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
-                                <span>{userStats.thisMonth} this month</span>
+                                <span>{t('analytics.overview.this_month_count', { count: userStats.thisMonth })}</span>
                                 <span>•</span>
-                                <span>{userStats.lastMonth} last month</span>
+                                <span>{t('analytics.user_stats.last_month_count', { count: userStats.lastMonth })}</span>
                             </div>
                         </div>
 
                         {/* Verification Status */}
                         <div className="mb-6">
-                            <h3 className="text-sm font-medium text-gray-900 mb-3">Verification Status</h3>
+                            <h3 className="text-sm font-medium text-gray-900 mb-3">{t('analytics.user_stats.verification_status')}</h3>
                             <div className="flex items-center gap-4">
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between text-sm mb-1">
-                                        <span className="text-gray-500">Verified</span>
+                                        <span className="text-gray-500">{t('analytics.user_stats.verified')}</span>
                                         <span className="font-medium text-green-600">{userStats.verified}</span>
                                     </div>
                                     <ProgressBar value={userStats.verified} max={userStats.total} color="bg-green-500" />
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between text-sm mb-1">
-                                        <span className="text-gray-500">Unverified</span>
+                                        <span className="text-gray-500">{t('analytics.user_stats.unverified')}</span>
                                         <span className="font-medium text-yellow-600">{userStats.unverified}</span>
                                     </div>
                                     <ProgressBar value={userStats.unverified} max={userStats.total} color="bg-yellow-500" />
@@ -540,7 +542,7 @@ export default function Index({
 
                         {/* Top Contributors */}
                         <div>
-                            <h3 className="text-sm font-medium text-gray-900 mb-3">Top Contributors</h3>
+                            <h3 className="text-sm font-medium text-gray-900 mb-3">{t('analytics.user_stats.top_contributors')}</h3>
                             <div className="space-y-3">
                                 {userStats.topContributors.length > 0 ? (
                                     userStats.topContributors.slice(0, 3).map((user, index) => (
@@ -553,13 +555,17 @@ export default function Index({
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
                                                 <p className="text-xs text-gray-500">
-                                                    {user.pagesCount} pages • {user.mediaCount} media • {user.carouselsCount} carousels
+                                                    {t('analytics.user_stats.contributor_stats', {
+                                                        pages: user.pagesCount,
+                                                        media: user.mediaCount,
+                                                        carousels: user.carouselsCount,
+                                                    })}
                                                 </p>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-sm text-gray-500">No contributors yet</p>
+                                    <p className="text-sm text-gray-500">{t('analytics.user_stats.no_contributors')}</p>
                                 )}
                             </div>
                         </div>
@@ -572,12 +578,12 @@ export default function Index({
                 <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <div className="border-b border-gray-100 px-6 py-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-900">Media Library</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">{t('analytics.media.title')}</h2>
                             <Link
                                 href={prefixedRoute('media.index')}
                                 className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
                             >
-                                View all →
+                                {t('analytics.media.view_all')}
                             </Link>
                         </div>
                     </div>
@@ -585,13 +591,13 @@ export default function Index({
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             {/* Storage Overview */}
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900 mb-4">Storage Overview</h3>
+                                <h3 className="text-sm font-medium text-gray-900 mb-4">{t('analytics.media.storage_overview')}</h3>
                                 <div className="rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 p-4">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm text-gray-600">Total Storage Used</span>
+                                        <span className="text-sm text-gray-600">{t('analytics.media.total_storage_used')}</span>
                                         <span className="text-xl font-bold text-gray-900">{mediaStats.humanStorageUsed}</span>
                                     </div>
-                                    <p className="text-sm text-gray-500">{mediaStats.totalFiles} files uploaded</p>
+                                    <p className="text-sm text-gray-500">{t('analytics.media.files_uploaded_count', { count: mediaStats.totalFiles })}</p>
                                 </div>
 
                                 {/* Media by Type */}
@@ -614,14 +620,14 @@ export default function Index({
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-gray-500">No media files yet</p>
+                                        <p className="text-sm text-gray-500">{t('analytics.media.no_media_files')}</p>
                                     )}
                                 </div>
                             </div>
 
                             {/* Recent Uploads */}
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900 mb-4">Recent Uploads</h3>
+                                <h3 className="text-sm font-medium text-gray-900 mb-4">{t('analytics.media.recent_uploads')}</h3>
                                 <div className="space-y-3">
                                     {mediaStats.recentUploads.length > 0 ? (
                                         mediaStats.recentUploads.map((media) => (
@@ -657,12 +663,12 @@ export default function Index({
                                             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                                             </svg>
-                                            <p className="mt-2 text-sm text-gray-500">No media uploaded yet</p>
+                                            <p className="mt-2 text-sm text-gray-500">{t('analytics.media.no_media_uploaded')}</p>
                                             <Link
                                                 href={prefixedRoute('media.create')}
                                                 className="mt-3 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
                                             >
-                                                Upload your first file →
+                                                {t('analytics.media.upload_first_file')}
                                             </Link>
                                         </div>
                                     )}

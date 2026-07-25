@@ -50,12 +50,12 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'The user name is required.',
-            'name.max' => 'The user name must not exceed 255 characters.',
-            'email.required' => 'The email address is required.',
-            'email.email' => 'Please enter a valid email address.',
-            'email.unique' => 'This email address is already in use.',
-            'password.confirmed' => 'The password confirmation does not match.',
+            'name.required' => __('users.validation.name_required'),
+            'name.max' => __('users.validation.name_max'),
+            'email.required' => __('users.validation.email_required'),
+            'email.email' => __('users.validation.email_valid'),
+            'email.unique' => __('users.validation.email_unique'),
+            'password.confirmed' => __('users.validation.password_confirmed'),
         ];
     }
 }

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -35,6 +36,7 @@ interface Props {
 
 export default function Edit({ role, rolePermissions, permissions, modules, actions }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         name: role.name,
         description: role.description || '',
@@ -85,15 +87,15 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Edit Role: {role.name}
+                        {t('roles.pages.edit.head', { name: role.name })}
                     </h2>
                     <Link href={prefixedRoute('roles.index')}>
-                        <SecondaryButton>Back to Roles</SecondaryButton>
+                        <SecondaryButton>{t('roles.actions.back_to_roles')}</SecondaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title={`Edit Role: ${role.name}`} />
+            <Head title={t('roles.pages.edit.title', { name: role.name })} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <form onSubmit={submit} className="p-6">
@@ -104,9 +106,9 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                                 <div className="ml-3">
-                                    <h3 className="text-sm font-medium text-yellow-800">System Role</h3>
+                                    <h3 className="text-sm font-medium text-yellow-800">{t('roles.pages.edit.system_notice_title')}</h3>
                                     <p className="mt-1 text-sm text-yellow-700">
-                                        This is a system role and cannot be modified. You can only view its permissions.
+                                        {t('roles.pages.edit.system_notice_body')}
                                     </p>
                                 </div>
                             </div>
@@ -117,7 +119,7 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                         {/* Left Column - Role Details */}
                         <div className="space-y-6">
                             <div>
-                                <InputLabel htmlFor="name" value="Role Name" />
+                                <InputLabel htmlFor="name" value={t('roles.fields.name')} />
                                 <TextInput
                                     id="name"
                                     type="text"
@@ -126,13 +128,13 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
                                     disabled={role.is_system}
-                                    placeholder="e.g., Editor, Moderator"
+                                    placeholder={t('roles.placeholders.name')}
                                 />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="description" value="Description" />
+                                <InputLabel htmlFor="description" value={t('roles.fields.description')} />
                                 <textarea
                                     id="description"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100"
@@ -140,21 +142,21 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={3}
                                     disabled={role.is_system}
-                                    placeholder="Describe what this role can do..."
+                                    placeholder={t('roles.placeholders.description')}
                                 />
                                 <InputError message={errors.description} className="mt-2" />
                             </div>
 
                             <div className="p-4 bg-gray-50 rounded-lg">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">Role Information</h4>
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">{t('roles.pages.show.information')}</h4>
                                 <dl className="space-y-1 text-sm">
                                     <div className="flex justify-between">
-                                        <dt className="text-gray-500">Slug:</dt>
+                                        <dt className="text-gray-500">{t('roles.pages.show.slug')}:</dt>
                                         <dd className="text-gray-900 font-mono">{role.slug}</dd>
                                     </div>
                                     <div className="flex justify-between">
-                                        <dt className="text-gray-500">Type:</dt>
-                                        <dd className="text-gray-900">{role.is_system ? 'System' : 'Custom'}</dd>
+                                        <dt className="text-gray-500">{t('roles.fields.type')}:</dt>
+                                        <dd className="text-gray-900">{role.is_system ? t('roles.type.system') : t('roles.type.custom')}</dd>
                                     </div>
                                 </dl>
                             </div>
@@ -163,7 +165,7 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                         {/* Right Column - Permissions */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <InputLabel value="Permissions" />
+                                <InputLabel value={t('roles.fields.permissions')} />
                                 {!role.is_system && (
                                     <div className="flex gap-2">
                                         <button
@@ -171,7 +173,7 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                             onClick={selectAllPermissions}
                                             className="text-sm text-indigo-600 hover:text-indigo-800"
                                         >
-                                            Select All
+                                            {t('roles.actions.select_all')}
                                         </button>
                                         <span className="text-gray-300">|</span>
                                         <button
@@ -179,7 +181,7 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                             onClick={clearAllPermissions}
                                             className="text-sm text-gray-600 hover:text-gray-800"
                                         >
-                                            Clear All
+                                            {t('roles.actions.clear_all')}
                                         </button>
                                     </div>
                                 )}
@@ -238,18 +240,18 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                             <InputError message={errors.permissions} className="mt-2" />
                             
                             <p className="mt-2 text-sm text-gray-500">
-                                Selected: {data.permissions.length} permission(s)
+                                {t('roles.permissions_selected', { count: data.permissions.length })}
                             </p>
                         </div>
                     </div>
 
                     <div className="mt-6 flex items-center justify-end gap-4">
                         <Link href={prefixedRoute('roles.index')}>
-                            <SecondaryButton type="button">Cancel</SecondaryButton>
+                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                         </Link>
                         {!role.is_system && (
                             <PrimaryButton disabled={processing}>
-                                {processing ? 'Saving...' : 'Save Changes'}
+                                {processing ? t('roles.pages.edit.submitting') : t('roles.pages.edit.submit')}
                             </PrimaryButton>
                         )}
                     </div>

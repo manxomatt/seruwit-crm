@@ -61,7 +61,7 @@ class InvitationController extends Controller
         } elseif ($request->user()?->email !== $invitation->email) {
             return redirect()
                 ->route('login')
-                ->with('status', 'Masuk terlebih dahulu dengan akun '.$invitation->email.' untuk menerima undangan.');
+                ->with('status', __('central.must_login_first', ['email' => $invitation->email]));
         }
 
         $tenant = $invitation->tenant;

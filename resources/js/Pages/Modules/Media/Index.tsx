@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import DangerButton from '@/Components/DangerButton';
@@ -55,6 +56,8 @@ type ViewMode = 'grid' | 'list';
 
 export default function Index({ media, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const canCreate = can?.create ?? true;
     const canUpdate = can?.update ?? true;
     const canDelete = can?.delete ?? true;
@@ -176,17 +179,17 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Media Library
+                        {t('media.pages.index.head')}
                     </h2>
                     {canCreate && (
                         <Link href={prefixedRoute('media.create')}>
-                            <PrimaryButton>Upload Media</PrimaryButton>
+                            <PrimaryButton>{t('media.pages.index.upload')}</PrimaryButton>
                         </Link>
                     )}
                 </div>
             }
         >
-            <Head title="Media Library" />
+            <Head title={t('media.pages.index.head')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -195,7 +198,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                         <div className="flex-1 min-w-[200px]">
                             <TextInput
                                 type="text"
-                                placeholder="Search media..."
+                                placeholder={t('media.placeholders.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
@@ -206,23 +209,23 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                 className="w-40"
                                 value={typeFilter}
                                 onChange={setTypeFilter}
-                                placeholder="All Types"
+                                placeholder={t('media.type.all')}
                                 options={[
-                                    { value: '', label: 'All Types' },
-                                    { value: 'image', label: 'Images' },
-                                    { value: 'video', label: 'Videos' },
-                                    { value: 'document', label: 'Documents' },
+                                    { value: '', label: t('media.type.all') },
+                                    { value: 'image', label: t('media.type.images') },
+                                    { value: 'video', label: t('media.type.videos') },
+                                    { value: 'document', label: t('media.type.documents') },
                                 ]}
                             />
                         </div>
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                         {(filters.search || filters.type) && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
                                 className="text-gray-500 hover:text-gray-700"
                             >
-                                Clear filters
+                                {t('common.clear_filters')}
                             </button>
                         )}
                     </form>
@@ -231,16 +234,16 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                     {selectedItems.length > 0 && (
                         <div className="mb-4 flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                             <span className="text-sm text-gray-600">
-                                {selectedItems.length} item(s) selected
+                                {t('media.pages.index.selected_count', { count: selectedItems.length })}
                             </span>
                             <DangerButton onClick={openBulkDeleteDialog}>
-                                Delete Selected
+                                {t('media.pages.index.delete_selected')}
                             </DangerButton>
                             <button
                                 onClick={() => setSelectedItems([])}
                                 className="text-sm text-gray-500 hover:text-gray-700"
                             >
-                                Clear selection
+                                {t('media.pages.index.clear_selection')}
                             </button>
                         </div>
                     )}
@@ -260,14 +263,14 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                                 />
                             </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No media files</h3>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('media.pages.index.empty_title')}</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                Get started by uploading your first media file.
+                                {t('media.pages.index.empty_hint')}
                             </p>
                             {canCreate && (
                                 <div className="mt-6">
                                     <Link href={prefixedRoute('media.create')}>
-                                        <PrimaryButton>Upload Media</PrimaryButton>
+                                        <PrimaryButton>{t('media.pages.index.upload')}</PrimaryButton>
                                     </Link>
                                 </div>
                             )}
@@ -283,7 +286,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                         onChange={toggleSelectAll}
                                         className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                     />
-                                    <span className="ml-2 text-sm text-gray-600">Select all</span>
+                                    <span className="ml-2 text-sm text-gray-600">{t('media.pages.index.select_all')}</span>
                                 </div>
                                 <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                                     <button
@@ -293,7 +296,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                 ? 'bg-white shadow text-indigo-600'
                                                 : 'text-gray-500 hover:text-gray-700'
                                         }`}
-                                        title="Grid View"
+                                        title={t('media.pages.index.grid_view')}
                                     >
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -306,7 +309,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                 ? 'bg-white shadow text-indigo-600'
                                                 : 'text-gray-500 hover:text-gray-700'
                                         }`}
-                                        title="List View"
+                                        title={t('media.pages.index.list_view')}
                                     >
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -361,7 +364,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                 <Link
                                                     href={prefixedRoute('media.show', item.id)}
                                                     className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
-                                                    title="View"
+                                                    title={t('media.actions.view')}
                                                 >
                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -372,7 +375,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                     <Link
                                                         href={prefixedRoute('media.edit', item.id)}
                                                         className="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600"
-                                                        title="Edit"
+                                                        title={t('common.edit')}
                                                     >
                                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -383,7 +386,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                     <button
                                                         onClick={() => openDeleteDialog(item)}
                                                         className="p-2 bg-white rounded-full text-gray-700 hover:text-red-600"
-                                                        title="Delete"
+                                                        title={t('common.delete')}
                                                     >
                                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -403,25 +406,25 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                         <thead className="bg-gray-50">
                                             <tr>
                                                 <th scope="col" className="w-12 px-6 py-3">
-                                                    <span className="sr-only">Select</span>
+                                                    <span className="sr-only">{t('media.pages.index.columns.select')}</span>
                                                 </th>
                                                 <th scope="col" className="w-16 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Preview
+                                                    {t('media.pages.index.columns.preview')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Name
+                                                    {t('media.pages.index.columns.name')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Type
+                                                    {t('media.pages.index.columns.type')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Size
+                                                    {t('media.pages.index.columns.size')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Uploaded
+                                                    {t('media.pages.index.columns.uploaded')}
                                                 </th>
                                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Actions
+                                                    {t('common.actions')}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -481,7 +484,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                         {item.human_size}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {new Date(item.created_at).toLocaleDateString('id-ID', {
+                                                        {new Date(item.created_at).toLocaleDateString(localeTag, {
                                                             day: 'numeric',
                                                             month: 'short',
                                                             year: 'numeric',
@@ -492,7 +495,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                             <Link
                                                                 href={prefixedRoute('media.show', item.id)}
                                                                 className="text-gray-600 hover:text-gray-900"
-                                                                title="Preview"
+                                                                title={t('media.actions.view')}
                                                             >
                                                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -503,7 +506,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                                 <Link
                                                                     href={prefixedRoute('media.edit', item.id)}
                                                                     className="text-indigo-600 hover:text-indigo-900"
-                                                                    title="Edit"
+                                                                    title={t('common.edit')}
                                                                 >
                                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -514,7 +517,7 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                                                                 <button
                                                                     onClick={() => openDeleteDialog(item)}
                                                                     className="text-red-600 hover:text-red-900"
-                                                                    title="Delete"
+                                                                    title={t('common.delete')}
                                                                 >
                                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -534,9 +537,11 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                             {media.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(media.current_page - 1) * media.per_page + 1} to{' '}
-                                        {Math.min(media.current_page * media.per_page, media.total)} of{' '}
-                                        {media.total} results
+                                        {t('common.showing_results', {
+                                            from: (media.current_page - 1) * media.per_page + 1,
+                                            to: Math.min(media.current_page * media.per_page, media.total),
+                                            total: media.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {media.links.map((link, index) => (
@@ -568,17 +573,11 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Media"
+                title={t('media.delete_confirm.title')}
                 message={
-                    mediaToDelete ? (
-                        <>
-                            Apakah Anda yakin ingin menghapus file{' '}
-                            <strong>"{mediaToDelete.original_name}"</strong>? Tindakan ini tidak
-                            dapat dibatalkan.
-                        </>
-                    ) : (
-                        'Apakah Anda yakin ingin menghapus file ini?'
-                    )
+                    mediaToDelete
+                        ? t('media.delete_confirm.message', { name: mediaToDelete.original_name })
+                        : t('media.delete_confirm.message_generic')
                 }
             />
 
@@ -588,14 +587,8 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
                 onClose={closeBulkDeleteDialog}
                 onConfirm={confirmBulkDelete}
                 processing={processing}
-                title="Hapus Media Terpilih"
-                message={
-                    <>
-                        Apakah Anda yakin ingin menghapus{' '}
-                        <strong>{selectedItems.length} file</strong> yang dipilih? Tindakan ini
-                        tidak dapat dibatalkan.
-                    </>
-                }
+                title={t('media.delete_confirm.bulk_title')}
+                message={t('media.delete_confirm.bulk_message', { count: selectedItems.length })}
             />
         </DynamicLayout>
     );

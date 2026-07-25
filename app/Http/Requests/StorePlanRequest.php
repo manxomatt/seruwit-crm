@@ -38,9 +38,9 @@ class StorePlanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'key.regex' => 'Kunci hanya boleh berisi huruf kecil, angka, dan tanda hubung.',
-            'key.unique' => 'Kunci ini sudah dipakai paket lain.',
-            'modules.*.in' => 'Modul tersebut tidak terdaftar.',
+            'key.regex' => __('plans.validation.key_regex'),
+            'key.unique' => __('plans.validation.key_unique'),
+            'modules.*.in' => __('plans.validation.modules_in'),
         ];
     }
 }

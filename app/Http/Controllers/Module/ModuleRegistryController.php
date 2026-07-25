@@ -53,8 +53,8 @@ class ModuleRegistryController extends Controller
         Modules::flushDisabledState();
 
         $message = $enabled
-            ? "Modul {$module->label()} dinonaktifkan untuk semua tenant."
-            : "Modul {$module->label()} diaktifkan kembali.";
+            ? __('platform.messages.module_disabled', ['module' => $module->label()])
+            : __('platform.messages.module_enabled', ['module' => $module->label()]);
 
         return back()->with('success', $message);
     }

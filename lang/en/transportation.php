@@ -30,6 +30,10 @@ return [
         'week' => 'Week',
         'month' => 'Month',
         'year' => 'Year',
+        'trips_scheduled' => ':count trips scheduled :period',
+        'period_week' => 'this week',
+        'period_month' => 'this month',
+        'period_year' => 'this year',
     ],
 
     'days' => [
@@ -93,6 +97,9 @@ return [
         ],
         'calendar' => [
             'title' => 'Trip Calendar',
+            'select_date' => 'Select a date to view trip details.',
+            'no_trips' => 'No trips scheduled on this date.',
+            'trip_count' => ':count trip(s)',
         ],
         'reports' => [
             'title' => 'Transportation Reports',

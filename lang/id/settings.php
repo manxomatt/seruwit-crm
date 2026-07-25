@@ -1,0 +1,109 @@
+<?php
+
+return [
+    'title' => 'Pengaturan',
+
+    'fields' => [
+        'key' => 'Kunci',
+        'label' => 'Label',
+        'group' => 'Grup',
+        'type' => 'Tipe',
+        'value' => 'Nilai',
+        'description' => 'Deskripsi (opsional)',
+        'sort_order' => 'Urutan',
+        'is_public' => 'Jadikan pengaturan ini dapat diakses publik',
+    ],
+
+    'placeholders' => [
+        'key' => 'Misal: site.name atau email.smtp_host',
+        'key_hint' => 'Hanya huruf kecil, angka, garis bawah, dan titik yang diizinkan.',
+        'label' => 'Misal: Nama Situs',
+        'group' => 'Misal: shipping',
+        'group_hint' => 'Hanya huruf kecil, angka, dan garis bawah yang diizinkan. Ini akan menjadi tab baru di Pengaturan.',
+        'description' => 'Deskripsi singkat tentang fungsi pengaturan ini…',
+        'color' => '#000000',
+    ],
+
+    'groups' => [
+        'general' => 'Umum',
+        'site' => 'Situs',
+        'email' => 'Email',
+        'social' => 'Sosial',
+        'seo' => 'SEO',
+    ],
+
+    'types' => [
+        'text' => 'Teks',
+        'textarea' => 'Textarea',
+        'boolean' => 'Boolean',
+        'number' => 'Angka',
+        'email' => 'Email',
+        'url' => 'URL',
+        'select' => 'Pilihan',
+        'json' => 'JSON',
+        'color' => 'Warna',
+    ],
+
+    'boolean_options' => [
+        'true' => 'Ya / Benar',
+        'false' => 'Tidak / Salah',
+        'select_placeholder' => 'Pilih…',
+    ],
+
+    'pages' => [
+        'index' => [
+            'head' => 'Pengaturan',
+        ],
+        'group' => [
+            'title' => 'Pengaturan — :group',
+            'new_group' => '+ Grup Baru',
+            'add_setting' => 'Tambah Pengaturan',
+            'empty_title' => 'Belum ada pengaturan di grup ini',
+            'empty_hint' => 'Tambahkan satu untuk memulai.',
+            'save' => 'Simpan Perubahan',
+            'enabled_label' => 'Aktif',
+        ],
+        'create' => [
+            'title' => 'Buat Pengaturan',
+            'head' => 'Buat Pengaturan',
+            'submit' => 'Buat Pengaturan',
+            'choose_existing_group' => 'Pilih grup yang sudah ada',
+            'create_new_group' => '+ Buat grup baru',
+        ],
+        'edit' => [
+            'title' => 'Ubah Pengaturan - :label',
+            'head' => 'Ubah Pengaturan',
+            'submit' => 'Perbarui Pengaturan',
+        ],
+    ],
+
+    'value_display' => [
+        'yes' => 'Ya',
+        'no' => 'Tidak',
+        'empty' => '—',
+    ],
+
+    'delete_confirm' => [
+        'title' => 'Hapus Pengaturan',
+        'message' => 'Apakah Anda yakin ingin menghapus ":label" (kunci: :key)? Tindakan ini tidak dapat dibatalkan.',
+        'message_generic' => 'Apakah Anda yakin ingin menghapus pengaturan ini?',
+    ],
+
+    'validation' => [
+        'key_required' => 'Kunci pengaturan wajib diisi.',
+        'key_unique' => 'Kunci pengaturan ini sudah ada.',
+        'key_regex' => 'Kunci pengaturan hanya boleh berisi huruf kecil, angka, garis bawah, dan titik.',
+        'group_required' => 'Grup pengaturan wajib diisi.',
+        'group_regex' => 'Grup hanya boleh berisi huruf kecil, angka, dan garis bawah.',
+        'type_required' => 'Tipe pengaturan wajib diisi.',
+        'type_in' => 'Tipe pengaturan harus salah satu dari: text, textarea, boolean, number, email, url, select, json, color.',
+        'label_required' => 'Label pengaturan wajib diisi.',
+    ],
+
+    'messages' => [
+        'created' => 'Pengaturan berhasil dibuat.',
+        'updated' => 'Pengaturan berhasil diperbarui.',
+        'deleted' => 'Pengaturan berhasil dihapus.',
+        'bulk_updated' => 'Pengaturan berhasil diperbarui.',
+    ],
+];

@@ -3,6 +3,7 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
@@ -36,28 +37,17 @@ interface Props {
 // content sits at the bottom. Each tier gets a plain-language heading.
 const TIER_ORDER: ModuleTier[] = ['vertical', 'foundation', 'content'];
 
-const TIER_META: Record<ModuleTier, { label: string; hint: string; accent: string }> = {
-    vertical: {
-        label: 'Fitur Bisnis',
-        hint: 'Modul yang dijual sebagai fitur utama',
-        accent: 'bg-indigo-500',
-    },
-    foundation: {
-        label: 'Fondasi',
-        hint: 'Data & layanan yang menopang fitur bisnis',
-        accent: 'bg-sky-500',
-    },
-    content: {
-        label: 'Konten & Situs',
-        hint: 'Halaman publik dan CMS',
-        accent: 'bg-emerald-500',
-    },
+const TIER_ACCENT: Record<ModuleTier, string> = {
+    vertical: 'bg-indigo-500',
+    foundation: 'bg-sky-500',
+    content: 'bg-emerald-500',
 };
 
 const inputClass =
     'mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm';
 
 export default function Index({ plans, availableModules }: Props): JSX.Element {
+    const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
 
     const [editing, setEditing] = useState<PlanRow | null>(null);
@@ -180,8 +170,8 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Paket</h2>}>
-            <Head title="Paket" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('plans.title')}</h2>}>
+            <Head title={t('plans.title')} />
 
             <div className="space-y-6">
                 {flash?.success && (
@@ -196,12 +186,8 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                 )}
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="max-w-2xl text-sm text-gray-600">
-                        Paket menentukan modul apa yang boleh dipasang tenant. Mengubah paket berlaku untuk semua tenant
-                        di dalamnya pada request berikutnya, dan tidak pernah menghapus data — mempersempit paket hanya
-                        mengunci modulnya.
-                    </p>
-                    <PrimaryButton onClick={openCreate}>Tambah Paket</PrimaryButton>
+                    <p className="max-w-2xl text-sm text-gray-600">{t('plans.pages.index.description')}</p>
+                    <PrimaryButton onClick={openCreate}>{t('plans.pages.index.new')}</PrimaryButton>
                 </div>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
@@ -216,7 +202,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                         </span>
                                         {plan.is_default && (
                                             <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
-                                                Default
+                                                {t('plans.pages.index.default_badge')}
                                             </span>
                                         )}
                                     </div>
@@ -227,7 +213,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
 
                                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                         {plan.modules.length === 0 ? (
-                                            <span className="text-xs text-gray-400">Tanpa modul tambahan</span>
+                                            <span className="text-xs text-gray-400">{t('plans.pages.index.no_modules')}</span>
                                         ) : (
                                             plan.modules.map((key) => {
                                                 const module = availableModules.find((m) => m.key === key);
@@ -240,7 +226,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                                                 ? 'bg-gray-50 text-gray-400 ring-gray-200 line-through'
                                                                 : 'bg-sky-50 text-sky-700 ring-sky-200'
                                                         }`}
-                                                        title={disabled ? 'Modul ini dinonaktifkan platform' : undefined}
+                                                        title={disabled ? t('plans.pages.index.module_disabled_title') : undefined}
                                                     >
                                                         {module?.label ?? key}
                                                     </span>
@@ -250,25 +236,25 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                     </div>
 
                                     <p className="mt-2 text-xs text-gray-400">
-                                        {plan.tenants} tenant di paket ini
-                                        {plan.is_default && ' (termasuk yang belum punya paket sendiri)'}
+                                        {t('plans.pages.index.tenant_count', { count: plan.tenants })}
+                                        {plan.is_default && t('plans.pages.index.default_suffix')}
                                     </p>
                                 </div>
 
                                 <div className="flex shrink-0 gap-2">
-                                    <SecondaryButton onClick={() => openEdit(plan)}>Ubah</SecondaryButton>
+                                    <SecondaryButton onClick={() => openEdit(plan)}>{t('common.edit')}</SecondaryButton>
                                     <SecondaryButton
                                         disabled={plan.tenants > 0 || plan.is_default}
                                         title={
                                             plan.is_default
-                                                ? 'Paket default tidak bisa dihapus'
+                                                ? t('plans.pages.index.delete_disabled_default')
                                                 : plan.tenants > 0
-                                                  ? 'Masih dipakai tenant'
+                                                  ? t('plans.pages.index.delete_disabled_in_use')
                                                   : undefined
                                         }
                                         onClick={() => setDeleting(plan)}
                                     >
-                                        Hapus
+                                        {t('common.delete')}
                                     </SecondaryButton>
                                 </div>
                             </li>
@@ -281,14 +267,14 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                 <form onSubmit={submit} className="flex max-h-[85vh] flex-col">
                     <div className="border-b border-gray-100 px-6 py-4">
                         <h2 className="text-lg font-semibold text-gray-900">
-                            {editing ? `Ubah paket ${editing.name}` : 'Paket baru'}
+                            {editing ? t('plans.pages.index.modal_edit_title', { name: editing.name }) : t('plans.pages.index.modal_create_title')}
                         </h2>
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-6 py-5">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Nama
+                            {t('plans.fields.name')}
                             <input
                                 className={inputClass}
                                 value={form.data.name}
@@ -299,7 +285,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                         </label>
 
                         <label className="block text-sm font-medium text-gray-700">
-                            Kunci
+                            {t('plans.fields.key')}
                             <input
                                 className={`${inputClass} font-mono disabled:bg-gray-100 disabled:text-gray-500`}
                                 value={form.data.key}
@@ -310,14 +296,12 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                             />
                             {form.errors.key && <p className="mt-1 text-xs text-red-500">{form.errors.key}</p>}
                             <p className="mt-1 text-xs text-gray-500">
-                                {editing
-                                    ? 'Kunci tidak bisa diubah — tenant menyimpannya sebagai acuan paketnya.'
-                                    : 'Huruf kecil, angka, dan tanda hubung. Permanen setelah dibuat.'}
+                                {editing ? t('plans.fields.key_hint_locked') : t('plans.fields.key_hint_new')}
                             </p>
                         </label>
 
                         <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
-                            Deskripsi
+                            {t('plans.fields.description')}
                             <input
                                 className={inputClass}
                                 value={form.data.description}
@@ -329,7 +313,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                         </label>
 
                         <label className="block text-sm font-medium text-gray-700">
-                            Urutan tampil
+                            {t('plans.fields.sort_order')}
                             <input
                                 type="number"
                                 min={0}
@@ -347,10 +331,8 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                 onChange={(e) => form.setData('is_default', e.target.checked)}
                             />
                             <span>
-                                Jadikan paket default
-                                <span className="block text-xs text-gray-500">
-                                    Dipakai tenant yang belum punya paket sendiri. Hanya satu paket bisa jadi default.
-                                </span>
+                                {t('plans.fields.is_default')}
+                                <span className="block text-xs text-gray-500">{t('plans.fields.is_default_hint')}</span>
                             </span>
                         </label>
                     </div>
@@ -358,9 +340,9 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                     <div className="mt-6">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-700">Modul dalam paket ini</span>
+                                <span className="text-sm font-medium text-gray-700">{t('plans.pages.index.modules_section_title')}</span>
                                 <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-indigo-100">
-                                    {form.data.modules.length} dipilih
+                                    {t('plans.pages.index.modules_selected_count', { count: form.data.modules.length })}
                                 </span>
                             </div>
                             <div className="flex items-center gap-1 text-xs">
@@ -369,20 +351,20 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                     onClick={selectAll}
                                     className="rounded-md px-2 py-1 font-medium text-indigo-600 hover:bg-indigo-50"
                                 >
-                                    Pilih semua
+                                    {t('plans.actions.select_all')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={clearAll}
                                     className="rounded-md px-2 py-1 font-medium text-gray-500 hover:bg-gray-100"
                                 >
-                                    Kosongkan
+                                    {t('plans.actions.clear_all')}
                                 </button>
                             </div>
                         </div>
 
                         {availableModules.length === 0 ? (
-                            <p className="mt-3 text-sm text-gray-500">Belum ada modul opsional yang terdaftar.</p>
+                            <p className="mt-3 text-sm text-gray-500">{t('plans.pages.index.no_modules_registered')}</p>
                         ) : (
                             <>
                                 <div className="relative mt-3">
@@ -399,25 +381,25 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                         type="text"
                                         value={moduleSearch}
                                         onChange={(e) => setModuleSearch(e.target.value)}
-                                        placeholder="Cari modul…"
+                                        placeholder={t('plans.pages.index.search_placeholder')}
                                         className="block w-full rounded-lg border-gray-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     />
                                 </div>
 
                                 {groupedModules.length === 0 ? (
                                     <p className="mt-4 text-center text-sm text-gray-400">
-                                        Tidak ada modul yang cocok dengan “{moduleSearch}”.
+                                        {t('plans.pages.index.no_modules_match', { query: moduleSearch })}
                                     </p>
                                 ) : (
                                     <div className="mt-4 space-y-5">
                                         {groupedModules.map(({ tier, modules }) => (
                                             <div key={tier}>
                                                 <div className="mb-2 flex items-center gap-2">
-                                                    <span className={`h-2 w-2 rounded-full ${TIER_META[tier].accent}`} />
+                                                    <span className={`h-2 w-2 rounded-full ${TIER_ACCENT[tier]}`} />
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-600">
-                                                        {TIER_META[tier].label}
+                                                        {t(`plans.tiers.${tier}.label`)}
                                                     </span>
-                                                    <span className="text-xs text-gray-400">— {TIER_META[tier].hint}</span>
+                                                    <span className="text-xs text-gray-400">— {t(`plans.tiers.${tier}.hint`)}</span>
                                                 </div>
 
                                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -463,7 +445,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                                                         </span>
                                                                         {locked && (
                                                                             <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 ring-1 ring-red-200">
-                                                                                Nonaktif
+                                                                                {t('plans.pages.index.module_disabled_badge')}
                                                                             </span>
                                                                         )}
                                                                     </span>
@@ -484,18 +466,17 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
 
                     {editing && editing.tenants > 0 && (
                         <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 ring-1 ring-amber-200">
-                            {editing.tenants} tenant memakai paket ini. Mencabut modul akan mengunci aksesnya bagi mereka
-                            — data mereka tetap utuh dan kembali jika modulnya dimasukkan lagi.
+                            {t('plans.pages.index.tenants_warning', { count: editing.tenants })}
                         </p>
                     )}
                     </div>
 
                     <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
                         <SecondaryButton type="button" onClick={close}>
-                            Batal
+                            {t('common.cancel')}
                         </SecondaryButton>
                         <PrimaryButton disabled={form.processing}>
-                            {form.processing ? 'Menyimpan…' : 'Simpan'}
+                            {form.processing ? t('plans.actions.saving') : t('common.save')}
                         </PrimaryButton>
                     </div>
                 </form>
@@ -503,9 +484,9 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
 
             <ConfirmDeleteDialog
                 show={deleting !== null}
-                title={`Hapus paket ${deleting?.name ?? ''}?`}
-                message="Paket ini tidak dipakai tenant mana pun, jadi menghapusnya tidak berdampak pada workspace yang berjalan."
-                confirmText="Hapus paket"
+                title={t('plans.pages.index.delete_title', { name: deleting?.name ?? '' })}
+                message={t('plans.pages.index.delete_message')}
+                confirmText={t('plans.actions.delete_confirm')}
                 processing={deleteForm.processing}
                 onClose={() => setDeleting(null)}
                 onConfirm={destroy}

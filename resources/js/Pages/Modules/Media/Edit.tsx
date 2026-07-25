@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -27,6 +28,7 @@ interface Props {
 
 export default function Edit({ media }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         alt_text: media.alt_text || '',
         description: media.description || '',
@@ -42,18 +44,18 @@ export default function Edit({ media }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Edit Media
+                        {t('media.pages.edit.head')}
                     </h2>
                 </div>
             }
         >
-            <Head title={`Edit: ${media.original_name}`} />
+            <Head title={t('media.pages.edit.title', { name: media.original_name })} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Preview */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('media.pages.edit.preview')}</h3>
                         <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center aspect-square">
                             {media.type === 'image' ? (
                                 <img
@@ -67,7 +69,7 @@ export default function Edit({ media }: Props): JSX.Element {
                                     controls
                                     className="max-w-full max-h-full"
                                 >
-                                    Your browser does not support the video tag.
+                                    {t('media.video_not_supported')}
                                 </video>
                             ) : (
                                 <div className="text-center p-4">
@@ -92,13 +94,13 @@ export default function Edit({ media }: Props): JSX.Element {
                         </div>
                         <div className="mt-4 space-y-2">
                             <p className="text-sm text-gray-600">
-                                <span className="font-medium">File:</span> {media.original_name}
+                                <span className="font-medium">{t('media.pages.edit.file')}:</span> {media.original_name}
                             </p>
                             <p className="text-sm text-gray-600">
-                                <span className="font-medium">Type:</span> {media.mime_type}
+                                <span className="font-medium">{t('media.pages.edit.type')}:</span> {media.mime_type}
                             </p>
                             <p className="text-sm text-gray-600">
-                                <span className="font-medium">Size:</span> {media.human_size}
+                                <span className="font-medium">{t('media.pages.edit.size')}:</span> {media.human_size}
                             </p>
                         </div>
                     </div>
@@ -107,46 +109,46 @@ export default function Edit({ media }: Props): JSX.Element {
                 {/* Edit Form */}
                 <div className="lg:col-span-2 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Details</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('media.pages.edit.details')}</h3>
                         <form onSubmit={submit} className="space-y-6">
                             <div>
-                                <InputLabel htmlFor="alt_text" value="Alt Text" />
+                                <InputLabel htmlFor="alt_text" value={t('media.fields.alt_text')} />
                                 <TextInput
                                     id="alt_text"
                                     type="text"
                                     className="mt-1 block w-full"
                                     value={data.alt_text}
                                     onChange={(e) => setData('alt_text', e.target.value)}
-                                    placeholder="Describe the image for accessibility"
+                                    placeholder={t('media.placeholders.alt_text')}
                                 />
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Alternative text is used by screen readers and displayed when the image cannot be loaded.
+                                    {t('media.placeholders.alt_text_hint')}
                                 </p>
                                 <InputError message={errors.alt_text} className="mt-2" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="description" value="Description" />
+                                <InputLabel htmlFor="description" value={t('media.fields.description')} />
                                 <textarea
                                     id="description"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={4}
-                                    placeholder="Add a description for this media file"
+                                    placeholder={t('media.placeholders.description')}
                                 />
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Optional description for internal reference.
+                                    {t('media.placeholders.description_hint')}
                                 </p>
                                 <InputError message={errors.description} className="mt-2" />
                             </div>
 
                             <div className="flex items-center gap-4">
                                 <PrimaryButton disabled={processing}>
-                                    Save Changes
+                                    {t('media.pages.edit.submit')}
                                 </PrimaryButton>
                                 <Link href={prefixedRoute('media.show', media.id)}>
-                                    <SecondaryButton type="button">Cancel</SecondaryButton>
+                                    <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                                 </Link>
                             </div>
                         </form>
@@ -157,7 +159,7 @@ export default function Edit({ media }: Props): JSX.Element {
             {/* Back Link */}
             <div className="mt-6">
                 <Link href={prefixedRoute('media.index')}>
-                    <SecondaryButton>Back to Library</SecondaryButton>
+                    <SecondaryButton>{t('media.pages.edit.back')}</SecondaryButton>
                 </Link>
             </div>
         </DynamicLayout>

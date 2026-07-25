@@ -38,7 +38,7 @@ class UpdatePlanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'modules.*.in' => 'Modul tersebut tidak terdaftar.',
+            'modules.*.in' => __('plans.validation.modules_in'),
         ];
     }
 }

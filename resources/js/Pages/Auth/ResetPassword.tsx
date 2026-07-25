@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 
 interface Props {
@@ -11,6 +12,8 @@ interface Props {
 }
 
 export default function ResetPassword({ token, email }: Props) {
+    const { t } = useTrans();
+
     interface ResetForm {
         token?: string;
         email?: string;
@@ -35,11 +38,11 @@ export default function ResetPassword({ token, email }: Props) {
 
     return (
         <GuestLayout>
-            <Head title="Reset Password" />
+            <Head title={t('auth_ui.reset_title')} />
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value={t('auth_ui.email')} />
 
                     <TextInput
                         id="email"
@@ -55,7 +58,7 @@ export default function ResetPassword({ token, email }: Props) {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value={t('auth_ui.password')} />
 
                     <TextInput
                         id="password"
@@ -74,7 +77,7 @@ export default function ResetPassword({ token, email }: Props) {
                 <div className="mt-4">
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value={t('auth_ui.password_confirmation')}
                     />
 
                     <TextInput
@@ -97,7 +100,7 @@ export default function ResetPassword({ token, email }: Props) {
 
                 <div className="mt-4 flex items-center justify-end">
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Reset Password
+                        {t('auth_ui.reset_submit')}
                     </PrimaryButton>
                 </div>
             </form>

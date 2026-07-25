@@ -106,7 +106,7 @@ class MediaController extends Controller
         ]);
 
         return redirect()->route($this->getRoutePrefix().'.media.index')
-            ->with('success', 'Media uploaded successfully.');
+            ->with('success', __('media.messages.created'));
     }
 
     /**
@@ -217,7 +217,7 @@ class MediaController extends Controller
         $medium->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.media.index')
-            ->with('success', 'Media updated successfully.');
+            ->with('success', __('media.messages.updated'));
     }
 
     /**
@@ -232,7 +232,7 @@ class MediaController extends Controller
         $medium->delete();
 
         return redirect()->route($this->getRoutePrefix().'.media.index')
-            ->with('success', 'Media deleted successfully.');
+            ->with('success', __('media.messages.deleted'));
     }
 
     /**
@@ -254,7 +254,7 @@ class MediaController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.media.index')
-            ->with('success', count($media).' media files deleted successfully.');
+            ->with('success', __('media.messages.bulk_deleted', ['count' => count($media)]));
     }
 
     /**

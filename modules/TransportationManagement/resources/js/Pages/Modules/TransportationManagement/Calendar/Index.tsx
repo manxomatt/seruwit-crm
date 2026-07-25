@@ -22,10 +22,10 @@ const VIEW_TABS: { key: CalendarView; labelKey: string }[] = [
     { key: 'year', labelKey: 'transportation.calendar.year' },
 ];
 
-const PERIOD_LABEL: Record<CalendarView, string> = {
-    week: 'minggu ini',
-    month: 'bulan ini',
-    year: 'tahun ini',
+const PERIOD_LABEL_KEY: Record<CalendarView, string> = {
+    week: 'transportation.calendar.period_week',
+    month: 'transportation.calendar.period_month',
+    year: 'transportation.calendar.period_year',
 };
 
 function periodLabel(view: CalendarView, date: Date): string {
@@ -91,7 +91,10 @@ export default function Index({ view, date: dateKey, tripsByDate }: Props): JSX.
                     <div>
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">{periodLabel(view, date)}</h2>
                         <p className="mt-0.5 text-sm text-gray-500">
-                            {totalTrips} trip terjadwal {PERIOD_LABEL[view]}
+                            {t('transportation.calendar.trips_scheduled', {
+                                count: totalTrips,
+                                period: t(PERIOD_LABEL_KEY[view]),
+                            })}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">

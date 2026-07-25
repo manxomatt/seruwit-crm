@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 
 interface Notification {
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function Index({ notifications }: Props): JSX.Element {
+    const { t } = useTrans();
     const hasUnread = notifications.data.some((notification) => !notification.read_at);
 
     const open = (notification: Notification) => {
@@ -46,19 +48,19 @@ export default function Index({ notifications }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Notifikasi</h2>
-                    {hasUnread && <PrimaryButton onClick={markAllRead}>Tandai semua terbaca</PrimaryButton>}
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('notifications.title')}</h2>
+                    {hasUnread && <PrimaryButton onClick={markAllRead}>{t('notifications.mark_all_read')}</PrimaryButton>}
                 </div>
             }
         >
-            <Head title="Notifikasi" />
+            <Head title={t('notifications.title')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
                     {notifications.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">Belum ada notifikasi</h3>
-                            <p className="mt-1 text-sm text-gray-500">Alert operasional akan muncul di sini.</p>
+                            <h3 className="text-sm font-medium text-gray-900">{t('notifications.empty_title')}</h3>
+                            <p className="mt-1 text-sm text-gray-500">{t('notifications.empty_hint')}</p>
                         </div>
                     ) : (
                         <>
@@ -83,8 +85,11 @@ export default function Index({ notifications }: Props): JSX.Element {
                             {notifications.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Menampilkan {(notifications.current_page - 1) * notifications.per_page + 1}–
-                                        {Math.min(notifications.current_page * notifications.per_page, notifications.total)} dari {notifications.total}
+                                        {t('common.showing_results', {
+                                            from: (notifications.current_page - 1) * notifications.per_page + 1,
+                                            to: Math.min(notifications.current_page * notifications.per_page, notifications.total),
+                                            total: notifications.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {notifications.links.map((link, index) => (

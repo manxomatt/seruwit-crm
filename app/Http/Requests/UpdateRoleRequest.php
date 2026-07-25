@@ -43,12 +43,12 @@ class UpdateRoleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'The role name is required.',
-            'name.max' => 'The role name must not exceed 255 characters.',
-            'name.unique' => 'A role with this name already exists.',
-            'description.max' => 'The description must not exceed 500 characters.',
-            'permissions.array' => 'Permissions must be an array.',
-            'permissions.*.exists' => 'One or more selected permissions are invalid.',
+            'name.required' => __('roles.validation.name_required'),
+            'name.max' => __('roles.validation.name_max'),
+            'name.unique' => __('roles.validation.name_unique'),
+            'description.max' => __('roles.validation.description_max'),
+            'permissions.array' => __('roles.validation.permissions_array'),
+            'permissions.*.exists' => __('roles.validation.permissions_exists'),
         ];
     }
 }

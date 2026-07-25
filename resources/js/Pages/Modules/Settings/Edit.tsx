@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -30,6 +31,7 @@ interface Props {
 
 export default function Edit({ setting, groups }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         key: setting.key,
         group: setting.group,
@@ -47,15 +49,15 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
     };
 
     const settingTypes = [
-        { value: 'text', label: 'Text' },
-        { value: 'textarea', label: 'Textarea' },
-        { value: 'boolean', label: 'Boolean' },
-        { value: 'number', label: 'Number' },
-        { value: 'email', label: 'Email' },
-        { value: 'url', label: 'URL' },
-        { value: 'select', label: 'Select' },
-        { value: 'json', label: 'JSON' },
-        { value: 'color', label: 'Color' },
+        { value: 'text', label: t('settings.types.text') },
+        { value: 'textarea', label: t('settings.types.textarea') },
+        { value: 'boolean', label: t('settings.types.boolean') },
+        { value: 'number', label: t('settings.types.number') },
+        { value: 'email', label: t('settings.types.email') },
+        { value: 'url', label: t('settings.types.url') },
+        { value: 'select', label: t('settings.types.select') },
+        { value: 'json', label: t('settings.types.json') },
+        { value: 'color', label: t('settings.types.color') },
     ];
 
     return (
@@ -63,61 +65,61 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Edit Setting
+                        {t('settings.pages.edit.head')}
                     </h2>
                 </div>
             }
         >
-            <Head title={`Edit Setting - ${setting.label}`} />
+            <Head title={t('settings.pages.edit.title', { label: setting.label })} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
                     <form onSubmit={submit} className="max-w-xl">
                         <div className="mb-4">
-                            <InputLabel htmlFor="key" value="Key" />
+                            <InputLabel htmlFor="key" value={t('settings.fields.key')} />
                             <TextInput
                                 id="key"
                                 type="text"
                                 name="key"
                                 value={data.key}
                                 className="mt-1 block w-full font-mono"
-                                placeholder="e.g., site.name or email.smtp_host"
+                                placeholder={t('settings.placeholders.key')}
                                 isFocused={true}
                                 onChange={(e) => setData('key', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
                             />
                             <p className="mt-1 text-sm text-gray-500">
-                                Only lowercase letters, numbers, underscores, and dots allowed.
+                                {t('settings.placeholders.key_hint')}
                             </p>
                             <InputError message={errors.key} className="mt-2" />
                         </div>
 
                         <div className="mb-4">
-                            <InputLabel htmlFor="label" value="Label" />
+                            <InputLabel htmlFor="label" value={t('settings.fields.label')} />
                             <TextInput
                                 id="label"
                                 type="text"
                                 name="label"
                                 value={data.label}
                                 className="mt-1 block w-full"
-                                placeholder="e.g., Site Name"
+                                placeholder={t('settings.placeholders.label')}
                                 onChange={(e) => setData('label', e.target.value)}
                             />
                             <InputError message={errors.label} className="mt-2" />
                         </div>
 
                         <div className="mb-4">
-                            <InputLabel htmlFor="group" value="Group" />
+                            <InputLabel htmlFor="group" value={t('settings.fields.group')} />
                             <Select
                                 id="group"
                                 className="mt-1"
                                 value={data.group}
                                 onChange={(value) => setData('group', value)}
                                 options={[
-                                    { value: 'general', label: 'General' },
-                                    { value: 'site', label: 'Site' },
-                                    { value: 'email', label: 'Email' },
-                                    { value: 'social', label: 'Social' },
-                                    { value: 'seo', label: 'SEO' },
+                                    { value: 'general', label: t('settings.groups.general') },
+                                    { value: 'site', label: t('settings.groups.site') },
+                                    { value: 'email', label: t('settings.groups.email') },
+                                    { value: 'social', label: t('settings.groups.social') },
+                                    { value: 'seo', label: t('settings.groups.seo') },
                                     ...groups
                                         .filter((g) => !['general', 'site', 'email', 'social', 'seo'].includes(g))
                                         .map((g) => ({ value: g, label: g.charAt(0).toUpperCase() + g.slice(1) })),
@@ -127,7 +129,7 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                         </div>
 
                         <div className="mb-4">
-                            <InputLabel htmlFor="type" value="Type" />
+                            <InputLabel htmlFor="type" value={t('settings.fields.type')} />
                             <Select
                                 id="type"
                                 className="mt-1"
@@ -139,7 +141,7 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                         </div>
 
                         <div className="mb-4">
-                            <InputLabel htmlFor="value" value="Value" />
+                            <InputLabel htmlFor="value" value={t('settings.fields.value')} />
                             {data.type === 'textarea' || data.type === 'json' ? (
                                 <textarea
                                     id="value"
@@ -155,10 +157,10 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                                     className="mt-1"
                                     value={data.value}
                                     onChange={(value) => setData('value', value)}
-                                    placeholder="Select..."
+                                    placeholder={t('settings.boolean_options.select_placeholder')}
                                     options={[
-                                        { value: '1', label: 'Yes / True' },
-                                        { value: '0', label: 'No / False' },
+                                        { value: '1', label: t('settings.boolean_options.true') },
+                                        { value: '0', label: t('settings.boolean_options.false') },
                                     ]}
                                 />
                             ) : data.type === 'color' ? (
@@ -191,21 +193,21 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                         </div>
 
                         <div className="mb-4">
-                            <InputLabel htmlFor="description" value="Description (optional)" />
+                            <InputLabel htmlFor="description" value={t('settings.fields.description')} />
                             <textarea
                                 id="description"
                                 name="description"
                                 value={data.description}
                                 rows={2}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                placeholder="Brief description of what this setting does..."
+                                placeholder={t('settings.placeholders.description')}
                                 onChange={(e) => setData('description', e.target.value)}
                             />
                             <InputError message={errors.description} className="mt-2" />
                         </div>
 
                         <div className="mb-4">
-                            <InputLabel htmlFor="sort_order" value="Sort Order" />
+                            <InputLabel htmlFor="sort_order" value={t('settings.fields.sort_order')} />
                             <TextInput
                                 id="sort_order"
                                 type="number"
@@ -228,7 +230,7 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
                                     className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                 />
                                 <span className="ml-2 text-sm text-gray-600">
-                                    Make this setting publicly accessible
+                                    {t('settings.fields.is_public')}
                                 </span>
                             </label>
                             <InputError message={errors.is_public} className="mt-2" />
@@ -236,10 +238,10 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
 
                         <div className="flex items-center gap-4">
                             <PrimaryButton disabled={processing}>
-                                Update Setting
+                                {t('settings.pages.edit.submit')}
                             </PrimaryButton>
                             <Link href={prefixedRoute('settings.group', setting.group)}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -25,6 +26,7 @@ interface Props {
 
 export default function Create({ permissions, modules, actions }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
@@ -75,15 +77,15 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Create Role
+                        {t('roles.pages.create.head')}
                     </h2>
                     <Link href={prefixedRoute('roles.index')}>
-                        <SecondaryButton>Back to Roles</SecondaryButton>
+                        <SecondaryButton>{t('roles.actions.back_to_roles')}</SecondaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title="Create Role" />
+            <Head title={t('roles.pages.create.title')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <form onSubmit={submit} className="p-6">
@@ -91,7 +93,7 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                         {/* Left Column - Role Details */}
                         <div className="space-y-6">
                             <div>
-                                <InputLabel htmlFor="name" value="Role Name" />
+                                <InputLabel htmlFor="name" value={t('roles.fields.name')} />
                                 <TextInput
                                     id="name"
                                     type="text"
@@ -100,20 +102,20 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
                                     autoFocus
-                                    placeholder="e.g., Editor, Moderator"
+                                    placeholder={t('roles.placeholders.name')}
                                 />
                                 <InputError message={errors.name} className="mt-2" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="description" value="Description" />
+                                <InputLabel htmlFor="description" value={t('roles.fields.description')} />
                                 <textarea
                                     id="description"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={3}
-                                    placeholder="Describe what this role can do..."
+                                    placeholder={t('roles.placeholders.description')}
                                 />
                                 <InputError message={errors.description} className="mt-2" />
                             </div>
@@ -122,14 +124,14 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                         {/* Right Column - Permissions */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <InputLabel value="Permissions" />
+                                <InputLabel value={t('roles.fields.permissions')} />
                                 <div className="flex gap-2">
                                     <button
                                         type="button"
                                         onClick={selectAllPermissions}
                                         className="text-sm text-indigo-600 hover:text-indigo-800"
                                     >
-                                        Select All
+                                        {t('roles.actions.select_all')}
                                     </button>
                                     <span className="text-gray-300">|</span>
                                     <button
@@ -137,7 +139,7 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                         onClick={clearAllPermissions}
                                         className="text-sm text-gray-600 hover:text-gray-800"
                                     >
-                                        Clear All
+                                        {t('roles.actions.clear_all')}
                                     </button>
                                 </div>
                             </div>
@@ -193,17 +195,17 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                             <InputError message={errors.permissions} className="mt-2" />
                             
                             <p className="mt-2 text-sm text-gray-500">
-                                Selected: {data.permissions.length} permission(s)
+                                {t('roles.permissions_selected', { count: data.permissions.length })}
                             </p>
                         </div>
                     </div>
 
                     <div className="mt-6 flex items-center justify-end gap-4">
                         <Link href={prefixedRoute('roles.index')}>
-                            <SecondaryButton type="button">Cancel</SecondaryButton>
+                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                         </Link>
                         <PrimaryButton disabled={processing}>
-                            {processing ? 'Creating...' : 'Create Role'}
+                            {processing ? t('roles.pages.create.submitting') : t('roles.pages.create.submit')}
                         </PrimaryButton>
                     </div>
                 </form>

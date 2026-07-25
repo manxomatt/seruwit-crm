@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, usePage } from '@inertiajs/react';
 
 interface Props {
@@ -14,36 +15,38 @@ interface Props {
 }
 
 export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
+    const { t } = useTrans();
     const { auth } = usePage().props as any;
     const permissions = auth.user?.permissions || {};
     const permissionModules = Object.keys(permissions);
+    const title = primaryRole ? t('dashboard.title_with_role', { role: primaryRole.name }) : t('dashboard.title');
 
     return (
         <DynamicLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {primaryRole ? `${primaryRole.name} Dashboard` : 'Dashboard'}
+                    {title}
                 </h2>
             }
         >
-            <Head title={primaryRole ? `${primaryRole.name} Dashboard` : 'Dashboard'} />
+            <Head title={title} />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {/* Welcome Card */}
                 <div className="col-span-full overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6 text-gray-900">
                         <h3 className="text-lg font-medium mb-4">
-                            Welcome, {user.name}!
+                            {t('dashboard.welcome', { name: user.name })}
                         </h3>
                         <p className="text-gray-600 mb-2">
-                            Email: {user.email}
+                            {t('dashboard.email')}: {user.email}
                         </p>
                         <p className="text-gray-600 mb-2">
-                            Roles: {user.roles.join(', ')}
+                            {t('dashboard.roles')}: {user.roles.join(', ')}
                         </p>
                         {primaryRole && (
                             <p className="text-gray-600">
-                                Primary Role: {primaryRole.name}
+                                {t('dashboard.primary_role')}: {primaryRole.name}
                             </p>
                         )}
                     </div>
@@ -53,7 +56,7 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
                 <div className="col-span-full overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">
-                            Your Permissions
+                            {t('dashboard.permissions.title')}
                         </h3>
                         {permissionModules.length > 0 ? (
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -77,7 +80,7 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
                             </div>
                         ) : (
                             <p className="text-gray-500">
-                                No specific permissions assigned. Contact an administrator for access.
+                                {t('dashboard.permissions.empty')}
                             </p>
                         )}
                     </div>

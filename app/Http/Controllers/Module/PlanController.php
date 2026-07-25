@@ -70,7 +70,7 @@ class PlanController extends Controller
             return $plan;
         });
 
-        return back()->with('success', "Paket {$plan->name} dibuat.");
+        return back()->with('success', __('plans.messages.created', ['name' => $plan->name]));
     }
 
     public function update(UpdatePlanRequest $request, Plan $plan): RedirectResponse
@@ -84,10 +84,7 @@ class PlanController extends Controller
             $this->settleDefault($plan);
         });
 
-        return back()->with(
-            'success',
-            "Paket {$plan->name} diperbarui. Perubahan berlaku untuk semua tenant di paket ini.",
-        );
+        return back()->with('success', __('plans.messages.updated', ['name' => $plan->name]));
     }
 
     public function destroy(Plan $plan): RedirectResponse
@@ -95,22 +92,19 @@ class PlanController extends Controller
         // Tenants point at a plan by key, so deleting one out from under them
         // would leave them entitled to nothing at all.
         if (($count = $plan->tenantCount()) > 0) {
-            return back()->with(
-                'error',
-                "Paket {$plan->name} masih dipakai {$count} tenant. Pindahkan mereka dulu sebelum menghapusnya.",
-            );
+            return back()->with('error', __('plans.messages.delete_in_use', [
+                'name' => $plan->name,
+                'count' => $count,
+            ]));
         }
 
         if ($plan->is_default) {
-            return back()->with(
-                'error',
-                'Paket default tidak bisa dihapus. Tetapkan paket lain sebagai default dulu.',
-            );
+            return back()->with('error', __('plans.messages.delete_default'));
         }
 
         $plan->delete();
 
-        return back()->with('success', "Paket {$plan->name} dihapus.");
+        return back()->with('success', __('plans.messages.deleted', ['name' => $plan->name]));
     }
 
     /**

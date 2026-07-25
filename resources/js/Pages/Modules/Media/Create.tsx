@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -19,6 +20,7 @@ interface UploadingFile {
 
 export default function Create(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [files, setFiles] = useState<UploadingFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -100,7 +102,7 @@ export default function Create(): JSX.Element {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Upload failed');
+                throw new Error(errorData.message || t('media.pages.create.upload_failed'));
             }
 
             setFiles((prev) =>
@@ -112,7 +114,7 @@ export default function Create(): JSX.Element {
             setFiles((prev) =>
                 prev.map((f) =>
                     f.id === uploadFile.id
-                        ? { ...f, status: 'error' as const, error: error instanceof Error ? error.message : 'Upload failed' }
+                        ? { ...f, status: 'error' as const, error: error instanceof Error ? error.message : t('media.pages.create.upload_failed') }
                         : f
                 )
             );
@@ -188,12 +190,12 @@ export default function Create(): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Upload Media
+                        {t('media.pages.create.head')}
                     </h2>
                 </div>
             }
         >
-            <Head title="Upload Media" />
+            <Head title={t('media.pages.create.title')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -222,19 +224,19 @@ export default function Create(): JSX.Element {
                             />
                         </svg>
                         <p className="mt-2 text-sm text-gray-600">
-                            Drag and drop files here, or{' '}
+                            {t('media.pages.create.dropzone_hint')}{' '}
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 className="text-indigo-600 hover:text-indigo-500 font-medium"
                             >
-                                browse
+                                {t('media.pages.create.browse')}
                             </button>
                         </p>
                         <p className="mt-1 text-xs text-gray-500">
-                            Supported: Images (JPEG, PNG, GIF, WebP, SVG), Videos (MP4, WebM, MOV), Documents (PDF, DOC, DOCX, XLS, XLSX)
+                            {t('media.pages.create.supported_types')}
                         </p>
-                        <p className="text-xs text-gray-500">Max file size: 50MB</p>
+                        <p className="text-xs text-gray-500">{t('media.pages.create.max_size')}</p>
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -250,7 +252,7 @@ export default function Create(): JSX.Element {
                         <div className="mt-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-medium text-gray-900">
-                                    Files ({files.length})
+                                    {t('media.pages.create.files_count', { count: files.length })}
                                 </h3>
                                 <div className="flex gap-2">
                                     {successCount > 0 && (
@@ -258,12 +260,12 @@ export default function Create(): JSX.Element {
                                             onClick={clearCompleted}
                                             className="text-sm text-gray-500 hover:text-gray-700"
                                         >
-                                            Clear completed ({successCount})
+                                            {t('media.pages.create.clear_completed', { count: successCount })}
                                         </button>
                                     )}
                                     {pendingCount > 0 && uploadingCount === 0 && (
                                         <PrimaryButton onClick={uploadAll}>
-                                            Upload All ({pendingCount})
+                                            {t('media.pages.create.upload_all', { count: pendingCount })}
                                         </PrimaryButton>
                                     )}
                                 </div>
@@ -318,7 +320,7 @@ export default function Create(): JSX.Element {
                                         {/* Status & Actions */}
                                         <div className="flex items-center gap-2">
                                             {uploadFile.status === 'pending' && (
-                                                <span className="text-xs text-gray-500">Pending</span>
+                                                <span className="text-xs text-gray-500">{t('media.pages.create.pending')}</span>
                                             )}
                                             {uploadFile.status === 'uploading' && (
                                                 <svg className="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
@@ -336,7 +338,7 @@ export default function Create(): JSX.Element {
                                                     onClick={() => retryUpload(uploadFile.id)}
                                                     className="text-xs text-indigo-600 hover:text-indigo-500"
                                                 >
-                                                    Retry
+                                                    {t('media.pages.create.retry')}
                                                 </button>
                                             )}
                                             {uploadFile.status !== 'uploading' && (
@@ -359,7 +361,7 @@ export default function Create(): JSX.Element {
                     {/* Actions */}
                     <div className="mt-6 flex items-center gap-4">
                         <Link href={prefixedRoute('media.index')}>
-                            <SecondaryButton>Back to Library</SecondaryButton>
+                            <SecondaryButton>{t('media.pages.create.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>

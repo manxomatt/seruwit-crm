@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { useTrans } from '@/hooks/useTrans';
 import { Trip, formatTime, parseDateKey, statusConfig } from './shared';
 
 interface Props {
@@ -8,10 +9,12 @@ interface Props {
 }
 
 export default function DayTripsPanel({ dateKey, trips, prefixedRoute }: Props): JSX.Element {
+    const { t } = useTrans();
+
     if (!dateKey) {
         return (
             <div className="mt-4 rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-400">
-                Pilih salah satu tanggal untuk melihat detail trip.
+                {t('transportation.pages.calendar.select_date')}
             </div>
         );
     }
@@ -22,10 +25,10 @@ export default function DayTripsPanel({ dateKey, trips, prefixedRoute }: Props):
         <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-800">{label}</h3>
-                <span className="text-xs text-gray-400">{trips.length} trip</span>
+                <span className="text-xs text-gray-400">{t('transportation.pages.calendar.trip_count', { count: trips.length })}</span>
             </div>
             {trips.length === 0 ? (
-                <p className="py-6 text-center text-sm text-gray-400">Tidak ada trip terjadwal pada tanggal ini.</p>
+                <p className="py-6 text-center text-sm text-gray-400">{t('transportation.pages.calendar.no_trips')}</p>
             ) : (
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {trips.map((trip) => {

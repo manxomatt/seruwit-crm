@@ -1,5 +1,6 @@
 import SecondaryButton from '@/Components/SecondaryButton';
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function Index({ modules }: Props): JSX.Element {
+    const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
     const [processingKey, setProcessingKey] = useState<string | null>(null);
 
@@ -28,8 +30,8 @@ export default function Index({ modules }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Modul Platform</h2>}>
-            <Head title="Modul Platform" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('platform.registry.title')}</h2>}>
+            <Head title={t('platform.registry.title')} />
 
             <div className="space-y-6">
                 {flash?.success && (
@@ -43,11 +45,7 @@ export default function Index({ modules }: Props): JSX.Element {
                     </div>
                 )}
 
-                <p className="max-w-2xl text-sm text-gray-600">
-                    Menonaktifkan modul di sini memutus akses <strong>semua tenant</strong> ke modul tersebut seketika,
-                    terlepas dari paket langganan atau status pasangnya masing-masing. Data tenant tidak tersentuh —
-                    mengaktifkan kembali langsung memulihkan semuanya, persis seperti menurunkan lalu menaikkan paket.
-                </p>
+                <p className="max-w-2xl text-sm text-gray-600">{t('platform.registry.description')}</p>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <ul className="divide-y divide-gray-100">
@@ -64,14 +62,16 @@ export default function Index({ modules }: Props): JSX.Element {
                                                 module.is_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                             }`}
                                         >
-                                            {module.is_enabled ? 'Aktif' : 'Dinonaktifkan'}
+                                            {module.is_enabled ? t('platform.registry.status.active') : t('platform.registry.status.disabled')}
                                         </span>
                                     </div>
 
                                     {module.description && <p className="mt-1 text-sm text-gray-500">{module.description}</p>}
 
                                     {module.requires.length > 0 && (
-                                        <p className="mt-2 text-xs text-gray-400">Membutuhkan: {module.requires.join(', ')}</p>
+                                        <p className="mt-2 text-xs text-gray-400">
+                                            {t('platform.registry.requires_prefix')} {module.requires.join(', ')}
+                                        </p>
                                     )}
                                 </div>
 
@@ -81,7 +81,11 @@ export default function Index({ modules }: Props): JSX.Element {
                                         onClick={() => toggle(module)}
                                         className={module.is_enabled ? '!text-red-700' : '!text-green-700'}
                                     >
-                                        {processingKey === module.key ? 'Memproses…' : module.is_enabled ? 'Nonaktifkan' : 'Aktifkan'}
+                                        {processingKey === module.key
+                                            ? t('platform.registry.actions.processing')
+                                            : module.is_enabled
+                                              ? t('platform.registry.actions.disable')
+                                              : t('platform.registry.actions.enable')}
                                     </SecondaryButton>
                                 </div>
                             </li>

@@ -3,9 +3,12 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 
 export default function ConfirmPassword() {
+    const { t } = useTrans();
+
     interface ConfirmForm {
         password: string;
     }
@@ -24,16 +27,15 @@ export default function ConfirmPassword() {
 
     return (
         <GuestLayout>
-            <Head title="Confirm Password" />
+            <Head title={t('auth_ui.confirm_title')} />
 
             <div className="mb-4 text-sm text-gray-600">
-                This is a secure area of the application. Please confirm your
-                password before continuing.
+                {t('auth_ui.confirm_message')}
             </div>
 
             <form onSubmit={submit}>
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value={t('auth_ui.password')} />
 
                     <TextInput
                         id="password"
@@ -50,7 +52,7 @@ export default function ConfirmPassword() {
 
                 <div className="mt-4 flex items-center justify-end">
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Confirm
+                        {t('auth_ui.confirm_submit')}
                     </PrimaryButton>
                 </div>
             </form>

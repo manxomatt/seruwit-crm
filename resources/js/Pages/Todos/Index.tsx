@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm, router } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function Index({ todos }: Props): JSX.Element {
+    const { t } = useTrans();
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
@@ -38,7 +40,7 @@ export default function Index({ todos }: Props): JSX.Element {
     };
 
     const deleteTodo = (todo: Todo) => {
-        if (confirm('Are you sure you want to delete this todo?')) {
+        if (confirm(t('todos.delete_confirm'))) {
             router.delete(route('todos.destroy', todo.id));
         }
     };
@@ -47,11 +49,11 @@ export default function Index({ todos }: Props): JSX.Element {
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    To-Do List
+                    {t('todos.title')}
                 </h2>
             }
         >
-            <Head title="To-Do List" />
+            <Head title={t('todos.title')} />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -67,13 +69,13 @@ export default function Index({ todos }: Props): JSX.Element {
                                             name="title"
                                             value={data.title}
                                             className="block w-full"
-                                            placeholder="What needs to be done?"
+                                            placeholder={t('todos.placeholders.title')}
                                             onChange={(e) => setData('title', e.target.value)}
                                         />
                                         <InputError message={errors.title} className="mt-2" />
                                     </div>
                                     <PrimaryButton disabled={processing}>
-                                        Add Todo
+                                        {t('todos.actions.add')}
                                     </PrimaryButton>
                                 </div>
                                 <div className="mt-3">
@@ -83,7 +85,7 @@ export default function Index({ todos }: Props): JSX.Element {
                                         name="description"
                                         value={data.description}
                                         className="block w-full"
-                                        placeholder="Description (optional)"
+                                        placeholder={t('todos.placeholders.description')}
                                         onChange={(e) => setData('description', e.target.value)}
                                     />
                                     <InputError message={errors.description} className="mt-2" />
@@ -94,7 +96,7 @@ export default function Index({ todos }: Props): JSX.Element {
                             <div className="space-y-3">
                                 {todos.length === 0 ? (
                                     <p className="text-center text-gray-500 py-8">
-                                        No todos yet. Add one above!
+                                        {t('todos.empty')}
                                     </p>
                                 ) : (
                                     todos.map((todo) => (

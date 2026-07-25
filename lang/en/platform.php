@@ -1,0 +1,59 @@
+<?php
+
+return [
+    'registry' => [
+        'title' => 'Platform Modules',
+        'description' => 'Disabling a module here instantly cuts off access for every tenant, regardless of their subscription plan or install state. Tenant data is untouched — re-enabling immediately restores everything, exactly like downgrading and then upgrading a plan.',
+        'status' => [
+            'active' => 'Active',
+            'disabled' => 'Disabled',
+        ],
+        'requires_prefix' => 'Requires:',
+        'actions' => [
+            'enable' => 'Enable',
+            'disable' => 'Disable',
+            'processing' => 'Processing…',
+        ],
+    ],
+
+    'modules_catalog' => [
+        'title' => 'Modules',
+        'plan_label' => 'Subscription Plan',
+        'available_heading' => 'Available Modules',
+        'available_hint' => 'Uninstalling a module does not delete its data. Data is kept for :days days — install it again before then and everything comes back as it was.',
+        'empty' => 'No optional modules registered yet.',
+        'states' => [
+            'installed' => 'Installed',
+            'available' => 'Available',
+            'uninstalled' => 'Uninstalled',
+            'locked' => 'Needs upgrade',
+            'locked_with_data' => 'Locked',
+            'disabled' => 'Disabled',
+            'disabled_with_data' => 'Disabled',
+        ],
+        'purges_at' => 'Data permanently deleted on :date.',
+        'locked_with_data_hint' => 'Your old data is still stored and will come back once your plan includes this module.',
+        'disabled_hint' => 'This module is currently disabled platform-wide for all tenants.',
+        'disabled_with_data_hint' => 'This module is currently disabled platform-wide for all tenants — your data remains stored and returns once it is enabled again.',
+        'plans_offering_hint' => 'Available on the :plans plan(s).',
+        'requires_prefix' => 'Requires:',
+        'actions' => [
+            'install' => 'Install',
+            'installing' => 'Installing…',
+            'uninstall' => 'Uninstall',
+            'needs_upgrade' => 'Needs upgrade',
+        ],
+        'uninstall_confirm' => [
+            'title' => 'Uninstall module :module?',
+            'message' => 'Its menu and access are revoked now, but the data is kept for :days days. Install it again before then and everything comes back intact.',
+            'confirm' => 'Uninstall module',
+        ],
+    ],
+
+    'messages' => [
+        'module_enabled' => 'Module :module re-enabled.',
+        'module_disabled' => 'Module :module disabled for all tenants.',
+        'module_installed' => 'Module :module installed successfully.',
+        'module_uninstalled' => 'Module :module uninstalled. Its data is retained for :days days — install it again before then to recover it.',
+    ],
+];

@@ -50,7 +50,7 @@ class ModuleController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', "Modul {$module->label()} berhasil dipasang.");
+        return back()->with('success', __('platform.messages.module_installed', ['module' => $module->label()]));
     }
 
     public function uninstall(string $key, ModuleInstaller $installer): RedirectResponse
@@ -71,10 +71,10 @@ class ModuleController extends Controller
 
         $days = config('modules.purge_after_days');
 
-        return back()->with(
-            'success',
-            "Modul {$module->label()} dicopot. Datanya disimpan {$days} hari — pasang lagi sebelum itu untuk memulihkannya.",
-        );
+        return back()->with('success', __('platform.messages.module_uninstalled', [
+            'module' => $module->label(),
+            'days' => $days,
+        ]));
     }
 
     private function ensureWorkspaceContext(): void

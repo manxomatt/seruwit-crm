@@ -100,7 +100,7 @@ class SettingController extends Controller
         });
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $setting->group)
-            ->with('success', 'Setting created successfully.');
+            ->with('success', __('settings.messages.created'));
     }
 
     /**
@@ -128,7 +128,7 @@ class SettingController extends Controller
         $setting->update($request->validated());
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $setting->group)
-            ->with('success', 'Setting updated successfully.');
+            ->with('success', __('settings.messages.updated'));
     }
 
     /**
@@ -140,7 +140,7 @@ class SettingController extends Controller
         $setting->delete();
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $group)
-            ->with('success', 'Setting deleted successfully.');
+            ->with('success', __('settings.messages.deleted'));
     }
 
     /**
@@ -160,6 +160,6 @@ class SettingController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $data['group'])
-            ->with('success', 'Settings updated successfully.');
+            ->with('success', __('settings.messages.bulk_updated'));
     }
 }

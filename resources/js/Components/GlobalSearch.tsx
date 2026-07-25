@@ -6,6 +6,7 @@ import {
 } from '@headlessui/react';
 import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTrans } from '@/hooks/useTrans';
 
 interface SearchResult {
     id: number;
@@ -119,6 +120,7 @@ const getTypeColor = (type: string) => {
 };
 
 export default function GlobalSearch() {
+    const { t } = useTrans();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -208,7 +210,7 @@ export default function GlobalSearch() {
                     <ComboboxInput
                         ref={inputRef}
                         className="block w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-10 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500"
-                        placeholder="Search..."
+                        placeholder={t('shell.search_placeholder')}
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         onFocus={() => setIsFocused(true)}
@@ -232,7 +234,7 @@ export default function GlobalSearch() {
                                 <svg className="mx-auto h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 16.318A4.486 4.486 0 0012.016 15a4.486 4.486 0 00-3.198 1.318M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
                                 </svg>
-                                <p className="mt-2 text-sm text-gray-500">No results found for "{query}"</p>
+                                <p className="mt-2 text-sm text-gray-500">{t('shell.no_results', { query })}</p>
                             </div>
                         )}
 

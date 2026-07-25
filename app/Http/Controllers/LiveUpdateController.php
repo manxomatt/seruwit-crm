@@ -44,7 +44,7 @@ class LiveUpdateController extends Controller
         LiveUpdate::create($request->validated());
 
         return redirect()->route('live-updates.index')
-            ->with('success', 'Live update created successfully.');
+            ->with('success', __('live_updates.messages.created'));
     }
 
     /**
@@ -75,7 +75,7 @@ class LiveUpdateController extends Controller
         $liveUpdate->update($request->validated());
 
         return redirect()->route('live-updates.index')
-            ->with('success', 'Live update updated successfully.');
+            ->with('success', __('live_updates.messages.updated'));
     }
 
     /**
@@ -86,6 +86,6 @@ class LiveUpdateController extends Controller
         $liveUpdate->delete();
 
         return redirect()->route('live-updates.index')
-            ->with('success', 'Live update deleted successfully.');
+            ->with('success', __('live_updates.messages.deleted'));
     }
 }

@@ -10,6 +10,7 @@ return [
     'no_notifications' => 'No notifications yet.',
     'mark_all_read' => 'Mark all as read',
     'search_placeholder' => 'Search…',
+    'no_results' => 'No results found for ":query"',
     'manage_tenants' => 'Manage Tenants',
     'plans' => 'Plans',
     'platform_modules' => 'Platform Modules',

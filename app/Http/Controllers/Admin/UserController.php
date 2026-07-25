@@ -98,7 +98,7 @@ class UserController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.users.index')
-            ->with('success', 'User created successfully.');
+            ->with('success', __('users.messages.created'));
     }
 
     /**
@@ -163,7 +163,7 @@ class UserController extends Controller
         );
 
         return redirect()->route($this->getRoutePrefix().'.users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', __('users.messages.updated'));
     }
 
     /**
@@ -174,6 +174,6 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route($this->getRoutePrefix().'.users.index')
-            ->with('success', 'User deleted successfully.');
+            ->with('success', __('users.messages.deleted'));
     }
 }

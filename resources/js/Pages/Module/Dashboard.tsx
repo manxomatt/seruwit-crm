@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -109,32 +110,37 @@ function formatCurrency(value: number): string {
     return `Rp ${value}`;
 }
 
-function formatRelativeTime(iso: string): string {
+function formatRelativeTime(iso: string, t: (key: string, params?: Record<string, string | number>) => string, localeTag: string): string {
     const diff = Date.now() - new Date(iso).getTime();
     const minutes = Math.floor(diff / 60_000);
-    if (minutes < 1) return 'Baru saja';
-    if (minutes < 60) return `${minutes} menit lalu`;
+    if (minutes < 1) return t('dashboard.time.just_now');
+    if (minutes < 60) return t('dashboard.time.minutes_ago', { count: minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} jam lalu`;
+    if (hours < 24) return t('dashboard.time.hours_ago', { count: hours });
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} hari lalu`;
-    return new Date(iso).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+    if (days < 7) return t('dashboard.time.days_ago', { count: days });
+    return new Date(iso).toLocaleDateString(localeTag, { month: 'short', day: 'numeric' });
 }
 
-function deltaLabel(current: number, previous: number, periodLabel: string): { text: string; direction: 'up' | 'down' | 'neutral' } {
+function deltaLabel(
+    current: number,
+    previous: number,
+    periodLabel: string,
+    t: (key: string, params?: Record<string, string | number>) => string,
+): { text: string; direction: 'up' | 'down' | 'neutral' } {
     const diff = current - previous;
-    if (diff === 0) return { text: `Sama dengan ${periodLabel}`, direction: 'neutral' };
+    if (diff === 0) return { text: t('dashboard.delta.same', { period: periodLabel }), direction: 'neutral' };
     const sign = diff > 0 ? '+' : '';
     return {
-        text: `${sign}${diff} dari ${periodLabel}`,
+        text: t('dashboard.delta.diff', { sign, diff, period: periodLabel }),
         direction: diff > 0 ? 'up' : 'down',
     };
 }
 
 const PERIOD_OPTIONS = [
-    { key: 'today', label: 'Hari ini', deltaLabel: 'kemarin' },
-    { key: 'week', label: 'Minggu ini', deltaLabel: 'minggu lalu' },
-    { key: 'month', label: 'Bulan ini', deltaLabel: 'bulan lalu' },
+    { key: 'today', labelKey: 'dashboard.periods.today', deltaLabelKey: 'dashboard.period_delta.today' },
+    { key: 'week', labelKey: 'dashboard.periods.week', deltaLabelKey: 'dashboard.period_delta.week' },
+    { key: 'month', labelKey: 'dashboard.periods.month', deltaLabelKey: 'dashboard.period_delta.month' },
 ] as const;
 
 const ORDER_STATUS_COLORS: Record<string, string> = {
@@ -146,14 +152,7 @@ const ORDER_STATUS_COLORS: Record<string, string> = {
     cancelled: 'bg-red-500',
 };
 
-const ORDER_STATUS_LABELS: Record<string, string> = {
-    draft: 'Draft',
-    confirmed: 'Confirmed',
-    assigned: 'Assigned',
-    in_transit: 'In Transit',
-    delivered: 'Delivered',
-    cancelled: 'Cancelled',
-};
+const ORDER_STATUS_KEYS = ['draft', 'confirmed', 'assigned', 'in_transit', 'delivered', 'cancelled'] as const;
 
 const VEHICLE_STATUS_COLORS: Record<string, string> = {
     active: 'bg-green-500',
@@ -161,11 +160,7 @@ const VEHICLE_STATUS_COLORS: Record<string, string> = {
     inactive: 'bg-gray-400',
 };
 
-const VEHICLE_STATUS_LABELS: Record<string, string> = {
-    active: 'Aktif',
-    maintenance: 'Maintenance',
-    inactive: 'Nonaktif',
-};
+const VEHICLE_STATUS_KEYS = ['active', 'maintenance', 'inactive'] as const;
 
 const ALERT_STYLES: Record<string, { bg: string; text: string; icon: string }> = {
     danger: { bg: 'bg-red-50 ring-red-200', text: 'text-red-800', icon: 'text-red-600' },
@@ -292,12 +287,15 @@ function SectionCard({ title, action, children }: { title: string; action?: { la
 }
 
 export default function Dashboard({ user, primaryRole, stats, logistics, alerts, recentActivity, recentPosts, recentPages, period }: Props): JSX.Element {
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const { auth } = usePage().props as any;
     const permissions = auth.user?.permissions || {};
     const permissionModules = Object.keys(permissions);
 
     const hasLogistics = !!(logistics.trips || logistics.orders || logistics.fleet || logistics.invoices);
     const currentPeriod = PERIOD_OPTIONS.find((p) => p.key === period) ?? PERIOD_OPTIONS[1];
+    const currentPeriodDeltaLabel = t(currentPeriod.deltaLabelKey);
 
     const [activeContentTab, setActiveContentTab] = useState<'posts' | 'pages'>('posts');
 
@@ -307,17 +305,19 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
 
     const getGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Selamat Pagi';
-        if (hour < 18) return 'Selamat Siang';
-        return 'Selamat Malam';
+        if (hour < 12) return t('dashboard.greeting.morning');
+        if (hour < 18) return t('dashboard.greeting.afternoon');
+        return t('dashboard.greeting.evening');
     };
+
+    const dashboardTitle = primaryRole ? t('dashboard.title_with_role', { role: primaryRole.name }) : t('dashboard.title');
 
     return (
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard'}
+                        {dashboardTitle}
                     </h2>
                     {hasLogistics && (
                         <div className="flex rounded-lg bg-gray-100 p-0.5">
@@ -331,7 +331,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                 >
-                                    {opt.label}
+                                    {t(opt.labelKey)}
                                 </button>
                             ))}
                         </div>
@@ -339,7 +339,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                 </div>
             }
         >
-            <Head title={primaryRole ? `Dashboard ${primaryRole.name}` : 'Dashboard'} />
+            <Head title={dashboardTitle} />
 
             <div className="space-y-6">
                 {/* Welcome banner */}
@@ -360,18 +360,18 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                             {logistics.trips && (
                                 <KpiCard
-                                    label="Trip aktif"
+                                    label={t('dashboard.kpi.active_trips')}
                                     value={logistics.trips.active}
                                     icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-2.122-2.121A3 3 0 0016.5 8.25H14.25M2.25 14.25V6.375c0-.621.504-1.125 1.125-1.125h10.5c.621 0 1.125.504 1.125 1.125v7.875" /></svg>}
-                                    delta={deltaLabel(logistics.trips.active, logistics.trips.previous_active, currentPeriod.deltaLabel)}
+                                    delta={deltaLabel(logistics.trips.active, logistics.trips.previous_active, currentPeriodDeltaLabel, t)}
                                 />
                             )}
                             {logistics.orders && (
                                 <KpiCard
-                                    label="Delivery order"
+                                    label={t('dashboard.kpi.delivery_orders')}
                                     value={logistics.orders.period_total}
                                     icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>}
-                                    delta={deltaLabel(logistics.orders.period_total, logistics.orders.previous_period_total, currentPeriod.deltaLabel)}
+                                    delta={deltaLabel(logistics.orders.period_total, logistics.orders.previous_period_total, currentPeriodDeltaLabel, t)}
                                 />
                             )}
                             {logistics.invoices && (() => {
@@ -379,7 +379,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                                 const paidAmount = paid?.amount ?? 0;
                                 return (
                                     <KpiCard
-                                        label="Revenue"
+                                        label={t('dashboard.kpi.revenue')}
                                         value={formatCurrency(paidAmount)}
                                         icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                                     />
@@ -387,11 +387,11 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                             })()}
                             {logistics.invoices && (
                                 <KpiCard
-                                    label="Outstanding"
+                                    label={t('dashboard.kpi.outstanding')}
                                     value={formatCurrency(logistics.invoices.by_status?.issued?.amount ?? 0)}
                                     icon={<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
                                     delta={logistics.invoices.overdue.count > 0
-                                        ? { text: `${logistics.invoices.overdue.count} overdue`, direction: 'down' }
+                                        ? { text: t('dashboard.kpi.overdue_count', { count: logistics.invoices.overdue.count }), direction: 'down' }
                                         : undefined}
                                 />
                             )}
@@ -401,23 +401,23 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                         <div className="grid gap-4 lg:grid-cols-2">
                             {logistics.orders && (
                                 <SectionCard
-                                    title="Status delivery order"
-                                    action={{ label: 'Lihat semua', href: route('module.orders.index') }}
+                                    title={t('dashboard.sections.order_status')}
+                                    action={{ label: t('dashboard.actions.view_all'), href: route('module.orders.index') }}
                                 >
                                     <StatusBar
                                         total={logistics.orders.total || 1}
-                                        items={Object.entries(ORDER_STATUS_LABELS).map(([key, label]) => ({
+                                        items={ORDER_STATUS_KEYS.map((key) => ({
                                             key,
                                             count: logistics.orders!.by_status[key] ?? 0,
                                             color: ORDER_STATUS_COLORS[key],
-                                            label,
+                                            label: t(`dashboard.order_status.${key}`),
                                         }))}
                                     />
                                 </SectionCard>
                             )}
 
                             {alerts.length > 0 && (
-                                <SectionCard title="Peringatan">
+                                <SectionCard title={t('dashboard.sections.alerts')}>
                                     <div className="flex flex-col gap-2">
                                         {alerts.map((alert) => {
                                             const style = ALERT_STYLES[alert.severity] ?? ALERT_STYLES.info;
@@ -439,30 +439,30 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                         {/* Row: revenue chart + fleet */}
                         <div className="grid gap-4 lg:grid-cols-2">
                             {logistics.revenue && logistics.revenue.length > 0 && (
-                                <SectionCard title="Revenue bulanan">
+                                <SectionCard title={t('dashboard.sections.monthly_revenue')}>
                                     <RevenueChart data={logistics.revenue} />
                                 </SectionCard>
                             )}
 
                             {logistics.fleet && (
                                 <SectionCard
-                                    title="Fleet"
-                                    action={{ label: 'Kelola', href: route('module.fleet.vehicles.index') }}
+                                    title={t('dashboard.sections.fleet')}
+                                    action={{ label: t('dashboard.actions.manage'), href: route('module.fleet.vehicles.index') }}
                                 >
                                     <div className="grid grid-cols-2 gap-2">
-                                        <MiniStat label="Kendaraan aktif" value={logistics.fleet.vehicles.active ?? 0} unit={`/ ${logistics.fleet.vehicles_total}`} />
-                                        <MiniStat label="Driver tersedia" value={logistics.fleet.drivers.available ?? 0} unit={`/ ${logistics.fleet.drivers_total}`} />
-                                        <MiniStat label="Dalam maintenance" value={logistics.fleet.vehicles.maintenance ?? 0} unit="kendaraan" />
-                                        <MiniStat label="BBM periode ini" value={logistics.fleet.fuel.liters.toLocaleString('id-ID')} unit="liter" />
+                                        <MiniStat label={t('dashboard.fleet.active_vehicles')} value={logistics.fleet.vehicles.active ?? 0} unit={`/ ${logistics.fleet.vehicles_total}`} />
+                                        <MiniStat label={t('dashboard.fleet.available_drivers')} value={logistics.fleet.drivers.available ?? 0} unit={`/ ${logistics.fleet.drivers_total}`} />
+                                        <MiniStat label={t('dashboard.fleet.in_maintenance')} value={logistics.fleet.vehicles.maintenance ?? 0} unit={t('dashboard.fleet.unit_vehicles')} />
+                                        <MiniStat label={t('dashboard.fleet.fuel_this_period')} value={logistics.fleet.fuel.liters.toLocaleString(localeTag)} unit={t('dashboard.fleet.unit_liters')} />
                                     </div>
                                     <div className="mt-3">
                                         <StatusBar
                                             total={logistics.fleet.vehicles_total || 1}
-                                            items={Object.entries(VEHICLE_STATUS_LABELS).map(([key, label]) => ({
+                                            items={VEHICLE_STATUS_KEYS.map((key) => ({
                                                 key,
                                                 count: logistics.fleet!.vehicles[key] ?? 0,
                                                 color: VEHICLE_STATUS_COLORS[key],
-                                                label,
+                                                label: t(`dashboard.vehicle_status.${key}`),
                                             }))}
                                         />
                                     </div>
@@ -474,8 +474,8 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                         <div className="grid gap-4 lg:grid-cols-2">
                             {logistics.top_partners && logistics.top_partners.length > 0 && (
                                 <SectionCard
-                                    title="Top partner (revenue)"
-                                    action={{ label: 'Semua partner', href: route('module.partners.index') }}
+                                    title={t('dashboard.sections.top_partners')}
+                                    action={{ label: t('dashboard.actions.all_partners'), href: route('module.partners.index') }}
                                 >
                                     <div className="divide-y divide-gray-100">
                                         {logistics.top_partners.map((p, i) => (
@@ -490,7 +490,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                             )}
 
                             {recentActivity.length > 0 && (
-                                <SectionCard title="Aktivitas terbaru">
+                                <SectionCard title={t('dashboard.sections.recent_activity')}>
                                     <div className="divide-y divide-gray-100">
                                         {recentActivity.map((act, i) => {
                                             const iconSet = ACTIVITY_ICONS[act.type] ?? ACTIVITY_ICONS.order;
@@ -501,7 +501,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="text-sm text-gray-900">{act.description}</p>
-                                                        <p className="text-xs text-gray-400">{formatRelativeTime(act.time)}</p>
+                                                        <p className="text-xs text-gray-400">{formatRelativeTime(act.time, t, localeTag)}</p>
                                                     </div>
                                                 </div>
                                             );
@@ -514,15 +514,15 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                         {/* Invoice summary */}
                         {logistics.invoices && (
                             <SectionCard
-                                title="Invoice"
-                                action={{ label: 'Kelola invoice', href: route('module.invoicing.invoices.index') }}
+                                title={t('dashboard.sections.invoices')}
+                                action={{ label: t('dashboard.actions.manage_invoices'), href: route('module.invoicing.invoices.index') }}
                             >
                                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                    <MiniStat label="Draft" value={logistics.invoices.by_status?.draft?.count ?? 0} />
-                                    <MiniStat label="Issued" value={logistics.invoices.by_status?.issued?.count ?? 0} unit={formatCurrency(logistics.invoices.by_status?.issued?.amount ?? 0)} />
-                                    <MiniStat label="Paid" value={logistics.invoices.by_status?.paid?.count ?? 0} unit={formatCurrency(logistics.invoices.by_status?.paid?.amount ?? 0)} />
+                                    <MiniStat label={t('dashboard.invoice_status.draft')} value={logistics.invoices.by_status?.draft?.count ?? 0} />
+                                    <MiniStat label={t('dashboard.invoice_status.issued')} value={logistics.invoices.by_status?.issued?.count ?? 0} unit={formatCurrency(logistics.invoices.by_status?.issued?.amount ?? 0)} />
+                                    <MiniStat label={t('dashboard.invoice_status.paid')} value={logistics.invoices.by_status?.paid?.count ?? 0} unit={formatCurrency(logistics.invoices.by_status?.paid?.amount ?? 0)} />
                                     <MiniStat
-                                        label="Overdue"
+                                        label={t('dashboard.invoice_status.overdue')}
                                         value={logistics.invoices.overdue.count}
                                         unit={logistics.invoices.overdue.count > 0 ? formatCurrency(logistics.invoices.overdue.amount) : undefined}
                                         danger={logistics.invoices.overdue.count > 0}
@@ -538,49 +538,49 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                     <>
                         {hasLogistics && (
                             <div className="border-t border-gray-200 pt-2">
-                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Konten</h3>
+                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">{t('dashboard.sections.content')}</h3>
                             </div>
                         )}
 
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {stats.posts && (
                                 <Link href={route('module.posts.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
-                                    <p className="text-sm text-gray-500">Postingan</p>
+                                    <p className="text-sm text-gray-500">{t('dashboard.content_stats.posts')}</p>
                                     <p className="mt-1 text-2xl font-bold text-gray-900">{stats.posts.total}</p>
-                                    <p className="mt-0.5 text-xs text-gray-400">{stats.posts.published} terbit, {stats.posts.draft} draft</p>
+                                    <p className="mt-0.5 text-xs text-gray-400">{t('dashboard.content_stats.published_draft', { published: stats.posts.published, draft: stats.posts.draft })}</p>
                                 </Link>
                             )}
                             {stats.pages && (
                                 <Link href={route('module.pages.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
-                                    <p className="text-sm text-gray-500">Halaman</p>
+                                    <p className="text-sm text-gray-500">{t('dashboard.content_stats.pages')}</p>
                                     <p className="mt-1 text-2xl font-bold text-gray-900">{stats.pages.total}</p>
-                                    <p className="mt-0.5 text-xs text-gray-400">{stats.pages.published} terbit, {stats.pages.draft} draft</p>
+                                    <p className="mt-0.5 text-xs text-gray-400">{t('dashboard.content_stats.published_draft', { published: stats.pages.published, draft: stats.pages.draft })}</p>
                                 </Link>
                             )}
                             <Link href={route('module.media.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
-                                <p className="text-sm text-gray-500">Media</p>
+                                <p className="text-sm text-gray-500">{t('dashboard.content_stats.media')}</p>
                                 <p className="mt-1 text-2xl font-bold text-gray-900">{stats.media.total}</p>
-                                <p className="mt-0.5 text-xs text-gray-400">{stats.media.images} gambar, {stats.media.documents} dokumen</p>
+                                <p className="mt-0.5 text-xs text-gray-400">{t('dashboard.content_stats.media_detail', { images: stats.media.images, documents: stats.media.documents })}</p>
                             </Link>
                             {stats.carousels && (
                                 <Link href={route('module.carousels.index')} className="group rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5 transition hover:shadow-md">
-                                    <p className="text-sm text-gray-500">Carousel</p>
+                                    <p className="text-sm text-gray-500">{t('dashboard.content_stats.carousels')}</p>
                                     <p className="mt-1 text-2xl font-bold text-gray-900">{stats.carousels.total}</p>
-                                    <p className="mt-0.5 text-xs text-gray-400">{stats.carousels.active} aktif</p>
+                                    <p className="mt-0.5 text-xs text-gray-400">{t('dashboard.content_stats.active_count', { count: stats.carousels.active })}</p>
                                 </Link>
                             )}
                         </div>
 
                         {/* Recent content */}
                         {(recentPosts.length > 0 || recentPages.length > 0) && (
-                            <SectionCard title="Konten terbaru">
+                            <SectionCard title={t('dashboard.sections.recent_content')}>
                                 <div className="mb-3 flex gap-1">
                                     {stats.posts && (
                                         <button
                                             onClick={() => setActiveContentTab('posts')}
                                             className={`rounded-md px-3 py-1 text-xs font-medium transition ${activeContentTab === 'posts' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
                                         >
-                                            Postingan
+                                            {t('dashboard.content_tabs.posts')}
                                         </button>
                                     )}
                                     {stats.pages && (
@@ -588,7 +588,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                                             onClick={() => setActiveContentTab('pages')}
                                             className={`rounded-md px-3 py-1 text-xs font-medium transition ${activeContentTab === 'pages' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
                                         >
-                                            Halaman
+                                            {t('dashboard.content_tabs.pages')}
                                         </button>
                                     )}
                                 </div>
@@ -601,7 +601,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                                         >
                                             <span className="truncate text-gray-900">{item.title}</span>
                                             <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${item.is_published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                {item.is_published ? 'Terbit' : 'Draft'}
+                                                {item.is_published ? t('dashboard.status_labels.published') : t('dashboard.status_labels.draft')}
                                             </span>
                                         </Link>
                                     ))}
@@ -613,7 +613,7 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
 
                 {/* Permissions overview */}
                 {permissionModules.length > 0 && (
-                    <SectionCard title="Izin akses Anda">
+                    <SectionCard title={t('dashboard.sections.access_permissions')}>
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {permissionModules.map((mod) => (
                                 <div key={mod} className="rounded-lg border border-gray-200 p-3">

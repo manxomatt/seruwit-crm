@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
@@ -56,6 +57,8 @@ interface Props {
 
 export default function Index({ users, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -97,7 +100,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -120,15 +123,15 @@ export default function Index({ users, filters }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        User Management
+                        {t('users.pages.index.head')}
                     </h2>
                     <Link href={prefixedRoute('users.create')}>
-                        <PrimaryButton>Add User</PrimaryButton>
+                        <PrimaryButton>{t('users.pages.index.new')}</PrimaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title="User Management" />
+            <Head title={t('users.pages.index.head')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -137,20 +140,20 @@ export default function Index({ users, filters }: Props): JSX.Element {
                         <div className="flex-1 min-w-[200px]">
                             <TextInput
                                 type="text"
-                                placeholder="Search users by name or email..."
+                                placeholder={t('users.placeholders.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
                             />
                         </div>
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                         {filters.search && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
                                 className="text-gray-500 hover:text-gray-700"
                             >
-                                Clear filters
+                                {t('common.clear_filters')}
                             </button>
                         )}
                     </form>
@@ -170,13 +173,13 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                                 />
                             </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('users.pages.index.empty_title')}</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                Get started by creating a new user.
+                                {t('users.pages.index.empty_hint')}
                             </p>
                             <div className="mt-6">
                                 <Link href={prefixedRoute('users.create')}>
-                                    <PrimaryButton>Add User</PrimaryButton>
+                                    <PrimaryButton>{t('users.pages.index.new')}</PrimaryButton>
                                 </Link>
                             </div>
                         </div>
@@ -188,22 +191,22 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                User
+                                                {t('users.pages.index.columns.user')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Email
+                                                {t('users.pages.index.columns.email')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Roles
+                                                {t('users.pages.index.columns.roles')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Status
+                                                {t('users.pages.index.columns.status')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Created
+                                                {t('users.pages.index.columns.created')}
                                             </th>
                                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions
+                                                {t('common.actions')}
                                             </th>
                                         </tr>
                                     </thead>
@@ -256,18 +259,18 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                                 </span>
                                                             ))
                                                         ) : (
-                                                            <span className="text-sm text-gray-400">No roles</span>
+                                                            <span className="text-sm text-gray-400">{t('users.pages.index.no_roles')}</span>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     {user.email_verified_at ? (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                            Verified
+                                                            {t('users.pages.index.verified')}
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                            Unverified
+                                                            {t('users.pages.index.unverified')}
                                                         </span>
                                                     )}
                                                 </td>
@@ -279,7 +282,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('users.show', user.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title="View"
+                                                            title={t('users.actions.view')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -289,7 +292,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('users.edit', user.id)}
                                                             className="text-indigo-600 hover:text-indigo-900"
-                                                            title="Edit"
+                                                            title={t('common.edit')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -298,7 +301,7 @@ export default function Index({ users, filters }: Props): JSX.Element {
                                                         <button
                                                             onClick={() => openDeleteDialog(user)}
                                                             className="text-red-600 hover:text-red-900"
-                                                            title="Delete"
+                                                            title={t('common.delete')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -316,9 +319,11 @@ export default function Index({ users, filters }: Props): JSX.Element {
                             {users.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(users.current_page - 1) * users.per_page + 1} to{' '}
-                                        {Math.min(users.current_page * users.per_page, users.total)} of{' '}
-                                        {users.total} results
+                                        {t('common.showing_results', {
+                                            from: (users.current_page - 1) * users.per_page + 1,
+                                            to: Math.min(users.current_page * users.per_page, users.total),
+                                            total: users.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {users.links.map((link, index) => (
@@ -349,18 +354,11 @@ export default function Index({ users, filters }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus User"
+                title={t('users.delete_confirm.title')}
                 message={
-                    userToDelete ? (
-                        <>
-                            Apakah Anda yakin ingin menghapus user{' '}
-                            <strong>"{userToDelete.name}"</strong> ({userToDelete.email})? Semua
-                            data terkait user ini juga akan dihapus. Tindakan ini tidak dapat
-                            dibatalkan.
-                        </>
-                    ) : (
-                        'Apakah Anda yakin ingin menghapus user ini?'
-                    )
+                    userToDelete
+                        ? t('users.delete_confirm.message', { name: userToDelete.name, email: userToDelete.email })
+                        : t('users.delete_confirm.message_generic')
                 }
             />
         </DynamicLayout>

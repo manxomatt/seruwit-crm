@@ -1,3 +1,4 @@
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function InvitationAccept({ token, email, tenantName, hasAccount }: Props): JSX.Element {
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         password: '',
@@ -24,7 +26,7 @@ export default function InvitationAccept({ token, email, tenantName, hasAccount 
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-16">
-            <Head title="Terima Undangan" />
+            <Head title={t('central.invitation.title')} />
 
             <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8">
                 <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500 text-white">
@@ -34,27 +36,27 @@ export default function InvitationAccept({ token, email, tenantName, hasAccount 
                 </span>
 
                 <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                    Undangan ke {tenantName}
+                    {t('central.invitation.invited_to', { tenant: tenantName })}
                 </h1>
                 <p className="mt-2 text-sm text-slate-500">
-                    Anda diundang sebagai <span className="font-medium text-slate-700">{email}</span>.
+                    {t('central.invitation.invited_as')} <span className="font-medium text-slate-700">{email}</span>.
                 </p>
 
                 <form onSubmit={submit} className="mt-6 space-y-4">
                     {!hasAccount && (
                         <>
                             <label className="block text-sm font-medium text-slate-600">
-                                Nama Lengkap
+                                {t('central.invitation.full_name')}
                                 <input className={inputClass} value={data.name} onChange={(e) => setData('name', e.target.value)} required />
                                 {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
                             </label>
                             <label className="block text-sm font-medium text-slate-600">
-                                Password
+                                {t('auth_ui.password')}
                                 <input type="password" className={inputClass} value={data.password} onChange={(e) => setData('password', e.target.value)} required />
                                 {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
                             </label>
                             <label className="block text-sm font-medium text-slate-600">
-                                Konfirmasi Password
+                                {t('auth_ui.password_confirmation')}
                                 <input type="password" className={inputClass} value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} required />
                             </label>
                         </>
@@ -65,7 +67,7 @@ export default function InvitationAccept({ token, email, tenantName, hasAccount 
                         disabled={processing}
                         className="w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:opacity-50"
                     >
-                        Terima Undangan &amp; Masuk Workspace
+                        {t('central.invitation.accept_button')}
                     </button>
                 </form>
             </div>

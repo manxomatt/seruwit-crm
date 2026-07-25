@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -41,17 +42,18 @@ const TrashIcon = () => (
     </svg>
 );
 
-const formatDisplayValue = (setting: Setting): string => {
-    if (setting.type === 'boolean') {
-        return setting.value === '1' ? 'Yes' : 'No';
-    }
-    return setting.value || '—';
-};
-
 export default function Group({ settings, groups, currentGroup, canEditValues, canManageStructure }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
+
+    const formatDisplayValue = (setting: Setting): string => {
+        if (setting.type === 'boolean') {
+            return setting.value === '1' ? t('settings.value_display.yes') : t('settings.value_display.no');
+        }
+        return setting.value || t('settings.value_display.empty');
+    };
 
     const { data, setData, post, processing, errors } = useForm({
         group: currentGroup,
@@ -81,9 +83,9 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Settings</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('settings.pages.index.head')}</h2>}
         >
-            <Head title={`Settings — ${formatGroupLabel(currentGroup)}`} />
+            <Head title={t('settings.pages.group.title', { group: formatGroupLabel(currentGroup) })} />
 
             <div className="mb-6 flex items-center justify-between border-b border-gray-200">
                 <nav className="-mb-px flex flex-wrap gap-6">
@@ -103,7 +105,7 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                 </nav>
                 {canManageStructure && (
                     <Link href={`${prefixedRoute('settings.create')}?new_group=1`} className="whitespace-nowrap pb-3 text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                        + New Group
+                        {t('settings.pages.group.new_group')}
                     </Link>
                 )}
             </div>
@@ -114,15 +116,15 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                         <h3 className="text-lg font-medium text-gray-900">{formatGroupLabel(currentGroup)}</h3>
                         {canManageStructure && (
                             <Link href={`${prefixedRoute('settings.create')}?group=${currentGroup}`}>
-                                <PrimaryButton type="button">Add Setting</PrimaryButton>
+                                <PrimaryButton type="button">{t('settings.pages.group.add_setting')}</PrimaryButton>
                             </Link>
                         )}
                     </div>
 
                     {settings.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">No settings in this group yet</h3>
-                            {canManageStructure && <p className="mt-1 text-sm text-gray-500">Add one to get started.</p>}
+                            <h3 className="text-sm font-medium text-gray-900">{t('settings.pages.group.empty_title')}</h3>
+                            {canManageStructure && <p className="mt-1 text-sm text-gray-500">{t('settings.pages.group.empty_hint')}</p>}
                         </div>
                     ) : !canEditValues ? (
                         <div className="space-y-6">
@@ -174,7 +176,7 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                                                             checked={data.settings[index].value === '1'}
                                                             onChange={(e) => updateValue(index, e.target.checked ? '1' : '0')}
                                                         />
-                                                        <span className="ml-2 text-sm text-gray-600">Enabled</span>
+                                                        <span className="ml-2 text-sm text-gray-600">{t('settings.pages.group.enabled_label')}</span>
                                                     </label>
                                                 ) : setting.type === 'color' ? (
                                                     <div className="flex items-center gap-3">
@@ -212,7 +214,7 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                                                 <Link
                                                     href={prefixedRoute('settings.edit', setting.id)}
                                                     className="text-indigo-600 hover:text-indigo-900"
-                                                    title="Edit"
+                                                    title={t('common.edit')}
                                                 >
                                                     <PencilIcon />
                                                 </Link>
@@ -220,7 +222,7 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                                                     type="button"
                                                     onClick={() => setSettingToDelete(setting)}
                                                     className="text-red-600 hover:text-red-900"
-                                                    title="Delete"
+                                                    title={t('common.delete')}
                                                 >
                                                     <TrashIcon />
                                                 </button>
@@ -231,7 +233,7 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                             ))}
 
                             <div className="flex items-center gap-4 pt-2">
-                                <PrimaryButton disabled={processing}>Save Changes</PrimaryButton>
+                                <PrimaryButton disabled={processing}>{t('settings.pages.group.save')}</PrimaryButton>
                             </div>
                         </form>
                     )}
@@ -243,11 +245,11 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                 onClose={() => setSettingToDelete(null)}
                 onConfirm={confirmDelete}
                 processing={deleteProcessing}
-                title="Delete Setting"
+                title={t('settings.delete_confirm.title')}
                 message={
                     settingToDelete
-                        ? `Are you sure you want to delete "${settingToDelete.label}" (key: ${settingToDelete.key})? This action cannot be undone.`
-                        : 'Are you sure you want to delete this setting?'
+                        ? t('settings.delete_confirm.message', { label: settingToDelete.label, key: settingToDelete.key })
+                        : t('settings.delete_confirm.message_generic')
                 }
             />
         </DynamicLayout>

@@ -30,6 +30,10 @@ return [
         'week' => 'Minggu',
         'month' => 'Bulan',
         'year' => 'Tahun',
+        'trips_scheduled' => ':count trip terjadwal :period',
+        'period_week' => 'minggu ini',
+        'period_month' => 'bulan ini',
+        'period_year' => 'tahun ini',
     ],
 
     'days' => [
@@ -93,6 +97,9 @@ return [
         ],
         'calendar' => [
             'title' => 'Kalender Trip',
+            'select_date' => 'Pilih salah satu tanggal untuk melihat detail trip.',
+            'no_trips' => 'Tidak ada trip terjadwal pada tanggal ini.',
+            'trip_count' => ':count trip',
         ],
         'reports' => [
             'title' => 'Laporan Transportasi',

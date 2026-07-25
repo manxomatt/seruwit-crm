@@ -35,8 +35,8 @@ class UpdateMediaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'alt_text.max' => 'The alt text must not exceed 255 characters.',
-            'description.max' => 'The description must not exceed 1000 characters.',
+            'alt_text.max' => __('media.validation.alt_text_max'),
+            'description.max' => __('media.validation.description_max'),
         ];
     }
 }

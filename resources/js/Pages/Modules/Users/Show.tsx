@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -32,11 +33,13 @@ interface Props {
 
 export default function Show({ user }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -65,18 +68,18 @@ export default function Show({ user }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        User Details
+                        {t('users.pages.show.head')}
                     </h2>
                     <div className="flex items-center gap-2">
                         <Link href={prefixedRoute('users.edit', user.id)}>
-                            <PrimaryButton>Edit User</PrimaryButton>
+                            <PrimaryButton>{t('users.actions.edit_user')}</PrimaryButton>
                         </Link>
-                        <DangerButton onClick={openDeleteDialog}>Delete User</DangerButton>
+                        <DangerButton onClick={openDeleteDialog}>{t('users.actions.delete_user')}</DangerButton>
                     </div>
                 </div>
             }
         >
-            <Head title={`User - ${user.name}`} />
+            <Head title={t('users.pages.show.title', { name: user.name })} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -120,14 +123,14 @@ export default function Show({ user }: Props): JSX.Element {
                                         <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                         </svg>
-                                        Email Verified
+                                        {t('users.pages.show.email_verified')}
                                     </span>
                                 ) : (
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                         <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                         </svg>
-                                        Email Not Verified
+                                        {t('users.pages.show.email_not_verified')}
                                     </span>
                                 )}
                             </div>
@@ -137,22 +140,22 @@ export default function Show({ user }: Props): JSX.Element {
                     {/* Profile Information */}
                     {user.profile && (
                         <div className="mt-8 border-t border-gray-200 pt-6">
-                            <h4 className="text-lg font-medium text-gray-900 mb-4">Profile Information</h4>
+                            <h4 className="text-lg font-medium text-gray-900 mb-4">{t('users.sections.profile_information')}</h4>
                             <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">First Name</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('users.fields.first_name')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{user.profile.first_name || '-'}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Last Name</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('users.fields.last_name')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{user.profile.last_name || '-'}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('users.fields.phone_number')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{user.profile.phone_number || '-'}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Avatar URL</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('users.fields.avatar_url')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900 break-all">{user.profile.avatar_url || '-'}</dd>
                                 </div>
                             </dl>
@@ -161,32 +164,32 @@ export default function Show({ user }: Props): JSX.Element {
 
                     {/* Account Details Grid */}
                     <div className="mt-8 border-t border-gray-200 pt-6">
-                        <h4 className="text-lg font-medium text-gray-900 mb-4">Account Details</h4>
+                        <h4 className="text-lg font-medium text-gray-900 mb-4">{t('users.sections.account_details')}</h4>
                         <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">User ID</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('users.pages.show.user_id')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{user.id}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Username</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('users.pages.show.username')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{user.name}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Email Address</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('users.pages.show.email_address')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{user.email}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Email Verified At</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('users.pages.show.email_verified_at')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {user.email_verified_at ? formatDate(user.email_verified_at) : 'Not verified'}
+                                    {user.email_verified_at ? formatDate(user.email_verified_at) : t('users.pages.show.not_verified')}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Created At</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('users.pages.show.created_at')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatDate(user.created_at)}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('users.pages.show.updated_at')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatDate(user.updated_at)}</dd>
                             </div>
                         </dl>
@@ -195,7 +198,7 @@ export default function Show({ user }: Props): JSX.Element {
                     {/* Back Button */}
                     <div className="mt-8 border-t border-gray-200 pt-6">
                         <Link href={prefixedRoute('users.index')}>
-                            <SecondaryButton>Back to Users</SecondaryButton>
+                            <SecondaryButton>{t('users.pages.show.back')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
@@ -206,14 +209,8 @@ export default function Show({ user }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus User"
-                message={
-                    <>
-                        Apakah Anda yakin ingin menghapus user{' '}
-                        <strong>"{user.name}"</strong> ({user.email})? Semua data terkait user
-                        ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.
-                    </>
-                }
+                title={t('users.delete_confirm.title')}
+                message={t('users.delete_confirm.message', { name: user.name, email: user.email })}
             />
         </DynamicLayout>
     );

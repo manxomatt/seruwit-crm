@@ -94,7 +94,7 @@ class TenantController extends Controller
             resellerGlobalId: $resellerGlobalId,
         );
 
-        return back()->with('success', 'Tenant berhasil dibuat.');
+        return back()->with('success', __('tenants.messages.created'));
     }
 
     /**
@@ -179,7 +179,7 @@ class TenantController extends Controller
             $currentDomain->update(['domain' => $newDomain]);
         }
 
-        return back()->with('success', 'Detail tenant diperbarui.');
+        return back()->with('success', __('tenants.messages.updated'));
     }
 
     /**
@@ -193,7 +193,7 @@ class TenantController extends Controller
             'status' => $tenant->status === 'active' ? 'suspended' : 'active',
         ]);
 
-        return back()->with('success', 'Status tenant diperbarui.');
+        return back()->with('success', __('tenants.messages.status_updated'));
     }
 
     /**
@@ -209,7 +209,7 @@ class TenantController extends Controller
 
         if ($request->string('confirm_name')->value() !== $tenant->name) {
             return back()->withErrors([
-                'confirm_name' => 'Nama konfirmasi tidak cocok dengan nama tenant.',
+                'confirm_name' => __('tenants.messages.confirm_name_mismatch'),
             ]);
         }
 
@@ -217,7 +217,7 @@ class TenantController extends Controller
 
         return redirect()
             ->route('module.tenants.index')
-            ->with('success', 'Tenant beserta seluruh datanya telah dihapus.');
+            ->with('success', __('tenants.messages.deleted'));
     }
 
     /**
@@ -239,7 +239,10 @@ class TenantController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', "Modul {$registered->label()} dipasang untuk {$tenant->name}.");
+        return back()->with('success', __('tenants.messages.module_installed', [
+            'module' => $registered->label(),
+            'tenant' => $tenant->name,
+        ]));
     }
 
     public function uninstallModule(Request $request, Tenant $tenant, string $module, ModuleInstaller $installer): RedirectResponse
@@ -260,10 +263,11 @@ class TenantController extends Controller
 
         $days = config('modules.purge_after_days');
 
-        return back()->with(
-            'success',
-            "Modul {$registered->label()} dicopot dari {$tenant->name}. Datanya disimpan {$days} hari.",
-        );
+        return back()->with('success', __('tenants.messages.module_uninstalled', [
+            'module' => $registered->label(),
+            'tenant' => $tenant->name,
+            'days' => $days,
+        ]));
     }
 
     /**

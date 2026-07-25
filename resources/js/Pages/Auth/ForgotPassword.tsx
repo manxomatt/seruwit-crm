@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
 }
 
 export default function ForgotPassword({ status, settings }: Props) {
+    const { t } = useTrans();
+
     interface ForgotForm {
         email: string;
     }
@@ -26,7 +29,7 @@ export default function ForgotPassword({ status, settings }: Props) {
 
     return (
         <>
-            <Head title="Lupa Kata Sandi" />
+            <Head title={t('auth_ui.forgot_title')} />
 
             <div className="min-h-screen flex bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
                 {/* Background decorative elements */}
@@ -60,10 +63,10 @@ export default function ForgotPassword({ status, settings }: Props) {
                         </div>
                         
                         <h1 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
-                            Lupa Kata Sandi?
+                            {t('auth_ui.forgot_title')}
                         </h1>
                         <p className="text-lg text-white/70 text-center max-w-md">
-                            Jangan khawatir! Kami akan membantu Anda mengatur ulang kata sandi dengan mudah.
+                            {t('auth_ui.forgot_subtitle')}
                         </p>
                         
                         {/* Feature highlights */}
@@ -74,7 +77,7 @@ export default function ForgotPassword({ status, settings }: Props) {
                                         mail
                                     </span>
                                 </div>
-                                <span className="text-white/80">Kirim link reset via email</span>
+                                <span className="text-white/80">{t('auth_ui.forgot_feature_email')}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
@@ -82,7 +85,7 @@ export default function ForgotPassword({ status, settings }: Props) {
                                         timer
                                     </span>
                                 </div>
-                                <span className="text-white/80">Proses cepat dan aman</span>
+                                <span className="text-white/80">{t('auth_ui.forgot_feature_fast')}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
@@ -90,7 +93,7 @@ export default function ForgotPassword({ status, settings }: Props) {
                                         lock_reset
                                     </span>
                                 </div>
-                                <span className="text-white/80">Buat kata sandi baru</span>
+                                <span className="text-white/80">{t('auth_ui.forgot_feature_new_password')}</span>
                             </div>
                         </div>
                     </div>
@@ -127,9 +130,9 @@ export default function ForgotPassword({ status, settings }: Props) {
                                         lock_reset
                                     </span>
                                 </div>
-                                <h2 className="text-3xl font-bold text-white">Reset Kata Sandi</h2>
+                                <h2 className="text-3xl font-bold text-white">{t('auth_ui.reset_password_heading')}</h2>
                                 <p className="mt-2 text-white/60">
-                                    Masukkan email Anda dan kami akan mengirimkan link untuk mengatur ulang kata sandi.
+                                    {t('auth_ui.reset_password_subtitle')}
                                 </p>
                             </div>
 
@@ -150,7 +153,7 @@ export default function ForgotPassword({ status, settings }: Props) {
                                 {/* Email Field */}
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
-                                        Alamat Email
+                                        {t('auth_ui.email_label')}
                                     </label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -167,7 +170,7 @@ export default function ForgotPassword({ status, settings }: Props) {
                                             autoFocus
                                             onChange={(e) => setData('email', e.target.value)}
                                             className="block w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
-                                            placeholder="anda@contoh.com"
+                                            placeholder={t('auth_ui.email_placeholder')}
                                         />
                                     </div>
                                     <InputError message={errors.email} className="mt-2" />
@@ -185,14 +188,14 @@ export default function ForgotPassword({ status, settings }: Props) {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                             </svg>
-                                            Mengirim...
+                                            {t('auth_ui.sending')}
                                         </span>
                                     ) : (
                                         <span className="flex items-center justify-center gap-2">
                                             <span className="material-symbols-outlined">
                                                 send
                                             </span>
-                                            Kirim Link Reset
+                                            {t('auth_ui.send_reset_link')}
                                         </span>
                                     )}
                                 </button>
@@ -207,7 +210,7 @@ export default function ForgotPassword({ status, settings }: Props) {
                                     <span className="material-symbols-outlined text-lg">
                                         arrow_back
                                     </span>
-                                    Kembali ke Halaman Masuk
+                                    {t('auth_ui.back_to_login')}
                                 </Link>
                             </div>
                         </div>
@@ -215,7 +218,7 @@ export default function ForgotPassword({ status, settings }: Props) {
                         {/* App Name */}
                         <div className="mt-8 text-center">
                             <p className="text-white/40 text-sm">
-                                {siteName} - Solusi Pelacakan Kendaraan Terpercaya
+                                {t('auth_ui.tagline', { name: siteName })}
                             </p>
                         </div>
                     </div>

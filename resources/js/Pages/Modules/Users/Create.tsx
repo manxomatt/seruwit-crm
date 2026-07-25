@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -22,6 +23,7 @@ interface Props {
 
 export default function Create({ roles }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -52,12 +54,12 @@ export default function Create({ roles }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Create User
+                        {t('users.pages.create.head')}
                     </h2>
                 </div>
             }
         >
-            <Head title="Create User" />
+            <Head title={t('users.pages.create.title')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -66,7 +68,7 @@ export default function Create({ roles }: Props): JSX.Element {
                             {/* Left Column - User Details */}
                             <div className="space-y-4">
                                 <div>
-                                    <InputLabel htmlFor="name" value="Name" />
+                                    <InputLabel htmlFor="name" value={t('users.fields.name')} />
                                     <TextInput
                                         id="name"
                                         type="text"
@@ -81,7 +83,7 @@ export default function Create({ roles }: Props): JSX.Element {
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="email" value="Email" />
+                                    <InputLabel htmlFor="email" value={t('users.fields.email')} />
                                     <TextInput
                                         id="email"
                                         type="email"
@@ -95,7 +97,7 @@ export default function Create({ roles }: Props): JSX.Element {
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="password" value="Password" />
+                                    <InputLabel htmlFor="password" value={t('users.fields.password')} />
                                     <TextInput
                                         id="password"
                                         type="password"
@@ -109,7 +111,7 @@ export default function Create({ roles }: Props): JSX.Element {
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="password_confirmation" value="Confirm Password" />
+                                    <InputLabel htmlFor="password_confirmation" value={t('users.fields.password_confirmation')} />
                                     <TextInput
                                         id="password_confirmation"
                                         type="password"
@@ -124,11 +126,11 @@ export default function Create({ roles }: Props): JSX.Element {
 
                                 {/* Profile Fields */}
                                 <div className="border-t pt-4 mt-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Profile Information</h4>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">{t('users.sections.profile_information')}</h4>
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <InputLabel htmlFor="first_name" value="First Name" />
+                                            <InputLabel htmlFor="first_name" value={t('users.fields.first_name')} />
                                             <TextInput
                                                 id="first_name"
                                                 type="text"
@@ -141,7 +143,7 @@ export default function Create({ roles }: Props): JSX.Element {
                                         </div>
 
                                         <div>
-                                            <InputLabel htmlFor="last_name" value="Last Name" />
+                                            <InputLabel htmlFor="last_name" value={t('users.fields.last_name')} />
                                             <TextInput
                                                 id="last_name"
                                                 type="text"
@@ -155,7 +157,7 @@ export default function Create({ roles }: Props): JSX.Element {
                                     </div>
 
                                     <div className="mt-4">
-                                        <InputLabel htmlFor="phone_number" value="Phone Number" />
+                                        <InputLabel htmlFor="phone_number" value={t('users.fields.phone_number')} />
                                         <TextInput
                                             id="phone_number"
                                             type="text"
@@ -168,14 +170,14 @@ export default function Create({ roles }: Props): JSX.Element {
                                     </div>
 
                                     <div className="mt-4">
-                                        <InputLabel htmlFor="avatar_url" value="Avatar URL" />
+                                        <InputLabel htmlFor="avatar_url" value={t('users.fields.avatar_url')} />
                                         <TextInput
                                             id="avatar_url"
                                             type="text"
                                             name="avatar_url"
                                             value={data.avatar_url}
                                             className="mt-1 block w-full"
-                                            placeholder="https://example.com/avatar.jpg"
+                                            placeholder={t('users.placeholders.avatar_url')}
                                             onChange={(e) => setData('avatar_url', e.target.value)}
                                         />
                                         <InputError message={errors.avatar_url} className="mt-2" />
@@ -185,7 +187,7 @@ export default function Create({ roles }: Props): JSX.Element {
 
                             {/* Right Column - Roles */}
                             <div>
-                                <InputLabel value="Roles" />
+                                <InputLabel value={t('users.fields.roles')} />
                                 <div className="mt-2 border rounded-lg divide-y max-h-[300px] overflow-y-auto">
                                     {roles.map((role) => (
                                         <label
@@ -205,7 +207,7 @@ export default function Create({ roles }: Props): JSX.Element {
                                                     </span>
                                                     {role.is_system && (
                                                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                                                            System
+                                                            {t('users.system_badge')}
                                                         </span>
                                                     )}
                                                 </div>
@@ -220,17 +222,17 @@ export default function Create({ roles }: Props): JSX.Element {
                                 </div>
                                 <InputError message={errors.roles} className="mt-2" />
                                 <p className="mt-2 text-sm text-gray-500">
-                                    Selected: {data.roles.length} role(s)
+                                    {t('users.roles_selected', { count: data.roles.length })}
                                 </p>
                             </div>
                         </div>
 
                         <div className="mt-6 flex items-center gap-4">
                             <PrimaryButton disabled={processing}>
-                                Create User
+                                {t('users.pages.create.submit')}
                             </PrimaryButton>
                             <Link href={prefixedRoute('users.index')}>
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
+                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                             </Link>
                         </div>
                     </form>

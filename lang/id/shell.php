@@ -10,6 +10,7 @@ return [
     'no_notifications' => 'Belum ada notifikasi.',
     'mark_all_read' => 'Tandai semua terbaca',
     'search_placeholder' => 'Cari…',
+    'no_results' => 'Tidak ada hasil untuk ":query"',
     'manage_tenants' => 'Kelola Tenant',
     'plans' => 'Paket',
     'platform_modules' => 'Modul Platform',

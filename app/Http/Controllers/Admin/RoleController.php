@@ -85,7 +85,7 @@ class RoleController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.roles.index')
-            ->with('success', 'Role created successfully.');
+            ->with('success', __('roles.messages.created'));
     }
 
     /**
@@ -134,7 +134,7 @@ class RoleController extends Controller
     {
         if ($role->isSystemRole()) {
             return redirect()->back()
-                ->with('error', 'System roles cannot be modified.');
+                ->with('error', __('roles.messages.system_cannot_modify'));
         }
 
         $validated = $request->validated();
@@ -150,7 +150,7 @@ class RoleController extends Controller
         }
 
         return redirect()->route($this->getRoutePrefix().'.roles.index')
-            ->with('success', 'Role updated successfully.');
+            ->with('success', __('roles.messages.updated'));
     }
 
     /**
@@ -160,17 +160,17 @@ class RoleController extends Controller
     {
         if ($role->isSystemRole()) {
             return redirect()->back()
-                ->with('error', 'System roles cannot be deleted.');
+                ->with('error', __('roles.messages.system_cannot_delete'));
         }
 
         if ($role->users()->count() > 0) {
             return redirect()->back()
-                ->with('error', 'Cannot delete role with assigned users.');
+                ->with('error', __('roles.messages.cannot_delete_assigned'));
         }
 
         $role->delete();
 
         return redirect()->route($this->getRoutePrefix().'.roles.index')
-            ->with('success', 'Role deleted successfully.');
+            ->with('success', __('roles.messages.deleted'));
     }
 }

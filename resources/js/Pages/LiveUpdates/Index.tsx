@@ -3,6 +3,7 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm, router, usePoll } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
@@ -53,10 +54,10 @@ const typeIcons = {
 };
 
 export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
+    const { t } = useTrans();
     const [isPolling, setIsPolling] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleTimeString());
 
-    // Use Inertia v2 polling - automatically refreshes data every 3 seconds
     const { start, stop } = usePoll(3000, {
         onStart() {
             console.log('Polling started');
@@ -95,27 +96,36 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
     };
 
     const deleteLiveUpdate = (liveUpdate: LiveUpdate) => {
-        if (confirm('Are you sure you want to delete this update?')) {
+        if (confirm(t('live_updates.delete_confirm'))) {
             router.delete(route('live-updates.destroy', liveUpdate.id));
         }
     };
 
     const formatDate = (dateString: string | null) => {
-        if (!dateString) return 'Not published';
+        if (!dateString) {
+            return t('live_updates.fields.not_published');
+        }
+
         return new Date(dateString).toLocaleString();
     };
+
+    const typeOptions = (['info', 'success', 'warning', 'error'] as const).map((type) => ({
+        value: type,
+        label: t(`live_updates.types.${type}`),
+    }));
 
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Live Updates
+                        {t('live_updates.title')}
                     </h2>
                     <div className="flex items-center gap-4">
                         <span className="text-sm text-gray-500">
-                            Last updated: {lastUpdated}
+                            {t('live_updates.last_updated')}: {lastUpdated}
                         </span>
+                        <span className="text-sm text-gray-500">{t('live_updates.polling_label')}:</span>
                         <button
                             onClick={togglePolling}
                             className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -125,13 +135,13 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                             }`}
                         >
                             <span className={`h-2 w-2 rounded-full ${isPolling ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                            {isPolling ? 'Live' : 'Paused'}
+                            {isPolling ? t('live_updates.actions.resume') : t('live_updates.actions.pause')}
                         </button>
                     </div>
                 </div>
             }
         >
-            <Head title="Live Updates" />
+            <Head title={t('live_updates.title')} />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -139,13 +149,13 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                     <div className="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
                             <h3 className="mb-4 text-lg font-medium text-gray-900">
-                                Create New Update
+                                {t('live_updates.fields.create_heading')}
                             </h3>
                             <form onSubmit={submit} className="space-y-4">
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div>
                                         <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                                            Title
+                                            {t('live_updates.fields.title')}
                                         </label>
                                         <TextInput
                                             id="title"
@@ -153,33 +163,28 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                                             name="title"
                                             value={data.title}
                                             className="mt-1 block w-full"
-                                            placeholder="Update title"
+                                            placeholder={t('live_updates.fields.title_placeholder')}
                                             onChange={(e) => setData('title', e.target.value)}
                                         />
                                         <InputError message={errors.title} className="mt-2" />
                                     </div>
                                     <div>
                                         <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                                            Type
+                                            {t('live_updates.fields.type')}
                                         </label>
                                         <Select
                                             id="type"
                                             className="mt-1"
                                             value={data.type}
                                             onChange={(value) => setData('type', value as 'info' | 'success' | 'warning' | 'error')}
-                                            options={[
-                                                { value: 'info', label: 'Info' },
-                                                { value: 'success', label: 'Success' },
-                                                { value: 'warning', label: 'Warning' },
-                                                { value: 'error', label: 'Error' },
-                                            ]}
+                                            options={typeOptions}
                                         />
                                         <InputError message={errors.type} className="mt-2" />
                                     </div>
                                 </div>
                                 <div>
                                     <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-                                        Content
+                                        {t('live_updates.fields.content')}
                                     </label>
                                     <textarea
                                         id="content"
@@ -188,14 +193,14 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                                         onChange={(e) => setData('content', e.target.value)}
                                         rows={3}
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="Update content..."
+                                        placeholder={t('live_updates.fields.content_placeholder')}
                                     />
                                     <InputError message={errors.content} className="mt-2" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div>
                                         <label htmlFor="published_at" className="block text-sm font-medium text-gray-700">
-                                            Publish Date
+                                            {t('live_updates.fields.published_at')}
                                         </label>
                                         <TextInput
                                             id="published_at"
@@ -216,13 +221,13 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                                             className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                         />
                                         <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                                            Active
+                                            {t('live_updates.fields.is_active')}
                                         </label>
                                     </div>
                                 </div>
                                 <div className="flex justify-end">
                                     <PrimaryButton disabled={processing}>
-                                        Create Update
+                                        {t('live_updates.actions.add')}
                                     </PrimaryButton>
                                 </div>
                             </form>
@@ -234,10 +239,10 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                         <div className="p-6">
                             <div className="mb-4 flex items-center justify-between">
                                 <h3 className="text-lg font-medium text-gray-900">
-                                    Recent Updates
+                                    {t('live_updates.fields.recent_updates')}
                                 </h3>
                                 <span className="text-sm text-gray-500">
-                                    Server time: {new Date(serverTime).toLocaleString()}
+                                    {t('live_updates.fields.server_time')}: {new Date(serverTime).toLocaleString()}
                                 </span>
                             </div>
 
@@ -257,9 +262,9 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                                                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                                             />
                                         </svg>
-                                        <h3 className="mt-2 text-sm font-medium text-gray-900">No updates</h3>
+                                        <h3 className="mt-2 text-sm font-medium text-gray-900">{t('live_updates.empty.title')}</h3>
                                         <p className="mt-1 text-sm text-gray-500">
-                                            Get started by creating a new update above.
+                                            {t('live_updates.empty.hint')}
                                         </p>
                                     </div>
                                 ) : (
@@ -277,13 +282,14 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
                                                         <h4 className="font-medium">{update.title}</h4>
                                                         <p className="mt-1 text-sm opacity-90">{update.content}</p>
                                                         <p className="mt-2 text-xs opacity-75">
-                                                            Published: {formatDate(update.published_at)}
+                                                            {t('live_updates.fields.published')}: {formatDate(update.published_at)}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => deleteLiveUpdate(update)}
                                                     className="ml-4 flex-shrink-0 rounded p-1 opacity-50 transition-opacity hover:opacity-100"
+                                                    aria-label={t('live_updates.actions.delete')}
                                                 >
                                                     <svg
                                                         className="h-5 w-5"
@@ -307,11 +313,9 @@ export default function Index({ liveUpdates, serverTime }: Props): JSX.Element {
 
                     {/* Polling Info */}
                     <div className="mt-6 rounded-lg bg-gray-50 p-4">
-                        <h4 className="text-sm font-medium text-gray-900">About Live Updates</h4>
+                        <h4 className="text-sm font-medium text-gray-900">{t('live_updates.fields.about_title')}</h4>
                         <p className="mt-1 text-sm text-gray-600">
-                            This page uses Inertia.js v2 polling to automatically refresh data every 3 seconds.
-                            The polling indicator shows when the page is actively fetching new data.
-                            You can pause/resume polling using the button in the header.
+                            {t('live_updates.fields.about_description')}
                         </p>
                     </div>
                 </div>

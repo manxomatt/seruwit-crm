@@ -33,13 +33,13 @@ class ValidSubdomain implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value) || ! preg_match('/^[a-z0-9]([a-z0-9-]{1,28}[a-z0-9])?$/', $value)) {
-            $fail('Subdomain hanya boleh berisi huruf kecil, angka, dan tanda hubung (3–30 karakter).');
+            $fail(__('tenants.validation.subdomain_format'));
 
             return;
         }
 
         if (in_array($value, self::RESERVED, true)) {
-            $fail('Subdomain ini tidak tersedia.');
+            $fail(__('tenants.validation.subdomain_reserved'));
 
             return;
         }
@@ -51,7 +51,7 @@ class ValidSubdomain implements ValidationRule
         }
 
         if (Domain::query()->where('domain', $fullDomain)->exists()) {
-            $fail('Subdomain ini sudah digunakan.');
+            $fail(__('tenants.validation.subdomain_taken'));
         }
     }
 }

@@ -3,9 +3,12 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Register() {
+    const { t } = useTrans();
+
     interface RegisterForm {
         name: string;
         email: string;
@@ -34,11 +37,11 @@ export default function Register() {
 
     return (
         <GuestLayout>
-            <Head title="Register" />
+            <Head title={t('auth_ui.register_title')} />
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value={t('auth_ui.name')} />
 
                     <TextInput
                         id="name"
@@ -55,7 +58,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value={t('auth_ui.email')} />
 
                     <TextInput
                         id="email"
@@ -72,7 +75,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value={t('auth_ui.password')} />
 
                     <TextInput
                         id="password"
@@ -91,7 +94,7 @@ export default function Register() {
                 <div className="mt-4">
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value={t('auth_ui.password_confirmation')}
                     />
 
                     <TextInput
@@ -114,7 +117,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="company_name" value="Nama Perusahaan" />
+                    <InputLabel htmlFor="company_name" value={t('auth_ui.company_name')} />
 
                     <TextInput
                         id="company_name"
@@ -130,7 +133,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="subdomain" value="Subdomain Workspace" />
+                    <InputLabel htmlFor="subdomain" value={t('auth_ui.subdomain')} />
 
                     <div className="mt-1 flex items-center">
                         <TextInput
@@ -138,7 +141,7 @@ export default function Register() {
                             name="subdomain"
                             value={data.subdomain}
                             className="block w-full"
-                            placeholder="perusahaan-anda"
+                            placeholder={t('auth_ui.subdomain_placeholder')}
                             onChange={(e: any) =>
                                 setData('subdomain', e.target.value.toLowerCase())
                             }
@@ -157,11 +160,11 @@ export default function Register() {
                         href={route('login')}
                         className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Already registered?
+                        {t('auth_ui.already_registered')}
                     </Link>
 
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
+                        {t('auth_ui.register_submit')}
                     </PrimaryButton>
                 </div>
             </form>

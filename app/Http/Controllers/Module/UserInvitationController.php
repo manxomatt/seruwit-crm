@@ -39,7 +39,7 @@ class UserInvitationController extends Controller
             ->exists();
 
         if ($alreadyMember) {
-            return back()->withErrors(['email' => 'Pengguna ini sudah menjadi anggota workspace.']);
+            return back()->withErrors(['email' => __('users.messages.already_member')]);
         }
 
         $invitation = Invitation::query()->updateOrCreate(
@@ -58,6 +58,6 @@ class UserInvitationController extends Controller
 
         Notification::route('mail', $email)->notify(new TenantInvitationNotification($invitation));
 
-        return back()->with('success', 'Undangan telah dikirim ke '.$email.'.');
+        return back()->with('success', __('users.messages.invitation_sent', ['email' => $email]));
     }
 }

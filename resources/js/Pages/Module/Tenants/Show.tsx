@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import Select from '@/Components/Select';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 interface Member {
@@ -30,14 +31,14 @@ interface Plan {
     modules: string[];
 }
 
-const STATE_BADGE: Record<ModuleState, { label: string; className: string }> = {
-    installed: { label: 'Terpasang', className: 'bg-green-100 text-green-800' },
-    available: { label: 'Tersedia', className: 'bg-sky-100 text-sky-800' },
-    uninstalled: { label: 'Dicopot', className: 'bg-amber-100 text-amber-800' },
-    locked: { label: 'Di luar paket', className: 'bg-gray-100 text-gray-600' },
-    locked_with_data: { label: 'Terkunci, data tersimpan', className: 'bg-gray-100 text-gray-600' },
-    disabled: { label: 'Dinonaktifkan', className: 'bg-red-100 text-red-800' },
-    disabled_with_data: { label: 'Dinonaktifkan', className: 'bg-red-100 text-red-800' },
+const STATE_BADGE_CLASS: Record<ModuleState, string> = {
+    installed: 'bg-green-100 text-green-800',
+    available: 'bg-sky-100 text-sky-800',
+    uninstalled: 'bg-amber-100 text-amber-800',
+    locked: 'bg-gray-100 text-gray-600',
+    locked_with_data: 'bg-gray-100 text-gray-600',
+    disabled: 'bg-red-100 text-red-800',
+    disabled_with_data: 'bg-red-100 text-red-800',
 };
 
 const isDisabled = (state: ModuleState): boolean => state === 'disabled' || state === 'disabled_with_data';
@@ -73,6 +74,7 @@ const ArrowLeftIcon = () => (
 );
 
 export default function Show({ tenant, members, modules, plans, graceDays }: Props): JSX.Element {
+    const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
 
     const { data, setData, patch, processing, errors } = useForm({
@@ -112,6 +114,9 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
 
     const canDelete = deleteForm.data.confirm_name === tenant.name;
 
+    const statusLabel = (status: string): string =>
+        status === 'active' ? t('tenants.status.active') : t('tenants.status.suspended');
+
     return (
         <DynamicLayout
             header={
@@ -126,7 +131,7 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                 </div>
             }
         >
-            <Head title={`Tenant: ${tenant.name}`} />
+            <Head title={t('tenants.pages.show.head_title', { name: tenant.name })} />
 
             <div className="space-y-6">
                 {flash?.success && (
@@ -143,11 +148,11 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                 {/* Overview */}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     {[
-                        { label: 'Status', value: tenant.status === 'active' ? 'Aktif' : 'Ditangguhkan' },
-                        { label: 'Anggota', value: String(tenant.members) },
-                        { label: 'Paket', value: plans.find((p) => p.key === tenant.plan)?.label ?? tenant.plan },
-                        { label: 'Subdomain', value: tenant.subdomain ?? '—' },
-                        { label: 'Dibuat', value: tenant.created_at ?? '—' },
+                        { label: t('tenants.fields.status'), value: statusLabel(tenant.status) },
+                        { label: t('tenants.fields.members'), value: String(tenant.members) },
+                        { label: t('tenants.fields.plan'), value: plans.find((p) => p.key === tenant.plan)?.label ?? tenant.plan },
+                        { label: t('tenants.fields.subdomain'), value: tenant.subdomain ?? '—' },
+                        { label: t('tenants.fields.created_at'), value: tenant.created_at ?? '—' },
                     ].map((item) => (
                         <div key={item.label} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5">
                             <p className="text-xs font-medium uppercase tracking-wider text-gray-400">{item.label}</p>
@@ -159,14 +164,14 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                 {/* Members */}
                 <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <div className="border-b border-gray-100 px-6 py-4">
-                        <h2 className="text-lg font-semibold text-gray-900">Anggota</h2>
+                        <h2 className="text-lg font-semibold text-gray-900">{t('tenants.pages.show.members_heading')}</h2>
                     </div>
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Peran</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.show.member_columns.name')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.show.member_columns.email')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.show.member_columns.roles')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
@@ -191,7 +196,7 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                             ))}
                             {members.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-6 py-10 text-center text-sm text-gray-400">Belum ada anggota.</td>
+                                    <td colSpan={3} className="px-6 py-10 text-center text-sm text-gray-400">{t('tenants.pages.show.no_members')}</td>
                                 </tr>
                             )}
                         </tbody>
@@ -200,24 +205,24 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
 
                 {/* Edit form */}
                 <form onSubmit={submit} className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900">Edit Detail</h2>
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900">{t('tenants.pages.show.edit_heading')}</h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Nama Perusahaan
+                            {t('tenants.fields.company_name')}
                             <input className={inputClass} value={data.name} onChange={(e) => setData('name', e.target.value)} required />
                             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700">
-                            Subdomain
+                            {t('tenants.fields.subdomain')}
                             <input className={inputClass} value={data.subdomain} onChange={(e) => setData('subdomain', e.target.value.toLowerCase())} required />
                             {errors.subdomain && <p className="mt-1 text-xs text-red-500">{errors.subdomain}</p>}
                         </label>
                         <div className="block text-sm font-medium text-gray-700">
-                            Status
+                            {t('tenants.fields.status')}
                             <div className="mt-1 grid grid-cols-2 gap-2">
                                 {[
-                                    { value: 'active', label: 'Aktif', dot: 'bg-green-500', selected: 'border-green-500 bg-green-50 text-green-700 ring-1 ring-green-500' },
-                                    { value: 'suspended', label: 'Ditangguhkan', dot: 'bg-amber-500', selected: 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500' },
+                                    { value: 'active', label: t('tenants.status.active'), dot: 'bg-green-500', selected: 'border-green-500 bg-green-50 text-green-700 ring-1 ring-green-500' },
+                                    { value: 'suspended', label: t('tenants.status.suspended'), dot: 'bg-amber-500', selected: 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500' },
                                 ].map((opt) => {
                                     const isSelected = data.status === opt.value;
                                     return (
@@ -239,7 +244,7 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                             {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                         </div>
                         <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
-                            Paket langganan
+                            {t('tenants.fields.plan')}
                             <Select
                                 className="mt-1 w-full"
                                 value={data.plan}
@@ -247,44 +252,39 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                                 options={plans.map((plan) => ({ value: plan.key, label: `${plan.label} — ${plan.description}` }))}
                             />
                             {errors.plan && <p className="mt-1 text-xs text-red-500">{errors.plan}</p>}
-                            <p className="mt-1 text-xs text-gray-500">
-                                Menurunkan paket hanya mencabut akses — modul yang sudah terpasang beserta datanya tetap
-                                utuh dan kembali begitu paketnya dinaikkan lagi.
-                            </p>
+                            <p className="mt-1 text-xs text-gray-500">{t('tenants.fields.plan_hint')}</p>
                         </label>
                     </div>
                     {data.subdomain !== (tenant.subdomain ?? '') && (
-                        <p className="mt-3 text-xs text-amber-600">
-                            Mengubah subdomain akan mengganti URL workspace ini — tautan lama akan berhenti bekerja.
-                        </p>
+                        <p className="mt-3 text-xs text-amber-600">{t('tenants.pages.show.subdomain_warning')}</p>
                     )}
 
                     <h3 className="mb-4 mt-8 border-t border-gray-100 pt-6 text-sm font-semibold uppercase tracking-wider text-gray-500">
-                        Profil &amp; Kontak
+                        {t('tenants.pages.show.profile_heading')}
                     </h3>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Email Billing
+                            {t('tenants.fields.billing_email')}
                             <input type="email" className={inputClass} value={data.billing_email} onChange={(e) => setData('billing_email', e.target.value)} placeholder="billing@perusahaan.com" />
                             {errors.billing_email && <p className="mt-1 text-xs text-red-500">{errors.billing_email}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700">
-                            Telepon
+                            {t('tenants.fields.phone')}
                             <input className={inputClass} value={data.phone} onChange={(e) => setData('phone', e.target.value)} placeholder="+62 ..." />
                             {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700">
-                            NPWP / Tax ID
+                            {t('tenants.fields.tax_id')}
                             <input className={inputClass} value={data.tax_id} onChange={(e) => setData('tax_id', e.target.value)} />
                             {errors.tax_id && <p className="mt-1 text-xs text-red-500">{errors.tax_id}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700">
-                            Alamat
+                            {t('tenants.fields.address')}
                             <input className={inputClass} value={data.address} onChange={(e) => setData('address', e.target.value)} />
                             {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
-                            Catatan Internal <span className="font-normal text-gray-400">(hanya terlihat admin platform)</span>
+                            {t('tenants.fields.notes')} <span className="font-normal text-gray-400">{t('tenants.fields.notes_hint')}</span>
                             <textarea className={inputClass} rows={3} value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
                             {errors.notes && <p className="mt-1 text-xs text-red-500">{errors.notes}</p>}
                         </label>
@@ -295,71 +295,68 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                         disabled={processing}
                         className="mt-5 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                     >
-                        Simpan Perubahan
+                        {t('tenants.actions.save_changes')}
                     </button>
                 </form>
 
                 {/* Modules */}
                 <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                     <div className="border-b border-gray-100 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900">Modul</h2>
-                        <p className="mt-1 text-sm text-gray-600">
-                            Apa yang boleh dipasang ditentukan paket di atas. Mencopot modul tidak menghapus datanya —
-                            data disimpan {graceDays} hari sebelum dihapus permanen.
-                        </p>
+                        <h2 className="text-lg font-semibold text-gray-900">{t('tenants.pages.show.modules_heading')}</h2>
+                        <p className="mt-1 text-sm text-gray-600">{t('tenants.pages.show.modules_hint', { days: graceDays })}</p>
                     </div>
 
                     {modules.length === 0 ? (
-                        <p className="p-6 text-sm text-gray-500">Belum ada modul opsional yang terdaftar.</p>
+                        <p className="p-6 text-sm text-gray-500">{t('tenants.pages.show.no_modules')}</p>
                     ) : (
                         <ul className="divide-y divide-gray-100">
                             {modules.map((module) => {
-                                const badge = STATE_BADGE[module.state];
+                                const badgeLabel = t(`tenants.pages.show.module_states.${module.state}`);
 
                                 return (
                                     <li key={module.key} className="flex flex-wrap items-center gap-4 p-6">
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
                                                 <h4 className="font-medium text-gray-900">{module.label}</h4>
-                                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
-                                                    {badge.label}
+                                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE_CLASS[module.state]}`}>
+                                                    {badgeLabel}
                                                 </span>
                                             </div>
                                             <p className="mt-1 text-sm text-gray-500">{module.description}</p>
 
                                             {module.state === 'uninstalled' && module.purges_at && (
                                                 <p className="mt-2 text-xs text-amber-700">
-                                                    Data dihapus permanen pada {module.purges_at}.
+                                                    {t('tenants.pages.show.purges_at', { date: module.purges_at })}
                                                 </p>
                                             )}
 
                                             {isDisabled(module.state) && (
                                                 <p className="mt-2 text-xs text-red-700">
-                                                    Modul ini dinonaktifkan platform untuk semua tenant
-                                                    {module.state === 'disabled_with_data' && ' — datanya tetap tersimpan'}.
+                                                    {module.state === 'disabled_with_data'
+                                                        ? t('tenants.pages.show.module_disabled_with_data_hint')
+                                                        : t('tenants.pages.show.module_disabled_hint')}
                                                 </p>
                                             )}
 
                                             {!isDisabled(module.state) && !module.entitled && module.plans_offering.length > 0 && (
                                                 <p className="mt-2 text-xs text-gray-500">
-                                                    Ada di paket {module.plans_offering.join(', ')} — pindahkan paketnya
-                                                    untuk membuka.
+                                                    {t('tenants.pages.show.plans_offering_hint', { plans: module.plans_offering.join(', ') })}
                                                 </p>
                                             )}
                                         </div>
 
                                         <div className="shrink-0">
                                             {isDisabled(module.state) ? (
-                                                <span className="text-sm text-gray-400">Dinonaktifkan</span>
+                                                <span className="text-sm text-gray-400">{t('tenants.pages.show.module_states.disabled')}</span>
                                             ) : !module.entitled ? (
-                                                <span className="text-sm text-gray-400">Di luar paket</span>
+                                                <span className="text-sm text-gray-400">{t('tenants.pages.show.module_states.locked')}</span>
                                             ) : module.installed ? (
                                                 <button
                                                     type="button"
                                                     onClick={() => uninstallModule(module.key)}
                                                     className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                                                 >
-                                                    Copot
+                                                    {t('tenants.actions.uninstall')}
                                                 </button>
                                             ) : (
                                                 <button
@@ -367,7 +364,7 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                                                     onClick={() => installModule(module.key)}
                                                     className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                                                 >
-                                                    Pasang
+                                                    {t('tenants.actions.install')}
                                                 </button>
                                             )}
                                         </div>
@@ -380,13 +377,10 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
 
                 {/* Danger zone */}
                 <form onSubmit={destroy} className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-red-200">
-                    <h2 className="text-lg font-semibold text-red-700">Zona Bahaya</h2>
-                    <p className="mt-1 text-sm text-gray-600">
-                        Menghapus tenant akan <strong>menghapus permanen seluruh datanya</strong> (schema database, pengguna,
-                        konten). Tindakan ini tidak dapat dibatalkan.
-                    </p>
+                    <h2 className="text-lg font-semibold text-red-700">{t('tenants.pages.show.danger_zone')}</h2>
+                    <p className="mt-1 text-sm text-gray-600">{t('tenants.pages.show.danger_zone_hint')}</p>
                     <label className="mt-4 block text-sm font-medium text-gray-700">
-                        Ketik <span className="font-semibold text-gray-900">{tenant.name}</span> untuk mengonfirmasi
+                        {t('tenants.fields.confirm_name', { name: tenant.name })}
                         <input
                             className={inputClass}
                             value={deleteForm.data.confirm_name}
@@ -400,7 +394,7 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                         disabled={!canDelete || deleteForm.processing}
                         className="mt-4 inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                        Hapus Tenant Permanen
+                        {t('tenants.actions.delete_permanently')}
                     </button>
                 </form>
             </div>

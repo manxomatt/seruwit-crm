@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -28,6 +29,7 @@ interface Props {
 
 export default function Show({ media }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const [copied, setCopied] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -62,24 +64,24 @@ export default function Show({ media }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Media Details
+                        {t('media.pages.show.head')}
                     </h2>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('media.edit', media.id)}>
-                            <PrimaryButton>Edit</PrimaryButton>
+                            <PrimaryButton>{t('common.edit')}</PrimaryButton>
                         </Link>
-                        <DangerButton onClick={openDeleteDialog}>Delete</DangerButton>
+                        <DangerButton onClick={openDeleteDialog}>{t('common.delete')}</DangerButton>
                     </div>
                 </div>
             }
         >
-            <Head title={`Media: ${media.original_name}`} />
+            <Head title={t('media.pages.show.title', { name: media.original_name })} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Preview */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('media.pages.show.preview')}</h3>
                         <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center min-h-[300px]">
                             {media.type === 'image' ? (
                                 <img
@@ -93,7 +95,7 @@ export default function Show({ media }: Props): JSX.Element {
                                     controls
                                     className="max-w-full max-h-[500px]"
                                 >
-                                    Your browser does not support the video tag.
+                                    {t('media.video_not_supported')}
                                 </video>
                             ) : (
                                 <div className="text-center p-8">
@@ -111,7 +113,7 @@ export default function Show({ media }: Props): JSX.Element {
                                         />
                                     </svg>
                                     <p className="mt-2 text-sm text-gray-500">
-                                        Preview not available for this file type
+                                        {t('media.pages.show.preview_unavailable')}
                                     </p>
                                     <a
                                         href={media.url}
@@ -122,7 +124,7 @@ export default function Show({ media }: Props): JSX.Element {
                                         <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                         </svg>
-                                        Download File
+                                        {t('media.pages.show.download')}
                                     </a>
                                 </div>
                             )}
@@ -133,18 +135,18 @@ export default function Show({ media }: Props): JSX.Element {
                 {/* Details */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">File Information</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('media.pages.show.information')}</h3>
                         <dl className="space-y-4">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Original Name</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.original_name')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{media.original_name}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">File Name</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.file_name')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{media.name}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Type</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.type')}</dt>
                                 <dd className="mt-1">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                         media.type === 'image'
@@ -153,40 +155,40 @@ export default function Show({ media }: Props): JSX.Element {
                                             ? 'bg-purple-100 text-purple-800'
                                             : 'bg-gray-100 text-gray-800'
                                     }`}>
-                                        {media.type.charAt(0).toUpperCase() + media.type.slice(1)}
+                                        {t(`media.type.${media.type}`, undefined, media.type)}
                                     </span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">MIME Type</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.mime_type')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{media.mime_type}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Size</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.size')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{media.human_size}</dd>
                             </div>
                             {media.alt_text && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Alt Text</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.alt_text')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{media.alt_text}</dd>
                                 </div>
                             )}
                             {media.description && (
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Description</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.description')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{media.description}</dd>
                                 </div>
                             )}
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Uploaded</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.uploaded')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatDate(media.created_at)}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Last Modified</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.last_modified')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatDate(media.updated_at)}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">URL</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.url')}</dt>
                                 <dd className="mt-1">
                                     <div className="flex items-center gap-2">
                                         <input
@@ -204,14 +206,14 @@ export default function Show({ media }: Props): JSX.Element {
                                                     <svg className="w-4 h-4 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                     </svg>
-                                                    Copied!
+                                                    {t('media.pages.show.copied')}
                                                 </>
                                             ) : (
                                                 <>
                                                     <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                     </svg>
-                                                    Copy
+                                                    {t('media.pages.show.copy')}
                                                 </>
                                             )}
                                         </button>
@@ -226,7 +228,7 @@ export default function Show({ media }: Props): JSX.Element {
             {/* Actions */}
             <div className="mt-6">
                 <Link href={prefixedRoute('media.index')}>
-                    <SecondaryButton>Back to Library</SecondaryButton>
+                    <SecondaryButton>{t('media.pages.show.back')}</SecondaryButton>
                 </Link>
             </div>
 
@@ -235,14 +237,8 @@ export default function Show({ media }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Hapus Media"
-                message={
-                    <>
-                        Apakah Anda yakin ingin menghapus media{' '}
-                        <strong>"{media.original_name}"</strong>? File akan dihapus secara permanen.
-                        Tindakan ini tidak dapat dibatalkan.
-                    </>
-                }
+                title={t('media.delete_confirm.title')}
+                message={t('media.delete_confirm.message', { name: media.original_name })}
             />
         </DynamicLayout>
     );

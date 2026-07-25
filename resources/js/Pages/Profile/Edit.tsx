@@ -6,6 +6,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Transition } from '@headlessui/react';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef, ChangeEvent } from 'react';
@@ -52,6 +53,7 @@ const CameraIcon = () => (
 
 export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const user = (usePage().props as any).auth.user;
     const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'delete'>('profile');
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
@@ -136,9 +138,9 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
     };
 
     const tabs = [
-        { id: 'profile' as const, name: 'Profile Information', icon: <UserIcon /> },
-        { id: 'password' as const, name: 'Update Password', icon: <LockIcon /> },
-        { id: 'delete' as const, name: 'Delete Account', icon: <TrashIcon /> },
+        { id: 'profile' as const, name: t('profile.tabs.profile'), icon: <UserIcon /> },
+        { id: 'password' as const, name: t('profile.tabs.password'), icon: <LockIcon /> },
+        { id: 'delete' as const, name: t('profile.tabs.delete'), icon: <TrashIcon /> },
     ];
 
     return (
@@ -147,10 +149,10 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                            Profile Settings
+                            {t('profile.settings_title')}
                         </h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            Manage your account settings and preferences
+                            {t('profile.settings_subtitle')}
                         </p>
                     </div>
                     <Link
@@ -160,12 +162,12 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                         <svg className="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                         </svg>
-                        Back to Dashboard
+                        {t('profile.back_to_dashboard')}
                     </Link>
                 </div>
             }
         >
-            <Head title="Profile Settings" />
+            <Head title={t('profile.settings_title')} />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                 {/* Sidebar Navigation */}
@@ -194,7 +196,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                         className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                                     >
                                         <CameraIcon />
-                                        <span className="sr-only">Change avatar</span>
+                                        <span className="sr-only">{t('profile.avatar.change')}</span>
                                     </button>
                                     <input
                                         ref={fileInputRef}
@@ -212,17 +214,17 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                         onClick={removeAvatar}
                                         className="mt-2 text-xs text-red-600 hover:text-red-700"
                                     >
-                                        Remove avatar
+                                        {t('profile.avatar.remove')}
                                     </button>
                                 )}
                                 {avatarForm.errors.avatar && (
                                     <p className="mt-2 text-xs text-red-600">{avatarForm.errors.avatar}</p>
                                 )}
                                 {status === 'avatar-updated' && (
-                                    <p className="mt-2 text-xs text-green-600">Avatar updated successfully.</p>
+                                    <p className="mt-2 text-xs text-green-600">{t('profile.avatar.updated')}</p>
                                 )}
                                 {status === 'avatar-removed' && (
-                                    <p className="mt-2 text-xs text-green-600">Avatar removed successfully.</p>
+                                    <p className="mt-2 text-xs text-green-600">{t('profile.avatar.removed')}</p>
                                 )}
                             </div>
 
@@ -264,15 +266,15 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                         <UserIcon />
                                     </div>
                                     <div className="ml-4">
-                                        <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
-                                        <p className="text-sm text-gray-500">Update your account's profile information and email address.</p>
+                                        <h2 className="text-lg font-semibold text-gray-900">{t('profile.information')}</h2>
+                                        <p className="text-sm text-gray-500">{t('profile.information_help')}</p>
                                     </div>
                                 </div>
                             </div>
                             <div className="p-6">
                                 <form onSubmit={submitProfile} className="max-w-xl space-y-6">
                                     <div>
-                                        <InputLabel htmlFor="name" value="Name" />
+                                        <InputLabel htmlFor="name" value={t('profile.name')} />
                                         <TextInput
                                             id="name"
                                             className="mt-1 block w-full"
@@ -286,7 +288,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                     </div>
 
                                     <div>
-                                        <InputLabel htmlFor="email" value="Email" />
+                                        <InputLabel htmlFor="email" value={t('profile.email')} />
                                         <TextInput
                                             id="email"
                                             type="email"
@@ -309,19 +311,19 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                                 </div>
                                                 <div className="ml-3">
                                                     <p className="text-sm text-yellow-700">
-                                                        Your email address is unverified.{' '}
+                                                        {t('profile.email_unverified')}{' '}
                                                         <Link
                                                             href={route('verification.send')}
                                                             method="post"
                                                             as="button"
                                                             className="font-medium text-yellow-700 underline hover:text-yellow-600"
                                                         >
-                                                            Click here to re-send the verification email.
+                                                            {t('profile.resend_verification')}
                                                         </Link>
                                                     </p>
                                                     {status === 'verification-link-sent' && (
                                                         <p className="mt-2 text-sm font-medium text-green-600">
-                                                            A new verification link has been sent to your email address.
+                                                            {t('profile.verification_sent')}
                                                         </p>
                                                     )}
                                                 </div>
@@ -331,7 +333,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
 
                                     <div className="flex items-center gap-4">
                                         <PrimaryButton disabled={profileForm.processing}>
-                                            Save Changes
+                                            {t('profile.save_changes')}
                                         </PrimaryButton>
 
                                         <Transition
@@ -341,7 +343,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                             leave="transition ease-in-out"
                                             leaveTo="opacity-0"
                                         >
-                                            <p className="text-sm text-green-600">Saved successfully.</p>
+                                            <p className="text-sm text-green-600">{t('profile.saved_success')}</p>
                                         </Transition>
                                     </div>
                                 </form>
@@ -358,15 +360,15 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                         <LockIcon />
                                     </div>
                                     <div className="ml-4">
-                                        <h2 className="text-lg font-semibold text-gray-900">Update Password</h2>
-                                        <p className="text-sm text-gray-500">Ensure your account is using a long, random password to stay secure.</p>
+                                        <h2 className="text-lg font-semibold text-gray-900">{t('profile.password.title')}</h2>
+                                        <p className="text-sm text-gray-500">{t('profile.password.help')}</p>
                                     </div>
                                 </div>
                             </div>
                             <div className="p-6">
                                 <form onSubmit={submitPassword} className="max-w-xl space-y-6">
                                     <div>
-                                        <InputLabel htmlFor="current_password" value="Current Password" />
+                                        <InputLabel htmlFor="current_password" value={t('profile.password.current')} />
                                         <TextInput
                                             id="current_password"
                                             type="password"
@@ -380,7 +382,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                     </div>
 
                                     <div>
-                                        <InputLabel htmlFor="password" value="New Password" />
+                                        <InputLabel htmlFor="password" value={t('profile.password.new')} />
                                         <TextInput
                                             id="password"
                                             type="password"
@@ -394,7 +396,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                     </div>
 
                                     <div>
-                                        <InputLabel htmlFor="password_confirmation" value="Confirm Password" />
+                                        <InputLabel htmlFor="password_confirmation" value={t('profile.password.confirm')} />
                                         <TextInput
                                             id="password_confirmation"
                                             type="password"
@@ -409,7 +411,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
 
                                     <div className="flex items-center gap-4">
                                         <PrimaryButton disabled={passwordForm.processing}>
-                                            Update Password
+                                            {t('profile.password.update')}
                                         </PrimaryButton>
 
                                         <Transition
@@ -419,7 +421,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                             leave="transition ease-in-out"
                                             leaveTo="opacity-0"
                                         >
-                                            <p className="text-sm text-green-600">Password updated successfully.</p>
+                                            <p className="text-sm text-green-600">{t('profile.password.updated')}</p>
                                         </Transition>
                                     </div>
                                 </form>
@@ -436,8 +438,8 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                         <TrashIcon />
                                     </div>
                                     <div className="ml-4">
-                                        <h2 className="text-lg font-semibold text-gray-900">Delete Account</h2>
-                                        <p className="text-sm text-gray-500">Permanently delete your account and all associated data.</p>
+                                        <h2 className="text-lg font-semibold text-gray-900">{t('profile.delete.title')}</h2>
+                                        <p className="text-sm text-gray-500">{t('profile.delete.help')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -451,10 +453,9 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                                 </svg>
                                             </div>
                                             <div className="ml-3">
-                                                <h3 className="text-sm font-medium text-red-800">Warning</h3>
+                                                <h3 className="text-sm font-medium text-red-800">{t('profile.delete.warning_title')}</h3>
                                                 <p className="mt-1 text-sm text-red-700">
-                                                    Once your account is deleted, all of its resources and data will be permanently deleted. 
-                                                    Before deleting your account, please download any data or information that you wish to retain.
+                                                    {t('profile.delete.warning_message')}
                                                 </p>
                                             </div>
                                         </div>
@@ -465,23 +466,23 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                             onClick={() => setConfirmingDeletion(true)}
                                             className="border-red-300 text-red-700 hover:bg-red-50"
                                         >
-                                            Delete Account
+                                            {t('profile.delete.action')}
                                         </SecondaryButton>
                                     ) : (
                                         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                                             <p className="text-sm text-red-700 mb-4">
-                                                Are you sure you want to delete your account? This action cannot be undone.
+                                                {t('profile.delete.confirm_message')}
                                             </p>
                                             <form onSubmit={deleteUser}>
                                                 <div className="flex items-center gap-4">
                                                     <DangerButton disabled={deleteForm.processing}>
-                                                        Yes, Delete My Account
+                                                        {t('profile.delete.confirm_action')}
                                                     </DangerButton>
                                                     <SecondaryButton
                                                         type="button"
                                                         onClick={() => setConfirmingDeletion(false)}
                                                     >
-                                                        Cancel
+                                                        {t('common.cancel')}
                                                     </SecondaryButton>
                                                 </div>
                                             </form>

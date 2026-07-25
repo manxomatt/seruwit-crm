@@ -1,3 +1,4 @@
+import { useTrans } from '@/hooks/useTrans';
 import { Head, usePage } from '@inertiajs/react';
 
 interface Workspace {
@@ -12,11 +13,12 @@ interface Props {
 }
 
 export default function Workspaces({ workspaces }: Props): JSX.Element {
+    const { t } = useTrans();
     const { auth } = usePage().props as any;
 
     return (
         <div className="min-h-screen bg-slate-50 px-4 py-16">
-            <Head title="Pilih Workspace" />
+            <Head title={t('central.workspaces.title')} />
 
             <div className="mx-auto w-full max-w-lg">
                 <div className="mb-10 text-center">
@@ -25,9 +27,9 @@ export default function Workspaces({ workspaces }: Props): JSX.Element {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                     </span>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pilih Workspace</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('central.workspaces.title')}</h1>
                     <p className="mt-2 text-slate-500">
-                        Masuk sebagai <span className="font-medium text-slate-700">{auth.user?.email}</span>
+                        {t('central.workspaces.signed_in_as')} <span className="font-medium text-slate-700">{auth.user?.email}</span>
                     </p>
                 </div>
 
@@ -56,7 +58,7 @@ export default function Workspaces({ workspaces }: Props): JSX.Element {
                                         </svg>
                                     ) : (
                                         <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-600">
-                                            Ditangguhkan
+                                            {t('central.workspaces.suspended')}
                                         </span>
                                     )}
                                 </a>
@@ -65,9 +67,9 @@ export default function Workspaces({ workspaces }: Props): JSX.Element {
                     </ul>
                 ) : (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
-                        <p className="font-medium text-slate-700">Belum ada workspace</p>
+                        <p className="font-medium text-slate-700">{t('central.workspaces.empty_title')}</p>
                         <p className="mt-1 text-sm text-slate-400">
-                            Anda belum menjadi anggota workspace mana pun.
+                            {t('central.workspaces.empty_hint')}
                         </p>
                     </div>
                 )}

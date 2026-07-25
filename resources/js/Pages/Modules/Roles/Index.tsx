@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
@@ -42,6 +43,8 @@ interface Props {
 
 export default function Index({ roles, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
@@ -83,7 +86,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -95,15 +98,15 @@ export default function Index({ roles, filters }: Props): JSX.Element {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Role Management
+                        {t('roles.pages.index.head')}
                     </h2>
                     <Link href={prefixedRoute('roles.create')}>
-                        <PrimaryButton>Add Role</PrimaryButton>
+                        <PrimaryButton>{t('roles.pages.index.new')}</PrimaryButton>
                     </Link>
                 </div>
             }
         >
-            <Head title="Role Management" />
+            <Head title={t('roles.pages.index.head')} />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -112,20 +115,20 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                         <div className="flex-1 min-w-[200px]">
                             <TextInput
                                 type="text"
-                                placeholder="Search roles by name or description..."
+                                placeholder={t('roles.placeholders.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full"
                             />
                         </div>
-                        <PrimaryButton type="submit">Search</PrimaryButton>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                         {filters.search && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
                                 className="text-gray-500 hover:text-gray-700"
                             >
-                                Clear filters
+                                {t('common.clear_filters')}
                             </button>
                         )}
                     </form>
@@ -145,13 +148,13 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                     d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                                 />
                             </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No roles found</h3>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('roles.pages.index.empty_title')}</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                Get started by creating a new role.
+                                {t('roles.pages.index.empty_hint')}
                             </p>
                             <div className="mt-6">
                                 <Link href={prefixedRoute('roles.create')}>
-                                    <PrimaryButton>Add Role</PrimaryButton>
+                                    <PrimaryButton>{t('roles.pages.index.new')}</PrimaryButton>
                                 </Link>
                             </div>
                         </div>
@@ -163,25 +166,25 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Role
+                                                {t('roles.pages.index.columns.role')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Description
+                                                {t('roles.pages.index.columns.description')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Users
+                                                {t('roles.pages.index.columns.users')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Permissions
+                                                {t('roles.pages.index.columns.permissions')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Type
+                                                {t('roles.pages.index.columns.type')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Created
+                                                {t('roles.pages.index.columns.created')}
                                             </th>
                                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions
+                                                {t('common.actions')}
                                             </th>
                                         </tr>
                                     </thead>
@@ -217,22 +220,22 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                        {role.users_count} users
+                                                        {t('roles.pages.index.users_count', { count: role.users_count })}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                        {role.permissions_count} permissions
+                                                        {t('roles.pages.index.permissions_count', { count: role.permissions_count })}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     {role.is_system ? (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                            System
+                                                            {t('roles.type.system')}
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                            Custom
+                                                            {t('roles.type.custom')}
                                                         </span>
                                                     )}
                                                 </td>
@@ -244,7 +247,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                         <Link
                                                             href={prefixedRoute('roles.show', role.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title="View"
+                                                            title={t('roles.actions.view')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -256,7 +259,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                                 <Link
                                                                     href={prefixedRoute('roles.edit', role.id)}
                                                                     className="text-indigo-600 hover:text-indigo-900"
-                                                                    title="Edit"
+                                                                    title={t('common.edit')}
                                                                 >
                                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -265,7 +268,7 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                                 <button
                                                                     onClick={() => openDeleteDialog(role)}
                                                                     className="text-red-600 hover:text-red-900"
-                                                                    title="Delete"
+                                                                    title={t('common.delete')}
                                                                     disabled={role.users_count > 0}
                                                                 >
                                                                     <svg className={`w-5 h-5 ${role.users_count > 0 ? 'opacity-50 cursor-not-allowed' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -286,9 +289,11 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                             {roles.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(roles.current_page - 1) * roles.per_page + 1} to{' '}
-                                        {Math.min(roles.current_page * roles.per_page, roles.total)} of{' '}
-                                        {roles.total} results
+                                        {t('common.showing_results', {
+                                            from: (roles.current_page - 1) * roles.per_page + 1,
+                                            to: Math.min(roles.current_page * roles.per_page, roles.total),
+                                            total: roles.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {roles.links.map((link, index) => (
@@ -319,16 +324,11 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                 onClose={closeDeleteDialog}
                 onConfirm={confirmDelete}
                 processing={processing}
-                title="Delete Role"
+                title={t('roles.delete_confirm.title')}
                 message={
-                    roleToDelete ? (
-                        <>
-                            Are you sure you want to delete the role{' '}
-                            <strong>"{roleToDelete.name}"</strong>? This action cannot be undone.
-                        </>
-                    ) : (
-                        'Are you sure you want to delete this role?'
-                    )
+                    roleToDelete
+                        ? t('roles.delete_confirm.message', { name: roleToDelete.name })
+                        : t('roles.delete_confirm.message_generic')
                 }
             />
         </DynamicLayout>

@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link } from '@inertiajs/react';
@@ -40,8 +41,10 @@ interface Props {
 
 export default function Show({ role, permissionsByModule, modules, actions }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -55,72 +58,72 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Role Details: {role.name}
+                        {t('roles.pages.show.head', { name: role.name })}
                     </h2>
                     <div className="flex gap-2">
                         {!role.is_system && (
                             <Link href={prefixedRoute('roles.edit', role.id)}>
-                                <PrimaryButton>Edit Role</PrimaryButton>
+                                <PrimaryButton>{t('roles.actions.edit_role')}</PrimaryButton>
                             </Link>
                         )}
                         <Link href={prefixedRoute('roles.index')}>
-                            <SecondaryButton>Back to Roles</SecondaryButton>
+                            <SecondaryButton>{t('roles.actions.back_to_roles')}</SecondaryButton>
                         </Link>
                     </div>
                 </div>
             }
         >
-            <Head title={`Role: ${role.name}`} />
+            <Head title={t('roles.pages.show.title', { name: role.name })} />
 
             <div className="space-y-6">
                 {/* Role Information */}
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Role Information</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('roles.pages.show.information')}</h3>
                         
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Name</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('roles.pages.show.name')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{role.name}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Slug</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('roles.pages.show.slug')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900 font-mono">{role.slug}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Type</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('roles.fields.type')}</dt>
                                 <dd className="mt-1">
                                     {role.is_system ? (
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                            System Role
+                                            {t('roles.type.system')}
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Custom Role
+                                            {t('roles.type.custom')}
                                         </span>
                                     )}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Users</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('roles.pages.index.columns.users')}</dt>
                                 <dd className="mt-1">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        {role.users.length} user(s)
+                                        {t('roles.pages.show.users_count', { count: role.users.length })}
                                     </span>
                                 </dd>
                             </div>
                             <div className="sm:col-span-2">
-                                <dt className="text-sm font-medium text-gray-500">Description</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('roles.fields.description')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {role.description || 'No description provided'}
+                                    {role.description || t('roles.pages.show.description_empty')}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Created</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('roles.pages.show.created')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatDate(role.created_at)}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+                                <dt className="text-sm font-medium text-gray-500">{t('roles.pages.show.updated')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatDate(role.updated_at)}</dd>
                             </div>
                         </dl>
@@ -131,11 +134,11 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">
-                            Permissions ({role.permissions.length})
+                            {t('roles.pages.show.permissions_title', { count: role.permissions.length })}
                         </h3>
                         
                         {Object.keys(permissionsByModule).length === 0 ? (
-                            <p className="text-sm text-gray-500">No permissions assigned to this role.</p>
+                            <p className="text-sm text-gray-500">{t('roles.pages.show.permissions_empty')}</p>
                         ) : (
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 {Object.entries(permissionsByModule).map(([module, modulePermissions]) => (
@@ -164,24 +167,24 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">
-                            Users with this Role ({role.users.length})
+                            {t('roles.pages.show.users_title', { count: role.users.length })}
                         </h3>
                         
                         {role.users.length === 0 ? (
-                            <p className="text-sm text-gray-500">No users have been assigned this role.</p>
+                            <p className="text-sm text-gray-500">{t('roles.pages.show.users_empty')}</p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                User
+                                                {t('users.pages.index.columns.user')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Email
+                                                {t('users.pages.index.columns.email')}
                                             </th>
                                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions
+                                                {t('common.actions')}
                                             </th>
                                         </tr>
                                     </thead>
@@ -212,7 +215,7 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                                                         href={prefixedRoute('users.show', user.id)}
                                                         className="text-indigo-600 hover:text-indigo-900"
                                                     >
-                                                        View User
+                                                        {t('roles.pages.show.view_user')}
                                                     </Link>
                                                 </td>
                                             </tr>

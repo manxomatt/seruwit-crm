@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -28,6 +29,8 @@ const BuildingIcon = () => (
 );
 
 export default function Index({ tenants }: Props): JSX.Element {
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showForm, setShowForm] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -54,7 +57,7 @@ export default function Index({ tenants }: Props): JSX.Element {
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('id-ID', {
+        return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -68,46 +71,46 @@ export default function Index({ tenants }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Tenants</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('tenants.title')}</h1>
                     <button
                         type="button"
                         onClick={() => setShowForm((v) => !v)}
                         className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         <PlusIcon />
-                        <span className="ml-2">{showForm ? 'Tutup Form' : 'Buat Tenant'}</span>
+                        <span className="ml-2">{showForm ? t('tenants.pages.index.close_form') : t('tenants.pages.index.new')}</span>
                     </button>
                 </div>
             }
         >
-            <Head title="Tenants" />
+            <Head title={t('tenants.title')} />
 
             {showForm && (
                 <form onSubmit={submit} className="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900">Buat Tenant Baru</h2>
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900">{t('tenants.pages.index.create_heading')}</h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Nama Perusahaan
+                            {t('tenants.fields.company_name')}
                             <input className={inputClass} value={data.company_name} onChange={(e) => setData('company_name', e.target.value)} required />
                             {errors.company_name && <p className="mt-1 text-xs text-red-500">{errors.company_name}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700">
-                            Subdomain
+                            {t('tenants.fields.subdomain')}
                             <input className={inputClass} value={data.subdomain} onChange={(e) => setData('subdomain', e.target.value.toLowerCase())} required />
                             {errors.subdomain && <p className="mt-1 text-xs text-red-500">{errors.subdomain}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700">
-                            Nama Pemilik
+                            {t('tenants.fields.owner_name')}
                             <input className={inputClass} value={data.owner_name} onChange={(e) => setData('owner_name', e.target.value)} required />
                             {errors.owner_name && <p className="mt-1 text-xs text-red-500">{errors.owner_name}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700">
-                            Email Pemilik
+                            {t('tenants.fields.owner_email')}
                             <input type="email" className={inputClass} value={data.owner_email} onChange={(e) => setData('owner_email', e.target.value)} required />
                             {errors.owner_email && <p className="mt-1 text-xs text-red-500">{errors.owner_email}</p>}
                         </label>
                         <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
-                            Password Pemilik <span className="font-normal text-gray-400">(kosongkan jika akun sudah ada)</span>
+                            {t('tenants.fields.owner_password')} <span className="font-normal text-gray-400">{t('tenants.fields.owner_password_hint')}</span>
                             <input type="password" className={inputClass} value={data.owner_password} onChange={(e) => setData('owner_password', e.target.value)} />
                             {errors.owner_password && <p className="mt-1 text-xs text-red-500">{errors.owner_password}</p>}
                         </label>
@@ -117,7 +120,7 @@ export default function Index({ tenants }: Props): JSX.Element {
                         disabled={processing}
                         className="mt-5 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                     >
-                        Buat Tenant
+                        {t('tenants.pages.index.submit')}
                     </button>
                 </form>
             )}
@@ -128,8 +131,8 @@ export default function Index({ tenants }: Props): JSX.Element {
                         <div className="flex justify-center">
                             <BuildingIcon />
                         </div>
-                        <h3 className="mt-4 text-lg font-semibold text-gray-900">Belum ada tenant</h3>
-                        <p className="mt-2 text-sm text-gray-500">Mulai dengan membuat workspace pertama untuk pelanggan.</p>
+                        <h3 className="mt-4 text-lg font-semibold text-gray-900">{t('tenants.pages.index.empty_title')}</h3>
+                        <p className="mt-2 text-sm text-gray-500">{t('tenants.pages.index.empty_hint')}</p>
                     </div>
                 </div>
             ) : (
@@ -137,12 +140,12 @@ export default function Index({ tenants }: Props): JSX.Element {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nama</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Domain</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Anggota</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Dibuat</th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Aksi</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.name')}</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.domain')}</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.members')}</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.status')}</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.created_at')}</th>
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
@@ -168,7 +171,7 @@ export default function Index({ tenants }: Props): JSX.Element {
                                                     : 'bg-yellow-100 text-yellow-800'
                                             }`}
                                         >
-                                            {tenant.status === 'active' ? 'Aktif' : 'Ditangguhkan'}
+                                            {tenant.status === 'active' ? t('tenants.status.active') : t('tenants.status.suspended')}
                                         </span>
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(tenant.created_at)}</td>
@@ -179,13 +182,13 @@ export default function Index({ tenants }: Props): JSX.Element {
                                                 onClick={() => toggleStatus(tenant)}
                                                 className="text-sm font-medium text-gray-500 hover:text-gray-700"
                                             >
-                                                {tenant.status === 'active' ? 'Tangguhkan' : 'Aktifkan'}
+                                                {tenant.status === 'active' ? t('tenants.actions.suspend') : t('tenants.actions.activate')}
                                             </button>
                                             <Link
                                                 href={route('module.tenants.show', tenant.id)}
                                                 className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                                             >
-                                                Detail
+                                                {t('tenants.actions.view_detail')}
                                             </Link>
                                         </div>
                                     </td>
