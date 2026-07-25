@@ -33,6 +33,7 @@ class StorePurchaseOrderRequest extends FormRequest
             'items.*.quantity_ordered' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'items.*.unit' => ['nullable', 'string', 'max:30'],
+            'items.*.product_packaging_id' => ['nullable', 'integer', 'exists:product_packagings,id'],
             'items.*.notes' => ['nullable', 'string', 'max:500'],
         ];
     }
@@ -47,5 +48,31 @@ class StorePurchaseOrderRequest extends FormRequest
             'items.required' => __('purchasing.validation.items_required'),
             'items.min' => __('purchasing.validation.items_required'),
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            foreach ($this->input('items', []) as $index => $item) {
+                $packagingId = $item['product_packaging_id'] ?? null;
+                $productId = $item['product_id'] ?? null;
+
+                if (! $packagingId || ! $productId) {
+                    continue;
+                }
+
+                $belongs = \Modules\Product\Models\ProductPackaging::query()
+                    ->whereKey($packagingId)
+                    ->where('product_id', $productId)
+                    ->exists();
+
+                if (! $belongs) {
+                    $validator->errors()->add(
+                        "items.{$index}.product_packaging_id",
+                        __('purchasing.validation.packaging_mismatch'),
+                    );
+                }
+            }
+        });
     }
 }

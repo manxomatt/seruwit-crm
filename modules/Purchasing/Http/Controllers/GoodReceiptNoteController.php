@@ -27,7 +27,12 @@ class GoodReceiptNoteController extends Controller
                 ->with('error', __('purchasing.messages.grn_cannot_receive'));
         }
 
-        $po->load(['partner:id,name,code', 'warehouse:id,name', 'items.product:id,name,code,unit']);
+        $po->load([
+            'partner:id,name,code',
+            'warehouse:id,name',
+            'items.product:id,name,code,unit,stock_unit',
+            'items.packaging:id,name,qty',
+        ]);
 
         $receivableItems = $po->items
             ->filter(fn ($item) => $item->remainingQuantity() > 0)
@@ -39,6 +44,7 @@ class GoodReceiptNoteController extends Controller
                 'quantity_received' => $item->quantity_received,
                 'remaining' => $item->remainingQuantity(),
                 'unit' => $item->unit,
+                'packaging' => $item->packaging,
             ]);
 
         $warehouses = Warehouse::query()
@@ -52,6 +58,7 @@ class GoodReceiptNoteController extends Controller
             'order' => $po,
             'receivableItems' => $receivableItems,
             'warehouses' => $warehouses,
+            'defaultStockLocationId' => app(GrnConfirmationService::class)->resolveStockLocationId((int) $po->warehouse_id),
             'can' => [
                 'receive' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
             ],
@@ -84,9 +91,12 @@ class GoodReceiptNoteController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
+                $locationId = $item['location_id']
+                    ?? app(GrnConfirmationService::class)->resolveStockLocationId((int) $validated['warehouse_id']);
+
                 $grn->items()->create([
                     'po_item_id' => $item['po_item_id'],
-                    'location_id' => $item['location_id'] ?? null,
+                    'location_id' => $locationId,
                     'quantity_received' => $item['quantity_received'],
                     'batch_number' => $item['batch_number'] ?? null,
                     'expiry_date' => $item['expiry_date'] ?? null,
@@ -127,6 +137,7 @@ class GoodReceiptNoteController extends Controller
             'grn' => $grn,
             'can' => [
                 'receive' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
+                'void' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
             ],
         ]);
     }
@@ -141,5 +152,17 @@ class GoodReceiptNoteController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $grn->purchase_order_id)
             ->with('success', __('purchasing.messages.grn_confirmed'));
+    }
+
+    public function void(GoodReceiptNote $grn): RedirectResponse
+    {
+        try {
+            app(GrnConfirmationService::class)->void($grn);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $grn->purchase_order_id)
+            ->with('success', __('purchasing.messages.grn_voided'));
     }
 }

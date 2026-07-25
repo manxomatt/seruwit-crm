@@ -190,4 +190,146 @@ class GoodReceiptNoteTest extends TestCase
         $this->assertEquals(0, StockMovement::query()->count());
         $this->assertEquals(0, (float) $itemA->fresh()->quantity_received);
     }
+
+    public function test_grn_confirm_defaults_location_to_stock_and_updates_product_cost(): void
+    {
+        $user = $this->createAdminUser();
+        [$po, $itemA] = $this->approvedPoWithTwoItems();
+        $warehouse = Warehouse::query()->findOrFail($po->warehouse_id);
+        $warehouse->createDefaultLocations();
+        $stockLocation = WarehouseLocation::query()
+            ->where('warehouse_id', $warehouse->id)
+            ->where('code', 'STOCK')
+            ->firstOrFail();
+
+        $itemA->product->update(['cost' => 100]);
+
+        $this->actingAs($user)->post(route('module.purchasing.purchase-orders.grn.store', $po, false), [
+            'warehouse_id' => $po->warehouse_id,
+            'received_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                ['po_item_id' => $itemA->id, 'quantity_received' => 10],
+            ],
+        ])->assertSessionHas('success');
+
+        $grnItem = GoodReceiptNoteItem::query()->first();
+        $this->assertNotNull($grnItem);
+        $this->assertSame($stockLocation->id, $grnItem->location_id);
+
+        $movement = StockMovement::query()->where('source_type', 'grn')->first();
+        $this->assertNotNull($movement);
+        $this->assertSame($stockLocation->id, $movement->location_id);
+
+        $this->assertEquals(1000, (float) $itemA->product->fresh()->cost);
+    }
+
+    public function test_grn_confirm_converts_packaging_quantity_to_base_units(): void
+    {
+        $user = $this->createAdminUser();
+        [$po, $itemA] = $this->approvedPoWithTwoItems();
+        $warehouse = Warehouse::query()->findOrFail($po->warehouse_id);
+        $warehouse->createDefaultLocations();
+
+        $packaging = \Modules\Product\Models\ProductPackaging::factory()->create([
+            'product_id' => $itemA->product_id,
+            'name' => 'Karton',
+            'qty' => 12,
+        ]);
+        $itemA->update([
+            'product_packaging_id' => $packaging->id,
+            'unit_price' => 24000,
+            'quantity_ordered' => 5,
+        ]);
+
+        $this->actingAs($user)->post(route('module.purchasing.purchase-orders.grn.store', $po, false), [
+            'warehouse_id' => $po->warehouse_id,
+            'received_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                ['po_item_id' => $itemA->id, 'quantity_received' => 2],
+            ],
+        ])->assertSessionHas('success');
+
+        $movement = StockMovement::query()->where('source_type', 'grn')->first();
+        $this->assertNotNull($movement);
+        $this->assertEquals(24, (float) $movement->quantity);
+        $this->assertEquals(2000, (float) $itemA->product->fresh()->cost);
+    }
+
+    public function test_void_confirmed_grn_reverses_stock_and_po_quantities(): void
+    {
+        $user = $this->createAdminUser();
+        [$po, $itemA] = $this->approvedPoWithTwoItems();
+        $warehouse = Warehouse::query()->findOrFail($po->warehouse_id);
+        $warehouse->createDefaultLocations();
+        $stockLocation = WarehouseLocation::query()
+            ->where('warehouse_id', $warehouse->id)
+            ->where('code', 'STOCK')
+            ->firstOrFail();
+
+        $this->actingAs($user)->post(route('module.purchasing.purchase-orders.grn.store', $po, false), [
+            'warehouse_id' => $po->warehouse_id,
+            'received_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                [
+                    'po_item_id' => $itemA->id,
+                    'quantity_received' => 40,
+                    'location_id' => $stockLocation->id,
+                ],
+            ],
+        ])->assertSessionHas('success');
+
+        $grn = GoodReceiptNote::query()->firstOrFail();
+        $this->assertSame(PurchaseOrder::STATUS_PARTIAL_RECEIVED, $po->fresh()->status);
+        $this->assertEquals(40, (float) StockLevel::query()
+            ->where('product_id', $itemA->product_id)
+            ->where('warehouse_id', $po->warehouse_id)
+            ->where('location_id', $stockLocation->id)
+            ->value('on_hand'));
+
+        $this->actingAs($user)
+            ->post(route('module.purchasing.grn.void', $grn, false))
+            ->assertSessionHas('success');
+
+        $this->assertSame(GoodReceiptNote::STATUS_VOIDED, $grn->fresh()->status);
+        $this->assertEquals(0, (float) $itemA->fresh()->quantity_received);
+        $this->assertSame(PurchaseOrder::STATUS_APPROVED, $po->fresh()->status);
+        $this->assertEquals(0, (float) StockLevel::query()
+            ->where('product_id', $itemA->product_id)
+            ->where('warehouse_id', $po->warehouse_id)
+            ->where('location_id', $stockLocation->id)
+            ->value('on_hand'));
+        $this->assertEquals(1, StockMovement::query()->where('source_type', 'grn_void')->count());
+    }
+
+    public function test_stock_movements_index_includes_grn_deep_link_id(): void
+    {
+        $user = $this->createAdminUser();
+        [$po, $itemA] = $this->approvedPoWithTwoItems();
+        $warehouse = Warehouse::query()->findOrFail($po->warehouse_id);
+        $warehouse->createDefaultLocations();
+
+        $this->actingAs($user)->post(route('module.purchasing.purchase-orders.grn.store', $po, false), [
+            'warehouse_id' => $po->warehouse_id,
+            'received_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                ['po_item_id' => $itemA->id, 'quantity_received' => 5],
+            ],
+        ])->assertSessionHas('success');
+
+        $grn = GoodReceiptNote::query()->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('module.inventory.stock-movements.index', [], false))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Inventory/StockMovements/Index')
+                ->has('movements.data.0', fn ($movement) => $movement
+                    ->where('grn_id', $grn->id)
+                    ->where('reference_code', $grn->grn_number)
+                    ->etc()));
+    }
 }

@@ -14,12 +14,14 @@ interface StockMovement {
   type: 'in' | 'out' | 'adjustment' | 'transfer'
   quantity: string
   source_type: string
+  source_id?: number | null
   reference_code?: string
   batch_number?: string | null
   expiry_date?: string | null
   notes?: string
   recorded_by?: { id: number; name: string } | null
   recorded_at: string
+  grn_id?: number | null
 }
 
 interface PaginatedMovements {
@@ -109,7 +111,18 @@ export default function StockMovementsIndex({ movements }: Props) {
                       {movement.type === 'out' ? '-' : '+'}{movement.quantity}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{movement.source_type}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{movement.reference_code || '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+                      {movement.grn_id && movement.reference_code ? (
+                        <Link
+                          href={prefixedRoute('purchasing.grn.show', movement.grn_id)}
+                          className="font-medium text-indigo-600 hover:text-indigo-900"
+                        >
+                          {movement.reference_code}
+                        </Link>
+                      ) : (
+                        movement.reference_code || '—'
+                      )}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                       {movement.batch_number || '—'}
                       {movement.expiry_date ? (

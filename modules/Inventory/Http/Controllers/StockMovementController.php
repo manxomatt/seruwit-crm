@@ -22,13 +22,37 @@ class StockMovementController extends Controller
 
     public function index()
     {
+        $movements = StockMovement::query()
+            ->with(['product:id,name', 'warehouse:id,name', 'location:id,name,code', 'recordedBy:id,name'])
+            ->select('id', 'product_id', 'warehouse_id', 'location_id', 'type', 'quantity', 'source_type', 'source_id', 'reference_code', 'batch_number', 'expiry_date', 'notes', 'recorded_by', 'recorded_at')
+            ->latest('recorded_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        $grnNumbers = $movements->getCollection()
+            ->filter(fn (StockMovement $movement): bool => in_array($movement->source_type, ['grn', 'grn_void'], true) && filled($movement->reference_code))
+            ->pluck('reference_code')
+            ->unique()
+            ->values();
+
+        $grnIdsByNumber = [];
+        if ($grnNumbers->isNotEmpty() && class_exists(\Modules\Purchasing\Models\GoodReceiptNote::class)) {
+            $grnIdsByNumber = \Modules\Purchasing\Models\GoodReceiptNote::query()
+                ->whereIn('grn_number', $grnNumbers)
+                ->pluck('id', 'grn_number')
+                ->all();
+        }
+
+        $movements->getCollection()->transform(function (StockMovement $movement) use ($grnIdsByNumber) {
+            if (in_array($movement->source_type, ['grn', 'grn_void'], true) && filled($movement->reference_code)) {
+                $movement->setAttribute('grn_id', $grnIdsByNumber[$movement->reference_code] ?? null);
+            }
+
+            return $movement;
+        });
+
         return inertia('Modules/Inventory/StockMovements/Index', [
-            'movements' => StockMovement::query()
-                ->with(['product:id,name', 'warehouse:id,name', 'location:id,name,code', 'recordedBy:id,name'])
-                ->select('id', 'product_id', 'warehouse_id', 'location_id', 'type', 'quantity', 'source_type', 'reference_code', 'batch_number', 'expiry_date', 'notes', 'recorded_by', 'recorded_at')
-                ->latest('recorded_at')
-                ->paginate(15)
-                ->withQueryString(),
+            'movements' => $movements,
         ]);
     }
 

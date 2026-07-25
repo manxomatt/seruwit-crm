@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductPackaging;
 use Modules\Purchasing\Database\Factories\PurchaseOrderItemFactory;
 
 class PurchaseOrderItem extends Model
@@ -19,6 +20,7 @@ class PurchaseOrderItem extends Model
     protected $fillable = [
         'purchase_order_id',
         'product_id',
+        'product_packaging_id',
         'quantity_ordered',
         'quantity_received',
         'unit_price',
@@ -61,6 +63,12 @@ class PurchaseOrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** @return BelongsTo<ProductPackaging, $this> */
+    public function packaging(): BelongsTo
+    {
+        return $this->belongsTo(ProductPackaging::class, 'product_packaging_id');
     }
 
     /** @return HasMany<GoodReceiptNoteItem, $this> */

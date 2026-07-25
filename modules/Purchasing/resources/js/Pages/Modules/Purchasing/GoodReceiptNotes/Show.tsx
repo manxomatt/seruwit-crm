@@ -38,16 +38,24 @@ interface Grn {
 
 interface Props {
     grn: Grn;
-    can: { receive: boolean };
+    can: { receive: boolean; void: boolean };
 }
 
 export default function Show({ grn, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const isDraft = grn.status === 'draft';
+    const isConfirmed = grn.status === 'confirmed';
 
     const confirm = () => {
         router.post(prefixedRoute('purchasing.grn.confirm', grn.id), {}, { preserveScroll: true });
+    };
+
+    const voidGrn = () => {
+        if (!window.confirm(t('purchasing.grn.show.void_confirm'))) {
+            return;
+        }
+        router.post(prefixedRoute('purchasing.grn.void', grn.id), {}, { preserveScroll: true });
     };
 
     return (
@@ -58,7 +66,11 @@ export default function Show({ grn, can }: Props): JSX.Element {
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">{grn.grn_number}</h2>
                         <span
                             className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                isDraft ? 'bg-gray-100 text-gray-700' : 'bg-emerald-50 text-emerald-700'
+                                isDraft
+                                    ? 'bg-gray-100 text-gray-700'
+                                    : grn.status === 'voided'
+                                      ? 'bg-red-50 text-red-700'
+                                      : 'bg-emerald-50 text-emerald-700'
                             }`}
                         >
                             {t(`purchasing.status.${grn.status}`, undefined, grn.status)}
@@ -70,6 +82,11 @@ export default function Show({ grn, can }: Props): JSX.Element {
                         </Link>
                         {can.receive && isDraft && (
                             <PrimaryButton onClick={confirm}>{t('purchasing.grn.show.confirm')}</PrimaryButton>
+                        )}
+                        {can.void && isConfirmed && (
+                            <SecondaryButton type="button" onClick={voidGrn}>
+                                {t('purchasing.grn.show.void')}
+                            </SecondaryButton>
                         )}
                     </div>
                 </div>

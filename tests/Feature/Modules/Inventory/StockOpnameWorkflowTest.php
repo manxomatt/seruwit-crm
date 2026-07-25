@@ -39,6 +39,40 @@ class StockOpnameWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_opname_creation_sums_on_hand_across_locations_for_each_product(): void
+    {
+        $warehouse = Warehouse::factory()->create();
+        $warehouse->createDefaultLocations();
+        $locations = $warehouse->locations()->orderBy('id')->get();
+        $this->assertGreaterThanOrEqual(2, $locations->count());
+
+        $product = Product::factory()->create();
+        StockLevel::factory()->create([
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouse->id,
+            'location_id' => $locations[0]->id,
+            'on_hand' => 10,
+            'reserved' => 0,
+        ]);
+        StockLevel::factory()->create([
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouse->id,
+            'location_id' => $locations[1]->id,
+            'on_hand' => 15,
+            'reserved' => 0,
+        ]);
+
+        $user = $this->createAdminUser();
+        $this->actingAs($user)->post(route('module.inventory.stock-opnames.store', [], false), [
+            'warehouse_id' => $warehouse->id,
+            'opname_date' => now()->toDateString(),
+        ])->assertRedirect();
+
+        $opname = StockOpname::query()->latest('id')->firstOrFail();
+        $item = $opname->items()->where('product_id', $product->id)->firstOrFail();
+        $this->assertEquals(25, (float) $item->system_qty);
+    }
+
     public function test_opname_finalization_records_variance_adjustments(): void
     {
         $warehouse = Warehouse::factory()->create();

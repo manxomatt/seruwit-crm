@@ -17,6 +17,7 @@ return [
         'closed' => 'Closed',
         'cancelled' => 'Cancelled',
         'confirmed' => 'Confirmed',
+        'voided' => 'Voided',
     ],
 
     'fields' => [
@@ -32,6 +33,7 @@ return [
         'product' => 'Product',
         'quantity' => 'Qty',
         'unit' => 'Unit',
+        'packaging' => 'Packaging',
         'unit_price' => 'Unit Price',
         'subtotal' => 'Subtotal',
         'total' => 'Total',
@@ -55,6 +57,7 @@ return [
         'select_supplier' => 'Select supplier',
         'select_warehouse' => 'Select warehouse',
         'select_product' => 'Select product',
+        'select_packaging' => 'Base unit',
         'select_location' => 'Location',
         'batch' => 'Batch',
     ],
@@ -115,6 +118,8 @@ return [
         'show' => [
             'view_po' => 'View PO',
             'confirm' => 'Confirm Receipt',
+            'void' => 'Void GRN',
+            'void_confirm' => 'Void this confirmed GRN? Stock will be reversed and PO received quantities updated.',
             'supplier_do' => 'Supplier DO No.:',
             'received_by' => 'Received by :name',
         ],
@@ -144,6 +149,10 @@ return [
         'grn_draft_saved' => 'Draft goods receipt saved.',
         'grn_confirm_draft_only' => 'Only a draft GRN can be confirmed.',
         'grn_confirm_need_items' => 'Add at least one item before confirming the GRN.',
+        'grn_voided' => 'Goods receipt voided and stock reversed.',
+        'grn_void_confirmed_only' => 'Only a confirmed GRN can be voided.',
+        'grn_void_closed_po' => 'Cannot void a GRN when the purchase order is closed.',
+        'grn_void_notes' => 'Void of GRN :grn',
     ],
 
     'validation' => [
@@ -152,5 +161,6 @@ return [
         'po_item_not_on_order' => 'Item does not belong to this purchase order.',
         'quantity_exceeds_remaining' => 'Quantity exceeds remaining (:remaining).',
         'location_wrong_warehouse' => 'Location must belong to the selected warehouse.',
+        'packaging_mismatch' => 'Packaging must belong to the selected product.',
     ],
 ];

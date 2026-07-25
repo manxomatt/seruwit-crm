@@ -53,6 +53,8 @@ class StockOpnameController extends Controller
 
             $levels = StockLevel::query()
                 ->where('warehouse_id', $opname->warehouse_id)
+                ->selectRaw('product_id, SUM(on_hand) as on_hand')
+                ->groupBy('product_id')
                 ->pluck('on_hand', 'product_id');
 
             $products = Product::query()->select('id')->get();

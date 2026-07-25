@@ -17,6 +17,7 @@ return [
         'closed' => 'Closed',
         'cancelled' => 'Cancelled',
         'confirmed' => 'Confirmed',
+        'voided' => 'Voided',
     ],
 
     'fields' => [
@@ -32,6 +33,7 @@ return [
         'product' => 'Produk',
         'quantity' => 'Qty',
         'unit' => 'Satuan',
+        'packaging' => 'Kemasan',
         'unit_price' => 'Harga/Unit',
         'subtotal' => 'Subtotal',
         'total' => 'Total',
@@ -55,6 +57,7 @@ return [
         'select_supplier' => 'Pilih supplier',
         'select_warehouse' => 'Pilih gudang',
         'select_product' => 'Pilih produk',
+        'select_packaging' => 'Satuan dasar',
         'select_location' => 'Lokasi',
         'batch' => 'Batch',
     ],
@@ -115,6 +118,8 @@ return [
         'show' => [
             'view_po' => 'Lihat PO',
             'confirm' => 'Konfirmasi Penerimaan',
+            'void' => 'Void GRN',
+            'void_confirm' => 'Void GRN yang sudah dikonfirmasi? Stok akan dibalikkan dan qty diterima pada PO diperbarui.',
             'supplier_do' => 'No. SJ Supplier:',
             'received_by' => 'Diterima oleh :name',
         ],
@@ -144,6 +149,10 @@ return [
         'grn_draft_saved' => 'Draft penerimaan barang disimpan.',
         'grn_confirm_draft_only' => 'Hanya GRN draft yang dapat dikonfirmasi.',
         'grn_confirm_need_items' => 'Tambahkan minimal satu item sebelum mengonfirmasi GRN.',
+        'grn_voided' => 'Penerimaan barang di-void dan stok dibalikkan.',
+        'grn_void_confirmed_only' => 'Hanya GRN yang sudah dikonfirmasi yang dapat di-void.',
+        'grn_void_closed_po' => 'Tidak dapat void GRN jika purchase order sudah ditutup.',
+        'grn_void_notes' => 'Void GRN :grn',
     ],
 
     'validation' => [
@@ -152,5 +161,6 @@ return [
         'po_item_not_on_order' => 'Item tidak termasuk dalam purchase order ini.',
         'quantity_exceeds_remaining' => 'Kuantitas melebihi sisa (:remaining).',
         'location_wrong_warehouse' => 'Lokasi harus berada di gudang yang dipilih.',
+        'packaging_mismatch' => 'Kemasan harus milik produk yang dipilih.',
     ],
 ];

@@ -78,6 +78,7 @@ class PurchaseOrderController extends Controller
                 ->get(),
             'products' => Product::query()
                 ->where('status', 'active')
+                ->with(['packagings' => fn ($q) => $q->select('id', 'product_id', 'name', 'qty')->orderBy('sort')])
                 ->select('id', 'name', 'code', 'unit', 'stock_unit', 'cost')
                 ->orderBy('name')
                 ->get(),
@@ -105,6 +106,7 @@ class PurchaseOrderController extends Controller
             foreach ($validated['items'] as $item) {
                 $po->items()->create([
                     'product_id' => $item['product_id'],
+                    'product_packaging_id' => $item['product_packaging_id'] ?? null,
                     'quantity_ordered' => $item['quantity_ordered'],
                     'quantity_received' => 0,
                     'unit_price' => $item['unit_price'],
@@ -129,6 +131,7 @@ class PurchaseOrderController extends Controller
             'warehouse:id,name',
             'createdBy:id,name',
             'items.product:id,name,code,unit',
+            'items.packaging:id,name,qty',
             'goodReceiptNotes' => fn ($q) => $q->latest('received_at')->with(['receivedBy:id,name', 'items:id,good_receipt_note_id,quantity_received']),
         ]);
 
@@ -148,7 +151,7 @@ class PurchaseOrderController extends Controller
                 ->with('error', __('purchasing.messages.po_edit_draft_only'));
         }
 
-        $po->load(['items.product:id,name,code,unit']);
+        $po->load(['items.product:id,name,code,unit', 'items.packaging:id,name,qty']);
 
         return inertia('Modules/Purchasing/PurchaseOrders/Edit', [
             'order' => $po,
@@ -164,6 +167,7 @@ class PurchaseOrderController extends Controller
                 ->get(),
             'products' => Product::query()
                 ->where('status', 'active')
+                ->with(['packagings' => fn ($q) => $q->select('id', 'product_id', 'name', 'qty')->orderBy('sort')])
                 ->select('id', 'name', 'code', 'unit', 'stock_unit', 'cost')
                 ->orderBy('name')
                 ->get(),
@@ -192,6 +196,7 @@ class PurchaseOrderController extends Controller
             foreach ($validated['items'] as $item) {
                 $po->items()->create([
                     'product_id' => $item['product_id'],
+                    'product_packaging_id' => $item['product_packaging_id'] ?? null,
                     'quantity_ordered' => $item['quantity_ordered'],
                     'quantity_received' => 0,
                     'unit_price' => $item['unit_price'],

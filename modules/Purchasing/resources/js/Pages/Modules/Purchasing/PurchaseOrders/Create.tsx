@@ -12,6 +12,12 @@ import { FormEventHandler } from 'react';
 import PurchasingNav from '../../../../PurchasingNav';
 import { formatMoney } from '@/utils/money';
 
+interface Packaging {
+    id: number;
+    name: string;
+    qty: string;
+}
+
 interface Option {
     id: number;
     name: string;
@@ -19,10 +25,12 @@ interface Option {
     unit?: string | null;
     stock_unit?: string | null;
     cost?: string | null;
+    packagings?: Packaging[];
 }
 
 interface LineItem {
     product_id: string;
+    product_packaging_id: string;
     quantity_ordered: string;
     unit_price: string;
     unit: string;
@@ -37,6 +45,7 @@ interface Props {
 
 const emptyItem = (): LineItem => ({
     product_id: '',
+    product_packaging_id: '',
     quantity_ordered: '1',
     unit_price: '0',
     unit: '',
@@ -58,6 +67,9 @@ export default function Create({ suppliers, warehouses, products }: Props): JSX.
         items: [emptyItem()] as LineItem[],
     });
 
+    const packagingsFor = (productId: string): Packaging[] =>
+        products.find((p) => String(p.id) === productId)?.packagings ?? [];
+
     const updateItem = (index: number, field: keyof LineItem, value: string) => {
         const items = data.items.map((item, i) => {
             if (i !== index) {
@@ -66,8 +78,15 @@ export default function Create({ suppliers, warehouses, products }: Props): JSX.
             const next = { ...item, [field]: value };
             if (field === 'product_id') {
                 const product = products.find((p) => String(p.id) === value);
+                next.product_packaging_id = '';
                 next.unit = product?.stock_unit || product?.unit || '';
                 next.unit_price = product?.cost ? String(product.cost) : item.unit_price;
+            }
+            if (field === 'product_packaging_id') {
+                const packaging = packagingsFor(next.product_id).find((p) => String(p.id) === value);
+                next.unit = packaging?.name || products.find((p) => String(p.id) === next.product_id)?.stock_unit
+                    || products.find((p) => String(p.id) === next.product_id)?.unit
+                    || '';
             }
             return next;
         });
@@ -93,7 +112,14 @@ export default function Create({ suppliers, warehouses, products }: Props): JSX.
     const totalUnits = data.items.reduce((s, i) => s + Number(i.quantity_ordered || 0), 0);
 
     const save = (submit: boolean) => {
-        transform((form) => ({ ...form, submit }));
+        transform((form) => ({
+            ...form,
+            submit,
+            items: form.items.map((item) => ({
+                ...item,
+                product_packaging_id: item.product_packaging_id || null,
+            })),
+        }));
         post(prefixedRoute('purchasing.purchase-orders.store'));
     };
 
@@ -183,67 +209,84 @@ export default function Create({ suppliers, warehouses, products }: Props): JSX.
                         </SecondaryButton>
                     </div>
                     <div className="space-y-4 p-6">
-                        {data.items.map((item, index) => (
-                            <div key={index} className="grid grid-cols-1 gap-3 border-b border-gray-100 pb-4 last:border-0 md:grid-cols-12">
-                                <div className="md:col-span-4">
-                                    <InputLabel value={t('purchasing.fields.product')} />
-                                    <Select
-                                        className="mt-1"
-                                        value={item.product_id}
-                                        onChange={(value) => updateItem(index, 'product_id', value)}
-                                        placeholder={t('purchasing.placeholders.select_product')}
-                                        options={products.map((p) => ({
-                                            value: String(p.id),
-                                            label: p.code ? `${p.code} — ${p.name}` : p.name,
-                                        }))}
-                                    />
-                                    <InputError message={(errors as Record<string, string>)[`items.${index}.product_id`]} className="mt-1" />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <InputLabel value={t('purchasing.fields.quantity')} />
-                                    <TextInput
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
-                                        className="mt-1 block w-full"
-                                        value={item.quantity_ordered}
-                                        onChange={(e) => updateItem(index, 'quantity_ordered', e.target.value)}
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <InputLabel value={t('purchasing.fields.unit')} />
-                                    <TextInput
-                                        className="mt-1 block w-full"
-                                        value={item.unit}
-                                        onChange={(e) => updateItem(index, 'unit', e.target.value)}
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <InputLabel value={t('purchasing.fields.unit_price')} />
-                                    <TextInput
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        className="mt-1 block w-full"
-                                        value={item.unit_price}
-                                        onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex items-end justify-between gap-2 md:col-span-2">
-                                    <div className="text-sm font-semibold tabular-nums text-gray-900">
-                                        {formatMoney(Number(item.quantity_ordered || 0) * Number(item.unit_price || 0))}
+                        {data.items.map((item, index) => {
+                            const packagings = packagingsFor(item.product_id);
+
+                            return (
+                                <div key={index} className="grid grid-cols-1 gap-3 border-b border-gray-100 pb-4 last:border-0 md:grid-cols-12">
+                                    <div className="md:col-span-3">
+                                        <InputLabel value={t('purchasing.fields.product')} />
+                                        <Select
+                                            className="mt-1"
+                                            value={item.product_id}
+                                            onChange={(value) => updateItem(index, 'product_id', value)}
+                                            placeholder={t('purchasing.placeholders.select_product')}
+                                            options={products.map((p) => ({
+                                                value: String(p.id),
+                                                label: p.code ? `${p.code} — ${p.name}` : p.name,
+                                            }))}
+                                        />
+                                        <InputError message={(errors as Record<string, string>)[`items.${index}.product_id`]} className="mt-1" />
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="text-lg text-gray-400 hover:text-red-600"
-                                        onClick={() => removeItem(index)}
-                                        disabled={data.items.length === 1}
-                                    >
-                                        ×
-                                    </button>
+                                    <div className="md:col-span-2">
+                                        <InputLabel value={t('purchasing.fields.packaging')} />
+                                        <Select
+                                            className="mt-1"
+                                            value={item.product_packaging_id}
+                                            onChange={(value) => updateItem(index, 'product_packaging_id', value)}
+                                            placeholder={t('purchasing.placeholders.select_packaging')}
+                                            options={packagings.map((p) => ({
+                                                value: String(p.id),
+                                                label: `${p.name} (×${p.qty})`,
+                                            }))}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <InputLabel value={t('purchasing.fields.quantity')} />
+                                        <TextInput
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            className="mt-1 block w-full"
+                                            value={item.quantity_ordered}
+                                            onChange={(e) => updateItem(index, 'quantity_ordered', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-1">
+                                        <InputLabel value={t('purchasing.fields.unit')} />
+                                        <TextInput
+                                            className="mt-1 block w-full"
+                                            value={item.unit}
+                                            onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <InputLabel value={t('purchasing.fields.unit_price')} />
+                                        <TextInput
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            className="mt-1 block w-full"
+                                            value={item.unit_price}
+                                            onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex items-end justify-between gap-2 md:col-span-2">
+                                        <div className="text-sm font-semibold tabular-nums text-gray-900">
+                                            {formatMoney(Number(item.quantity_ordered || 0) * Number(item.unit_price || 0))}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="text-lg text-gray-400 hover:text-red-600"
+                                            onClick={() => removeItem(index)}
+                                            disabled={data.items.length === 1}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         <InputError message={errors.items} className="mt-2" />
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 px-6 py-4">

@@ -104,6 +104,7 @@ class PurchasingModule implements ModuleContract
                 Route::post('/purchase-orders/{po}/grn', [GoodReceiptNoteController::class, 'store'])->middleware('permission:purchasing,create')->name('purchase-orders.grn.store');
                 Route::get('/grn/{grn}', [GoodReceiptNoteController::class, 'show'])->name('grn.show');
                 Route::post('/grn/{grn}/confirm', [GoodReceiptNoteController::class, 'confirm'])->middleware('permission:purchasing,receive')->name('grn.confirm');
+                Route::post('/grn/{grn}/void', [GoodReceiptNoteController::class, 'void'])->middleware('permission:purchasing,receive')->name('grn.void');
             });
         });
     }

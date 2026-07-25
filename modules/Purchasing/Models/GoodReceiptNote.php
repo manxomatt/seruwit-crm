@@ -20,6 +20,8 @@ class GoodReceiptNote extends Model
 
     public const STATUS_CONFIRMED = 'confirmed';
 
+    public const STATUS_VOIDED = 'voided';
+
     /** @var list<string> */
     protected $fillable = [
         'purchase_order_id',

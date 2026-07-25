@@ -18,6 +18,7 @@ interface ReceivableItem {
     quantity_received: string;
     remaining: number;
     unit: string | null;
+    packaging?: { id: number; name: string; qty: string } | null;
 }
 
 interface Location {
@@ -43,6 +44,7 @@ interface Props {
     order: Order;
     receivableItems: ReceivableItem[];
     warehouses: Warehouse[];
+    defaultStockLocationId: number | null;
     can: { receive: boolean };
 }
 
@@ -56,10 +58,11 @@ interface GrnLine {
     included: boolean;
 }
 
-export default function Create({ order, receivableItems, warehouses, can }: Props): JSX.Element {
-    const { prefixedRoute } = useRoutePrefix();
-    const { t } = useTrans();
-    const today = new Date().toISOString().slice(0, 10);
+export default function Create({ order, receivableItems, warehouses, defaultStockLocationId, can }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix()
+    const { t } = useTrans()
+    const today = new Date().toISOString().slice(0, 10)
+    const defaultLocation = defaultStockLocationId ? String(defaultStockLocationId) : ''
 
     const { data, setData, post, processing, errors, transform } = useForm({
         warehouse_id: String(order.warehouse.id),
@@ -70,18 +73,33 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
         items: receivableItems.map((item) => ({
             po_item_id: String(item.id),
             quantity_received: String(item.remaining),
-            location_id: '',
+            location_id: defaultLocation,
             batch_number: '',
             expiry_date: '',
             notes: '',
             included: true,
         })) as GrnLine[],
-    });
+    })
 
     const locations = useMemo(() => {
         const warehouse = warehouses.find((w) => String(w.id) === data.warehouse_id);
         return warehouse?.locations ?? [];
     }, [warehouses, data.warehouse_id]);
+
+    const stockLocationIdFor = (warehouseId: string): string => {
+        const warehouse = warehouses.find((w) => String(w.id) === warehouseId);
+        const stock = warehouse?.locations.find((l) => l.code === 'STOCK');
+        return stock ? String(stock.id) : '';
+    };
+
+    const changeWarehouse = (value: string) => {
+        const locationId = stockLocationIdFor(value);
+        setData({
+            ...data,
+            warehouse_id: value,
+            items: data.items.map((item) => ({ ...item, location_id: locationId })),
+        });
+    };
 
     const updateLine = (index: number, field: keyof GrnLine, value: string | boolean) => {
         const items = data.items.map((item, i) => (i === index ? { ...item, [field]: value } : item));
@@ -154,7 +172,7 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                             <Select
                                 className="mt-1"
                                 value={data.warehouse_id}
-                                onChange={(value) => setData('warehouse_id', value)}
+                                onChange={changeWarehouse}
                                 placeholder={t('purchasing.placeholders.select_warehouse')}
                                 options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))}
                             />
@@ -203,7 +221,16 @@ export default function Create({ order, receivableItems, warehouses, can }: Prop
                                                 onChange={(e) => updateLine(index, 'included', e.target.checked)}
                                             />
                                         </td>
-                                        <td className="px-2 py-3 text-sm font-semibold text-gray-900">{item.product.name}</td>
+                                        <td className="px-2 py-3 text-sm font-semibold text-gray-900">
+                                            {item.product.name}
+                                            {(item.packaging || item.unit) && (
+                                                <div className="text-xs font-normal text-gray-500">
+                                                    {item.packaging
+                                                        ? `${item.packaging.name} (×${item.packaging.qty})`
+                                                        : item.unit}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-2 py-3 text-right text-sm tabular-nums text-gray-500">{item.quantity_ordered}</td>
                                         <td className="px-2 py-3 text-right text-sm font-semibold tabular-nums text-amber-700">{item.remaining}</td>
                                         <td className="px-2 py-3">
