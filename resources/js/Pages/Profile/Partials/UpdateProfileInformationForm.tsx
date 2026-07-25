@@ -2,8 +2,14 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import { useTrans } from '@/hooks/useTrans';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
+
+interface AvailableLocale {
+    code: string;
+    label: string;
+}
 
 interface Props {
     mustVerifyEmail?: boolean;
@@ -16,17 +22,25 @@ export default function UpdateProfileInformation({
     status,
     className = '',
 }: Props) {
-    const user = (usePage().props as any).auth.user;
+    const page = usePage().props as {
+        auth: { user: { name: string; email: string; locale?: string; email_verified_at?: string | null } };
+        availableLocales?: AvailableLocale[];
+    };
+    const user = page.auth.user;
+    const availableLocales = page.availableLocales ?? [];
+    const { t } = useTrans();
 
     interface ProfileForm {
         name: string;
         email: string;
+        locale: string;
     }
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm<ProfileForm>({
             name: user.name,
             email: user.email,
+            locale: user.locale ?? 'id',
         });
 
     const submit = (e: React.FormEvent) => {
@@ -38,19 +52,13 @@ export default function UpdateProfileInformation({
     return (
         <section className={className}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Profile Information
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-600">
-                    Update your account's profile information and email address.
-                </p>
+                <h2 className="text-lg font-medium text-gray-900">{t('profile.information')}</h2>
+                <p className="mt-1 text-sm text-gray-600">{t('profile.information_help')}</p>
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
+                    <InputLabel htmlFor="name" value={t('profile.name')} />
                     <TextInput
                         id="name"
                         className="mt-1 block w-full"
@@ -60,13 +68,11 @@ export default function UpdateProfileInformation({
                         isFocused
                         autoComplete="name"
                     />
-
                     <InputError className="mt-2" message={errors.name} />
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
+                    <InputLabel htmlFor="email" value={t('profile.email')} />
                     <TextInput
                         id="email"
                         type="email"
@@ -76,8 +82,25 @@ export default function UpdateProfileInformation({
                         required
                         autoComplete="username"
                     />
-
                     <InputError className="mt-2" message={errors.email} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="locale" value={t('profile.language')} />
+                    <select
+                        id="locale"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        value={data.locale}
+                        onChange={(e) => setData('locale', e.target.value)}
+                    >
+                        {availableLocales.map((item) => (
+                            <option key={item.code} value={item.code}>
+                                {item.label}
+                            </option>
+                        ))}
+                    </select>
+                    <p className="mt-1 text-sm text-gray-500">{t('profile.language_help')}</p>
+                    <InputError className="mt-2" message={errors.locale} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
@@ -96,15 +119,14 @@ export default function UpdateProfileInformation({
 
                         {status === 'verification-link-sent' && (
                             <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
+                                A new verification link has been sent to your email address.
                             </div>
                         )}
                     </div>
                 )}
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <PrimaryButton disabled={processing}>{t('profile.save')}</PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
@@ -113,7 +135,7 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">Saved.</p>
+                        <p className="text-sm text-gray-600">{t('profile.saved')}</p>
                     </Transition>
                 </div>
             </form>

@@ -1,8 +1,10 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import GlobalSearch from '@/Components/GlobalSearch';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import { useTrans } from '@/hooks/useTrans';
 import { Link, usePage, usePoll } from '@inertiajs/react';
-import { useState, ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 
 interface UserProfile {
     id: number;
@@ -234,20 +236,20 @@ type ModuleTier = 'content' | 'foundation' | 'vertical';
 // or a fixed list of core features (media, users, settings, the platform
 // control plane), which are not registered modules and so declare no tier.
 type MenuGroup =
-    | { title: string; tier: ModuleTier; also?: string[] }
-    | { title: string; modules: string[] };
+    | { titleKey: string; tier: ModuleTier; also?: string[] }
+    | { titleKey: string; modules: string[] };
 
 const MENU_GROUPS: MenuGroup[] = [
-    { title: 'Intelligence',          modules: ['bi', 'approvals'] },
-    { title: 'Master Data',           modules: ['partners', 'products'] },
-    { title: 'Pengadaan & Gudang',    modules: ['purchasing', 'inventory', 'receivables'] },
-    { title: 'Fleet & Kepatuhan',     modules: ['fleet', 'document', 'maintenance', 'tracking', 'scoring'] },
-    { title: 'Distribusi & Logistik', modules: ['transportation', 'orders', 'outbound', 'routing', 'billing', 'invoicing'] },
-    { title: 'Sales & Komersial',     modules: ['canvassing', 'rental', 'promotions'] },
-    { title: 'Konten',                tier: 'content', also: ['media'] },
-    { title: 'Wawasan',               modules: ['analytics', 'live-updates'] },
-    { title: 'Administrasi',          modules: ['users', 'roles', 'settings', 'modules'] },
-    { title: 'Platform',              modules: ['tenants', 'plans', 'module-registry'] },
+    { titleKey: 'intelligence', modules: ['bi', 'approvals'] },
+    { titleKey: 'master_data', modules: ['partners', 'products'] },
+    { titleKey: 'procurement_warehouse', modules: ['purchasing', 'inventory', 'receivables'] },
+    { titleKey: 'fleet_compliance', modules: ['fleet', 'document', 'maintenance', 'tracking', 'scoring'] },
+    { titleKey: 'distribution_logistics', modules: ['transportation', 'orders', 'outbound', 'routing', 'billing', 'invoicing'] },
+    { titleKey: 'sales_commercial', modules: ['canvassing', 'rental', 'promotions'] },
+    { titleKey: 'content', tier: 'content', also: ['media'] },
+    { titleKey: 'insights', modules: ['analytics', 'live-updates'] },
+    { titleKey: 'administration', modules: ['users', 'roles', 'settings', 'modules'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'module-registry'] },
 ];
 
 // Module to route mapping - use module routes
@@ -318,39 +320,8 @@ const moduleIconMap: Record<string, ReactNode> = {
     'live-updates': <LiveUpdatesIcon />,
 };
 
-// Module display names
-const moduleDisplayNames: Record<string, string> = {
-    'pages': 'Pages',
-    'posts': 'Posts',
-    'carousels': 'Carousels',
-    'media': 'Media',
-    'partners': 'Partners',
-    'products': 'Products',
-    'fleet': 'Fleet',
-    'document': 'Documents',
-    'maintenance': 'Maintenance',
-    'tracking': 'Tracking',
-    'transportation': 'Transportation',
-    'inventory': 'Inventory',
-    'purchasing': 'Purchasing',
-    'receivables': 'Receivables',
-    'approvals': 'Approvals',
-    'orders': 'Orders',
-    'routing': 'Route Optimization',
-    'scoring': 'Driver Scoring',
-    'promotions': 'Trade Promotions',
-    'bi': 'Dashboard Eksekutif',
-    'outbound': 'Outbound',
-    'billing': 'Billing',
-    'invoicing': 'Invoicing',
-    'rental': 'Rental',
-    'canvassing': 'Canvassing',
-    'analytics': 'Analytics',
-    'settings': 'Settings',
-    'users': 'Users',
-    'roles': 'Roles',
-    'live-updates': 'Live Updates',
-};
+// Module display names fall back to the module key; prefer t('modules.*') in the layout.
+const moduleDisplayNames: Record<string, string> = {};
 
 // Helper function to check if a route exists
 const routeExists = (routeName: string): boolean => {
@@ -409,6 +380,7 @@ const getThemeColors = (isAdmin: boolean) => {
 
 export default function ModuleLayout({ header, children }: Props) {
     const pageProps = usePage().props as any;
+    const { t, locale } = useTrans();
     const user = pageProps.auth.user as User | null;
     const settings = pageProps.settings as Record<string, string> | undefined;
     const notifications = pageProps.notificationCenter as {
@@ -434,12 +406,14 @@ export default function ModuleLayout({ header, children }: Props) {
     const siteLogo = settings?.['site.logo'];
     const siteName = settings?.['general.site_name'] || 'Sky Track';
 
+    const moduleLabel = (module: string): string => t(`modules.${module}`, undefined, moduleDisplayNames[module] || module);
+
     // Build navigation from the user's permissions in the active schema.
     const navigation = useMemo(() => {
         const dashboardRoute = getDashboardRoute(user);
         const items: MenuItem[] = [
             {
-                name: 'Dashboard',
+                name: t('shell.dashboard'),
                 href: dashboardRoute,
                 icon: <DashboardIcon />,
                 current: route().current('module.dashboard') || route().current('dashboard'),
@@ -460,7 +434,7 @@ export default function ModuleLayout({ header, children }: Props) {
             if (modulePermissions.includes('view') && moduleRouteMap[module] && routeExists(moduleRouteMap[module].route)) {
                 const routeInfo = moduleRouteMap[module];
                 items.push({
-                    name: moduleDisplayNames[module] || module,
+                    name: moduleLabel(module),
                     href: route(routeInfo.route),
                     icon: moduleIconMap[module] || <PagesIcon />,
                     current: route().current(routeInfo.routePattern),
@@ -472,7 +446,7 @@ export default function ModuleLayout({ header, children }: Props) {
         // On the central domain, super admins and resellers manage tenants.
         if (isCentral && (isAdmin || isReseller) && routeExists('module.tenants.index')) {
             items.push({
-                name: 'Kelola Tenant',
+                name: t('shell.manage_tenants'),
                 href: route('module.tenants.index'),
                 icon: <BuildingIcon />,
                 current: route().current('module.tenants.*'),
@@ -484,7 +458,7 @@ export default function ModuleLayout({ header, children }: Props) {
         // on the control plane rather than inside any one workspace.
         if (isCentral && isAdmin && routeExists('module.plans.index')) {
             items.push({
-                name: 'Paket',
+                name: t('shell.plans'),
                 href: route('module.plans.index'),
                 icon: <PlansIcon />,
                 current: route().current('module.plans.*'),
@@ -497,7 +471,7 @@ export default function ModuleLayout({ header, children }: Props) {
         // and the tenant's plan both already allow.
         if (isCentral && isAdmin && routeExists('module.registry.index')) {
             items.push({
-                name: 'Modul Platform',
+                name: t('shell.platform_modules'),
                 href: route('module.registry.index'),
                 icon: <ModulesIcon />,
                 current: route().current('module.registry.*'),
@@ -510,7 +484,7 @@ export default function ModuleLayout({ header, children }: Props) {
         // instead of being seeded as a menu row.
         if (!isCentral && isAdmin && routeExists('module.modules.index')) {
             items.push({
-                name: 'Modul',
+                name: t('shell.modules'),
                 href: route('module.modules.index'),
                 icon: <ModulesIcon />,
                 current: route().current('module.modules.*'),
@@ -519,7 +493,7 @@ export default function ModuleLayout({ header, children }: Props) {
         }
 
         return items;
-    }, [user, isCentral, isAdmin, isReseller]);
+    }, [user, isCentral, isAdmin, isReseller, t, locale]);
 
     // Split the flat navigation into the standalone Dashboard plus collapsible
     // groups, preserving the module order defined in MENU_GROUPS.
@@ -537,12 +511,12 @@ export default function ModuleLayout({ header, children }: Props) {
                 : group.modules;
 
         return MENU_GROUPS.map((group) => ({
-            title: group.title,
+            title: t(`menu_groups.${group.titleKey}`),
             items: moduleKeysIn(group)
                 .map((module) => navigation.find((item) => item.module === module))
                 .filter((item): item is MenuItem => Boolean(item)),
         })).filter((group) => group.items.length > 0);
-    }, [navigation, moduleTiers]);
+    }, [navigation, moduleTiers, t, locale]);
 
     // Collapsible group state, persisted so it survives page navigations.
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -727,13 +701,13 @@ export default function ModuleLayout({ header, children }: Props) {
                                                 preserveScroll
                                                 className="text-xs text-indigo-600 hover:text-indigo-900"
                                             >
-                                                Tandai semua terbaca
+                                                {t('shell.mark_all_read')}
                                             </Link>
                                         )}
                                     </div>
                                     <div className="max-h-80 overflow-y-auto">
                                         {!notifications?.recent?.length ? (
-                                            <p className="px-4 py-6 text-center text-sm text-gray-500">Belum ada notifikasi.</p>
+                                            <p className="px-4 py-6 text-center text-sm text-gray-500">{t('shell.no_notifications')}</p>
                                         ) : (
                                             notifications.recent.map((item) => (
                                                 <Link
@@ -749,10 +723,15 @@ export default function ModuleLayout({ header, children }: Props) {
                                         )}
                                     </div>
                                     <Link href={route('module.notifications.index')} className="block border-t border-gray-100 px-4 py-2 text-center text-sm text-indigo-600 hover:text-indigo-900">
-                                        Lihat semua
+                                        {t('shell.view_all')}
                                     </Link>
                                 </Dropdown.Content>
                             </Dropdown>
+
+                            {/* Separator */}
+                            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
+
+                            <LanguageSwitcher compact />
 
                             {/* Separator */}
                             <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
@@ -764,7 +743,7 @@ export default function ModuleLayout({ header, children }: Props) {
                                         <UserAvatar user={user} size="sm" />
                                         <span className="hidden lg:flex lg:items-center">
                                             <span className="ml-4 text-sm font-semibold leading-6 text-gray-900">
-                                                {user?.name || 'User'}
+                                                {user?.name || t('shell.user')}
                                             </span>
                                             <svg className="ml-2 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
@@ -773,9 +752,9 @@ export default function ModuleLayout({ header, children }: Props) {
                                     </button>
                                 </Dropdown.Trigger>
                                 <Dropdown.Content>
-                                    <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
+                                    <Dropdown.Link href={route('profile.edit')}>{t('shell.profile')}</Dropdown.Link>
                                     <Dropdown.Link href={route('logout')} method="post" as="button">
-                                        Log Out
+                                        {t('shell.log_out')}
                                     </Dropdown.Link>
                                 </Dropdown.Content>
                             </Dropdown>

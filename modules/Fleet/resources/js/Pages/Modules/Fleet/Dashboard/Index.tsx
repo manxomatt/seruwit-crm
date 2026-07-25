@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
 
@@ -54,37 +55,43 @@ function StatCard({ label, value, hint }: { label: string; value: number | strin
 
 export default function Index({ board }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { counts, drivers, expiring_docs, vehicles } = board;
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Fleet Dashboard</h2>}>
-            <Head title="Fleet Dashboard" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('fleet.dashboard.title')}</h2>}>
+            <Head title={t('fleet.dashboard.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <FleetNav />
-                    <p className="text-sm text-gray-600">
-                        Status board armada — kendaraan aktif/maintenance, odometer terakhir, dan sinyal kepatuhan STNK/KIR.
-                    </p>
+                    <p className="text-sm text-gray-600">{t('fleet.dashboard.subtitle')}</p>
 
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <StatCard label="Aktif" value={counts.active} hint={`dari ${counts.total} kendaraan`} />
-                        <StatCard label="Maintenance" value={counts.maintenance} />
-                        <StatCard label="Nonaktif" value={counts.inactive} />
                         <StatCard
-                            label="Driver tersedia"
+                            label={t('fleet.dashboard.active')}
+                            value={counts.active}
+                            hint={t('fleet.dashboard.of_vehicles', { total: counts.total })}
+                        />
+                        <StatCard label={t('fleet.dashboard.maintenance')} value={counts.maintenance} />
+                        <StatCard label={t('fleet.dashboard.inactive')} value={counts.inactive} />
+                        <StatCard
+                            label={t('fleet.dashboard.drivers_available')}
                             value={drivers.available}
-                            hint={`${drivers.on_leave} cuti · ${drivers.inactive} nonaktif`}
+                            hint={t('fleet.dashboard.drivers_hint', {
+                                leave: drivers.on_leave,
+                                inactive: drivers.inactive,
+                            })}
                         />
                     </div>
 
                     {expiring_docs.available && (expiring_docs.expired > 0 || expiring_docs.expiring_30 > 0) && (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                            Dokumen: <strong>{expiring_docs.expired} expired</strong>
-                            {' · '}
-                            <strong>{expiring_docs.expiring_30} expiring ≤30 hari</strong>
-                            {' — '}
+                            {t('fleet.dashboard.docs_alert', {
+                                expired: expiring_docs.expired,
+                                expiring: expiring_docs.expiring_30,
+                            })}{' '}
                             <Link href={prefixedRoute('documents.index')} className="font-medium underline">
-                                buka Documents
+                                {t('fleet.dashboard.open_documents')}
                             </Link>
                         </div>
                     )}
@@ -93,19 +100,19 @@ export default function Index({ board }: Props): JSX.Element {
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Kendaraan</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Odometer</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Isi BBM terakhir</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">STNK</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">KIR</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.dashboard.vehicle')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.dashboard.status')}</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.dashboard.odometer')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.dashboard.last_fuel')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.dashboard.stnk')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.dashboard.kir')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {vehicles.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                                            Belum ada kendaraan.
+                                            {t('fleet.dashboard.empty')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -122,7 +129,7 @@ export default function Index({ board }: Props): JSX.Element {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[vehicle.status] ?? STATUS_STYLES.inactive}`}>
-                                                    {vehicle.status}
+                                                    {t(`fleet.status.${vehicle.status}`, undefined, vehicle.status)}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right tabular-nums">
@@ -157,7 +164,7 @@ export default function Index({ board }: Props): JSX.Element {
 
                     <div className="text-sm">
                         <Link href={prefixedRoute('fleet.fuel.analytics')} className="font-medium text-indigo-600 hover:underline">
-                            Buka Fuel Analytics →
+                            {t('fleet.dashboard.open_analytics')}
                         </Link>
                     </div>
                 </div>

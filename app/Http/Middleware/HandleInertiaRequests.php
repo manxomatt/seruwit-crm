@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Menu;
 use App\Models\Setting;
 use App\Modules\Facades\Modules;
+use App\Support\LocaleResolver;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -34,6 +35,7 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $routePrefix = $this->getRoutePrefix($request);
+        $locales = app(LocaleResolver::class);
 
         // Eager load profile and roles with permissions to avoid N+1 query
         if ($user) {
@@ -53,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->name,
                     'email' => $user->email,
                     'email_verified_at' => $user->email_verified_at,
+                    'locale' => $user->locale ?? $locales->resolve($request),
                     'is_admin' => $user->isAdmin(),
                     'is_reseller' => $user->hasRole('reseller'),
                     'dashboard_path' => $user->getDashboardPath(),
@@ -66,6 +69,10 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $this->getUserPermissions($user),
                 ] : null,
             ],
+            'locale' => app()->getLocale(),
+            'fallback_locale' => config('app.fallback_locale', 'en'),
+            'availableLocales' => $locales->availableLocales(),
+            'translations' => $locales->sharedTranslations(),
             'route_prefix' => $routePrefix,
             // Controllers already redirect with these; lazily resolved so a page
             // that never reads them does not touch the session.

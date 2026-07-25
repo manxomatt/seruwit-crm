@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
@@ -27,20 +28,19 @@ interface Props {
 
 export default function Index({ logs, vehicles, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Fuel Management</h2>}>
-            <Head title="Fuel Management" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('fleet.fuel.title')}</h2>}>
+            <Head title={t('fleet.fuel.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <FleetNav />
-                    <p className="text-sm text-gray-600">
-                        Fill history across the fleet — consumption per km, anomaly flags, GPS/vehicle odometer source.
-                    </p>
+                    <p className="text-sm text-gray-600">{t('fleet.fuel.subtitle')}</p>
 
                     <div className="flex flex-wrap items-end gap-3">
                         <div>
-                            <label className="block text-xs text-gray-500">Vehicle</label>
+                            <label className="block text-xs text-gray-500">{t('fleet.fuel.vehicle')}</label>
                             <Select
                                 className="mt-0.5 min-w-[14rem]"
                                 value={filters.vehicle_id ? String(filters.vehicle_id) : ''}
@@ -50,7 +50,7 @@ export default function Index({ logs, vehicles, filters }: Props): JSX.Element {
                                         anomalies_only: filters.anomalies_only || undefined,
                                     })
                                 }
-                                placeholder="All vehicles"
+                                placeholder={t('fleet.fuel.all_vehicles')}
                                 options={vehicles.map((v) => ({
                                     value: String(v.id),
                                     label: `${v.name} (${v.plate_number})`,
@@ -68,7 +68,7 @@ export default function Index({ logs, vehicles, filters }: Props): JSX.Element {
                                     })
                                 }
                             />
-                            Anomalies only
+                            {t('fleet.fuel.anomalies_only')}
                         </label>
                     </div>
 
@@ -76,19 +76,19 @@ export default function Index({ logs, vehicles, filters }: Props): JSX.Element {
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Vehicle</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Liters</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.date')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.vehicle')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.liters')}</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Δ km</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">km/L</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Flags</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.km_l')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.flags')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {logs.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                                            No fuel logs yet.
+                                            {t('fleet.fuel.empty')}
                                         </td>
                                     </tr>
                                 ) : (

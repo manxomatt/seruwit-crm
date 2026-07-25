@@ -1,0 +1,22 @@
+<?php
+
+return [
+    'save' => 'Save',
+    'cancel' => 'Cancel',
+    'delete' => 'Delete',
+    'edit' => 'Edit',
+    'create' => 'Create',
+    'back' => 'Back',
+    'search' => 'Search',
+    'actions' => 'Actions',
+    'confirm_delete_title' => 'Confirm Delete',
+    'confirm_delete_message' => 'Are you sure you want to delete this? This action cannot be undone.',
+    'confirm_delete_confirm' => 'Delete',
+    'confirm_delete_cancel' => 'Cancel',
+    'saved' => 'Saved.',
+    'loading' => 'Loading…',
+    'deleting' => 'Deleting…',
+    'yes' => 'Yes',
+    'no' => 'No',
+    'locale_updated' => 'Language updated.',
+];

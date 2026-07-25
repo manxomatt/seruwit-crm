@@ -30,6 +30,7 @@ class User extends Authenticatable implements Syncable
         'email',
         'password',
         'last_login_at',
+        'locale',
     ];
 
     protected static function booted(): void
@@ -66,6 +67,7 @@ class User extends Authenticatable implements Syncable
             'username',
             'email',
             'password',
+            'locale',
         ];
     }
 

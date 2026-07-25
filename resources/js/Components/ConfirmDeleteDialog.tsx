@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import DangerButton from '@/Components/DangerButton';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { useTrans } from '@/hooks/useTrans';
 
 interface Props {
     show: boolean;
@@ -18,12 +19,18 @@ export default function ConfirmDeleteDialog({
     show,
     onClose,
     onConfirm,
-    title = 'Konfirmasi Hapus',
-    message = 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.',
-    confirmText = 'Hapus',
-    cancelText = 'Batal',
+    title,
+    message,
+    confirmText,
+    cancelText,
     processing = false,
 }: Props) {
+    const { t } = useTrans();
+
+    const resolvedTitle = title ?? t('common.confirm_delete_title');
+    const resolvedMessage = message ?? t('common.confirm_delete_message');
+    const resolvedConfirm = confirmText ?? t('common.confirm_delete_confirm');
+    const resolvedCancel = cancelText ?? t('common.confirm_delete_cancel');
     return (
         <Modal show={show} onClose={onClose} maxWidth="md">
             <div className="p-6">
@@ -46,21 +53,21 @@ export default function ConfirmDeleteDialog({
                     </div>
                     <div className="ml-4">
                         <h3 className="text-lg font-medium leading-6 text-gray-900">
-                            {title}
+                            {resolvedTitle}
                         </h3>
                     </div>
                 </div>
 
                 <div className="mt-4">
-                    <p className="text-sm text-gray-500">{message}</p>
+                    <p className="text-sm text-gray-500">{resolvedMessage}</p>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">
                     <SecondaryButton onClick={onClose} disabled={processing}>
-                        {cancelText}
+                        {resolvedCancel}
                     </SecondaryButton>
                     <DangerButton onClick={onConfirm} disabled={processing}>
-                        {processing ? 'Menghapus...' : confirmText}
+                        {processing ? t('common.deleting') : resolvedConfirm}
                     </DangerButton>
                 </div>
             </div>

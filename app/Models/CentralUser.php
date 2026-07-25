@@ -35,6 +35,7 @@ class CentralUser extends Authenticatable implements SyncMaster
         'email',
         'password',
         'last_login_at',
+        'locale',
     ];
 
     /**
@@ -103,6 +104,7 @@ class CentralUser extends Authenticatable implements SyncMaster
             'username',
             'email',
             'password',
+            'locale',
         ];
     }
 }

@@ -1,16 +1,18 @@
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { label: 'Dashboard', route: 'fleet.dashboard', pattern: 'fleet.dashboard' },
-    { label: 'Vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
-    { label: 'Drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
-    { label: 'Fuel', route: 'fleet.fuel.index', pattern: 'fleet.fuel.index' },
-    { label: 'Analytics', route: 'fleet.fuel.analytics', pattern: 'fleet.fuel.analytics' },
-];
+    { labelKey: 'fleet.nav.dashboard', route: 'fleet.dashboard', pattern: 'fleet.dashboard' },
+    { labelKey: 'fleet.nav.vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
+    { labelKey: 'fleet.nav.drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
+    { labelKey: 'fleet.nav.fuel', route: 'fleet.fuel.index', pattern: 'fleet.fuel.index' },
+    { labelKey: 'fleet.nav.analytics', route: 'fleet.fuel.analytics', pattern: 'fleet.fuel.analytics' },
+] as const;
 
 export default function FleetNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { t } = useTrans();
 
     return (
         <div className="mb-6 border-b border-gray-200">
@@ -27,7 +29,7 @@ export default function FleetNav(): JSX.Element {
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Link>
                     );
                 })}

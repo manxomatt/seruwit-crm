@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\LiveUpdateController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Module\AnalyticsController as ModuleAnalyticsController;
 use App\Http\Controllers\Module\DashboardController as ModuleDashboardController;
 use App\Http\Controllers\Module\GlobalSearchController as ModuleGlobalSearchController;
@@ -38,6 +39,8 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 // Public shipment tracking — no auth, tenant resolved by domain. The Orders
 // controller 404s when the module is not installed, like the blog does.
 Route::get('/track/{token}', [PublicTrackingController::class, 'show'])->name('track.show');
+
+Route::patch('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::get('/dashboard', [ModuleDashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])

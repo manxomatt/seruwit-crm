@@ -1,0 +1,53 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supported Locales
+    |--------------------------------------------------------------------------
+    |
+    | First-phase languages. Keys must match lang/{locale} directories.
+    |
+    */
+
+    'supported' => ['en', 'id'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Locale
+    |--------------------------------------------------------------------------
+    |
+    | Used when the user has no preference and the session has none. Defaults
+    | to Indonesian to match the product's primary market; APP_LOCALE still
+    | wins when explicitly set.
+    |
+    */
+
+    'default' => env('APP_LOCALE', 'id'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session key
+    |--------------------------------------------------------------------------
+    */
+
+    'session_key' => 'locale',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Translation groups shared with the Inertia frontend
+    |--------------------------------------------------------------------------
+    */
+
+    'shared_groups' => [
+        'shell',
+        'common',
+        'auth_ui',
+        'modules',
+        'menu_groups',
+        'profile',
+        'fleet',
+    ],
+
+];

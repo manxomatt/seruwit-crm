@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
 import Select from '@/Components/Select';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
@@ -76,19 +77,19 @@ interface Props {
     filters: { vehicle_id?: number | null; period: string };
 }
 
-const PERIODS = [
-    { key: 'month', label: '30 hari' },
-    { key: 'quarter', label: '3 bulan' },
-    { key: 'year', label: '12 bulan' },
-] as const;
+const PERIOD_KEYS = ['month', 'quarter', 'year'] as const;
 
-function costDelta(current: number, previous: number): string {
+function costDelta(
+    t: (key: string, params?: Record<string, string | number>) => string,
+    current: number,
+    previous: number,
+): string {
     if (previous === 0) {
-        return current === 0 ? 'Sama vs periode lalu' : 'Tidak ada baseline periode lalu';
+        return current === 0 ? t('fleet.analytics.same_previous') : t('fleet.analytics.no_baseline');
     }
     const pct = Math.round(((current - previous) / previous) * 1000) / 10;
     const sign = pct > 0 ? '+' : '';
-    return `${sign}${pct}% vs periode lalu`;
+    return t('fleet.analytics.vs_previous', { pct: `${sign}${pct}%` });
 }
 
 function BarChart({ points }: { points: MonthPoint[] }): JSX.Element {
@@ -112,8 +113,15 @@ function BarChart({ points }: { points: MonthPoint[] }): JSX.Element {
 
 export default function Analytics({ analytics, vehicles, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
     const { summary, monthly_costs, efficiency_trend, fleet_ranking, anomalies, driver_performance } = analytics;
     const maxKm = Math.max(...efficiency_trend.map((p) => p.km_per_liter ?? 0), 1);
+
+    const periodLabels: Record<(typeof PERIOD_KEYS)[number], string> = {
+        month: t('fleet.analytics.period_month'),
+        quarter: t('fleet.analytics.period_quarter'),
+        year: t('fleet.analytics.period_year'),
+    };
 
     const reload = (patch: Record<string, string | number | undefined>) => {
         router.get(
@@ -128,23 +136,21 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">Fuel Analytics</h2>}>
-            <Head title="Fuel Analytics" />
+        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('fleet.analytics.title')}</h2>}>
+            <Head title={t('fleet.analytics.title')} />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <FleetNav />
-                    <p className="text-sm text-gray-600">
-                        Trend km/L, biaya BBM, ranking efisiensi, anomaly history, dan performa driver vs baseline kendaraan.
-                    </p>
+                    <p className="text-sm text-gray-600">{t('fleet.analytics.subtitle')}</p>
 
                     <div className="flex flex-wrap items-end gap-3">
                         <div>
-                            <label className="block text-xs text-gray-500">Kendaraan</label>
+                            <label className="block text-xs text-gray-500">{t('fleet.analytics.vehicle')}</label>
                             <Select
                                 className="mt-0.5 min-w-[14rem]"
                                 value={filters.vehicle_id ? String(filters.vehicle_id) : ''}
                                 onChange={(value) => reload({ vehicle_id: value || undefined })}
-                                placeholder="Semua kendaraan"
+                                placeholder={t('fleet.analytics.all_vehicles')}
                                 options={vehicles.map((v) => ({
                                     value: String(v.id),
                                     label: `${v.name} (${v.plate_number})`,
@@ -152,61 +158,63 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
                             />
                         </div>
                         <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
-                            {PERIODS.map((option) => (
+                            {PERIOD_KEYS.map((key) => (
                                 <button
-                                    key={option.key}
+                                    key={key}
                                     type="button"
-                                    onClick={() => reload({ period: option.key })}
+                                    onClick={() => reload({ period: key })}
                                     className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                                        filters.period === option.key
+                                        filters.period === key
                                             ? 'bg-white text-gray-900 shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                 >
-                                    {option.label}
+                                    {periodLabels[key]}
                                 </button>
                             ))}
                         </div>
                         <Link href={prefixedRoute('fleet.fuel.index')} className="pb-2 text-sm text-indigo-600 hover:underline">
-                            Riwayat isi BBM →
+                            {t('fleet.analytics.fuel_history')}
                         </Link>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">Biaya BBM</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.fuel_cost')}</p>
                             <p className="mt-2 text-2xl font-semibold tabular-nums">{formatMoney(summary.total_cost)}</p>
-                            <p className="mt-1 text-xs text-gray-500">{costDelta(summary.total_cost, summary.previous_total_cost)}</p>
+                            <p className="mt-1 text-xs text-gray-500">{costDelta(t, summary.total_cost, summary.previous_total_cost)}</p>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">Liter</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.liters')}</p>
                             <p className="mt-2 text-2xl font-semibold tabular-nums">
                                 {summary.total_liters.toLocaleString('id-ID')} L
                             </p>
-                            <p className="mt-1 text-xs text-gray-500">{summary.fill_count} pengisian</p>
+                            <p className="mt-1 text-xs text-gray-500">
+                                {summary.fill_count} {t('fleet.analytics.fills')}
+                            </p>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">Avg km/L</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.avg_kml')}</p>
                             <p className="mt-2 text-2xl font-semibold tabular-nums">
                                 {summary.avg_km_per_liter !== null ? summary.avg_km_per_liter : '—'}
                             </p>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">Anomaly</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.anomaly')}</p>
                             <p className="mt-2 text-2xl font-semibold tabular-nums text-amber-700">{summary.anomaly_count}</p>
                         </div>
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-2">
                         <section className="rounded-lg border border-gray-200 bg-white p-5">
-                            <h3 className="mb-4 text-sm font-semibold text-gray-800">Biaya BBM 12 bulan</h3>
+                            <h3 className="mb-4 text-sm font-semibold text-gray-800">{t('fleet.analytics.cost_12m')}</h3>
                             <BarChart points={monthly_costs} />
                         </section>
 
                         <section className="rounded-lg border border-gray-200 bg-white p-5">
-                            <h3 className="mb-4 text-sm font-semibold text-gray-800">Trend km/L (10 fill terakhir)</h3>
+                            <h3 className="mb-4 text-sm font-semibold text-gray-800">{t('fleet.analytics.trend_kml')}</h3>
                             {efficiency_trend.length === 0 ? (
-                                <p className="text-sm text-gray-500">Belum ada data km/L.</p>
+                                <p className="text-sm text-gray-500">{t('fleet.analytics.no_kml')}</p>
                             ) : (
                                 <div className="space-y-2">
                                     {efficiency_trend.map((point, index) => (
@@ -239,24 +247,24 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
 
                     <section className="rounded-lg border border-gray-200 bg-white">
                         <div className="border-b border-gray-100 px-5 py-3">
-                            <h3 className="text-sm font-semibold text-gray-800">Ranking efisiensi armada</h3>
+                            <h3 className="text-sm font-semibold text-gray-800">{t('fleet.analytics.ranking')}</h3>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">#</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Kendaraan</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Avg km/L</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">vs expected</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Fills</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.vehicle')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.avg_kml')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.vs_expected')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.fills')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {fleet_ranking.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                                Belum ada data efisiensi di periode ini.
+                                                {t('fleet.analytics.no_ranking')}
                                             </td>
                                         </tr>
                                     ) : (
@@ -299,27 +307,25 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
 
                     <section className="rounded-lg border border-gray-200 bg-white">
                         <div className="border-b border-gray-100 px-5 py-3">
-                            <h3 className="text-sm font-semibold text-gray-800">Driver fuel performance</h3>
-                            <p className="text-xs text-gray-500">
-                                Avg km/L saat driver mengisi vs baseline kendaraan yang dipakai
-                            </p>
+                            <h3 className="text-sm font-semibold text-gray-800">{t('fleet.analytics.driver_perf')}</h3>
+                            <p className="text-xs text-gray-500">{t('fleet.analytics.driver_perf_help')}</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Driver</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Avg km/L</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Baseline</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Delta</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Fills</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.driver')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.avg_kml')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.baseline')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.delta')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.fills')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {driver_performance.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                                Belum ada pengisian dengan driver terisi.
+                                                {t('fleet.analytics.no_driver_perf')}
                                             </td>
                                         </tr>
                                     ) : (
@@ -363,24 +369,24 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
 
                     <section className="rounded-lg border border-gray-200 bg-white">
                         <div className="border-b border-gray-100 px-5 py-3">
-                            <h3 className="text-sm font-semibold text-gray-800">Anomaly history</h3>
+                            <h3 className="text-sm font-semibold text-gray-800">{t('fleet.analytics.anomaly_history')}</h3>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Tanggal</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Kendaraan</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Driver</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Liter</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Flags</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.date')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.vehicle')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.driver')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.liters')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.flags')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {anomalies.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                                Tidak ada anomaly di periode ini.
+                                                {t('fleet.analytics.no_anomalies')}
                                             </td>
                                         </tr>
                                     ) : (
