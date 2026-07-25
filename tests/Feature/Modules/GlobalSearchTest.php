@@ -8,7 +8,12 @@ use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Partners\Models\Partner;
+use Modules\Product\Models\Brand;
+use Modules\Product\Models\Principal;
 use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductAttribute;
+use Modules\Product\Models\ProductTag;
+use Modules\Product\Models\ProductType;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -116,5 +121,38 @@ class GlobalSearchTest extends TestCase
         $this->assertNotNull($userHit);
         $this->assertSame($target->name, $userHit['title']);
         $this->assertSame($target->email, $userHit['subtitle']);
+    }
+
+    public function test_search_finds_product_module_catalog_records(): void
+    {
+        $user = $this->createAdminUser();
+
+        $principal = Principal::factory()->create([
+            'name' => 'Zebra Principal Foods',
+            'code' => 'PRC-ZEBRA',
+        ]);
+        $brand = Brand::factory()->create([
+            'principal_id' => $principal->id,
+            'name' => 'Zebra Brand',
+        ]);
+        ProductType::factory()->create(['name' => 'Zebra Snacks']);
+        ProductAttribute::factory()->create(['name' => 'Zebra Size']);
+        ProductTag::factory()->create(['name' => 'Zebra Promo']);
+
+        $response = $this->actingAs($user)
+            ->getJson(route('module.search', ['q' => 'Zebra']))
+            ->assertOk();
+
+        $types = collect($response->json('results'))->pluck('type')->unique()->values()->all();
+
+        $this->assertContains('principal', $types);
+        $this->assertContains('brand', $types);
+        $this->assertContains('product_type', $types);
+        $this->assertContains('product_attribute', $types);
+        $this->assertContains('product_tag', $types);
+
+        $brandHit = collect($response->json('results'))->firstWhere('type', 'brand');
+        $this->assertSame($brand->name, $brandHit['title']);
+        $this->assertStringContainsString('/brands/', $brandHit['url']);
     }
 }

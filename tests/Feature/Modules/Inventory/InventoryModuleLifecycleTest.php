@@ -31,6 +31,26 @@ class InventoryModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('stock_levels'));
             $this->assertTrue(Schema::hasTable('stock_opnames'));
             $this->assertTrue(Schema::hasTable('stock_opname_items'));
+            $this->assertTrue(Schema::hasTable('stock_reservations'));
+            $this->assertTrue(Schema::hasColumn('products', 'category'));
+        });
+    }
+
+    public function test_inventory_installs_without_orders_module(): void
+    {
+        $tenant = $this->provisionTenant('Inventory Solo Co', 'inventory-solo-co', 'owner@inventory-solo.test');
+        $tenant->plan = 'pro';
+        $tenant->save();
+
+        app(ModuleInstaller::class)->install($tenant, new InventoryModule);
+
+        $tenant->run(function () {
+            $this->assertTrue(Schema::hasTable('stock_reservations'));
+            $this->assertFalse(Schema::hasTable('delivery_orders'));
+            $this->assertDatabaseHas('installed_modules', [
+                'key' => 'inventory',
+                'uninstalled_at' => null,
+            ]);
         });
     }
 

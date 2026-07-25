@@ -25,7 +25,12 @@ use Modules\Outbound\Models\PickList;
 use Modules\Pages\Models\Page;
 use Modules\Partners\Models\Partner;
 use Modules\Posts\Models\Post;
+use Modules\Product\Models\Brand;
+use Modules\Product\Models\Principal;
 use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductAttribute;
+use Modules\Product\Models\ProductTag;
+use Modules\Product\Models\ProductType;
 use Modules\Purchasing\Models\GoodReceiptNote;
 use Modules\Purchasing\Models\PurchaseOrder;
 use Modules\Receivables\Models\Payment;
@@ -77,6 +82,11 @@ class GlobalSearchService
             $this->carousels(...),
             $this->partners(...),
             $this->products(...),
+            $this->principals(...),
+            $this->brands(...),
+            $this->productTypes(...),
+            $this->productAttributes(...),
+            $this->productTags(...),
             $this->vehicles(...),
             $this->drivers(...),
             $this->orders(...),
@@ -309,6 +319,7 @@ class GlobalSearchService
         }
 
         return Product::query()
+            ->whereNull('parent_id')
             ->where(fn (Builder $q) => $q
                 ->where('name', 'ilike', "%{$query}%")
                 ->orWhere('code', 'ilike', "%{$query}%")
@@ -325,6 +336,132 @@ class GlobalSearchService
                 'url' => route('module.products.show', $product),
             ])
             ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function principals(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'products', Principal::class, 'principals')) {
+            return [];
+        }
+
+        return Principal::query()
+            ->where(fn (Builder $q) => $q
+                ->where('name', 'ilike', "%{$query}%")
+                ->orWhere('code', 'ilike', "%{$query}%")
+                ->orWhere('contact_person', 'ilike', "%{$query}%")
+                ->orWhere('email', 'ilike', "%{$query}%")
+                ->orWhere('phone', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (Principal $principal) => [
+                'id' => $principal->id,
+                'title' => $principal->name,
+                'subtitle' => collect([$principal->code, $principal->contact_person])->filter()->implode(' • '),
+                'type' => 'principal',
+                'icon' => 'product',
+                'url' => $this->productCatalogUrl($user, 'products.principals.edit', 'products.principals.index', $principal, $principal->name),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function brands(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'products', Brand::class, 'brands')) {
+            return [];
+        }
+
+        return Brand::query()
+            ->with('principal:id,name')
+            ->where('name', 'ilike', "%{$query}%")
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (Brand $brand) => [
+                'id' => $brand->id,
+                'title' => $brand->name,
+                'subtitle' => collect([$brand->principal?->name, $brand->status])->filter()->implode(' • '),
+                'type' => 'brand',
+                'icon' => 'product',
+                'url' => $this->productCatalogUrl($user, 'products.brands.edit', 'products.brands.index', $brand, $brand->name),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function productTypes(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'products', ProductType::class, 'product_types')) {
+            return [];
+        }
+
+        return ProductType::query()
+            ->with('parent:id,name')
+            ->where('name', 'ilike', "%{$query}%")
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (ProductType $type) => [
+                'id' => $type->id,
+                'title' => $type->name,
+                'subtitle' => $type->parent?->name ?? __('shell.search.product_type_root'),
+                'type' => 'product_type',
+                'icon' => 'product',
+                'url' => $this->productCatalogUrl($user, 'products.product-types.edit', 'products.product-types.index', $type, $type->name),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function productAttributes(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'products', ProductAttribute::class, 'product_attributes')) {
+            return [];
+        }
+
+        return ProductAttribute::query()
+            ->where('name', 'ilike', "%{$query}%")
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (ProductAttribute $attribute) => [
+                'id' => $attribute->id,
+                'title' => $attribute->name,
+                'subtitle' => $attribute->type,
+                'type' => 'product_attribute',
+                'icon' => 'product',
+                'url' => $this->productCatalogUrl($user, 'products.attributes.edit', 'products.attributes.index', $attribute, $attribute->name),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function productTags(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'products', ProductTag::class, 'product_tags')) {
+            return [];
+        }
+
+        return ProductTag::query()
+            ->where('name', 'ilike', "%{$query}%")
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (ProductTag $tag) => [
+                'id' => $tag->id,
+                'title' => $tag->name,
+                'subtitle' => $tag->color ?: __('shell.search.tag'),
+                'type' => 'product_tag',
+                'icon' => 'product',
+                'url' => $this->productCatalogUrl($user, 'products.tags.edit', 'products.tags.index', $tag, $tag->name),
+            ])
+            ->all();
+    }
+
+    private function productCatalogUrl(User $user, string $editRoute, string $indexRoute, object $model, string $search): string
+    {
+        if ($user->hasPermissionFor('products', 'update')) {
+            return route('module.'.$editRoute, $model);
+        }
+
+        return route('module.'.$indexRoute, ['search' => $search]);
     }
 
     /** @return list<array<string, mixed>> */
