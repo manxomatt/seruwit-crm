@@ -1,10 +1,13 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import ModuleLayout from '@/Layouts/ModuleLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
-import { useState } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 interface Location {
     id: number;
@@ -40,6 +43,8 @@ interface Warehouse {
     id: number;
     name: string;
     location: string;
+    latitude: string | null;
+    longitude: string | null;
     status: 'active' | 'inactive';
     locations: Location[];
 }
@@ -112,6 +117,15 @@ export default function WarehouseShow({ warehouse, stockLevels, stockMovements }
     const localeTag = useLocaleTag();
     const [deleteTarget, setDeleteTarget] = useState<Location | null>(null);
     const [processing, setProcessing] = useState(false);
+    const coordsForm = useForm({
+        latitude: warehouse.latitude ?? '',
+        longitude: warehouse.longitude ?? '',
+    });
+
+    const saveCoords: FormEventHandler = (e) => {
+        e.preventDefault();
+        coordsForm.patch(prefixedRoute('inventory.warehouses.update', warehouse.id), { preserveScroll: true });
+    };
 
     const confirmDelete = () => {
         if (!deleteTarget) return;
@@ -147,6 +161,40 @@ export default function WarehouseShow({ warehouse, stockLevels, stockMovements }
                         {t(`inventory.status.${warehouse.status}`)}
                     </span>
                 </div>
+
+                <section className="overflow-hidden rounded-lg border bg-white p-6 shadow-sm">
+                    <h2 className="mb-3 text-lg font-semibold">{t('inventory.warehouses.coordinates_title')}</h2>
+                    <p className="mb-4 text-sm text-gray-500">{t('inventory.warehouses.coordinates_hint')}</p>
+                    <form onSubmit={saveCoords} className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end">
+                        <div>
+                            <InputLabel htmlFor="wh_lat" value={t('inventory.warehouses.latitude')} />
+                            <TextInput
+                                id="wh_lat"
+                                type="number"
+                                step="0.0000001"
+                                className="mt-1 block w-full"
+                                value={coordsForm.data.latitude}
+                                onChange={(e) => coordsForm.setData('latitude', e.target.value)}
+                            />
+                            <InputError message={coordsForm.errors.latitude} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="wh_lng" value={t('inventory.warehouses.longitude')} />
+                            <TextInput
+                                id="wh_lng"
+                                type="number"
+                                step="0.0000001"
+                                className="mt-1 block w-full"
+                                value={coordsForm.data.longitude}
+                                onChange={(e) => coordsForm.setData('longitude', e.target.value)}
+                            />
+                            <InputError message={coordsForm.errors.longitude} className="mt-2" />
+                        </div>
+                        <div>
+                            <PrimaryButton disabled={coordsForm.processing}>{t('inventory.warehouses.save_coordinates')}</PrimaryButton>
+                        </div>
+                    </form>
+                </section>
 
                 {/* Locations Section */}
                 <section className="space-y-3">

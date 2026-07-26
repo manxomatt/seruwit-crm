@@ -117,6 +117,7 @@ class OrdersModule implements ModuleContract
         Route::post('/orders/{order}/confirm', [DeliveryOrderController::class, 'confirm'])->middleware('permission:orders,update')->name('orders.confirm');
         Route::post('/orders/{order}/cancel', [DeliveryOrderController::class, 'cancel'])->middleware('permission:orders,update')->name('orders.cancel');
         Route::post('/orders/{order}/assign-trip', [DeliveryOrderController::class, 'assignTrip'])->middleware('permission:orders,update')->name('orders.assign-trip');
+        Route::post('/orders/batch-assign-trip', [DeliveryOrderController::class, 'batchAssignTrip'])->middleware('permission:orders,update')->name('orders.batch-assign-trip');
         Route::post('/orders/{order}/unassign-trip', [DeliveryOrderController::class, 'unassignTrip'])->middleware('permission:orders,update')->name('orders.unassign-trip');
 
         Route::post('/orders/{order}/items', [OrderItemController::class, 'store'])->middleware('permission:orders,create')->name('orders.items.store');

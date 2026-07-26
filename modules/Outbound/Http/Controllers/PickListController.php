@@ -66,6 +66,7 @@ class PickListController extends Controller
             'orders' => DeliveryOrder::query()
                 ->with('partner:id,name,code')
                 ->whereIn('status', $eligibleStatuses)
+                ->whereNull('goods_issue_note_id')
                 ->whereNotIn('id', $activeOrderIds)
                 ->withCount('items')
                 ->latest('id')

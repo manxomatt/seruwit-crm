@@ -133,6 +133,7 @@ return [
         'pack_created' => 'Pack dibuat beserta label.',
         'pack_sealed' => 'Pack di-seal.',
         'do_status_invalid' => 'Pick list hanya bisa dibuat untuk order confirmed, assigned, atau in-transit.',
+        'do_from_gin_skip' => 'Delivery order dari GIN tidak perlu pick list — stok sudah dikeluarkan di gudang. Assign langsung ke trip.',
         'do_no_items' => 'Delivery order tidak punya item untuk di-pick.',
         'active_pick_list_exists' => 'Sudah ada pick list aktif untuk delivery order ini.',
         'no_pickable_products' => 'Tidak ada produk pickable (non-service) pada delivery order ini.',

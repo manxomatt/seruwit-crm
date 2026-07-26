@@ -201,4 +201,15 @@ class PickPackWorkflowTest extends TestCase
 
         $this->assertSame(PickList::STATUS_PACKED, $pickList->fresh()->status);
     }
+
+    public function test_cannot_generate_pick_list_for_do_from_gin(): void
+    {
+        ['warehouse' => $warehouse, 'order' => $order] = $this->seededOrder();
+        $order->update(['goods_issue_note_id' => 1]);
+        $this->actingAs($this->createAdminUser());
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        PickListGenerator::generate($order->fresh(), $warehouse);
+    }
 }

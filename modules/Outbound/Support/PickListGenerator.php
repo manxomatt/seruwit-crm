@@ -28,6 +28,12 @@ class PickListGenerator
             ]);
         }
 
+        if ($order->isFromGin()) {
+            throw ValidationException::withMessages([
+                'delivery_order_id' => __('outbound.messages.do_from_gin_skip'),
+            ]);
+        }
+
         if ($order->items->isEmpty()) {
             throw ValidationException::withMessages([
                 'delivery_order_id' => __('outbound.messages.do_no_items'),

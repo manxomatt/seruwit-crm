@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Orders\Support\TripPodCompletionGate;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Http\Requests\StoreTripRequest;
@@ -101,7 +102,11 @@ class TripController extends Controller
         $ordersEnabled = Modules::available('orders');
 
         if ($ordersEnabled) {
-            $trip->load(['deliveryOrders.partner', 'stops.deliveryOrder']);
+            $trip->load([
+                'deliveryOrders.partner',
+                'deliveryOrders.goodsIssueNote:id,gin_number',
+                'stops.deliveryOrder',
+            ]);
         }
 
         // A GPS-fed trip carries thousands of checkpoints, so the trail is
@@ -219,12 +224,35 @@ class TripController extends Controller
             return back()->with('error', __('transportation.messages.complete_in_progress_only'));
         }
 
+        $ordersWithoutPod = collect();
+        $blocking = collect();
+
+        if (Modules::available('orders') && class_exists(TripPodCompletionGate::class)) {
+            $ordersWithoutPod = TripPodCompletionGate::ordersWithoutPod($trip);
+            $blocking = TripPodCompletionGate::blockingOrders($trip);
+
+            if ($blocking->isNotEmpty()) {
+                return back()->with('error', __('transportation.messages.require_pod_before_complete', [
+                    'count' => $blocking->count(),
+                    'codes' => $blocking->pluck('code')->implode(', '),
+                ]));
+            }
+        }
+
         $trip->update([
             'status' => Trip::STATUS_COMPLETED,
             'completed_at' => now(),
         ]);
 
-        return back()->with('success', __('transportation.messages.trip_completed'));
+        $redirect = back()->with('success', __('transportation.messages.trip_completed'));
+
+        if ($ordersWithoutPod->isNotEmpty()) {
+            $redirect->with('warning', __('transportation.messages.completed_without_pod', [
+                'count' => $ordersWithoutPod->count(),
+            ]));
+        }
+
+        return $redirect;
     }
 
     /**

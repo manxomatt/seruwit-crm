@@ -150,6 +150,9 @@ class GoodsIssueNoteController extends Controller
             ? app(DeliveryOrderFromGinService::class)
             : null;
         $existingDo = $doService?->existingForGin($gin);
+        if ($existingDo) {
+            $existingDo->loadMissing('trip:id,code');
+        }
         $canCreateDo = $gin->status === GoodsIssueNote::STATUS_CONFIRMED
             && $doService?->isAvailable()
             && $existingDo === null
@@ -158,7 +161,15 @@ class GoodsIssueNoteController extends Controller
         return inertia('Modules/Sales/GoodsIssueNotes/Show', [
             'gin' => $gin,
             'deliveryOrder' => $existingDo
-                ? ['id' => $existingDo->id, 'code' => $existingDo->code, 'status' => $existingDo->status]
+                ? [
+                    'id' => $existingDo->id,
+                    'code' => $existingDo->code,
+                    'status' => $existingDo->status,
+                    'trip_id' => $existingDo->trip_id,
+                    'trip' => $existingDo->trip
+                        ? ['id' => $existingDo->trip->id, 'code' => $existingDo->trip->code]
+                        : null,
+                ]
                 : null,
             'can' => [
                 'issue' => auth()->user()?->hasPermissionFor('sales', 'issue') ?? false,

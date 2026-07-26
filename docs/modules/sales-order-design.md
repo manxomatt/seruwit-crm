@@ -39,9 +39,10 @@ Menutup siklus dagang setelah stok masuk via PO/GRN:
 
 ### Out of scope (fase berikutnya)
 - Quotation / penawaran
-- Integrasi Outbound pick/pack atau Transportation trip
-- Price list / pricing rules penuh (tax dari settings sudah di Fase 1.3)
 - Trade Promotions / Canvassing
+
+### Integrasi logistik (desain terpisah)
+GIN → DO bridge sudah ada. Integrasi lanjutan ke Trip/POD/Outbound: lihat [`gin-do-transport-design.md`](./gin-do-transport-design.md).
 
 ### Fase 1.1 — implemented
 `stock_reservations` mendukung SO dan DO:

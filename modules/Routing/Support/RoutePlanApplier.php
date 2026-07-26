@@ -4,10 +4,10 @@ namespace Modules\Routing\Support;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Orders\Support\DeliveryOrderTripAssignment;
 use Modules\Routing\Models\RoutePlan;
 use Modules\Routing\Models\RoutePlanRoute;
 use Modules\TransportationManagement\Models\Trip;
-use Modules\TransportationManagement\Models\TripStop;
 use RuntimeException;
 
 /**
@@ -49,7 +49,6 @@ class RoutePlanApplier
 
     private function applyRoute(RoutePlan $plan, RoutePlanRoute $route): void
     {
-        $first = $route->stops->first();
         $last = $route->stops->last();
 
         $trip = Trip::query()->create([
@@ -64,7 +63,8 @@ class RoutePlanApplier
             'status' => Trip::STATUS_SCHEDULED,
         ]);
 
-        $sequence = 1;
+        $assignment = app(DeliveryOrderTripAssignment::class);
+
         foreach ($route->stops as $stop) {
             /** @var DeliveryOrder $order */
             $order = DeliveryOrder::query()->lockForUpdate()->findOrFail($stop->delivery_order_id);
@@ -73,19 +73,10 @@ class RoutePlanApplier
                 throw new RuntimeException(__('routing.errors.order_not_confirmed', ['code' => $order->code]));
             }
 
-            $trip->stops()->create([
-                'sequence' => $sequence++,
-                'type' => TripStop::TYPE_DROPOFF,
+            $assignment->assign($order, $trip, [
                 'address' => $stop->address,
                 'lat' => $stop->lat,
                 'lng' => $stop->lng,
-                'delivery_order_id' => $order->id,
-                'status' => TripStop::STATUS_PENDING,
-            ]);
-
-            $order->update([
-                'trip_id' => $trip->id,
-                'status' => DeliveryOrder::STATUS_ASSIGNED,
             ]);
         }
 

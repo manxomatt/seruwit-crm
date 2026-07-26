@@ -10,14 +10,15 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Orders\Http\Requests\AssignTripRequest;
+use Modules\Orders\Http\Requests\BatchAssignTripRequest;
 use Modules\Orders\Http\Requests\StoreDeliveryOrderRequest;
 use Modules\Orders\Http\Requests\UpdateDeliveryOrderRequest;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Support\DeliveryOrderStock;
+use Modules\Orders\Support\DeliveryOrderTripAssignment;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Models\Trip;
-use Modules\TransportationManagement\Models\TripStop;
 
 class DeliveryOrderController extends Controller
 {
@@ -36,8 +37,10 @@ class DeliveryOrderController extends Controller
     {
         $user = Auth::user();
 
+        $queue = request('queue');
+
         $orders = DeliveryOrder::query()
-            ->with(['partner', 'trip'])
+            ->with(['partner', 'trip', 'goodsIssueNote:id,gin_number'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
@@ -46,6 +49,11 @@ class DeliveryOrderController extends Controller
                 });
             })
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
+            ->when($queue === 'ready_from_gin', function ($query) {
+                $query->where('status', DeliveryOrder::STATUS_CONFIRMED)
+                    ->whereNotNull('goods_issue_note_id')
+                    ->whereNull('trip_id');
+            })
             ->latest('order_date')
             ->paginate(15)
             ->withQueryString();
@@ -55,12 +63,20 @@ class DeliveryOrderController extends Controller
             'filters' => [
                 'search' => request('search'),
                 'status' => request('status'),
+                'queue' => $queue,
             ],
             'can' => [
                 'create' => $user->hasPermissionFor('orders', 'create'),
                 'update' => $user->hasPermissionFor('orders', 'update'),
                 'delete' => $user->hasPermissionFor('orders', 'delete'),
             ],
+            'assignableTrips' => $user->hasPermissionFor('orders', 'update')
+                ? Trip::query()
+                    ->where('status', Trip::STATUS_SCHEDULED)
+                    ->with(['vehicle:id,name,plate_number', 'driver:id,name'])
+                    ->orderBy('scheduled_at')
+                    ->get(['id', 'code', 'vehicle_id', 'driver_id', 'origin', 'destination', 'scheduled_at'])
+                : [],
         ]);
     }
 
@@ -99,6 +115,7 @@ class DeliveryOrderController extends Controller
             'partner',
             'trip.vehicle',
             'trip.driver',
+            'goodsIssueNote:id,gin_number,status',
             'items.product',
             'pod.photos',
             'pod.items.deliveryOrderItem.product',
@@ -278,23 +295,37 @@ class DeliveryOrderController extends Controller
         $trip = Trip::findOrFail($request->validated()['trip_id']);
 
         DB::transaction(function () use ($order, $trip) {
-            $order->update([
-                'trip_id' => $trip->id,
-                'status' => DeliveryOrder::STATUS_ASSIGNED,
-            ]);
-
-            $trip->stops()->create([
-                'sequence' => ((int) $trip->stops()->max('sequence')) + 1,
-                'type' => TripStop::TYPE_DROPOFF,
-                'address' => $order->delivery_address,
-                'lat' => $order->delivery_lat,
-                'lng' => $order->delivery_lng,
-                'delivery_order_id' => $order->id,
-                'status' => TripStop::STATUS_PENDING,
-            ]);
+            app(DeliveryOrderTripAssignment::class)->assign($order, $trip);
         });
 
         return back()->with('success', __('orders.messages.assigned', ['code' => $trip->code]));
+    }
+
+    /**
+     * Consolidate multiple confirmed orders onto one scheduled trip.
+     */
+    public function batchAssignTrip(BatchAssignTripRequest $request): RedirectResponse
+    {
+        $trip = Trip::query()->findOrFail($request->validated()['trip_id']);
+        $ids = collect($request->validated()['delivery_order_ids'])->unique()->values();
+
+        DB::transaction(function () use ($ids, $trip): void {
+            $orders = DeliveryOrder::query()
+                ->whereIn('id', $ids)
+                ->lockForUpdate()
+                ->get();
+
+            $assignment = app(DeliveryOrderTripAssignment::class);
+
+            foreach ($orders as $order) {
+                $assignment->assign($order, $trip);
+            }
+        });
+
+        return back()->with('success', __('orders.messages.batch_assigned', [
+            'count' => $ids->count(),
+            'code' => $trip->code,
+        ]));
     }
 
     /**
@@ -312,15 +343,7 @@ class DeliveryOrderController extends Controller
         }
 
         DB::transaction(function () use ($order) {
-            TripStop::query()
-                ->where('delivery_order_id', $order->id)
-                ->where('status', TripStop::STATUS_PENDING)
-                ->delete();
-
-            $order->update([
-                'trip_id' => null,
-                'status' => DeliveryOrder::STATUS_CONFIRMED,
-            ]);
+            app(DeliveryOrderTripAssignment::class)->unassign($order);
         });
 
         return back()->with('success', __('orders.messages.unassigned'));

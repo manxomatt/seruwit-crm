@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Surat Jalan {{ $order->code }}</title>
+    <title>Surat Jalan Pengiriman {{ $order->code }}</title>
     <style>
         @page { margin: 28px 36px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; }
@@ -26,7 +26,7 @@
     </style>
 </head>
 <body>
-    <h1>Surat Jalan</h1>
+    <h1>Surat Jalan Pengiriman</h1>
     <p class="subtitle">{{ $order->code }} &mdash; {{ $order->order_date?->format('d/m/Y') }}</p>
 
     <table class="meta">

@@ -73,11 +73,39 @@ class OrderTripSyncTest extends TestCase
         $trip = Trip::factory()->inProgress()->create();
         $order = DeliveryOrder::factory()->assigned($trip)->create(['status' => DeliveryOrder::STATUS_IN_TRANSIT]);
 
-        $this->actingAs($user)->post(route('module.transportation.trips.complete', $trip));
+        $this->actingAs($user)
+            ->post(route('module.transportation.trips.complete', $trip))
+            ->assertSessionHas('success')
+            ->assertSessionHas('warning');
 
         $order->refresh();
         $this->assertSame(DeliveryOrder::STATUS_DELIVERED, $order->status);
         $this->assertNotNull($order->delivered_at);
+    }
+
+    public function test_require_pod_setting_blocks_trip_complete_for_from_gin_orders(): void
+    {
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => 'orders.require_pod_before_trip_complete'],
+            ['group' => 'orders', 'value' => 'from_gin', 'type' => 'text', 'label' => 'Require POD']
+        );
+
+        $user = $this->createAdminUser();
+        $trip = Trip::factory()->inProgress()->create();
+        $gin = \Modules\Sales\Models\GoodsIssueNote::factory()->create([
+            'status' => \Modules\Sales\Models\GoodsIssueNote::STATUS_CONFIRMED,
+        ]);
+        $order = DeliveryOrder::factory()->assigned($trip)->create([
+            'status' => DeliveryOrder::STATUS_IN_TRANSIT,
+            'goods_issue_note_id' => $gin->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('module.transportation.trips.complete', $trip))
+            ->assertSessionHas('error');
+
+        $this->assertSame(Trip::STATUS_IN_PROGRESS, $trip->fresh()->status);
+        $this->assertSame(DeliveryOrder::STATUS_IN_TRANSIT, $order->fresh()->status);
     }
 
     public function test_cancelling_a_trip_releases_its_orders_for_replanning(): void

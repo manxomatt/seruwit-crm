@@ -66,7 +66,9 @@ interface DeliveryOrderSummary {
     code: string;
     status: string;
     delivery_address: string;
+    goods_issue_note_id?: number | null;
     partner: { id: number; name: string } | null;
+    goods_issue_note?: { id: number; gin_number: string } | null;
 }
 
 interface Trip {
@@ -505,11 +507,17 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                                     {trip.delivery_orders.map((order) => (
                                         <li key={order.id} className="flex items-start justify-between rounded-md border border-gray-200 p-3">
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900">
+                                                <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-900">
                                                     <Link href={prefixedRoute('orders.show', order.id)} className="text-indigo-600 hover:text-indigo-900">
                                                         {order.code}
                                                     </Link>
                                                     {order.partner ? ` — ${order.partner.name}` : ''}
+                                                    {order.goods_issue_note_id && (
+                                                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                                                            {t('orders.show.from_gin')}
+                                                            {order.goods_issue_note ? ` · ${order.goods_issue_note.gin_number}` : ''}
+                                                        </span>
+                                                    )}
                                                 </p>
                                                 <p className="text-sm text-gray-500">{order.delivery_address}</p>
                                             </div>

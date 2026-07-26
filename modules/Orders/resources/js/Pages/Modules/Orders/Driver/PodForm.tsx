@@ -22,6 +22,7 @@ interface Order {
 interface Props {
     driverName: string;
     order: Order;
+    fromGin?: boolean;
 }
 
 interface PodItemInput {
@@ -62,7 +63,7 @@ function downscale(file: File, maxEdge = 1280, quality = 0.7): Promise<string> {
     });
 }
 
-export default function PodForm({ driverName, order }: Props): JSX.Element {
+export default function PodForm({ driverName, order, fromGin = false }: Props): JSX.Element {
     const { t } = useTrans();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const drawing = useRef(false);
@@ -269,6 +270,11 @@ export default function PodForm({ driverName, order }: Props): JSX.Element {
 
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <span className="text-sm font-medium text-gray-700">{t('orders.driver.pod.items')}</span>
+                    {fromGin && data.items.some((item) => Number(item.returned_quantity) > 0) && (
+                        <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                            {t('orders.driver.pod.return_stock_hint')}
+                        </p>
+                    )}
                     <div className="mt-2 space-y-4">
                         {order.items.map((item, index) => {
                             const input = data.items[index];

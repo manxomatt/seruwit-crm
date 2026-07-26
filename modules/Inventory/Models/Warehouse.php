@@ -15,8 +15,21 @@ class Warehouse extends Model
     protected $fillable = [
         'name',
         'location',
+        'latitude',
+        'longitude',
         'status',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+        ];
+    }
 
     protected static function newFactory(): Factory
     {

@@ -136,6 +136,8 @@ return [
         'trip_deleted' => 'Trip deleted successfully.',
         'trip_started' => 'Trip started.',
         'trip_completed' => 'Trip completed.',
+        'completed_without_pod' => 'Trip completed, but :count delivery order(s) have no POD. Consider capturing proof of delivery before closing operations.',
+        'require_pod_before_complete' => 'Cannot complete trip: :count order(s) still lack POD (:codes). Capture POD first or change the require-POD setting.',
         'trip_cancelled' => 'Trip cancelled.',
         'edit_scheduled_only' => 'Only a scheduled trip can be edited.',
         'delete_in_progress' => 'An in-progress trip cannot be deleted.',

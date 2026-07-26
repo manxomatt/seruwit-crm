@@ -75,7 +75,9 @@ interface Order {
     confirmed_at: string | null;
     delivered_at: string | null;
     cancelled_reason: string | null;
+    goods_issue_note_id?: number | null;
     partner: { id: number; code: string; name: string };
+    goods_issue_note?: { id: number; gin_number: string; status: string } | null;
     trip: {
         id: number;
         code: string;
@@ -132,6 +134,10 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
     const isAssigned = order.status === 'assigned';
     const hasSuratJalan = ['assigned', 'in_transit', 'delivered'].includes(order.status);
     const canUnassign = isAssigned && order.trip?.status === 'scheduled';
+    const podReturnedQty = order.pod
+        ? order.pod.items.reduce((sum, item) => sum + Number(item.returned_quantity || 0), 0)
+        : 0;
+    const canCreateSalesReturn = Boolean(order.goods_issue_note && podReturnedQty > 0);
 
     const confirm = () => {
         router.post(prefixedRoute('orders.confirm', order.id), {}, { preserveScroll: true });
@@ -191,6 +197,11 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(order.status)}`}>
                             {t(`orders.status.${order.status}`, undefined, order.status)}
                         </span>
+                        {order.goods_issue_note_id && (
+                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
+                                {t('orders.show.from_gin')}
+                            </span>
+                        )}
                     </div>
                     <div className="flex gap-2">
                         {can.update && isDraft && (
@@ -237,6 +248,19 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                                     ({order.partner.code})
                                 </dd>
                             </div>
+                            {order.goods_issue_note && (
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">{t('orders.show.gin')}</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">
+                                        <Link
+                                            href={prefixedRoute('sales.gin.show', order.goods_issue_note.id)}
+                                            className="text-indigo-600 hover:text-indigo-900"
+                                        >
+                                            {order.goods_issue_note.gin_number}
+                                        </Link>
+                                    </dd>
+                                </div>
+                            )}
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('orders.show.order_date')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{order.order_date}</dd>
@@ -423,13 +447,29 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
                                                 <td className="py-2 pr-4">{podItem.delivery_order_item?.product?.name ?? '—'}</td>
                                                 <td className="py-2 pr-4">{podItem.accepted_quantity}</td>
                                                 <td className="py-2 pr-4">{podItem.rejected_quantity}</td>
-                                                <td className="py-2 pr-4">{podItem.returned_quantity}</td>
+                                                <td className={`py-2 pr-4 ${Number(podItem.returned_quantity) > 0 ? 'font-medium text-amber-700' : ''}`}>
+                                                    {podItem.returned_quantity}
+                                                </td>
                                                 <td className="py-2">{podItem.reason ?? '—'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
+
+                            {podReturnedQty > 0 && (
+                                <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+                                    <p className="text-sm text-amber-900">{t('orders.show.pod.returned_hint')}</p>
+                                    {canCreateSalesReturn && order.goods_issue_note && (
+                                        <Link
+                                            href={prefixedRoute('sales.gin.return.create', order.goods_issue_note.id)}
+                                            className="mt-2 inline-block text-sm font-medium text-amber-900 underline hover:text-amber-700"
+                                        >
+                                            {t('orders.show.pod.create_sales_return')}
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
 
                             {order.pod.notes && (
                                 <div className="mt-4">

@@ -162,7 +162,11 @@ class RouteOptimizationTest extends TestCase
         }
 
         $this->assertSame($plan->routes->count(), Trip::query()->count());
-        $this->assertSame(3, TripStop::query()->count());
+        $this->assertSame(3, TripStop::query()->where('type', TripStop::TYPE_DROPOFF)->count());
+        $this->assertSame(
+            Trip::query()->count(),
+            TripStop::query()->where('type', TripStop::TYPE_PICKUP)->count()
+        );
         $this->assertTrue(Trip::query()->where('driver_id', $driver->id)->exists());
     }
 

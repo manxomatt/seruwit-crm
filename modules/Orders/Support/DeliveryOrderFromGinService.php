@@ -2,6 +2,7 @@
 
 namespace Modules\Orders\Support;
 
+use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -119,8 +120,25 @@ class DeliveryOrderFromGinService
                 throw new RuntimeException(__('sales.messages.do_gin_need_items'));
             }
 
+            if ($this->shouldAutoConfirm($order)) {
+                DeliveryOrderStock::reserve($order);
+                $order->update([
+                    'status' => DeliveryOrder::STATUS_CONFIRMED,
+                    'confirmed_at' => now(),
+                ]);
+            }
+
             return $order->fresh(['items', 'partner']);
         });
+    }
+
+    private function shouldAutoConfirm(DeliveryOrder $order): bool
+    {
+        if (Setting::getValue('orders.auto_confirm_do_from_gin', '0') !== '1') {
+            return false;
+        }
+
+        return filled($order->pickup_address) && filled($order->delivery_address);
     }
 
     /**

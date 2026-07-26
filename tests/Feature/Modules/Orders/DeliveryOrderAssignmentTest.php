@@ -41,7 +41,38 @@ class DeliveryOrderAssignmentTest extends TestCase
         $this->assertSame($trip->id, $stop->trip_id);
         $this->assertSame(TripStop::TYPE_DROPOFF, $stop->type);
         $this->assertSame($order->delivery_address, $stop->address);
-        $this->assertSame(1, $stop->sequence);
+        $this->assertSame(2, $stop->sequence);
+
+        $pickup = TripStop::query()
+            ->where('trip_id', $trip->id)
+            ->where('type', TripStop::TYPE_PICKUP)
+            ->first();
+        $this->assertNotNull($pickup);
+        $this->assertSame(1, $pickup->sequence);
+        $this->assertSame($order->pickup_address, $pickup->address);
+    }
+
+    public function test_assigning_syncs_trip_manifest_items(): void
+    {
+        $user = $this->createAdminUser();
+        $order = DeliveryOrder::factory()->confirmed()->create();
+        $item = \Modules\Orders\Models\DeliveryOrderItem::factory()->create([
+            'delivery_order_id' => $order->id,
+            'quantity' => 12,
+        ]);
+        $trip = Trip::factory()->create();
+
+        $this->actingAs($user)->post(route('module.orders.assign-trip', $order), [
+            'trip_id' => $trip->id,
+        ])->assertSessionHas('success');
+
+        $manifest = \Modules\TransportationManagement\Models\TripItem::query()
+            ->where('trip_id', $trip->id)
+            ->where('product_id', $item->product_id)
+            ->first();
+
+        $this->assertNotNull($manifest);
+        $this->assertEquals(12, (float) $manifest->quantity);
     }
 
     public function test_the_dropoff_stop_is_appended_after_existing_stops(): void
@@ -56,7 +87,7 @@ class DeliveryOrderAssignmentTest extends TestCase
         ]);
 
         $stop = TripStop::where('delivery_order_id', $order->id)->first();
-        $this->assertSame(2, $stop->sequence);
+        $this->assertSame(3, $stop->sequence);
     }
 
     public function test_a_draft_order_cannot_be_assigned(): void
@@ -101,6 +132,33 @@ class DeliveryOrderAssignmentTest extends TestCase
         $this->assertSame(DeliveryOrder::STATUS_CONFIRMED, $order->status);
         $this->assertNull($order->trip_id);
         $this->assertDatabaseMissing('trip_stops', ['id' => $stop->id]);
+    }
+
+    public function test_batch_assign_consolidates_confirmed_orders_onto_one_trip(): void
+    {
+        $user = $this->createAdminUser();
+        $trip = Trip::factory()->create();
+        $orders = DeliveryOrder::factory()->confirmed()->count(2)->create();
+        foreach ($orders as $order) {
+            \Modules\Orders\Models\DeliveryOrderItem::factory()->create([
+                'delivery_order_id' => $order->id,
+                'quantity' => 5,
+            ]);
+        }
+
+        $this->actingAs($user)->post(route('module.orders.batch-assign-trip'), [
+            'trip_id' => $trip->id,
+            'delivery_order_ids' => $orders->pluck('id')->all(),
+        ])->assertSessionHas('success');
+
+        foreach ($orders as $order) {
+            $order->refresh();
+            $this->assertSame(DeliveryOrder::STATUS_ASSIGNED, $order->status);
+            $this->assertSame($trip->id, $order->trip_id);
+        }
+
+        $this->assertSame(2, TripStop::query()->where('type', TripStop::TYPE_DROPOFF)->count());
+        $this->assertSame(1, TripStop::query()->where('type', TripStop::TYPE_PICKUP)->count());
     }
 
     public function test_an_order_cannot_be_unassigned_once_the_trip_started(): void

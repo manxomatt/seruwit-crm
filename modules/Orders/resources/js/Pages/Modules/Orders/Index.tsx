@@ -1,11 +1,14 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
+import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, Link, router } from '@inertiajs/react';
-import { useState, FormEventHandler } from 'react';
+import InputLabel from '@/Components/InputLabel';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useMemo, useState, FormEventHandler } from 'react';
 
 interface Order {
     id: number;
@@ -14,8 +17,20 @@ interface Order {
     order_date: string;
     pickup_address: string;
     delivery_address: string;
+    goods_issue_note_id?: number | null;
     partner: { id: number; code: string; name: string };
     trip: { id: number; code: string } | null;
+    goods_issue_note?: { id: number; gin_number: string } | null;
+}
+
+interface AssignableTrip {
+    id: number;
+    code: string;
+    origin: string;
+    destination: string;
+    scheduled_at: string;
+    vehicle: { id: number; name: string; plate_number: string } | null;
+    driver: { id: number; name: string } | null;
 }
 
 interface PaginatedOrders {
@@ -30,12 +45,14 @@ interface PaginatedOrders {
 interface Filters {
     search: string | null;
     status: string | null;
+    queue: string | null;
 }
 
 interface Props {
     orders: PaginatedOrders;
     filters: Filters;
-    can: { create: boolean };
+    can: { create: boolean; update?: boolean };
+    assignableTrips?: AssignableTrip[];
 }
 
 const STATUSES = ['draft', 'confirmed', 'assigned', 'in_transit', 'delivered', 'cancelled'];
@@ -64,16 +81,29 @@ const EyeIcon = () => (
     </svg>
 );
 
-export default function Index({ orders, filters, can }: Props): JSX.Element {
+export default function Index({ orders, filters, can, assignableTrips = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
+    const [selected, setSelected] = useState<number[]>([]);
+    const [showBatchModal, setShowBatchModal] = useState(false);
+
+    const batchForm = useForm({
+        trip_id: '',
+        delivery_order_ids: [] as number[],
+    });
+
+    const selectableIds = useMemo(
+        () => orders.data.filter((order) => order.status === 'confirmed').map((order) => order.id),
+        [orders.data],
+    );
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
         router.get(prefixedRoute('orders.index'), {
             search: search || undefined,
             status: filters.status || undefined,
+            queue: filters.queue || undefined,
         }, { preserveState: true, replace: true });
     };
 
@@ -81,7 +111,49 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
         router.get(prefixedRoute('orders.index'), {
             search: search || undefined,
             status: status || undefined,
+            queue: filters.queue || undefined,
         }, { preserveState: true, replace: true });
+    };
+
+    const handleQueueFilter = (queue: string) => {
+        router.get(prefixedRoute('orders.index'), {
+            search: search || undefined,
+            status: queue ? undefined : (filters.status || undefined),
+            queue: queue || undefined,
+        }, { preserveState: true, replace: true });
+    };
+
+    const toggleOne = (id: number) => {
+        setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    };
+
+    const toggleAllSelectable = () => {
+        if (selectableIds.every((id) => selected.includes(id))) {
+            setSelected((prev) => prev.filter((id) => !selectableIds.includes(id)));
+            return;
+        }
+        setSelected((prev) => Array.from(new Set([...prev, ...selectableIds])));
+    };
+
+    const openBatchModal = () => {
+        batchForm.setData({
+            trip_id: '',
+            delivery_order_ids: selected,
+        });
+        setShowBatchModal(true);
+    };
+
+    const submitBatch: FormEventHandler = (e) => {
+        e.preventDefault();
+        batchForm.setData('delivery_order_ids', selected);
+        batchForm.post(prefixedRoute('orders.batch-assign-trip'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowBatchModal(false);
+                setSelected([]);
+                batchForm.reset();
+            },
+        });
     };
 
     return (
@@ -124,8 +196,29 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                 })),
                             ]}
                         />
+                        <Select
+                            className="w-64"
+                            value={filters.queue || ''}
+                            onChange={handleQueueFilter}
+                            placeholder={t('orders.status.all')}
+                            options={[
+                                { value: '', label: t('orders.status.all') },
+                                { value: 'ready_from_gin', label: t('orders.index.queue_ready_from_gin') },
+                            ]}
+                        />
                         <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                     </form>
+
+                    {can.update && selected.length > 0 && (
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3">
+                            <p className="text-sm text-indigo-900">
+                                {t('orders.index.batch_selected', { count: selected.length })}
+                            </p>
+                            <PrimaryButton type="button" onClick={openBatchModal}>
+                                {t('orders.index.batch_assign')}
+                            </PrimaryButton>
+                        </div>
+                    )}
 
                     {orders.data.length === 0 ? (
                         <div className="py-12 text-center">
@@ -138,6 +231,17 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
+                                            {can.update && (
+                                                <th className="px-4 py-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-gray-300 text-indigo-600"
+                                                        checked={selectableIds.length > 0 && selectableIds.every((id) => selected.includes(id))}
+                                                        onChange={toggleAllSelectable}
+                                                        aria-label={t('orders.index.batch_select_all')}
+                                                    />
+                                                </th>
+                                            )}
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.code')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.partner')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('orders.index.columns.route')}</th>
@@ -150,7 +254,31 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {orders.data.map((order) => (
                                             <tr key={order.id} className="hover:bg-gray-50">
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{order.code}</td>
+                                                {can.update && (
+                                                    <td className="px-4 py-4">
+                                                        {order.status === 'confirmed' ? (
+                                                            <input
+                                                                type="checkbox"
+                                                                className="rounded border-gray-300 text-indigo-600"
+                                                                checked={selected.includes(order.id)}
+                                                                onChange={() => toggleOne(order.id)}
+                                                                aria-label={order.code}
+                                                            />
+                                                        ) : (
+                                                            <span className="inline-block w-4" />
+                                                        )}
+                                                    </td>
+                                                )}
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{order.code}</span>
+                                                        {order.goods_issue_note_id && (
+                                                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                                                                {t('orders.index.from_gin_badge')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.partner.name}</td>
                                                 <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-500">{order.pickup_address} → {order.delivery_address}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{order.order_date}</td>
@@ -209,6 +337,39 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                     )}
                 </div>
             </div>
+
+            <Modal show={showBatchModal} onClose={() => setShowBatchModal(false)} maxWidth="md">
+                <form onSubmit={submitBatch} className="p-6">
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">{t('orders.index.batch_assign_title')}</h3>
+                    <p className="mb-4 text-sm text-gray-500">
+                        {t('orders.index.batch_assign_hint', { count: selected.length })}
+                    </p>
+                    {assignableTrips.length === 0 ? (
+                        <p className="text-sm text-gray-500">{t('orders.show.modals.assign_empty')}</p>
+                    ) : (
+                        <div>
+                            <InputLabel htmlFor="batch_trip_id" value={t('orders.show.trip.title')} />
+                            <Select
+                                id="batch_trip_id"
+                                className="mt-1"
+                                value={batchForm.data.trip_id}
+                                onChange={(value) => batchForm.setData('trip_id', value)}
+                                placeholder={t('orders.show.modals.select_trip')}
+                                options={assignableTrips.map((trip) => ({
+                                    value: String(trip.id),
+                                    label: `${trip.code} · ${trip.vehicle?.plate_number ?? '—'} / ${trip.driver?.name ?? '—'}`,
+                                }))}
+                            />
+                        </div>
+                    )}
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={() => setShowBatchModal(false)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={batchForm.processing || assignableTrips.length === 0 || !batchForm.data.trip_id}>
+                            {t('orders.index.batch_assign')}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
         </DynamicLayout>
     );
 }

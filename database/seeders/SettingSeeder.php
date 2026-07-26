@@ -438,6 +438,30 @@ class SettingSeeder extends Seeder
             ],
 
             // ==========================================
+            // ORDERS / LOGISTICS GROUP
+            // ==========================================
+            [
+                'key' => 'orders.auto_confirm_do_from_gin',
+                'group' => 'orders',
+                'value' => '0',
+                'type' => 'boolean',
+                'label' => 'Auto-confirm DO from GIN',
+                'description' => 'When enabled, creating a delivery order from a confirmed GIN immediately confirms it (ready to assign to a trip).',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'key' => 'orders.require_pod_before_trip_complete',
+                'group' => 'orders',
+                'value' => 'off',
+                'type' => 'text',
+                'label' => 'Require POD before trip complete',
+                'description' => 'off = warning only; from_gin = block if GIN-linked DOs lack POD; all = block if any DO lacks POD.',
+                'is_public' => false,
+                'sort_order' => 2,
+            ],
+
+            // ==========================================
             // APPEARANCE GROUP
             // ==========================================
             [

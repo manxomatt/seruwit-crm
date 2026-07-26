@@ -169,4 +169,44 @@ class GinToDeliveryOrderTest extends TestCase
         $this->assertSame(GoodsIssueNote::STATUS_CONFIRMED, $gin->fresh()->status);
         $this->assertSame(1, DeliveryOrder::query()->where('goods_issue_note_id', $gin->id)->count());
     }
+
+    public function test_auto_confirm_setting_confirms_do_from_gin(): void
+    {
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => 'orders.auto_confirm_do_from_gin'],
+            ['group' => 'orders', 'value' => '1', 'type' => 'boolean', 'label' => 'Auto-confirm DO from GIN']
+        );
+
+        $user = $this->createAdminUser();
+        [$gin] = $this->confirmedGin();
+
+        $this->actingAs($user)
+            ->post(route('module.sales.gin.delivery-order', $gin, false))
+            ->assertRedirect();
+
+        $order = DeliveryOrder::query()->where('goods_issue_note_id', $gin->id)->firstOrFail();
+        $this->assertSame(DeliveryOrder::STATUS_CONFIRMED, $order->status);
+        $this->assertNotNull($order->confirmed_at);
+    }
+
+    public function test_ready_from_gin_queue_lists_confirmed_unassigned_dos(): void
+    {
+        $user = $this->createAdminUser();
+        [$gin] = $this->confirmedGin();
+
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => 'orders.auto_confirm_do_from_gin'],
+            ['group' => 'orders', 'value' => '1', 'type' => 'boolean', 'label' => 'Auto-confirm']
+        );
+
+        $this->actingAs($user)->post(route('module.sales.gin.delivery-order', $gin, false));
+
+        $this->actingAs($user)
+            ->get(route('module.orders.index', ['queue' => 'ready_from_gin'], false))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Orders/Index')
+                ->has('orders.data', 1)
+                ->where('filters.queue', 'ready_from_gin'));
+    }
 }

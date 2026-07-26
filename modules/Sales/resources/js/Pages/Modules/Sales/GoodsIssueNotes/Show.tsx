@@ -38,7 +38,13 @@ interface Gin {
 
 interface Props {
     gin: Gin;
-    deliveryOrder?: { id: number; code: string; status: string } | null;
+    deliveryOrder?: {
+        id: number;
+        code: string;
+        status: string;
+        trip_id?: number | null;
+        trip?: { id: number; code: string } | null;
+    } | null;
     can: { issue: boolean; void: boolean; invoice: boolean; return: boolean; create_do?: boolean };
 }
 
@@ -103,6 +109,13 @@ export default function Show({ gin, deliveryOrder = null, can }: Props): JSX.Ele
                             <Link href={prefixedRoute('orders.show', deliveryOrder.id)}>
                                 <SecondaryButton type="button">
                                     {t('sales.gin.show.view_do')} ({deliveryOrder.code})
+                                </SecondaryButton>
+                            </Link>
+                        )}
+                        {deliveryOrder?.trip && (
+                            <Link href={prefixedRoute('transportation.trips.show', deliveryOrder.trip.id)}>
+                                <SecondaryButton type="button">
+                                    {t('sales.gin.show.view_trip')} ({deliveryOrder.trip.code})
                                 </SecondaryButton>
                             </Link>
                         )}

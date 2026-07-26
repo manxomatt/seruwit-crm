@@ -133,6 +133,7 @@ return [
         'pack_created' => 'Pack created with label.',
         'pack_sealed' => 'Pack sealed.',
         'do_status_invalid' => 'Pick list can only be generated for confirmed, assigned, or in-transit orders.',
+        'do_from_gin_skip' => 'Delivery orders from a GIN do not need a pick list — stock already left the warehouse. Assign the order to a trip instead.',
         'do_no_items' => 'Delivery order has no items to pick.',
         'active_pick_list_exists' => 'An active pick list already exists for this delivery order.',
         'no_pickable_products' => 'No pickable (non-service) products on this delivery order.',

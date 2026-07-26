@@ -40,6 +40,7 @@ class PodController extends Controller
         return Inertia::render('Modules/Orders/Driver/PodForm', [
             'driverName' => $driver->name,
             'order' => $order,
+            'fromGin' => $order->isFromGin(),
         ]);
     }
 

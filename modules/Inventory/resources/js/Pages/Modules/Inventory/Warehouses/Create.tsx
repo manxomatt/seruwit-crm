@@ -16,6 +16,8 @@ export default function WarehouseCreate(): JSX.Element {
   const { data, setData, post, processing, errors } = useForm({
     name: '',
     location: '',
+    latitude: '',
+    longitude: '',
     status: 'active',
   })
 
@@ -56,6 +58,33 @@ export default function WarehouseCreate(): JSX.Element {
                 required
               />
               <InputError message={errors.location} className="mt-2" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <InputLabel htmlFor="latitude" value={t('inventory.warehouses.latitude')} />
+                <TextInput
+                  id="latitude"
+                  type="number"
+                  step="0.0000001"
+                  className="mt-1 block w-full"
+                  value={data.latitude}
+                  onChange={(e) => setData('latitude', e.target.value)}
+                />
+                <InputError message={errors.latitude} className="mt-2" />
+              </div>
+              <div>
+                <InputLabel htmlFor="longitude" value={t('inventory.warehouses.longitude')} />
+                <TextInput
+                  id="longitude"
+                  type="number"
+                  step="0.0000001"
+                  className="mt-1 block w-full"
+                  value={data.longitude}
+                  onChange={(e) => setData('longitude', e.target.value)}
+                />
+                <InputError message={errors.longitude} className="mt-2" />
+              </div>
             </div>
 
             <div>
