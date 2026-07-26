@@ -1,5 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { Head, Link, router } from '@inertiajs/react';
@@ -119,38 +120,42 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                     <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
                 </form>
 
-                <select
+                <Select
+                    className="w-44"
                     value={filters.status ?? ''}
-                    onChange={(e) => applyFilters({ status: e.target.value || undefined })}
-                    className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                    <option value="">{t('maintenance.status.all')}</option>
-                    {statusOptions(t).map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                </select>
+                    onChange={(val) => applyFilters({ status: val || undefined })}
+                    placeholder={t('maintenance.status.all')}
+                    options={[
+                        { value: '', label: t('maintenance.status.all') },
+                        ...statusOptions(t),
+                    ]}
+                />
 
-                <select
+                <Select
+                    className="w-44"
                     value={filters.priority ?? ''}
-                    onChange={(e) => applyFilters({ priority: e.target.value || undefined })}
-                    className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                    <option value="">{t('maintenance.priority.all')}</option>
-                    {priorityOptions(t).map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                </select>
+                    onChange={(val) => applyFilters({ priority: val || undefined })}
+                    placeholder={t('maintenance.priority.all')}
+                    options={[
+                        { value: '', label: t('maintenance.priority.all') },
+                        ...priorityOptions(t),
+                    ]}
+                />
 
-                <select
+                <Select
+                    className="w-64"
                     value={filters.vehicle_id ?? ''}
-                    onChange={(e) => applyFilters({ vehicle_id: e.target.value || undefined })}
-                    className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                    <option value="">{t('maintenance.work_orders.all_vehicles')}</option>
-                    {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>{v.name} — {v.plate_number}</option>
-                    ))}
-                </select>
+                    onChange={(val) => applyFilters({ vehicle_id: val || undefined })}
+                    searchable
+                    placeholder={t('maintenance.work_orders.all_vehicles')}
+                    options={[
+                        { value: '', label: t('maintenance.work_orders.all_vehicles') },
+                        ...vehicles.map((v) => ({
+                            value: String(v.id),
+                            label: `${v.name} — ${v.plate_number}`,
+                        })),
+                    ]}
+                />
             </div>
 
             {/* Table */}

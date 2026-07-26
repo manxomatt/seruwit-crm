@@ -105,6 +105,9 @@ class MaintenanceModule implements ModuleContract
             ->middleware('permission:maintenance,update')
             ->name('maintenance.work-orders.update');
 
+        Route::patch('/maintenance/work-orders/{workOrder}/status', [WorkOrderController::class, 'updateStatus'])
+            ->name('maintenance.work-orders.update-status');
+
         Route::delete('/maintenance/work-orders/{workOrder}', [WorkOrderController::class, 'destroy'])
             ->middleware('permission:maintenance,delete')
             ->name('maintenance.work-orders.destroy');

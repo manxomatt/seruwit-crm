@@ -159,35 +159,47 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
 
                         <div>
                             <InputLabel htmlFor="vehicle_id" value={t('maintenance.work_orders.vehicle')} />
-                            <Select id="vehicle_id" className="mt-1" value={data.vehicle_id} onChange={(val) => setData('vehicle_id', val)}
+                            <Select
+                                id="vehicle_id"
+                                className="mt-1 w-full"
+                                value={data.vehicle_id}
+                                onChange={(val) => setData('vehicle_id', val)}
+                                searchable
                                 options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))}
-                                placeholder={t('maintenance.work_orders.select_vehicle')} />
+                                placeholder={t('maintenance.work_orders.select_vehicle')}
+                            />
                             <InputError message={errors.vehicle_id} className="mt-2" />
                         </div>
 
                         <div>
                             <InputLabel htmlFor="category_id" value={t('maintenance.work_orders.category')} />
-                            <Select id="category_id" className="mt-1" value={data.category_id} onChange={(val) => setData('category_id', val)}
+                            <Select
+                                id="category_id"
+                                className="mt-1 w-full"
+                                value={data.category_id}
+                                onChange={(val) => setData('category_id', val)}
+                                searchable
                                 options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
-                                placeholder={t('maintenance.work_orders.select_category')} />
+                                placeholder={t('maintenance.work_orders.select_category')}
+                            />
                             <InputError message={errors.category_id} className="mt-2" />
                         </div>
 
                         <div>
                             <InputLabel htmlFor="status" value={t('maintenance.work_orders.status_label')} />
-                            <Select id="status" className="mt-1" value={data.status} onChange={(val) => setData('status', val)} options={statusOptions(t)} />
+                            <Select id="status" className="mt-1 w-full" value={data.status} onChange={(val) => setData('status', val)} options={statusOptions(t)} />
                             <InputError message={errors.status} className="mt-2" />
                         </div>
 
                         <div>
                             <InputLabel htmlFor="priority" value={t('maintenance.work_orders.priority_label')} />
-                            <Select id="priority" className="mt-1" value={data.priority} onChange={(val) => setData('priority', val)} options={priorityOptions(t)} />
+                            <Select id="priority" className="mt-1 w-full" value={data.priority} onChange={(val) => setData('priority', val)} options={priorityOptions(t)} />
                             <InputError message={errors.priority} className="mt-2" />
                         </div>
 
                         <div>
                             <InputLabel htmlFor="type" value={t('maintenance.work_orders.type_label')} />
-                            <Select id="type" className="mt-1" value={data.type} onChange={(val) => setData('type', val)} options={typeOptions(t)} />
+                            <Select id="type" className="mt-1 w-full" value={data.type} onChange={(val) => setData('type', val)} options={typeOptions(t)} />
                             <InputError message={errors.type} className="mt-2" />
                         </div>
 
@@ -310,28 +322,35 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts }
                                     {data.items.map((item, i) => (
                                         <tr key={i}>
                                             <td className="py-2 pr-2">
-                                                <select value={item.item_type} onChange={(e) => updateItem(i, 'item_type', e.target.value)}
-                                                    className="rounded border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                    {itemTypeOptions(t).map((o) => (
-                                                        <option key={o.value} value={o.value}>{o.label}</option>
-                                                    ))}
-                                                </select>
+                                                <Select
+                                                    className="w-36"
+                                                    value={item.item_type}
+                                                    onChange={(val) => updateItem(i, 'item_type', val)}
+                                                    options={itemTypeOptions(t)}
+                                                />
                                             </td>
                                             <td className="py-2 pr-2">
                                                 {item.item_type === 'part' ? (
-                                                    <select
-                                                        value={item.product_id ?? ''}
-                                                        onChange={(e) => selectSparePart(i, e.target.value)}
-                                                        className="w-52 rounded border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    <Select
+                                                        className="w-52"
+                                                        value={item.product_id != null ? String(item.product_id) : ''}
+                                                        onChange={(val) => selectSparePart(i, val)}
+                                                        searchable
                                                         disabled={spareParts.length === 0}
-                                                    >
-                                                        <option value="">
-                                                            {spareParts.length === 0 ? t('maintenance.work_orders.no_spare_parts') : t('maintenance.work_orders.manual_no_stock')}
-                                                        </option>
-                                                        {spareParts.map((p) => (
-                                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                                        ))}
-                                                    </select>
+                                                        placeholder={spareParts.length === 0 ? t('maintenance.work_orders.no_spare_parts') : t('maintenance.work_orders.manual_no_stock')}
+                                                        options={[
+                                                            {
+                                                                value: '',
+                                                                label: spareParts.length === 0
+                                                                    ? t('maintenance.work_orders.no_spare_parts')
+                                                                    : t('maintenance.work_orders.manual_no_stock'),
+                                                            },
+                                                            ...spareParts.map((p) => ({
+                                                                value: String(p.id),
+                                                                label: p.name,
+                                                            })),
+                                                        ]}
+                                                    />
                                                 ) : (
                                                     <span className="text-xs text-gray-400">—</span>
                                                 )}

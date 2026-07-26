@@ -157,6 +157,13 @@ return [
         'actual_total' => 'Actual Total',
         'workshop' => 'Workshop',
         'vendor_label' => 'Vendor / Workshop',
+        'progress' => [
+            'submit' => 'Submit for Approval',
+            'approve' => 'Approve',
+            'start' => 'Start Work',
+            'complete' => 'Mark Completed',
+            'cancel' => 'Cancel',
+        ],
     ],
 
     'categories' => [
@@ -216,6 +223,10 @@ return [
         'wo_created' => 'Work order created.',
         'wo_updated' => 'Work order updated.',
         'wo_deleted' => 'Work order deleted.',
+        'wo_status_updated' => 'Work order status updated to :status.',
+        'status_required' => 'Status is required.',
+        'status_invalid' => 'Invalid status.',
+        'status_transition_invalid' => 'That status transition is not allowed.',
         'category_created' => 'Category added.',
         'category_updated' => 'Category updated.',
         'category_deleted' => 'Category deleted.',

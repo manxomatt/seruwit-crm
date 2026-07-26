@@ -157,6 +157,13 @@ return [
         'actual_total' => 'Total Aktual',
         'workshop' => 'Bengkel',
         'vendor_label' => 'Vendor / Bengkel',
+        'progress' => [
+            'submit' => 'Ajukan Persetujuan',
+            'approve' => 'Setujui',
+            'start' => 'Mulai Pekerjaan',
+            'complete' => 'Tandai Selesai',
+            'cancel' => 'Batalkan',
+        ],
     ],
 
     'categories' => [
@@ -216,6 +223,10 @@ return [
         'wo_created' => 'Work order berhasil dibuat.',
         'wo_updated' => 'Work order berhasil diperbarui.',
         'wo_deleted' => 'Work order berhasil dihapus.',
+        'wo_status_updated' => 'Status work order diperbarui menjadi :status.',
+        'status_required' => 'Status wajib diisi.',
+        'status_invalid' => 'Status tidak valid.',
+        'status_transition_invalid' => 'Perubahan status tersebut tidak diizinkan.',
         'category_created' => 'Kategori berhasil ditambahkan.',
         'category_updated' => 'Kategori berhasil diperbarui.',
         'category_deleted' => 'Kategori berhasil dihapus.',

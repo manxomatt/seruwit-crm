@@ -24,6 +24,21 @@ interface Props {
     can: { update: boolean; delete: boolean; approve: boolean };
 }
 
+type ProgressAction = {
+    status: string;
+    labelKey: string;
+    needsApprove?: boolean;
+};
+
+const NEXT_PROGRESS: Record<string, ProgressAction | null> = {
+    draft: { status: 'pending', labelKey: 'submit' },
+    pending: { status: 'approved', labelKey: 'approve', needsApprove: true },
+    approved: { status: 'in_progress', labelKey: 'start' },
+    in_progress: { status: 'completed', labelKey: 'complete' },
+    completed: null,
+    cancelled: null,
+};
+
 const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div className="flex gap-2 py-2">
         <dt className="w-40 flex-shrink-0 text-sm text-gray-500">{label}</dt>
@@ -37,10 +52,18 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
     const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
 
     const statusBadge = getStatusBadge(wo.status, t);
     const priorityBadge = getPriorityBadge(wo.priority, t);
     const typeBadge = getTypeBadge(wo.type, t);
+
+    const nextProgress = NEXT_PROGRESS[wo.status] ?? null;
+    const canAdvance =
+        nextProgress !== null &&
+        (nextProgress.needsApprove ? can.approve || can.update : can.update);
+    const canCancel =
+        can.update && !['completed', 'cancelled'].includes(wo.status);
 
     const confirmDelete = () => {
         setDeleting(true);
@@ -48,6 +71,18 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
             onSuccess: () => setShowDeleteDialog(false),
             onFinish: () => setDeleting(false),
         });
+    };
+
+    const updateStatus = (status: string) => {
+        setUpdatingStatus(true);
+        router.patch(
+            prefixedRoute('maintenance.work-orders.update-status', wo.id),
+            { status },
+            {
+                preserveScroll: true,
+                onFinish: () => setUpdatingStatus(false),
+            },
+        );
     };
 
     const partItems = wo.items?.filter((i: WorkOrderItem) => i.item_type === 'part') ?? [];
@@ -67,18 +102,39 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.work_orders.show_title')}</h2>
                         <p className="mt-1 font-mono text-sm text-gray-500">{wo.reference_number}</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {canAdvance && nextProgress && (
+                            <PrimaryButton
+                                type="button"
+                                disabled={updatingStatus}
+                                onClick={() => updateStatus(nextProgress.status)}
+                            >
+                                {updatingStatus
+                                    ? t('maintenance.actions.saving')
+                                    : t(`maintenance.work_orders.progress.${nextProgress.labelKey}`)}
+                            </PrimaryButton>
+                        )}
+                        {canCancel && (
+                            <button
+                                type="button"
+                                disabled={updatingStatus}
+                                onClick={() => updateStatus('cancelled')}
+                                className="rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                            >
+                                {t('maintenance.work_orders.progress.cancel')}
+                            </button>
+                        )}
                         <Link href={prefixedRoute('maintenance.work-orders.index')}>
                             <SecondaryButton>{t('maintenance.actions.back')}</SecondaryButton>
                         </Link>
                         {can.update && (
                             <Link href={prefixedRoute('maintenance.work-orders.edit', wo.id)}>
-                                <PrimaryButton>{t('common.edit')}</PrimaryButton>
+                                <SecondaryButton>{t('common.edit')}</SecondaryButton>
                             </Link>
                         )}
                         {can.delete && (

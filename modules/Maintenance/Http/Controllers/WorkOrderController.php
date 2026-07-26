@@ -11,6 +11,7 @@ use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Maintenance\Http\Requests\StoreWorkOrderRequest;
 use Modules\Maintenance\Http\Requests\UpdateWorkOrderRequest;
+use Modules\Maintenance\Http\Requests\UpdateWorkOrderStatusRequest;
 use Modules\Maintenance\Models\MaintenanceCategory;
 use Modules\Maintenance\Models\WorkOrder;
 use Modules\Maintenance\Models\WorkOrderItem;
@@ -165,23 +166,9 @@ class WorkOrderController extends Controller
         $items = $validated['items'] ?? null;
         unset($validated['items']);
 
-        DB::transaction(function () use ($workOrder, $validated, $items) {
+        DB::transaction(function () use ($workOrder, $validated, $items): void {
             $originalStatus = $workOrder->status;
-
-            // Auto-set approved_by when status transitions to approved
-            if ($validated['status'] === WorkOrder::STATUS_APPROVED && $workOrder->status !== WorkOrder::STATUS_APPROVED) {
-                $validated['approved_by'] = Auth::id();
-                $validated['approved_at'] = now();
-            }
-
-            // Auto-set started_at / completed_at timestamps
-            if ($validated['status'] === WorkOrder::STATUS_IN_PROGRESS && ! $workOrder->started_at) {
-                $validated['started_at'] = $validated['started_at'] ?? now();
-            }
-
-            if ($validated['status'] === WorkOrder::STATUS_COMPLETED && ! $workOrder->completed_at) {
-                $validated['completed_at'] = $validated['completed_at'] ?? now();
-            }
+            $validated = $this->withStatusSideEffects($workOrder, $validated);
 
             $workOrder->update($validated);
 
@@ -201,21 +188,85 @@ class WorkOrderController extends Controller
                 }
             }
 
-            // Draw sparepart stock down once the order is completed, and hand it
-            // back if a completed order is reopened or cancelled. Items are
-            // reloaded so the deduction reflects the just-synced part lines.
-            $workOrder->load('items.product');
-            $newStatus = $workOrder->status;
-
-            if ($newStatus === WorkOrder::STATUS_COMPLETED && $originalStatus !== WorkOrder::STATUS_COMPLETED) {
-                MaintenanceStockRecorder::deduct($workOrder);
-            } elseif ($originalStatus === WorkOrder::STATUS_COMPLETED && $newStatus !== WorkOrder::STATUS_COMPLETED) {
-                MaintenanceStockRecorder::reverse($workOrder);
-            }
+            $this->syncStockForStatusChange($workOrder, $originalStatus);
         });
 
         return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
             ->with('success', __('maintenance.messages.wo_updated'));
+    }
+
+    public function updateStatus(UpdateWorkOrderStatusRequest $request, WorkOrder $workOrder): RedirectResponse
+    {
+        $newStatus = $request->validated('status');
+
+        if (! $this->isAllowedStatusTransition($workOrder->status, $newStatus)) {
+            return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
+                ->with('error', __('maintenance.messages.status_transition_invalid'));
+        }
+
+        DB::transaction(function () use ($workOrder, $newStatus): void {
+            $originalStatus = $workOrder->status;
+            $payload = $this->withStatusSideEffects($workOrder, ['status' => $newStatus]);
+            $workOrder->update($payload);
+            $this->syncStockForStatusChange($workOrder, $originalStatus);
+        });
+
+        return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
+            ->with('success', __('maintenance.messages.wo_status_updated', [
+                'status' => __('maintenance.status.'.$newStatus),
+            ]));
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function withStatusSideEffects(WorkOrder $workOrder, array $validated): array
+    {
+        if (($validated['status'] ?? null) === WorkOrder::STATUS_APPROVED && $workOrder->status !== WorkOrder::STATUS_APPROVED) {
+            $validated['approved_by'] = Auth::id();
+            $validated['approved_at'] = now();
+        }
+
+        if (($validated['status'] ?? null) === WorkOrder::STATUS_IN_PROGRESS && ! $workOrder->started_at) {
+            $validated['started_at'] = $validated['started_at'] ?? now();
+        }
+
+        if (($validated['status'] ?? null) === WorkOrder::STATUS_COMPLETED && ! $workOrder->completed_at) {
+            $validated['completed_at'] = $validated['completed_at'] ?? now();
+        }
+
+        return $validated;
+    }
+
+    private function syncStockForStatusChange(WorkOrder $workOrder, string $originalStatus): void
+    {
+        $workOrder->load('items.product');
+        $newStatus = $workOrder->status;
+
+        if ($newStatus === WorkOrder::STATUS_COMPLETED && $originalStatus !== WorkOrder::STATUS_COMPLETED) {
+            MaintenanceStockRecorder::deduct($workOrder);
+        } elseif ($originalStatus === WorkOrder::STATUS_COMPLETED && $newStatus !== WorkOrder::STATUS_COMPLETED) {
+            MaintenanceStockRecorder::reverse($workOrder);
+        }
+    }
+
+    private function isAllowedStatusTransition(string $from, string $to): bool
+    {
+        if ($from === $to) {
+            return false;
+        }
+
+        $allowed = [
+            WorkOrder::STATUS_DRAFT => [WorkOrder::STATUS_PENDING, WorkOrder::STATUS_CANCELLED],
+            WorkOrder::STATUS_PENDING => [WorkOrder::STATUS_APPROVED, WorkOrder::STATUS_CANCELLED],
+            WorkOrder::STATUS_APPROVED => [WorkOrder::STATUS_IN_PROGRESS, WorkOrder::STATUS_CANCELLED],
+            WorkOrder::STATUS_IN_PROGRESS => [WorkOrder::STATUS_COMPLETED, WorkOrder::STATUS_CANCELLED],
+            WorkOrder::STATUS_COMPLETED => [],
+            WorkOrder::STATUS_CANCELLED => [],
+        ];
+
+        return in_array($to, $allowed[$from] ?? [], true);
     }
 
     public function destroy(WorkOrder $workOrder): RedirectResponse

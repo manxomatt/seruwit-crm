@@ -164,6 +164,94 @@ class MaintenanceCrudTest extends TestCase
             );
     }
 
+    public function test_admin_can_advance_work_order_status_from_show(): void
+    {
+        $user = $this->createAdminUser();
+        $category = $this->category();
+        $wo = WorkOrder::factory()->create([
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_DRAFT,
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('module.maintenance.work-orders.update-status', $wo), [
+                'status' => WorkOrder::STATUS_PENDING,
+            ])
+            ->assertRedirect(route('module.maintenance.work-orders.show', $wo));
+
+        $this->assertSame(WorkOrder::STATUS_PENDING, $wo->fresh()->status);
+    }
+
+    public function test_status_progress_sets_approver_and_timestamps(): void
+    {
+        $user = $this->createAdminUser();
+        $category = $this->category();
+        $wo = WorkOrder::factory()->create([
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_PENDING,
+            'started_at' => null,
+            'completed_at' => null,
+        ]);
+
+        $this->actingAs($user)->patch(route('module.maintenance.work-orders.update-status', $wo), [
+            'status' => WorkOrder::STATUS_APPROVED,
+        ])->assertRedirect();
+
+        $wo->refresh();
+        $this->assertSame(WorkOrder::STATUS_APPROVED, $wo->status);
+        $this->assertSame($user->id, $wo->approved_by);
+        $this->assertNotNull($wo->approved_at);
+
+        $this->actingAs($user)->patch(route('module.maintenance.work-orders.update-status', $wo), [
+            'status' => WorkOrder::STATUS_IN_PROGRESS,
+        ])->assertRedirect();
+
+        $wo->refresh();
+        $this->assertSame(WorkOrder::STATUS_IN_PROGRESS, $wo->status);
+        $this->assertNotNull($wo->started_at);
+
+        $this->actingAs($user)->patch(route('module.maintenance.work-orders.update-status', $wo), [
+            'status' => WorkOrder::STATUS_COMPLETED,
+        ])->assertRedirect();
+
+        $wo->refresh();
+        $this->assertSame(WorkOrder::STATUS_COMPLETED, $wo->status);
+        $this->assertNotNull($wo->completed_at);
+    }
+
+    public function test_invalid_status_transition_is_rejected(): void
+    {
+        $user = $this->createAdminUser();
+        $category = $this->category();
+        $wo = WorkOrder::factory()->create([
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_DRAFT,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('module.maintenance.work-orders.show', $wo))
+            ->patch(route('module.maintenance.work-orders.update-status', $wo), [
+                'status' => WorkOrder::STATUS_COMPLETED,
+            ])
+            ->assertRedirect(route('module.maintenance.work-orders.show', $wo))
+            ->assertSessionHas('error');
+
+        $this->assertSame(WorkOrder::STATUS_DRAFT, $wo->fresh()->status);
+    }
+
+    public function test_guest_cannot_update_work_order_status(): void
+    {
+        $category = $this->category();
+        $wo = WorkOrder::factory()->create([
+            'category_id' => $category->id,
+            'status' => WorkOrder::STATUS_DRAFT,
+        ]);
+
+        $this->patch(route('module.maintenance.work-orders.update-status', $wo), [
+            'status' => WorkOrder::STATUS_PENDING,
+        ])->assertRedirect(route('login'));
+    }
+
     public function test_admin_can_edit_work_order(): void
     {
         $user = $this->createAdminUser();
