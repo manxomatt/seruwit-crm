@@ -50,6 +50,7 @@ class TripScheduleController extends Controller
             'filters' => [
                 'search' => request('search'),
             ],
+            'activeScheduleCount' => TripSchedule::query()->where('is_active', true)->count(),
             'can' => [
                 'create' => $user->hasPermissionFor('transportation', 'create'),
                 'update' => $user->hasPermissionFor('transportation', 'update'),
@@ -148,20 +149,43 @@ class TripScheduleController extends Controller
             'to' => ['required', 'date', 'after_or_equal:from'],
         ]);
 
+        $activeSchedules = TripSchedule::query()->where('is_active', true)->get();
+
+        if ($activeSchedules->isEmpty()) {
+            return back()->with('error', __('transportation.messages.generate_no_active_schedules'));
+        }
+
         $from = Carbon::parse($validated['from'])->startOfDay();
         $to = Carbon::parse($validated['to'])->startOfDay();
 
         $createdCount = 0;
         $skipped = [];
 
-        TripSchedule::query()->where('is_active', true)->each(function (TripSchedule $schedule) use ($from, $to, &$createdCount, &$skipped) {
+        foreach ($activeSchedules as $schedule) {
             $result = $schedule->generateTripsBetween($from, $to);
             $createdCount += $result['created']->count();
 
             foreach ($result['skipped'] as $skip) {
                 $skipped[] = "{$schedule->origin} → {$schedule->destination} ({$skip['date']}): {$skip['reason']}";
             }
-        });
+        }
+
+        if ($createdCount === 0) {
+            $message = __('transportation.messages.generate_none_created');
+            if ($skipped !== []) {
+                $message .= __('transportation.messages.generate_skipped', [
+                    'count' => count($skipped),
+                    'reasons' => implode('; ', array_slice($skipped, 0, 5)),
+                ]);
+                if (count($skipped) > 5) {
+                    $message .= __('transportation.messages.generate_and_more', [
+                        'count' => count($skipped) - 5,
+                    ]);
+                }
+            }
+
+            return back()->with('warning', $message);
+        }
 
         $message = __('transportation.messages.generate_created', ['count' => $createdCount]);
         if ($skipped !== []) {

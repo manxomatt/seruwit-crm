@@ -119,7 +119,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.vehicles.title')}</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>
                     {can.create && (
                         <Link href={prefixedRoute('fleet.vehicles.create')}>
                             <PrimaryButton>{t('fleet.vehicles.add')}</PrimaryButton>

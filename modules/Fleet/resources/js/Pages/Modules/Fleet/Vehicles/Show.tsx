@@ -188,7 +188,7 @@ export default function Show({
         <DynamicLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.vehicles.show')}</h2>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>
                     <div className="flex gap-2">
                         {can.update && (
                             <Link href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}>

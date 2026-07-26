@@ -16,7 +16,7 @@ export default function FleetNav(): JSX.Element {
 
     return (
         <div className="mb-6 border-b border-gray-200">
-            <nav className="-mb-px flex flex-wrap gap-6">
+            <nav className="-mb-px flex gap-6 overflow-x-auto">
                 {TABS.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
                     return (

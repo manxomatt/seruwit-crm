@@ -40,6 +40,7 @@ interface Filters {
 interface Props {
     schedules: PaginatedSchedules;
     filters: Filters;
+    activeScheduleCount: number;
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -62,7 +63,7 @@ const TrashIcon = () => (
     </svg>
 );
 
-export default function Index({ schedules, filters, can }: Props): JSX.Element {
+export default function Index({ schedules, filters, activeScheduleCount = 0, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
@@ -72,6 +73,7 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
     const [from, setFrom] = useState(new Date().toISOString().slice(0, 10));
     const [to, setTo] = useState(new Date(Date.now() + 13 * 86400000).toISOString().slice(0, 10));
     const [generating, setGenerating] = useState(false);
+    const canGenerate = activeScheduleCount > 0;
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -128,19 +130,38 @@ export default function Index({ schedules, filters, can }: Props): JSX.Element {
                     <div className="p-6">
                         <h3 className="mb-3 text-sm font-medium text-gray-900">{t('transportation.actions.generate')}</h3>
                         <p className="mb-4 text-sm text-gray-500">
-                            Creates real trips from every active schedule for the dates below. Safe to run more than once — dates already generated are skipped.
+                            {t('transportation.messages.generate_help')}
                         </p>
+                        {!canGenerate && (
+                            <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+                                {t('transportation.messages.generate_no_active_schedules')}
+                            </p>
+                        )}
                         <form onSubmit={handleGenerate} className="flex flex-wrap items-end gap-4">
                             <div>
                                 <InputLabel htmlFor="from" value={t('transportation.fields.starts_on')} />
-                                <TextInput id="from" type="date" className="mt-1 block" value={from} onChange={(e) => setFrom(e.target.value)} />
+                                <TextInput
+                                    id="from"
+                                    type="date"
+                                    className="mt-1 block"
+                                    value={from}
+                                    onChange={(e) => setFrom(e.target.value)}
+                                    disabled={!canGenerate || generating}
+                                />
                             </div>
                             <div>
                                 <InputLabel htmlFor="to" value={t('transportation.fields.ends_on')} />
-                                <TextInput id="to" type="date" className="mt-1 block" value={to} onChange={(e) => setTo(e.target.value)} />
+                                <TextInput
+                                    id="to"
+                                    type="date"
+                                    className="mt-1 block"
+                                    value={to}
+                                    onChange={(e) => setTo(e.target.value)}
+                                    disabled={!canGenerate || generating}
+                                />
                             </div>
-                            <PrimaryButton type="submit" disabled={generating}>
-                                {generating ? 'Generating…' : t('transportation.actions.generate')}
+                            <PrimaryButton type="submit" disabled={!canGenerate || generating}>
+                                {generating ? t('transportation.actions.generating') : t('transportation.actions.generate')}
                             </PrimaryButton>
                         </form>
                     </div>

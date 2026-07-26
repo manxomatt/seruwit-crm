@@ -136,11 +136,14 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('fleet.analytics.title')}</h2>}>
+        <DynamicLayout
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>}
+        >
             <Head title={t('fleet.analytics.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <FleetNav />
+
+            <FleetNav />
+
+            <div className="space-y-6">
                     <p className="text-sm text-gray-600">{t('fleet.analytics.subtitle')}</p>
 
                     <div className="flex flex-wrap items-end gap-3">
@@ -431,7 +434,6 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
                             </table>
                         </div>
                     </section>
-                </div>
             </div>
         </DynamicLayout>
     );

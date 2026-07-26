@@ -790,6 +790,25 @@ export default function ModuleLayout({ header, children }: Props) {
                 {/* Main content area */}
                 <main className="py-6">
                     <div className="px-4 sm:px-6 lg:px-8">
+                        {(pageProps.flash?.success || pageProps.flash?.error || pageProps.flash?.warning) && (
+                            <div className="mb-4 space-y-2">
+                                {pageProps.flash?.success && (
+                                    <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800 ring-1 ring-green-200">
+                                        {pageProps.flash.success}
+                                    </div>
+                                )}
+                                {pageProps.flash?.warning && (
+                                    <div className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
+                                        {pageProps.flash.warning}
+                                    </div>
+                                )}
+                                {pageProps.flash?.error && (
+                                    <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-800 ring-1 ring-red-200">
+                                        {pageProps.flash.error}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         {children}
                     </div>
                 </main>

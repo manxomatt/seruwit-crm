@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'title' => 'Fleet',
+
     'nav' => [
         'dashboard' => 'Dashboard',
         'vehicles' => 'Vehicles',

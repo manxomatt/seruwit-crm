@@ -36,7 +36,7 @@ export default function Create(): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.drivers.add')}</h2>}
+            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>}
         >
             <Head title={t('fleet.drivers.add')} />
 

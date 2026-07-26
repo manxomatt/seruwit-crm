@@ -154,7 +154,19 @@ class TripScheduleTest extends TestCase
         $this->actingAs($user)->post(route('module.transportation.schedules.generate'), [
             'from' => $monday->toDateString(),
             'to' => $monday->copy()->addDays(6)->toDateString(),
-        ]);
+        ])->assertSessionHas('error');
+
+        $this->assertSame(0, Trip::count());
+    }
+
+    public function test_generate_errors_when_no_active_schedules_exist(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->post(route('module.transportation.schedules.generate'), [
+            'from' => now()->toDateString(),
+            'to' => now()->addDays(7)->toDateString(),
+        ])->assertSessionHas('error');
 
         $this->assertSame(0, Trip::count());
     }
@@ -197,9 +209,23 @@ class TripScheduleTest extends TestCase
         $this->actingAs($user)->post(route('module.transportation.schedules.generate'), [
             'from' => $monday->toDateString(),
             'to' => $monday->toDateString(),
-        ])->assertSessionHas('success');
+        ])->assertSessionHas('warning');
 
         // Only the pre-existing trip exists; nothing generated for the conflicting date.
         $this->assertSame(1, Trip::count());
+    }
+
+    public function test_schedules_index_includes_active_schedule_count(): void
+    {
+        $user = $this->createAdminUser();
+        TripSchedule::factory()->create(['is_active' => true]);
+        TripSchedule::factory()->inactive()->create();
+
+        $this->actingAs($user)
+            ->get(route('module.transportation.schedules.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/TransportationManagement/Schedules/Index')
+                ->where('activeScheduleCount', 1));
     }
 }

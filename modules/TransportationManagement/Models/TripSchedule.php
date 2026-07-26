@@ -121,7 +121,7 @@ class TripSchedule extends Model
         }
 
         for ($date = $rangeStart->copy(); $date->lte($rangeEnd); $date->addDay()) {
-            if (! in_array($date->dayOfWeek, $this->days_of_week, false)) {
+            if (! in_array((int) $date->dayOfWeek, array_map('intval', $this->days_of_week ?? []), true)) {
                 continue;
             }
 
