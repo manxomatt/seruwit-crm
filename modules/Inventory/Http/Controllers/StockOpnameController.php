@@ -110,33 +110,57 @@ class StockOpnameController extends Controller
     {
         abort_if($opname->status !== 'in_progress', 403);
 
-        DB::transaction(function () use ($opname) {
-            foreach ($opname->items as $item) {
-                $variance = (float) $item->actual_qty - (float) $item->system_qty;
+        try {
+            DB::transaction(function () use ($opname) {
+                $opname->load(['items.product:id,name']);
 
-                if ($variance === 0.0) {
-                    continue;
+                foreach ($opname->items as $item) {
+                    $variance = (float) $item->actual_qty - (float) $item->system_qty;
+
+                    if ($variance === 0.0) {
+                        continue;
+                    }
+
+                    $batch = StockMovementRecorder::normalizeBatch($item->batch_number);
+                    $level = StockLevel::query()
+                        ->where('product_id', $item->product_id)
+                        ->where('warehouse_id', $opname->warehouse_id)
+                        ->where('location_id', $item->location_id)
+                        ->where('batch_number', $batch)
+                        ->lockForUpdate()
+                        ->first();
+
+                    $reserved = (float) ($level?->reserved ?? 0);
+
+                    if ((float) $item->actual_qty + 0.009 < $reserved) {
+                        throw new \RuntimeException(__('inventory.messages.opname_below_reserved', [
+                            'product' => $item->product?->name ?? $item->product_id,
+                            'reserved' => $reserved,
+                        ]));
+                    }
+
+                    StockMovementRecorder::record([
+                        'product_id' => $item->product_id,
+                        'warehouse_id' => $opname->warehouse_id,
+                        'location_id' => $item->location_id,
+                        'batch_number' => $item->batch_number !== '' ? $item->batch_number : null,
+                        'expiry_date' => $item->expiry_date?->toDateString(),
+                        'type' => $variance > 0 ? 'in' : 'out',
+                        'quantity' => abs($variance),
+                        'source_type' => 'opname',
+                        'source_id' => $opname->id,
+                        'notes' => "opname adjustment: system={$item->system_qty}, actual={$item->actual_qty}",
+                        'recorded_by' => auth()->id(),
+                        'recorded_at' => now(),
+                        'allocate' => false,
+                    ]);
                 }
 
-                StockMovementRecorder::record([
-                    'product_id' => $item->product_id,
-                    'warehouse_id' => $opname->warehouse_id,
-                    'location_id' => $item->location_id,
-                    'batch_number' => $item->batch_number !== '' ? $item->batch_number : null,
-                    'expiry_date' => $item->expiry_date?->toDateString(),
-                    'type' => $variance > 0 ? 'in' : 'out',
-                    'quantity' => abs($variance),
-                    'source_type' => 'opname',
-                    'source_id' => $opname->id,
-                    'notes' => "opname adjustment: system={$item->system_qty}, actual={$item->actual_qty}",
-                    'recorded_by' => auth()->id(),
-                    'recorded_at' => now(),
-                    'allocate' => false,
-                ]);
-            }
-
-            $opname->update(['status' => 'completed', 'completed_at' => now()]);
-        });
+                $opname->update(['status' => 'completed', 'completed_at' => now()]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()->route($this->getRoutePrefix().'.inventory.stock-opnames.show', $opname)
             ->with('success', __('inventory.messages.opname_finalized'));

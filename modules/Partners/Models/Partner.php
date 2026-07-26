@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Partners\Database\Factories\PartnerFactory;
+use Modules\Sales\Models\PriceList;
 
 class Partner extends Model
 {
@@ -44,6 +45,7 @@ class Partner extends Model
         'customer_rank',
         'supplier_rank',
         'credit_limit',
+        'price_list_id',
         'address',
         'notes',
         'comment',
@@ -95,6 +97,12 @@ class Partner extends Model
     public function industry(): BelongsTo
     {
         return $this->belongsTo(PartnerIndustry::class, 'industry_id');
+    }
+
+    /** @return BelongsTo<PriceList, $this> */
+    public function priceList(): BelongsTo
+    {
+        return $this->belongsTo(PriceList::class);
     }
 
     /** @return BelongsTo<PartnerTitle, $this> */

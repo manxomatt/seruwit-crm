@@ -69,6 +69,7 @@ export default function Create({ order, receivableItems, warehouses, defaultStoc
         received_at: today,
         supplier_do_number: '',
         notes: '',
+        freight_amount: '',
         confirm: false as boolean,
         items: receivableItems.map((item) => ({
             po_item_id: String(item.id),
@@ -186,6 +187,18 @@ export default function Create({ order, receivableItems, warehouses, defaultStoc
                                 value={data.notes}
                                 onChange={(e) => setData('notes', e.target.value)}
                             />
+                        </div>
+                        <div>
+                            <InputLabel value={t('purchasing.fields.freight_amount')} />
+                            <TextInput
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="mt-1 block w-full"
+                                value={data.freight_amount}
+                                onChange={(e) => setData('freight_amount', e.target.value)}
+                            />
+                            <InputError message={errors.freight_amount} className="mt-2" />
                         </div>
                     </div>
                 </div>

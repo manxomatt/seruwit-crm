@@ -11,6 +11,7 @@ use Modules\Purchasing\Models\GoodReceiptNote;
 use Modules\Purchasing\Models\PurchaseReturn;
 use Modules\Purchasing\Support\GrnConfirmationService;
 use Modules\Purchasing\Support\PurchaseReturnConfirmationService;
+use Modules\Purchasing\Support\PurchaseReturnQuantity;
 use RuntimeException;
 
 class PurchaseReturnController extends Controller
@@ -35,20 +36,27 @@ class PurchaseReturnController extends Controller
         ]);
 
         $returnableItems = $grn->items
-            ->map(fn ($item) => [
-                'grn_item_id' => $item->id,
-                'po_item_id' => $item->po_item_id,
-                'product' => $item->purchaseOrderItem?->product,
-                'quantity_received' => (float) $item->quantity_received,
-                'remaining' => min(
+            ->map(function ($item) {
+                $lineRemaining = PurchaseReturnQuantity::remainingForGrnItem(
                     (float) $item->quantity_received,
-                    (float) ($item->purchaseOrderItem?->quantity_received ?? 0)
-                ),
-                'unit' => $item->purchaseOrderItem?->unit ?? $item->purchaseOrderItem?->product?->unit,
-                'location_id' => $item->location_id,
-                'batch_number' => $item->batch_number,
-                'expiry_date' => $item->expiry_date?->toDateString(),
-            ])
+                    (int) $item->id
+                );
+
+                return [
+                    'grn_item_id' => $item->id,
+                    'po_item_id' => $item->po_item_id,
+                    'product' => $item->purchaseOrderItem?->product,
+                    'quantity_received' => (float) $item->quantity_received,
+                    'remaining' => min(
+                        $lineRemaining,
+                        (float) ($item->purchaseOrderItem?->quantity_received ?? 0)
+                    ),
+                    'unit' => $item->purchaseOrderItem?->unit ?? $item->purchaseOrderItem?->product?->unit,
+                    'location_id' => $item->location_id,
+                    'batch_number' => $item->batch_number,
+                    'expiry_date' => $item->expiry_date?->toDateString(),
+                ];
+            })
             ->filter(fn (array $item) => $item['remaining'] > 0)
             ->values();
 
@@ -140,6 +148,7 @@ class PurchaseReturnController extends Controller
             'purchaseReturn' => $purchaseReturn,
             'can' => [
                 'receive' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
+                'void' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
             ],
         ]);
     }
@@ -154,5 +163,17 @@ class PurchaseReturnController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $purchaseReturn->purchase_order_id)
             ->with('success', __('purchasing.messages.return_confirmed'));
+    }
+
+    public function void(PurchaseReturn $purchaseReturn): RedirectResponse
+    {
+        try {
+            app(PurchaseReturnConfirmationService::class)->void($purchaseReturn);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route($this->getRoutePrefix().'.purchasing.purchase-orders.show', $purchaseReturn->purchase_order_id)
+            ->with('success', __('purchasing.messages.return_voided'));
     }
 }

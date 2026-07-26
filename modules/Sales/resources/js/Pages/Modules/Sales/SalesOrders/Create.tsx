@@ -26,6 +26,7 @@ interface Option {
     stock_unit?: string | null;
     price?: string | null;
     cost?: string | null;
+    price_list_id?: number | null;
     packagings?: Packaging[];
 }
 
@@ -42,6 +43,7 @@ interface Props {
     customers: Option[];
     warehouses: Option[];
     products: Option[];
+    priceMaps?: Record<string, Record<string, number>>;
 }
 
 const emptyItem = (): LineItem => ({
@@ -53,7 +55,7 @@ const emptyItem = (): LineItem => ({
     notes: '',
 });
 
-const defaultUnitPrice = (product: Option | undefined): string => {
+const catalogUnitPrice = (product: Option | undefined): string => {
     if (product?.price) {
         return String(product.price);
     }
@@ -64,7 +66,7 @@ const defaultUnitPrice = (product: Option | undefined): string => {
     return '0';
 };
 
-export default function Create({ customers, warehouses, products }: Props): JSX.Element {
+export default function Create({ customers, warehouses, products, priceMaps = {} }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const today = new Date().toISOString().slice(0, 10);
@@ -78,8 +80,31 @@ export default function Create({ customers, warehouses, products }: Props): JSX.
         items: [emptyItem()] as LineItem[],
     });
 
+    const resolveUnitPrice = (partnerId: string, productId: string): string => {
+        const customer = customers.find((c) => String(c.id) === partnerId);
+        const listId = customer?.price_list_id ? String(customer.price_list_id) : '';
+        const listed = listId && productId ? priceMaps[listId]?.[productId] : undefined;
+        if (listed !== undefined) {
+            return String(listed);
+        }
+
+        return catalogUnitPrice(products.find((p) => String(p.id) === productId));
+    };
+
     const packagingsFor = (productId: string): Packaging[] =>
         products.find((p) => String(p.id) === productId)?.packagings ?? [];
+
+    const changePartner = (partnerId: string) => {
+        setData({
+            ...data,
+            partner_id: partnerId,
+            items: data.items.map((item) =>
+                item.product_id
+                    ? { ...item, unit_price: resolveUnitPrice(partnerId, item.product_id) }
+                    : item,
+            ),
+        });
+    };
 
     const updateItem = (index: number, field: keyof LineItem, value: string) => {
         const items = data.items.map((item, i) => {
@@ -91,7 +116,7 @@ export default function Create({ customers, warehouses, products }: Props): JSX.
                 const product = products.find((p) => String(p.id) === value);
                 next.product_packaging_id = '';
                 next.unit = product?.stock_unit || product?.unit || '';
-                next.unit_price = defaultUnitPrice(product);
+                next.unit_price = resolveUnitPrice(data.partner_id, value);
             }
             if (field === 'product_packaging_id') {
                 const packaging = packagingsFor(next.product_id).find((p) => String(p.id) === value);
@@ -153,7 +178,7 @@ export default function Create({ customers, warehouses, products }: Props): JSX.
                                     className="mt-1"
                                     searchable
                                     value={data.partner_id}
-                                    onChange={(value) => setData('partner_id', value)}
+                                    onChange={changePartner}
                                     placeholder={t('sales.placeholders.select_customer')}
                                     searchPlaceholder={t('sales.placeholders.search_customer')}
                                     emptyText={t('common.no_options')}

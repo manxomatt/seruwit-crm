@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Response;
+use Modules\Payables\Http\Requests\UpdateSupplierBillLineRequest;
 use Modules\Payables\Models\SupplierBill;
+use Modules\Payables\Models\SupplierBillLine;
+use Modules\Payables\Support\BillMatchChecker;
 use Modules\Payables\Support\PurchaseBillService;
 use Modules\Purchasing\Models\GoodReceiptNote;
 use RuntimeException;
@@ -45,8 +48,26 @@ class SupplierBillController extends Controller
     {
         $bill->load(['partner:id,code,name', 'lines', 'purchaseOrder:id,po_number', 'goodReceiptNote:id,grn_number']);
 
+        $lines = $bill->lines->map(function (SupplierBillLine $line): array {
+            $expected = $line->expected_amount !== null ? (float) $line->expected_amount : null;
+            $amount = (float) $line->amount;
+
+            return [
+                'id' => $line->id,
+                'description' => $line->description,
+                'amount' => $line->amount,
+                'expected_amount' => $line->expected_amount,
+                'variance' => $expected !== null ? round($amount - $expected, 2) : 0,
+                'exceeds_tolerance' => BillMatchChecker::lineExceedsTolerance($line),
+            ];
+        });
+
         return inertia('Modules/Payables/Bills/Show', [
-            'bill' => $bill,
+            'bill' => [
+                ...$bill->toArray(),
+                'lines' => $lines,
+            ],
+            'match' => BillMatchChecker::snapshot($bill),
             'can' => $this->abilitiesFor(),
         ]);
     }
@@ -63,10 +84,33 @@ class SupplierBillController extends Controller
             ->with('success', __('payables.messages.bill_created'));
     }
 
+    public function updateLine(
+        UpdateSupplierBillLineRequest $request,
+        SupplierBill $bill,
+        SupplierBillLine $line,
+    ): RedirectResponse {
+        if ($bill->status !== SupplierBill::STATUS_DRAFT) {
+            return back()->with('error', __('payables.messages.line_edit_draft_only'));
+        }
+
+        if ((int) $line->supplier_bill_id !== (int) $bill->id) {
+            abort(404);
+        }
+
+        $line->update(['amount' => $request->validated('amount')]);
+        $bill->recalculate();
+
+        return back()->with('success', __('payables.messages.line_updated'));
+    }
+
     public function issue(SupplierBill $bill): RedirectResponse
     {
         if ($bill->status !== SupplierBill::STATUS_DRAFT) {
             return back()->with('error', __('payables.messages.issue_draft_only'));
+        }
+
+        if (BillMatchChecker::billExceedsTolerance($bill)) {
+            return back()->with('error', __('payables.messages.match_tolerance_exceeded'));
         }
 
         $bill->update(['status' => SupplierBill::STATUS_ISSUED]);

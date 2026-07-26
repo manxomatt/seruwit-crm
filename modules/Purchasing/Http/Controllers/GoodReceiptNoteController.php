@@ -89,6 +89,7 @@ class GoodReceiptNoteController extends Controller
                 'received_at' => $validated['received_at'],
                 'supplier_do_number' => $validated['supplier_do_number'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'freight_amount' => $validated['freight_amount'] ?? 0,
             ]);
 
             foreach ($validated['items'] as $item) {

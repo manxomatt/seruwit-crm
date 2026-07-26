@@ -53,6 +53,7 @@ interface PartnerData {
     customer_rank: number;
     supplier_rank: number;
     credit_limit: string | null;
+    price_list_id?: number | null;
     address: string | null;
     notes: string | null;
     comment: string | null;
@@ -66,9 +67,10 @@ interface Props {
     titles: Title[];
     tags: Tag[];
     partners: ParentPartner[];
+    priceLists?: Array<{ id: number; name: string; code: string | null }>;
 }
 
-export default function Edit({ partner, industries, titles, tags, partners }: Props): JSX.Element {
+export default function Edit({ partner, industries, titles, tags, partners, priceLists = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
@@ -89,6 +91,7 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
         is_customer: partner.customer_rank > 0,
         is_supplier: partner.supplier_rank > 0,
         credit_limit: partner.credit_limit || '',
+        price_list_id: partner.price_list_id ? String(partner.price_list_id) : '',
         address: partner.address || '',
         notes: partner.notes || '',
         comment: partner.comment || '',
@@ -270,6 +273,25 @@ export default function Edit({ partner, industries, titles, tags, partners }: Pr
                                 <TextInput id="credit_limit" type="number" className="mt-1 block w-full" value={data.credit_limit} onChange={(e) => setData('credit_limit', e.target.value)} min="0" step="0.01" />
                                 <InputError message={errors.credit_limit} className="mt-2" />
                             </div>
+                            {priceLists.length > 0 && (
+                                <div>
+                                    <InputLabel value={t('partners.fields.price_list')} />
+                                    <Select
+                                        className="mt-1"
+                                        value={data.price_list_id}
+                                        onChange={(value) => setData('price_list_id', value)}
+                                        placeholder={t('partners.placeholders.none')}
+                                        options={[
+                                            { value: '', label: t('partners.placeholders.none') },
+                                            ...priceLists.map((list) => ({
+                                                value: String(list.id),
+                                                label: list.code ? `${list.code} — ${list.name}` : list.name,
+                                            })),
+                                        ]}
+                                    />
+                                    <InputError message={errors.price_list_id} className="mt-2" />
+                                </div>
+                            )}
                         </div>
 
                         {/* Tags */}

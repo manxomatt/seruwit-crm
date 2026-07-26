@@ -240,6 +240,12 @@ class StockMovementRecorder
      */
     private static function recordWithinTransaction(array $data): StockMovement
     {
+        $sourceType = (string) ($data['source_type'] ?? '');
+
+        if ($sourceType !== 'opname' && isset($data['warehouse_id'])) {
+            self::assertWarehouseNotFrozenForOpname((int) $data['warehouse_id']);
+        }
+
         $batch = self::normalizeBatch($data['batch_number'] ?? null);
         $data['batch_number'] = $batch !== '' ? $batch : null;
         unset($data['allocate']);
@@ -257,6 +263,22 @@ class StockMovementRecorder
         );
 
         return $movement;
+    }
+
+    private static function assertWarehouseNotFrozenForOpname(int $warehouseId): void
+    {
+        if (! class_exists(\Modules\Inventory\Models\StockOpname::class)) {
+            return;
+        }
+
+        $active = \Modules\Inventory\Models\StockOpname::query()
+            ->where('warehouse_id', $warehouseId)
+            ->where('status', 'in_progress')
+            ->exists();
+
+        if ($active) {
+            throw new RuntimeException(__('inventory.messages.opname_warehouse_frozen'));
+        }
     }
 
     private static function updateStockLevel(

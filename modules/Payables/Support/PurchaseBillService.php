@@ -2,6 +2,7 @@
 
 namespace Modules\Payables\Support;
 
+use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -9,6 +10,7 @@ use Modules\Payables\Models\SupplierBill;
 use Modules\Payables\Models\SupplierBillLine;
 use Modules\Purchasing\Models\GoodReceiptNote;
 use Modules\Purchasing\Models\GoodReceiptNoteItem;
+use Modules\Purchasing\Models\PurchaseReturn;
 use RuntimeException;
 
 class PurchaseBillService
@@ -65,8 +67,9 @@ class PurchaseBillService
         }
 
         $po = $grn->purchaseOrder;
+        [$taxEnabled, $taxRate] = $this->taxSettings();
 
-        return DB::transaction(function () use ($grn, $billable, $po) {
+        return DB::transaction(function () use ($grn, $billable, $po, $taxEnabled, $taxRate) {
             $bill = SupplierBill::query()->create([
                 'code' => SupplierBill::nextCode(),
                 'partner_id' => $po->partner_id,
@@ -75,6 +78,8 @@ class PurchaseBillService
                 'status' => SupplierBill::STATUS_DRAFT,
                 'bill_date' => now()->toDateString(),
                 'due_date' => null,
+                'tax_enabled' => $taxEnabled,
+                'tax_rate' => $taxEnabled ? $taxRate : 0,
                 'subtotal' => 0,
                 'tax_amount' => 0,
                 'total' => 0,
@@ -100,6 +105,7 @@ class PurchaseBillService
                         'unit' => $poItem?->unit ?? '',
                     ]),
                     'amount' => $amount,
+                    'expected_amount' => $amount,
                     'source_type' => $grnItem->getMorphClass(),
                     'source_id' => $grnItem->id,
                 ]);
@@ -109,5 +115,85 @@ class PurchaseBillService
 
             return $bill->fresh(['lines', 'partner']);
         });
+    }
+
+    public function createCreditFromPurchaseReturn(PurchaseReturn $purchaseReturn): ?SupplierBill
+    {
+        if (! $this->isAvailable()) {
+            return null;
+        }
+
+        $purchaseReturn->loadMissing(['items.purchaseOrderItem.product', 'items.grnItem', 'purchaseOrder']);
+
+        $creditable = $purchaseReturn->items->filter(function ($item): bool {
+            if (! $item->grn_item_id || ! $item->grnItem) {
+                return false;
+            }
+
+            return $this->grnItemHasActiveBill($item->grnItem);
+        })->values();
+
+        if ($creditable->isEmpty()) {
+            return null;
+        }
+
+        $po = $purchaseReturn->purchaseOrder;
+        [$taxEnabled, $taxRate] = $this->taxSettings();
+
+        return DB::transaction(function () use ($purchaseReturn, $creditable, $po, $taxEnabled, $taxRate) {
+            $bill = SupplierBill::query()->create([
+                'code' => SupplierBill::nextCode(),
+                'partner_id' => $po->partner_id,
+                'purchase_order_id' => $po->id,
+                'good_receipt_note_id' => $purchaseReturn->good_receipt_note_id,
+                'status' => SupplierBill::STATUS_ISSUED,
+                'bill_date' => now()->toDateString(),
+                'due_date' => null,
+                'tax_enabled' => $taxEnabled,
+                'tax_rate' => $taxEnabled ? $taxRate : 0,
+                'subtotal' => 0,
+                'tax_amount' => 0,
+                'total' => 0,
+                'amount_paid' => 0,
+                'notes' => __('payables.messages.credit_from_return_notes', [
+                    'return' => $purchaseReturn->return_number,
+                    'po' => $po->po_number,
+                ]),
+            ]);
+
+            foreach ($creditable as $item) {
+                $poItem = $item->purchaseOrderItem;
+                $qty = (float) $item->quantity_returned;
+                $amount = -1 * round($qty * (float) ($poItem?->unit_price ?? 0), 2);
+
+                SupplierBillLine::query()->create([
+                    'supplier_bill_id' => $bill->id,
+                    'description' => __('payables.messages.credit_line_description', [
+                        'return' => $purchaseReturn->return_number,
+                        'product' => $poItem?->product?->name ?? 'Product',
+                        'qty' => $qty,
+                    ]),
+                    'amount' => $amount,
+                    'expected_amount' => $amount,
+                    'source_type' => $item->getMorphClass(),
+                    'source_id' => $item->id,
+                ]);
+            }
+
+            $bill->recalculate();
+
+            return $bill->fresh(['lines', 'partner']);
+        });
+    }
+
+    /**
+     * @return array{0: bool, 1: float}
+     */
+    private function taxSettings(): array
+    {
+        $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+        $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+
+        return [$taxEnabled, $taxRate];
     }
 }

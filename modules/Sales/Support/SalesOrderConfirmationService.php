@@ -31,7 +31,10 @@ class SalesOrderConfirmationService
                 && CreditLimitChecker::wouldExceed($so->partner, (float) $so->total_amount);
 
             if ($creditExceeded) {
-                if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)) {
+                $approvedViaGate = false;
+
+                if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)
+                    && \Modules\Approvals\Support\ApprovalGate::enabled()) {
                     $gate = \Modules\Approvals\Support\ApprovalGate::authorize(
                         \Modules\Approvals\Support\ApprovalTriggers::CREDIT_LIMIT,
                         $so,
@@ -43,10 +46,14 @@ class SalesOrderConfirmationService
                         ],
                     );
 
-                    if (! $gate['allowed']) {
+                    if ($gate['required'] && ! $gate['allowed']) {
                         throw new RuntimeException($gate['message'] ?? __('sales.messages.so_credit_approval'));
                     }
-                } else {
+
+                    $approvedViaGate = $gate['required'] && $gate['allowed'];
+                }
+
+                if (! $approvedViaGate) {
                     throw new RuntimeException(__('sales.messages.so_credit_exceeded'));
                 }
             }

@@ -73,7 +73,12 @@ class Invoice extends Model
 
     public function balanceDue(): float
     {
-        return max(0, round((float) $this->total - (float) ($this->amount_paid ?? 0), 2));
+        return round((float) $this->total - (float) ($this->amount_paid ?? 0), 2);
+    }
+
+    public function isCreditNote(): bool
+    {
+        return (float) $this->total < -0.009;
     }
 
     public function isOpen(): bool

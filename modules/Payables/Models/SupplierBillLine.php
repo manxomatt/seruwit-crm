@@ -13,6 +13,7 @@ class SupplierBillLine extends Model
         'supplier_bill_id',
         'description',
         'amount',
+        'expected_amount',
         'source_type',
         'source_id',
     ];
@@ -22,6 +23,7 @@ class SupplierBillLine extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'expected_amount' => 'decimal:2',
         ];
     }
 

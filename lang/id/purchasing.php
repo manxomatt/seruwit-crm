@@ -47,6 +47,7 @@ return [
         'batch' => 'Batch',
         'expiry' => 'Expiry',
         'supplier_do_number' => 'No. Surat Jalan Supplier',
+        'freight_amount' => 'Ongkir / Landed Cost',
         'created_by' => 'Dibuat oleh',
         'received_by' => 'Diterima oleh',
         'status' => 'Status',
@@ -141,6 +142,8 @@ return [
         'show' => [
             'view_po' => 'Lihat PO',
             'confirm' => 'Konfirmasi Retur',
+            'void' => 'Void Retur',
+            'void_confirm' => 'Void retur pembelian terkonfirmasi ini? Stok dan biaya akan dikembalikan, dan kredit AP yang belum dibayar akan di-void.',
         ],
     ],
 
@@ -183,6 +186,11 @@ return [
         'return_confirm_draft_only' => 'Hanya draft retur pembelian yang dapat dikonfirmasi.',
         'return_need_items' => 'Tambahkan minimal satu item sebelum mengonfirmasi retur.',
         'return_qty_exceeds_received' => 'Kuantitas retur untuk :product melebihi sisa diterima (:remaining).',
+        'return_voided' => 'Retur pembelian di-void dan stok dikembalikan.',
+        'return_void_confirmed_only' => 'Hanya retur pembelian terkonfirmasi yang dapat di-void.',
+        'return_void_closed_po' => 'Tidak dapat void retur pembelian jika purchase order sudah ditutup.',
+        'return_void_notes' => 'Void retur pembelian :return',
+        'return_void_credit_paid' => 'Tidak dapat void retur pembelian yang kredit AP-nya sudah dilunasi.',
     ],
 
     'validation' => [

@@ -14,6 +14,7 @@ use Modules\Product\Models\Product;
 use Modules\Sales\Http\Requests\StoreSalesOrderRequest;
 use Modules\Sales\Http\Requests\UpdateSalesOrderRequest;
 use Modules\Sales\Models\SalesOrder;
+use Modules\Sales\Support\PriceListResolver;
 use Modules\Sales\Support\SalesInvoiceService;
 use Modules\Sales\Support\SalesOrderConfirmationService;
 use RuntimeException;
@@ -69,12 +70,18 @@ class SalesOrderController extends Controller
 
     public function create(): Response
     {
+        $customerQuery = Partner::query()
+            ->where('customer_rank', '>', 0)
+            ->orderBy('name');
+
+        if (PriceListResolver::tablesReady()) {
+            $customerQuery->select('id', 'name', 'code', 'price_list_id');
+        } else {
+            $customerQuery->select('id', 'name', 'code');
+        }
+
         return inertia('Modules/Sales/SalesOrders/Create', [
-            'customers' => Partner::query()
-                ->where('customer_rank', '>', 0)
-                ->select('id', 'name', 'code')
-                ->orderBy('name')
-                ->get(),
+            'customers' => $customerQuery->get(),
             'warehouses' => Warehouse::query()
                 ->where('status', 'active')
                 ->select('id', 'name')
@@ -86,6 +93,7 @@ class SalesOrderController extends Controller
                 ->select('id', 'name', 'code', 'unit', 'stock_unit', 'price', 'cost')
                 ->orderBy('name')
                 ->get(),
+            'priceMaps' => PriceListResolver::activePriceMaps(),
         ]);
     }
 
@@ -161,13 +169,19 @@ class SalesOrderController extends Controller
 
         $so->load(['items.product:id,name,code,unit', 'items.packaging:id,name,qty']);
 
+        $customerQuery = Partner::query()
+            ->where('customer_rank', '>', 0)
+            ->orderBy('name');
+
+        if (PriceListResolver::tablesReady()) {
+            $customerQuery->select('id', 'name', 'code', 'price_list_id');
+        } else {
+            $customerQuery->select('id', 'name', 'code');
+        }
+
         return inertia('Modules/Sales/SalesOrders/Edit', [
             'order' => $so,
-            'customers' => Partner::query()
-                ->where('customer_rank', '>', 0)
-                ->select('id', 'name', 'code')
-                ->orderBy('name')
-                ->get(),
+            'customers' => $customerQuery->get(),
             'warehouses' => Warehouse::query()
                 ->where('status', 'active')
                 ->select('id', 'name')
@@ -179,6 +193,7 @@ class SalesOrderController extends Controller
                 ->select('id', 'name', 'code', 'unit', 'stock_unit', 'price', 'cost')
                 ->orderBy('name')
                 ->get(),
+            'priceMaps' => PriceListResolver::activePriceMaps(),
         ]);
     }
 

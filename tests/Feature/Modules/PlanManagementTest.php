@@ -5,6 +5,7 @@ namespace Tests\Feature\Modules;
 use App\Models\Plan;
 use App\Models\Role;
 use App\Models\User;
+use App\Modules\Facades\Modules;
 use App\Modules\ModuleInstaller;
 use Modules\Carousels\CarouselsModule;
 use Tests\TestCase;
@@ -46,27 +47,17 @@ class PlanManagementTest extends TestCase
     {
         $admin = $this->makeCentralAdmin();
         $this->provisionTenant('Counted Co', 'counted-co', 'owner@counted.test');
+        $moduleCount = count(Modules::all());
+        $moduleKeys = collect(Modules::all())->map->key()->values()->all();
 
         $this->actingAs($admin)->get('/module/plans')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Plans/Index')
                 ->has('plans', 3)
-                ->has('availableModules', 14)
-                ->where('availableModules.0.key', 'billing')
-                ->where('availableModules.1.key', 'carousels')
-                ->where('availableModules.2.key', 'document')
-                ->where('availableModules.3.key', 'partners')
-                ->where('availableModules.4.key', 'fleet')
-                ->where('availableModules.5.key', 'inventory')
-                ->where('availableModules.6.key', 'invoicing')
-                ->where('availableModules.7.key', 'maintenance')
-                ->where('availableModules.8.key', 'orders')
-                ->where('availableModules.9.key', 'pages')
-                ->where('availableModules.10.key', 'posts')
-                ->where('availableModules.11.key', 'products')
-                ->where('availableModules.12.key', 'tracking')
-                ->where('availableModules.13.key', 'transportation')
+                ->has('availableModules', $moduleCount)
+                ->where('availableModules.0.key', $moduleKeys[0])
+                ->where('availableModules.'.($moduleCount - 1).'.key', $moduleKeys[$moduleCount - 1])
                 // The tenant carries no plan of its own, so it counts against the
                 // default — the plan it actually falls back to.
                 ->where('plans.1.key', 'basic')

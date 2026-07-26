@@ -164,10 +164,17 @@ class InvoiceController extends Controller
         $invoice->loadMissing('partner');
 
         $creditExceeded = class_exists(CreditLimitChecker::class)
-            && CreditLimitChecker::wouldExceed($invoice->partner, (float) $invoice->total);
+            && CreditLimitChecker::wouldExceed(
+                $invoice->partner,
+                (float) $invoice->total,
+                includeSalesCommitment: false,
+            );
 
         if ($creditExceeded) {
-            if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)) {
+            $approvedViaGate = false;
+
+            if (class_exists(\Modules\Approvals\Support\ApprovalGate::class)
+                && \Modules\Approvals\Support\ApprovalGate::enabled()) {
                 $gate = \Modules\Approvals\Support\ApprovalGate::authorize(
                     \Modules\Approvals\Support\ApprovalTriggers::CREDIT_LIMIT,
                     $invoice,
@@ -179,10 +186,14 @@ class InvoiceController extends Controller
                     ],
                 );
 
-                if (! $gate['allowed']) {
+                if ($gate['required'] && ! $gate['allowed']) {
                     return back()->with('error', $gate['message'] ?? __('invoicing.messages.credit_approval'));
                 }
-            } else {
+
+                $approvedViaGate = $gate['required'] && $gate['allowed'];
+            }
+
+            if (! $approvedViaGate) {
                 return back()->with('error', __('invoicing.messages.credit_exceeded'));
             }
         }

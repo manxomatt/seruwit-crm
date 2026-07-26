@@ -11,6 +11,7 @@ use Modules\Sales\Models\GoodsIssueNote;
 use Modules\Sales\Models\SalesReturn;
 use Modules\Sales\Support\GinConfirmationService;
 use Modules\Sales\Support\SalesReturnConfirmationService;
+use Modules\Sales\Support\SalesReturnQuantity;
 use RuntimeException;
 
 class SalesReturnController extends Controller
@@ -35,21 +36,28 @@ class SalesReturnController extends Controller
         ]);
 
         $returnableItems = $gin->items
-            ->map(fn ($item) => [
-                'gin_item_id' => $item->id,
-                'so_item_id' => $item->so_item_id,
-                'product' => $item->salesOrderItem?->product,
-                'quantity_issued' => (float) $item->quantity_issued,
-                'quantity_delivered' => (float) ($item->salesOrderItem?->quantity_delivered ?? 0),
-                'remaining' => min(
+            ->map(function ($item) {
+                $lineRemaining = SalesReturnQuantity::remainingForGinItem(
                     (float) $item->quantity_issued,
-                    (float) ($item->salesOrderItem?->quantity_delivered ?? 0)
-                ),
-                'unit' => $item->salesOrderItem?->unit ?? $item->salesOrderItem?->product?->unit,
-                'location_id' => $item->location_id,
-                'batch_number' => $item->batch_number,
-                'expiry_date' => $item->expiry_date?->toDateString(),
-            ])
+                    (int) $item->id
+                );
+
+                return [
+                    'gin_item_id' => $item->id,
+                    'so_item_id' => $item->so_item_id,
+                    'product' => $item->salesOrderItem?->product,
+                    'quantity_issued' => (float) $item->quantity_issued,
+                    'quantity_delivered' => (float) ($item->salesOrderItem?->quantity_delivered ?? 0),
+                    'remaining' => min(
+                        $lineRemaining,
+                        (float) ($item->salesOrderItem?->quantity_delivered ?? 0)
+                    ),
+                    'unit' => $item->salesOrderItem?->unit ?? $item->salesOrderItem?->product?->unit,
+                    'location_id' => $item->location_id,
+                    'batch_number' => $item->batch_number,
+                    'expiry_date' => $item->expiry_date?->toDateString(),
+                ];
+            })
             ->filter(fn (array $item) => $item['remaining'] > 0)
             ->values();
 
@@ -141,6 +149,7 @@ class SalesReturnController extends Controller
             'salesReturn' => $salesReturn,
             'can' => [
                 'issue' => auth()->user()?->hasPermissionFor('sales', 'issue') ?? false,
+                'void' => auth()->user()?->hasPermissionFor('sales', 'issue') ?? false,
             ],
         ]);
     }
@@ -155,5 +164,17 @@ class SalesReturnController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.sales.sales-orders.show', $salesReturn->sales_order_id)
             ->with('success', __('sales.messages.return_confirmed'));
+    }
+
+    public function void(SalesReturn $salesReturn): RedirectResponse
+    {
+        try {
+            app(SalesReturnConfirmationService::class)->void($salesReturn);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route($this->getRoutePrefix().'.sales.sales-orders.show', $salesReturn->sales_order_id)
+            ->with('success', __('sales.messages.return_voided'));
     }
 }

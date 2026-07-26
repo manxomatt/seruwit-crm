@@ -33,6 +33,11 @@ class SalesModuleUatTest extends TestCase
 
     public function test_uat_full_sales_cycle_from_draft_to_closed_with_invoice(): void
     {
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => 'ecommerce.tax_enabled'],
+            ['group' => 'ecommerce', 'value' => '0', 'type' => 'boolean', 'label' => 'Enable Tax']
+        );
+
         $user = $this->createAdminUser();
         $customer = Partner::factory()->create([
             'customer_rank' => 1,

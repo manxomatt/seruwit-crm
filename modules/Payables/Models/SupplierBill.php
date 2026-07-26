@@ -30,6 +30,8 @@ class SupplierBill extends Model
         'status',
         'bill_date',
         'due_date',
+        'tax_enabled',
+        'tax_rate',
         'subtotal',
         'tax_amount',
         'total',
@@ -43,6 +45,8 @@ class SupplierBill extends Model
         return [
             'bill_date' => 'date',
             'due_date' => 'date',
+            'tax_enabled' => 'boolean',
+            'tax_rate' => 'decimal:2',
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',
@@ -52,7 +56,12 @@ class SupplierBill extends Model
 
     public function balanceDue(): float
     {
-        return max(0, round((float) $this->total - (float) $this->amount_paid, 2));
+        return round((float) $this->total - (float) $this->amount_paid, 2);
+    }
+
+    public function isCreditNote(): bool
+    {
+        return (float) $this->total < -0.009;
     }
 
     public static function nextCode(): string
@@ -75,10 +84,14 @@ class SupplierBill extends Model
     public function recalculate(): void
     {
         $subtotal = round((float) $this->lines()->sum('amount'), 2);
+        $taxAmount = $this->tax_enabled
+            ? round($subtotal * ((float) $this->tax_rate) / 100, 2)
+            : 0;
+
         $this->update([
             'subtotal' => $subtotal,
-            'tax_amount' => 0,
-            'total' => $subtotal,
+            'tax_amount' => $taxAmount,
+            'total' => round($subtotal + $taxAmount, 2),
         ]);
     }
 

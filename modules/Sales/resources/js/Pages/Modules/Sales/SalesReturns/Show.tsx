@@ -23,13 +23,21 @@ interface Props {
             location: { name: string; code: string } | null;
         }>;
     };
-    can: { issue: boolean };
+    can: { issue: boolean; void: boolean };
 }
 
 export default function Show({ salesReturn, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const isDraft = salesReturn.status === 'draft';
+    const isConfirmed = salesReturn.status === 'confirmed';
+
+    const voidReturn = () => {
+        if (!window.confirm(t('sales.returns.show.void_confirm'))) {
+            return;
+        }
+        router.post(prefixedRoute('sales.returns.void', salesReturn.id), {}, { preserveScroll: true });
+    };
 
     return (
         <DynamicLayout
@@ -48,6 +56,11 @@ export default function Show({ salesReturn, can }: Props): JSX.Element {
                             >
                                 {t('sales.returns.show.confirm')}
                             </PrimaryButton>
+                        )}
+                        {can.void && isConfirmed && (
+                            <SecondaryButton type="button" onClick={voidReturn}>
+                                {t('sales.returns.show.void')}
+                            </SecondaryButton>
                         )}
                     </div>
                 </div>

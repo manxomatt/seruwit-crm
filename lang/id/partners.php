@@ -40,6 +40,7 @@ return [
         'industry' => 'Industri',
         'tax_id' => 'NPWP',
         'credit_limit' => 'Batas Kredit',
+        'price_list' => 'Daftar Harga',
         'tags' => 'Tag',
         'address' => 'Alamat Utama',
         'notes' => 'Catatan',

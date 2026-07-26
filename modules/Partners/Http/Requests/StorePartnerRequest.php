@@ -3,6 +3,8 @@
 namespace Modules\Partners\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 
 class StorePartnerRequest extends FormRequest
 {
@@ -32,6 +34,11 @@ class StorePartnerRequest extends FormRequest
             'is_customer' => ['boolean'],
             'is_supplier' => ['boolean'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'price_list_id' => array_values(array_filter([
+                'nullable',
+                'integer',
+                Schema::hasTable('price_lists') ? Rule::exists('price_lists', 'id') : null,
+            ])),
             'address' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'comment' => ['nullable', 'string', 'max:5000'],

@@ -80,6 +80,7 @@ class PayablesModule implements ModuleContract
                 Route::get('/bills/{bill}', [SupplierBillController::class, 'show'])->name('bills.show');
                 Route::post('/bills/{bill}/issue', [SupplierBillController::class, 'issue'])->middleware('permission:payables,update')->name('bills.issue');
                 Route::post('/bills/{bill}/void', [SupplierBillController::class, 'void'])->middleware('permission:payables,delete')->name('bills.void');
+                Route::patch('/bills/{bill}/lines/{line}', [SupplierBillController::class, 'updateLine'])->middleware('permission:payables,update')->name('bills.lines.update');
                 Route::post('/grn/{grn}/bill', [SupplierBillController::class, 'storeFromGrn'])->middleware('permission:payables,create')->name('grn.bill');
 
                 Route::get('/payments', [BillPaymentController::class, 'index'])->name('payments.index');

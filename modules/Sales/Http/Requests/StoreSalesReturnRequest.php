@@ -7,6 +7,7 @@ use Illuminate\Validation\Validator;
 use Modules\Inventory\Models\WarehouseLocation;
 use Modules\Sales\Models\GoodsIssueNote;
 use Modules\Sales\Models\GoodsIssueNoteItem;
+use Modules\Sales\Support\SalesReturnQuantity;
 
 class StoreSalesReturnRequest extends FormRequest
 {
@@ -64,7 +65,7 @@ class StoreSalesReturnRequest extends FormRequest
                 }
 
                 $remaining = min(
-                    (float) $ginItem->quantity_issued,
+                    SalesReturnQuantity::remainingForGinItem((float) $ginItem->quantity_issued, $ginItem->id),
                     (float) ($ginItem->salesOrderItem?->quantity_delivered ?? 0)
                 );
 

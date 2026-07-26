@@ -218,6 +218,49 @@ class StockReservationService
         });
     }
 
+    /**
+     * Release leftover reserved qty for an SO line without reducing on_hand.
+     */
+    public static function releaseForSalesOrderItem(SalesOrderItem $item, ?float $quantity = null): void
+    {
+        DB::transaction(function () use ($item, $quantity): void {
+            $reservations = StockReservation::query()
+                ->where('sales_order_item_id', $item->id)
+                ->where('status', StockReservation::STATUS_OPEN)
+                ->lockForUpdate()
+                ->orderBy('id')
+                ->get();
+
+            $left = $quantity;
+
+            foreach ($reservations as $reservation) {
+                $open = $reservation->remaining();
+
+                if ($open <= 0) {
+                    $reservation->update(['status' => StockReservation::STATUS_CLOSED]);
+
+                    continue;
+                }
+
+                $take = $left === null ? $open : min($open, $left);
+
+                if ($take <= 0) {
+                    break;
+                }
+
+                self::releaseOpenQuantity($reservation, $take);
+
+                if ($left !== null) {
+                    $left = round($left - $take, 2);
+
+                    if ($left <= 0) {
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     public static function hasOpenSalesOrderReservations(SalesOrder|int $order): bool
     {
         $orderId = $order instanceof SalesOrder ? $order->id : $order;

@@ -5,6 +5,7 @@ return [
 
     'nav' => [
         'sales_orders' => 'Pesanan Penjualan',
+        'price_lists' => 'Daftar Harga',
     ],
 
     'status' => [
@@ -47,6 +48,25 @@ return [
         'created_by' => 'Dibuat oleh',
         'issued_by' => 'Dikeluarkan oleh',
         'status' => 'Status',
+        'name' => 'Nama',
+        'code' => 'Kode',
+    ],
+
+    'actions' => [
+        'cancel' => 'Batal',
+        'delete' => 'Hapus',
+    ],
+
+    'price_lists' => [
+        'title' => 'Daftar Harga',
+        'new' => 'Daftar Harga Baru',
+        'create' => 'Buat Daftar Harga',
+        'empty' => 'Belum ada daftar harga.',
+        'items' => 'Item',
+        'active' => 'Aktif',
+        'inactive' => 'Nonaktif',
+        'save' => 'Simpan',
+        'add_item' => 'Tambah / Update Harga',
     ],
 
     'placeholders' => [
@@ -139,6 +159,8 @@ return [
         'show' => [
             'view_so' => 'Lihat SO',
             'confirm' => 'Konfirmasi Retur',
+            'void' => 'Void Retur',
+            'void_confirm' => 'Void retur penjualan terkonfirmasi ini? Stok akan dikeluarkan lagi, reservasi dilepas, dan kredit note yang belum dibayar di-void.',
         ],
     ],
 
@@ -195,6 +217,16 @@ return [
         'return_qty_exceeds_delivered' => 'Kuantitas retur untuk :product melebihi sisa terkirim (:remaining).',
         'credit_from_return_notes' => 'Kredit dari retur penjualan :return (SO :so)',
         'credit_line_description' => 'Kredit :return — :product × :qty',
+        'return_rereserve_failed' => 'Stok dikembalikan tetapi gagal direservasi ulang untuk pesanan penjualan.',
+        'return_voided' => 'Retur penjualan di-void dan stok disesuaikan.',
+        'return_void_confirmed_only' => 'Hanya retur penjualan terkonfirmasi yang dapat di-void.',
+        'return_void_closed_so' => 'Tidak dapat void retur penjualan jika pesanan penjualan sudah ditutup.',
+        'return_void_notes' => 'Void retur penjualan :return',
+        'return_void_credit_paid' => 'Tidak dapat void retur penjualan yang kredit note-nya sudah dibayar.',
+        'price_list_created' => 'Daftar harga dibuat.',
+        'price_list_updated' => 'Daftar harga diperbarui.',
+        'price_list_item_saved' => 'Item daftar harga disimpan.',
+        'price_list_item_deleted' => 'Item daftar harga dihapus.',
     ],
 
     'validation' => [

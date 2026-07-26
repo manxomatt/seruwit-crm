@@ -6,6 +6,7 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Sales\Http\Controllers\GoodsIssueNoteController;
+use Modules\Sales\Http\Controllers\PriceListController;
 use Modules\Sales\Http\Controllers\SalesOrderController;
 use Modules\Sales\Http\Controllers\SalesPdfController;
 use Modules\Sales\Http\Controllers\SalesReturnController;
@@ -110,6 +111,15 @@ class SalesModule implements ModuleContract
                 Route::post('/gin/{gin}/return', [SalesReturnController::class, 'store'])->middleware('permission:sales,create')->name('gin.return.store');
                 Route::get('/returns/{salesReturn}', [SalesReturnController::class, 'show'])->name('returns.show');
                 Route::post('/returns/{salesReturn}/confirm', [SalesReturnController::class, 'confirm'])->middleware('permission:sales,issue')->name('returns.confirm');
+                Route::post('/returns/{salesReturn}/void', [SalesReturnController::class, 'void'])->middleware('permission:sales,issue')->name('returns.void');
+
+                Route::get('/price-lists', [PriceListController::class, 'index'])->name('price-lists.index');
+                Route::get('/price-lists/create', [PriceListController::class, 'create'])->middleware('permission:sales,create')->name('price-lists.create');
+                Route::post('/price-lists', [PriceListController::class, 'store'])->middleware('permission:sales,create')->name('price-lists.store');
+                Route::get('/price-lists/{priceList}', [PriceListController::class, 'show'])->name('price-lists.show');
+                Route::patch('/price-lists/{priceList}', [PriceListController::class, 'update'])->middleware('permission:sales,update')->name('price-lists.update');
+                Route::post('/price-lists/{priceList}/items', [PriceListController::class, 'storeItem'])->middleware('permission:sales,update')->name('price-lists.items.store');
+                Route::delete('/price-lists/{priceList}/items/{item}', [PriceListController::class, 'destroyItem'])->middleware('permission:sales,update')->name('price-lists.items.destroy');
             });
         });
     }

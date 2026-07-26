@@ -40,6 +40,7 @@ return [
         'industry' => 'Industry',
         'tax_id' => 'Tax ID (NPWP)',
         'credit_limit' => 'Credit Limit',
+        'price_list' => 'Price List',
         'tags' => 'Tags',
         'address' => 'Primary Address',
         'notes' => 'Notes',

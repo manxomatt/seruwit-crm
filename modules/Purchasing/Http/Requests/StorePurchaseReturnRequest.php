@@ -7,6 +7,7 @@ use Illuminate\Validation\Validator;
 use Modules\Inventory\Models\WarehouseLocation;
 use Modules\Purchasing\Models\GoodReceiptNote;
 use Modules\Purchasing\Models\GoodReceiptNoteItem;
+use Modules\Purchasing\Support\PurchaseReturnQuantity;
 
 class StorePurchaseReturnRequest extends FormRequest
 {
@@ -64,7 +65,7 @@ class StorePurchaseReturnRequest extends FormRequest
                 }
 
                 $remaining = min(
-                    (float) $grnItem->quantity_received,
+                    PurchaseReturnQuantity::remainingForGrnItem((float) $grnItem->quantity_received, $grnItem->id),
                     (float) ($grnItem->purchaseOrderItem?->quantity_received ?? 0)
                 );
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Payables;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Partners\Models\Partner;
@@ -26,6 +27,11 @@ class PayablesBillFromGrnTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         $this->setUpRoles();
+
+        Setting::query()->updateOrCreate(
+            ['key' => 'ecommerce.tax_enabled'],
+            ['group' => 'ecommerce', 'value' => '0', 'type' => 'boolean', 'label' => 'Enable Tax']
+        );
     }
 
     /**

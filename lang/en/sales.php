@@ -5,6 +5,7 @@ return [
 
     'nav' => [
         'sales_orders' => 'Sales Orders',
+        'price_lists' => 'Price Lists',
     ],
 
     'status' => [
@@ -47,6 +48,25 @@ return [
         'created_by' => 'Created by',
         'issued_by' => 'Issued by',
         'status' => 'Status',
+        'name' => 'Name',
+        'code' => 'Code',
+    ],
+
+    'actions' => [
+        'cancel' => 'Cancel',
+        'delete' => 'Delete',
+    ],
+
+    'price_lists' => [
+        'title' => 'Price Lists',
+        'new' => 'New Price List',
+        'create' => 'Create Price List',
+        'empty' => 'No price lists yet.',
+        'items' => 'Items',
+        'active' => 'Active',
+        'inactive' => 'Inactive',
+        'save' => 'Save',
+        'add_item' => 'Add / Update Price',
     ],
 
     'placeholders' => [
@@ -139,6 +159,8 @@ return [
         'show' => [
             'view_so' => 'View SO',
             'confirm' => 'Confirm Return',
+            'void' => 'Void Return',
+            'void_confirm' => 'Void this confirmed sales return? Stock will be issued again, reservations released, and unpaid credit notes voided.',
         ],
     ],
 
@@ -195,6 +217,16 @@ return [
         'return_qty_exceeds_delivered' => 'Return quantity for :product exceeds delivered remaining (:remaining).',
         'credit_from_return_notes' => 'Credit from sales return :return (SO :so)',
         'credit_line_description' => 'Credit :return — :product × :qty',
+        'return_rereserve_failed' => 'Stock was restored but could not be re-reserved for the sales order.',
+        'return_voided' => 'Sales return voided and stock adjusted.',
+        'return_void_confirmed_only' => 'Only a confirmed sales return can be voided.',
+        'return_void_closed_so' => 'Cannot void a sales return when the sales order is closed.',
+        'return_void_notes' => 'Void of sales return :return',
+        'return_void_credit_paid' => 'Cannot void a sales return whose credit note has already been paid.',
+        'price_list_created' => 'Price list created.',
+        'price_list_updated' => 'Price list updated.',
+        'price_list_item_saved' => 'Price list item saved.',
+        'price_list_item_deleted' => 'Price list item deleted.',
     ],
 
     'validation' => [

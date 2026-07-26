@@ -25,6 +25,7 @@ class StoreGoodReceiptNoteRequest extends FormRequest
             'received_at' => ['required', 'date'],
             'supplier_do_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'freight_amount' => ['nullable', 'numeric', 'min:0'],
             'confirm' => ['sometimes', 'boolean'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.po_item_id' => ['required', 'integer', 'exists:purchase_order_items,id'],

@@ -28,10 +28,11 @@ class ModuleTierPropTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->has('moduleTiers', $expected)
-                // Ordered by the module's own menu sort_order, which is what fixes
-                // the order of items inside each sidebar group. Pages sorts first.
-                ->where('moduleTiers.0.key', 'pages')
-                ->where('moduleTiers.0.tier', 'content')
+                // Ordered by each module menu sort_order (BI currently sorts first).
+                ->where('moduleTiers.0.key', 'bi')
+                ->where('moduleTiers.0.tier', 'vertical')
+                ->where('moduleTiers.1.key', 'pages')
+                ->where('moduleTiers.1.tier', 'content')
             );
     }
 }

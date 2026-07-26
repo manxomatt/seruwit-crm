@@ -8,6 +8,11 @@ const TABS = [
         route: 'sales.sales-orders.index',
         patterns: ['sales.sales-orders.*', 'sales.gin.*', 'sales.returns.*'],
     },
+    {
+        labelKey: 'sales.nav.price_lists',
+        route: 'sales.price-lists.index',
+        patterns: ['sales.price-lists.*'],
+    },
 ] as const;
 
 export default function SalesNav(): JSX.Element {

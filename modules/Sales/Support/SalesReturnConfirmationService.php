@@ -6,9 +6,12 @@ use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Modules\Inventory\Support\StockMovementRecorder;
+use Modules\Inventory\Support\StockReservationService;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
+use Modules\Sales\Models\SalesOrder;
 use Modules\Sales\Models\SalesReturn;
 use Modules\Sales\Models\SalesReturnItem;
 use RuntimeException;
@@ -19,7 +22,12 @@ class SalesReturnConfirmationService
     {
         return DB::transaction(function () use ($salesReturn, $createCreditNote) {
             $salesReturn->refresh();
-            $salesReturn->load(['items.salesOrderItem.product', 'items.salesOrderItem.packaging', 'salesOrder.partner']);
+            $salesReturn->load([
+                'items.salesOrderItem.product',
+                'items.salesOrderItem.packaging',
+                'items.ginItem',
+                'salesOrder.partner',
+            ]);
 
             if ($salesReturn->status !== SalesReturn::STATUS_DRAFT) {
                 throw new RuntimeException(__('sales.messages.return_confirm_draft_only'));
@@ -34,6 +42,22 @@ class SalesReturnConfirmationService
             foreach ($salesReturn->items as $item) {
                 $soItem = $item->salesOrderItem;
                 $returnQty = (float) $item->quantity_returned;
+
+                if ($item->gin_item_id) {
+                    $remaining = SalesReturnQuantity::remainingForGinItem(
+                        (float) ($item->ginItem?->quantity_issued ?? 0),
+                        (int) $item->gin_item_id,
+                        $salesReturn->id
+                    );
+
+                    if ($returnQty > $remaining + 0.009) {
+                        throw new RuntimeException(__('sales.messages.return_qty_exceeds_delivered', [
+                            'product' => $soItem->product?->name ?? 'Product',
+                            'remaining' => $remaining,
+                        ]));
+                    }
+                }
+
                 $delivered = (float) $soItem->quantity_delivered;
 
                 if ($returnQty > $delivered) {
@@ -70,6 +94,22 @@ class SalesReturnConfirmationService
                 if ((float) $soItem->fresh()->quantity_delivered < 0) {
                     $soItem->update(['quantity_delivered' => 0]);
                 }
+
+                $so = $salesReturn->salesOrder;
+                if ($baseQty > 0 && ! in_array($so->status, [SalesOrder::STATUS_CANCELLED, SalesOrder::STATUS_CLOSED], true)) {
+                    try {
+                        StockReservationService::reserveAdditionalForSalesOrderItem(
+                            $so,
+                            $soItem->fresh(['product', 'packaging']),
+                            $baseQty,
+                        );
+                    } catch (ValidationException $e) {
+                        $message = collect($e->errors())->flatten()->first()
+                            ?? __('sales.messages.return_rereserve_failed');
+
+                        throw new RuntimeException($message);
+                    }
+                }
             }
 
             $salesReturn->update(['status' => SalesReturn::STATUS_CONFIRMED]);
@@ -81,6 +121,93 @@ class SalesReturnConfirmationService
 
             return $salesReturn->fresh(['items', 'salesOrder', 'warehouse']);
         });
+    }
+
+    public function void(SalesReturn $salesReturn): SalesReturn
+    {
+        return DB::transaction(function () use ($salesReturn) {
+            $salesReturn->refresh();
+            $salesReturn->load([
+                'items.salesOrderItem.product',
+                'items.salesOrderItem.packaging',
+                'salesOrder',
+            ]);
+
+            if ($salesReturn->status !== SalesReturn::STATUS_CONFIRMED) {
+                throw new RuntimeException(__('sales.messages.return_void_confirmed_only'));
+            }
+
+            $so = $salesReturn->salesOrder;
+            if ($so->status === SalesOrder::STATUS_CLOSED) {
+                throw new RuntimeException(__('sales.messages.return_void_closed_so'));
+            }
+
+            foreach ($salesReturn->items as $item) {
+                $soItem = $item->salesOrderItem;
+                $baseQty = app(GinConfirmationService::class)->toBaseQuantity(
+                    (float) $item->quantity_returned,
+                    $soItem
+                );
+
+                StockMovementRecorder::record([
+                    'product_id' => $soItem->product_id,
+                    'warehouse_id' => $salesReturn->warehouse_id,
+                    'location_id' => $item->location_id,
+                    'type' => 'out',
+                    'quantity' => $baseQty,
+                    'source_type' => 'sales_return_void',
+                    'source_id' => $item->id,
+                    'reference_code' => $salesReturn->return_number,
+                    'batch_number' => $item->batch_number,
+                    'expiry_date' => $item->expiry_date?->toDateString(),
+                    'notes' => __('sales.messages.return_void_notes', ['return' => $salesReturn->return_number]),
+                    'recorded_by' => auth()->id(),
+                    'recorded_at' => now(),
+                    'allocate' => filled($item->batch_number) ? false : true,
+                ]);
+
+                if ($baseQty > 0) {
+                    StockReservationService::releaseForSalesOrderItem($soItem, $baseQty);
+                }
+
+                $soItem->increment('quantity_delivered', (float) $item->quantity_returned);
+            }
+
+            $this->voidLinkedCreditInvoice($salesReturn);
+
+            $salesReturn->update(['status' => SalesReturn::STATUS_VOIDED]);
+            app(GinConfirmationService::class)->recalculateSalesOrderStatus($so->fresh(['items']));
+
+            return $salesReturn->fresh(['items', 'salesOrder', 'warehouse']);
+        });
+    }
+
+    private function voidLinkedCreditInvoice(SalesReturn $salesReturn): void
+    {
+        if (! Schema::hasTable('invoice_lines')) {
+            return;
+        }
+
+        foreach ($salesReturn->items as $item) {
+            $lines = InvoiceLine::query()
+                ->where('source_type', $item->getMorphClass())
+                ->where('source_id', $item->id)
+                ->with('invoice')
+                ->get();
+
+            foreach ($lines as $line) {
+                $invoice = $line->invoice;
+                if (! $invoice || $invoice->status === Invoice::STATUS_VOID) {
+                    continue;
+                }
+
+                if ((float) $invoice->amount_paid > 0.009) {
+                    throw new RuntimeException(__('sales.messages.return_void_credit_paid'));
+                }
+
+                $invoice->update(['status' => Invoice::STATUS_VOID]);
+            }
+        }
     }
 
     private function createCreditInvoice(SalesReturn $salesReturn): Invoice
@@ -127,6 +254,7 @@ class SalesReturnConfirmationService
         }
 
         $invoice->recalculate();
+        $invoice->update(['status' => Invoice::STATUS_ISSUED]);
 
         return $invoice;
     }

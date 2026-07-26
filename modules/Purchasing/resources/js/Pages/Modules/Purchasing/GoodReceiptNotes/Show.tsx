@@ -26,6 +26,7 @@ interface Grn {
     received_at: string;
     supplier_do_number: string | null;
     notes: string | null;
+    freight_amount: string | number | null;
     purchase_order: {
         id: number;
         po_number: string;
@@ -133,12 +134,18 @@ export default function Show({ grn, can }: Props): JSX.Element {
                 </div>
             </div>
 
-            {(grn.supplier_do_number || grn.notes) && (
+            {(grn.supplier_do_number || grn.notes || Number(grn.freight_amount) > 0) && (
                 <div className="mb-6 rounded-lg bg-white p-4 text-sm shadow-sm">
                     {grn.supplier_do_number && (
                         <p>
                             <span className="text-gray-500">{t('purchasing.grn.show.supplier_do')}</span>{' '}
                             <span className="font-semibold">{grn.supplier_do_number}</span>
+                        </p>
+                    )}
+                    {Number(grn.freight_amount) > 0 && (
+                        <p className="mt-1">
+                            <span className="text-gray-500">{t('purchasing.fields.freight_amount')}</span>{' '}
+                            <span className="font-semibold tabular-nums">{grn.freight_amount}</span>
                         </p>
                     )}
                     {grn.notes && <p className="mt-1 text-gray-600">{grn.notes}</p>}

@@ -250,6 +250,8 @@ return [
         'opname_created' => 'Stock opname dibuat. Masukkan hitungan fisik Anda.',
         'counts_saved' => 'Hitungan disimpan.',
         'opname_finalized' => 'Stock opname difinalisasi dan penyesuaian dicatat.',
+        'opname_warehouse_frozen' => 'Mutasi stok dibekukan selama stock opname sedang berjalan di gudang ini.',
+        'opname_below_reserved' => 'Qty hitung tidak boleh di bawah reserved untuk :product (reserved :reserved).',
         'putaway_done' => 'Putaway selesai — stok dipindah ke STOCK.',
         'putaway_invalid_qty' => 'Kuantitas putaway harus lebih dari nol.',
         'putaway_same_location' => 'Lokasi sumber dan tujuan harus berbeda.',

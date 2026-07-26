@@ -114,6 +114,7 @@ class PurchasingModule implements ModuleContract
                 Route::post('/grn/{grn}/return', [PurchaseReturnController::class, 'store'])->middleware('permission:purchasing,create')->name('grn.return.store');
                 Route::get('/returns/{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('returns.show');
                 Route::post('/returns/{purchaseReturn}/confirm', [PurchaseReturnController::class, 'confirm'])->middleware('permission:purchasing,receive')->name('returns.confirm');
+                Route::post('/returns/{purchaseReturn}/void', [PurchaseReturnController::class, 'void'])->middleware('permission:purchasing,receive')->name('returns.void');
             });
         });
     }

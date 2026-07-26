@@ -144,6 +144,45 @@ class SalesReturnTest extends TestCase
 
         $credit = Invoice::query()->latest('id')->first();
         $this->assertNotNull($credit);
+        $this->assertSame(Invoice::STATUS_ISSUED, $credit->status);
         $this->assertLessThan(0, (float) $credit->subtotal);
+        $this->assertLessThan(0, $credit->balanceDue());
+    }
+
+    public function test_second_return_cannot_exceed_gin_line_residual(): void
+    {
+        Setting::query()->updateOrCreate(
+            ['key' => 'ecommerce.tax_enabled'],
+            ['group' => 'ecommerce', 'value' => '0', 'type' => 'boolean', 'label' => 'Enable Tax']
+        );
+
+        $user = $this->createAdminUser();
+        [$gin, $ginItem, $soItem, $location] = $this->confirmedGin();
+
+        $this->actingAs($user)->post(route('module.sales.gin.return.store', $gin, false), [
+            'returned_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                [
+                    'gin_item_id' => $ginItem->id,
+                    'so_item_id' => $soItem->id,
+                    'quantity_returned' => 30,
+                    'location_id' => $location->id,
+                ],
+            ],
+        ])->assertSessionHas('success');
+
+        $this->actingAs($user)->post(route('module.sales.gin.return.store', $gin, false), [
+            'returned_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                [
+                    'gin_item_id' => $ginItem->id,
+                    'so_item_id' => $soItem->id,
+                    'quantity_returned' => 20,
+                    'location_id' => $location->id,
+                ],
+            ],
+        ])->assertSessionHasErrors();
     }
 }

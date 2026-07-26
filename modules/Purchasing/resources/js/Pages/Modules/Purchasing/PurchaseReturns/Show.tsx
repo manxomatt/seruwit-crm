@@ -23,13 +23,21 @@ interface Props {
             location: { name: string; code: string } | null;
         }>;
     };
-    can: { receive: boolean };
+    can: { receive: boolean; void: boolean };
 }
 
 export default function Show({ purchaseReturn, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const isDraft = purchaseReturn.status === 'draft';
+    const isConfirmed = purchaseReturn.status === 'confirmed';
+
+    const voidReturn = () => {
+        if (!window.confirm(t('purchasing.returns.show.void_confirm'))) {
+            return;
+        }
+        router.post(prefixedRoute('purchasing.returns.void', purchaseReturn.id), {}, { preserveScroll: true });
+    };
 
     return (
         <DynamicLayout
@@ -52,6 +60,11 @@ export default function Show({ purchaseReturn, can }: Props): JSX.Element {
                             >
                                 {t('purchasing.returns.show.confirm')}
                             </PrimaryButton>
+                        )}
+                        {can.void && isConfirmed && (
+                            <SecondaryButton type="button" onClick={voidReturn}>
+                                {t('purchasing.returns.show.void')}
+                            </SecondaryButton>
                         )}
                     </div>
                 </div>

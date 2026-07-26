@@ -47,6 +47,7 @@ return [
         'batch' => 'Batch',
         'expiry' => 'Expiry',
         'supplier_do_number' => 'Supplier Delivery Note No.',
+        'freight_amount' => 'Freight / Landed Cost',
         'created_by' => 'Created by',
         'received_by' => 'Received by',
         'status' => 'Status',
@@ -141,6 +142,8 @@ return [
         'show' => [
             'view_po' => 'View PO',
             'confirm' => 'Confirm Return',
+            'void' => 'Void Return',
+            'void_confirm' => 'Void this confirmed purchase return? Stock and cost will be restored, and unpaid AP credits voided.',
         ],
     ],
 
@@ -183,6 +186,11 @@ return [
         'return_confirm_draft_only' => 'Only a draft purchase return can be confirmed.',
         'return_need_items' => 'Add at least one item before confirming the return.',
         'return_qty_exceeds_received' => 'Return quantity for :product exceeds received remaining (:remaining).',
+        'return_voided' => 'Purchase return voided and stock restored.',
+        'return_void_confirmed_only' => 'Only a confirmed purchase return can be voided.',
+        'return_void_closed_po' => 'Cannot void a purchase return when the purchase order is closed.',
+        'return_void_notes' => 'Void of purchase return :return',
+        'return_void_credit_paid' => 'Cannot void a purchase return whose AP credit has already been settled.',
     ],
 
     'validation' => [

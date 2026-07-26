@@ -32,6 +32,7 @@ class GoodReceiptNote extends Model
         'received_at',
         'supplier_do_number',
         'notes',
+        'freight_amount',
     ];
 
     /** @return array<string, string> */
@@ -39,6 +40,7 @@ class GoodReceiptNote extends Model
     {
         return [
             'received_at' => 'date',
+            'freight_amount' => 'decimal:2',
         ];
     }
 

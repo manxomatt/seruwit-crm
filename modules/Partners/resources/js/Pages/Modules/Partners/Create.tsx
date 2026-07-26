@@ -38,9 +38,10 @@ interface Props {
     titles: Title[];
     tags: Tag[];
     partners: ParentPartner[];
+    priceLists?: Array<{ id: number; name: string; code: string | null }>;
 }
 
-export default function Create({ industries, titles, tags, partners }: Props): JSX.Element {
+export default function Create({ industries, titles, tags, partners, priceLists = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
@@ -61,6 +62,7 @@ export default function Create({ industries, titles, tags, partners }: Props): J
         is_customer: true,
         is_supplier: false,
         credit_limit: '',
+        price_list_id: '',
         address: '',
         notes: '',
         comment: '',
@@ -242,6 +244,25 @@ export default function Create({ industries, titles, tags, partners }: Props): J
                                 <TextInput id="credit_limit" type="number" className="mt-1 block w-full" value={data.credit_limit} onChange={(e) => setData('credit_limit', e.target.value)} min="0" step="0.01" />
                                 <InputError message={errors.credit_limit} className="mt-2" />
                             </div>
+                            {priceLists.length > 0 && (
+                                <div>
+                                    <InputLabel value={t('partners.fields.price_list')} />
+                                    <Select
+                                        className="mt-1"
+                                        value={data.price_list_id}
+                                        onChange={(value) => setData('price_list_id', value)}
+                                        placeholder={t('partners.placeholders.none')}
+                                        options={[
+                                            { value: '', label: t('partners.placeholders.none') },
+                                            ...priceLists.map((list) => ({
+                                                value: String(list.id),
+                                                label: list.code ? `${list.code} — ${list.name}` : list.name,
+                                            })),
+                                        ]}
+                                    />
+                                    <InputError message={errors.price_list_id} className="mt-2" />
+                                </div>
+                            )}
                         </div>
 
                         {/* Tags */}

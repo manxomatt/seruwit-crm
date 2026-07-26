@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\DB;
 use Modules\Inventory\Models\StockMovement;
 use Modules\Inventory\Models\WarehouseLocation;
 use Modules\Inventory\Support\LowStockNotifier;
+use Modules\Inventory\Support\ProductCostAverager;
 use Modules\Inventory\Support\StockMovementRecorder;
-use Modules\Product\Models\Product;
 use Modules\Purchasing\Models\GoodReceiptNote;
 use Modules\Purchasing\Models\PurchaseOrder;
 use Modules\Purchasing\Models\PurchaseOrderItem;
@@ -30,17 +30,18 @@ class GrnConfirmationService
             }
 
             $lockedItems = PurchaseOrderItem::query()
-                ->whereIn('id', $grn->items->pluck('purchase_order_item_id'))
+                ->whereIn('id', $grn->items->pluck('po_item_id'))
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
 
             $receiptLocationId = $this->resolveInputLocationId((int) $grn->warehouse_id);
+            $freightShareByItemId = $this->allocateFreightByLineValue($grn);
 
             foreach ($grn->items as $grnItem) {
                 /** @var PurchaseOrderItem $poItem */
-                $poItem = $lockedItems->get($grnItem->purchase_order_item_id) ?? $grnItem->purchaseOrderItem;
+                $poItem = $lockedItems->get($grnItem->po_item_id) ?? $grnItem->purchaseOrderItem;
                 $poItem->refresh();
 
                 $remaining = $poItem->remainingQuantity();
@@ -73,7 +74,13 @@ class GrnConfirmationService
                 ]);
 
                 $poItem->increment('quantity_received', (float) $grnItem->quantity_received);
-                $this->updateProductCostFromReceipt($poItem, $baseQty, (float) $grnItem->quantity_received);
+                $freightShare = $freightShareByItemId[$grnItem->id] ?? 0.0;
+                $this->updateProductCostFromReceipt(
+                    $poItem,
+                    $baseQty,
+                    (float) $grnItem->quantity_received,
+                    $freightShare
+                );
             }
 
             $grn->update(['status' => GoodReceiptNote::STATUS_CONFIRMED]);
@@ -117,8 +124,16 @@ class GrnConfirmationService
                 ->lockForUpdate()
                 ->get();
 
+            $freightShareByItemId = $this->allocateFreightByLineValue($grn);
+
             foreach ($grn->items as $grnItem) {
                 $poItem = $grnItem->purchaseOrderItem;
+                $freightShare = $freightShareByItemId[$grnItem->id] ?? 0.0;
+                $unitCost = $this->unitCostInBase(
+                    $poItem,
+                    $freightShare,
+                    (float) $grnItem->quantity_received
+                );
                 $inbound = StockMovement::query()
                     ->where('source_type', 'grn')
                     ->where('source_id', $grnItem->id)
@@ -142,6 +157,12 @@ class GrnConfirmationService
                         'recorded_at' => now(),
                         'allocate' => false,
                     ]);
+
+                    ProductCostAverager::reverseInbound(
+                        (int) $movement->product_id,
+                        (float) $movement->quantity,
+                        $unitCost
+                    );
                 }
 
                 $poItem->decrement('quantity_received', (float) $grnItem->quantity_received);
@@ -243,38 +264,86 @@ class GrnConfirmationService
         return round($orderQty * $factor, 2);
     }
 
-    private function updateProductCostFromReceipt(PurchaseOrderItem $poItem, float $baseQty, float $orderQty): void
-    {
+    private function updateProductCostFromReceipt(
+        PurchaseOrderItem $poItem,
+        float $baseQty,
+        float $orderQty,
+        float $freightShare = 0.0,
+    ): void {
         if ($baseQty <= 0 || $orderQty <= 0) {
             return;
         }
 
-        $incomingCost = round(((float) $poItem->unit_price * $orderQty) / $baseQty, 4);
+        $merchandise = (float) $poItem->unit_price * $orderQty;
+        $incomingCost = round(($merchandise + $freightShare) / $baseQty, 4);
 
-        $product = Product::query()->whereKey($poItem->product_id)->lockForUpdate()->first();
+        ProductCostAverager::applyInbound((int) $poItem->product_id, $baseQty, $incomingCost);
+    }
 
-        if (! $product) {
-            return;
+    /**
+     * @return array<int, float> freight share keyed by GRN item id
+     */
+    public function allocateFreightByLineValue(GoodReceiptNote $grn): array
+    {
+        $freight = round((float) ($grn->freight_amount ?? 0), 2);
+
+        if ($freight <= 0) {
+            return [];
         }
 
-        $onHandAfter = round((float) \Modules\Inventory\Models\StockLevel::query()
-            ->where('product_id', $product->id)
-            ->sum('on_hand'), 2);
+        $weights = [];
+        $totalWeight = 0.0;
 
-        $previousQty = max(0, round($onHandAfter - $baseQty, 2));
-        $previousCost = (float) $product->cost;
-
-        if ($previousQty <= 0) {
-            $product->update(['cost' => $incomingCost]);
-
-            return;
+        foreach ($grn->items as $grnItem) {
+            $poItem = $grnItem->purchaseOrderItem;
+            $weight = round((float) $grnItem->quantity_received * (float) ($poItem?->unit_price ?? 0), 2);
+            $weights[$grnItem->id] = $weight;
+            $totalWeight += $weight;
         }
 
-        $average = round(
-            (($previousQty * $previousCost) + ($baseQty * $incomingCost)) / ($previousQty + $baseQty),
-            4
-        );
+        if ($totalWeight <= 0) {
+            $count = max(1, $grn->items->count());
+            $each = round($freight / $count, 2);
+            $shares = [];
+            foreach ($grn->items as $grnItem) {
+                $shares[$grnItem->id] = $each;
+            }
 
-        $product->update(['cost' => $average]);
+            return $shares;
+        }
+
+        $shares = [];
+        $allocated = 0.0;
+        $items = $grn->items->values();
+
+        foreach ($items as $index => $grnItem) {
+            if ($index === $items->count() - 1) {
+                $shares[$grnItem->id] = round($freight - $allocated, 2);
+            } else {
+                $share = round($freight * ($weights[$grnItem->id] / $totalWeight), 2);
+                $shares[$grnItem->id] = $share;
+                $allocated = round($allocated + $share, 2);
+            }
+        }
+
+        return $shares;
+    }
+
+    public function unitCostInBase(PurchaseOrderItem $poItem, float $freightShare = 0.0, float $orderQty = 1.0): float
+    {
+        $factor = (float) ($poItem->packaging?->qty ?: 1);
+
+        if ($factor <= 0) {
+            $factor = 1;
+        }
+
+        $baseQty = round($orderQty * $factor, 2);
+        if ($baseQty <= 0) {
+            return round((float) $poItem->unit_price / $factor, 4);
+        }
+
+        $merchandise = (float) $poItem->unit_price * $orderQty;
+
+        return round(($merchandise + $freightShare) / $baseQty, 4);
     }
 }

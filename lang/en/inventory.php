@@ -250,6 +250,8 @@ return [
         'opname_created' => 'Stock opname created. Enter your physical counts.',
         'counts_saved' => 'Counts saved.',
         'opname_finalized' => 'Stock opname finalized and adjustments recorded.',
+        'opname_warehouse_frozen' => 'Stock movements are frozen while a stock opname is in progress for this warehouse.',
+        'opname_below_reserved' => 'Cannot set counted qty below reserved for :product (reserved :reserved).',
         'putaway_done' => 'Putaway completed — stock moved to STOCK.',
         'putaway_invalid_qty' => 'Putaway quantity must be greater than zero.',
         'putaway_same_location' => 'Source and destination locations must differ.',

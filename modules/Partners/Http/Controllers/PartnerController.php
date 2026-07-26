@@ -15,6 +15,8 @@ use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerIndustry;
 use Modules\Partners\Models\PartnerTag;
 use Modules\Partners\Models\PartnerTitle;
+use Modules\Sales\Models\PriceList;
+use Modules\Sales\Support\PriceListResolver;
 
 class PartnerController extends Controller
 {
@@ -75,6 +77,9 @@ class PartnerController extends Controller
             'titles' => PartnerTitle::query()->orderBy('name')->get(),
             'tags' => PartnerTag::query()->orderBy('name')->get(),
             'partners' => Partner::query()->where('account_type', 'company')->orderBy('name')->get(['id', 'name', 'code']),
+            'priceLists' => PriceListResolver::tablesReady()
+                ? PriceList::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code'])
+                : [],
         ]);
     }
 
@@ -83,6 +88,10 @@ class PartnerController extends Controller
         $validated = $request->validated();
         $tagIds = $validated['tag_ids'] ?? [];
         unset($validated['tag_ids']);
+
+        if (! PriceListResolver::tablesReady()) {
+            unset($validated['price_list_id']);
+        }
 
         $validated['customer_rank'] = ($validated['is_customer'] ?? false) ? 1 : 0;
         $validated['supplier_rank'] = ($validated['is_supplier'] ?? false) ? 1 : 0;
@@ -138,6 +147,9 @@ class PartnerController extends Controller
                 ->where('id', '!=', $partner->id)
                 ->orderBy('name')
                 ->get(['id', 'name', 'code']),
+            'priceLists' => PriceListResolver::tablesReady()
+                ? PriceList::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code'])
+                : [],
         ]);
     }
 
@@ -146,6 +158,10 @@ class PartnerController extends Controller
         $validated = $request->validated();
         $tagIds = $validated['tag_ids'] ?? null;
         unset($validated['tag_ids']);
+
+        if (! PriceListResolver::tablesReady()) {
+            unset($validated['price_list_id']);
+        }
 
         if (array_key_exists('is_customer', $validated)) {
             $validated['customer_rank'] = $validated['is_customer'] ? max(1, $partner->customer_rank) : 0;
