@@ -1,9 +1,10 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { formatDateTime } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import TransportationNav from '../../../../TransportationNav';
@@ -65,6 +66,7 @@ const EyeIcon = () => (
 export default function Index({ trips, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [search, setSearch] = useState(filters.search || '');
 
     const handleSearch: FormEventHandler = (e) => {
@@ -153,7 +155,7 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
                                                     {trip.vehicle.name} ({trip.vehicle.plate_number}) / {trip.driver.name}
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{trip.partner?.name || '—'}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{trip.scheduled_at}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDateTime(trip.scheduled_at, localeTag)}</td>
                                                 <td className="whitespace-nowrap px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(trip.status)}`}>
                                                         {t(`transportation.status.${trip.status}`, undefined, trip.status)}

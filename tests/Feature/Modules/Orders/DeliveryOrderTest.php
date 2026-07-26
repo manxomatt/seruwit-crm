@@ -52,6 +52,20 @@ class DeliveryOrderTest extends TestCase
         $this->assertSame('DO-000001', $order->code);
     }
 
+    public function test_create_order_page_includes_map_geocode_flag(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)
+            ->get(route('module.orders.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Orders/Create')
+                ->has('partners')
+                ->has('canGeocode')
+            );
+    }
+
     public function test_only_a_draft_order_can_be_edited(): void
     {
         $user = $this->createAdminUser();

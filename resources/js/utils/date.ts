@@ -30,3 +30,24 @@ export function formatDate(value: string | null | undefined, localeTag = 'id-ID'
         year: 'numeric',
     });
 }
+
+/** Display a datetime without raw ISO / timezone noise (e.g. T08:00:00.000000Z). */
+export function formatDateTime(value: string | null | undefined, localeTag = 'id-ID'): string {
+    if (!value) {
+        return '—';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString(localeTag, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}

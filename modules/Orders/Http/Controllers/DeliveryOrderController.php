@@ -3,6 +3,7 @@
 namespace Modules\Orders\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -87,6 +88,7 @@ class DeliveryOrderController extends Controller
     {
         return Inertia::render('Modules/Orders/Create', [
             'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'canGeocode' => Modules::available('inventory'),
         ]);
     }
 

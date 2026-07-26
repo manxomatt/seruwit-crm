@@ -1,6 +1,4 @@
-import DynamicLayout from '@/Layouts/DynamicLayout';
-import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -12,10 +10,13 @@ import TextInput from '@/Components/TextInput';
 import LeafletMap from '@/Components/Map/LeafletMap';
 import RouteTrail from '@/Components/Map/RouteTrail';
 import VehicleMarker from '@/Components/Map/VehicleMarker';
+import { formatDateTime } from '@/utils/date';
 import { formatSpeedKph, toLatLng, type LatLng } from '@/utils/geo';
 import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import TransportationNav from '../../../../TransportationNav';
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 
 interface Checkpoint {
     id: number;
@@ -152,6 +153,7 @@ const getOrderStatusBadgeColor = (status: string) => {
 export default function Show({ trip, products, ordersEnabled, trackingEnabled, livePosition, fuelEstimate, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCheckpointModal, setShowCheckpointModal] = useState(false);
     const [showItemModal, setShowItemModal] = useState(false);
@@ -380,7 +382,7 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.scheduled_at')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{trip.scheduled_at}</dd>
+                                <dd className="mt-1 text-sm text-gray-900">{formatDateTime(trip.scheduled_at, localeTag)}</dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Started At</dt>

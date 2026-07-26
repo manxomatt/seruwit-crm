@@ -3,12 +3,13 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import LocationMapPicker from '@/Components/Map/LocationMapPicker';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useCallback } from 'react';
 
 interface Partner {
     id: number;
@@ -18,9 +19,10 @@ interface Partner {
 
 interface Props {
     partners: Partner[];
+    canGeocode?: boolean;
 }
 
-export default function Create({ partners }: Props): JSX.Element {
+export default function Create({ partners, canGeocode = false }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
@@ -39,6 +41,18 @@ export default function Create({ partners }: Props): JSX.Element {
         post(prefixedRoute('orders.store'));
     };
 
+    const handleMapChange = useCallback(
+        (next: { latitude: string; longitude: string; address?: string }) => {
+            setData((current) => ({
+                ...current,
+                delivery_lat: next.latitude,
+                delivery_lng: next.longitude,
+                ...(next.address ? { delivery_address: next.address } : {}),
+            }));
+        },
+        [setData],
+    );
+
     return (
         <DynamicLayout
             header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('orders.create.title')}</h2>}
@@ -47,13 +61,13 @@ export default function Create({ partners }: Props): JSX.Element {
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
-                    <form onSubmit={submit} className="max-w-2xl space-y-6">
+                    <form onSubmit={submit} className="mx-auto max-w-3xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="partner_id" value={t('orders.create.partner')} />
                                 <Select
                                     id="partner_id"
-                                    className="mt-1"
+                                    className="mt-1 w-full"
                                     value={data.partner_id}
                                     onChange={(value) => setData('partner_id', value)}
                                     placeholder={t('orders.create.select_partner')}
@@ -75,24 +89,63 @@ export default function Create({ partners }: Props): JSX.Element {
                                 <InputError message={errors.pickup_address} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="delivery_address" value={t('orders.create.delivery_address')} />
-                                <TextInput id="delivery_address" className="mt-1 block w-full" value={data.delivery_address} onChange={(e) => setData('delivery_address', e.target.value)} required />
-                                <InputError message={errors.delivery_address} className="mt-2" />
+                                <InputLabel htmlFor="demand_kg" value={t('orders.create.demand_kg')} />
+                                <TextInput id="demand_kg" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.demand_kg} onChange={(e) => setData('demand_kg', e.target.value)} />
+                                <InputError message={errors.demand_kg} className="mt-2" />
                             </div>
+                        </div>
+
+                        <div>
+                            <InputLabel value={t('orders.create.map_title')} />
+                            <p className="mb-2 text-xs text-gray-500">{t('orders.create.map_hint')}</p>
+                            <LocationMapPicker
+                                latitude={String(data.delivery_lat)}
+                                longitude={String(data.delivery_lng)}
+                                onChange={handleMapChange}
+                                height="360px"
+                                resolveAddress={canGeocode}
+                            />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="delivery_address" value={t('orders.create.delivery_address')} />
+                            <TextInput
+                                id="delivery_address"
+                                className="mt-1 block w-full"
+                                value={data.delivery_address}
+                                onChange={(e) => setData('delivery_address', e.target.value)}
+                                required
+                            />
+                            <p className="mt-1 text-xs text-gray-500">{t('orders.create.address_hint')}</p>
+                            <InputError message={errors.delivery_address} className="mt-2" />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="delivery_lat" value={t('orders.create.delivery_lat')} />
-                                <TextInput id="delivery_lat" className="mt-1 block w-full" value={data.delivery_lat} onChange={(e) => setData('delivery_lat', e.target.value)} />
+                                <TextInput
+                                    id="delivery_lat"
+                                    type="number"
+                                    step="0.0000001"
+                                    className="mt-1 block w-full"
+                                    value={data.delivery_lat}
+                                    onChange={(e) => setData('delivery_lat', e.target.value)}
+                                    readOnly
+                                />
                                 <InputError message={errors.delivery_lat} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="delivery_lng" value={t('orders.create.delivery_lng')} />
-                                <TextInput id="delivery_lng" className="mt-1 block w-full" value={data.delivery_lng} onChange={(e) => setData('delivery_lng', e.target.value)} />
+                                <TextInput
+                                    id="delivery_lng"
+                                    type="number"
+                                    step="0.0000001"
+                                    className="mt-1 block w-full"
+                                    value={data.delivery_lng}
+                                    onChange={(e) => setData('delivery_lng', e.target.value)}
+                                    readOnly
+                                />
                                 <InputError message={errors.delivery_lng} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="demand_kg" value={t('orders.create.demand_kg')} />
-                                <TextInput id="demand_kg" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.demand_kg} onChange={(e) => setData('demand_kg', e.target.value)} />
-                                <InputError message={errors.demand_kg} className="mt-2" />
                             </div>
                         </div>
 
