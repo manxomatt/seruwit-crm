@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
 use Modules\Inventory\Models\Warehouse;
+use Modules\Orders\Support\DeliveryOrderFromGinService;
 use Modules\Sales\Http\Requests\StoreGoodsIssueNoteRequest;
 use Modules\Sales\Models\GoodsIssueNote;
 use Modules\Sales\Models\SalesOrder;
@@ -145,15 +146,40 @@ class GoodsIssueNoteController extends Controller
         $canReturn = $gin->status === GoodsIssueNote::STATUS_CONFIRMED
             && (auth()->user()?->hasPermissionFor('sales', 'create') ?? false);
 
+        $doService = class_exists(DeliveryOrderFromGinService::class)
+            ? app(DeliveryOrderFromGinService::class)
+            : null;
+        $existingDo = $doService?->existingForGin($gin);
+        $canCreateDo = $gin->status === GoodsIssueNote::STATUS_CONFIRMED
+            && $doService?->isAvailable()
+            && $existingDo === null
+            && (auth()->user()?->hasPermissionFor('orders', 'create') ?? false);
+
         return inertia('Modules/Sales/GoodsIssueNotes/Show', [
             'gin' => $gin,
+            'deliveryOrder' => $existingDo
+                ? ['id' => $existingDo->id, 'code' => $existingDo->code, 'status' => $existingDo->status]
+                : null,
             'can' => [
                 'issue' => auth()->user()?->hasPermissionFor('sales', 'issue') ?? false,
                 'void' => auth()->user()?->hasPermissionFor('sales', 'issue') ?? false,
                 'invoice' => $canInvoice,
                 'return' => $canReturn,
+                'create_do' => $canCreateDo,
             ],
         ]);
+    }
+
+    public function createDeliveryOrder(GoodsIssueNote $gin): RedirectResponse
+    {
+        try {
+            $order = app(DeliveryOrderFromGinService::class)->createFromConfirmedGin($gin);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route($this->getRoutePrefix().'.orders.show', $order)
+            ->with('success', __('sales.messages.do_created'));
     }
 
     public function invoice(GoodsIssueNote $gin): RedirectResponse

@@ -38,16 +38,19 @@ class PodItemObserver
 
         $pod = $podItem->proofOfDelivery;
         $order = $pod?->deliveryOrder;
-        $alreadyDispatched = Modules::available('outbound')
-            && class_exists(OutboundDispatchGate::class)
-            && $order
-            && OutboundDispatchGate::hasDispatchedStock($order);
+        $stockHandledUpstream = ($order && DeliveryOrderStock::isStockHandledUpstream($order))
+            || (
+                Modules::available('outbound')
+                && class_exists(OutboundDispatchGate::class)
+                && $order
+                && OutboundDispatchGate::hasDispatchedStock($order)
+            );
 
         $accepted = (float) $podItem->accepted_quantity;
 
-        if ($alreadyDispatched) {
-            // Stock already left the warehouse at pick/pack dispatch — only clear leftover reserved.
-            if ($orderItem) {
+        if ($stockHandledUpstream) {
+            // Stock already left the warehouse (GIN confirm or outbound dispatch).
+            if ($orderItem && ! ($order && $order->isFromGin())) {
                 DeliveryOrderStock::releaseItem($orderItem);
             }
         } elseif ($accepted > 0 && $orderItem && DeliveryOrderStock::hasOpenReservations($order)) {

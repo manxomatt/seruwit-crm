@@ -121,6 +121,15 @@ class GinConfirmationService
                 throw new RuntimeException(__('sales.messages.gin_void_closed_so'));
             }
 
+            if (class_exists(\Modules\Orders\Support\DeliveryOrderFromGinService::class)) {
+                $linkedDo = app(\Modules\Orders\Support\DeliveryOrderFromGinService::class)->existingForGin($gin);
+                if ($linkedDo) {
+                    throw new RuntimeException(__('sales.messages.gin_void_has_delivery_order', [
+                        'code' => $linkedDo->code,
+                    ]));
+                }
+            }
+
             $invoiceService = app(SalesInvoiceService::class);
             foreach ($gin->items as $ginItem) {
                 if ($invoiceService->ginItemHasActiveInvoice($ginItem)) {

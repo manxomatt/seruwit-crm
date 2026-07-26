@@ -255,11 +255,17 @@ class PickPackWorkflow
 
                 $orderItem = $item->deliveryOrderItem;
                 $consumed = 0.0;
+                $deliveryOrder = $pickList->deliveryOrder;
+
+                if ($deliveryOrder && DeliveryOrderStock::isStockHandledUpstream($deliveryOrder)) {
+                    // Stock already deducted at GIN confirm — do not stock out again at dispatch.
+                    continue;
+                }
 
                 if (
                     $orderItem
-                    && $pickList->deliveryOrder
-                    && DeliveryOrderStock::hasOpenReservations($pickList->deliveryOrder)
+                    && $deliveryOrder
+                    && DeliveryOrderStock::hasOpenReservations($deliveryOrder)
                 ) {
                     $consumed = DeliveryOrderStock::consumeItem($orderItem, $qty, $meta);
                 }

@@ -58,6 +58,7 @@ class DeliveryOrder extends Model
     protected $fillable = [
         'code',
         'partner_id',
+        'goods_issue_note_id',
         'trip_id',
         'status',
         'order_date',
@@ -97,6 +98,22 @@ class DeliveryOrder extends Model
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    /**
+     * Optional link to a Sales GIN. When set, inventory was already deducted
+     * at GIN confirm and this DO is logistics-only (trip / POD).
+     *
+     * @return BelongsTo<\Modules\Sales\Models\GoodsIssueNote, $this>|null
+     */
+    public function goodsIssueNote(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Sales\Models\GoodsIssueNote::class);
+    }
+
+    public function isFromGin(): bool
+    {
+        return $this->goods_issue_note_id !== null;
     }
 
     /**

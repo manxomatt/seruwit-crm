@@ -38,10 +38,11 @@ interface Gin {
 
 interface Props {
     gin: Gin;
-    can: { issue: boolean; void: boolean; invoice: boolean; return: boolean };
+    deliveryOrder?: { id: number; code: string; status: string } | null;
+    can: { issue: boolean; void: boolean; invoice: boolean; return: boolean; create_do?: boolean };
 }
 
-export default function Show({ gin, can }: Props): JSX.Element {
+export default function Show({ gin, deliveryOrder = null, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -61,6 +62,10 @@ export default function Show({ gin, can }: Props): JSX.Element {
 
     const createInvoice = () => {
         router.post(prefixedRoute('sales.gin.invoice', gin.id), {}, { preserveScroll: true });
+    };
+
+    const createDeliveryOrder = () => {
+        router.post(prefixedRoute('sales.gin.delivery-order', gin.id), {}, { preserveScroll: true });
     };
 
     return (
@@ -90,6 +95,16 @@ export default function Show({ gin, can }: Props): JSX.Element {
                         )}
                         {can.invoice && isConfirmed && (
                             <PrimaryButton onClick={createInvoice}>{t('sales.gin.show.create_invoice')}</PrimaryButton>
+                        )}
+                        {can.create_do && isConfirmed && (
+                            <PrimaryButton onClick={createDeliveryOrder}>{t('sales.gin.show.create_do')}</PrimaryButton>
+                        )}
+                        {deliveryOrder && (
+                            <Link href={prefixedRoute('orders.show', deliveryOrder.id)}>
+                                <SecondaryButton type="button">
+                                    {t('sales.gin.show.view_do')} ({deliveryOrder.code})
+                                </SecondaryButton>
+                            </Link>
                         )}
                         {can.return && isConfirmed && (
                             <Link href={prefixedRoute('sales.gin.return.create', gin.id)}>

@@ -106,6 +106,7 @@ class SalesModule implements ModuleContract
                 Route::post('/gin/{gin}/confirm', [GoodsIssueNoteController::class, 'confirm'])->middleware('permission:sales,issue')->name('gin.confirm');
                 Route::post('/gin/{gin}/void', [GoodsIssueNoteController::class, 'void'])->middleware('permission:sales,issue')->name('gin.void');
                 Route::post('/gin/{gin}/invoice', [GoodsIssueNoteController::class, 'invoice'])->middleware('permission:sales,create')->name('gin.invoice');
+                Route::post('/gin/{gin}/delivery-order', [GoodsIssueNoteController::class, 'createDeliveryOrder'])->middleware('permission:orders,create')->name('gin.delivery-order');
 
                 Route::get('/gin/{gin}/return/create', [SalesReturnController::class, 'create'])->middleware('permission:sales,create')->name('gin.return.create');
                 Route::post('/gin/{gin}/return', [SalesReturnController::class, 'store'])->middleware('permission:sales,create')->name('gin.return.store');
