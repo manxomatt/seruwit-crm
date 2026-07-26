@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Modules\Tracking\Events\VehiclePositionsRecorded;
 use Modules\TransportationManagement\Http\Controllers\CalendarController;
+use Modules\TransportationManagement\Http\Controllers\DirectionsController;
 use Modules\TransportationManagement\Http\Controllers\ReportController;
 use Modules\TransportationManagement\Http\Controllers\TripCheckpointController;
 use Modules\TransportationManagement\Http\Controllers\TripController;
@@ -114,6 +115,10 @@ class TransportationManagementModule implements ModuleContract
         Route::delete('/transportation/trips/{trip}/stops/{stop}', [TripStopController::class, 'destroy'])->middleware('permission:transportation,delete')->name('transportation.trips.stops.destroy');
         Route::post('/transportation/trips/{trip}/stops/{stop}/arrive', [TripStopController::class, 'arrive'])->middleware('permission:transportation,update')->name('transportation.trips.stops.arrive');
         Route::post('/transportation/trips/{trip}/stops/{stop}/complete', [TripStopController::class, 'complete'])->middleware('permission:transportation,update')->name('transportation.trips.stops.complete');
+
+        Route::get('/transportation/directions', DirectionsController::class)
+            ->middleware('permission:transportation,view')
+            ->name('transportation.directions');
 
         Route::get('/transportation/reports', [ReportController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.reports.index');
 

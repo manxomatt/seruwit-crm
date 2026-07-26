@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
+import PlanRoutesMap from '@/Components/Map/PlanRoutesMap';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
@@ -200,7 +201,7 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
         >
             <Head title={plan.code} />
             <div className="py-6">
-                <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
                             <div className="text-xs text-gray-500">{t('routing.fields.total_distance')}</div>
@@ -227,6 +228,33 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                             lng: plan.depot_lng,
                         })}
                     </p>
+
+                    {plan.routes.length > 0 && (
+                        <PlanRoutesMap
+                            depot={{
+                                lat: plan.depot_lat,
+                                lng: plan.depot_lng,
+                                address: plan.depot_address,
+                            }}
+                            routes={plan.routes.map((route) => ({
+                                id: route.id,
+                                sequence: route.sequence,
+                                vehicleLabel: route.vehicle
+                                    ? `${route.vehicle.name}${route.vehicle.plate_number ? ` (${route.vehicle.plate_number})` : ''}`
+                                    : undefined,
+                                stops: route.stops.map((stop) => ({
+                                    id: stop.id,
+                                    sequence: stop.sequence,
+                                    address: stop.address,
+                                    lat: stop.lat,
+                                    lng: stop.lng,
+                                    label: stop.delivery_order
+                                        ? `${stop.delivery_order.code}${stop.delivery_order.partner ? ` · ${stop.delivery_order.partner.name}` : ''}`
+                                        : stop.address,
+                                })),
+                            }))}
+                        />
+                    )}
 
                     <div className="space-y-4">
                         {plan.routes.length === 0 ? (

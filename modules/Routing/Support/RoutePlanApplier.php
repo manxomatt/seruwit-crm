@@ -8,6 +8,7 @@ use Modules\Orders\Support\DeliveryOrderTripAssignment;
 use Modules\Routing\Models\RoutePlan;
 use Modules\Routing\Models\RoutePlanRoute;
 use Modules\TransportationManagement\Models\Trip;
+use Modules\TransportationManagement\Models\TripStop;
 use RuntimeException;
 
 /**
@@ -79,6 +80,16 @@ class RoutePlanApplier
                 'lng' => $stop->lng,
             ]);
         }
+
+        // Routing plans always start at the depot — stamp those coords onto the
+        // shared pickup stop when the order itself has no warehouse geo.
+        $trip->stops()
+            ->where('type', TripStop::TYPE_PICKUP)
+            ->whereNull('lat')
+            ->update([
+                'lat' => $plan->depot_lat,
+                'lng' => $plan->depot_lng,
+            ]);
 
         $route->update(['trip_id' => $trip->id]);
     }

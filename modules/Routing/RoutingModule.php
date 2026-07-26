@@ -5,6 +5,7 @@ namespace Modules\Routing;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Routing\Http\Controllers\DirectionsController;
 use Modules\Routing\Http\Controllers\RoutePlanController;
 
 /**
@@ -79,6 +80,8 @@ class RoutingModule implements ModuleContract
             });
 
             Route::prefix('routing')->name('routing.')->group(function (): void {
+                Route::get('/directions', DirectionsController::class)->name('directions');
+
                 Route::get('/plans', [RoutePlanController::class, 'index'])->name('plans.index');
                 Route::get('/plans/create', [RoutePlanController::class, 'create'])->middleware('permission:routing,create')->name('plans.create');
                 Route::post('/plans', [RoutePlanController::class, 'store'])->middleware('permission:routing,create')->name('plans.store');

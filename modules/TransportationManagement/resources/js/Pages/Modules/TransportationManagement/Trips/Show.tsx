@@ -411,13 +411,27 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                 {hasMap && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <div className="mb-4 flex items-center justify-between">
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                                 <h3 className="text-lg font-medium text-gray-900">Route</h3>
-                                {live && (
-                                    <span className="text-sm text-gray-500">
-                                        Live: {formatSpeedKph(livePosition?.speed_kph)} — {livePosition?.recorded_at}
-                                    </span>
-                                )}
+                                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                    {mappedStops.length > 1 && (
+                                        <span className="inline-flex items-center gap-1.5">
+                                            <span className="inline-block h-0.5 w-5 bg-indigo-600" />
+                                            Planned (road)
+                                        </span>
+                                    )}
+                                    {trail.length > 1 && (
+                                        <span className="inline-flex items-center gap-1.5">
+                                            <span className="inline-block h-0.5 w-5 border-t-2 border-dashed border-slate-500" />
+                                            GPS trail
+                                        </span>
+                                    )}
+                                    {live && (
+                                        <span>
+                                            Live: {formatSpeedKph(livePosition?.speed_kph)} — {livePosition?.recorded_at}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <LeafletMap bounds={bounds} height="420px">
                                 <RouteTrail trail={trail} stops={mappedStops} />

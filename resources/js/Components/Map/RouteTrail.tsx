@@ -1,7 +1,9 @@
 import L from 'leaflet';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Marker, Polyline, Popup, Tooltip } from 'react-leaflet';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import type { LatLng } from '@/utils/geo';
+import { fetchDrivingRoute, waypointsKey } from '@/utils/osrm';
 
 interface Stop {
     position: LatLng;
@@ -15,6 +17,7 @@ interface Props {
     trail: LatLng[];
     stops?: Stop[];
     colour?: string;
+    plannedColour?: string;
 }
 
 const STOP_TONES: Record<string, string> = {
@@ -34,10 +37,60 @@ function numberedIcon(sequence: number, status: string): L.DivIcon {
 }
 
 /**
- * The path a trip actually took, drawn from its GPS checkpoints, with its
- * planned stops on top.
+ * Planned stop sequence (road-following via server-side OSRM proxy) + GPS trail.
  */
-export default function RouteTrail({ trail, stops = [], colour = '#4f46e5' }: Props): JSX.Element {
+export default function RouteTrail({
+    trail,
+    stops = [],
+    colour = '#4f46e5',
+    plannedColour = '#4f46e5',
+}: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
+    const directionsUrl = prefixedRoute('transportation.directions');
+
+    const orderedStops = useMemo(
+        () => [...stops].sort((a, b) => a.sequence - b.sequence),
+        [stops],
+    );
+
+    const waypoints = useMemo(
+        () => orderedStops.map((stop) => stop.position),
+        [orderedStops],
+    );
+
+    const [roadPath, setRoadPath] = useState<LatLng[]>(waypoints);
+    const [followingRoads, setFollowingRoads] = useState(false);
+
+    useEffect(() => {
+        if (waypoints.length < 2) {
+            setRoadPath([]);
+            setFollowingRoads(false);
+
+            return;
+        }
+
+        setRoadPath(waypoints);
+        setFollowingRoads(false);
+
+        let cancelled = false;
+        const key = waypointsKey(waypoints);
+
+        void fetchDrivingRoute(waypoints, directionsUrl).then((path) => {
+            if (cancelled || waypointsKey(waypoints) !== key) {
+                return;
+            }
+
+            if (path.length > 1) {
+                setRoadPath(path);
+                setFollowingRoads(true);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [waypoints, directionsUrl]);
+
     const endpoints = useMemo(
         () => (trail.length > 1 ? { start: trail[0], end: trail[trail.length - 1] } : null),
         [trail],
@@ -45,7 +98,21 @@ export default function RouteTrail({ trail, stops = [], colour = '#4f46e5' }: Pr
 
     return (
         <>
-            {trail.length > 1 && <Polyline positions={trail} pathOptions={{ color: colour, weight: 4, opacity: 0.75 }} />}
+            {roadPath.length > 1 && (
+                <Polyline
+                    positions={roadPath}
+                    pathOptions={{
+                        color: plannedColour,
+                        weight: 5,
+                        opacity: 0.85,
+                        dashArray: followingRoads ? undefined : '10 8',
+                    }}
+                />
+            )}
+
+            {trail.length > 1 && (
+                <Polyline positions={trail} pathOptions={{ color: colour, weight: 4, opacity: 0.8 }} />
+            )}
 
             {endpoints && (
                 <>
@@ -58,7 +125,7 @@ export default function RouteTrail({ trail, stops = [], colour = '#4f46e5' }: Pr
                 </>
             )}
 
-            {stops.map((stop) => (
+            {orderedStops.map((stop) => (
                 <Marker
                     key={`${stop.sequence}-${stop.label}`}
                     position={stop.position}

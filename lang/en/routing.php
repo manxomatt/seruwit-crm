@@ -71,6 +71,10 @@ return [
             'route_trip' => ' · trip #:id',
             'stop_fallback' => 'Stop',
             'stop_meta' => '+:distance km · :demand kg · :lat, :lng',
+            'map_title' => 'Route map',
+            'map_depot' => 'Depot',
+            'map_route_legend' => 'Route #:sequence · :vehicle',
+            'map_stop_popup' => 'Route #:sequence · stop #:stop',
         ],
     ],
 
@@ -84,6 +88,8 @@ return [
         'trips_created' => 'Trips created and delivery orders assigned.',
         'plan_cancelled' => 'Plan cancelled.',
         'route_assignment_updated' => 'Route assignment updated.',
+        'directions_failed' => 'Could not resolve a road route for these stops.',
+        'directions_need_points' => 'At least two coordinates are required to draw a route.',
     ],
 
     'errors' => [

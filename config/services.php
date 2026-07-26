@@ -46,4 +46,13 @@ return [
         'base_url' => env('TRACCAR_BASE_URL'),
     ],
 
+    /*
+     * OSRM host used to turn trip stop waypoints into a road-following polyline.
+     * Default is the public demo; override with a self-hosted instance for production.
+     */
+    'osrm' => [
+        'base_url' => env('OSRM_URL', 'https://router.project-osrm.org'),
+        'timeout' => env('OSRM_TIMEOUT', 12),
+    ],
+
 ];

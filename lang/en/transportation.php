@@ -140,6 +140,8 @@ return [
         'completed_without_pod' => 'Trip completed, but :count delivery order(s) have no POD. Consider capturing proof of delivery before closing operations.',
         'require_pod_before_complete' => 'Cannot complete trip: :count order(s) still lack POD (:codes). Capture POD first or change the require-POD setting.',
         'trip_cancelled' => 'Trip cancelled.',
+        'directions_failed' => 'Could not resolve a road route for these stops.',
+        'directions_need_points' => 'At least two coordinates are required to draw a route.',
         'edit_scheduled_only' => 'Only a scheduled trip can be edited.',
         'delete_in_progress' => 'An in-progress trip cannot be deleted.',
         'start_scheduled_only' => 'Only a scheduled trip can be started.',

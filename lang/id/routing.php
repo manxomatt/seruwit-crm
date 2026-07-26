@@ -71,6 +71,10 @@ return [
             'route_trip' => ' · trip #:id',
             'stop_fallback' => 'Stop',
             'stop_meta' => '+:distance km · :demand kg · :lat, :lng',
+            'map_title' => 'Peta rute',
+            'map_depot' => 'Depot',
+            'map_route_legend' => 'Rute #:sequence · :vehicle',
+            'map_stop_popup' => 'Rute #:sequence · stop #:stop',
         ],
     ],
 
@@ -84,6 +88,8 @@ return [
         'trips_created' => 'Trip dibuat dan delivery order di-assign.',
         'plan_cancelled' => 'Rencana dibatalkan.',
         'route_assignment_updated' => 'Assignment rute diperbarui.',
+        'directions_failed' => 'Tidak dapat menggambar rute jalan untuk stop ini.',
+        'directions_need_points' => 'Minimal dua koordinat diperlukan untuk menggambar rute.',
     ],
 
     'errors' => [

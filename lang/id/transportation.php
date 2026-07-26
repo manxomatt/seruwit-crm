@@ -140,6 +140,8 @@ return [
         'completed_without_pod' => 'Trip selesai, tetapi :count delivery order belum punya POD. Pertimbangkan bukti terima sebelum menutup operasional.',
         'require_pod_before_complete' => 'Tidak bisa menyelesaikan trip: :count order belum punya POD (:codes). Isi POD dulu atau ubah setting require POD.',
         'trip_cancelled' => 'Trip dibatalkan.',
+        'directions_failed' => 'Tidak dapat menggambar rute jalan untuk stop ini.',
+        'directions_need_points' => 'Minimal dua koordinat diperlukan untuk menggambar rute.',
         'edit_scheduled_only' => 'Hanya trip terjadwal yang dapat diedit.',
         'delete_in_progress' => 'Trip yang sedang berlangsung tidak dapat dihapus.',
         'start_scheduled_only' => 'Hanya trip terjadwal yang dapat dimulai.',
