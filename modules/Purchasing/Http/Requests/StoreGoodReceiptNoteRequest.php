@@ -44,6 +44,10 @@ class StoreGoodReceiptNoteRequest extends FormRequest
                 $validator,
                 $this->input('warehouse_id'),
             );
+            \Modules\Inventory\Support\WarehouseKindGuard::rejectIfInaccessible(
+                $validator,
+                $this->input('warehouse_id'),
+            );
 
             /** @var PurchaseOrder $po */
             $po = $this->route('po');

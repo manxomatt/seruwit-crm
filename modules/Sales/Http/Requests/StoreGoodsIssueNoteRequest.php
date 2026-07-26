@@ -43,6 +43,10 @@ class StoreGoodsIssueNoteRequest extends FormRequest
                 $validator,
                 $this->input('warehouse_id'),
             );
+            \Modules\Inventory\Support\WarehouseKindGuard::rejectIfInaccessible(
+                $validator,
+                $this->input('warehouse_id'),
+            );
 
             /** @var SalesOrder $so */
             $so = $this->route('so');

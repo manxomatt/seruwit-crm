@@ -95,5 +95,41 @@ class RoleSeeder extends Seeder
                 'dashboard_path' => '/module/tenants',
             ]
         );
+
+        // Warehouse head: full site ops, restricted to exactly one assigned warehouse/store.
+        $warehouseHead = Role::query()->firstOrCreate(
+            ['slug' => 'warehouse_head'],
+            [
+                'name' => 'Warehouse Head',
+                'description' => 'Owns operations for a single warehouse or store site',
+                'is_system' => true,
+                'dashboard_path' => '/module/inventory/warehouses',
+            ]
+        );
+
+        $siteOpsPermissions = Permission::query()
+            ->where(function ($query): void {
+                $query
+                    ->where(fn ($q) => $q->where('module', 'inventory')->whereIn('action', ['view', 'create', 'update', 'adjust']))
+                    ->orWhere(fn ($q) => $q->where('module', 'products')->where('action', 'view'))
+                    ->orWhere(fn ($q) => $q->where('module', 'partners')->where('action', 'view'))
+                    ->orWhere(fn ($q) => $q->where('module', 'purchasing')->whereIn('action', ['view', 'create', 'update', 'receive']))
+                    ->orWhere(fn ($q) => $q->where('module', 'sales')->whereIn('action', ['view', 'create', 'update', 'issue']))
+                    ->orWhere(fn ($q) => $q->where('module', 'orders')->whereIn('action', ['view', 'create']));
+            })
+            ->get();
+        $warehouseHead->permissions()->sync($siteOpsPermissions->pluck('id')->toArray());
+
+        // Warehouse manager: same ops verbs, can be assigned to one or more sites.
+        $warehouseManager = Role::query()->firstOrCreate(
+            ['slug' => 'warehouse_manager'],
+            [
+                'name' => 'Warehouse Manager',
+                'description' => 'Owns operations across one or more warehouse or store sites',
+                'is_system' => true,
+                'dashboard_path' => '/module/inventory/warehouses',
+            ]
+        );
+        $warehouseManager->permissions()->sync($siteOpsPermissions->pluck('id')->toArray());
     }
 }

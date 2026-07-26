@@ -2,28 +2,26 @@
 
 namespace App\Http\Requests;
 
+use App\Modules\Facades\Modules;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Modules\Inventory\Support\AccessibleWarehouses;
 
 class UpdateUserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
@@ -39,12 +37,19 @@ class UpdateUserRequest extends FormRequest
             'last_name' => ['nullable', 'string', 'max:255'],
             'phone_number' => ['nullable', 'string', 'max:50'],
             'avatar_url' => ['nullable', 'string', 'max:2048'],
+            'warehouse_ids' => ['nullable', 'array'],
         ];
+
+        if (Modules::available('inventory') && Schema::hasTable('warehouses')) {
+            $rules['warehouse_ids.*'] = ['integer', 'exists:warehouses,id'];
+        } else {
+            $rules['warehouse_ids.*'] = ['integer'];
+        }
+
+        return $rules;
     }
 
     /**
-     * Get custom messages for validator errors.
-     *
      * @return array<string, string>
      */
     public function messages(): array
@@ -57,5 +62,20 @@ class UpdateUserRequest extends FormRequest
             'email.unique' => __('users.validation.email_unique'),
             'password.confirmed' => __('users.validation.password_confirmed'),
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            if (! Modules::available('inventory')) {
+                return;
+            }
+
+            AccessibleWarehouses::validateAssignment(
+                $validator,
+                array_map('intval', $this->input('roles', [])),
+                array_map('intval', $this->input('warehouse_ids', [])),
+            );
+        });
     }
 }

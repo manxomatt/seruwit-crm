@@ -10,6 +10,7 @@ return [
         'password_confirmation' => 'Confirm Password',
         'password_hint' => 'Password (leave blank to keep current)',
         'roles' => 'Roles',
+        'warehouses' => 'Assigned sites',
         'first_name' => 'First Name',
         'last_name' => 'Last Name',
         'phone_number' => 'Phone Number',
@@ -27,6 +28,9 @@ return [
     ],
 
     'roles_selected' => 'Selected: :count role(s)',
+    'warehouses_selected' => 'Selected: :count site(s)',
+    'warehouses_hint_head' => 'Warehouse Head must be assigned to exactly one site.',
+    'warehouses_hint_manager' => 'Warehouse Manager can be assigned to one or more sites.',
     'system_badge' => 'System',
 
     'pages' => [
@@ -94,6 +98,8 @@ return [
         'password_confirmed' => 'The password confirmation does not match.',
         'roles_array' => 'Roles must be an array.',
         'roles_exists' => 'One or more selected roles are invalid.',
+        'warehouse_ids_required' => 'Assign at least one warehouse or store site for this role.',
+        'warehouse_head_single_site' => 'A Warehouse Head can only be assigned to one site.',
     ],
 
     'messages' => [

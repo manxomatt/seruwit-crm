@@ -10,6 +10,7 @@ return [
         'password_confirmation' => 'Konfirmasi Kata Sandi',
         'password_hint' => 'Kata Sandi (kosongkan untuk mempertahankan yang lama)',
         'roles' => 'Peran',
+        'warehouses' => 'Situs yang di-assign',
         'first_name' => 'Nama Depan',
         'last_name' => 'Nama Belakang',
         'phone_number' => 'Nomor Telepon',
@@ -27,6 +28,9 @@ return [
     ],
 
     'roles_selected' => 'Dipilih: :count peran',
+    'warehouses_selected' => 'Dipilih: :count situs',
+    'warehouses_hint_head' => 'Warehouse Head harus di-assign ke tepat satu situs.',
+    'warehouses_hint_manager' => 'Warehouse Manager bisa di-assign ke satu atau lebih situs.',
     'system_badge' => 'Sistem',
 
     'pages' => [
@@ -94,6 +98,8 @@ return [
         'password_confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         'roles_array' => 'Peran harus berupa array.',
         'roles_exists' => 'Satu atau lebih peran yang dipilih tidak valid.',
+        'warehouse_ids_required' => 'Assign minimal satu gudang/toko untuk peran ini.',
+        'warehouse_head_single_site' => 'Warehouse Head hanya boleh di-assign ke satu situs.',
     ],
 
     'messages' => [

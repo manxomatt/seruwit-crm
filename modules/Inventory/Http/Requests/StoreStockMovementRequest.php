@@ -3,6 +3,8 @@
 namespace Modules\Inventory\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
+use Modules\Inventory\Support\WarehouseKindGuard;
 
 class StoreStockMovementRequest extends FormRequest
 {
@@ -37,5 +39,12 @@ class StoreStockMovementRequest extends FormRequest
         return [
             'type.in' => 'Select a valid movement type.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            WarehouseKindGuard::rejectIfInaccessible($validator, $this->input('warehouse_id'));
+        });
     }
 }

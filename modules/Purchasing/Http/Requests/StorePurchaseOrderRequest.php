@@ -57,6 +57,10 @@ class StorePurchaseOrderRequest extends FormRequest
                 $validator,
                 $this->input('warehouse_id'),
             );
+            \Modules\Inventory\Support\WarehouseKindGuard::rejectIfInaccessible(
+                $validator,
+                $this->input('warehouse_id'),
+            );
 
             foreach ($this->input('items', []) as $index => $item) {
                 $packagingId = $item['product_packaging_id'] ?? null;

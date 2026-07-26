@@ -7,10 +7,14 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Inventory\Models\Warehouse;
+use Modules\Inventory\Support\AccessibleWarehouses;
 
 class UserController extends Controller
 {
@@ -61,12 +65,11 @@ class UserController extends Controller
 
         return Inertia::render('Modules/Users/Create', [
             'roles' => $roles,
+            'warehouses' => $this->assignableWarehouses(),
+            'warehouseScopedRoleSlugs' => AccessibleWarehouses::scopedRoleSlugs(),
         ]);
     }
 
-    /**
-     * Store a newly created user in storage.
-     */
     public function store(StoreUserRequest $request): RedirectResponse
     {
         $validated = $request->validated();
@@ -81,6 +84,8 @@ class UserController extends Controller
         if (isset($validated['roles'])) {
             $user->syncRoles($validated['roles']);
         }
+
+        $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
 
         // Create user profile if any profile data is provided
         if (
@@ -121,16 +126,21 @@ class UserController extends Controller
         $user->load(['roles', 'profile']);
         $roles = Role::query()->orderBy('name')->get();
 
+        $userWarehouseIds = [];
+        if (Modules::available('inventory') && Schema::hasTable('user_warehouse')) {
+            $userWarehouseIds = $user->warehouses()->pluck('warehouses.id')->map(fn ($id) => (int) $id)->all();
+        }
+
         return Inertia::render('Modules/Users/Edit', [
             'user' => $user,
             'userRoles' => $user->roles->pluck('id')->toArray(),
+            'userWarehouseIds' => $userWarehouseIds,
             'roles' => $roles,
+            'warehouses' => $this->assignableWarehouses(),
+            'warehouseScopedRoleSlugs' => AccessibleWarehouses::scopedRoleSlugs(),
         ]);
     }
 
-    /**
-     * Update the specified user in storage.
-     */
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         $validated = $request->validated();
@@ -150,6 +160,8 @@ class UserController extends Controller
         if (isset($validated['roles'])) {
             $user->syncRoles($validated['roles']);
         }
+
+        $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
 
         // Update or create user profile
         $user->profile()->updateOrCreate(
@@ -175,5 +187,41 @@ class UserController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.users.index')
             ->with('success', __('users.messages.deleted'));
+    }
+
+    /**
+     * @return list<array{id: int, name: string, kind: string|null}>
+     */
+    protected function assignableWarehouses(): array
+    {
+        if (! Modules::available('inventory')) {
+            return [];
+        }
+
+        return Warehouse::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'kind'])
+            ->map(fn (Warehouse $warehouse): array => [
+                'id' => $warehouse->id,
+                'name' => $warehouse->name,
+                'kind' => $warehouse->kind?->value,
+            ])
+            ->all();
+    }
+
+    /**
+     * @param  list<int>  $roleIds
+     * @param  list<int>  $warehouseIds
+     */
+    protected function syncUserWarehouses(User $user, array $roleIds, array $warehouseIds): void
+    {
+        if (! Modules::available('inventory') || ! Schema::hasTable('user_warehouse')) {
+            return;
+        }
+
+        $slugs = Role::query()->whereIn('id', $roleIds)->pluck('slug')->all();
+        $isScoped = count(array_intersect($slugs, AccessibleWarehouses::scopedRoleSlugs())) > 0;
+
+        $user->warehouses()->sync($isScoped ? $warehouseIds : []);
     }
 }

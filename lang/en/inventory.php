@@ -66,6 +66,7 @@ return [
     'validation' => [
         'warehouse_kind_not_for_purchase' => 'A :kind cannot receive purchase inbound (PO/GRN). Use a warehouse or store.',
         'warehouse_kind_not_for_sale' => 'A :kind cannot be used for sales outbound (SO/GIN). Use a warehouse or store.',
+        'warehouse_access_denied' => 'You do not have access to this warehouse or store site.',
     ],
 
     'warehouses' => [
@@ -287,6 +288,7 @@ return [
         'putaway_insufficient' => 'Insufficient quantity in hold location. Available: :available.',
         'geocode_failed' => 'Could not look up the address for this location.',
         'geocode_not_found' => 'No address found for this location.',
+        'warehouse_create_forbidden_for_head' => 'A Warehouse Head cannot create new sites. Ask a manager or admin.',
     ],
 
     'putaway' => [

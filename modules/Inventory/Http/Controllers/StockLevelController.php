@@ -4,7 +4,7 @@ namespace Modules\Inventory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Modules\Inventory\Models\StockLevel;
-use Modules\Inventory\Models\Warehouse;
+use Modules\Inventory\Support\AccessibleWarehouses;
 use Modules\Product\Models\Product;
 
 class StockLevelController extends Controller
@@ -16,7 +16,7 @@ class StockLevelController extends Controller
 
     public function index()
     {
-        $warehouses = Warehouse::query()
+        $warehouses = AccessibleWarehouses::query()
             ->where('status', 'active')
             ->select('id', 'name')
             ->orderBy('name')
@@ -28,9 +28,12 @@ class StockLevelController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $warehouseIds = $warehouses->pluck('id');
+
         $stockLevels = StockLevel::query()
             ->with('location:id,name,code')
             ->whereIn('product_id', $products->getCollection()->pluck('id'))
+            ->whereIn('warehouse_id', $warehouseIds)
             ->select('product_id', 'warehouse_id', 'location_id', 'batch_number', 'expiry_date', 'on_hand', 'reserved')
             ->get()
             ->groupBy(fn ($level) => "{$level->product_id}-{$level->warehouse_id}");

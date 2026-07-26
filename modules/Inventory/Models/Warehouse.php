@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Inventory\Support\WarehouseKind;
 
@@ -116,5 +117,15 @@ class Warehouse extends Model
                 array_merge($loc, ['is_default' => true]),
             );
         }
+    }
+
+    /**
+     * Users assigned to this site (warehouse_head / warehouse_manager).
+     *
+     * @return BelongsToMany<\App\Models\User, $this>
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\User::class)->withTimestamps();
     }
 }

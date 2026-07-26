@@ -7,8 +7,8 @@ use Illuminate\Http\RedirectResponse;
 use Modules\Inventory\Http\Requests\StoreStockMovementRequest;
 use Modules\Inventory\Http\Requests\StoreStockTransferRequest;
 use Modules\Inventory\Models\StockMovement;
-use Modules\Inventory\Models\Warehouse;
 use Modules\Inventory\Models\WarehouseLocation;
+use Modules\Inventory\Support\AccessibleWarehouses;
 use Modules\Inventory\Support\StockMovementRecorder;
 use Modules\Product\Models\Product;
 use RuntimeException;
@@ -22,8 +22,11 @@ class StockMovementController extends Controller
 
     public function index()
     {
+        $accessibleIds = AccessibleWarehouses::ids();
+
         $movements = StockMovement::query()
             ->with(['product:id,name', 'warehouse:id,name', 'location:id,name,code', 'recordedBy:id,name'])
+            ->when($accessibleIds !== null, fn ($query) => $query->whereIn('warehouse_id', $accessibleIds ?: [0]))
             ->select('id', 'product_id', 'warehouse_id', 'location_id', 'type', 'quantity', 'source_type', 'source_id', 'reference_code', 'batch_number', 'expiry_date', 'notes', 'recorded_by', 'recorded_at')
             ->latest('recorded_at')
             ->paginate(15)
@@ -81,13 +84,17 @@ class StockMovementController extends Controller
                 ->select('id', 'name', 'category', 'unit')
                 ->orderBy('name')
                 ->get(),
-            'warehouses' => Warehouse::query()
+            'warehouses' => AccessibleWarehouses::query()
                 ->where('status', 'active')
                 ->select('id', 'name')
                 ->orderBy('name')
                 ->get(),
             'locations' => WarehouseLocation::query()
                 ->select('id', 'warehouse_id', 'name', 'code', 'type')
+                ->when(
+                    ($ids = AccessibleWarehouses::ids()) !== null,
+                    fn ($query) => $query->whereIn('warehouse_id', $ids ?: [0]),
+                )
                 ->orderBy('sort_order')
                 ->get(),
         ]);
@@ -124,13 +131,17 @@ class StockMovementController extends Controller
                 ->select('id', 'name', 'category', 'unit')
                 ->orderBy('name')
                 ->get(),
-            'warehouses' => Warehouse::query()
+            'warehouses' => AccessibleWarehouses::query()
                 ->where('status', 'active')
                 ->select('id', 'name')
                 ->orderBy('name')
                 ->get(),
             'locations' => WarehouseLocation::query()
                 ->select('id', 'warehouse_id', 'name', 'code', 'type')
+                ->when(
+                    ($ids = AccessibleWarehouses::ids()) !== null,
+                    fn ($query) => $query->whereIn('warehouse_id', $ids ?: [0]),
+                )
                 ->orderBy('sort_order')
                 ->get(),
         ]);

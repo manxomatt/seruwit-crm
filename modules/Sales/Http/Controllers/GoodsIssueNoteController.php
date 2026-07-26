@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
-use Modules\Inventory\Models\Warehouse;
 use Modules\Orders\Support\DeliveryOrderFromGinService;
 use Modules\Sales\Http\Requests\StoreGoodsIssueNoteRequest;
 use Modules\Sales\Models\GoodsIssueNote;
@@ -49,7 +48,7 @@ class GoodsIssueNoteController extends Controller
                 'packaging' => $item->packaging,
             ]);
 
-        $warehouses = Warehouse::query()
+        $warehouses = \Modules\Inventory\Support\AccessibleWarehouses::query()
             ->where('status', 'active')
             ->salesOutbound()
             ->with(['locations' => fn ($q) => $q->select('id', 'warehouse_id', 'name', 'code')->orderBy('sort_order')])

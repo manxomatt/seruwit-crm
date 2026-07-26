@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
-use Modules\Inventory\Models\Warehouse;
 use Modules\Payables\Support\PurchaseBillService;
 use Modules\Purchasing\Http\Requests\StoreGoodReceiptNoteRequest;
 use Modules\Purchasing\Models\GoodReceiptNote;
@@ -48,7 +47,7 @@ class GoodReceiptNoteController extends Controller
                 'packaging' => $item->packaging,
             ]);
 
-        $warehouses = Warehouse::query()
+        $warehouses = \Modules\Inventory\Support\AccessibleWarehouses::query()
             ->where('status', 'active')
             ->purchaseInbound()
             ->with(['locations' => fn ($q) => $q->select('id', 'warehouse_id', 'name', 'code')->orderBy('sort_order')])

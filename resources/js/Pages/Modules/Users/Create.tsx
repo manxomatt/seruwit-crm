@@ -17,11 +17,23 @@ interface Role {
     is_system: boolean;
 }
 
-interface Props {
-    roles: Role[];
+interface WarehouseOption {
+    id: number;
+    name: string;
+    kind: string | null;
 }
 
-export default function Create({ roles }: Props): JSX.Element {
+interface Props {
+    roles: Role[];
+    warehouses?: WarehouseOption[];
+    warehouseScopedRoleSlugs?: string[];
+}
+
+export default function Create({
+    roles,
+    warehouses = [],
+    warehouseScopedRoleSlugs = ['warehouse_head', 'warehouse_manager'],
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
@@ -30,6 +42,7 @@ export default function Create({ roles }: Props): JSX.Element {
         password: '',
         password_confirmation: '',
         roles: [] as number[],
+        warehouse_ids: [] as number[],
         first_name: '',
         last_name: '',
         phone_number: '',
@@ -43,11 +56,27 @@ export default function Create({ roles }: Props): JSX.Element {
 
     const toggleRole = (roleId: number) => {
         if (data.roles.includes(roleId)) {
-            setData('roles', data.roles.filter(id => id !== roleId));
+            setData('roles', data.roles.filter((id) => id !== roleId));
         } else {
             setData('roles', [...data.roles, roleId]);
         }
     };
+
+    const toggleWarehouse = (warehouseId: number) => {
+        if (data.warehouse_ids.includes(warehouseId)) {
+            setData(
+                'warehouse_ids',
+                data.warehouse_ids.filter((id) => id !== warehouseId),
+            );
+        } else {
+            setData('warehouse_ids', [...data.warehouse_ids, warehouseId]);
+        }
+    };
+
+    const selectedRoleSlugs = roles.filter((role) => data.roles.includes(role.id)).map((role) => role.slug);
+    const needsWarehouses = selectedRoleSlugs.some((slug) => warehouseScopedRoleSlugs.includes(slug));
+    const isHeadOnly =
+        selectedRoleSlugs.includes('warehouse_head') && !selectedRoleSlugs.includes('warehouse_manager');
 
     return (
         <DynamicLayout
@@ -224,6 +253,53 @@ export default function Create({ roles }: Props): JSX.Element {
                                 <p className="mt-2 text-sm text-gray-500">
                                     {t('users.roles_selected', { count: data.roles.length })}
                                 </p>
+
+                                {needsWarehouses && warehouses.length > 0 && (
+                                    <div className="mt-6">
+                                        <InputLabel value={t('users.fields.warehouses')} />
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            {isHeadOnly
+                                                ? t('users.warehouses_hint_head')
+                                                : t('users.warehouses_hint_manager')}
+                                        </p>
+                                        <div className="mt-2 max-h-[240px] divide-y overflow-y-auto rounded-lg border">
+                                            {warehouses.map((warehouse) => (
+                                                <label
+                                                    key={warehouse.id}
+                                                    className="flex cursor-pointer items-start p-3 hover:bg-gray-50"
+                                                >
+                                                    <input
+                                                        type={isHeadOnly ? 'radio' : 'checkbox'}
+                                                        name="warehouse_ids"
+                                                        checked={data.warehouse_ids.includes(warehouse.id)}
+                                                        onChange={() => {
+                                                            if (isHeadOnly) {
+                                                                setData('warehouse_ids', [warehouse.id]);
+                                                            } else {
+                                                                toggleWarehouse(warehouse.id);
+                                                            }
+                                                        }}
+                                                        className="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                    />
+                                                    <div className="ml-3">
+                                                        <span className="text-sm font-medium text-gray-900">
+                                                            {warehouse.name}
+                                                        </span>
+                                                        {warehouse.kind && (
+                                                            <p className="text-xs text-gray-500">
+                                                                {t(`inventory.warehouse_kinds.${warehouse.kind}`, undefined, warehouse.kind)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <InputError message={errors.warehouse_ids} className="mt-2" />
+                                        <p className="mt-2 text-sm text-gray-500">
+                                            {t('users.warehouses_selected', { count: data.warehouse_ids.length })}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

@@ -50,4 +50,9 @@ final class WarehouseKindGuard
             );
         }
     }
+
+    public static function rejectIfInaccessible(Validator $validator, mixed $warehouseId, string $attribute = 'warehouse_id'): void
+    {
+        AccessibleWarehouses::rejectIfDenied($validator, $warehouseId, $attribute);
+    }
 }

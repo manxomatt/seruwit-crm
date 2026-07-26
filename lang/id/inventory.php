@@ -66,6 +66,7 @@ return [
     'validation' => [
         'warehouse_kind_not_for_purchase' => ':kind tidak bisa menerima pembelian (PO/GRN). Gunakan gudang atau toko.',
         'warehouse_kind_not_for_sale' => ':kind tidak bisa dipakai untuk penjualan (SO/GIN). Gunakan gudang atau toko.',
+        'warehouse_access_denied' => 'Anda tidak punya akses ke situs gudang/toko ini.',
     ],
 
     'warehouses' => [
@@ -287,6 +288,7 @@ return [
         'putaway_insufficient' => 'Kuantitas di lokasi hold tidak cukup. Tersedia: :available.',
         'geocode_failed' => 'Tidak bisa mencari alamat untuk lokasi ini.',
         'geocode_not_found' => 'Alamat tidak ditemukan untuk lokasi ini.',
+        'warehouse_create_forbidden_for_head' => 'Warehouse Head tidak bisa membuat situs baru. Minta manager atau admin.',
     ],
 
     'putaway' => [

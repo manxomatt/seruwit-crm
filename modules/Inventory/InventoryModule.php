@@ -2,6 +2,7 @@
 
 namespace Modules\Inventory;
 
+use App\Models\User;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,7 @@ use Modules\Inventory\Http\Controllers\StockMovementController;
 use Modules\Inventory\Http\Controllers\StockOpnameController;
 use Modules\Inventory\Http\Controllers\WarehouseController;
 use Modules\Inventory\Http\Controllers\WarehouseLocationController;
+use Modules\Inventory\Models\Warehouse;
 
 class InventoryModule implements ModuleContract
 {
@@ -119,5 +121,11 @@ class InventoryModule implements ModuleContract
         });
     }
 
-    public function boot(): void {}
+    public function boot(): void
+    {
+        User::resolveRelationUsing(
+            'warehouses',
+            fn (User $user) => $user->belongsToMany(Warehouse::class)->withTimestamps(),
+        );
+    }
 }

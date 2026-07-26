@@ -46,6 +46,17 @@ class StoreStockTransferRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            \Modules\Inventory\Support\WarehouseKindGuard::rejectIfInaccessible(
+                $validator,
+                $this->input('from_warehouse_id'),
+                'from_warehouse_id',
+            );
+            \Modules\Inventory\Support\WarehouseKindGuard::rejectIfInaccessible(
+                $validator,
+                $this->input('to_warehouse_id'),
+                'to_warehouse_id',
+            );
+
             $fromWarehouseId = (int) $this->input('from_warehouse_id');
             $toWarehouseId = (int) $this->input('to_warehouse_id');
             $fromLocationId = $this->input('from_location_id');

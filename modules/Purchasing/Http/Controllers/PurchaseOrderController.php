@@ -7,7 +7,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
-use Modules\Inventory\Models\Warehouse;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\Purchasing\Http\Requests\StorePurchaseOrderRequest;
@@ -71,7 +70,7 @@ class PurchaseOrderController extends Controller
                 ->select('id', 'name', 'code')
                 ->orderBy('name')
                 ->get(),
-            'warehouses' => Warehouse::query()
+            'warehouses' => \Modules\Inventory\Support\AccessibleWarehouses::query()
                 ->where('status', 'active')
                 ->purchaseInbound()
                 ->select('id', 'name', 'kind')
@@ -161,7 +160,7 @@ class PurchaseOrderController extends Controller
                 ->select('id', 'name', 'code')
                 ->orderBy('name')
                 ->get(),
-            'warehouses' => Warehouse::query()
+            'warehouses' => \Modules\Inventory\Support\AccessibleWarehouses::query()
                 ->where('status', 'active')
                 ->purchaseInbound()
                 ->select('id', 'name', 'kind')

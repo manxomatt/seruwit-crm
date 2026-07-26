@@ -7,7 +7,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
-use Modules\Inventory\Models\Warehouse;
 use Modules\Inventory\Support\StockReservationService;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
@@ -82,7 +81,7 @@ class SalesOrderController extends Controller
 
         return inertia('Modules/Sales/SalesOrders/Create', [
             'customers' => $customerQuery->get(),
-            'warehouses' => Warehouse::query()
+            'warehouses' => \Modules\Inventory\Support\AccessibleWarehouses::query()
                 ->where('status', 'active')
                 ->salesOutbound()
                 ->select('id', 'name', 'kind')
@@ -183,7 +182,7 @@ class SalesOrderController extends Controller
         return inertia('Modules/Sales/SalesOrders/Edit', [
             'order' => $so,
             'customers' => $customerQuery->get(),
-            'warehouses' => Warehouse::query()
+            'warehouses' => \Modules\Inventory\Support\AccessibleWarehouses::query()
                 ->where('status', 'active')
                 ->salesOutbound()
                 ->select('id', 'name', 'kind')
