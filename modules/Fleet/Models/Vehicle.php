@@ -69,8 +69,8 @@ class Vehicle extends Model
             'cost_per_km' => 'decimal:2',
             'tank_capacity_liters' => 'decimal:2',
             'expected_km_per_liter' => 'decimal:2',
-            'stnk_expires_at' => 'date',
-            'kir_expires_at' => 'date',
+            'stnk_expires_at' => 'date:Y-m-d',
+            'kir_expires_at' => 'date:Y-m-d',
         ];
     }
 

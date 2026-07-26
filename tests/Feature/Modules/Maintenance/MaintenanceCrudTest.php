@@ -314,7 +314,66 @@ class MaintenanceCrudTest extends TestCase
 
         $this->actingAs($user)->get(route('module.maintenance.categories.index'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Modules/Maintenance/Categories/Index'));
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Maintenance/Categories/Index')
+                ->has('categories.data')
+                ->has('categories.links')
+                ->has('categories.current_page')
+            );
+    }
+
+    public function test_work_orders_index_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        $category = $this->category();
+
+        // Create one-by-one so reference numbers stay unique (factory evaluates all attrs before insert when using count()).
+        foreach (range(1, 21) as $i) {
+            WorkOrder::factory()->create([
+                'category_id' => $category->id,
+                'reference_number' => sprintf('WO-TEST-%04d', $i),
+            ]);
+        }
+
+        $this->actingAs($user)->get(route('module.maintenance.work-orders.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('workOrders.data', 20)
+                ->where('workOrders.per_page', 20)
+                ->where('workOrders.total', 21)
+                ->where('workOrders.last_page', 2)
+                ->has('workOrders.links')
+            );
+    }
+
+    public function test_schedules_index_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        $category = $this->category();
+        $vehicles = Vehicle::factory()->count(21)->create();
+
+        foreach ($vehicles as $vehicle) {
+            MaintenanceSchedule::query()->create([
+                'vehicle_id' => $vehicle->id,
+                'category_id' => $category->id,
+                'name' => 'Demo schedule '.$vehicle->id,
+                'interval_type' => MaintenanceSchedule::INTERVAL_CALENDAR,
+                'interval_value' => 90,
+                'last_service_date' => now()->subMonth(),
+                'next_service_date' => now()->addMonths(2),
+                'is_active' => true,
+            ]);
+        }
+
+        $this->actingAs($user)->get(route('module.maintenance.schedules.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('schedules.data', 20)
+                ->where('schedules.per_page', 20)
+                ->where('schedules.total', 21)
+                ->where('schedules.last_page', 2)
+                ->has('schedules.links')
+            );
     }
 
     public function test_admin_can_create_category(): void

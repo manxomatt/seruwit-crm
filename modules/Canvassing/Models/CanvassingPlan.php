@@ -37,7 +37,7 @@ class CanvassingPlan extends Model
     protected function casts(): array
     {
         return [
-            'plan_date' => 'date',
+            'plan_date' => 'date:Y-m-d',
         ];
     }
 

@@ -62,8 +62,8 @@ class Document extends Model
     protected function casts(): array
     {
         return [
-            'issued_at' => 'date',
-            'expires_at' => 'date',
+            'issued_at' => 'date:Y-m-d',
+            'expires_at' => 'date:Y-m-d',
             'verified_at' => 'datetime',
         ];
     }

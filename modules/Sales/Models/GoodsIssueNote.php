@@ -38,7 +38,7 @@ class GoodsIssueNote extends Model
     protected function casts(): array
     {
         return [
-            'issued_at' => 'date',
+            'issued_at' => 'date:Y-m-d',
         ];
     }
 

@@ -48,8 +48,8 @@ class PurchaseOrder extends Model
     protected function casts(): array
     {
         return [
-            'ordered_at' => 'date',
-            'expected_at' => 'date',
+            'ordered_at' => 'date:Y-m-d',
+            'expected_at' => 'date:Y-m-d',
             'total_amount' => 'decimal:2',
         ];
     }

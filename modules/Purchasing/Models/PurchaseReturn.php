@@ -32,7 +32,7 @@ class PurchaseReturn extends Model
     protected function casts(): array
     {
         return [
-            'returned_at' => 'date',
+            'returned_at' => 'date:Y-m-d',
         ];
     }
 

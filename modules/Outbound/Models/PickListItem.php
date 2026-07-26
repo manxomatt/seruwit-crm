@@ -45,8 +45,8 @@ class PickListItem extends Model
         return [
             'quantity_requested' => 'decimal:2',
             'quantity_picked' => 'decimal:2',
-            'suggested_expiry_date' => 'date',
-            'expiry_date' => 'date',
+            'suggested_expiry_date' => 'date:Y-m-d',
+            'expiry_date' => 'date:Y-m-d',
             'picked_at' => 'datetime',
         ];
     }

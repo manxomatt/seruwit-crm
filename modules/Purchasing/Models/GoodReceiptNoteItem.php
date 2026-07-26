@@ -30,7 +30,7 @@ class GoodReceiptNoteItem extends Model
     {
         return [
             'quantity_received' => 'decimal:2',
-            'expiry_date' => 'date',
+            'expiry_date' => 'date:Y-m-d',
         ];
     }
 

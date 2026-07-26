@@ -38,7 +38,7 @@ class StockReservation extends Model
     protected function casts(): array
     {
         return [
-            'expiry_date' => 'date',
+            'expiry_date' => 'date:Y-m-d',
             'quantity' => 'decimal:2',
             'consumed_quantity' => 'decimal:2',
         ];

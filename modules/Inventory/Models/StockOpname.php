@@ -25,7 +25,7 @@ class StockOpname extends Model
     protected function casts(): array
     {
         return [
-            'opname_date' => 'date',
+            'opname_date' => 'date:Y-m-d',
             'completed_at' => 'datetime',
         ];
     }

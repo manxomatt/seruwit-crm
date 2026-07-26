@@ -28,7 +28,7 @@ class StockLevel extends Model
         return [
             'on_hand' => 'decimal:2',
             'reserved' => 'decimal:2',
-            'expiry_date' => 'date',
+            'expiry_date' => 'date:Y-m-d',
         ];
     }
 

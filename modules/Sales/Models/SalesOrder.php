@@ -46,8 +46,8 @@ class SalesOrder extends Model
     protected function casts(): array
     {
         return [
-            'ordered_at' => 'date',
-            'promised_at' => 'date',
+            'ordered_at' => 'date:Y-m-d',
+            'promised_at' => 'date:Y-m-d',
             'total_amount' => 'decimal:2',
         ];
     }

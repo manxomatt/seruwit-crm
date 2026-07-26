@@ -49,7 +49,9 @@ class FleetStatusBoard
                 'type' => $vehicle->type,
                 'status' => $vehicle->status,
                 'odometer_km' => (int) $vehicle->odometer_km,
-                'last_fuel_at' => $fuel?->last_filled_at,
+                'last_fuel_at' => $fuel?->last_filled_at
+                    ? \Illuminate\Support\Carbon::parse($fuel->last_filled_at)->toDateString()
+                    : null,
                 'last_fuel_odometer' => $fuel?->last_fuel_odometer !== null ? (int) $fuel->last_fuel_odometer : null,
                 'stnk_expires_at' => $vehicle->stnk_expires_at?->toDateString(),
                 'kir_expires_at' => $vehicle->kir_expires_at?->toDateString(),

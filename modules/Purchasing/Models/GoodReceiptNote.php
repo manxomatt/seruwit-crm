@@ -39,7 +39,7 @@ class GoodReceiptNote extends Model
     protected function casts(): array
     {
         return [
-            'received_at' => 'date',
+            'received_at' => 'date:Y-m-d',
             'freight_amount' => 'decimal:2',
         ];
     }

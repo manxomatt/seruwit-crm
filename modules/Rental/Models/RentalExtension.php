@@ -32,8 +32,8 @@ class RentalExtension extends Model
     protected function casts(): array
     {
         return [
-            'original_end_date' => 'date',
-            'new_end_date' => 'date',
+            'original_end_date' => 'date:Y-m-d',
+            'new_end_date' => 'date:Y-m-d',
             'extended_periods' => 'integer',
             'additional_amount' => 'decimal:2',
         ];

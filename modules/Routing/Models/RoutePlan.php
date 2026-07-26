@@ -47,7 +47,7 @@ class RoutePlan extends Model
     protected function casts(): array
     {
         return [
-            'planned_date' => 'date',
+            'planned_date' => 'date:Y-m-d',
             'depot_lat' => 'decimal:7',
             'depot_lng' => 'decimal:7',
             'params' => 'array',

@@ -1,6 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -9,6 +9,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { formatDate } from '@/utils/date';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import FleetNav from '../../../../FleetNav';
@@ -110,6 +111,7 @@ export default function Show({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [showFuelModal, setShowFuelModal] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -255,11 +257,11 @@ export default function Show({
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.stnk_expires')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.stnk_expires_at || '—'}</dd>
+                                <dd className="mt-1 text-sm text-gray-900">{formatDate(vehicle.stnk_expires_at, localeTag)}</dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.kir_expires')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.kir_expires_at || '—'}</dd>
+                                <dd className="mt-1 text-sm text-gray-900">{formatDate(vehicle.kir_expires_at, localeTag)}</dd>
                             </div>
                             {vehicle.notes && (
                                 <div className="sm:col-span-3">
@@ -302,9 +304,7 @@ export default function Show({
                                     <div>
                                         <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_nearest')}</p>
                                         <p className="mt-1 font-medium">
-                                            {documentSummary.nearest_expiry
-                                                ? new Date(documentSummary.nearest_expiry).toLocaleDateString('id-ID')
-                                                : '—'}
+                                            {formatDate(documentSummary.nearest_expiry, localeTag)}
                                         </p>
                                     </div>
                                 </div>
@@ -342,7 +342,7 @@ export default function Show({
                                         <tr key={log.id}>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-900">{log.type.replace('_', ' ')}</td>
                                             <td className="px-3 py-2 text-sm text-gray-500">{log.description}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{log.scheduled_date}</td>
+                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{formatDate(log.scheduled_date, localeTag)}</td>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{log.cost ? `Rp ${Number(log.cost).toLocaleString()}` : '—'}</td>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-500">{log.status}</td>
                                             <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
@@ -403,7 +403,7 @@ export default function Show({
                                     {vehicle.fuel_logs.map((log) => (
                                         <tr key={log.id} className={log.anomaly_flags?.length ? 'bg-amber-50/60' : ''}>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900">
-                                                {log.filled_at}
+                                                {formatDate(log.filled_at, localeTag)}
                                                 {log.is_full_tank && <span className="ml-1 text-xs text-indigo-600">{t('fleet.fuel.full_tank')}</span>}
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{log.liters} L</td>

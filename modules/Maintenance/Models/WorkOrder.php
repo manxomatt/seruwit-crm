@@ -91,7 +91,7 @@ class WorkOrder extends Model
     protected function casts(): array
     {
         return [
-            'scheduled_date' => 'date',
+            'scheduled_date' => 'date:Y-m-d',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'stock_deducted_at' => 'datetime',

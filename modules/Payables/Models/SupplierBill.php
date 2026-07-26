@@ -43,8 +43,8 @@ class SupplierBill extends Model
     protected function casts(): array
     {
         return [
-            'bill_date' => 'date',
-            'due_date' => 'date',
+            'bill_date' => 'date:Y-m-d',
+            'due_date' => 'date:Y-m-d',
             'tax_enabled' => 'boolean',
             'tax_rate' => 'decimal:2',
             'subtotal' => 'decimal:2',

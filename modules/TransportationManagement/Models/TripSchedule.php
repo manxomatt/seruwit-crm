@@ -54,8 +54,8 @@ class TripSchedule extends Model
         return [
             'days_of_week' => 'array',
             'distance_km' => 'decimal:2',
-            'starts_on' => 'date',
-            'ends_on' => 'date',
+            'starts_on' => 'date:Y-m-d',
+            'ends_on' => 'date:Y-m-d',
             'is_active' => 'boolean',
         ];
     }

@@ -35,7 +35,7 @@ class DocumentReminder extends Model
     {
         return [
             'days_before' => 'integer',
-            'remind_at' => 'date',
+            'remind_at' => 'date:Y-m-d',
             'sent_at' => 'datetime',
         ];
     }

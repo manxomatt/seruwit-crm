@@ -56,7 +56,7 @@ class FuelLog extends Model
     protected function casts(): array
     {
         return [
-            'filled_at' => 'date',
+            'filled_at' => 'date:Y-m-d',
             'liters' => 'decimal:2',
             'cost' => 'decimal:2',
             'odometer_km' => 'integer',

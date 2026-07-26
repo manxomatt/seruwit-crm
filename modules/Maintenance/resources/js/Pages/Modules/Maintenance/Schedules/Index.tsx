@@ -7,7 +7,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import Modal from '@/Components/Modal';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
-import { Head, useForm, router, Link } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
@@ -24,6 +24,7 @@ interface PaginatedSchedules {
     data: MaintenanceSchedule[];
     current_page: number;
     last_page: number;
+    per_page: number;
     total: number;
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
@@ -160,26 +161,32 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
 
             {/* Filters */}
             <div className="mb-6 flex flex-wrap gap-3">
-                <select
+                <Select
+                    className="w-64"
                     value={filters.vehicle_id ?? ''}
-                    onChange={(e) => applyFilter('vehicle_id', e.target.value)}
-                    className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                    <option value="">{t('maintenance.schedules.all_vehicles')}</option>
-                    {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>{v.name} — {v.plate_number}</option>
-                    ))}
-                </select>
+                    onChange={(val) => applyFilter('vehicle_id', val)}
+                    searchable
+                    placeholder={t('maintenance.schedules.all_vehicles')}
+                    options={[
+                        { value: '', label: t('maintenance.schedules.all_vehicles') },
+                        ...vehicles.map((v) => ({
+                            value: String(v.id),
+                            label: `${v.name} — ${v.plate_number}`,
+                        })),
+                    ]}
+                />
 
-                <select
+                <Select
+                    className="w-48"
                     value={filters.is_active ?? ''}
-                    onChange={(e) => applyFilter('is_active', e.target.value)}
-                    className="rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                    <option value="">{t('maintenance.status.all')}</option>
-                    <option value="1">{t('maintenance.status.active')}</option>
-                    <option value="0">{t('maintenance.status.inactive')}</option>
-                </select>
+                    onChange={(val) => applyFilter('is_active', val)}
+                    placeholder={t('maintenance.status.all')}
+                    options={[
+                        { value: '', label: t('maintenance.status.all') },
+                        { value: '1', label: t('maintenance.status.active') },
+                        { value: '0', label: t('maintenance.status.inactive') },
+                    ]}
+                />
             </div>
 
             {/* Table */}
@@ -287,14 +294,28 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                 )}
 
                 {schedules.last_page > 1 && (
-                    <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
-                        <p className="text-sm text-gray-500">
-                            {t('maintenance.page_of', { current: schedules.current_page, last: schedules.last_page })}
+                    <div className="mt-6 flex items-center justify-between border-t border-gray-200 px-6 py-3">
+                        <p className="text-sm text-gray-700">
+                            {t('common.showing_results', {
+                                from: (schedules.current_page - 1) * schedules.per_page + 1,
+                                to: Math.min(schedules.current_page * schedules.per_page, schedules.total),
+                                total: schedules.total,
+                            })}
                         </p>
                         <div className="flex gap-1">
                             {schedules.links.map((link, i) => (
-                                <Link key={i} href={link.url ?? '#'} preserveState
-                                    className={`rounded px-3 py-1.5 text-sm ${link.active ? 'bg-indigo-600 text-white' : link.url ? 'text-gray-600 hover:bg-gray-100' : 'cursor-default text-gray-300'}`}
+                                <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded px-3 py-1 text-sm ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white'
+                                            : link.url
+                                              ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                    }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}
@@ -315,9 +336,10 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                             <InputLabel htmlFor="vehicle_id" value={t('maintenance.schedules.vehicle')} />
                             <Select
                                 id="vehicle_id"
-                                className="mt-1"
+                                className="mt-1 w-full"
                                 value={data.vehicle_id}
                                 onChange={(val) => setData('vehicle_id', val)}
+                                searchable
                                 options={vehicles.map((v) => ({ value: String(v.id), label: `${v.name} — ${v.plate_number}` }))}
                                 placeholder={t('maintenance.schedules.select_vehicle')}
                             />
@@ -328,9 +350,10 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                             <InputLabel htmlFor="category_id" value={t('maintenance.schedules.category')} />
                             <Select
                                 id="category_id"
-                                className="mt-1"
+                                className="mt-1 w-full"
                                 value={data.category_id}
                                 onChange={(val) => setData('category_id', val)}
+                                searchable
                                 options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
                                 placeholder={t('maintenance.schedules.select_category')}
                             />
@@ -355,7 +378,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                 <InputLabel htmlFor="interval_type" value={t('maintenance.schedules.interval_type')} />
                                 <Select
                                     id="interval_type"
-                                    className="mt-1"
+                                    className="mt-1 w-full"
                                     value={data.interval_type}
                                     onChange={(val) => setData('interval_type', val)}
                                     options={[

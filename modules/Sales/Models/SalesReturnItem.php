@@ -25,7 +25,7 @@ class SalesReturnItem extends Model
     {
         return [
             'quantity_returned' => 'decimal:2',
-            'expiry_date' => 'date',
+            'expiry_date' => 'date:Y-m-d',
         ];
     }
 

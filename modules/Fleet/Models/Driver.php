@@ -57,7 +57,7 @@ class Driver extends Model
     protected function casts(): array
     {
         return [
-            'license_expires_at' => 'date',
+            'license_expires_at' => 'date:Y-m-d',
         ];
     }
 

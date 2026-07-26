@@ -37,9 +37,9 @@ class MaintenanceSchedule extends Model
         return [
             'interval_value' => 'integer',
             'last_service_odometer' => 'integer',
-            'last_service_date' => 'date',
+            'last_service_date' => 'date:Y-m-d',
             'next_service_odometer' => 'integer',
-            'next_service_date' => 'date',
+            'next_service_date' => 'date:Y-m-d',
             'is_active' => 'boolean',
         ];
     }

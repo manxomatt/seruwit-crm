@@ -72,9 +72,9 @@ class Rental extends Model
     protected function casts(): array
     {
         return [
-            'start_date' => 'date',
-            'end_date' => 'date',
-            'actual_return_date' => 'date',
+            'start_date' => 'date:Y-m-d',
+            'end_date' => 'date:Y-m-d',
+            'actual_return_date' => 'date:Y-m-d',
             'rate_per_period' => 'decimal:2',
             'excess_km_rate' => 'decimal:2',
             'deposit_amount' => 'decimal:2',

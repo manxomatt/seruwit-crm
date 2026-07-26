@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { toDateInputValue } from '@/utils/date';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
@@ -38,7 +39,7 @@ export default function Edit({ driver }: Props): JSX.Element {
         name: driver.name,
         license_number: driver.license_number,
         license_type: driver.license_type || '',
-        license_expires_at: driver.license_expires_at || '',
+        license_expires_at: toDateInputValue(driver.license_expires_at),
         phone: driver.phone,
         email: driver.email || '',
         status: driver.status,

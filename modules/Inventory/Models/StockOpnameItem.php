@@ -29,7 +29,7 @@ class StockOpnameItem extends Model
         return [
             'system_qty' => 'decimal:2',
             'actual_qty' => 'decimal:2',
-            'expiry_date' => 'date',
+            'expiry_date' => 'date:Y-m-d',
         ];
     }
 

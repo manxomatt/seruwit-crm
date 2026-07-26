@@ -29,7 +29,7 @@ class DriverDailyScore extends Model
     protected function casts(): array
     {
         return [
-            'score_date' => 'date',
+            'score_date' => 'date:Y-m-d',
             'score' => 'integer',
             'harsh_brake_count' => 'integer',
             'harsh_accel_count' => 'integer',

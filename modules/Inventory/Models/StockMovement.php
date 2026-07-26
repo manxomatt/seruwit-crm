@@ -34,7 +34,7 @@ class StockMovement extends Model
     {
         return [
             'quantity' => 'decimal:2',
-            'expiry_date' => 'date',
+            'expiry_date' => 'date:Y-m-d',
             'recorded_at' => 'datetime',
         ];
     }

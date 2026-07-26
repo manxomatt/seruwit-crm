@@ -16,7 +16,8 @@ class MaintenanceCategoryController extends Controller
         $categories = MaintenanceCategory::query()
             ->withCount('workOrders')
             ->orderBy('sort_order')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('Modules/Maintenance/Categories/Index', [
             'categories' => $categories,

@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { toDateInputValue } from '@/utils/date';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
@@ -56,8 +57,8 @@ export default function Edit({ vehicle }: Props): JSX.Element {
         fuel_type: vehicle.fuel_type,
         status: vehicle.status,
         odometer_km: vehicle.odometer_km,
-        stnk_expires_at: vehicle.stnk_expires_at || '',
-        kir_expires_at: vehicle.kir_expires_at || '',
+        stnk_expires_at: toDateInputValue(vehicle.stnk_expires_at),
+        kir_expires_at: toDateInputValue(vehicle.kir_expires_at),
         photo_url: vehicle.photo_url || '',
         notes: vehicle.notes || '',
     });

@@ -1,12 +1,13 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import { formatDate } from '@/utils/date';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import FleetNav from '../../../../FleetNav';
@@ -67,6 +68,7 @@ export default function Show({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -151,7 +153,7 @@ export default function Show({
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('fleet.drivers.license_expires')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{driver.license_expires_at || '—'}</dd>
+                                <dd className="mt-1 text-sm text-gray-900">{formatDate(driver.license_expires_at, localeTag)}</dd>
                             </div>
                             {driver.notes && (
                                 <div className="sm:col-span-3">
@@ -194,9 +196,7 @@ export default function Show({
                                     <div>
                                         <p className="text-xs uppercase text-gray-500">{t('fleet.drivers.docs_nearest')}</p>
                                         <p className="mt-1 font-medium">
-                                            {documentSummary.nearest_expiry
-                                                ? new Date(documentSummary.nearest_expiry).toLocaleDateString('id-ID')
-                                                : '—'}
+                                            {formatDate(documentSummary.nearest_expiry, localeTag)}
                                         </p>
                                     </div>
                                 </div>

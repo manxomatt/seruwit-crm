@@ -1,7 +1,8 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import Select from '@/Components/Select';
+import { formatDate } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
 
@@ -38,6 +39,7 @@ interface Props {
 export default function Index({ logs, vehicles, filters }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     return (
         <DynamicLayout
@@ -110,7 +112,7 @@ export default function Index({ logs, vehicles, filters }: Props): JSX.Element {
                                 ) : (
                                     logs.data.map((log) => (
                                         <tr key={log.id} className={log.anomaly_flags?.length ? 'bg-amber-50/50' : 'hover:bg-gray-50'}>
-                                            <td className="px-4 py-3">{log.filled_at}</td>
+                                            <td className="px-4 py-3">{formatDate(log.filled_at, localeTag)}</td>
                                             <td className="px-4 py-3">
                                                 {log.vehicle ? (
                                                     <Link

@@ -88,7 +88,7 @@ function SearchableSelect({
                 <ComboboxOptions
                     transition
                     anchor="bottom start"
-                    className="z-50 mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
+                    className="z-[200] mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
                 >
                     {filtered.length === 0 ? (
                         <div className="px-3 py-2 text-sm text-gray-400">
@@ -165,7 +165,7 @@ export default function Select({
                 <ListboxOptions
                     transition
                     anchor="bottom start"
-                    className="z-50 mt-1 max-h-60 w-[var(--button-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
+                    className="z-[200] mt-1 max-h-60 w-[var(--button-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
                 >
                     {options.length === 0 && (
                         <div className="px-3 py-2 text-sm text-gray-400">{emptyText}</div>

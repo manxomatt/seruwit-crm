@@ -17,8 +17,17 @@ interface CategoryWithCount extends MaintenanceCategory {
     work_orders_count: number;
 }
 
+interface PaginatedCategories {
+    data: CategoryWithCount[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+}
+
 interface Props {
-    categories: CategoryWithCount[];
+    categories: PaginatedCategories;
 }
 
 const COLOR_PRESETS = [
@@ -122,7 +131,7 @@ export default function Index({ categories }: Props): JSX.Element {
                 </div>
 
                 <div className="divide-y divide-gray-100">
-                    {categories.map((cat) => (
+                    {categories.data.map((cat) => (
                         <div key={cat.id} className="flex items-center gap-4 px-6 py-4">
                             <div
                                 className="h-4 w-4 flex-shrink-0 rounded-full border border-white shadow"
@@ -167,7 +176,42 @@ export default function Index({ categories }: Props): JSX.Element {
                             </div>
                         </div>
                     ))}
+                    {categories.data.length === 0 && (
+                        <div className="px-6 py-10 text-center text-sm text-gray-500">
+                            {t('maintenance.categories.empty', undefined, 'No categories yet.')}
+                        </div>
+                    )}
                 </div>
+
+                {categories.last_page > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
+                        <p className="text-sm text-gray-700">
+                            {t('common.showing_results', {
+                                from: (categories.current_page - 1) * categories.per_page + 1,
+                                to: Math.min(categories.current_page * categories.per_page, categories.total),
+                                total: categories.total,
+                            })}
+                        </p>
+                        <div className="flex gap-1">
+                            {categories.links.map((link, i) => (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded px-3 py-1 text-sm ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white'
+                                            : link.url
+                                              ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Create / Edit Modal */}

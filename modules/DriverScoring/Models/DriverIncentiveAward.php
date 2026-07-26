@@ -37,8 +37,8 @@ class DriverIncentiveAward extends Model
     protected function casts(): array
     {
         return [
-            'period_start' => 'date',
-            'period_end' => 'date',
+            'period_start' => 'date:Y-m-d',
+            'period_end' => 'date:Y-m-d',
             'average_score' => 'decimal:2',
             'scored_days' => 'integer',
             'reward_amount' => 'decimal:2',

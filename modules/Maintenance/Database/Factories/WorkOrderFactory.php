@@ -41,7 +41,7 @@ class WorkOrderFactory extends Factory
         return [
             'vehicle_id' => Vehicle::factory(),
             'category_id' => MaintenanceCategory::query()->inRandomOrder()->value('id') ?? 1,
-            'reference_number' => WorkOrder::generateReferenceNumber(),
+            'reference_number' => 'WO-'.now()->year.'-'.str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
             'title' => fake()->randomElement([
                 'Ganti oli mesin rutin',
                 'Perbaikan sistem rem',

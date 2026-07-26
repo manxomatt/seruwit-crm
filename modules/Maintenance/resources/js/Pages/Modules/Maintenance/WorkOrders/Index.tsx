@@ -251,24 +251,29 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                     </div>
                 )}
 
-                {/* Pagination */}
                 {workOrders.last_page > 1 && (
-                    <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
-                        <p className="text-sm text-gray-500">
-                            {t('maintenance.page_of', { current: workOrders.current_page, last: workOrders.last_page })}
+                    <div className="mt-6 flex items-center justify-between border-t border-gray-200 px-6 py-3">
+                        <p className="text-sm text-gray-700">
+                            {t('common.showing_results', {
+                                from: (workOrders.current_page - 1) * workOrders.per_page + 1,
+                                to: Math.min(workOrders.current_page * workOrders.per_page, workOrders.total),
+                                total: workOrders.total,
+                            })}
                         </p>
                         <div className="flex gap-1">
                             {workOrders.links.map((link, i) => (
-                                <Link
+                                <button
                                     key={i}
-                                    href={link.url ?? '#'}
-                                    preserveState
-                                    className={`rounded px-3 py-1.5 text-sm ${link.active
-                                        ? 'bg-indigo-600 text-white'
-                                        : link.url
-                                            ? 'text-gray-600 hover:bg-gray-100'
-                                            : 'cursor-default text-gray-300'
-                                        }`}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded px-3 py-1 text-sm ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white'
+                                            : link.url
+                                              ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                    }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}
