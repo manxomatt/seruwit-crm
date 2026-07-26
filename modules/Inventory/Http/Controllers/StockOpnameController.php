@@ -12,7 +12,6 @@ use Modules\Inventory\Models\StockLevel;
 use Modules\Inventory\Models\StockOpname;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Inventory\Support\StockMovementRecorder;
-use Modules\Product\Models\Product;
 
 class StockOpnameController extends Controller
 {
@@ -53,19 +52,19 @@ class StockOpnameController extends Controller
 
             $levels = StockLevel::query()
                 ->where('warehouse_id', $opname->warehouse_id)
-                ->selectRaw('product_id, SUM(on_hand) as on_hand')
-                ->groupBy('product_id')
-                ->pluck('on_hand', 'product_id');
+                ->orderBy('product_id')
+                ->orderBy('location_id')
+                ->orderBy('batch_number')
+                ->get();
 
-            $products = Product::query()->select('id')->get();
-
-            foreach ($products as $product) {
-                $systemQty = $levels[$product->id] ?? 0;
-
+            foreach ($levels as $level) {
                 $opname->items()->create([
-                    'product_id' => $product->id,
-                    'system_qty' => $systemQty,
-                    'actual_qty' => $systemQty,
+                    'product_id' => $level->product_id,
+                    'location_id' => $level->location_id,
+                    'batch_number' => $level->batch_number ?? '',
+                    'expiry_date' => $level->expiry_date,
+                    'system_qty' => $level->on_hand,
+                    'actual_qty' => $level->on_hand,
                 ]);
             }
 
@@ -79,7 +78,12 @@ class StockOpnameController extends Controller
     public function show(StockOpname $opname)
     {
         return inertia('Modules/Inventory/StockOpnames/Show', [
-            'opname' => $opname->load(['warehouse:id,name', 'createdBy:id,name', 'items.product:id,name,category,unit']),
+            'opname' => $opname->load([
+                'warehouse:id,name',
+                'createdBy:id,name',
+                'items.product:id,name,category,unit',
+                'items.location:id,name,code',
+            ]),
         ]);
     }
 
@@ -117,6 +121,9 @@ class StockOpnameController extends Controller
                 StockMovementRecorder::record([
                     'product_id' => $item->product_id,
                     'warehouse_id' => $opname->warehouse_id,
+                    'location_id' => $item->location_id,
+                    'batch_number' => $item->batch_number !== '' ? $item->batch_number : null,
+                    'expiry_date' => $item->expiry_date?->toDateString(),
                     'type' => $variance > 0 ? 'in' : 'out',
                     'quantity' => abs($variance),
                     'source_type' => 'opname',
@@ -124,6 +131,7 @@ class StockOpnameController extends Controller
                     'notes' => "opname adjustment: system={$item->system_qty}, actual={$item->actual_qty}",
                     'recorded_by' => auth()->id(),
                     'recorded_at' => now(),
+                    'allocate' => false,
                 ]);
             }
 

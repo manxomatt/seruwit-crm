@@ -10,6 +10,9 @@ import { FormEventHandler, useState } from 'react'
 interface StockOpnameItem {
   id: number
   product: { id: number; name: string; category: 'merchandise' | 'fleet_sparepart' }
+  location?: { id: number; name: string; code: string } | null
+  batch_number?: string | null
+  expiry_date?: string | null
   system_qty: string
   actual_qty: string
   notes?: string
@@ -153,6 +156,9 @@ export default function StockOpnameShow({ opname }: Props) {
               <thead className="border-b bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left font-semibold">{t('inventory.opnames.product')}</th>
+                  <th className="px-4 py-3 text-left font-semibold">{t('inventory.opnames.location')}</th>
+                  <th className="px-4 py-3 text-left font-semibold">{t('inventory.opnames.batch')}</th>
+                  <th className="px-4 py-3 text-left font-semibold">{t('inventory.opnames.expiry')}</th>
                   <th className="px-6 py-3 text-right font-semibold">{t('inventory.opnames.system_qty')}</th>
                   <th className="px-6 py-3 text-right font-semibold">{t('inventory.opnames.actual_qty')}</th>
                   <th className="px-6 py-3 text-right font-semibold">{t('inventory.opnames.variance')}</th>
@@ -170,6 +176,11 @@ export default function StockOpnameShow({ opname }: Props) {
                             {t('inventory.categories.fleet_sparepart')}
                           </span>
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{item.location?.code ?? '—'}</td>
+                      <td className="px-4 py-3 text-sm tabular-nums">{item.batch_number || '—'}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {item.expiry_date ? new Date(item.expiry_date).toLocaleDateString(localeTag) : '—'}
                       </td>
                       <td className="px-6 py-3 text-right text-gray-600">{item.system_qty}</td>
                       <td className="px-6 py-3 text-right">

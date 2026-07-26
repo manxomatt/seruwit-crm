@@ -6,7 +6,7 @@ const TABS = [
     {
         labelKey: 'purchasing.nav.purchase_orders',
         route: 'purchasing.purchase-orders.index',
-        patterns: ['purchasing.purchase-orders.*', 'purchasing.grn.*'],
+        patterns: ['purchasing.purchase-orders.*', 'purchasing.grn.*', 'purchasing.returns.*'],
     },
 ] as const;
 

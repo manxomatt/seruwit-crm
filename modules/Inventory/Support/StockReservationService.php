@@ -9,12 +9,15 @@ use Modules\Inventory\Models\StockLevel;
 use Modules\Inventory\Models\StockReservation;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Models\DeliveryOrderItem;
+use Modules\Product\Models\Product;
+use Modules\Sales\Models\SalesOrder;
+use Modules\Sales\Models\SalesOrderItem;
 use RuntimeException;
 
 /**
- * Links StockLevel.reserved to active delivery orders.
+ * Links StockLevel.reserved to active delivery orders and sales orders.
  *
- * confirm → reserve · cancel → release · outbound / POD / delivered → consume
+ * confirm → reserve · cancel → release · fulfill / GIN → consume
  * (reserved↓ then stock out via StockMovementRecorder).
  */
 class StockReservationService
@@ -31,8 +34,55 @@ class StockReservationService
             }
 
             foreach ($order->items as $item) {
-                self::reserveItem($order, $item);
+                self::reserveDeliveryItem($order, $item);
             }
+        });
+    }
+
+    public static function reserveSalesOrder(SalesOrder $order): void
+    {
+        $order->loadMissing(['items.product', 'items.packaging']);
+
+        DB::transaction(function () use ($order): void {
+            if (StockReservation::query()
+                ->where('sales_order_id', $order->id)
+                ->exists()) {
+                return;
+            }
+
+            foreach ($order->items as $item) {
+                self::reserveSalesItem($order, $item);
+            }
+        });
+    }
+
+    /**
+     * Reserve additional base quantity for an SO line (e.g. after GIN void).
+     */
+    public static function reserveAdditionalForSalesOrderItem(
+        SalesOrder $order,
+        SalesOrderItem $item,
+        float $baseQuantity,
+    ): void {
+        $baseQuantity = round($baseQuantity, 2);
+
+        if ($baseQuantity <= 0) {
+            return;
+        }
+
+        DB::transaction(function () use ($order, $item, $baseQuantity): void {
+            $item->loadMissing('product');
+            self::allocateReservation(
+                product: $item->product,
+                warehouseId: (int) $order->warehouse_id,
+                needed: $baseQuantity,
+                attributes: [
+                    'sales_order_id' => $order->id,
+                    'sales_order_item_id' => $item->id,
+                    'delivery_order_id' => null,
+                    'delivery_order_item_id' => null,
+                ],
+            );
         });
     }
 
@@ -41,6 +91,22 @@ class StockReservationService
         DB::transaction(function () use ($order): void {
             $reservations = StockReservation::query()
                 ->where('delivery_order_id', $order->id)
+                ->where('status', StockReservation::STATUS_OPEN)
+                ->lockForUpdate()
+                ->orderBy('id')
+                ->get();
+
+            foreach ($reservations as $reservation) {
+                self::releaseOpenQuantity($reservation, $reservation->remaining());
+            }
+        });
+    }
+
+    public static function releaseSalesOrder(SalesOrder $order): void
+    {
+        DB::transaction(function () use ($order): void {
+            $reservations = StockReservation::query()
+                ->where('sales_order_id', $order->id)
                 ->where('status', StockReservation::STATUS_OPEN)
                 ->lockForUpdate()
                 ->orderBy('id')
@@ -101,39 +167,66 @@ class StockReservationService
         return (float) DB::transaction(function () use ($item, $quantity, $movementMeta): float {
             $item->loadMissing('deliveryOrder');
 
-            $reservations = StockReservation::query()
-                ->where('delivery_order_item_id', $item->id)
-                ->where('status', StockReservation::STATUS_OPEN)
-                ->lockForUpdate()
-                ->orderBy('id')
-                ->get();
-
-            $left = $quantity;
-            $consumed = 0.0;
-
-            foreach ($reservations as $reservation) {
-                if ($left <= 0) {
-                    break;
-                }
-
-                $take = min($left, $reservation->remaining());
-
-                if ($take <= 0) {
-                    continue;
-                }
-
-                self::consumeOpenQuantity($reservation, $take, array_merge([
+            return self::consumeFromReservations(
+                StockReservation::query()
+                    ->where('delivery_order_item_id', $item->id)
+                    ->where('status', StockReservation::STATUS_OPEN)
+                    ->lockForUpdate()
+                    ->orderBy('id')
+                    ->get(),
+                $quantity,
+                array_merge([
                     'source_type' => 'delivery_reservation',
                     'source_id' => $item->delivery_order_id,
                     'reference_code' => $item->deliveryOrder?->code,
-                ], $movementMeta));
-
-                $left = round($left - $take, 2);
-                $consumed = round($consumed + $take, 2);
-            }
-
-            return $consumed;
+                ], $movementMeta),
+            );
         });
+    }
+
+    /**
+     * Consume up to $quantity (base UOM) from open reservations for an SO line.
+     *
+     * @param  array<string, mixed>  $movementMeta
+     */
+    public static function consumeForSalesOrderItem(SalesOrderItem $item, float $quantity, array $movementMeta = []): float
+    {
+        $quantity = round($quantity, 2);
+
+        if ($quantity <= 0) {
+            return 0.0;
+        }
+
+        return (float) DB::transaction(function () use ($item, $quantity, $movementMeta): float {
+            $item->loadMissing('salesOrder');
+
+            return self::consumeFromReservations(
+                StockReservation::query()
+                    ->where('sales_order_item_id', $item->id)
+                    ->where('status', StockReservation::STATUS_OPEN)
+                    ->lockForUpdate()
+                    ->orderByRaw('expiry_date ASC NULLS LAST')
+                    ->orderBy('id')
+                    ->get(),
+                $quantity,
+                array_merge([
+                    'source_type' => 'sales_reservation',
+                    'source_id' => $item->sales_order_id,
+                    'reference_code' => $item->salesOrder?->so_number,
+                ], $movementMeta),
+            );
+        });
+    }
+
+    public static function hasOpenSalesOrderReservations(SalesOrder|int $order): bool
+    {
+        $orderId = $order instanceof SalesOrder ? $order->id : $order;
+
+        return StockReservation::query()
+            ->where('sales_order_id', $orderId)
+            ->where('status', StockReservation::STATUS_OPEN)
+            ->whereColumn('consumed_quantity', '<', 'quantity')
+            ->exists();
     }
 
     /**
@@ -190,7 +283,7 @@ class StockReservationService
             ->exists();
     }
 
-    private static function reserveItem(DeliveryOrder $order, DeliveryOrderItem $item): void
+    private static function reserveDeliveryItem(DeliveryOrder $order, DeliveryOrderItem $item): void
     {
         $product = $item->product;
 
@@ -210,10 +303,69 @@ class StockReservationService
             return;
         }
 
+        self::allocateReservation(
+            product: $product,
+            warehouseId: (int) $warehouseId,
+            needed: $needed,
+            attributes: [
+                'delivery_order_id' => $order->id,
+                'delivery_order_item_id' => $item->id,
+                'sales_order_id' => null,
+                'sales_order_item_id' => null,
+            ],
+        );
+    }
+
+    private static function reserveSalesItem(SalesOrder $order, SalesOrderItem $item): void
+    {
+        $product = $item->product;
+
+        if (! $product || $product->category === 'service') {
+            return;
+        }
+
+        $factor = (float) ($item->packaging?->qty ?: 1);
+        if ($factor <= 0) {
+            $factor = 1;
+        }
+
+        $needed = round((float) $item->quantity_ordered * $factor, 2);
+
+        if ($needed <= 0) {
+            return;
+        }
+
+        self::allocateReservation(
+            product: $product,
+            warehouseId: (int) $order->warehouse_id,
+            needed: $needed,
+            attributes: [
+                'sales_order_id' => $order->id,
+                'sales_order_item_id' => $item->id,
+                'delivery_order_id' => null,
+                'delivery_order_item_id' => null,
+            ],
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private static function allocateReservation(
+        ?Product $product,
+        int $warehouseId,
+        float $needed,
+        array $attributes,
+    ): void {
+        if (! $product) {
+            return;
+        }
+
         $levels = StockLevel::query()
             ->where('product_id', $product->id)
             ->where('warehouse_id', $warehouseId)
             ->whereRaw('(on_hand - reserved) > 0')
+            ->tap(fn ($query) => SellableStock::constrain($query))
             ->orderByRaw('expiry_date ASC NULLS LAST')
             ->orderBy('id')
             ->lockForUpdate()
@@ -235,9 +387,7 @@ class StockReservationService
             $take = min($remaining, $available);
             $level->increment('reserved', $take);
 
-            StockReservation::query()->create([
-                'delivery_order_id' => $order->id,
-                'delivery_order_item_id' => $item->id,
+            StockReservation::query()->create(array_merge($attributes, [
                 'product_id' => $product->id,
                 'warehouse_id' => $warehouseId,
                 'location_id' => $level->location_id,
@@ -246,7 +396,7 @@ class StockReservationService
                 'quantity' => $take,
                 'consumed_quantity' => 0,
                 'status' => StockReservation::STATUS_OPEN,
-            ]);
+            ]));
 
             $remaining = round($remaining - $take, 2);
         }
@@ -256,6 +406,41 @@ class StockReservationService
                 'items' => "Insufficient available stock for {$product->name}. Short by {$remaining}.",
             ]);
         }
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, StockReservation>  $reservations
+     * @param  array<string, mixed>  $movementMeta
+     */
+    private static function consumeFromReservations($reservations, float $quantity, array $movementMeta): float
+    {
+        $left = $quantity;
+        $consumed = 0.0;
+
+        foreach ($reservations as $reservation) {
+            if ($left <= 0) {
+                break;
+            }
+
+            $take = min($left, $reservation->remaining());
+
+            if ($take <= 0) {
+                continue;
+            }
+
+            self::consumeOpenQuantity($reservation, $take, $movementMeta);
+
+            $left = round($left - $take, 2);
+            $consumed = round($consumed + $take, 2);
+        }
+
+        if ($left > 0.009) {
+            throw ValidationException::withMessages([
+                'items' => "Insufficient reserved stock to consume. Short by {$left}.",
+            ]);
+        }
+
+        return $consumed;
     }
 
     private static function releaseOpenQuantity(StockReservation $reservation, float $quantity): void
@@ -319,7 +504,7 @@ class StockReservationService
             'batch_number' => $batch,
             'expiry_date' => $reservation->expiry_date?->toDateString(),
             'source_type' => $meta['source_type'] ?? 'delivery_reservation',
-            'source_id' => $meta['source_id'] ?? $reservation->delivery_order_id,
+            'source_id' => $meta['source_id'] ?? $reservation->delivery_order_id ?? $reservation->sales_order_id,
             'reference_code' => $meta['reference_code'] ?? null,
             'notes' => $meta['notes'] ?? null,
             'recorded_by' => $meta['recorded_by'] ?? Auth::id(),

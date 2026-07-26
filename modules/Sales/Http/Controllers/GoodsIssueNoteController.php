@@ -11,6 +11,7 @@ use Modules\Sales\Http\Requests\StoreGoodsIssueNoteRequest;
 use Modules\Sales\Models\GoodsIssueNote;
 use Modules\Sales\Models\SalesOrder;
 use Modules\Sales\Support\GinConfirmationService;
+use Modules\Sales\Support\SalesInvoiceService;
 use RuntimeException;
 
 class GoodsIssueNoteController extends Controller
@@ -133,13 +134,38 @@ class GoodsIssueNoteController extends Controller
             'items.location:id,name,code',
         ]);
 
+        $invoiceService = app(SalesInvoiceService::class);
+        $canInvoice = $invoiceService->isAvailable()
+            && $gin->status === GoodsIssueNote::STATUS_CONFIRMED
+            && (auth()->user()?->hasPermissionFor('sales', 'create') ?? false)
+            && $gin->items->contains(
+                fn ($item) => ! $invoiceService->ginItemHasActiveInvoice($item)
+            );
+
+        $canReturn = $gin->status === GoodsIssueNote::STATUS_CONFIRMED
+            && (auth()->user()?->hasPermissionFor('sales', 'create') ?? false);
+
         return inertia('Modules/Sales/GoodsIssueNotes/Show', [
             'gin' => $gin,
             'can' => [
                 'issue' => auth()->user()?->hasPermissionFor('sales', 'issue') ?? false,
                 'void' => auth()->user()?->hasPermissionFor('sales', 'issue') ?? false,
+                'invoice' => $canInvoice,
+                'return' => $canReturn,
             ],
         ]);
+    }
+
+    public function invoice(GoodsIssueNote $gin): RedirectResponse
+    {
+        try {
+            $invoice = app(SalesInvoiceService::class)->createFromGin($gin);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route($this->getRoutePrefix().'.invoicing.invoices.show', $invoice)
+            ->with('success', __('sales.messages.invoice_created'));
     }
 
     public function confirm(GoodsIssueNote $gin): RedirectResponse

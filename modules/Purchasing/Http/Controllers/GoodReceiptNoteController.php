@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
 use Modules\Inventory\Models\Warehouse;
+use Modules\Payables\Support\PurchaseBillService;
 use Modules\Purchasing\Http\Requests\StoreGoodReceiptNoteRequest;
 use Modules\Purchasing\Models\GoodReceiptNote;
 use Modules\Purchasing\Models\PurchaseOrder;
@@ -58,7 +59,7 @@ class GoodReceiptNoteController extends Controller
             'order' => $po,
             'receivableItems' => $receivableItems,
             'warehouses' => $warehouses,
-            'defaultStockLocationId' => app(GrnConfirmationService::class)->resolveStockLocationId((int) $po->warehouse_id),
+            'defaultStockLocationId' => app(GrnConfirmationService::class)->resolveInputLocationId((int) $po->warehouse_id),
             'can' => [
                 'receive' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
             ],
@@ -92,7 +93,7 @@ class GoodReceiptNoteController extends Controller
 
             foreach ($validated['items'] as $item) {
                 $locationId = $item['location_id']
-                    ?? app(GrnConfirmationService::class)->resolveStockLocationId((int) $validated['warehouse_id']);
+                    ?? app(GrnConfirmationService::class)->resolveInputLocationId((int) $validated['warehouse_id']);
 
                 $grn->items()->create([
                     'po_item_id' => $item['po_item_id'],
@@ -133,11 +134,21 @@ class GoodReceiptNoteController extends Controller
             'items.location:id,name,code',
         ]);
 
+        $billService = app(PurchaseBillService::class);
+        $canBill = $billService->isAvailable()
+            && (auth()->user()?->hasPermissionFor('payables', 'create') ?? false)
+            && $billService->hasBillableReceipt($grn);
+
+        $canReturn = $grn->status === GoodReceiptNote::STATUS_CONFIRMED
+            && (auth()->user()?->hasPermissionFor('purchasing', 'create') ?? false);
+
         return inertia('Modules/Purchasing/GoodReceiptNotes/Show', [
             'grn' => $grn,
             'can' => [
                 'receive' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
                 'void' => auth()->user()?->hasPermissionFor('purchasing', 'receive') ?? false,
+                'bill' => $canBill,
+                'return' => $canReturn,
             ],
         ]);
     }

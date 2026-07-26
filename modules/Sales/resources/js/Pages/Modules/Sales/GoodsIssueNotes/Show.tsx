@@ -38,7 +38,7 @@ interface Gin {
 
 interface Props {
     gin: Gin;
-    can: { issue: boolean; void: boolean };
+    can: { issue: boolean; void: boolean; invoice: boolean; return: boolean };
 }
 
 export default function Show({ gin, can }: Props): JSX.Element {
@@ -57,6 +57,10 @@ export default function Show({ gin, can }: Props): JSX.Element {
             return;
         }
         router.post(prefixedRoute('sales.gin.void', gin.id), {}, { preserveScroll: true });
+    };
+
+    const createInvoice = () => {
+        router.post(prefixedRoute('sales.gin.invoice', gin.id), {}, { preserveScroll: true });
     };
 
     return (
@@ -83,6 +87,19 @@ export default function Show({ gin, can }: Props): JSX.Element {
                         </Link>
                         {can.issue && isDraft && (
                             <PrimaryButton onClick={confirm}>{t('sales.gin.show.confirm')}</PrimaryButton>
+                        )}
+                        {can.invoice && isConfirmed && (
+                            <PrimaryButton onClick={createInvoice}>{t('sales.gin.show.create_invoice')}</PrimaryButton>
+                        )}
+                        {can.return && isConfirmed && (
+                            <Link href={prefixedRoute('sales.gin.return.create', gin.id)}>
+                                <SecondaryButton type="button">{t('sales.gin.show.create_return')}</SecondaryButton>
+                            </Link>
+                        )}
+                        {isConfirmed && (
+                            <a href={prefixedRoute('sales.gin.pdf', gin.id)} target="_blank" rel="noreferrer">
+                                <SecondaryButton type="button">{t('sales.gin.show.print_pdf')}</SecondaryButton>
+                            </a>
                         )}
                         {can.void && isConfirmed && (
                             <SecondaryButton type="button" onClick={voidGin}>

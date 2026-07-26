@@ -7,6 +7,8 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Sales\Http\Controllers\GoodsIssueNoteController;
 use Modules\Sales\Http\Controllers\SalesOrderController;
+use Modules\Sales\Http\Controllers\SalesPdfController;
+use Modules\Sales\Http\Controllers\SalesReturnController;
 
 /**
  * Sales orders and goods issue notes for outbound fulfillment.
@@ -67,7 +69,7 @@ class SalesModule implements ModuleContract
 
     public function viewsPath(): ?string
     {
-        return null;
+        return __DIR__.'/resources/views';
     }
 
     public function boot(): void
@@ -94,12 +96,20 @@ class SalesModule implements ModuleContract
                 Route::post('/sales-orders/{so}/cancel', [SalesOrderController::class, 'cancel'])->middleware('permission:sales,update')->name('sales-orders.cancel');
                 Route::post('/sales-orders/{so}/close', [SalesOrderController::class, 'close'])->middleware('permission:sales,update')->name('sales-orders.close');
                 Route::post('/sales-orders/{so}/invoice', [SalesOrderController::class, 'invoice'])->middleware('permission:sales,create')->name('sales-orders.invoice');
+                Route::get('/sales-orders/{so}/pdf', [SalesPdfController::class, 'salesOrder'])->name('sales-orders.pdf');
 
                 Route::get('/sales-orders/{so}/gin/create', [GoodsIssueNoteController::class, 'create'])->middleware('permission:sales,create')->name('sales-orders.gin.create');
                 Route::post('/sales-orders/{so}/gin', [GoodsIssueNoteController::class, 'store'])->middleware('permission:sales,create')->name('sales-orders.gin.store');
                 Route::get('/gin/{gin}', [GoodsIssueNoteController::class, 'show'])->name('gin.show');
+                Route::get('/gin/{gin}/pdf', [SalesPdfController::class, 'gin'])->name('gin.pdf');
                 Route::post('/gin/{gin}/confirm', [GoodsIssueNoteController::class, 'confirm'])->middleware('permission:sales,issue')->name('gin.confirm');
                 Route::post('/gin/{gin}/void', [GoodsIssueNoteController::class, 'void'])->middleware('permission:sales,issue')->name('gin.void');
+                Route::post('/gin/{gin}/invoice', [GoodsIssueNoteController::class, 'invoice'])->middleware('permission:sales,create')->name('gin.invoice');
+
+                Route::get('/gin/{gin}/return/create', [SalesReturnController::class, 'create'])->middleware('permission:sales,create')->name('gin.return.create');
+                Route::post('/gin/{gin}/return', [SalesReturnController::class, 'store'])->middleware('permission:sales,create')->name('gin.return.store');
+                Route::get('/returns/{salesReturn}', [SalesReturnController::class, 'show'])->name('returns.show');
+                Route::post('/returns/{salesReturn}/confirm', [SalesReturnController::class, 'confirm'])->middleware('permission:sales,issue')->name('returns.confirm');
             });
         });
     }

@@ -2,13 +2,15 @@
 
 namespace Modules\Sales\Support;
 
+use App\Models\Setting;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
+use Modules\Sales\Models\GoodsIssueNote;
+use Modules\Sales\Models\GoodsIssueNoteItem;
 use Modules\Sales\Models\SalesOrder;
-use Modules\Sales\Models\SalesOrderItem;
 use RuntimeException;
 
 class SalesInvoiceService
@@ -18,23 +20,46 @@ class SalesInvoiceService
         return Modules::available('invoicing') && Schema::hasTable('invoices');
     }
 
-    public function hasActiveInvoice(SalesOrder $so): bool
+    public function ginItemHasActiveInvoice(GoodsIssueNoteItem $ginItem): bool
     {
         if (! Schema::hasTable('invoice_lines')) {
             return false;
         }
 
-        $itemIds = $so->items()->pluck('id');
-
-        if ($itemIds->isEmpty()) {
-            return false;
-        }
-
         return InvoiceLine::query()
-            ->where('source_type', (new SalesOrderItem)->getMorphClass())
-            ->whereIn('source_id', $itemIds)
+            ->where('source_type', $ginItem->getMorphClass())
+            ->where('source_id', $ginItem->id)
             ->whereHas('invoice', fn ($query) => $query->where('status', '!=', Invoice::STATUS_VOID))
             ->exists();
+    }
+
+    /**
+     * @return list<GoodsIssueNoteItem>
+     */
+    public function billableGinItemsForSalesOrder(SalesOrder $so): array
+    {
+        $so->loadMissing([
+            'goodsIssueNotes' => fn ($q) => $q
+                ->where('status', GoodsIssueNote::STATUS_CONFIRMED)
+                ->with(['items.salesOrderItem.product']),
+        ]);
+
+        $billable = [];
+
+        foreach ($so->goodsIssueNotes as $gin) {
+            foreach ($gin->items as $ginItem) {
+                if (! $this->ginItemHasActiveInvoice($ginItem)) {
+                    $billable[] = $ginItem;
+                }
+            }
+        }
+
+        return $billable;
+    }
+
+    public function hasBillableDelivery(SalesOrder $so): bool
+    {
+        return $this->billableGinItemsForSalesOrder($so) !== [];
     }
 
     public function createFromSalesOrder(SalesOrder $so): Invoice
@@ -51,47 +76,89 @@ class SalesInvoiceService
             throw new RuntimeException(__('sales.messages.invoice_invalid_status'));
         }
 
-        if ($this->hasActiveInvoice($so)) {
-            throw new RuntimeException(__('sales.messages.invoice_already_exists'));
+        $billableItems = $this->billableGinItemsForSalesOrder($so);
+
+        if ($billableItems === []) {
+            throw new RuntimeException(__('sales.messages.invoice_no_delivered_qty'));
         }
 
-        $so->load(['items.product', 'partner']);
+        return $this->createInvoiceForGinItems($so, $billableItems, __('sales.messages.invoice_from_so_notes', [
+            'so' => $so->so_number,
+        ]));
+    }
 
-        if ($so->items->isEmpty()) {
-            throw new RuntimeException(__('sales.messages.so_confirm_need_items'));
+    public function createFromGin(GoodsIssueNote $gin): Invoice
+    {
+        if (! $this->isAvailable()) {
+            throw new RuntimeException(__('sales.messages.invoice_module_unavailable'));
         }
 
-        return DB::transaction(function () use ($so) {
+        if ($gin->status !== GoodsIssueNote::STATUS_CONFIRMED) {
+            throw new RuntimeException(__('sales.messages.invoice_gin_confirmed_only'));
+        }
+
+        $gin->load(['items.salesOrderItem.product', 'salesOrder.partner']);
+        $so = $gin->salesOrder;
+
+        $billableItems = $gin->items
+            ->filter(fn (GoodsIssueNoteItem $item): bool => ! $this->ginItemHasActiveInvoice($item))
+            ->values()
+            ->all();
+
+        if ($billableItems === []) {
+            throw new RuntimeException(__('sales.messages.invoice_gin_already_invoiced'));
+        }
+
+        return $this->createInvoiceForGinItems($so, $billableItems, __('sales.messages.invoice_from_gin_notes', [
+            'gin' => $gin->gin_number,
+            'so' => $so->so_number,
+        ]));
+    }
+
+    /**
+     * @param  list<GoodsIssueNoteItem>  $ginItems
+     */
+    private function createInvoiceForGinItems(SalesOrder $so, array $ginItems, string $notes): Invoice
+    {
+        $so->loadMissing('partner');
+
+        return DB::transaction(function () use ($so, $ginItems, $notes) {
+            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+            $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+
             $invoice = Invoice::create([
                 'code' => Invoice::nextCode(),
                 'partner_id' => $so->partner_id,
                 'status' => Invoice::STATUS_DRAFT,
                 'issue_date' => now()->toDateString(),
                 'due_date' => null,
-                'tax_enabled' => false,
-                'tax_rate' => 0,
+                'tax_enabled' => $taxEnabled,
+                'tax_rate' => $taxEnabled ? $taxRate : 0,
                 'subtotal' => 0,
                 'tax_amount' => 0,
                 'total' => 0,
                 'amount_paid' => 0,
-                'notes' => __('sales.messages.invoice_from_so_notes', ['so' => $so->so_number]),
+                'notes' => $notes,
             ]);
 
-            foreach ($so->items as $item) {
-                $productName = $item->product?->name ?? 'Product';
-                $unit = $item->unit ?? $item->product?->unit ?? '';
+            foreach ($ginItems as $ginItem) {
+                $soItem = $ginItem->salesOrderItem;
+                $productName = $soItem?->product?->name ?? 'Product';
+                $unit = $soItem?->unit ?? $soItem?->product?->unit ?? '';
+                $qty = (float) $ginItem->quantity_issued;
+                $amount = round($qty * (float) ($soItem?->unit_price ?? 0), 2);
 
                 InvoiceLine::create([
                     'invoice_id' => $invoice->id,
                     'description' => __('sales.messages.invoice_line_description', [
                         'so' => $so->so_number,
                         'product' => $productName,
-                        'qty' => $item->quantity_ordered,
+                        'qty' => $qty,
                         'unit' => $unit,
                     ]),
-                    'amount' => $item->lineTotal(),
-                    'source_type' => $item->getMorphClass(),
-                    'source_id' => $item->id,
+                    'amount' => $amount,
+                    'source_type' => $ginItem->getMorphClass(),
+                    'source_id' => $ginItem->id,
                 ]);
             }
 

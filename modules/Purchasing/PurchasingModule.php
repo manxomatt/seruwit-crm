@@ -7,6 +7,8 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Purchasing\Http\Controllers\GoodReceiptNoteController;
 use Modules\Purchasing\Http\Controllers\PurchaseOrderController;
+use Modules\Purchasing\Http\Controllers\PurchaseReturnController;
+use Modules\Purchasing\Http\Controllers\PurchasingPdfController;
 
 /**
  * Purchase orders and goods receipt notes for inbound procurement.
@@ -67,7 +69,7 @@ class PurchasingModule implements ModuleContract
 
     public function viewsPath(): ?string
     {
-        return null;
+        return __DIR__.'/resources/views';
     }
 
     public function boot(): void
@@ -99,12 +101,19 @@ class PurchasingModule implements ModuleContract
                 Route::post('/purchase-orders/{po}/approve', [PurchaseOrderController::class, 'approve'])->middleware('permission:purchasing,update')->name('purchase-orders.approve');
                 Route::post('/purchase-orders/{po}/cancel', [PurchaseOrderController::class, 'cancel'])->middleware('permission:purchasing,update')->name('purchase-orders.cancel');
                 Route::post('/purchase-orders/{po}/close', [PurchaseOrderController::class, 'close'])->middleware('permission:purchasing,update')->name('purchase-orders.close');
+                Route::get('/purchase-orders/{po}/pdf', [PurchasingPdfController::class, 'purchaseOrder'])->name('purchase-orders.pdf');
 
                 Route::get('/purchase-orders/{po}/grn/create', [GoodReceiptNoteController::class, 'create'])->middleware('permission:purchasing,create')->name('purchase-orders.grn.create');
                 Route::post('/purchase-orders/{po}/grn', [GoodReceiptNoteController::class, 'store'])->middleware('permission:purchasing,create')->name('purchase-orders.grn.store');
                 Route::get('/grn/{grn}', [GoodReceiptNoteController::class, 'show'])->name('grn.show');
+                Route::get('/grn/{grn}/pdf', [PurchasingPdfController::class, 'grn'])->name('grn.pdf');
                 Route::post('/grn/{grn}/confirm', [GoodReceiptNoteController::class, 'confirm'])->middleware('permission:purchasing,receive')->name('grn.confirm');
                 Route::post('/grn/{grn}/void', [GoodReceiptNoteController::class, 'void'])->middleware('permission:purchasing,receive')->name('grn.void');
+
+                Route::get('/grn/{grn}/return/create', [PurchaseReturnController::class, 'create'])->middleware('permission:purchasing,create')->name('grn.return.create');
+                Route::post('/grn/{grn}/return', [PurchaseReturnController::class, 'store'])->middleware('permission:purchasing,create')->name('grn.return.store');
+                Route::get('/returns/{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('returns.show');
+                Route::post('/returns/{purchaseReturn}/confirm', [PurchaseReturnController::class, 'confirm'])->middleware('permission:purchasing,receive')->name('returns.confirm');
             });
         });
     }

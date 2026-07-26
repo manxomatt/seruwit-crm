@@ -6,6 +6,8 @@ const TABS = [
     { labelKey: 'inventory.nav.warehouses', route: 'inventory.warehouses.index', pattern: 'inventory.warehouses.*' },
     { labelKey: 'inventory.nav.stock_levels', route: 'inventory.stock-levels.index', pattern: 'inventory.stock-levels.*' },
     { labelKey: 'inventory.nav.stock_movements', route: 'inventory.stock-movements.index', pattern: 'inventory.stock-movements.*' },
+    { labelKey: 'inventory.nav.putaway', route: 'inventory.putaway.index', pattern: 'inventory.putaway.*' },
+    { labelKey: 'inventory.nav.expiry_report', route: 'inventory.expiry-report.index', pattern: 'inventory.expiry-report.*' },
     { labelKey: 'inventory.nav.stock_opnames', route: 'inventory.stock-opnames.index', pattern: 'inventory.stock-opnames.*' },
 ] as const;
 

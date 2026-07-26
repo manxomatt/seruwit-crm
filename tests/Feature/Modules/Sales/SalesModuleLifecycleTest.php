@@ -26,6 +26,8 @@ class SalesModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('sales_order_items'));
             $this->assertTrue(Schema::hasTable('goods_issue_notes'));
             $this->assertTrue(Schema::hasTable('goods_issue_note_items'));
+            $this->assertTrue(Schema::hasTable('sales_returns'));
+            $this->assertTrue(Schema::hasTable('sales_return_items'));
             $this->assertDatabaseHas('permissions', ['module' => 'sales', 'action' => 'view']);
             $this->assertDatabaseHas('permissions', ['module' => 'sales', 'action' => 'issue']);
             $this->assertDatabaseHas('menus', ['slug' => 'sales']);

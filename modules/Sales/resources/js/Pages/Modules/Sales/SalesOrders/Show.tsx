@@ -77,7 +77,7 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
 
     const remaining = (item: SoItem) => Math.max(0, Number(item.quantity_ordered) - Number(item.quantity_delivered));
     const canIssue = ['confirmed', 'partial_delivered'].includes(order.status);
-    const canInvoice = can.invoice && ['confirmed', 'partial_delivered', 'fully_delivered'].includes(order.status);
+    const canInvoice = can.invoice;
 
     const ginQty = (gin: GinSummary) =>
         (gin.items ?? []).reduce((sum, item) => sum + Number(item.quantity_issued || 0), 0);
@@ -108,6 +108,11 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                         )}
                         {canInvoice && (
                             <PrimaryButton onClick={() => postAction('invoice')}>{t('sales.sales_orders.show.create_invoice')}</PrimaryButton>
+                        )}
+                        {!['draft', 'cancelled'].includes(order.status) && (
+                            <a href={prefixedRoute('sales.sales-orders.pdf', order.id)} target="_blank" rel="noreferrer">
+                                <SecondaryButton type="button">{t('sales.sales_orders.show.print_pdf')}</SecondaryButton>
+                            </a>
                         )}
                         {can.update && order.status === 'fully_delivered' && (
                             <PrimaryButton onClick={() => postAction('close')}>{t('sales.sales_orders.show.close')}</PrimaryButton>

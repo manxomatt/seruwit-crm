@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Response;
 use Modules\Inventory\Models\Warehouse;
+use Modules\Inventory\Support\StockReservationService;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\Sales\Http\Requests\StoreSalesOrderRequest;
@@ -146,7 +147,7 @@ class SalesOrderController extends Controller
             'can' => array_merge($this->abilitiesFor(), [
                 'invoice' => $invoiceService->isAvailable()
                     && (auth()->user()?->hasPermissionFor('sales', 'create') ?? false)
-                    && ! $invoiceService->hasActiveInvoice($so),
+                    && $invoiceService->hasBillableDelivery($so),
             ]),
         ]);
     }
@@ -236,7 +237,13 @@ class SalesOrderController extends Controller
             return back()->with('error', __('sales.messages.so_cancel_not_allowed'));
         }
 
-        $so->update(['status' => SalesOrder::STATUS_CANCELLED]);
+        DB::transaction(function () use ($so): void {
+            if ($so->status === SalesOrder::STATUS_CONFIRMED) {
+                StockReservationService::releaseSalesOrder($so);
+            }
+
+            $so->update(['status' => SalesOrder::STATUS_CANCELLED]);
+        });
 
         return back()->with('success', __('sales.messages.so_cancelled'));
     }

@@ -29,12 +29,28 @@ class GrnConfirmationService
                 throw new RuntimeException(__('purchasing.messages.grn_confirm_need_items'));
             }
 
-            $stockLocationId = $this->resolveStockLocationId((int) $grn->warehouse_id);
+            $lockedItems = PurchaseOrderItem::query()
+                ->whereIn('id', $grn->items->pluck('purchase_order_item_id'))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $receiptLocationId = $this->resolveInputLocationId((int) $grn->warehouse_id);
 
             foreach ($grn->items as $grnItem) {
                 /** @var PurchaseOrderItem $poItem */
-                $poItem = $grnItem->purchaseOrderItem;
-                $locationId = $grnItem->location_id ?: $stockLocationId;
+                $poItem = $lockedItems->get($grnItem->purchase_order_item_id) ?? $grnItem->purchaseOrderItem;
+                $poItem->refresh();
+
+                $remaining = $poItem->remainingQuantity();
+                if ((float) $grnItem->quantity_received > $remaining + 0.009) {
+                    throw new RuntimeException(__('purchasing.validation.quantity_exceeds_remaining', [
+                        'remaining' => $remaining,
+                    ]));
+                }
+
+                $locationId = $grnItem->location_id ?: $receiptLocationId;
                 $baseQty = $this->toBaseQuantity((float) $grnItem->quantity_received, $poItem);
 
                 if ($grnItem->location_id === null && $locationId !== null) {
@@ -85,6 +101,21 @@ class GrnConfirmationService
             if ($po->status === PurchaseOrder::STATUS_CLOSED) {
                 throw new RuntimeException(__('purchasing.messages.grn_void_closed_po'));
             }
+
+            if (class_exists(\Modules\Payables\Support\PurchaseBillService::class)) {
+                $billService = app(\Modules\Payables\Support\PurchaseBillService::class);
+                foreach ($grn->items as $grnItem) {
+                    if ($billService->grnItemHasActiveBill($grnItem)) {
+                        throw new RuntimeException(__('purchasing.messages.grn_void_billed'));
+                    }
+                }
+            }
+
+            PurchaseOrderItem::query()
+                ->whereIn('id', $grn->items->pluck('po_item_id'))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
 
             foreach ($grn->items as $grnItem) {
                 $poItem = $grnItem->purchaseOrderItem;
@@ -169,11 +200,21 @@ class GrnConfirmationService
         }
     }
 
+    public function resolveInputLocationId(int $warehouseId): ?int
+    {
+        return $this->resolveLocationIdByCode($warehouseId, 'INPUT');
+    }
+
     public function resolveStockLocationId(int $warehouseId): ?int
+    {
+        return $this->resolveLocationIdByCode($warehouseId, 'STOCK');
+    }
+
+    private function resolveLocationIdByCode(int $warehouseId, string $code): ?int
     {
         $locationId = WarehouseLocation::query()
             ->where('warehouse_id', $warehouseId)
-            ->where('code', 'STOCK')
+            ->where('code', $code)
             ->value('id');
 
         if ($locationId) {
@@ -185,7 +226,7 @@ class GrnConfirmationService
 
         $locationId = WarehouseLocation::query()
             ->where('warehouse_id', $warehouseId)
-            ->where('code', 'STOCK')
+            ->where('code', $code)
             ->value('id');
 
         return $locationId ? (int) $locationId : null;
@@ -208,8 +249,32 @@ class GrnConfirmationService
             return;
         }
 
-        $costPerBase = round(((float) $poItem->unit_price * $orderQty) / $baseQty, 4);
+        $incomingCost = round(((float) $poItem->unit_price * $orderQty) / $baseQty, 4);
 
-        Product::query()->whereKey($poItem->product_id)->update(['cost' => $costPerBase]);
+        $product = Product::query()->whereKey($poItem->product_id)->lockForUpdate()->first();
+
+        if (! $product) {
+            return;
+        }
+
+        $onHandAfter = round((float) \Modules\Inventory\Models\StockLevel::query()
+            ->where('product_id', $product->id)
+            ->sum('on_hand'), 2);
+
+        $previousQty = max(0, round($onHandAfter - $baseQty, 2));
+        $previousCost = (float) $product->cost;
+
+        if ($previousQty <= 0) {
+            $product->update(['cost' => $incomingCost]);
+
+            return;
+        }
+
+        $average = round(
+            (($previousQty * $previousCost) + ($baseQty * $incomingCost)) / ($previousQty + $baseQty),
+            4
+        );
+
+        $product->update(['cost' => $average]);
     }
 }

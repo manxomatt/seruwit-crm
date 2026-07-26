@@ -191,15 +191,15 @@ class GoodReceiptNoteTest extends TestCase
         $this->assertEquals(0, (float) $itemA->fresh()->quantity_received);
     }
 
-    public function test_grn_confirm_defaults_location_to_stock_and_updates_product_cost(): void
+    public function test_grn_confirm_defaults_location_to_input_and_updates_product_cost(): void
     {
         $user = $this->createAdminUser();
         [$po, $itemA] = $this->approvedPoWithTwoItems();
         $warehouse = Warehouse::query()->findOrFail($po->warehouse_id);
         $warehouse->createDefaultLocations();
-        $stockLocation = WarehouseLocation::query()
+        $inputLocation = WarehouseLocation::query()
             ->where('warehouse_id', $warehouse->id)
-            ->where('code', 'STOCK')
+            ->where('code', 'INPUT')
             ->firstOrFail();
 
         $itemA->product->update(['cost' => 100]);
@@ -215,11 +215,11 @@ class GoodReceiptNoteTest extends TestCase
 
         $grnItem = GoodReceiptNoteItem::query()->first();
         $this->assertNotNull($grnItem);
-        $this->assertSame($stockLocation->id, $grnItem->location_id);
+        $this->assertSame($inputLocation->id, $grnItem->location_id);
 
         $movement = StockMovement::query()->where('source_type', 'grn')->first();
         $this->assertNotNull($movement);
-        $this->assertSame($stockLocation->id, $movement->location_id);
+        $this->assertSame($inputLocation->id, $movement->location_id);
 
         $this->assertEquals(1000, (float) $itemA->product->fresh()->cost);
     }
@@ -255,6 +255,39 @@ class GoodReceiptNoteTest extends TestCase
         $this->assertNotNull($movement);
         $this->assertEquals(24, (float) $movement->quantity);
         $this->assertEquals(2000, (float) $itemA->product->fresh()->cost);
+    }
+
+    public function test_grn_confirm_uses_moving_average_when_prior_stock_exists(): void
+    {
+        $user = $this->createAdminUser();
+        [$po, $itemA] = $this->approvedPoWithTwoItems();
+        $warehouse = Warehouse::query()->findOrFail($po->warehouse_id);
+        $warehouse->createDefaultLocations();
+        $inputLocation = WarehouseLocation::query()
+            ->where('warehouse_id', $warehouse->id)
+            ->where('code', 'INPUT')
+            ->firstOrFail();
+
+        StockLevel::factory()->create([
+            'product_id' => $itemA->product_id,
+            'warehouse_id' => $warehouse->id,
+            'location_id' => $inputLocation->id,
+            'on_hand' => 10,
+            'reserved' => 0,
+        ]);
+        $itemA->product->update(['cost' => 1000]);
+        $itemA->update(['unit_price' => 2000]);
+
+        $this->actingAs($user)->post(route('module.purchasing.purchase-orders.grn.store', $po, false), [
+            'warehouse_id' => $po->warehouse_id,
+            'received_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                ['po_item_id' => $itemA->id, 'quantity_received' => 10, 'location_id' => $inputLocation->id],
+            ],
+        ])->assertSessionHas('success');
+
+        $this->assertEquals(1500, (float) $itemA->product->fresh()->cost);
     }
 
     public function test_void_confirmed_grn_reverses_stock_and_po_quantities(): void

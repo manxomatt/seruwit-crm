@@ -147,6 +147,10 @@ class StockMovementRecorder
     {
         $query = self::levelsQuery($productId, $warehouseId, $locationId);
 
+        if ($locationId === null) {
+            SellableStock::constrain($query);
+        }
+
         if ($batchNumber !== null) {
             $query->where('batch_number', self::normalizeBatch($batchNumber));
             $level = $query->first(['on_hand', 'reserved']);
@@ -179,6 +183,19 @@ class StockMovementRecorder
 
         $levels = self::levelsQuery($productId, $warehouseId, $locationId)
             ->where('on_hand', '>', 0)
+            ->tap(function (Builder $query) use ($locationId): void {
+                // When picking from a specific bin, still skip expired lots.
+                // When location is unspecified, only sellable (internal + non-expired) bins.
+                if ($locationId === null) {
+                    SellableStock::constrain($query);
+                } else {
+                    $query->where(function (Builder $expiryQuery): void {
+                        $expiryQuery
+                            ->whereNull('expiry_date')
+                            ->orWhereDate('expiry_date', '>=', now()->toDateString());
+                    });
+                }
+            })
             ->tap(fn (Builder $query) => self::applyPickingOrder($query, $strategy))
             ->lockForUpdate()
             ->get();
@@ -225,6 +242,7 @@ class StockMovementRecorder
     {
         $batch = self::normalizeBatch($data['batch_number'] ?? null);
         $data['batch_number'] = $batch !== '' ? $batch : null;
+        unset($data['allocate']);
 
         $movement = StockMovement::create($data);
 
@@ -286,9 +304,7 @@ class StockMovementRecorder
             ->where('product_id', $productId)
             ->where('warehouse_id', $warehouseId);
 
-        if ($locationId === null) {
-            $query->whereNull('location_id');
-        } else {
+        if ($locationId !== null) {
             $query->where('location_id', $locationId);
         }
 

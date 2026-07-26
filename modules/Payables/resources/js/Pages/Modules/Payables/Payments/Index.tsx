@@ -1,0 +1,87 @@
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useTrans } from '@/hooks/useTrans';
+import PrimaryButton from '@/Components/PrimaryButton';
+import { formatMoney } from '@/utils/money';
+import { Head, Link } from '@inertiajs/react';
+
+interface Payment {
+    id: number;
+    code: string;
+    payment_date: string;
+    amount: string;
+    method: string;
+    status: string;
+    partner: { id: number; name: string };
+}
+
+interface Props {
+    payments: { data: Payment[] };
+    can: { create: boolean };
+}
+
+export default function Index({ payments, can }: Props): JSX.Element {
+    const { prefixedRoute } = useRoutePrefix();
+    const { t } = useTrans();
+
+    return (
+        <DynamicLayout
+            header={
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-gray-800">{t('payables.payments.title')}</h2>
+                    {can.create && (
+                        <Link href={prefixedRoute('payables.payments.create')}>
+                            <PrimaryButton>{t('payables.payments.create')}</PrimaryButton>
+                        </Link>
+                    )}
+                </div>
+            }
+        >
+            <Head title={t('payables.payments.title')} />
+            <div className="mb-4 flex gap-4 text-sm">
+                <Link href={prefixedRoute('payables.bills.index')} className="text-gray-600 hover:text-gray-900">
+                    {t('payables.nav.bills')}
+                </Link>
+                <Link href={prefixedRoute('payables.payments.index')} className="font-medium text-indigo-600">
+                    {t('payables.nav.payments')}
+                </Link>
+            </div>
+            <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+                <table className="w-full">
+                    <thead className="border-b bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+                        <tr>
+                            <th className="px-4 py-3">Code</th>
+                            <th className="px-4 py-3">Supplier</th>
+                            <th className="px-4 py-3">Status</th>
+                            <th className="px-4 py-3 text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {payments.data.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500">
+                                    {t('payables.payments.empty')}
+                                </td>
+                            </tr>
+                        )}
+                        {payments.data.map((payment) => (
+                            <tr key={payment.id} className="border-b">
+                                <td className="px-4 py-3">
+                                    <Link
+                                        href={prefixedRoute('payables.payments.show', payment.id)}
+                                        className="font-medium text-indigo-600"
+                                    >
+                                        {payment.code}
+                                    </Link>
+                                </td>
+                                <td className="px-4 py-3 text-sm">{payment.partner?.name}</td>
+                                <td className="px-4 py-3 text-sm">{t(`payables.status.${payment.status}`, undefined, payment.status)}</td>
+                                <td className="px-4 py-3 text-right tabular-nums">{formatMoney(Number(payment.amount))}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </DynamicLayout>
+    );
+}

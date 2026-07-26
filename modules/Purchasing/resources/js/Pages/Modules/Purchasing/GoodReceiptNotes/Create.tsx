@@ -88,7 +88,8 @@ export default function Create({ order, receivableItems, warehouses, defaultStoc
 
     const stockLocationIdFor = (warehouseId: string): string => {
         const warehouse = warehouses.find((w) => String(w.id) === warehouseId);
-        const stock = warehouse?.locations.find((l) => l.code === 'STOCK');
+        const stock = warehouse?.locations.find((l) => l.code === 'INPUT')
+            ?? warehouse?.locations.find((l) => l.code === 'STOCK');
         return stock ? String(stock.id) : '';
     };
 

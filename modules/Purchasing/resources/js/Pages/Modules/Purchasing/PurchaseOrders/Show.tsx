@@ -113,6 +113,11 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                         {can.update && order.status === 'fully_received' && (
                             <PrimaryButton onClick={() => postAction('close')}>{t('purchasing.purchase_orders.show.close')}</PrimaryButton>
                         )}
+                        {!['draft', 'cancelled'].includes(order.status) && (
+                            <a href={prefixedRoute('purchasing.purchase-orders.pdf', order.id)} target="_blank" rel="noreferrer">
+                                <SecondaryButton type="button">{t('purchasing.purchase_orders.show.print_pdf')}</SecondaryButton>
+                            </a>
+                        )}
                         {can.update && ['draft', 'submitted', 'approved'].includes(order.status) && (
                             <DangerButton onClick={() => postAction('cancel')}>{t('common.cancel')}</DangerButton>
                         )}

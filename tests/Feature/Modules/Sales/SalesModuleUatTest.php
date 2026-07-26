@@ -159,11 +159,11 @@ class SalesModuleUatTest extends TestCase
         $invoice = Invoice::query()->where('partner_id', $customer->id)->latest('id')->firstOrFail();
         $this->assertSame(Invoice::STATUS_DRAFT, $invoice->status);
         $this->assertEquals(1_000_000, (float) $invoice->total);
+        $this->assertEquals(2, InvoiceLine::query()->where('invoice_id', $invoice->id)->count());
         $this->assertTrue(
             InvoiceLine::query()
                 ->where('invoice_id', $invoice->id)
-                ->where('source_type', (new SalesOrderItem)->getMorphClass())
-                ->where('source_id', $item->id)
+                ->where('source_type', (new \Modules\Sales\Models\GoodsIssueNoteItem)->getMorphClass())
                 ->exists()
         );
 

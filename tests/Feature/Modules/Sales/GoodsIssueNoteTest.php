@@ -60,9 +60,10 @@ class GoodsIssueNoteTest extends TestCase
             'reserved' => 0,
         ]);
 
-        $so = SalesOrder::factory()->confirmed()->create([
+        $so = SalesOrder::factory()->create([
             'partner_id' => $customer->id,
             'warehouse_id' => $warehouse->id,
+            'status' => SalesOrder::STATUS_DRAFT,
         ]);
 
         $itemA = SalesOrderItem::factory()->create([
@@ -81,7 +82,10 @@ class GoodsIssueNoteTest extends TestCase
             'unit_price' => 500,
         ]);
 
-        return [$so, $itemA, $itemB, $stockLocation];
+        $so->recalculateTotal();
+        app(\Modules\Sales\Support\SalesOrderConfirmationService::class)->confirm($so);
+
+        return [$so->fresh(), $itemA->fresh(), $itemB->fresh(), $stockLocation];
     }
 
     public function test_gin_confirm_creates_stock_movements_and_updates_levels(): void
@@ -122,6 +126,7 @@ class GoodsIssueNoteTest extends TestCase
 
         $this->assertNotNull($level);
         $this->assertEquals(440, (float) $level->on_hand);
+        $this->assertEquals(40, (float) $level->reserved);
         $this->assertEquals(60, (float) $itemA->fresh()->quantity_delivered);
         $this->assertSame(SalesOrder::STATUS_PARTIAL_DELIVERED, $so->fresh()->status);
     }
@@ -217,31 +222,63 @@ class GoodsIssueNoteTest extends TestCase
     public function test_gin_confirm_converts_packaging_quantity_to_base_units(): void
     {
         $user = $this->createAdminUser();
-        [$so, $itemA] = $this->confirmedSoWithTwoItems();
+        $customer = Partner::factory()->create(['customer_rank' => 1]);
+        $warehouse = Warehouse::factory()->create();
+        $warehouse->createDefaultLocations();
+        $stockLocation = WarehouseLocation::query()
+            ->where('warehouse_id', $warehouse->id)
+            ->where('code', 'STOCK')
+            ->firstOrFail();
+
+        $product = Product::factory()->create();
+        StockLevel::factory()->create([
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouse->id,
+            'location_id' => $stockLocation->id,
+            'on_hand' => 500,
+            'reserved' => 0,
+        ]);
 
         $packaging = \Modules\Product\Models\ProductPackaging::factory()->create([
-            'product_id' => $itemA->product_id,
+            'product_id' => $product->id,
             'name' => 'Karton',
             'qty' => 12,
         ]);
-        $itemA->update([
-            'product_packaging_id' => $packaging->id,
-            'unit_price' => 24000,
-            'quantity_ordered' => 5,
+
+        $so = SalesOrder::factory()->create([
+            'partner_id' => $customer->id,
+            'warehouse_id' => $warehouse->id,
+            'status' => SalesOrder::STATUS_DRAFT,
         ]);
+        $item = SalesOrderItem::factory()->create([
+            'sales_order_id' => $so->id,
+            'product_id' => $product->id,
+            'product_packaging_id' => $packaging->id,
+            'quantity_ordered' => 5,
+            'unit_price' => 24000,
+        ]);
+        $so->recalculateTotal();
+        app(\Modules\Sales\Support\SalesOrderConfirmationService::class)->confirm($so);
 
         $this->actingAs($user)->post(route('module.sales.sales-orders.gin.store', $so, false), [
             'warehouse_id' => $so->warehouse_id,
             'issued_at' => now()->toDateString(),
             'confirm' => true,
             'items' => [
-                ['so_item_id' => $itemA->id, 'quantity_issued' => 2],
+                ['so_item_id' => $item->id, 'quantity_issued' => 2],
             ],
         ])->assertSessionHas('success');
 
         $movement = StockMovement::query()->where('source_type', 'gin')->first();
         $this->assertNotNull($movement);
         $this->assertEquals(24, (float) $movement->quantity);
+
+        $level = StockLevel::query()
+            ->where('product_id', $product->id)
+            ->where('warehouse_id', $warehouse->id)
+            ->first();
+        $this->assertEquals(476, (float) $level->on_hand);
+        $this->assertEquals(36, (float) $level->reserved);
     }
 
     public function test_void_confirmed_gin_reverses_stock_and_so_quantities(): void
@@ -277,11 +314,13 @@ class GoodsIssueNoteTest extends TestCase
         $this->assertSame(GoodsIssueNote::STATUS_VOIDED, $gin->fresh()->status);
         $this->assertEquals(0, (float) $itemA->fresh()->quantity_delivered);
         $this->assertSame(SalesOrder::STATUS_CONFIRMED, $so->fresh()->status);
-        $this->assertEquals(500, (float) StockLevel::query()
+        $level = StockLevel::query()
             ->where('product_id', $itemA->product_id)
             ->where('warehouse_id', $so->warehouse_id)
             ->where('location_id', $stockLocation->id)
-            ->value('on_hand'));
+            ->first();
+        $this->assertEquals(500, (float) $level->on_hand);
+        $this->assertEquals(100, (float) $level->reserved);
         $this->assertEquals(1, StockMovement::query()->where('source_type', 'gin_void')->count());
     }
 

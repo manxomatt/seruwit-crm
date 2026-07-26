@@ -177,6 +177,13 @@ class SalesOrderTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame(SalesOrder::STATUS_CONFIRMED, $so->fresh()->status);
+
+        $level = StockLevel::query()
+            ->where('product_id', $product->id)
+            ->where('warehouse_id', $warehouse->id)
+            ->first();
+        $this->assertEquals(50, (float) $level->reserved);
+        $this->assertEquals(100, (float) $level->on_hand);
     }
 
     public function test_cancel_confirmed_without_gin_ok_with_confirmed_gin_blocked(): void
@@ -293,6 +300,11 @@ class SalesOrderTest extends TestCase
             $this->markTestSkipped('Invoicing tables are not available.');
         }
 
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => 'ecommerce.tax_enabled'],
+            ['group' => 'ecommerce', 'value' => '0', 'type' => 'boolean', 'label' => 'Enable Tax']
+        );
+
         $user = $this->createAdminUser();
         [$warehouse, $stockLocation] = $this->warehouseWithStockLocation();
         $customer = Partner::factory()->create(['customer_rank' => 1]);
@@ -320,21 +332,55 @@ class SalesOrderTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('module.sales.sales-orders.invoice', $so, false))
+            ->assertSessionHas('error');
+
+        $this->actingAs($user)->post(route('module.sales.sales-orders.gin.store', $so, false), [
+            'warehouse_id' => $warehouse->id,
+            'issued_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                ['so_item_id' => $item->id, 'quantity_issued' => 4],
+            ],
+        ])->assertSessionHas('success');
+
+        $this->actingAs($user)
+            ->post(route('module.sales.sales-orders.invoice', $so, false))
             ->assertRedirect();
 
         $invoice = Invoice::query()->latest('id')->first();
         $this->assertNotNull($invoice);
         $this->assertSame($customer->id, $invoice->partner_id);
         $this->assertSame(Invoice::STATUS_DRAFT, $invoice->status);
-        $this->assertEquals(50000, (float) $invoice->total);
+        $this->assertEquals(20000, (float) $invoice->total);
+
+        $ginItem = \Modules\Sales\Models\GoodsIssueNoteItem::query()->first();
+        $this->assertNotNull($ginItem);
 
         $line = InvoiceLine::query()->where('invoice_id', $invoice->id)->first();
         $this->assertNotNull($line);
-        $this->assertSame($item->getMorphClass(), $line->source_type);
-        $this->assertSame($item->id, $line->source_id);
+        $this->assertSame($ginItem->getMorphClass(), $line->source_type);
+        $this->assertSame($ginItem->id, $line->source_id);
 
         $this->actingAs($user)
             ->post(route('module.sales.sales-orders.invoice', $so, false))
             ->assertSessionHas('error');
+
+        $this->actingAs($user)->post(route('module.sales.sales-orders.gin.store', $so, false), [
+            'warehouse_id' => $warehouse->id,
+            'issued_at' => now()->toDateString(),
+            'confirm' => true,
+            'items' => [
+                ['so_item_id' => $item->id, 'quantity_issued' => 6],
+            ],
+        ])->assertSessionHas('success');
+
+        $this->actingAs($user)
+            ->post(route('module.sales.sales-orders.invoice', $so, false))
+            ->assertRedirect();
+
+        $second = Invoice::query()->latest('id')->first();
+        $this->assertNotNull($second);
+        $this->assertNotSame($invoice->id, $second->id);
+        $this->assertEquals(30000, (float) $second->total);
     }
 }

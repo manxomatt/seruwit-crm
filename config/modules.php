@@ -26,6 +26,7 @@ return [
         Modules\Purchasing\PurchasingModule::class,
         Modules\Sales\SalesModule::class,
         Modules\Receivables\ReceivablesModule::class,
+        Modules\Payables\PayablesModule::class,
         Modules\Approvals\ApprovalsModule::class,
         Modules\DriverScoring\DriverScoringModule::class,
         Modules\TradePromotions\TradePromotionsModule::class,

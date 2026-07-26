@@ -38,7 +38,7 @@ interface Grn {
 
 interface Props {
     grn: Grn;
-    can: { receive: boolean; void: boolean };
+    can: { receive: boolean; void: boolean; bill: boolean; return: boolean };
 }
 
 export default function Show({ grn, can }: Props): JSX.Element {
@@ -82,6 +82,25 @@ export default function Show({ grn, can }: Props): JSX.Element {
                         </Link>
                         {can.receive && isDraft && (
                             <PrimaryButton onClick={confirm}>{t('purchasing.grn.show.confirm')}</PrimaryButton>
+                        )}
+                        {can.bill && isConfirmed && (
+                            <PrimaryButton
+                                onClick={() =>
+                                    router.post(prefixedRoute('payables.grn.bill', grn.id), {}, { preserveScroll: true })
+                                }
+                            >
+                                {t('purchasing.grn.show.create_bill')}
+                            </PrimaryButton>
+                        )}
+                        {can.return && isConfirmed && (
+                            <Link href={prefixedRoute('purchasing.grn.return.create', grn.id)}>
+                                <SecondaryButton type="button">{t('purchasing.grn.show.create_return')}</SecondaryButton>
+                            </Link>
+                        )}
+                        {isConfirmed && (
+                            <a href={prefixedRoute('purchasing.grn.pdf', grn.id)} target="_blank" rel="noreferrer">
+                                <SecondaryButton type="button">{t('purchasing.grn.show.print_pdf')}</SecondaryButton>
+                            </a>
                         )}
                         {can.void && isConfirmed && (
                             <SecondaryButton type="button" onClick={voidGrn}>

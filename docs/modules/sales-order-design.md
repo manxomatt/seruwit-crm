@@ -39,19 +39,29 @@ Menutup siklus dagang setelah stok masuk via PO/GRN:
 
 ### Out of scope (fase berikutnya)
 - Quotation / penawaran
-- Sales return / RMA
-- Reserve stok saat SO confirm (generalisasi `stock_reservations` yang hari ini terikat `delivery_order_*`)
 - Integrasi Outbound pick/pack atau Transportation trip
-- Partial invoice per GIN
-- Pricing rules / Trade Promotions / Canvassing
-- Cetak PDF SO/GIN (bisa menyusul seperti saran cetak GRN)
-- Update `product.cost` (itu milik inbound); harga jual tidak mengubah cost
+- Price list / pricing rules penuh (tax dari settings sudah di Fase 1.3)
+- Trade Promotions / Canvassing
 
-### Keputusan desain penting: reservation ditunda
-`stock_reservations` saat ini wajib `delivery_order_id` + `delivery_order_item_id`. Memaksa SO memakai itu akan menarik ketergantungan ke Orders (Vertical) atau memaksa refactor Inventory di tengah MVP.
+### Fase 1.1 — implemented
+`stock_reservations` mendukung SO dan DO:
+- `delivery_order_id` / `delivery_order_item_id` nullable
+- `sales_order_id` / `sales_order_item_id` nullable (XOR di aplikasi)
+- SO confirm → reserve · GIN confirm → consume · cancel SO / void GIN → release / re-reserve
+- Invoice dari qty **delivered** (line morph ke `GoodsIssueNoteItem`); partial invoice per GIN didukung
 
-**MVP:** tidak reserve. Ketersediaan dicek **keras** saat GIN confirm (dan **lunak**/peringatan saat SO confirm).  
-**Fase 1.1:** generalisasi reservation (polimorfik / nullable SO FK) tanpa merusak flow DO.
+### Fase 1.2 — implemented
+- Opname per lokasi + batch
+- Blok FEFO/reservasi untuk lot kadaluarsa + laporan expiry
+- PDF PO / GRN / SO / GIN
+- GRN default ke INPUT + putaway INPUT/QC → STOCK (sellable hanya `internal`)
+
+### Fase 1.3 — implemented
+- Sales return (dari GIN) → stock in + draft credit invoice
+- Purchase return (dari GRN) → stock out; void GRN diblok jika sudah ada bill
+- Modul **Payables**: supplier bill dari GRN + bill payment
+- Moving average cost saat GRN confirm
+- Pajak invoice SO dari setting `ecommerce.tax_*` (price list penuh ditunda)
 
 ---
 
@@ -199,29 +209,28 @@ Mirror `GrnConfirmationService::void`:
 1. Status harus `draft`, minimal 1 item
 2. Soft stock check (opsional MVP): untuk tiap item, bandingkan `toBaseQuantity(remaining)` vs available `(on_hand − reserved)` di `warehouse_id` — bila kurang, **boleh tetap confirm** dengan flash warning *atau* hard-block via setting; **rekomendasi MVP: hard-block** agar tidak menumpuk SO yang tidak bisa dikirim
 3. Credit limit: jika `CreditLimitChecker::wouldExceed(partner, total)` → error / Approvals gate (copy pola `InvoiceController::issue`)
-4. Status → `confirmed`
+4. `StockReservationService::reserveSalesOrder` (hold `StockLevel.reserved`)
+5. Status → `confirmed`
 
-Tidak ada stock movement di langkah ini.
-
-### 3.3 Create Invoice dari SO
+### 3.3 Create Invoice dari SO / GIN
 
 Hanya jika `Modules::available('invoicing')` / tabel `invoices` ada:
 
-1. SO status ∈ `{confirmed, partial_delivered, fully_delivered}`
-2. Belum ada invoice line dengan `source_type` = morph class `SalesOrder` **atau** policy “satu invoice aktif per SO” (cek via invoice lines morph ke SO / SO item)
-3. Buat `Invoice` draft: partner = SO partner, issue_date = today
-4. Untuk tiap SO item: `InvoiceLine` dengan:
-   - `description` = snapshot `"SO-… — {product name} × {qty} {unit}"`
-   - `amount` = line total
-   - `source` = morph ke `SalesOrderItem` (atau satu line agregat morph ke `SalesOrder` — **rekomendasi: per item** agar audit jelas)
-5. `recalculate()` invoice
-6. Redirect ke show invoice (user issue/pay di modul Invoicing)
+1. SO status ∈ `{confirmed, partial_delivered, fully_delivered}` **dan** ada GIN confirmed yang belum di-invoice
+2. Buat `Invoice` draft: partner = SO partner, issue_date = today
+3. Untuk tiap `GoodsIssueNoteItem` yang belum punya invoice aktif:
+   - `description` = snapshot `"SO-… — {product name} × {qty issued} {unit}"`
+   - `amount` = `quantity_issued × unit_price`
+   - `source` = morph ke `GoodsIssueNoteItem`
+4. `recalculate()` invoice
+5. Redirect ke show invoice (user issue/pay di modul Invoicing)
+6. Alternatif: `POST /gin/{gin}/invoice` untuk satu GIN saja
 
-**MVP:** invoice penuh atas qty ordered (bukan qty delivered). Partial bill per GIN = fase berikutnya.
+**Fase 1.1:** invoice dari qty delivered / per GIN (bukan qty ordered). Satu SO boleh punya beberapa invoice seiring partial delivery.
 
 ### 3.4 Ketersediaan stok saat GIN confirm
 
-`StockMovementRecorder` sudah melempar jika stok tidak cukup. Tangkap `RuntimeException` → flash error, GIN tetap draft. Tidak perlu logika alokasi custom di Sales kecuali ingin pre-check pesan lebih ramah.
+GIN confirm meng-`consume` reservasi SO (stock out + reserved↓). Fallback allocate FEFO hanya jika SO legacy tanpa reservasi. Row lock pada `sales_order_items` mencegah over-issue concurrent.
 
 ---
 
@@ -303,12 +312,12 @@ POST   /sales/gin/{gin}/void             # permission:issue
 | Partners | Filter `customer_rank > 0` di form SO |
 | Product packagings | Sama pola PO (load + validate belong-to product) |
 
-### Fase 1.1 (dokumentasikan, jangan kerjakan di MVP)
-Generalisasi `stock_reservations`:
-- Jadikan `delivery_order_id` / `delivery_order_item_id` nullable
-- Tambah `sales_order_id` / `sales_order_item_id` nullable (XOR constraint di aplikasi)
-- Atau ganti ke morph `reservable_type/id`
-- Extend `StockReservationService` agar menerima kontrak generik, bukan hanya `DeliveryOrder`
+### Fase 1.1 — implemented
+Generalisasi `stock_reservations` + invoice by delivery:
+- `delivery_order_*` nullable; `sales_order_*` ditambah
+- `StockReservationService` reserve/release/consume untuk SO
+- Invoice lines morph ke `GoodsIssueNoteItem` (qty issued × unit price)
+- Row lock PO/SO items saat GRN/GIN confirm
 
 ---
 

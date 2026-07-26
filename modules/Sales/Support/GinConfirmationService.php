@@ -3,10 +3,13 @@
 namespace Modules\Sales\Support;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Modules\Inventory\Models\StockMovement;
+use Modules\Inventory\Models\StockReservation;
 use Modules\Inventory\Models\WarehouseLocation;
 use Modules\Inventory\Support\LowStockNotifier;
 use Modules\Inventory\Support\StockMovementRecorder;
+use Modules\Inventory\Support\StockReservationService;
 use Modules\Sales\Models\GoodsIssueNote;
 use Modules\Sales\Models\SalesOrder;
 use Modules\Sales\Models\SalesOrderItem;
@@ -28,11 +31,16 @@ class GinConfirmationService
                 throw new RuntimeException(__('sales.messages.gin_confirm_need_items'));
             }
 
+            $lockedItems = SalesOrderItemLocker::lockItems(
+                $gin->items->pluck('so_item_id')->all()
+            )->keyBy('id');
+
             $stockLocationId = $this->resolveStockLocationId((int) $gin->warehouse_id);
 
             foreach ($gin->items as $ginItem) {
                 /** @var SalesOrderItem $soItem */
-                $soItem = $ginItem->salesOrderItem;
+                $soItem = $lockedItems->get($ginItem->so_item_id) ?? $ginItem->salesOrderItem;
+                $soItem->refresh();
                 $remaining = $soItem->remainingQuantity();
 
                 if ((float) $ginItem->quantity_issued > $remaining + 0.009) {
@@ -46,20 +54,43 @@ class GinConfirmationService
                     $ginItem->update(['location_id' => $locationId]);
                 }
 
-                StockMovementRecorder::record([
-                    'product_id' => $soItem->product_id,
-                    'warehouse_id' => $gin->warehouse_id,
-                    'location_id' => $locationId,
-                    'type' => 'out',
-                    'quantity' => $baseQty,
-                    'source_type' => 'gin',
-                    'source_id' => $ginItem->id,
-                    'reference_code' => $gin->gin_number,
-                    'batch_number' => $ginItem->batch_number,
-                    'expiry_date' => $ginItem->expiry_date?->toDateString(),
-                    'recorded_by' => auth()->id(),
-                    'recorded_at' => now(),
-                ]);
+                $hasReservation = StockReservation::query()
+                    ->where('sales_order_item_id', $soItem->id)
+                    ->where('status', StockReservation::STATUS_OPEN)
+                    ->whereColumn('consumed_quantity', '<', 'quantity')
+                    ->exists();
+
+                try {
+                    if ($hasReservation) {
+                        StockReservationService::consumeForSalesOrderItem($soItem, $baseQty, [
+                            'source_type' => 'gin',
+                            'source_id' => $ginItem->id,
+                            'reference_code' => $gin->gin_number,
+                            'recorded_by' => auth()->id(),
+                            'recorded_at' => now(),
+                        ]);
+                    } else {
+                        StockMovementRecorder::record([
+                            'product_id' => $soItem->product_id,
+                            'warehouse_id' => $gin->warehouse_id,
+                            'location_id' => $locationId,
+                            'type' => 'out',
+                            'quantity' => $baseQty,
+                            'source_type' => 'gin',
+                            'source_id' => $ginItem->id,
+                            'reference_code' => $gin->gin_number,
+                            'batch_number' => $ginItem->batch_number,
+                            'expiry_date' => $ginItem->expiry_date?->toDateString(),
+                            'recorded_by' => auth()->id(),
+                            'recorded_at' => now(),
+                        ]);
+                    }
+                } catch (ValidationException $e) {
+                    $message = collect($e->errors())->flatten()->first()
+                        ?? __('sales.messages.gin_insufficient_reserved');
+
+                    throw new RuntimeException($message);
+                }
 
                 $soItem->increment('quantity_delivered', (float) $ginItem->quantity_issued);
             }
@@ -90,6 +121,15 @@ class GinConfirmationService
                 throw new RuntimeException(__('sales.messages.gin_void_closed_so'));
             }
 
+            $invoiceService = app(SalesInvoiceService::class);
+            foreach ($gin->items as $ginItem) {
+                if ($invoiceService->ginItemHasActiveInvoice($ginItem)) {
+                    throw new RuntimeException(__('sales.messages.gin_void_invoiced'));
+                }
+            }
+
+            SalesOrderItemLocker::lockItems($gin->items->pluck('so_item_id')->all());
+
             foreach ($gin->items as $ginItem) {
                 $soItem = $ginItem->salesOrderItem;
                 $outbound = StockMovement::query()
@@ -97,6 +137,8 @@ class GinConfirmationService
                     ->where('source_id', $ginItem->id)
                     ->where('type', 'out')
                     ->get();
+
+                $restoredBase = 0.0;
 
                 foreach ($outbound as $movement) {
                     StockMovementRecorder::record([
@@ -115,11 +157,28 @@ class GinConfirmationService
                         'recorded_at' => now(),
                         'allocate' => false,
                     ]);
+
+                    $restoredBase = round($restoredBase + (float) $movement->quantity, 2);
                 }
 
                 $soItem->decrement('quantity_delivered', (float) $ginItem->quantity_issued);
                 if ((float) $soItem->fresh()->quantity_delivered < 0) {
                     $soItem->update(['quantity_delivered' => 0]);
+                }
+
+                if ($restoredBase > 0 && ! in_array($so->status, [SalesOrder::STATUS_CANCELLED], true)) {
+                    try {
+                        StockReservationService::reserveAdditionalForSalesOrderItem(
+                            $so,
+                            $soItem->fresh(['product', 'packaging']),
+                            $restoredBase,
+                        );
+                    } catch (ValidationException $e) {
+                        $message = collect($e->errors())->flatten()->first()
+                            ?? __('sales.messages.gin_void_rereserve_failed');
+
+                        throw new RuntimeException($message);
+                    }
                 }
             }
 

@@ -20,6 +20,8 @@ class StockReservation extends Model
     protected $fillable = [
         'delivery_order_id',
         'delivery_order_item_id',
+        'sales_order_id',
+        'sales_order_item_id',
         'product_id',
         'warehouse_id',
         'location_id',
@@ -61,6 +63,22 @@ class StockReservation extends Model
     public function deliveryOrderItem(): BelongsTo
     {
         return $this->belongsTo(DeliveryOrderItem::class);
+    }
+
+    /**
+     * @return BelongsTo<\Modules\Sales\Models\SalesOrder, $this>
+     */
+    public function salesOrder(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Sales\Models\SalesOrder::class);
+    }
+
+    /**
+     * @return BelongsTo<\Modules\Sales\Models\SalesOrderItem, $this>
+     */
+    public function salesOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Sales\Models\SalesOrderItem::class);
     }
 
     /**

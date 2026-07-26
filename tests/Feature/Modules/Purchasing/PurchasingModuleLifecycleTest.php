@@ -26,6 +26,8 @@ class PurchasingModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('purchase_order_items'));
             $this->assertTrue(Schema::hasTable('good_receipt_notes'));
             $this->assertTrue(Schema::hasTable('good_receipt_note_items'));
+            $this->assertTrue(Schema::hasTable('purchase_returns'));
+            $this->assertTrue(Schema::hasTable('purchase_return_items'));
             $this->assertTrue(Schema::hasColumn('stock_movements', 'batch_number'));
             $this->assertTrue(Schema::hasColumn('stock_movements', 'expiry_date'));
             $this->assertDatabaseHas('permissions', ['module' => 'purchasing', 'action' => 'view']);

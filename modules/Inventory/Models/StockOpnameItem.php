@@ -16,6 +16,9 @@ class StockOpnameItem extends Model
     protected $fillable = [
         'opname_id',
         'product_id',
+        'location_id',
+        'batch_number',
+        'expiry_date',
         'system_qty',
         'actual_qty',
         'notes',
@@ -26,6 +29,7 @@ class StockOpnameItem extends Model
         return [
             'system_qty' => 'decimal:2',
             'actual_qty' => 'decimal:2',
+            'expiry_date' => 'date',
         ];
     }
 
@@ -48,6 +52,14 @@ class StockOpnameItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * @return BelongsTo<WarehouseLocation, $this>
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseLocation::class, 'location_id');
     }
 
     public function getVarianceAttribute(): string

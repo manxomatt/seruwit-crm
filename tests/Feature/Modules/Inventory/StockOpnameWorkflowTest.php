@@ -39,7 +39,7 @@ class StockOpnameWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_opname_creation_sums_on_hand_across_locations_for_each_product(): void
+    public function test_opname_creation_creates_line_per_location_batch(): void
     {
         $warehouse = Warehouse::factory()->create();
         $warehouse->createDefaultLocations();
@@ -69,8 +69,8 @@ class StockOpnameWorkflowTest extends TestCase
         ])->assertRedirect();
 
         $opname = StockOpname::query()->latest('id')->firstOrFail();
-        $item = $opname->items()->where('product_id', $product->id)->firstOrFail();
-        $this->assertEquals(25, (float) $item->system_qty);
+        $this->assertEquals(2, $opname->items()->where('product_id', $product->id)->count());
+        $this->assertEquals(25, (float) $opname->items()->where('product_id', $product->id)->sum('system_qty'));
     }
 
     public function test_opname_finalization_records_variance_adjustments(): void

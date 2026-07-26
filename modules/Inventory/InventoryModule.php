@@ -5,6 +5,8 @@ namespace Modules\Inventory;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Inventory\Http\Controllers\ExpiryReportController;
+use Modules\Inventory\Http\Controllers\PutawayController;
 use Modules\Inventory\Http\Controllers\StockLevelController;
 use Modules\Inventory\Http\Controllers\StockMovementController;
 use Modules\Inventory\Http\Controllers\StockOpnameController;
@@ -89,6 +91,13 @@ class InventoryModule implements ModuleContract
 
                 // Stock Levels
                 Route::get('/stock-levels', [StockLevelController::class, 'index'])->name('stock-levels.index');
+
+                // Putaway (INPUT/QC → STOCK)
+                Route::get('/putaway', [PutawayController::class, 'index'])->name('putaway.index');
+                Route::post('/putaway', [PutawayController::class, 'store'])->middleware('permission:inventory,adjust')->name('putaway.store');
+
+                // Expiry report
+                Route::get('/expiry-report', [ExpiryReportController::class, 'index'])->name('expiry-report.index');
 
                 // Stock Movements (ledger)
                 Route::get('/stock-movements', [StockMovementController::class, 'index'])->name('stock-movements.index');

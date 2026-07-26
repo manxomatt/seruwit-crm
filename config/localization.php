@@ -77,6 +77,7 @@ return [
         'purchasing',
         'sales',
         'receivables',
+        'payables',
         'rental',
         'roles',
         'routing',
