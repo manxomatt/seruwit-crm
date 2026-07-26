@@ -224,13 +224,17 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                             {drivers.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(drivers.current_page - 1) * drivers.per_page + 1} to{' '}
-                                        {Math.min(drivers.current_page * drivers.per_page, drivers.total)} of {drivers.total} results
+                                        {t('common.showing_results', {
+                                            from: (drivers.current_page - 1) * drivers.per_page + 1,
+                                            to: Math.min(drivers.current_page * drivers.per_page, drivers.total),
+                                            total: drivers.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {drivers.links.map((link, index) => (
                                             <button
                                                 key={index}
+                                                type="button"
                                                 onClick={() => link.url && router.get(link.url)}
                                                 disabled={!link.url}
                                                 className={`rounded px-3 py-1 text-sm ${

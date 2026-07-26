@@ -71,7 +71,14 @@ class DocumentCrudTest extends TestCase
 
         $this->actingAs($user)->get(route('module.documents.types.index'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Modules/Document/Types/Index'));
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Document/Types/Index')
+                ->has('can.create')
+                ->has('can.update')
+                ->has('can.delete')
+                ->where('can.create', true)
+                ->where('can.update', true)
+                ->where('can.delete', true));
     }
 
     public function test_admin_can_create_document_type(): void

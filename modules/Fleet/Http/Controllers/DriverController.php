@@ -3,10 +3,12 @@
 namespace Modules\Fleet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Http\Requests\StoreDriverRequest;
@@ -87,11 +89,64 @@ class DriverController extends Controller
 
         return Inertia::render('Modules/Fleet/Drivers/Show', [
             'driver' => $driver,
+            'documentsEnabled' => Modules::available('document'),
+            'documentSummary' => $this->driverDocumentSummary($driver),
             'can' => [
                 'update' => $user->hasPermissionFor('fleet', 'update'),
                 'delete' => $user->hasPermissionFor('fleet', 'delete'),
             ],
         ]);
+    }
+
+    /**
+     * @return array{total: int, expired: int, expiring_soon: int, nearest_expiry: string|null}|null
+     */
+    private function driverDocumentSummary(Driver $driver): ?array
+    {
+        if (! Modules::available('document') || ! Schema::hasTable('documents')) {
+            return null;
+        }
+
+        $documents = \Modules\Document\Models\Document::query()
+            ->where('documentable_type', 'driver')
+            ->where('documentable_id', $driver->id)
+            ->get(['id', 'expires_at']);
+
+        if ($documents->isEmpty()) {
+            return [
+                'total' => 0,
+                'expired' => 0,
+                'expiring_soon' => 0,
+                'nearest_expiry' => null,
+            ];
+        }
+
+        $expired = 0;
+        $expiring = 0;
+        $nearest = null;
+
+        foreach ($documents as $document) {
+            $status = $document->status;
+            if ($status === \Modules\Document\Models\Document::STATUS_EXPIRED) {
+                $expired++;
+            } elseif ($status === \Modules\Document\Models\Document::STATUS_EXPIRING_SOON) {
+                $expiring++;
+            }
+
+            if ($document->expires_at !== null) {
+                $date = $document->expires_at->toDateString();
+                if ($nearest === null || $date < $nearest) {
+                    $nearest = $date;
+                }
+            }
+        }
+
+        return [
+            'total' => $documents->count(),
+            'expired' => $expired,
+            'expiring_soon' => $expiring,
+            'nearest_expiry' => $nearest,
+        ];
     }
 
     /**

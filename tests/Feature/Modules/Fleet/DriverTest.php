@@ -33,6 +33,22 @@ class DriverTest extends TestCase
         $this->actingAs($user)->get(route('module.fleet.drivers.index'))->assertForbidden();
     }
 
+    public function test_drivers_index_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        Driver::factory()->count(16)->create();
+
+        $this->actingAs($user)->get(route('module.fleet.drivers.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('drivers.data', 15)
+                ->where('drivers.per_page', 15)
+                ->where('drivers.total', 16)
+                ->where('drivers.last_page', 2)
+                ->has('drivers.links')
+            );
+    }
+
     public function test_admin_can_create_a_driver(): void
     {
         $user = $this->createAdminUser();
@@ -72,6 +88,8 @@ class DriverTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Fleet/Drivers/Show')
                 ->where('driver.id', $driver->id)
+                ->has('documentsEnabled')
+                ->has('documentSummary')
             );
     }
 

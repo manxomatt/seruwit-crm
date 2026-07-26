@@ -136,7 +136,44 @@ class FuelManagementTest extends TestCase
         $this->actingAs($user)
             ->get(route('module.fleet.fuel.index'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Modules/Fleet/Fuel/Index'));
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Fuel/Index')
+                ->has('logs.data')
+                ->has('logs.current_page')
+                ->has('logs.last_page')
+                ->has('logs.per_page')
+                ->has('logs.total')
+                ->has('logs.links')
+            );
+    }
+
+    public function test_fuel_index_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+
+        FuelLog::factory()->count(25)->create([
+            'vehicle_id' => $vehicle->id,
+            'filled_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.fuel.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('logs.data', 20)
+                ->where('logs.per_page', 20)
+                ->where('logs.total', 25)
+                ->where('logs.last_page', 2)
+            );
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.fuel.index', ['page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('logs.data', 5)
+                ->where('logs.current_page', 2)
+            );
     }
 
     public function test_trip_fuel_attribution_estimates_liters_from_fleet_efficiency(): void

@@ -3,8 +3,6 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { labelKey: 'document.nav.vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
-    { labelKey: 'document.nav.drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
     { labelKey: 'document.nav.all', route: 'documents.index', pattern: 'documents.index' },
     { labelKey: 'document.nav.types', route: 'documents.types.index', pattern: 'documents.types.*' },
 ] as const;

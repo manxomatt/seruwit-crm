@@ -2,7 +2,9 @@ import ModuleLayout from '@/Layouts/ModuleLayout';
 import InventoryNav from '../../../../InventoryNav';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import { router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
@@ -83,22 +85,19 @@ export default function PutawayIndex({ levels, warehouses, filters }: Props): JS
                 </div>
 
                 <form onSubmit={applyFilter} className="flex flex-wrap items-end gap-3">
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-600">
-                            {t('inventory.opnames.warehouse')}
-                        </label>
-                        <select
+                    <div className="w-full max-w-xs">
+                        <InputLabel htmlFor="warehouse_id" value={t('inventory.opnames.warehouse')} />
+                        <Select
+                            id="warehouse_id"
+                            className="mt-1 w-full"
                             value={filterForm.data.warehouse_id}
-                            onChange={(e) => filterForm.setData('warehouse_id', e.target.value)}
-                            className="mt-1 rounded border-gray-300 shadow-sm"
-                        >
-                            <option value="">{t('inventory.putaway.filter_warehouse')}</option>
-                            {warehouses.map((w) => (
-                                <option key={w.id} value={w.id}>
-                                    {w.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(value) => filterForm.setData('warehouse_id', value)}
+                            placeholder={t('inventory.putaway.filter_warehouse')}
+                            options={[
+                                { value: '', label: t('inventory.putaway.filter_warehouse') },
+                                ...warehouses.map((w) => ({ value: String(w.id), label: w.name })),
+                            ]}
+                        />
                     </div>
                     <PrimaryButton type="submit">{t('common.filter', undefined, 'Filter')}</PrimaryButton>
                 </form>

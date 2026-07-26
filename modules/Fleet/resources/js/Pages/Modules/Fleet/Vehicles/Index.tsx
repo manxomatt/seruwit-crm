@@ -231,13 +231,17 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                             {vehicles.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
                                     <p className="text-sm text-gray-700">
-                                        Showing {(vehicles.current_page - 1) * vehicles.per_page + 1} to{' '}
-                                        {Math.min(vehicles.current_page * vehicles.per_page, vehicles.total)} of {vehicles.total} results
+                                        {t('common.showing_results', {
+                                            from: (vehicles.current_page - 1) * vehicles.per_page + 1,
+                                            to: Math.min(vehicles.current_page * vehicles.per_page, vehicles.total),
+                                            total: vehicles.total,
+                                        })}
                                     </p>
                                     <div className="flex gap-1">
                                         {vehicles.links.map((link, index) => (
                                             <button
                                                 key={index}
+                                                type="button"
                                                 onClick={() => link.url && router.get(link.url)}
                                                 disabled={!link.url}
                                                 className={`rounded px-3 py-1 text-sm ${

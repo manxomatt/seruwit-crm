@@ -32,8 +32,17 @@ interface Driver {
     user: DriverUser | null;
 }
 
+interface DocumentSummary {
+    total: number;
+    expired: number;
+    expiring_soon: number;
+    nearest_expiry: string | null;
+}
+
 interface Props {
     driver: Driver;
+    documentsEnabled?: boolean;
+    documentSummary?: DocumentSummary | null;
     can: { update: boolean; delete: boolean };
 }
 
@@ -50,7 +59,12 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ driver, can }: Props): JSX.Element {
+export default function Show({
+    driver,
+    documentsEnabled = false,
+    documentSummary = null,
+    can,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -148,6 +162,48 @@ export default function Show({ driver, can }: Props): JSX.Element {
                         </dl>
                     </div>
                 </div>
+
+                {documentsEnabled && (
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6">
+                            <div className="mb-3 flex items-center justify-between">
+                                <h3 className="text-lg font-medium text-gray-900">{t('fleet.drivers.documents')}</h3>
+                                <Link
+                                    href={prefixedRoute('fleet.drivers.documents.index', driver.id)}
+                                    className="text-sm font-medium text-indigo-600 hover:underline"
+                                >
+                                    {t('fleet.drivers.manage_documents')}
+                                </Link>
+                            </div>
+                            {!documentSummary || documentSummary.total === 0 ? (
+                                <p className="text-sm text-gray-500">{t('fleet.drivers.no_documents')}</p>
+                            ) : (
+                                <div className="grid gap-3 text-sm sm:grid-cols-4">
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">{t('fleet.drivers.docs_total')}</p>
+                                        <p className="mt-1 text-xl font-semibold tabular-nums">{documentSummary.total}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">{t('fleet.drivers.docs_expired')}</p>
+                                        <p className="mt-1 text-xl font-semibold tabular-nums text-red-700">{documentSummary.expired}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">{t('fleet.drivers.docs_expiring')}</p>
+                                        <p className="mt-1 text-xl font-semibold tabular-nums text-amber-700">{documentSummary.expiring_soon}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-500">{t('fleet.drivers.docs_nearest')}</p>
+                                        <p className="mt-1 font-medium">
+                                            {documentSummary.nearest_expiry
+                                                ? new Date(documentSummary.nearest_expiry).toLocaleDateString('id-ID')
+                                                : '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {can.update && (
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">

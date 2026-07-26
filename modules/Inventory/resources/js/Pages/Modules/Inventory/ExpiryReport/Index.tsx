@@ -2,7 +2,10 @@ import ModuleLayout from '@/Layouts/ModuleLayout';
 import InventoryNav from '../../../../InventoryNav';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
+import TextInput from '@/Components/TextInput';
 import { router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -57,34 +60,30 @@ export default function ExpiryReportIndex({ levels, warehouses, filters }: Props
                 </div>
 
                 <form onSubmit={apply} className="flex flex-wrap items-end gap-3">
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-600">
-                            {t('inventory.opnames.warehouse')}
-                        </label>
-                        <select
+                    <div className="w-full max-w-xs">
+                        <InputLabel htmlFor="warehouse_id" value={t('inventory.opnames.warehouse')} />
+                        <Select
+                            id="warehouse_id"
+                            className="mt-1 w-full"
                             value={form.data.warehouse_id}
-                            onChange={(e) => form.setData('warehouse_id', e.target.value)}
-                            className="mt-1 rounded border-gray-300 shadow-sm"
-                        >
-                            <option value="">{t('inventory.putaway.filter_warehouse')}</option>
-                            {warehouses.map((w) => (
-                                <option key={w.id} value={w.id}>
-                                    {w.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(value) => form.setData('warehouse_id', value)}
+                            placeholder={t('inventory.putaway.filter_warehouse')}
+                            options={[
+                                { value: '', label: t('inventory.putaway.filter_warehouse') },
+                                ...warehouses.map((w) => ({ value: String(w.id), label: w.name })),
+                            ]}
+                        />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-gray-600">
-                            {t('inventory.expiry_report.days')}
-                        </label>
-                        <input
+                        <InputLabel htmlFor="days" value={t('inventory.expiry_report.days')} />
+                        <TextInput
+                            id="days"
                             type="number"
                             min={1}
                             max={365}
                             value={form.data.days}
                             onChange={(e) => form.setData('days', e.target.value)}
-                            className="mt-1 w-24 rounded border-gray-300 shadow-sm"
+                            className="mt-1 w-24"
                         />
                     </div>
                     <PrimaryButton type="submit">{t('common.filter', undefined, 'Filter')}</PrimaryButton>

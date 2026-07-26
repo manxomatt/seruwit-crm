@@ -153,6 +153,20 @@ class Phase12WarehouseTest extends TestCase
         $this->assertEquals(25, $sellable);
     }
 
+    public function test_putaway_index_renders_with_warehouse_filter(): void
+    {
+        $warehouse = Warehouse::factory()->create(['status' => 'active']);
+
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.inventory.putaway.index', [], false))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Inventory/Putaway/Index')
+                ->has('warehouses', 1)
+                ->where('warehouses.0.id', $warehouse->id)
+                ->where('filters.warehouse_id', null));
+    }
+
     public function test_expiry_report_lists_near_expiry_stock(): void
     {
         $warehouse = Warehouse::factory()->create();
@@ -169,6 +183,9 @@ class Phase12WarehouseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Inventory/ExpiryReport/Index')
-                ->has('levels', 1));
+                ->has('levels', 1)
+                ->has('warehouses', 1)
+                ->where('warehouses.0.id', $warehouse->id)
+                ->where('filters.warehouse_id', null));
     }
 }

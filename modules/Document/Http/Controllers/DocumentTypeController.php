@@ -5,6 +5,7 @@ namespace Modules\Document\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Document\Models\DocumentType;
@@ -21,8 +22,15 @@ class DocumentTypeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $user = Auth::user();
+
         return Inertia::render('Modules/Document/Types/Index', [
             'types' => $types,
+            'can' => [
+                'create' => $user->hasPermissionFor('document', 'update'),
+                'update' => $user->hasPermissionFor('document', 'update'),
+                'delete' => $user->hasPermissionFor('document', 'delete'),
+            ],
         ]);
     }
 

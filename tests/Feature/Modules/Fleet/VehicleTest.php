@@ -69,6 +69,22 @@ class VehicleTest extends TestCase
             );
     }
 
+    public function test_vehicles_index_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        Vehicle::factory()->count(16)->create();
+
+        $this->actingAs($user)->get(route('module.fleet.vehicles.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('vehicles.data', 15)
+                ->where('vehicles.per_page', 15)
+                ->where('vehicles.total', 16)
+                ->where('vehicles.last_page', 2)
+                ->has('vehicles.links')
+            );
+    }
+
     public function test_admin_can_create_a_vehicle(): void
     {
         $user = $this->createAdminUser();

@@ -103,6 +103,13 @@ return [
         'no_login' => 'No login account',
         'account_username' => 'Username',
         'account_password' => 'Password',
+        'documents' => 'Documents',
+        'manage_documents' => 'Manage documents →',
+        'no_documents' => 'No compliance documents for this driver yet.',
+        'docs_total' => 'Total',
+        'docs_expired' => 'Expired',
+        'docs_expiring' => 'Expiring ≤30 days',
+        'docs_nearest' => 'Nearest expiry',
     ],
 
     'fuel' => [

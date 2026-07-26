@@ -103,6 +103,13 @@ return [
         'no_login' => 'Belum ada akun login',
         'account_username' => 'Username',
         'account_password' => 'Password',
+        'documents' => 'Dokumen',
+        'manage_documents' => 'Kelola dokumen →',
+        'no_documents' => 'Belum ada dokumen kepatuhan untuk pengemudi ini.',
+        'docs_total' => 'Total',
+        'docs_expired' => 'Expired',
+        'docs_expiring' => 'Expiring ≤30 hari',
+        'docs_nearest' => 'Expiry terdekat',
     ],
 
     'fuel' => [
