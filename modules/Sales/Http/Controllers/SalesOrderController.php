@@ -44,7 +44,7 @@ class SalesOrderController extends Controller
             });
         }
 
-        $orders = $query->paginate(15)->withQueryString();
+        $orders = $query->paginate(10)->withQueryString();
 
         $orders->getCollection()->transform(function (SalesOrder $so): SalesOrder {
             $ordered = (float) ($so->quantity_ordered_sum ?? 0);

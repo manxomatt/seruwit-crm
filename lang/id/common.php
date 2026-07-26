@@ -9,6 +9,8 @@ return [
     'back' => 'Kembali',
     'view' => 'Lihat',
     'search' => 'Cari',
+    'no_options' => 'Tidak ada pilihan',
+    'no_results' => 'Tidak ada hasil yang cocok',
     'actions' => 'Aksi',
     'confirm_delete_title' => 'Konfirmasi Hapus',
     'confirm_delete_message' => 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.',

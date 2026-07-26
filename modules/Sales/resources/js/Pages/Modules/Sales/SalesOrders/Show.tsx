@@ -1,6 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -69,6 +69,7 @@ const statusBadge = (status: string): string => {
 export default function Show({ order, progress, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
 
     const postAction = (action: string) => {
         router.post(prefixedRoute(`sales.sales-orders.${action}`, order.id), {}, { preserveScroll: true });
@@ -213,12 +214,12 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                             </div>
                             <div className="flex justify-between border-b border-gray-100 py-1">
                                 <span className="text-gray-500">{t('sales.fields.ordered_at')}</span>
-                                <span className="font-semibold text-gray-900">{new Date(order.ordered_at).toLocaleDateString('id-ID')}</span>
+                                <span className="font-semibold text-gray-900">{new Date(order.ordered_at).toLocaleDateString(localeTag)}</span>
                             </div>
                             <div className="flex justify-between border-b border-gray-100 py-1">
                                 <span className="text-gray-500">{t('sales.fields.promised_at')}</span>
                                 <span className="font-semibold text-amber-700">
-                                    {order.promised_at ? new Date(order.promised_at).toLocaleDateString('id-ID') : '—'}
+                                    {order.promised_at ? new Date(order.promised_at).toLocaleDateString(localeTag) : '—'}
                                 </span>
                             </div>
                             <div className="flex justify-between py-1">
@@ -247,7 +248,7 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                                     >
                                         <div>
                                             <div className="text-sm font-semibold text-indigo-600">{gin.gin_number}</div>
-                                            <div className="text-xs text-gray-500">{new Date(gin.issued_at).toLocaleDateString('id-ID')}</div>
+                                            <div className="text-xs text-gray-500">{new Date(gin.issued_at).toLocaleDateString(localeTag)}</div>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-sm tabular-nums text-gray-700">

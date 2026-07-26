@@ -1,6 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
@@ -86,6 +86,7 @@ const ConfirmIcon = () => (
 export default function Index({ orders, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [search, setSearch] = useState(filters.search || '');
 
     const applyFilters = (status: string, searchValue: string) => {
@@ -179,10 +180,10 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                             <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">{order.partner.name}</td>
                                             <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{order.warehouse.name}</td>
                                             <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
-                                                {new Date(order.ordered_at).toLocaleDateString('id-ID')}
+                                                {new Date(order.ordered_at).toLocaleDateString(localeTag)}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
-                                                {order.promised_at ? new Date(order.promised_at).toLocaleDateString('id-ID') : '—'}
+                                                {order.promised_at ? new Date(order.promised_at).toLocaleDateString(localeTag) : '—'}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-700">
                                                 {formatMoney(order.total_amount)}
@@ -251,8 +252,8 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                         </table>
                     </div>
 
-                    {orders.last_page > 1 && (
-                        <div className="mt-6 flex items-center justify-between">
+                    {orders.total > 0 && (
+                        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-sm text-gray-700">
                                 {t('common.showing_results', {
                                     from: (orders.current_page - 1) * orders.per_page + 1,
@@ -260,23 +261,26 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
                                     total: orders.total,
                                 })}
                             </p>
-                            <div className="flex gap-1">
-                                {orders.links.map((link, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => link.url && router.get(link.url)}
-                                        disabled={!link.url}
-                                        className={`rounded px-3 py-1 text-sm ${
-                                            link.active
-                                                ? 'bg-indigo-600 text-white'
-                                                : link.url
-                                                    ? 'border bg-white text-gray-700 hover:bg-gray-50'
-                                                    : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </div>
+                            {orders.last_page > 1 && (
+                                <div className="flex flex-wrap gap-1">
+                                    {orders.links.map((link, index) => (
+                                        <button
+                                            key={index}
+                                            type="button"
+                                            onClick={() => link.url && router.get(link.url, {}, { preserveState: true, replace: true })}
+                                            disabled={!link.url}
+                                            className={`rounded px-3 py-1 text-sm ${
+                                                link.active
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : link.url
+                                                      ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                      : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                            }`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

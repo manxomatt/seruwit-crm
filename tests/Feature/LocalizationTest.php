@@ -86,6 +86,8 @@ class LocalizationTest extends TestCase
                 ->has('translations.promotions.nav.programs')
                 ->has('translations.purchasing')
                 ->has('translations.purchasing.nav.purchase_orders')
+                ->has('translations.sales')
+                ->has('translations.sales.nav.sales_orders')
                 ->has('translations.receivables')
                 ->has('translations.receivables.nav.payments')
                 ->has('translations.rental')
@@ -172,6 +174,9 @@ class LocalizationTest extends TestCase
                 ->where('translations.promotions.programs.index.new', 'New Program')
                 ->where('translations.purchasing.nav.purchase_orders', 'Purchase Orders')
                 ->where('translations.purchasing.purchase_orders.index.new', 'New PO')
+                ->where('translations.sales.nav.sales_orders', 'Sales Orders')
+                ->where('translations.sales.sales_orders.index.new', 'New SO')
+                ->where('translations.sales.title', 'Sales')
                 ->where('translations.receivables.nav.payments', 'Payments')
                 ->where('translations.receivables.payments.index.record', 'Record Payment')
                 ->where('translations.rental.pages.index.title', 'Vehicle Rentals')
@@ -195,6 +200,7 @@ class LocalizationTest extends TestCase
                 ->where('translations.transportation.actions.dispatch', 'Dispatch Trip')
                 ->where('translations.users.pages.index.head', 'User Management')
                 ->where('translations.users.title', 'Users')
+                ->where('translations.modules.sales', 'Sales')
             );
 
         $this->patch(route('locale.update'), ['locale' => 'id'])->assertRedirect();
@@ -255,6 +261,10 @@ class LocalizationTest extends TestCase
                 ->where('translations.promotions.programs.index.new', 'Program Baru')
                 ->where('translations.purchasing.nav.purchase_orders', 'Purchase Orders')
                 ->where('translations.purchasing.purchase_orders.index.new', 'PO Baru')
+                ->where('translations.sales.nav.sales_orders', 'Pesanan Penjualan')
+                ->where('translations.sales.sales_orders.index.new', 'SO Baru')
+                ->where('translations.sales.title', 'Penjualan')
+                ->where('translations.modules.sales', 'Penjualan')
                 ->where('translations.receivables.nav.payments', 'Pembayaran')
                 ->where('translations.receivables.payments.index.record', 'Rekam Pembayaran')
                 ->where('translations.rental.pages.index.title', 'Rental Kendaraan')

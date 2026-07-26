@@ -75,6 +75,7 @@ return [
         'products',
         'promotions',
         'purchasing',
+        'sales',
         'receivables',
         'rental',
         'roles',

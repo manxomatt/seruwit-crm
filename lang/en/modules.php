@@ -14,6 +14,7 @@ return [
     'transportation' => 'Transportation',
     'inventory' => 'Inventory',
     'purchasing' => 'Purchasing',
+    'sales' => 'Sales',
     'receivables' => 'Receivables',
     'approvals' => 'Approvals',
     'orders' => 'Orders',

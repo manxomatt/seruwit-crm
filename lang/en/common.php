@@ -9,6 +9,8 @@ return [
     'back' => 'Back',
     'view' => 'View',
     'search' => 'Search',
+    'no_options' => 'No options available',
+    'no_results' => 'No matching results',
     'actions' => 'Actions',
     'confirm_delete_title' => 'Confirm Delete',
     'confirm_delete_message' => 'Are you sure you want to delete this? This action cannot be undone.',

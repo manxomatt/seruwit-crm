@@ -168,9 +168,13 @@ export default function Edit({ order, customers, warehouses, products }: Props):
                                 <InputLabel value={`${t('sales.fields.customer')} *`} />
                                 <Select
                                     className="mt-1"
+                                    searchable
                                     value={data.partner_id}
                                     onChange={(value) => setData('partner_id', value)}
                                     placeholder={t('sales.placeholders.select_customer')}
+                                    searchPlaceholder={t('sales.placeholders.search_customer')}
+                                    emptyText={t('common.no_options')}
+                                    noResultsText={t('common.no_results')}
                                     options={customers.map((c) => ({
                                         value: String(c.id),
                                         label: c.code ? `${c.code} — ${c.name}` : c.name,
@@ -236,9 +240,13 @@ export default function Edit({ order, customers, warehouses, products }: Props):
                                 <div key={index} className="grid grid-cols-1 gap-3 border-b border-gray-100 pb-4 last:border-0 md:grid-cols-12">
                                     <div className="md:col-span-3">
                                         <Select
+                                            searchable
                                             value={item.product_id}
                                             onChange={(value) => updateItem(index, 'product_id', value)}
                                             placeholder={t('sales.placeholders.select_product')}
+                                            searchPlaceholder={t('sales.placeholders.search_product')}
+                                            emptyText={t('common.no_options')}
+                                            noResultsText={t('common.no_results')}
                                             options={products.map((p) => ({
                                                 value: String(p.id),
                                                 label: p.code ? `${p.code} — ${p.name}` : p.name,

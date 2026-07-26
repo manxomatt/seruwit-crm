@@ -1,6 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Head, Link, router } from '@inertiajs/react';
@@ -44,6 +44,7 @@ interface Props {
 export default function Show({ gin, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const isDraft = gin.status === 'draft';
     const isConfirmed = gin.status === 'confirmed';
 
@@ -110,7 +111,7 @@ export default function Show({ gin, can }: Props): JSX.Element {
                 </div>
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <p className="text-xs text-gray-500">{t('sales.fields.issued_at')}</p>
-                    <p className="mt-1 font-semibold text-gray-900">{new Date(gin.issued_at).toLocaleDateString('id-ID')}</p>
+                    <p className="mt-1 font-semibold text-gray-900">{new Date(gin.issued_at).toLocaleDateString(localeTag)}</p>
                 </div>
             </div>
 
@@ -154,7 +155,7 @@ export default function Show({ gin, can }: Props): JSX.Element {
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-500">{item.batch_number || '—'}</td>
                                     <td className="px-4 py-3 text-sm text-gray-500">
-                                        {item.expiry_date ? new Date(item.expiry_date).toLocaleDateString('id-ID') : '—'}
+                                        {item.expiry_date ? new Date(item.expiry_date).toLocaleDateString(localeTag) : '—'}
                                     </td>
                                     <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-gray-900">
                                         {item.quantity_issued}

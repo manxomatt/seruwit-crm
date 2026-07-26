@@ -52,8 +52,10 @@ return [
     'placeholders' => [
         'search_so' => 'Search SO number or customer…',
         'select_customer' => 'Select customer',
+        'search_customer' => 'Search customer by name or code…',
         'select_warehouse' => 'Select warehouse',
         'select_product' => 'Select product',
+        'search_product' => 'Search product by name or code…',
         'select_packaging' => 'Base unit',
         'select_location' => 'Location',
         'batch' => 'Batch',

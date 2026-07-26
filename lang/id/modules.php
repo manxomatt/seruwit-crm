@@ -14,6 +14,7 @@ return [
     'transportation' => 'Transportasi',
     'inventory' => 'Inventaris',
     'purchasing' => 'Pembelian',
+    'sales' => 'Penjualan',
     'receivables' => 'Piutang',
     'approvals' => 'Persetujuan',
     'orders' => 'Pesanan',
