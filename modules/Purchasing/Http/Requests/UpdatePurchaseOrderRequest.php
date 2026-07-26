@@ -40,6 +40,11 @@ class UpdatePurchaseOrderRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator): void {
+            \Modules\Inventory\Support\WarehouseKindGuard::rejectIfCannotPurchase(
+                $validator,
+                $this->input('warehouse_id'),
+            );
+
             foreach ($this->input('items', []) as $index => $item) {
                 $packagingId = $item['product_packaging_id'] ?? null;
                 $productId = $item['product_id'] ?? null;

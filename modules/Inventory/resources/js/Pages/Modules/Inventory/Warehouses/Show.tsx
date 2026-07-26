@@ -3,7 +3,9 @@ import ModuleLayout from '@/Layouts/ModuleLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import LocationMapPicker from '@/Components/Map/LocationMapPicker';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
@@ -43,6 +45,7 @@ interface Warehouse {
     id: number;
     name: string;
     location: string;
+    kind: 'warehouse' | 'store' | 'showroom';
     latitude: string | null;
     longitude: string | null;
     status: 'active' | 'inactive';
@@ -121,10 +124,18 @@ export default function WarehouseShow({ warehouse, stockLevels, stockMovements }
         latitude: warehouse.latitude ?? '',
         longitude: warehouse.longitude ?? '',
     });
+    const kindForm = useForm({
+        kind: warehouse.kind,
+    });
 
     const saveCoords: FormEventHandler = (e) => {
         e.preventDefault();
         coordsForm.patch(prefixedRoute('inventory.warehouses.update', warehouse.id), { preserveScroll: true });
+    };
+
+    const saveKind: FormEventHandler = (e) => {
+        e.preventDefault();
+        kindForm.patch(prefixedRoute('inventory.warehouses.update', warehouse.id), { preserveScroll: true });
     };
 
     const confirmDelete = () => {
@@ -152,7 +163,7 @@ export default function WarehouseShow({ warehouse, stockLevels, stockMovements }
                     </Link>
                 </div>
 
-                <div>
+                <div className="flex flex-wrap items-center gap-2">
                     <span
                         className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
                             warehouse.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
@@ -160,11 +171,49 @@ export default function WarehouseShow({ warehouse, stockLevels, stockMovements }
                     >
                         {t(`inventory.status.${warehouse.status}`)}
                     </span>
+                    <span className="inline-block rounded bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-800">
+                        {t(`inventory.warehouse_kinds.${warehouse.kind}`)}
+                    </span>
                 </div>
+
+                <section className="overflow-hidden rounded-lg border bg-white p-6 shadow-sm">
+                    <h2 className="mb-3 text-lg font-semibold">{t('inventory.warehouses.kind_title')}</h2>
+                    <p className="mb-4 text-sm text-gray-500">{t('inventory.warehouses.kind_hint')}</p>
+                    <form onSubmit={saveKind} className="flex flex-wrap items-end gap-4">
+                        <div className="min-w-[14rem] flex-1">
+                            <InputLabel htmlFor="wh_kind" value={t('inventory.warehouses.kind')} />
+                            <Select
+                                id="wh_kind"
+                                className="mt-1"
+                                value={kindForm.data.kind}
+                                onChange={(value) => kindForm.setData('kind', value as typeof warehouse.kind)}
+                                options={[
+                                    { value: 'warehouse', label: t('inventory.warehouse_kinds.warehouse') },
+                                    { value: 'store', label: t('inventory.warehouse_kinds.store') },
+                                    { value: 'showroom', label: t('inventory.warehouse_kinds.showroom') },
+                                ]}
+                            />
+                            <InputError message={kindForm.errors.kind} className="mt-2" />
+                        </div>
+                        <PrimaryButton disabled={kindForm.processing}>{t('inventory.warehouses.save_kind')}</PrimaryButton>
+                    </form>
+                </section>
 
                 <section className="overflow-hidden rounded-lg border bg-white p-6 shadow-sm">
                     <h2 className="mb-3 text-lg font-semibold">{t('inventory.warehouses.coordinates_title')}</h2>
                     <p className="mb-4 text-sm text-gray-500">{t('inventory.warehouses.coordinates_hint')}</p>
+                    <div className="mb-4">
+                        <LocationMapPicker
+                            latitude={coordsForm.data.latitude}
+                            longitude={coordsForm.data.longitude}
+                            resolveAddress={false}
+                            onChange={(next) => {
+                                coordsForm.setData('latitude', next.latitude);
+                                coordsForm.setData('longitude', next.longitude);
+                            }}
+                            height="280px"
+                        />
+                    </div>
                     <form onSubmit={saveCoords} className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end">
                         <div>
                             <InputLabel htmlFor="wh_lat" value={t('inventory.warehouses.latitude')} />

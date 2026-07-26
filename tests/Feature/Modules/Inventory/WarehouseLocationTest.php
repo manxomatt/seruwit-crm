@@ -289,11 +289,13 @@ class WarehouseLocationTest extends TestCase
         $this->actingAs($user)->post(route('module.inventory.warehouses.store'), [
             'name' => 'Gudang Baru',
             'location' => 'Jakarta',
+            'kind' => 'warehouse',
             'status' => 'active',
         ])->assertRedirect();
 
         $warehouse = Warehouse::where('name', 'Gudang Baru')->first();
         $this->assertEquals(3, $warehouse->locations()->count());
+        $this->assertSame('warehouse', $warehouse->kind->value);
     }
 
     public function test_full_code_accessor(): void

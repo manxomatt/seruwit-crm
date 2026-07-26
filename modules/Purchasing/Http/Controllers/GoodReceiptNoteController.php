@@ -50,8 +50,9 @@ class GoodReceiptNoteController extends Controller
 
         $warehouses = Warehouse::query()
             ->where('status', 'active')
+            ->purchaseInbound()
             ->with(['locations' => fn ($q) => $q->select('id', 'warehouse_id', 'name', 'code')->orderBy('sort_order')])
-            ->select('id', 'name')
+            ->select('id', 'name', 'kind')
             ->orderBy('name')
             ->get();
 

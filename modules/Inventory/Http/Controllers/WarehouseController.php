@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Modules\Inventory\Http\Requests\StoreWarehouseRequest;
 use Modules\Inventory\Http\Requests\UpdateWarehouseRequest;
 use Modules\Inventory\Models\Warehouse;
+use Modules\Inventory\Support\WarehouseKind;
 
 class WarehouseController extends Controller
 {
@@ -17,18 +18,27 @@ class WarehouseController extends Controller
 
     public function index()
     {
+        $kind = request('kind');
+
         return inertia('Modules/Inventory/Warehouses/Index', [
             'warehouses' => Warehouse::query()
-                ->select('id', 'name', 'location', 'status', 'created_at')
+                ->select('id', 'name', 'location', 'kind', 'status', 'created_at')
+                ->when($kind, fn ($query) => $query->ofKind($kind))
                 ->withCount('locations')
                 ->orderBy('name')
                 ->get(),
+            'filters' => [
+                'kind' => $kind,
+            ],
+            'kinds' => WarehouseKind::values(),
         ]);
     }
 
     public function create()
     {
-        return inertia('Modules/Inventory/Warehouses/Create');
+        return inertia('Modules/Inventory/Warehouses/Create', [
+            'kinds' => WarehouseKind::values(),
+        ]);
     }
 
     public function store(StoreWarehouseRequest $request): RedirectResponse

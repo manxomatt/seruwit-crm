@@ -39,6 +39,11 @@ class StoreGoodsIssueNoteRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            \Modules\Inventory\Support\WarehouseKindGuard::rejectIfCannotSell(
+                $validator,
+                $this->input('warehouse_id'),
+            );
+
             /** @var SalesOrder $so */
             $so = $this->route('so');
             $warehouseId = (int) $this->input('warehouse_id');

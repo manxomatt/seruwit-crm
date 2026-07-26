@@ -21,6 +21,7 @@ interface Packaging {
 interface Option {
     id: number;
     name: string;
+    kind?: 'warehouse' | 'store' | 'showroom';
     code?: string;
     unit?: string | null;
     stock_unit?: string | null;
@@ -197,7 +198,12 @@ export default function Create({ customers, warehouses, products, priceMaps = {}
                                     value={data.warehouse_id}
                                     onChange={(value) => setData('warehouse_id', value)}
                                     placeholder={t('sales.placeholders.select_warehouse')}
-                                    options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))}
+                                    options={warehouses.map((w) => ({
+                                        value: String(w.id),
+                                        label: w.kind
+                                            ? `${w.name} (${t(`inventory.warehouse_kinds.${w.kind}`)})`
+                                            : w.name,
+                                    }))}
                                 />
                                 <InputError message={errors.warehouse_id} className="mt-2" />
                             </div>

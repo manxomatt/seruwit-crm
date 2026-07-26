@@ -84,7 +84,8 @@ class SalesOrderController extends Controller
             'customers' => $customerQuery->get(),
             'warehouses' => Warehouse::query()
                 ->where('status', 'active')
-                ->select('id', 'name')
+                ->salesOutbound()
+                ->select('id', 'name', 'kind')
                 ->orderBy('name')
                 ->get(),
             'products' => Product::query()
@@ -184,7 +185,8 @@ class SalesOrderController extends Controller
             'customers' => $customerQuery->get(),
             'warehouses' => Warehouse::query()
                 ->where('status', 'active')
-                ->select('id', 'name')
+                ->salesOutbound()
+                ->select('id', 'name', 'kind')
                 ->orderBy('name')
                 ->get(),
             'products' => Product::query()

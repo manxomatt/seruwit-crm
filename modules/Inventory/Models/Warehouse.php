@@ -2,19 +2,22 @@
 
 namespace Modules\Inventory\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Inventory\Support\WarehouseKind;
 
 class Warehouse extends Model
 {
-    /** @use HasFactory<WarehouseFactory> */
+    /** @use HasFactory<\Modules\Inventory\Database\Factories\WarehouseFactory> */
     use HasFactory;
 
     protected $fillable = [
         'name',
         'location',
+        'kind',
         'latitude',
         'longitude',
         'status',
@@ -26,6 +29,7 @@ class Warehouse extends Model
     protected function casts(): array
     {
         return [
+            'kind' => WarehouseKind::class,
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
         ];
@@ -63,6 +67,45 @@ class Warehouse extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function acceptsPurchaseInbound(): bool
+    {
+        return ($this->kind ?? WarehouseKind::default())->acceptsPurchaseInbound();
+    }
+
+    public function acceptsSalesOutbound(): bool
+    {
+        return ($this->kind ?? WarehouseKind::default())->acceptsSalesOutbound();
+    }
+
+    /**
+     * @param  Builder<Warehouse>  $query
+     * @return Builder<Warehouse>
+     */
+    public function scopeOfKind(Builder $query, WarehouseKind|string $kind): Builder
+    {
+        $value = $kind instanceof WarehouseKind ? $kind->value : $kind;
+
+        return $query->where('kind', $value);
+    }
+
+    /**
+     * @param  Builder<Warehouse>  $query
+     * @return Builder<Warehouse>
+     */
+    public function scopePurchaseInbound(Builder $query): Builder
+    {
+        return $query->where('kind', '!=', WarehouseKind::Showroom->value);
+    }
+
+    /**
+     * @param  Builder<Warehouse>  $query
+     * @return Builder<Warehouse>
+     */
+    public function scopeSalesOutbound(Builder $query): Builder
+    {
+        return $query->where('kind', '!=', WarehouseKind::Showroom->value);
     }
 
     public function createDefaultLocations(): void

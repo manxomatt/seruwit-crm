@@ -73,7 +73,8 @@ class PurchaseOrderController extends Controller
                 ->get(),
             'warehouses' => Warehouse::query()
                 ->where('status', 'active')
-                ->select('id', 'name')
+                ->purchaseInbound()
+                ->select('id', 'name', 'kind')
                 ->orderBy('name')
                 ->get(),
             'products' => Product::query()
@@ -162,7 +163,8 @@ class PurchaseOrderController extends Controller
                 ->get(),
             'warehouses' => Warehouse::query()
                 ->where('status', 'active')
-                ->select('id', 'name')
+                ->purchaseInbound()
+                ->select('id', 'name', 'kind')
                 ->orderBy('name')
                 ->get(),
             'products' => Product::query()
