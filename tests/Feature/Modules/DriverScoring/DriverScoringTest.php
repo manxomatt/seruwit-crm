@@ -155,6 +155,99 @@ class DriverScoringTest extends TestCase
         ]);
     }
 
+    public function test_incentives_page_renders_awards(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $rule = DriverIncentiveRule::query()->create([
+            'name' => 'Safe week UI',
+            'period' => DriverIncentiveRule::PERIOD_WEEKLY,
+            'min_score' => 85,
+            'min_days' => 2,
+            'reward_amount' => 200000,
+            'is_active' => true,
+        ]);
+
+        DriverIncentiveAward::query()->create([
+            'driver_incentive_rule_id' => $rule->id,
+            'driver_id' => $driver->id,
+            'period_start' => now()->startOfWeek()->toDateString(),
+            'period_end' => now()->endOfWeek()->toDateString(),
+            'average_score' => 91.5,
+            'scored_days' => 5,
+            'reward_amount' => 200000,
+            'status' => DriverIncentiveAward::STATUS_PENDING,
+            'awarded_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('module.scoring.incentives.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/DriverScoring/Incentives/Index')
+                ->has('awards', 1)
+                ->where('awards.0.status', DriverIncentiveAward::STATUS_PENDING)
+                ->where('can.award', true));
+    }
+
+    public function test_award_status_can_be_updated(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $rule = DriverIncentiveRule::query()->create([
+            'name' => 'Safe week status',
+            'period' => DriverIncentiveRule::PERIOD_WEEKLY,
+            'min_score' => 85,
+            'min_days' => 2,
+            'reward_amount' => 200000,
+            'is_active' => true,
+        ]);
+
+        $award = DriverIncentiveAward::query()->create([
+            'driver_incentive_rule_id' => $rule->id,
+            'driver_id' => $driver->id,
+            'period_start' => now()->startOfWeek()->toDateString(),
+            'period_end' => now()->endOfWeek()->toDateString(),
+            'average_score' => 91.5,
+            'scored_days' => 5,
+            'reward_amount' => 200000,
+            'status' => DriverIncentiveAward::STATUS_PENDING,
+            'awarded_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('module.scoring.awards.status', $award), [
+                'status' => DriverIncentiveAward::STATUS_APPROVED,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('driver_incentive_awards', [
+            'id' => $award->id,
+            'status' => DriverIncentiveAward::STATUS_APPROVED,
+        ]);
+    }
+
+    public function test_incentive_rule_can_be_deleted(): void
+    {
+        $user = $this->createAdminUser();
+        $rule = DriverIncentiveRule::query()->create([
+            'name' => 'Rule to delete',
+            'period' => DriverIncentiveRule::PERIOD_WEEKLY,
+            'min_score' => 85,
+            'min_days' => 2,
+            'reward_amount' => 150000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('module.scoring.incentives.destroy', $rule))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('driver_incentive_rules', [
+            'id' => $rule->id,
+        ]);
+    }
+
     public function test_leaderboard_page_renders(): void
     {
         $user = $this->createAdminUser();
@@ -162,7 +255,164 @@ class DriverScoringTest extends TestCase
         $this->actingAs($user)
             ->get(route('module.scoring.leaderboard'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Modules/DriverScoring/Leaderboard/Index'));
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/DriverScoring/Leaderboard/Index')
+                ->has('leaderboard.data')
+                ->has('leaderboard.current_page')
+                ->has('leaderboard.last_page')
+                ->has('leaderboard.per_page')
+                ->has('leaderboard.total')
+                ->has('leaderboard.links'));
+    }
+
+    public function test_events_index_page_renders(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $vehicle = Vehicle::factory()->create();
+
+        DrivingEvent::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'driver_id' => $driver->id,
+            'type' => DrivingEvent::TYPE_SPEEDING,
+            'severity' => 'critical',
+            'speed_kph' => 95,
+            'points_delta' => -4,
+            'recorded_at' => now()->setTime(14, 5),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('module.scoring.events.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/DriverScoring/Events/Index')
+                ->has('events.data', 1)
+                ->has('events.current_page')
+                ->has('events.last_page')
+                ->has('events.per_page')
+                ->has('events.total')
+                ->has('events.links')
+                ->where('events.data.0.recorded_at', fn ($value) => is_string($value) && $value !== ''));
+    }
+
+    public function test_events_index_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $vehicle = Vehicle::factory()->create();
+
+        foreach (range(1, 16) as $i) {
+            DrivingEvent::query()->create([
+                'vehicle_id' => $vehicle->id,
+                'driver_id' => $driver->id,
+                'type' => DrivingEvent::TYPE_IDLE,
+                'severity' => 'warning',
+                'points_delta' => -2,
+                'recorded_at' => now()->subMinutes($i),
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->get(route('module.scoring.events.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('events.per_page', 15)
+                ->where('events.total', 16)
+                ->where('events.last_page', 2)
+                ->has('events.data', 15));
+
+        $this->actingAs($user)
+            ->get(route('module.scoring.events.index', ['page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('events.data', 1));
+    }
+
+    public function test_leaderboard_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        $from = now()->startOfWeek()->toDateString();
+        $to = now()->endOfWeek()->toDateString();
+
+        foreach (range(1, 16) as $i) {
+            $driver = Driver::factory()->create(['name' => "Paginate Driver {$i}"]);
+            DriverDailyScore::query()->create([
+                'driver_id' => $driver->id,
+                'score_date' => $from,
+                'score' => 100 - $i,
+                'harsh_brake_count' => 0,
+                'harsh_accel_count' => 0,
+                'speeding_count' => 0,
+                'idle_count' => 0,
+                'points_delta' => 0,
+                'event_count' => 0,
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->get(route('module.scoring.leaderboard', ['from' => $from, 'to' => $to]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/DriverScoring/Leaderboard/Index')
+                ->where('leaderboard.per_page', 15)
+                ->where('leaderboard.total', 16)
+                ->where('leaderboard.last_page', 2)
+                ->has('leaderboard.data', 15));
+
+        $this->actingAs($user)
+            ->get(route('module.scoring.leaderboard', ['from' => $from, 'to' => $to, 'page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('leaderboard.data', 1));
+    }
+
+    public function test_driver_show_paginates_scores_and_events(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $vehicle = Vehicle::factory()->create();
+        $from = now()->subDays(40)->toDateString();
+        $to = now()->toDateString();
+
+        foreach (range(0, 19) as $i) {
+            DriverDailyScore::query()->create([
+                'driver_id' => $driver->id,
+                'score_date' => now()->subDays($i)->toDateString(),
+                'score' => 90,
+                'harsh_brake_count' => 1,
+                'harsh_accel_count' => 0,
+                'speeding_count' => 0,
+                'idle_count' => 0,
+                'points_delta' => -5,
+                'event_count' => 1,
+            ]);
+        }
+
+        foreach (range(0, 19) as $i) {
+            DrivingEvent::query()->create([
+                'vehicle_id' => $vehicle->id,
+                'driver_id' => $driver->id,
+                'type' => DrivingEvent::TYPE_HARSH_BRAKE,
+                'severity' => 'warning',
+                'points_delta' => -5,
+                'recorded_at' => now()->subHours($i),
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->get(route('module.scoring.drivers.show', [
+                'driver' => $driver->id,
+                'from' => $from,
+                'to' => $to,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/DriverScoring/Leaderboard/Show')
+                ->has('scores.data', 15)
+                ->where('scores.last_page', 2)
+                ->has('events.data', 15)
+                ->where('events.last_page', 2)
+                ->where('summary.event_count', 20)
+                ->where('summary.harsh_brake_count', 20));
     }
 
     private function payload(CarbonImmutable $at, float $speedKph, ?bool $ignition = null): PositionPayload

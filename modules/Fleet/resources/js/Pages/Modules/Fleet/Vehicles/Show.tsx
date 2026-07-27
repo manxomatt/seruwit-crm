@@ -100,6 +100,17 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
+const TrashIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+        />
+    </svg>
+);
+
 export default function Show({
     vehicle,
     trackingEnabled = false,
@@ -114,7 +125,12 @@ export default function Show({
     const localeTag = useLocaleTag();
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [showFuelModal, setShowFuelModal] = useState(false);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [pendingDelete, setPendingDelete] = useState<
+        | { type: 'vehicle' }
+        | { type: 'maintenance'; id: number; label: string }
+        | { type: 'fuel'; id: number; label: string }
+        | null
+    >(null);
     const [processing, setProcessing] = useState(false);
 
     const maintenanceForm = useForm({
@@ -160,19 +176,53 @@ export default function Show({
         });
     };
 
-    const deleteMaintenance = (id: number) => {
-        router.delete(prefixedRoute('fleet.vehicles.maintenance-logs.destroy', [vehicle.id, id]), { preserveScroll: true });
+    const closeDeleteDialog = (): void => {
+        if (!processing) {
+            setPendingDelete(null);
+        }
     };
 
-    const deleteFuel = (id: number) => {
-        router.delete(prefixedRoute('fleet.vehicles.fuel-logs.destroy', [vehicle.id, id]), { preserveScroll: true });
-    };
+    const confirmPendingDelete = (): void => {
+        if (!pendingDelete) {
+            return;
+        }
 
-    const confirmDelete = () => {
         setProcessing(true);
-        router.delete(prefixedRoute('fleet.vehicles.destroy', vehicle.id), {
+
+        if (pendingDelete.type === 'vehicle') {
+            router.delete(prefixedRoute('fleet.vehicles.destroy', vehicle.id), {
+                onFinish: () => setProcessing(false),
+            });
+
+            return;
+        }
+
+        const routeName =
+            pendingDelete.type === 'maintenance'
+                ? 'fleet.vehicles.maintenance-logs.destroy'
+                : 'fleet.vehicles.fuel-logs.destroy';
+
+        router.delete(prefixedRoute(routeName, [vehicle.id, pendingDelete.id]), {
+            preserveScroll: true,
+            onSuccess: () => setPendingDelete(null),
             onFinish: () => setProcessing(false),
         });
+    };
+
+    const deleteConfirmMessage = (): string | undefined => {
+        if (!pendingDelete) {
+            return undefined;
+        }
+
+        if (pendingDelete.type === 'vehicle') {
+            return t('fleet.vehicles.delete_confirm', { name: vehicle.name });
+        }
+
+        if (pendingDelete.type === 'maintenance') {
+            return t('fleet.vehicles.delete_maintenance_confirm', { description: pendingDelete.label });
+        }
+
+        return t('fleet.vehicles.delete_fuel_confirm', { label: pendingDelete.label });
     };
 
     const fuelSummaryParts = [
@@ -347,8 +397,19 @@ export default function Show({
                                             <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-500">{log.status}</td>
                                             <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
                                                 {can.delete && (
-                                                    <button onClick={() => deleteMaintenance(log.id)} className="text-red-600 hover:text-red-900">
-                                                        {t('common.delete')}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setPendingDelete({
+                                                                type: 'maintenance',
+                                                                id: log.id,
+                                                                label: log.description,
+                                                            })
+                                                        }
+                                                        className="text-red-600 hover:text-red-900"
+                                                        title={t('common.delete')}
+                                                    >
+                                                        <TrashIcon />
                                                     </button>
                                                 )}
                                             </td>
@@ -438,8 +499,19 @@ export default function Show({
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
                                                 {can.delete && (
-                                                    <button onClick={() => deleteFuel(log.id)} className="text-red-600 hover:text-red-900">
-                                                        {t('common.delete')}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setPendingDelete({
+                                                                type: 'fuel',
+                                                                id: log.id,
+                                                                label: `${log.liters} L · ${formatDate(log.filled_at, localeTag)}`,
+                                                            })
+                                                        }
+                                                        className="text-red-600 hover:text-red-900"
+                                                        title={t('common.delete')}
+                                                    >
+                                                        <TrashIcon />
                                                     </button>
                                                 )}
                                             </td>
@@ -458,8 +530,13 @@ export default function Show({
                                 <h3 className="text-sm font-medium text-gray-900">{t('common.delete')}</h3>
                                 <p className="text-sm text-gray-500">{t('common.confirm_delete_message')}</p>
                             </div>
-                            <button onClick={() => setShowDeleteDialog(true)} className="text-sm font-medium text-red-600 hover:text-red-900">
-                                {t('common.delete')}
+                            <button
+                                type="button"
+                                onClick={() => setPendingDelete({ type: 'vehicle' })}
+                                className="rounded-md p-2 text-red-600 transition hover:bg-red-50 hover:text-red-900"
+                                title={t('common.delete')}
+                            >
+                                <TrashIcon />
                             </button>
                         </div>
                     </div>
@@ -604,11 +681,11 @@ export default function Show({
             </Modal>
 
             <ConfirmDeleteDialog
-                show={showDeleteDialog}
-                onClose={() => setShowDeleteDialog(false)}
-                onConfirm={confirmDelete}
+                show={pendingDelete !== null}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmPendingDelete}
                 processing={processing}
-                message={t('fleet.vehicles.delete_confirm', { name: vehicle.name })}
+                message={deleteConfirmMessage()}
             />
         </DynamicLayout>
     );

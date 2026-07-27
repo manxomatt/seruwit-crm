@@ -60,6 +60,8 @@ return [
         'save' => 'Save Vehicle',
         'create' => 'Create Vehicle',
         'delete_confirm' => 'Delete vehicle :name?',
+        'delete_maintenance_confirm' => 'Delete maintenance log ":description"? This cannot be undone.',
+        'delete_fuel_confirm' => 'Delete fuel fill :label? This cannot be undone.',
         'maintenance' => 'Maintenance History',
         'log_maintenance' => 'Log Maintenance',
         'no_maintenance' => 'No maintenance logs yet.',

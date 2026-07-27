@@ -19,24 +19,31 @@ class LeaderboardController extends Controller
         $from = Carbon::parse($request->input('from', now()->startOfWeek()->toDateString()))->startOfDay();
         $to = Carbon::parse($request->input('to', now()->endOfWeek()->toDateString()))->endOfDay();
 
-        $rows = $aggregator->leaderboard($from->toDateString(), $to->toDateString());
+        $leaderboard = $aggregator->paginatedLeaderboard(
+            $from->toDateString(),
+            $to->toDateString(),
+            15,
+        );
+
         $drivers = Driver::query()
-            ->whereIn('id', collect($rows)->pluck('driver_id'))
+            ->whereIn('id', collect($leaderboard->items())->pluck('driver_id'))
             ->get(['id', 'name', 'status'])
             ->keyBy('id');
 
-        $leaderboard = collect($rows)->map(function (array $row) use ($drivers): array {
-            $driver = $drivers->get($row['driver_id']);
+        $leaderboard->setCollection(
+            collect($leaderboard->items())->map(function (array $row) use ($drivers): array {
+                $driver = $drivers->get($row['driver_id']);
 
-            return [
-                ...$row,
-                'driver' => $driver ? [
-                    'id' => $driver->id,
-                    'name' => $driver->name,
-                    'status' => $driver->status,
-                ] : null,
-            ];
-        })->values();
+                return [
+                    ...$row,
+                    'driver' => $driver ? [
+                        'id' => $driver->id,
+                        'name' => $driver->name,
+                        'status' => $driver->status,
+                    ] : null,
+                ];
+            })->values(),
+        );
 
         return Inertia::render('Modules/DriverScoring/Leaderboard/Index', [
             'leaderboard' => $leaderboard,
@@ -56,19 +63,24 @@ class LeaderboardController extends Controller
         $from = Carbon::parse($request->input('from', now()->subDays(30)->toDateString()))->toDateString();
         $to = Carbon::parse($request->input('to', now()->toDateString()))->toDateString();
 
-        $scores = DriverDailyScore::query()
+        $scoreQuery = DriverDailyScore::query()
             ->where('driver_id', $driver->id)
-            ->whereBetween('score_date', [$from, $to])
-            ->orderBy('score_date')
-            ->get();
+            ->whereBetween('score_date', [$from, $to]);
 
-        $events = DrivingEvent::query()
-            ->with('vehicle:id,name,plate_number')
+        $eventQuery = DrivingEvent::query()
             ->where('driver_id', $driver->id)
-            ->whereBetween('recorded_at', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->whereBetween('recorded_at', [$from.' 00:00:00', $to.' 23:59:59']);
+
+        $scores = (clone $scoreQuery)
+            ->orderBy('score_date')
+            ->paginate(15, ['*'], 'scores_page')
+            ->withQueryString();
+
+        $events = (clone $eventQuery)
+            ->with('vehicle:id,name,plate_number')
             ->latest('recorded_at')
-            ->limit(100)
-            ->get();
+            ->paginate(15, ['*'], 'events_page')
+            ->withQueryString();
 
         return Inertia::render('Modules/DriverScoring/Leaderboard/Show', [
             'driver' => $driver->only(['id', 'name', 'status', 'phone']),
@@ -76,11 +88,11 @@ class LeaderboardController extends Controller
             'events' => $events,
             'filters' => compact('from', 'to'),
             'summary' => [
-                'average_score' => round((float) ($scores->avg('score') ?? 0), 2),
-                'event_count' => $events->count(),
-                'harsh_brake_count' => (int) $scores->sum('harsh_brake_count'),
-                'speeding_count' => (int) $scores->sum('speeding_count'),
-                'idle_count' => (int) $scores->sum('idle_count'),
+                'average_score' => round((float) ((clone $scoreQuery)->avg('score') ?? 0), 2),
+                'event_count' => (clone $eventQuery)->count(),
+                'harsh_brake_count' => (int) (clone $scoreQuery)->sum('harsh_brake_count'),
+                'speeding_count' => (int) (clone $scoreQuery)->sum('speeding_count'),
+                'idle_count' => (int) (clone $scoreQuery)->sum('idle_count'),
             ],
         ]);
     }

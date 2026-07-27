@@ -60,6 +60,8 @@ return [
         'save' => 'Simpan Kendaraan',
         'create' => 'Buat Kendaraan',
         'delete_confirm' => 'Hapus kendaraan :name?',
+        'delete_maintenance_confirm' => 'Hapus log perawatan ":description"? Tindakan ini tidak dapat dibatalkan.',
+        'delete_fuel_confirm' => 'Hapus pengisian BBM :label? Tindakan ini tidak dapat dibatalkan.',
         'maintenance' => 'Riwayat Perawatan',
         'log_maintenance' => 'Catat Perawatan',
         'no_maintenance' => 'Belum ada log perawatan.',

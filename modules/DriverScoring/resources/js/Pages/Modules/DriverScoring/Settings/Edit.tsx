@@ -70,31 +70,35 @@ export default function Edit({ settings }: Props): JSX.Element {
     ];
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('scoring.pages.settings.title')}</h2>}>
+        <DynamicLayout
+            header={
+                <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                    {t('scoring.pages.settings.title')}
+                </h2>
+            }
+        >
             <Head title={t('scoring.pages.settings.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <ScoringNav />
-                    <form onSubmit={submit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            {fields.map(([key, label]) => (
-                                <div key={key}>
-                                    <InputLabel value={label} />
-                                    <TextInput
-                                        type="number"
-                                        step="0.01"
-                                        className="mt-1 block w-full"
-                                        value={data[key]}
-                                        onChange={(e) => setData(key, e.target.value)}
-                                    />
-                                    <InputError message={errors[key]} className="mt-1" />
-                                </div>
-                            ))}
+
+            <ScoringNav />
+
+            <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {fields.map(([key, label]) => (
+                        <div key={key}>
+                            <InputLabel value={label} />
+                            <TextInput
+                                type="number"
+                                step="0.01"
+                                className="mt-1 block w-full"
+                                value={data[key]}
+                                onChange={(e) => setData(key, e.target.value)}
+                            />
+                            <InputError message={errors[key]} className="mt-1" />
                         </div>
-                        <PrimaryButton disabled={processing}>{t('scoring.actions.save_settings')}</PrimaryButton>
-                    </form>
+                    ))}
                 </div>
-            </div>
+                <PrimaryButton disabled={processing}>{t('scoring.actions.save_settings')}</PrimaryButton>
+            </form>
         </DynamicLayout>
     );
 }

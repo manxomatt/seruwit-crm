@@ -46,6 +46,7 @@ return [
         'all_drivers' => 'All drivers',
         'all_vehicles' => 'All vehicles',
         'all_types' => 'All types',
+        'search_drivers' => 'Search drivers…',
     ],
 
     'actions' => [
@@ -70,6 +71,8 @@ return [
             'title' => 'Incentives',
             'empty_rules' => 'No rules yet.',
             'empty_awards' => 'No awards yet.',
+            'delete_rule_title' => 'Delete incentive rule',
+            'delete_rule_confirm' => 'Delete rule ":name"? Related awards for this rule will also be removed. This cannot be undone.',
         ],
         'settings' => [
             'title' => 'Scoring Settings',

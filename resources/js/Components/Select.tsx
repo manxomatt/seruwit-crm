@@ -21,6 +21,12 @@ interface Props {
     className?: string;
 }
 
+/** Visible rows when the combobox opens with an empty query. */
+const DEFAULT_VISIBLE_OPTIONS = 8;
+
+/** Cap for filtered search results so the list stays short. */
+const SEARCH_VISIBLE_OPTIONS = 25;
+
 const ChevronUpDownIcon = () => (
     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
@@ -48,16 +54,32 @@ function SearchableSelect({
     const [query, setQuery] = useState('');
 
     const selected = options.find((option) => option.value === value);
+    const needle = query.trim().toLowerCase();
 
     const filtered = useMemo(() => {
-        const needle = query.trim().toLowerCase();
-
         if (needle === '') {
             return options;
         }
 
         return options.filter((option) => option.label.toLowerCase().includes(needle));
-    }, [options, query]);
+    }, [options, needle]);
+
+    const visible = useMemo(() => {
+        const limit = needle === '' ? DEFAULT_VISIBLE_OPTIONS : SEARCH_VISIBLE_OPTIONS;
+        let list = filtered.slice(0, limit);
+
+        if (value && !list.some((option) => option.value === value)) {
+            const selectedOption = filtered.find((option) => option.value === value);
+            if (selectedOption) {
+                list = [selectedOption, ...list.filter((option) => option.value !== value)].slice(0, limit);
+            }
+        }
+
+        return {
+            list,
+            hiddenCount: Math.max(0, filtered.length - list.length),
+        };
+    }, [filtered, needle, value]);
 
     return (
         <Combobox
@@ -88,26 +110,35 @@ function SearchableSelect({
                 <ComboboxOptions
                     transition
                     anchor="bottom start"
-                    className="z-[200] mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
+                    className="z-[200] mt-1 max-h-48 w-[var(--input-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
                 >
                     {filtered.length === 0 ? (
                         <div className="px-3 py-2 text-sm text-gray-400">
                             {options.length === 0 ? emptyText : noResultsText}
                         </div>
                     ) : (
-                        filtered.map((option) => (
-                            <ComboboxOption
-                                key={option.value}
-                                value={option.value}
-                                disabled={option.disabled}
-                                className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white data-[disabled]:cursor-not-allowed data-[disabled]:text-gray-400"
-                            >
-                                <span className="block truncate group-data-[selected]:font-semibold">{option.label}</span>
-                                <span className="absolute inset-y-0 right-0 hidden items-center pr-3 text-indigo-600 group-data-[focus]:text-white group-data-[selected]:flex">
-                                    <CheckIcon />
-                                </span>
-                            </ComboboxOption>
-                        ))
+                        <>
+                            {visible.list.map((option) => (
+                                <ComboboxOption
+                                    key={option.value}
+                                    value={option.value}
+                                    disabled={option.disabled}
+                                    className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white data-[disabled]:cursor-not-allowed data-[disabled]:text-gray-400"
+                                >
+                                    <span className="block truncate group-data-[selected]:font-semibold">{option.label}</span>
+                                    <span className="absolute inset-y-0 right-0 hidden items-center pr-3 text-indigo-600 group-data-[focus]:text-white group-data-[selected]:flex">
+                                        <CheckIcon />
+                                    </span>
+                                </ComboboxOption>
+                            ))}
+                            {visible.hiddenCount > 0 && (
+                                <div className="border-t border-gray-100 px-3 py-2 text-xs text-gray-400">
+                                    {needle === ''
+                                        ? `Type to search (${visible.hiddenCount} more)`
+                                        : `${visible.hiddenCount} more — refine your search`}
+                                </div>
+                            )}
+                        </>
                     )}
                 </ComboboxOptions>
             </div>
@@ -165,7 +196,7 @@ export default function Select({
                 <ListboxOptions
                     transition
                     anchor="bottom start"
-                    className="z-[200] mt-1 max-h-60 w-[var(--button-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
+                    className="z-[200] mt-1 max-h-48 w-[var(--button-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
                 >
                     {options.length === 0 && (
                         <div className="px-3 py-2 text-sm text-gray-400">{emptyText}</div>

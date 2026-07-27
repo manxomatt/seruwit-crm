@@ -46,6 +46,7 @@ return [
         'all_drivers' => 'Semua driver',
         'all_vehicles' => 'Semua kendaraan',
         'all_types' => 'Semua tipe',
+        'search_drivers' => 'Cari driver…',
     ],
 
     'actions' => [
@@ -70,6 +71,8 @@ return [
             'title' => 'Insentif',
             'empty_rules' => 'Belum ada aturan.',
             'empty_awards' => 'Belum ada award.',
+            'delete_rule_title' => 'Hapus aturan insentif',
+            'delete_rule_confirm' => 'Hapus aturan ":name"? Award terkait aturan ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.',
         ],
         'settings' => [
             'title' => 'Pengaturan Scoring',

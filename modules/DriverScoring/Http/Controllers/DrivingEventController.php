@@ -20,7 +20,7 @@ class DrivingEventController extends Controller
             ->when($request->integer('vehicle_id'), fn ($q, $id) => $q->where('vehicle_id', $id))
             ->when($request->string('type')->toString(), fn ($q, $type) => $q->where('type', $type))
             ->latest('recorded_at')
-            ->paginate(25)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Modules/DriverScoring/Events/Index', [

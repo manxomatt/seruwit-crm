@@ -48,6 +48,20 @@ class VehicleTest extends TestCase
             );
     }
 
+    public function test_admin_can_view_vehicle_show_page(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['name' => 'Show Truck']);
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.vehicles.show', $vehicle))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Show')
+                ->where('vehicle.name', 'Show Truck')
+                ->where('can.delete', true));
+    }
+
     public function test_index_supports_search_and_status_filter(): void
     {
         $user = $this->createAdminUser();
