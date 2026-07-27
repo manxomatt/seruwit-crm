@@ -4,11 +4,11 @@ return [
     'title' => 'Route Optimization',
 
     'status' => [
-        'all' => 'all',
-        'draft' => 'draft',
-        'optimized' => 'optimized',
-        'applied' => 'applied',
-        'cancelled' => 'cancelled',
+        'all' => 'All statuses',
+        'draft' => 'Draft',
+        'optimized' => 'Optimized',
+        'applied' => 'Applied',
+        'cancelled' => 'Cancelled',
     ],
 
     'objective' => [

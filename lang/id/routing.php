@@ -4,11 +4,11 @@ return [
     'title' => 'Optimasi Rute',
 
     'status' => [
-        'all' => 'semua',
-        'draft' => 'draft',
-        'optimized' => 'dioptimasi',
-        'applied' => 'diterapkan',
-        'cancelled' => 'dibatalkan',
+        'all' => 'Semua status',
+        'draft' => 'Draft',
+        'optimized' => 'Dioptimasi',
+        'applied' => 'Diterapkan',
+        'cancelled' => 'Dibatalkan',
     ],
 
     'objective' => [

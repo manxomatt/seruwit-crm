@@ -8,11 +8,22 @@ use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Partners\Models\Partner;
+use Modules\Routing\Models\RoutePlan;
 use Tests\TestCase;
+use Tests\Traits\WithRoles;
 
 class RoutingDemoSeederTest extends TestCase
 {
     use RefreshDatabase;
+    use WithRoles;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+        $this->setUpRoles();
+    }
 
     public function test_seeds_confirmed_geocoded_orders_and_ready_fleet(): void
     {
@@ -46,18 +57,64 @@ class RoutingDemoSeederTest extends TestCase
         $this->assertGreaterThanOrEqual(4, Driver::query()->where('name', 'like', 'Sopir Routing%')->count());
     }
 
-    public function test_seeder_is_idempotent_for_orders(): void
+    public function test_seeds_thirty_demo_route_plans(): void
     {
         Partner::factory()->create(['customer_rank' => 1, 'supplier_rank' => 0]);
 
         $this->seed(TenantRoutingDemoSeeder::class);
-        $count = DeliveryOrder::query()->where('notes', 'like', '%'.TenantRoutingDemoSeeder::TAG.'%')->count();
+
+        $this->assertSame(
+            TenantRoutingDemoSeeder::PLAN_COUNT,
+            RoutePlan::query()->where('params->demo_tag', TenantRoutingDemoSeeder::TAG)->count(),
+        );
+
+        $this->assertGreaterThan(0, RoutePlan::query()->where('status', RoutePlan::STATUS_DRAFT)->count());
+        $this->assertGreaterThan(0, RoutePlan::query()->where('status', RoutePlan::STATUS_OPTIMIZED)->count());
+        $this->assertGreaterThan(0, RoutePlan::query()->where('status', RoutePlan::STATUS_APPLIED)->count());
+    }
+
+    public function test_seeder_is_idempotent(): void
+    {
+        Partner::factory()->create(['customer_rank' => 1, 'supplier_rank' => 0]);
+
+        $this->seed(TenantRoutingDemoSeeder::class);
+        $orderCount = DeliveryOrder::query()->where('notes', 'like', '%'.TenantRoutingDemoSeeder::TAG.'%')->count();
+        $planCount = RoutePlan::query()->where('params->demo_tag', TenantRoutingDemoSeeder::TAG)->count();
 
         $this->seed(TenantRoutingDemoSeeder::class);
 
         $this->assertSame(
-            $count,
+            $orderCount,
             DeliveryOrder::query()->where('notes', 'like', '%'.TenantRoutingDemoSeeder::TAG.'%')->count(),
         );
+        $this->assertSame(
+            $planCount,
+            RoutePlan::query()->where('params->demo_tag', TenantRoutingDemoSeeder::TAG)->count(),
+        );
+    }
+
+    public function test_plans_index_paginates_demo_results(): void
+    {
+        Partner::factory()->create(['customer_rank' => 1, 'supplier_rank' => 0]);
+        $user = $this->createAdminUser();
+        $this->seed(TenantRoutingDemoSeeder::class);
+
+        $this->actingAs($user)
+            ->get(route('module.routing.plans.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Routing/Plans/Index')
+                ->where('plans.per_page', 15)
+                ->where('plans.total', TenantRoutingDemoSeeder::PLAN_COUNT)
+                ->where('plans.last_page', 2)
+                ->has('plans.data', 15)
+                ->has('plans.links')
+                ->has('filters')
+                ->has('can.create'));
+
+        $this->actingAs($user)
+            ->get(route('module.routing.plans.index', ['page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('plans.data', 15));
     }
 }

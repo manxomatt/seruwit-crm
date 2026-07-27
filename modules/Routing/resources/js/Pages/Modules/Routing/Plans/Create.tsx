@@ -81,28 +81,27 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('routing.pages.create.title')}</h2>}>
             <Head title={t('routing.pages.create.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.geocoded_dos')}</div>
                             <div className="text-lg font-semibold text-gray-900">{eligible_counts.geocoded}</div>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.missing_coords')}</div>
                             <div className="text-lg font-semibold text-amber-700">{eligible_counts.missing_coords}</div>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.active_vehicles')}</div>
                             <div className="text-lg font-semibold text-gray-900">{eligible_counts.vehicles}</div>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.available_drivers')}</div>
                             <div className="text-lg font-semibold text-gray-900">{eligible_counts.drivers}</div>
                         </div>
                     </div>
 
-                    <form onSubmit={submit} className="space-y-6 rounded-lg border border-gray-200 bg-white p-6">
+                    <form onSubmit={submit} className="space-y-6 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <InputLabel htmlFor="planned_date" value={t('routing.fields.plan_date')} />
@@ -212,8 +211,6 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
                             </Link>
                         </div>
                     </form>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }

@@ -8,9 +8,10 @@ use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Partners\Models\Partner;
+use Modules\Routing\Models\RoutePlan;
 
 /**
- * Seeds fleet + confirmed geocoded delivery orders for the Routing module.
+ * Seeds fleet + confirmed geocoded delivery orders + 30 demo route plans for Routing.
  *
  * Prerequisites the Create Plan UI needs:
  * - active vehicles with capacity_kg, cost_per_km, valid STNK/KIR
@@ -22,6 +23,8 @@ use Modules\Partners\Models\Partner;
 class TenantRoutingDemoSeeder extends Seeder
 {
     public const TAG = '[ROUTING-DEMO]';
+
+    public const PLAN_COUNT = 30;
 
     public function run(): void
     {
@@ -48,6 +51,16 @@ class TenantRoutingDemoSeeder extends Seeder
             $this->seedDeliveryOrders($partners, $plannedDate);
         }
 
+        if (class_exists(RoutePlan::class) && Schema::hasTable('route_plans')) {
+            if ($this->demoPlansExist()) {
+                $this->command?->info('Routing demo plans already present — skipping create.');
+            } else {
+                $this->seedRoutePlans();
+            }
+        } else {
+            $this->command?->warn('Routing tables missing. Install the routing module first.');
+        }
+
         $eligibleOrders = DeliveryOrder::query()
             ->where('status', DeliveryOrder::STATUS_CONFIRMED)
             ->whereDate('order_date', $plannedDate)
@@ -55,14 +68,72 @@ class TenantRoutingDemoSeeder extends Seeder
             ->whereNotNull('delivery_lng')
             ->count();
 
+        $planCount = class_exists(RoutePlan::class) && Schema::hasTable('route_plans')
+            ? RoutePlan::query()->where('params->demo_tag', self::TAG)->count()
+            : 0;
+
         $this->command?->info(sprintf(
-            'Routing demo ready for %s: %d vehicles, %d drivers, %d confirmed geocoded DOs.',
+            'Routing demo ready for %s: %d vehicles, %d drivers, %d confirmed geocoded DOs, %d route plans.',
             $plannedDate,
             $vehicles->count(),
             $drivers->count(),
             $eligibleOrders,
+            $planCount,
         ));
-        $this->command?->info('Open /module/routing/plans/create and run Optimize.');
+        $this->command?->info('Open /module/routing/plans');
+    }
+
+    protected function demoPlansExist(): bool
+    {
+        return RoutePlan::query()->where('params->demo_tag', self::TAG)->count() >= self::PLAN_COUNT;
+    }
+
+    protected function seedRoutePlans(): void
+    {
+        $statuses = [
+            RoutePlan::STATUS_DRAFT,
+            RoutePlan::STATUS_OPTIMIZED,
+            RoutePlan::STATUS_APPLIED,
+            RoutePlan::STATUS_CANCELLED,
+        ];
+        $objectives = [
+            RoutePlan::OBJECTIVE_FUEL_COST,
+            RoutePlan::OBJECTIVE_DISTANCE,
+        ];
+
+        $existing = RoutePlan::query()->where('params->demo_tag', self::TAG)->count();
+
+        for ($i = $existing + 1; $i <= self::PLAN_COUNT; $i++) {
+            $status = $statuses[($i - 1) % count($statuses)];
+            $objective = $objectives[($i - 1) % count($objectives)];
+            $distance = round(40 + ($i * 7.35), 2);
+            $cost = round($distance * (2000 + ($i % 5) * 250), 2);
+
+            RoutePlan::query()->create([
+                'code' => sprintf('RP-DEMO-%04d', $i),
+                'status' => $status,
+                'objective' => $objective,
+                'planned_date' => now()->subDays(($i - 1) % 14)->toDateString(),
+                'depot_address' => 'Gudang Pusat — Jl. Medan Merdeka Selatan, Jakarta Pusat',
+                'depot_lat' => -6.2088000,
+                'depot_lng' => 106.8456000,
+                'params' => [
+                    'demo_tag' => self::TAG,
+                    'delivery_order_ids' => null,
+                ],
+                'total_distance_km' => in_array($status, [RoutePlan::STATUS_DRAFT, RoutePlan::STATUS_CANCELLED], true) ? 0 : $distance,
+                'total_cost' => in_array($status, [RoutePlan::STATUS_DRAFT, RoutePlan::STATUS_CANCELLED], true) ? 0 : $cost,
+                'unassigned_count' => $status === RoutePlan::STATUS_OPTIMIZED && $i % 3 === 0 ? ($i % 4) + 1 : 0,
+                'optimized_at' => in_array($status, [RoutePlan::STATUS_OPTIMIZED, RoutePlan::STATUS_APPLIED], true)
+                    ? now()->subDays(($i - 1) % 10)
+                    : null,
+                'applied_at' => $status === RoutePlan::STATUS_APPLIED
+                    ? now()->subDays(($i - 1) % 7)
+                    : null,
+            ]);
+        }
+
+        $this->command?->info(sprintf('Created %d demo route plans.', self::PLAN_COUNT - $existing));
     }
 
     /**

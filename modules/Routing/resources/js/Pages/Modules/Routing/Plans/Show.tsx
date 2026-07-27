@@ -200,28 +200,27 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
             }
         >
             <Head title={plan.code} />
-            <div className="py-6">
-                <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.total_distance')}</div>
                             <div className="text-lg font-semibold">{plan.total_distance_km} km</div>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.estimated_cost')}</div>
                             <div className="text-lg font-semibold">{plan.total_cost}</div>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.routes')}</div>
                             <div className="text-lg font-semibold">{plan.routes.length}</div>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm">
+                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
                             <div className="text-xs text-gray-500">{t('routing.fields.unassigned')}</div>
                             <div className="text-lg font-semibold text-amber-700">{plan.unassigned_count}</div>
                         </div>
                     </div>
 
-                    <p className="text-sm text-gray-600">
+                    <p className="mb-6 text-sm text-gray-600">
                         {t('routing.pages.show.depot', {
                             address: plan.depot_address || '—',
                             lat: plan.depot_lat,
@@ -230,6 +229,7 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                     </p>
 
                     {plan.routes.length > 0 && (
+                        <div className="mb-6">
                         <PlanRoutesMap
                             depot={{
                                 lat: plan.depot_lat,
@@ -254,11 +254,12 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                                 })),
                             }))}
                         />
+                        </div>
                     )}
 
                     <div className="space-y-4">
                         {plan.routes.length === 0 ? (
-                            <div className="rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500">
+                            <div className="bg-white px-4 py-10 text-center text-sm text-gray-500 shadow-sm sm:rounded-lg">
                                 {t('routing.pages.show.routes_empty')}
                             </div>
                         ) : (
@@ -274,8 +275,6 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                             ))
                         )}
                     </div>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }
