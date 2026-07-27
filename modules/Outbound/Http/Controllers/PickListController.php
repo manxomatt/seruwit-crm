@@ -37,7 +37,7 @@ class PickListController extends Controller
             ->when(request('search'), fn ($q, $search) => $q->where('code', 'like', "%{$search}%")
                 ->orWhereHas('deliveryOrder', fn ($dq) => $dq->where('code', 'like', "%{$search}%")))
             ->latest('id')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Modules/Outbound/PickLists/Index', [

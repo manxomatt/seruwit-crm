@@ -28,10 +28,14 @@ function replaceParams(template: string, params?: Record<string, string | number
         return template;
     }
 
-    return Object.entries(params).reduce(
-        (text, [key, value]) => text.replaceAll(`:${key}`, String(value)),
-        template,
-    );
+    // Longer keys first so `:to` does not eat the start of `:total`.
+    return Object.entries(params)
+        .sort(([left], [right]) => right.length - left.length)
+        .reduce((text, [key, value]) => {
+            const pattern = new RegExp(`:${key}(?![A-Za-z0-9_])`, 'g');
+
+            return text.replace(pattern, String(value));
+        }, template);
 }
 
 /**

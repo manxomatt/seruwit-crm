@@ -35,7 +35,7 @@ class RentalController extends Controller
                     ->orWhereHas('partner', fn ($q) => $q->where('name', 'like', "%{$s}%"));
             }))
             ->latest()
-            ->paginate(25)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Modules/Rental/Index', [

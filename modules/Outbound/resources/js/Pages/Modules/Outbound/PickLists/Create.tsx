@@ -5,8 +5,9 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useMemo } from 'react';
 import OutboundNav from '../../../../OutboundNav';
 
 interface Order {
@@ -38,79 +39,82 @@ export default function Create({ orders, warehouses, selectedOrderId }: Props): 
         notes: '',
     });
 
+    const orderOptions = useMemo(
+        () =>
+            orders.map((o) => ({
+                value: String(o.id),
+                label: t('outbound.pick_lists.create.order_option', {
+                    code: o.code,
+                    partner: o.partner.name,
+                    count: o.items_count,
+                    status: t(`orders.status.${o.status}`, undefined, o.status),
+                }),
+            })),
+        [orders, t],
+    );
+
+    const warehouseOptions = useMemo(
+        () => warehouses.map((w) => ({ value: String(w.id), label: w.name })),
+        [warehouses],
+    );
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(prefixedRoute('outbound.pick-lists.store'));
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('outbound.pick_lists.create.title')}</h2>}>
+        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('outbound.pick_lists.create.title')}</h2>}>
             <Head title={t('outbound.pick_lists.create.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-2xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <OutboundNav />
 
-                    <form onSubmit={submit} className="space-y-5 rounded-lg border border-gray-200 bg-white p-6">
-                        <div>
-                            <InputLabel value={t('outbound.pick_lists.create.delivery_order')} />
-                            <select
-                                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                value={data.delivery_order_id}
-                                onChange={(e) => setData('delivery_order_id', e.target.value)}
-                            >
-                                <option value="">{t('outbound.pick_lists.create.select_do')}</option>
-                                {orders.map((o) => (
-                                    <option key={o.id} value={o.id}>
-                                        {t('outbound.pick_lists.create.order_option', {
-                                            code: o.code,
-                                            partner: o.partner.name,
-                                            count: o.items_count,
-                                            status: t(`orders.status.${o.status}`, undefined, o.status),
-                                        })}
-                                    </option>
-                                ))}
-                            </select>
-                            <InputError message={errors.delivery_order_id} className="mt-2" />
-                            {orders.length === 0 && (
-                                <p className="mt-2 text-sm text-gray-500">{t('outbound.pick_lists.create.no_eligible_do')}</p>
-                            )}
-                        </div>
+            <OutboundNav />
 
-                        <div>
-                            <InputLabel value={t('outbound.pick_lists.create.source_warehouse')} />
-                            <select
-                                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                value={data.warehouse_id}
-                                onChange={(e) => setData('warehouse_id', e.target.value)}
-                            >
-                                {warehouses.map((w) => (
-                                    <option key={w.id} value={w.id}>
-                                        {w.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <InputError message={errors.warehouse_id} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel value={t('outbound.pick_lists.create.notes')} />
-                            <textarea
-                                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                rows={2}
-                                value={data.notes}
-                                onChange={(e) => setData('notes', e.target.value)}
-                            />
-                        </div>
-
-                        <div className="flex justify-end gap-2">
-                            <Link href={prefixedRoute('outbound.pick-lists.index')}>
-                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
-                            </Link>
-                            <PrimaryButton disabled={processing || !data.delivery_order_id}>{t('outbound.actions.generate')}</PrimaryButton>
-                        </div>
-                    </form>
+            <form onSubmit={submit} className="space-y-5 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+                <div>
+                    <InputLabel value={t('outbound.pick_lists.create.delivery_order')} />
+                    <Select
+                        className="mt-1"
+                        value={data.delivery_order_id}
+                        onChange={(value) => setData('delivery_order_id', value)}
+                        placeholder={t('outbound.pick_lists.create.select_do')}
+                        options={orderOptions}
+                        searchable
+                    />
+                    <InputError message={errors.delivery_order_id} className="mt-2" />
+                    {orders.length === 0 && (
+                        <p className="mt-2 text-sm text-gray-500">{t('outbound.pick_lists.create.no_eligible_do')}</p>
+                    )}
                 </div>
-            </div>
+
+                <div>
+                    <InputLabel value={t('outbound.pick_lists.create.source_warehouse')} />
+                    <Select
+                        className="mt-1"
+                        value={data.warehouse_id}
+                        onChange={(value) => setData('warehouse_id', value)}
+                        options={warehouseOptions}
+                        searchable
+                    />
+                    <InputError message={errors.warehouse_id} className="mt-2" />
+                </div>
+
+                <div>
+                    <InputLabel value={t('outbound.pick_lists.create.notes')} />
+                    <textarea
+                        className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        rows={2}
+                        value={data.notes}
+                        onChange={(e) => setData('notes', e.target.value)}
+                    />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                    <Link href={prefixedRoute('outbound.pick-lists.index')}>
+                        <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                    </Link>
+                    <PrimaryButton disabled={processing || !data.delivery_order_id}>{t('outbound.actions.generate')}</PrimaryButton>
+                </div>
+            </form>
         </DynamicLayout>
     );
 }

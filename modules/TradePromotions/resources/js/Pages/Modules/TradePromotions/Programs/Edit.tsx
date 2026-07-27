@@ -96,10 +96,10 @@ export default function Edit({ program, partners, products, principals }: Props)
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.programs.edit.title')}</h2>}>
             <Head title={t('promotions.programs.edit.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <PromotionsNav />
-                    <form onSubmit={submit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
+
+            <PromotionsNav />
+
+            <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                         <div>
                             <InputLabel value={t('promotions.fields.name')} />
                             <TextInput className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />
@@ -143,8 +143,6 @@ export default function Edit({ program, partners, products, principals }: Props)
                             </Link>
                         </div>
                     </form>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }

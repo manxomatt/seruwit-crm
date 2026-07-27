@@ -23,7 +23,7 @@ class PromoRealizationController extends Controller
             ])
             ->when($request->integer('program_id'), fn ($q, $id) => $q->where('trade_promo_program_id', $id))
             ->latest('id')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Modules/TradePromotions/Realizations/Index', [

@@ -48,6 +48,30 @@ class RentalCrudTest extends TestCase
             ->assertInertia(fn ($page) => $page->component('Modules/Rental/Index'));
     }
 
+    public function test_rental_index_paginates_results(): void
+    {
+        foreach (range(1, 16) as $i) {
+            Rental::factory()->create(['code' => sprintf('RENT-PAGE-%03d', $i)]);
+        }
+
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.rental.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Index')
+                ->where('rentals.per_page', 15)
+                ->where('rentals.total', 16)
+                ->where('rentals.last_page', 2)
+                ->has('rentals.data', 15)
+                ->has('rentals.links')
+                ->has('filters'));
+
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.rental.index', ['page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('rentals.data', 1));
+    }
+
     // ── Rates CRUD ─────────────────────────────────────────────────────────
 
     public function test_can_create_rental_rate(): void

@@ -4,13 +4,14 @@ import { Link } from '@inertiajs/react';
 
 const TABS = [
     {
-        labelKey: 'outbound.nav.pick_lists',
-        route: 'outbound.pick-lists.index',
-        patterns: ['outbound.pick-lists.*', 'outbound.packs.*'],
+        labelKey: 'rental.nav.list',
+        route: 'rental.index',
+        patterns: ['rental.index', 'rental.create', 'rental.show', 'rental.edit'],
     },
+    { labelKey: 'rental.nav.rates', route: 'rental.rates.index', patterns: ['rental.rates.*'] },
 ] as const;
 
-export default function OutboundNav(): JSX.Element {
+export default function RentalNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
 

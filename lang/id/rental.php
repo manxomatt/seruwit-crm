@@ -4,13 +4,14 @@ return [
     'title' => 'Rental',
 
     'nav' => [
+        'list' => 'Rental',
         'rates' => 'Tarif',
         'back_to_list' => '← Kembali ke Rental',
         'back' => '← Kembali',
     ],
 
     'status' => [
-        'all' => 'Semua Status',
+        'all' => 'Semua status',
         'draft' => 'Draft',
         'confirmed' => 'Dikonfirmasi',
         'active' => 'Aktif',
@@ -154,6 +155,8 @@ return [
             'empty' => 'Belum ada tarif. Buat satu untuk mulai.',
             'new' => 'Tarif Baru',
             'edit' => 'Edit Tarif',
+            'delete_title' => 'Hapus tarif',
+            'delete_confirm' => 'Hapus tarif “:name”? Tindakan ini tidak dapat dibatalkan.',
         ],
     ],
 

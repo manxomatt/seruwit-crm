@@ -3,14 +3,17 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
+    { labelKey: 'canvassing.nav.dashboard', route: 'canvassing.index', patterns: ['canvassing.index'] },
     {
-        labelKey: 'outbound.nav.pick_lists',
-        route: 'outbound.pick-lists.index',
-        patterns: ['outbound.pick-lists.*', 'outbound.packs.*'],
+        labelKey: 'canvassing.nav.salespeople',
+        route: 'canvassing.salespeople.index',
+        patterns: ['canvassing.salespeople.*'],
     },
+    { labelKey: 'canvassing.nav.visits', route: 'canvassing.visits.index', patterns: ['canvassing.visits.*'] },
+    { labelKey: 'canvassing.nav.plans', route: 'canvassing.plans.index', patterns: ['canvassing.plans.*'] },
 ] as const;
 
-export default function OutboundNav(): JSX.Element {
+export default function CanvassingNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
 

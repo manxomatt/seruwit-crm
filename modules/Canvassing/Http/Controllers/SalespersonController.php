@@ -58,7 +58,7 @@ class SalespersonController extends Controller
                 ->orWhere('area', 'like', '%'.request('search').'%'))
             ->when(request('active') !== null, fn ($q) => $q->where('is_active', request('active') === '1'))
             ->orderBy('name')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Modules/Canvassing/Salespeople/Index', [

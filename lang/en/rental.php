@@ -4,13 +4,14 @@ return [
     'title' => 'Rental',
 
     'nav' => [
+        'list' => 'Rentals',
         'rates' => 'Rates',
         'back_to_list' => '← Back to Rentals',
         'back' => '← Back',
     ],
 
     'status' => [
-        'all' => 'All Status',
+        'all' => 'All statuses',
         'draft' => 'Draft',
         'confirmed' => 'Confirmed',
         'active' => 'Active',
@@ -154,6 +155,8 @@ return [
             'empty' => 'No rates yet. Create one to get started.',
             'new' => 'New Rate',
             'edit' => 'Edit Rate',
+            'delete_title' => 'Delete rate',
+            'delete_confirm' => 'Delete rate “:name”? This action cannot be undone.',
         ],
     ],
 

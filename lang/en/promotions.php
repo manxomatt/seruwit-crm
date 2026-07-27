@@ -9,13 +9,19 @@ return [
     ],
 
     'status' => [
-        'all' => 'all',
-        'draft' => 'draft',
-        'active' => 'active',
-        'paused' => 'paused',
-        'closed' => 'closed',
-        'accrued' => 'accrued',
-        'settled' => 'settled',
+        'all' => 'All statuses',
+        'draft' => 'Draft',
+        'active' => 'Active',
+        'paused' => 'Paused',
+        'closed' => 'Closed',
+        'open' => 'Open',
+        'achieved' => 'Achieved',
+        'accrued' => 'Accrued',
+        'settled' => 'Settled',
+    ],
+
+    'placeholders' => [
+        'all_types' => 'All types',
     ],
 
     'types' => [

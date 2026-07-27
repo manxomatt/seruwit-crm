@@ -25,7 +25,7 @@ class CanvassingPlanController extends Controller
             ->when(request('date'), fn ($q) => $q->where('plan_date', request('date')))
             ->when(request('status'), fn ($q) => $q->where('status', request('status')))
             ->orderByDesc('plan_date')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         $salespeople = Salesperson::query()->active()->orderBy('name')->get(['id', 'name']);

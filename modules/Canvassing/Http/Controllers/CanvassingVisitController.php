@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Canvassing\Models\CanvassingVisit;
+use Modules\Canvassing\Models\Salesperson;
 
 class CanvassingVisitController extends Controller
 {
@@ -22,11 +23,14 @@ class CanvassingVisitController extends Controller
             ->when(request('outcome'), fn ($q) => $q->where('outcome', request('outcome')))
             ->when(request('date'), fn ($q) => $q->whereDate('checked_in_at', request('date')))
             ->latest('checked_in_at')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
+
+        $salespeople = Salesperson::query()->active()->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Modules/Canvassing/Visits/Index', [
             'visits' => $visits,
+            'salespeople' => $salespeople,
             'filters' => request()->only(['salesperson_id', 'outcome', 'date']),
         ]);
     }

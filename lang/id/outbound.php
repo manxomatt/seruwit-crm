@@ -48,6 +48,7 @@ return [
             'title' => 'Pick Lists',
             'generate' => 'Generate Pick List',
             'search_placeholder' => 'Cari PL / DO…',
+            'all_statuses' => 'Semua status',
             'empty' => 'Belum ada pick list.',
             'columns' => [
                 'pick_list' => 'Pick List',

@@ -92,10 +92,10 @@ export default function Create({ partners, products, principals }: Props): JSX.E
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.programs.create.title')}</h2>}>
             <Head title={t('promotions.programs.create.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <PromotionsNav />
-                    <form onSubmit={submit} className="space-y-6 rounded-lg border border-gray-200 bg-white p-6">
+
+            <PromotionsNav />
+
+            <form onSubmit={submit} className="space-y-6 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="sm:col-span-2">
                                 <InputLabel value={t('promotions.fields.name')} />
@@ -258,8 +258,6 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                             </Link>
                         </div>
                     </form>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }

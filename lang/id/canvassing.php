@@ -8,9 +8,11 @@ return [
         'today' => 'Hari Ini',
         'logout' => 'Keluar',
         'back' => 'Kembali',
-        'dashboard' => '← Dashboard',
-        'salespeople' => '← Salespeople',
-        'all_visits' => '← Semua Kunjungan',
+        'dashboard' => 'Dashboard',
+        'salespeople' => 'Salespeople',
+        'visits' => 'Kunjungan',
+        'plans' => 'Rencana',
+        'all_visits' => 'Semua Kunjungan',
     ],
 
     'outcomes' => [
@@ -55,6 +57,8 @@ return [
         'edit_head' => 'Ubah :name',
         'create_title' => 'Tambah Salesperson',
         'search' => 'Cari nama atau area…',
+        'total' => ':count salesperson',
+        'delete_confirm' => 'Hapus salesperson :name?',
         'empty' => 'Tidak ada salesperson.',
         'create' => 'Buat Salesperson',
         'save' => 'Simpan Perubahan',
@@ -138,6 +142,7 @@ return [
         'status' => 'Status',
         'all_salespeople' => 'Semua salesperson',
         'all_statuses' => 'Semua status',
+        'delete_confirm' => 'Hapus rencana :name pada :date?',
         'columns' => [
             'salesperson' => 'Salesperson',
             'date' => 'Tanggal',

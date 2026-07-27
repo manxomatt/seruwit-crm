@@ -9,13 +9,19 @@ return [
     ],
 
     'status' => [
-        'all' => 'semua',
-        'draft' => 'draft',
-        'active' => 'aktif',
-        'paused' => 'dijeda',
-        'closed' => 'ditutup',
-        'accrued' => 'terakru',
-        'settled' => 'diselesaikan',
+        'all' => 'Semua status',
+        'draft' => 'Draft',
+        'active' => 'Aktif',
+        'paused' => 'Dijeda',
+        'closed' => 'Ditutup',
+        'open' => 'Terbuka',
+        'achieved' => 'Tercapai',
+        'accrued' => 'Terakru',
+        'settled' => 'Diselesaikan',
+    ],
+
+    'placeholders' => [
+        'all_types' => 'Semua tipe',
     ],
 
     'types' => [

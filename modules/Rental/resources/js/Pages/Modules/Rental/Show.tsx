@@ -10,6 +10,7 @@ import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import RentalNav from '../../../RentalNav';
 
 const formatMoney = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
@@ -74,23 +75,28 @@ export default function Show({ rental }: Props): JSX.Element {
     ];
 
     return (
-        <DynamicLayout header={t('rental.pages.index.head')}>
-            <Head title={t('rental.pages.show.title', { code: rental.code })} />
-            <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <Link href={prefixedRoute('rental.index')} className="mb-1 block text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400">{t('rental.nav.back')}</Link>
-                        <div className="flex items-center gap-3">
-                            <h1 className="font-mono text-xl font-bold text-gray-900 dark:text-white">{rental.code}</h1>
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLORS[rental.status]}`}>
-                                {t(`rental.status.${rental.status}`, undefined, rental.status)}
+        <DynamicLayout
+            header={
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <h2 className="font-mono text-xl font-semibold text-gray-800">{rental.code}</h2>
+                        <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[rental.status]}`}>
+                            {t(`rental.status.${rental.status}`, undefined, rental.status)}
+                        </span>
+                        {rental.is_overdue && (
+                            <span className="inline-flex rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                                {t('rental.status.overdue')}
                             </span>
-                            {rental.is_overdue && <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">{t('rental.status.overdue')}</span>}
-                        </div>
+                        )}
                     </div>
-                    {/* Actions */}
-                    <div className="flex flex-wrap gap-2">
+                </div>
+            }
+        >
+            <Head title={t('rental.pages.show.title', { code: rental.code })} />
+
+            <RentalNav />
+
+            <div className="mb-6 flex flex-wrap justify-end gap-2">
                         {(is('draft') || is('confirmed')) && (
                             <Link href={prefixedRoute('rental.edit', rental.id)}>
                                 <SecondaryButton>{t('common.edit')}</SecondaryButton>
@@ -114,8 +120,7 @@ export default function Show({ rental }: Props): JSX.Element {
                         {(is('draft') || is('confirmed')) && (
                             <DangerButton onClick={() => setModal('cancel')}>{t('common.cancel')}</DangerButton>
                         )}
-                    </div>
-                </div>
+            </div>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Left column */}
@@ -254,7 +259,6 @@ export default function Show({ rental }: Props): JSX.Element {
                         )}
                     </div>
                 </div>
-            </div>
 
             {/* Modals */}
             <Modal show={modal === 'cancel'} onClose={() => setModal(null)}>

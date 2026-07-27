@@ -2,13 +2,30 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { formatDateDmY } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import RentalNav from '../../../RentalNav';
 
-interface Vehicle { id: number; name: string; plate_number: string; type: string; }
-interface Partner { id: number; name: string; code: string; }
-interface Driver { id: number; name: string; }
+interface Vehicle {
+    id: number;
+    name: string;
+    plate_number: string;
+    type: string;
+}
+
+interface Partner {
+    id: number;
+    name: string;
+    code: string;
+}
+
+interface Driver {
+    id: number;
+    name: string;
+}
 
 interface Rental {
     id: number;
@@ -29,6 +46,7 @@ interface PaginatedRentals {
     data: Rental[];
     current_page: number;
     last_page: number;
+    per_page: number;
     total: number;
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
@@ -40,17 +58,26 @@ interface Props {
 
 const STATUSES = ['draft', 'confirmed', 'active', 'returned', 'completed', 'cancelled'] as const;
 
-const STATUS_COLORS: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700',
-    confirmed: 'bg-blue-100 text-blue-700',
-    active: 'bg-amber-100 text-amber-700',
-    returned: 'bg-purple-100 text-purple-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-};
+function statusBadgeClass(status: string): string {
+    switch (status) {
+        case 'draft':
+            return 'bg-gray-100 text-gray-700';
+        case 'confirmed':
+            return 'bg-sky-100 text-sky-800';
+        case 'active':
+            return 'bg-amber-100 text-amber-800';
+        case 'returned':
+            return 'bg-violet-100 text-violet-800';
+        case 'completed':
+            return 'bg-emerald-100 text-emerald-800';
+        case 'cancelled':
+            return 'bg-red-100 text-red-800';
+        default:
+            return 'bg-gray-100 text-gray-700';
+    }
+}
 
-const formatMoney = (v: string | number) =>
-    'Rp ' + Number(v).toLocaleString('id-ID');
+const formatMoney = (v: string | number): string => 'Rp ' + Number(v).toLocaleString('id-ID');
 
 const periodUnit = (periodType: string): string =>
     periodType === 'daily' ? 'day' : periodType === 'weekly' ? 'week' : 'month';
@@ -60,8 +87,15 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
     const { t } = useTrans();
     const [search, setSearch] = useState(filters.search ?? '');
 
-    const applyFilters = (overrides: Record<string, string>) => {
-        router.get(prefixedRoute('rental.index'), { ...filters, search, ...overrides }, { preserveState: true });
+    const applyFilters = (overrides: Record<string, string>): void => {
+        router.get(
+            prefixedRoute('rental.index'),
+            {
+                status: overrides.status !== undefined ? overrides.status || undefined : filters.status || undefined,
+                search: overrides.search !== undefined ? overrides.search || undefined : search || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
     };
 
     const handleSearch: FormEventHandler = (e) => {
@@ -70,134 +104,144 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={t('rental.pages.index.head')}>
+        <DynamicLayout
+            header={
+                <div className="flex items-center justify-between gap-4">
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('rental.pages.index.title')}</h2>
+                    <Link href={prefixedRoute('rental.create')}>
+                        <PrimaryButton>{t('rental.actions.new_rental')}</PrimaryButton>
+                    </Link>
+                </div>
+            }
+        >
             <Head title={t('rental.pages.index.head')} />
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-6 flex items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t('rental.pages.index.title')}</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('rental.pages.index.total', { count: rentals.total })}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Link href={prefixedRoute('rental.rates.index')}>
-                            <button className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                {t('rental.nav.rates')}
-                            </button>
-                        </Link>
-                        <Link href={prefixedRoute('rental.create')}>
-                            <PrimaryButton>{t('rental.actions.new_rental')}</PrimaryButton>
-                        </Link>
-                    </div>
-                </div>
 
-                {/* Filters */}
-                <div className="mb-4 flex flex-wrap gap-3">
-                    <form onSubmit={handleSearch} className="flex gap-2">
-                        <TextInput
-                            placeholder={t('rental.placeholders.search')}
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-56"
-                        />
-                        <button type="submit" className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
-                            {t('rental.actions.search')}
-                        </button>
-                    </form>
-                    <select
-                        value={filters.status ?? ''}
-                        onChange={(e) => applyFilters({ status: e.target.value })}
-                        className="w-40 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            <RentalNav />
+
+            <p className="mb-6 text-sm text-gray-600">{t('rental.pages.index.total', { count: rentals.total })}</p>
+
+            <div className="mb-6 flex flex-wrap gap-3">
+                <form onSubmit={handleSearch} className="flex gap-2">
+                    <TextInput
+                        placeholder={t('rental.placeholders.search')}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-56"
+                    />
+                    <button
+                        type="submit"
+                        className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                        <option value="">{t('rental.status.all')}</option>
-                        {STATUSES.map((status) => (
-                            <option key={status} value={status}>{t(`rental.status.${status}`, undefined, status)}</option>
-                        ))}
-                    </select>
-                </div>
+                        {t('rental.actions.search')}
+                    </button>
+                </form>
+                <Select
+                    className="min-w-[12rem]"
+                    value={filters.status || ''}
+                    onChange={(value) => applyFilters({ status: value })}
+                    placeholder={t('rental.status.all')}
+                    options={[
+                        { value: '', label: t('rental.status.all') },
+                        ...STATUSES.map((status) => ({
+                            value: status,
+                            label: t(`rental.status.${status}`, undefined, status),
+                        })),
+                    ]}
+                />
+            </div>
 
-                {/* Table */}
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.code')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.partner')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.vehicle')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.period')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('rental.fields.status')}</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('rental.fields.amount')}</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {rentals.data.length === 0 ? (
                             <tr>
-                                {[t('rental.fields.code'), t('rental.fields.partner'), t('rental.fields.vehicle'), t('rental.fields.period'), t('rental.fields.status'), t('rental.fields.amount'), ''].map((h) => (
-                                    <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                        {h}
-                                    </th>
-                                ))}
+                                <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
+                                    {t('rental.pages.index.empty')}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {rentals.data.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">
-                                        {t('rental.pages.index.empty')}
-                                    </td>
-                                </tr>
-                            )}
-                            {rentals.data.map((rental) => (
-                                <tr key={rental.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        ) : (
+                            rentals.data.map((rental) => (
+                                <tr key={rental.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3">
-                                        <span className="font-mono text-sm font-medium text-gray-900 dark:text-white">
+                                        <Link
+                                            href={prefixedRoute('rental.show', rental.id)}
+                                            className="font-medium text-indigo-600 hover:underline"
+                                        >
                                             {rental.code}
-                                        </span>
+                                        </Link>
                                         {rental.is_overdue && (
-                                            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                                            <span className="ml-2 inline-flex rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
                                                 {t('rental.status.overdue')}
                                             </span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {rental.partner.name}
+                                    <td className="px-4 py-3 text-gray-700">{rental.partner.name}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="font-medium text-gray-900">{rental.vehicle.name}</div>
+                                        <div className="text-xs text-gray-500">{rental.vehicle.plate_number}</div>
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        <div>{rental.vehicle.name}</div>
-                                        <div className="text-xs text-gray-400">{rental.vehicle.plate_number}</div>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        <div>{rental.start_date} → {rental.end_date}</div>
-                                        <div className="text-xs text-gray-400">
-                                            {rental.total_periods} {t(`rental.period_type.${periodUnit(rental.period_type)}`, undefined, rental.period_type)}
+                                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-600">
+                                        <div>
+                                            {formatDateDmY(rental.start_date)} → {formatDateDmY(rental.end_date)}
+                                        </div>
+                                        <div className="text-gray-400">
+                                            {rental.total_periods}{' '}
+                                            {t(`rental.period_type.${periodUnit(rental.period_type)}`, undefined, rental.period_type)}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_COLORS[rental.status] ?? ''}`}>
+                                        <span
+                                            className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${statusBadgeClass(rental.status)}`}
+                                        >
                                             {t(`rental.status.${rental.status}`, undefined, rental.status)}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 tabular-nums dark:text-white">
+                                    <td className="px-4 py-3 text-right font-medium tabular-nums text-gray-900">
                                         {formatMoney(rental.total_amount)}
                                     </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <Link
-                                            href={prefixedRoute('rental.show', rental.id)}
-                                            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
-                                        >
-                                            {t('rental.actions.view')}
-                                        </Link>
-                                    </td>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            ))
+                        )}
+                    </tbody>
+                </table>
 
-                {/* Pagination */}
                 {rentals.last_page > 1 && (
-                    <div className="mt-4 flex justify-center gap-1">
-                        {rentals.links.map((link, i) => (
-                            link.url ? (
-                                <Link
-                                    key={i}
-                                    href={link.url}
-                                    className={`rounded px-3 py-1 text-sm ${link.active ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+                    <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
+                        <p className="text-sm text-gray-700">
+                            {t('common.showing_results', {
+                                from: (rentals.current_page - 1) * rentals.per_page + 1,
+                                to: Math.min(rentals.current_page * rentals.per_page, rentals.total),
+                                total: rentals.total,
+                            })}
+                        </p>
+                        <div className="flex gap-1">
+                            {rentals.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded px-3 py-1 text-sm ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white'
+                                            : link.url
+                                              ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                    }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
-                            ) : (
-                                <span key={i} className="rounded px-3 py-1 text-sm text-gray-400" dangerouslySetInnerHTML={{ __html: link.label }} />
-                            )
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

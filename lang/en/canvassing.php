@@ -8,9 +8,11 @@ return [
         'today' => 'Today',
         'logout' => 'Log out',
         'back' => 'Back',
-        'dashboard' => '← Dashboard',
-        'salespeople' => '← Salespeople',
-        'all_visits' => '← All Visits',
+        'dashboard' => 'Dashboard',
+        'salespeople' => 'Salespeople',
+        'visits' => 'Visits',
+        'plans' => 'Plans',
+        'all_visits' => 'All Visits',
     ],
 
     'outcomes' => [
@@ -55,6 +57,8 @@ return [
         'edit_head' => 'Edit :name',
         'create_title' => 'Add Salesperson',
         'search' => 'Search name or area…',
+        'total' => ':count salespeople',
+        'delete_confirm' => 'Delete salesperson :name?',
         'empty' => 'No salespeople found.',
         'create' => 'Create Salesperson',
         'save' => 'Save Changes',
@@ -138,6 +142,7 @@ return [
         'status' => 'Status',
         'all_salespeople' => 'All salespeople',
         'all_statuses' => 'All statuses',
+        'delete_confirm' => 'Delete plan for :name on :date?',
         'columns' => [
             'salesperson' => 'Salesperson',
             'date' => 'Date',

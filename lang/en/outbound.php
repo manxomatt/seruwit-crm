@@ -48,6 +48,7 @@ return [
             'title' => 'Pick Lists',
             'generate' => 'Generate Pick List',
             'search_placeholder' => 'Search PL / DO…',
+            'all_statuses' => 'All statuses',
             'empty' => 'No pick lists yet.',
             'columns' => [
                 'pick_list' => 'Pick List',

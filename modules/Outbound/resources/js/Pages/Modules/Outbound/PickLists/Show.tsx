@@ -4,9 +4,10 @@ import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import OutboundNav from '../../../../OutboundNav';
 
 interface Location {
@@ -75,6 +76,14 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
         return initial;
     });
 
+    const locationOptions = useMemo(
+        () => [
+            { value: '', label: '—' },
+            ...locations.map((loc) => ({ value: String(loc.id), label: loc.code })),
+        ],
+        [locations],
+    );
+
     const canPick = can.pick && ['open', 'picking'].includes(pickList.status);
     const canComplete = can.pick && ['open', 'picking'].includes(pickList.status);
     const canPack = can.pack && ['picked', 'packing', 'packed'].includes(pickList.status);
@@ -99,8 +108,8 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-semibold text-gray-800">{pickList.code}</h2>
-                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{pickList.code}</h2>
+                        <span className="inline-flex rounded-md bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
                             {t(`outbound.pick_list_status.${pickList.status}`, undefined, pickList.status)}
                         </span>
                     </div>
@@ -146,165 +155,157 @@ export default function Show({ pickList, locations, can }: Props): JSX.Element {
             }
         >
             <Head title={pickList.code} />
-            <div className="py-6">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <OutboundNav />
 
-                    <div className="grid gap-4 rounded-lg border border-gray-200 bg-white p-5 sm:grid-cols-3">
-                        <div>
-                            <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.delivery_order')}</p>
-                            <p className="font-medium">
-                                {pickList.delivery_order.code} · {pickList.delivery_order.partner.name}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.warehouse')}</p>
-                            <p className="font-medium">{pickList.warehouse.name}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.do_status')}</p>
-                            <p className="font-medium">
-                                {t(`orders.status.${pickList.delivery_order.status}`, undefined, pickList.delivery_order.status)}
-                            </p>
-                        </div>
-                    </div>
+            <OutboundNav />
 
-                    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">{t('outbound.pick_lists.show.pick_lines')}</div>
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.product')}</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.req')}</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.suggest')}</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.pick_qty')}</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.location')}</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.batch')}</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.status')}</th>
-                                    <th className="px-3 py-2" />
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {pickList.items.map((item) => {
-                                    const draft = drafts[item.id];
-                                    return (
-                                        <tr key={item.id}>
-                                            <td className="px-3 py-2">
-                                                <div className="font-medium">{item.product.name}</div>
-                                                <div className="text-xs text-gray-500">{item.product.sku || '—'}</div>
-                                            </td>
-                                            <td className="px-3 py-2 text-right tabular-nums">{item.quantity_requested}</td>
-                                            <td className="px-3 py-2 text-xs text-gray-600">
-                                                {item.suggested_location?.code || '—'}
-                                                {item.suggested_batch_number ? ` · ${item.suggested_batch_number}` : ''}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {canPick ? (
-                                                    <TextInput
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        className="w-24"
-                                                        value={draft?.qty ?? ''}
-                                                        onChange={(e) =>
-                                                            setDrafts((d) => ({
-                                                                ...d,
-                                                                [item.id]: { ...d[item.id], qty: e.target.value },
-                                                            }))
-                                                        }
-                                                    />
-                                                ) : (
-                                                    <span className="tabular-nums">{item.quantity_picked}</span>
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {canPick ? (
-                                                    <select
-                                                        className="w-36 rounded-md border-gray-300 text-sm shadow-sm"
-                                                        value={draft?.location_id ?? ''}
-                                                        onChange={(e) =>
-                                                            setDrafts((d) => ({
-                                                                ...d,
-                                                                [item.id]: { ...d[item.id], location_id: e.target.value },
-                                                            }))
-                                                        }
-                                                    >
-                                                        <option value="">—</option>
-                                                        {locations.map((loc) => (
-                                                            <option key={loc.id} value={loc.id}>
-                                                                {loc.code}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                ) : (
-                                                    item.location?.code || '—'
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {canPick ? (
-                                                    <TextInput
-                                                        className="w-28"
-                                                        value={draft?.batch_number ?? ''}
-                                                        onChange={(e) =>
-                                                            setDrafts((d) => ({
-                                                                ...d,
-                                                                [item.id]: { ...d[item.id], batch_number: e.target.value },
-                                                            }))
-                                                        }
-                                                    />
-                                                ) : (
-                                                    item.batch_number || '—'
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {t(`outbound.pick_item_status.${item.status}`, undefined, item.status)}
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                {canPick && (
-                                                    <button
-                                                        type="button"
-                                                        className="text-sm font-medium text-indigo-600 hover:underline"
-                                                        onClick={() => confirmItem(item)}
-                                                    >
-                                                        {t('outbound.actions.confirm')}
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {pickList.packs.length > 0 && (
-                        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                            <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">{t('outbound.pick_lists.show.packs')}</div>
-                            <ul className="divide-y divide-gray-100">
-                                {pickList.packs.map((pack) => (
-                                    <li key={pack.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                                        <div>
-                                            <Link
-                                                href={prefixedRoute('outbound.packs.show', pack.id)}
-                                                className="font-medium text-indigo-600 hover:underline"
-                                            >
-                                                {pack.code}
-                                            </Link>
-                                            <span className="ml-2 text-gray-500">{pack.label_code}</span>
-                                            <span className="ml-2 text-gray-600">
-                                                · {t(`outbound.pack_status.${pack.status}`, undefined, pack.status)}
-                                            </span>
-                                        </div>
-                                        <Link href={prefixedRoute('outbound.packs.label', pack.id)}>
-                                            <SecondaryButton type="button">{t('outbound.packs.show.label')}</SecondaryButton>
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
+            <div className="mb-6 grid gap-4 overflow-hidden bg-white p-5 shadow-sm sm:grid-cols-3 sm:rounded-lg">
+                <div>
+                    <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.delivery_order')}</p>
+                    <p className="font-medium">
+                        {pickList.delivery_order.code} · {pickList.delivery_order.partner.name}
+                    </p>
+                </div>
+                <div>
+                    <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.warehouse')}</p>
+                    <p className="font-medium">{pickList.warehouse.name}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-gray-500">{t('outbound.pick_lists.show.do_status')}</p>
+                    <p className="font-medium">
+                        {t(`orders.status.${pickList.delivery_order.status}`, undefined, pickList.delivery_order.status)}
+                    </p>
                 </div>
             </div>
+
+            <div className="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">{t('outbound.pick_lists.show.pick_lines')}</div>
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.product')}</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.req')}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.suggest')}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.pick_qty')}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.location')}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.batch')}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('outbound.pick_lists.show.columns.status')}</th>
+                            <th className="px-3 py-2" />
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {pickList.items.map((item) => {
+                            const draft = drafts[item.id];
+                            return (
+                                <tr key={item.id}>
+                                    <td className="px-3 py-2">
+                                        <div className="font-medium">{item.product.name}</div>
+                                        <div className="text-xs text-gray-500">{item.product.sku || '—'}</div>
+                                    </td>
+                                    <td className="px-3 py-2 text-right tabular-nums">{item.quantity_requested}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-600">
+                                        {item.suggested_location?.code || '—'}
+                                        {item.suggested_batch_number ? ` · ${item.suggested_batch_number}` : ''}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        {canPick ? (
+                                            <TextInput
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                className="w-24"
+                                                value={draft?.qty ?? ''}
+                                                onChange={(e) =>
+                                                    setDrafts((d) => ({
+                                                        ...d,
+                                                        [item.id]: { ...d[item.id], qty: e.target.value },
+                                                    }))
+                                                }
+                                            />
+                                        ) : (
+                                            <span className="tabular-nums">{item.quantity_picked}</span>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        {canPick ? (
+                                            <Select
+                                                className="w-36"
+                                                value={draft?.location_id ?? ''}
+                                                onChange={(value) =>
+                                                    setDrafts((d) => ({
+                                                        ...d,
+                                                        [item.id]: { ...d[item.id], location_id: value },
+                                                    }))
+                                                }
+                                                options={locationOptions}
+                                                searchable
+                                            />
+                                        ) : (
+                                            item.location?.code || '—'
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        {canPick ? (
+                                            <TextInput
+                                                className="w-28"
+                                                value={draft?.batch_number ?? ''}
+                                                onChange={(e) =>
+                                                    setDrafts((d) => ({
+                                                        ...d,
+                                                        [item.id]: { ...d[item.id], batch_number: e.target.value },
+                                                    }))
+                                                }
+                                            />
+                                        ) : (
+                                            item.batch_number || '—'
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        {t(`outbound.pick_item_status.${item.status}`, undefined, item.status)}
+                                    </td>
+                                    <td className="px-3 py-2 text-right">
+                                        {canPick && (
+                                            <button
+                                                type="button"
+                                                className="text-sm font-medium text-indigo-600 hover:underline"
+                                                onClick={() => confirmItem(item)}
+                                            >
+                                                {t('outbound.actions.confirm')}
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            {pickList.packs.length > 0 && (
+                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold">{t('outbound.pick_lists.show.packs')}</div>
+                    <ul className="divide-y divide-gray-100">
+                        {pickList.packs.map((pack) => (
+                            <li key={pack.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                                <div>
+                                    <Link
+                                        href={prefixedRoute('outbound.packs.show', pack.id)}
+                                        className="font-medium text-indigo-600 hover:underline"
+                                    >
+                                        {pack.code}
+                                    </Link>
+                                    <span className="ml-2 text-gray-500">{pack.label_code}</span>
+                                    <span className="ml-2 text-gray-600">
+                                        · {t(`outbound.pack_status.${pack.status}`, undefined, pack.status)}
+                                    </span>
+                                </div>
+                                <Link href={prefixedRoute('outbound.packs.label', pack.id)}>
+                                    <SecondaryButton type="button">{t('outbound.packs.show.label')}</SecondaryButton>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </DynamicLayout>
     );
 }
