@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POS Kasir Toko — Product Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #E8EEF4;
+      --surface: #FFFFFF;
+      --surface-2: #F4F7FA;
+      --ink: #0F1D2E;
+      --muted: #5E7490;
+      --border: #D1DCE8;
+      --accent: #1A5C8A;
+      --accent-soft: #EBF3FA;
+      --pay: #0F7A4A;
+      --pay-hover: #0C643C;
+      --warn: #C87C0A;
+      --danger: #A52020;
+      --radius: 12px;
+      --font: "DM Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #d5e4f0 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #dce8e2 0%, transparent 50%),
+        var(--bg);
+      line-height: 1.45;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+    .eyebrow {
+      font-size: 12px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--accent); margin: 0 0 8px;
+    }
+    h1 { font-size: 2.25rem; letter-spacing: -0.03em; margin: 0 0 12px; line-height: 1.15; }
+    .lede { font-size: 1.125rem; color: var(--muted); max-width: 42rem; margin: 0 0 32px; }
+    .meta {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 40px;
+    }
+    .chip {
+      font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 999px;
+      background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    }
+    .chip strong { color: var(--ink); font-weight: 600; }
+    section { margin: 48px 0; }
+    h2 { font-size: 1.35rem; letter-spacing: -0.02em; margin: 0 0 8px; }
+    h3 { font-size: 1rem; margin: 20px 0 8px; }
+    p.sec { color: var(--muted); margin: 0 0 20px; max-width: 40rem; }
+    .principles {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    @media (max-width: 800px) { .principles { grid-template-columns: 1fr; } }
+    .principle {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px;
+    }
+    .principle b { display: block; margin-bottom: 4px; }
+    .principle span { font-size: 14px; color: var(--muted); }
+
+    /* Terminal mock */
+    .terminal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(15, 29, 46, 0.08);
+    }
+    .t-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 12px 16px; background: var(--surface-2);
+      border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .t-bar .store { font-weight: 700; }
+    .t-bar .muted { color: var(--muted); }
+    .t-actions { display: flex; gap: 8px; }
+    .btn {
+      border: 1px solid var(--border); background: var(--surface);
+      border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 13px;
+      font-weight: 600; cursor: default; color: var(--ink);
+    }
+    .btn-ghost { background: transparent; }
+    .t-body { display: grid; grid-template-columns: 1.35fr 1fr; min-height: 520px; }
+    @media (max-width: 860px) { .t-body { grid-template-columns: 1fr; } }
+    .catalog { padding: 16px; border-right: 1px solid var(--border); background: #fafbfc; }
+    .search {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
+      box-shadow: 0 1px 0 rgba(15,29,46,.03);
+    }
+    .search input {
+      border: 0; outline: 0; width: 100%; font: inherit; font-size: 15px;
+      background: transparent; color: var(--ink);
+    }
+    .search .hint { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    @media (max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    .tile {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px;
+      min-height: 148px;
+    }
+    .tile .ph {
+      height: 72px; border-radius: 8px;
+      background: linear-gradient(145deg, #e7eef5, #d9e5df);
+      display: grid; place-items: center; color: var(--muted); font-size: 12px; font-weight: 600;
+    }
+    .tile .name { font-size: 13px; font-weight: 600; line-height: 1.25; min-height: 2.5em; }
+    .tile .meta-row { display: flex; justify-content: space-between; align-items: baseline; }
+    .tile .price { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+    .tile .stock { font-size: 11px; color: var(--muted); }
+    .tile.dim { opacity: .45; }
+
+    .cart { display: flex; flex-direction: column; background: var(--surface); }
+    .cart-head {
+      padding: 14px 16px 8px; font-size: 12px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+    }
+    .lines { flex: 1; padding: 0 8px 8px; }
+    .line {
+      display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
+      padding: 12px 10px; border-radius: 10px;
+    }
+    .line:nth-child(odd) { background: var(--surface-2); }
+    .line .n { font-weight: 600; font-size: 14px; }
+    .line .u { font-size: 12px; color: var(--muted); }
+    .line .amt { font-family: var(--mono); font-weight: 600; font-size: 14px; text-align: right; }
+    .qty {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
+    }
+    .qty button {
+      width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); font-weight: 700; color: var(--ink);
+    }
+    .qty span { font-family: var(--mono); font-size: 13px; min-width: 1.5rem; text-align: center; }
+    .totals {
+      border-top: 1px solid var(--border); padding: 14px 16px 16px;
+      background: linear-gradient(180deg, #fff, #f7faf8);
+    }
+    .tot-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .tot-row.grand { color: var(--ink); font-size: 1.25rem; font-weight: 700; margin: 10px 0 14px; }
+    .tot-row.grand b { font-family: var(--mono); }
+    .pay {
+      display: block; width: 100%; border: 0; border-radius: 12px;
+      background: var(--pay); color: #fff; font: inherit; font-weight: 700;
+      font-size: 1.05rem; padding: 16px; letter-spacing: -0.01em;
+      box-shadow: 0 8px 20px rgba(15, 122, 74, 0.25);
+    }
+
+    .flow {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    @media (max-width: 800px) { .flow { grid-template-columns: 1fr 1fr; } }
+    .step {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px;
+    }
+    .step .n {
+      width: 24px; height: 24px; border-radius: 8px; background: var(--accent-soft);
+      color: var(--accent); font-size: 12px; font-weight: 700;
+      display: grid; place-items: center; margin-bottom: 8px;
+    }
+    .step b { display: block; margin-bottom: 4px; }
+    .step span { font-size: 13px; color: var(--muted); }
+
+    .compare {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    @media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px;
+    }
+    .card h3 { margin-top: 0; }
+    .card ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: 14px; }
+    .card.good { border-color: #b7dcc8; background: #f4fbf7; }
+    .card.bad { border-color: #e5c4c4; background: #fdf6f6; }
+
+    .keys {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      font-size: 13px;
+    }
+    @media (max-width: 700px) { .keys { grid-template-columns: 1fr; } }
+    .key {
+      display: flex; gap: 10px; align-items: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 12px;
+    }
+    kbd {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      background: var(--ink); color: #fff; padding: 4px 7px; border-radius: 6px;
+    }
+    footer {
+      margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 13px;
+    }
+    a.doc { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="eyebrow">Seruwit CRM · Module Design</p>
+    <h1>POS Kasir Toko</h1>
+    <p class="lede">
+      Terminal penjualan cepat untuk lokasi <strong>store</strong>: scan → keranjang → bayar → stok keluar.
+      Bukan Sales Order. Dirancang agar kasir menyelesaikan transaksi dalam hitungan detik.
+    </p>
+    <div class="meta">
+      <span class="chip"><strong>key</strong> pos</span>
+      <span class="chip"><strong>depends</strong> products · inventory</span>
+      <span class="chip"><strong>layout</strong> full-bleed terminal</span>
+      <span class="chip"><strong>spec</strong> <a class="doc" href="./pos-design.md">pos-design.md</a></span>
+    </div>
+
+    <section>
+      <h2>Prinsip produk</h2>
+      <p class="sec">Keputusan UX yang memandu setiap layar dan interaksi.</p>
+      <div class="principles">
+        <div class="principle"><b>Speed over features</b><span>Happy path bayar ≤ 4 langkah setelah scan selesai.</span></div>
+        <div class="principle"><b>One job per screen</b><span>Tanpa sidebar CRM. Hanya store, shift, jam, dan aksi kasir.</span></div>
+        <div class="principle"><b>Touch-first</b><span>Target ≥ 48px; shortcut keyboard untuk power user.</span></div>
+        <div class="principle"><b>Stock-honest</b><span>Stok toko terlihat; item habis tidak bisa dijual.</span></div>
+        <div class="principle"><b>Forgiving</b><span>Ubah qty &amp; parkir bebas; void butuh SPV.</span></div>
+        <div class="principle"><b>Calm pay CTA</b><span>Emerald untuk Bayar saja — bukan ungu / glow.</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Layar utama — Terminal</h2>
+      <p class="sec">Katalog kiri (~58%), keranjang kanan (~42%). CTA Bayar selalu terlihat.</p>
+
+      <div class="terminal" aria-label="Wireframe terminal POS">
+        <div class="t-bar">
+          <div>
+            <span class="store">Toko Menteng</span>
+            <span class="muted"> · Shift #12 · Kasir Sari · 14:32</span>
+          </div>
+          <div class="t-actions">
+            <button class="btn btn-ghost" type="button">Parkir</button>
+            <button class="btn" type="button">Riwayat</button>
+          </div>
+        </div>
+        <div class="t-body">
+          <div class="catalog">
+            <div class="search">
+              <span aria-hidden="true">⌕</span>
+              <input value="" placeholder="Scan barcode atau ketik nama / SKU…" readonly />
+              <span class="hint">F2 · Enter</span>
+            </div>
+            <div class="grid">
+              <div class="tile"><div class="ph">IMG</div><div class="name">Indomie Goreng 85g</div><div class="meta-row"><span class="price">3.500</span><span class="stock">48 pcs</span></div></div>
+              <div class="tile"><div class="ph">IMG</div><div class="name">Teh Botol Sosro 350ml</div><div class="meta-row"><span class="price">5.000</span><span class="stock">22 pcs</span></div></div>
+              <div class="tile"><div class="ph">IMG</div><div class="name">Kopiko Coffee Candy</div><div class="meta-row"><span class="price">8.500</span><span class="stock">15 pcs</span></div></div>
+              <div class="tile"><div class="ph">IMG</div><div class="name">Aqua 600ml</div><div class="meta-row"><span class="price">3.000</span><span class="stock">60 pcs</span></div></div>
+              <div class="tile"><div class="ph">IMG</div><div class="name">Rinso Cair 800ml</div><div class="meta-row"><span class="price">28.000</span><span class="stock">9 pcs</span></div></div>
+              <div class="tile dim"><div class="ph">IMG</div><div class="name">Chitato Sapi Panggang</div><div class="meta-row"><span class="price">12.000</span><span class="stock">0 — habis</span></div></div>
+            </div>
+          </div>
+          <div class="cart">
+            <div class="cart-head">Keranjang</div>
+            <div class="lines">
+              <div class="line">
+                <div>
+                  <div class="n">Indomie Goreng 85g</div>
+                  <div class="u">@ 3.500</div>
+                  <div class="qty"><button type="button">−</button><span>2</span><button type="button">+</button></div>
+                </div>
+                <div class="amt">7.000</div>
+              </div>
+              <div class="line">
+                <div>
+                  <div class="n">Teh Botol Sosro 350ml</div>
+                  <div class="u">@ 5.000</div>
+                  <div class="qty"><button type="button">−</button><span>1</span><button type="button">+</button></div>
+                </div>
+                <div class="amt">5.000</div>
+              </div>
+            </div>
+            <div class="totals">
+              <div class="tot-row"><span>Subtotal</span><span>12.000</span></div>
+              <div class="tot-row"><span>Pajak</span><span>1.320</span></div>
+              <div class="tot-row grand"><span>Total</span><b>13.320</b></div>
+              <button class="pay" type="button">Bayar · Rp 13.320</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Happy path</h2>
+      <p class="sec">Satu transaksi tunai tipikal.</p>
+      <div class="flow">
+        <div class="step"><div class="n">1</div><b>Buka shift</b><span>Modal awal kas. Terminal terkunci ke store.</span></div>
+        <div class="step"><div class="n">2</div><b>Scan / tap</b><span>Barang masuk keranjang; stok dicek live.</span></div>
+        <div class="step"><div class="n">3</div><b>Bayar</b><span>Tunai → nominal → kembalian besar &amp; jelas.</span></div>
+        <div class="step"><div class="n">4</div><b>Selesai</b><span>Stok out + struk + siap transaksi baru.</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>POS vs Sales Order</h2>
+      <div class="compare">
+        <div class="card good">
+          <h3>Pakai POS</h3>
+          <ul>
+            <li>Walk-in di toko / kasir</li>
+            <li>Bayar di tempat, butuh kembalian</li>
+            <li>Stok langsung dari store</li>
+            <li>Struk thermal 80mm</li>
+          </ul>
+        </div>
+        <div class="card bad">
+          <h3>Tetap pakai SO → GIN</h3>
+          <ul>
+            <li>Pesanan B2B / kredit tempo</li>
+            <li>Pengiriman terpisah / partial delivery</li>
+            <li>Reservasi stok gudang</li>
+            <li>Invoice formal multi-tahap</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Shortcut kasir</h2>
+      <div class="keys">
+        <div class="key"><kbd>F2</kbd> Fokus cari / scan</div>
+        <div class="key"><kbd>F4</kbd> Buka pembayaran</div>
+        <div class="key"><kbd>Enter</kbd> Tambah hasil tunggal</div>
+        <div class="key"><kbd>Esc</kbd> Tutup panel / batal</div>
+        <div class="key"><kbd>+/−</kbd> Ubah qty baris aktif</div>
+        <div class="key"><kbd>Del</kbd> Hapus baris</div>
+      </div>
+    </section>
+
+    <footer>
+      Spesifikasi lengkap (tabel, permission, stock movement, fase):
+      <a class="doc" href="./pos-design.md">docs/modules/pos-design.md</a>
+    </footer>
+  </div>
+</body>
+</html>

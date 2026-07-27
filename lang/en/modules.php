@@ -23,6 +23,7 @@ return [
     'promotions' => 'Trade Promotions',
     'bi' => 'Executive Dashboard',
     'outbound' => 'Outbound',
+    'pos' => 'POS',
     'billing' => 'Billing',
     'invoicing' => 'Invoicing',
     'rental' => 'Rental',

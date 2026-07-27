@@ -1,0 +1,146 @@
+<?php
+
+return [
+    'title' => 'POS',
+
+    'nav' => [
+        'terminal' => 'Terminal',
+        'shifts' => 'Shifts',
+        'sales' => 'Sales',
+    ],
+
+    'shift_status' => [
+        'open' => 'Open',
+        'closed' => 'Closed',
+    ],
+
+    'sale_status' => [
+        'completed' => 'Completed',
+        'voided' => 'Voided',
+        'refunded' => 'Refunded',
+    ],
+
+    'payment_methods' => [
+        'cash' => 'Cash',
+        'qris' => 'QRIS',
+        'transfer' => 'Transfer',
+        'card' => 'Card',
+        'other' => 'Other',
+    ],
+
+    'actions' => [
+        'open_shift' => 'Open shift',
+        'close_shift' => 'Close shift',
+        'pay' => 'Pay',
+        'confirm_pay' => 'Confirm payment',
+        'new_sale' => 'New sale',
+        'print_receipt' => 'Print',
+        'void' => 'Void',
+        'back_terminal' => 'Back to terminal',
+        'park' => 'Park',
+        'clear_cart' => 'Clear cart',
+    ],
+
+    'terminal' => [
+        'title' => 'Cashier terminal',
+        'search_placeholder' => 'Scan or search product…',
+        'cart' => 'Cart',
+        'empty_cart' => 'Scan a product to start',
+        'subtotal' => 'Subtotal',
+        'tax' => 'Tax',
+        'total' => 'Total',
+        'change' => 'Change',
+        'tendered' => 'Amount tendered',
+        'stock' => 'Stock',
+        'out_of_stock' => 'Out of stock',
+        'shift_label' => 'Shift #:id',
+        'cashier' => 'Cashier',
+        'no_shift' => 'Open a shift to start selling',
+        'payment' => 'Payment',
+        'success_title' => 'Paid',
+        'success_receipt' => 'Receipt :code',
+        'reference' => 'Reference',
+        'held_restored' => 'Parked cart restored',
+    ],
+
+    'shifts' => [
+        'index' => [
+            'title' => 'POS shifts',
+            'head' => 'Shifts',
+            'open' => 'Open shift',
+            'all_statuses' => 'All statuses',
+            'all_stores' => 'All stores',
+            'empty' => 'No shifts yet.',
+            'columns' => [
+                'id' => 'Shift',
+                'store' => 'Store',
+                'opened_by' => 'Opened by',
+                'opened_at' => 'Opened',
+                'sales' => 'Sales',
+                'status' => 'Status',
+            ],
+        ],
+        'open_form' => [
+            'title' => 'Open shift',
+            'store' => 'Store *',
+            'opening_float' => 'Opening float *',
+            'notes' => 'Notes',
+            'no_stores' => 'No active stores available.',
+        ],
+        'show' => [
+            'title' => 'Shift #:id',
+            'expected_cash' => 'Expected cash',
+            'counted' => 'Cash counted',
+            'variance' => 'Variance',
+            'close_title' => 'Close shift',
+            'sales' => 'Sales in this shift',
+            'no_sales' => 'No sales yet.',
+        ],
+    ],
+
+    'sales' => [
+        'index' => [
+            'title' => 'POS sales',
+            'head' => 'Sales history',
+            'search_placeholder' => 'Search receipt…',
+            'all_statuses' => 'All statuses',
+            'all_stores' => 'All stores',
+            'empty' => 'No sales yet.',
+            'columns' => [
+                'code' => 'Receipt',
+                'store' => 'Store',
+                'cashier' => 'Cashier',
+                'total' => 'Total',
+                'method' => 'Payment',
+                'sold_at' => 'Sold at',
+                'status' => 'Status',
+            ],
+        ],
+        'show' => [
+            'title' => 'Receipt :code',
+            'items' => 'Items',
+            'payments' => 'Payments',
+            'void_confirm' => 'Void this sale and restore stock?',
+            'void_reason' => 'Void reason',
+            'voided_by' => 'Voided by',
+        ],
+    ],
+
+    'messages' => [
+        'shift_opened' => 'Shift #:id opened.',
+        'shift_closed_ok' => 'Shift closed.',
+        'shift_already_open' => 'This store already has an open shift.',
+        'shift_already_closed' => 'This shift is already closed.',
+        'sale_completed' => 'Sale :code completed.',
+        'sale_voided' => 'Sale voided and stock restored.',
+        'sale_not_voidable' => 'Only completed sales can be voided.',
+        'cart_empty' => 'Cart is empty.',
+        'insufficient_tender' => 'Amount tendered is less than the total.',
+        'insufficient_stock' => ':name — only :available available in this store.',
+        'product_inactive' => ':name is not active.',
+        'invalid_quantity' => 'Quantity must be greater than zero.',
+        'warehouse_not_store' => 'POS can only sell from a store warehouse.',
+        'warehouse_cannot_sell' => 'This location cannot sell stock.',
+        'shift_is_closed' => 'The shift is closed.',
+    ],
+];

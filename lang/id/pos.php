@@ -1,0 +1,146 @@
+<?php
+
+return [
+    'title' => 'POS',
+
+    'nav' => [
+        'terminal' => 'Terminal',
+        'shifts' => 'Shift',
+        'sales' => 'Penjualan',
+    ],
+
+    'shift_status' => [
+        'open' => 'Terbuka',
+        'closed' => 'Tertutup',
+    ],
+
+    'sale_status' => [
+        'completed' => 'Selesai',
+        'voided' => 'Dibatalkan',
+        'refunded' => 'Direfund',
+    ],
+
+    'payment_methods' => [
+        'cash' => 'Tunai',
+        'qris' => 'QRIS',
+        'transfer' => 'Transfer',
+        'card' => 'Kartu',
+        'other' => 'Lainnya',
+    ],
+
+    'actions' => [
+        'open_shift' => 'Buka shift',
+        'close_shift' => 'Tutup shift',
+        'pay' => 'Bayar',
+        'confirm_pay' => 'Konfirmasi bayar',
+        'new_sale' => 'Transaksi baru',
+        'print_receipt' => 'Cetak',
+        'void' => 'Void',
+        'back_terminal' => 'Kembali ke terminal',
+        'park' => 'Parkir',
+        'clear_cart' => 'Kosongkan',
+    ],
+
+    'terminal' => [
+        'title' => 'Terminal kasir',
+        'search_placeholder' => 'Scan atau cari produk…',
+        'cart' => 'Keranjang',
+        'empty_cart' => 'Scan barang untuk mulai',
+        'subtotal' => 'Subtotal',
+        'tax' => 'Pajak',
+        'total' => 'Total',
+        'change' => 'Kembalian',
+        'tendered' => 'Uang diterima',
+        'stock' => 'Stok',
+        'out_of_stock' => 'Stok habis',
+        'shift_label' => 'Shift #:id',
+        'cashier' => 'Kasir',
+        'no_shift' => 'Buka shift untuk mulai menjual',
+        'payment' => 'Pembayaran',
+        'success_title' => 'Lunas',
+        'success_receipt' => 'Struk :code',
+        'reference' => 'Referensi',
+        'held_restored' => 'Keranjang parkir dipulihkan',
+    ],
+
+    'shifts' => [
+        'index' => [
+            'title' => 'Shift POS',
+            'head' => 'Shift',
+            'open' => 'Buka shift',
+            'all_statuses' => 'Semua status',
+            'all_stores' => 'Semua toko',
+            'empty' => 'Belum ada shift.',
+            'columns' => [
+                'id' => 'Shift',
+                'store' => 'Toko',
+                'opened_by' => 'Dibuka oleh',
+                'opened_at' => 'Dibuka',
+                'sales' => 'Penjualan',
+                'status' => 'Status',
+            ],
+        ],
+        'open_form' => [
+            'title' => 'Buka shift',
+            'store' => 'Toko *',
+            'opening_float' => 'Modal kas awal *',
+            'notes' => 'Catatan',
+            'no_stores' => 'Tidak ada toko aktif.',
+        ],
+        'show' => [
+            'title' => 'Shift #:id',
+            'expected_cash' => 'Kas diharapkan',
+            'counted' => 'Kas dihitung',
+            'variance' => 'Selisih',
+            'close_title' => 'Tutup shift',
+            'sales' => 'Penjualan di shift ini',
+            'no_sales' => 'Belum ada penjualan.',
+        ],
+    ],
+
+    'sales' => [
+        'index' => [
+            'title' => 'Penjualan POS',
+            'head' => 'Riwayat penjualan',
+            'search_placeholder' => 'Cari struk…',
+            'all_statuses' => 'Semua status',
+            'all_stores' => 'Semua toko',
+            'empty' => 'Belum ada penjualan.',
+            'columns' => [
+                'code' => 'Struk',
+                'store' => 'Toko',
+                'cashier' => 'Kasir',
+                'total' => 'Total',
+                'method' => 'Bayar',
+                'sold_at' => 'Waktu',
+                'status' => 'Status',
+            ],
+        ],
+        'show' => [
+            'title' => 'Struk :code',
+            'items' => 'Item',
+            'payments' => 'Pembayaran',
+            'void_confirm' => 'Void penjualan ini dan kembalikan stok?',
+            'void_reason' => 'Alasan void',
+            'voided_by' => 'Divoid oleh',
+        ],
+    ],
+
+    'messages' => [
+        'shift_opened' => 'Shift #:id dibuka.',
+        'shift_closed_ok' => 'Shift ditutup.',
+        'shift_already_open' => 'Toko ini sudah punya shift terbuka.',
+        'shift_already_closed' => 'Shift ini sudah ditutup.',
+        'sale_completed' => 'Penjualan :code selesai.',
+        'sale_voided' => 'Penjualan divoid dan stok dikembalikan.',
+        'sale_not_voidable' => 'Hanya penjualan selesai yang bisa divoid.',
+        'cart_empty' => 'Keranjang kosong.',
+        'insufficient_tender' => 'Uang diterima kurang dari total.',
+        'insufficient_stock' => ':name — stok tersedia hanya :available di toko ini.',
+        'product_inactive' => ':name tidak aktif.',
+        'invalid_quantity' => 'Kuantitas harus lebih dari nol.',
+        'warehouse_not_store' => 'POS hanya bisa menjual dari gudang jenis toko.',
+        'warehouse_cannot_sell' => 'Lokasi ini tidak boleh menjual stok.',
+        'shift_is_closed' => 'Shift sudah ditutup.',
+    ],
+];

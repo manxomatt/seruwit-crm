@@ -67,6 +67,7 @@ return [
         'media',
         'orders',
         'outbound',
+        'pos',
         'pages',
         'partners',
         'plans',

@@ -32,6 +32,7 @@ return [
         Modules\TradePromotions\TradePromotionsModule::class,
         Modules\ExecutiveDashboard\ExecutiveDashboardModule::class,
         Modules\Outbound\OutboundModule::class,
+        Modules\Pos\PosModule::class,
         Modules\Routing\RoutingModule::class,
         Modules\Maintenance\MaintenanceModule::class,
         Modules\Orders\OrdersModule::class,

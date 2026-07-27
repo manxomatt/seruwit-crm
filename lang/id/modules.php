@@ -23,6 +23,7 @@ return [
     'promotions' => 'Promosi Dagang',
     'bi' => 'Dashboard Eksekutif',
     'outbound' => 'Outbound',
+    'pos' => 'POS',
     'billing' => 'Penagihan',
     'invoicing' => 'Faktur',
     'rental' => 'Sewa',
