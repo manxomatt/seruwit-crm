@@ -12,12 +12,14 @@ return [
         'new_policy' => 'Kebijakan Baru',
         'pending_banner' => ':count permintaan menunggu persetujuan.',
         'empty' => 'Tidak ada permintaan.',
+        'all_triggers' => 'Semua pemicu',
         'columns' => [
             'code' => 'Kode',
             'policy' => 'Kebijakan',
             'trigger' => 'Pemicu',
             'level' => 'Level',
             'by' => 'Oleh',
+            'date' => 'Tanggal',
             'status' => 'Status',
         ],
     ],
@@ -47,6 +49,8 @@ return [
         'edit' => 'Ubah',
         'active' => 'Aktif',
         'inactive' => 'Nonaktif',
+        'pending_count' => ':count pending',
+        'delete_confirm' => 'Hapus kebijakan ":name"? Tindakan ini tidak dapat dibatalkan.',
         'columns' => [
             'name' => 'Nama',
             'trigger' => 'Pemicu',
@@ -72,18 +76,19 @@ return [
         'create' => 'Buat',
         'update' => 'Simpan',
         'approver_types' => [
-            'permission' => 'permission',
-            'role' => 'role',
-            'user' => 'user',
+            'permission' => 'Permission',
+            'role' => 'Role',
+            'user' => 'User',
         ],
     ],
 
     'status' => [
-        'pending' => 'pending',
-        'approved' => 'approved',
-        'rejected' => 'rejected',
-        'commented' => 'commented',
-        'all' => 'semua',
+        'pending' => 'Pending',
+        'approved' => 'Disetujui',
+        'rejected' => 'Ditolak',
+        'cancelled' => 'Dibatalkan',
+        'commented' => 'Dikomentari',
+        'all' => 'Semua status',
     ],
 
     'triggers' => [

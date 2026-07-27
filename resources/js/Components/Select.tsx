@@ -18,6 +18,8 @@ interface Props {
     noResultsText?: string;
     disabled?: boolean;
     searchable?: boolean;
+    /** Cap visible options in searchable mode (empty query and search results). */
+    maxVisibleOptions?: number;
     className?: string;
 }
 
@@ -49,6 +51,7 @@ function SearchableSelect({
     emptyText = 'No options available',
     noResultsText = 'No matching results',
     disabled = false,
+    maxVisibleOptions,
     className = '',
 }: Omit<Props, 'searchable'>): JSX.Element {
     const [query, setQuery] = useState('');
@@ -65,7 +68,9 @@ function SearchableSelect({
     }, [options, needle]);
 
     const visible = useMemo(() => {
-        const limit = needle === '' ? DEFAULT_VISIBLE_OPTIONS : SEARCH_VISIBLE_OPTIONS;
+        const emptyLimit = maxVisibleOptions ?? DEFAULT_VISIBLE_OPTIONS;
+        const searchLimit = maxVisibleOptions ?? SEARCH_VISIBLE_OPTIONS;
+        const limit = needle === '' ? emptyLimit : searchLimit;
         let list = filtered.slice(0, limit);
 
         if (value && !list.some((option) => option.value === value)) {
@@ -79,7 +84,7 @@ function SearchableSelect({
             list,
             hiddenCount: Math.max(0, filtered.length - list.length),
         };
-    }, [filtered, needle, value]);
+    }, [filtered, needle, value, maxVisibleOptions]);
 
     return (
         <Combobox
@@ -157,6 +162,7 @@ export default function Select({
     noResultsText = 'No matching results',
     disabled = false,
     searchable = false,
+    maxVisibleOptions,
     className = '',
 }: Props): JSX.Element {
     if (searchable) {
@@ -171,6 +177,7 @@ export default function Select({
                 emptyText={emptyText}
                 noResultsText={noResultsText}
                 disabled={disabled}
+                maxVisibleOptions={maxVisibleOptions}
                 className={className}
             />
         );

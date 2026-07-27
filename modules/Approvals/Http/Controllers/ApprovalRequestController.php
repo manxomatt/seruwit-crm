@@ -21,21 +21,23 @@ class ApprovalRequestController extends Controller
 
     public function index(): Response
     {
-        $status = request('status', 'pending');
+        $status = request()->has('status')
+            ? (string) request('status')
+            : '';
 
         $requests = ApprovalRequest::query()
             ->with(['policy:id,name,trigger_type', 'requester:id,name'])
             ->when($status !== '' && $status !== 'all', fn ($q) => $q->where('status', $status))
             ->when(request('trigger_type'), fn ($q, $trigger) => $q->where('trigger_type', $trigger))
             ->latest('id')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Modules/Approvals/Requests/Index', [
             'requests' => $requests,
             'triggers' => ApprovalTriggers::catalog(),
             'filters' => [
-                'status' => $status,
+                'status' => $status === '' ? null : $status,
                 'trigger_type' => request('trigger_type'),
             ],
             'can' => $this->abilitiesFor(),

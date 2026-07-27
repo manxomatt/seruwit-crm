@@ -236,14 +236,33 @@ export default function Edit({ product, units, brands, productTypes, tags, attri
                                 <>
                                     <div>
                                         <InputLabel htmlFor="brand_id" value={t('products.fields.brand')} />
-                                        <Select id="brand_id" className="mt-1" value={data.brand_id} onChange={(value) => setData('brand_id', value)} placeholder={t('products.placeholders.select_brand')}
-                                            options={brands.map((b) => ({ value: String(b.id), label: `${b.name}${b.principal ? ` (${b.principal.name})` : ''}` }))} />
+                                        <Select
+                                            id="brand_id"
+                                            className="mt-1"
+                                            value={data.brand_id}
+                                            onChange={(value) => setData('brand_id', value)}
+                                            placeholder={t('products.placeholders.select_brand')}
+                                            searchable
+                                            maxVisibleOptions={10}
+                                            options={brands.map((b) => ({
+                                                value: String(b.id),
+                                                label: `${b.name}${b.principal ? ` (${b.principal.name})` : ''}`,
+                                            }))}
+                                        />
                                         <InputError message={errors.brand_id} className="mt-2" />
                                     </div>
                                     <div>
                                         <InputLabel htmlFor="product_type_id" value={t('products.fields.product_type')} />
-                                        <Select id="product_type_id" className="mt-1" value={data.product_type_id} onChange={(value) => setData('product_type_id', value)} placeholder={t('products.placeholders.select_type')}
-                                            options={productTypes.map((pt) => ({ value: String(pt.id), label: pt.name }))} />
+                                        <Select
+                                            id="product_type_id"
+                                            className="mt-1"
+                                            value={data.product_type_id}
+                                            onChange={(value) => setData('product_type_id', value)}
+                                            placeholder={t('products.placeholders.select_type')}
+                                            searchable
+                                            maxVisibleOptions={10}
+                                            options={productTypes.map((pt) => ({ value: String(pt.id), label: pt.name }))}
+                                        />
                                         <InputError message={errors.product_type_id} className="mt-2" />
                                     </div>
                                 </>

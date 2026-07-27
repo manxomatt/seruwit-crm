@@ -58,6 +58,8 @@ export default function Edit({ brand, principals }: Props): JSX.Element {
                                 value={data.principal_id}
                                 onChange={(value) => setData('principal_id', value)}
                                 placeholder={t('products.placeholders.select_principal')}
+                                searchable
+                                maxVisibleOptions={10}
                                 options={principals.map((p) => ({ value: String(p.id), label: p.name }))}
                             />
                             <InputError message={errors.principal_id} className="mt-2" />

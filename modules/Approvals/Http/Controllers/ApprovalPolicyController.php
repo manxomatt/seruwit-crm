@@ -29,7 +29,8 @@ class ApprovalPolicyController extends Controller
                 ->withCount('levels')
                 ->withCount(['requests as pending_requests_count' => fn ($q) => $q->where('status', 'pending')])
                 ->orderBy('name')
-                ->get(),
+                ->paginate(15)
+                ->withQueryString(),
             'triggers' => ApprovalTriggers::catalog(),
             'can' => $this->abilitiesFor(),
         ]);

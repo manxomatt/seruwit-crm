@@ -108,6 +108,8 @@ export default function Index({ brands, principals, filters, can }: Props): JSX.
                             value={filters.principal_id || ''}
                             onChange={(v) => applyFilters({ principal_id: v || undefined })}
                             placeholder={t('products.placeholders.select_principal')}
+                            searchable
+                            maxVisibleOptions={10}
                             options={[
                                 { value: '', label: t('products.placeholders.select_principal') },
                                 ...principals.map((p) => ({ value: String(p.id), label: p.name })),

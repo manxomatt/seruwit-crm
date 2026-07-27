@@ -12,12 +12,14 @@ return [
         'new_policy' => 'New Policy',
         'pending_banner' => ':count request(s) awaiting approval.',
         'empty' => 'No requests.',
+        'all_triggers' => 'All triggers',
         'columns' => [
             'code' => 'Code',
             'policy' => 'Policy',
             'trigger' => 'Trigger',
             'level' => 'Level',
             'by' => 'By',
+            'date' => 'Date',
             'status' => 'Status',
         ],
     ],
@@ -47,6 +49,8 @@ return [
         'edit' => 'Edit',
         'active' => 'Active',
         'inactive' => 'Inactive',
+        'pending_count' => ':count pending',
+        'delete_confirm' => 'Delete policy ":name"? This cannot be undone.',
         'columns' => [
             'name' => 'Name',
             'trigger' => 'Trigger',
@@ -72,18 +76,19 @@ return [
         'create' => 'Create',
         'update' => 'Update',
         'approver_types' => [
-            'permission' => 'permission',
-            'role' => 'role',
-            'user' => 'user',
+            'permission' => 'Permission',
+            'role' => 'Role',
+            'user' => 'User',
         ],
     ],
 
     'status' => [
-        'pending' => 'pending',
-        'approved' => 'approved',
-        'rejected' => 'rejected',
-        'commented' => 'commented',
-        'all' => 'all',
+        'pending' => 'Pending',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+        'cancelled' => 'Cancelled',
+        'commented' => 'Commented',
+        'all' => 'All statuses',
     ],
 
     'triggers' => [
