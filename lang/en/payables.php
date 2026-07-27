@@ -67,5 +67,29 @@ return [
         'title' => 'Bill Payments',
         'create' => 'Record Payment',
         'empty' => 'No payments yet.',
+        'open_bills' => 'Open bills',
+        'no_open_bills' => 'No open bills for this supplier.',
+    ],
+
+    'fields' => [
+        'supplier' => 'Supplier',
+        'payment_date' => 'Payment date',
+        'method' => 'Method',
+        'amount' => 'Amount',
+        'reference' => 'Reference',
+        'notes' => 'Notes',
+    ],
+
+    'placeholders' => [
+        'select_supplier' => 'Select supplier',
+        'search_supplier' => 'Search supplier…',
+        'select_method' => 'Select method',
+    ],
+
+    'methods' => [
+        'cash' => 'Cash',
+        'transfer' => 'Transfer',
+        'giro' => 'Giro',
+        'other' => 'Other',
     ],
 ];

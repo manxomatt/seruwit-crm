@@ -67,5 +67,29 @@ return [
         'title' => 'Pembayaran Tagihan',
         'create' => 'Catat Pembayaran',
         'empty' => 'Belum ada pembayaran.',
+        'open_bills' => 'Tagihan terbuka',
+        'no_open_bills' => 'Tidak ada tagihan terbuka untuk supplier ini.',
+    ],
+
+    'fields' => [
+        'supplier' => 'Supplier',
+        'payment_date' => 'Tanggal pembayaran',
+        'method' => 'Metode',
+        'amount' => 'Jumlah',
+        'reference' => 'Referensi',
+        'notes' => 'Catatan',
+    ],
+
+    'placeholders' => [
+        'select_supplier' => 'Pilih supplier',
+        'search_supplier' => 'Cari supplier…',
+        'select_method' => 'Pilih metode',
+    ],
+
+    'methods' => [
+        'cash' => 'Tunai',
+        'transfer' => 'Transfer',
+        'giro' => 'Giro',
+        'other' => 'Lainnya',
     ],
 ];

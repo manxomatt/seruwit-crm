@@ -25,7 +25,7 @@ class BillPaymentController extends Controller
             ->with('partner:id,code,name')
             ->latest('payment_date')
             ->latest('id')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return inertia('Modules/Payables/Payments/Index', [

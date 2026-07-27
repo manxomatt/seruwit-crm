@@ -3,7 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { formatMoney } from '@/utils/money';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
 interface Bill {
     id: number;
@@ -16,8 +16,17 @@ interface Bill {
     good_receipt_note?: { id: number; grn_number: string } | null;
 }
 
+interface PaginatedBills {
+    data: Bill[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+}
+
 interface Props {
-    bills: { data: Bill[]; links: Array<{ url: string | null; label: string; active: boolean }> };
+    bills: PaginatedBills;
     can: { create: boolean; update: boolean };
 }
 
@@ -84,6 +93,36 @@ export default function Index({ bills, can }: Props): JSX.Element {
                         ))}
                     </tbody>
                 </table>
+
+                {bills.last_page > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
+                        <p className="text-sm text-gray-700">
+                            {t('common.showing_results', {
+                                from: (bills.current_page - 1) * bills.per_page + 1,
+                                to: Math.min(bills.current_page * bills.per_page, bills.total),
+                                total: bills.total,
+                            })}
+                        </p>
+                        <div className="flex gap-1">
+                            {bills.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded px-3 py-1 text-sm ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white'
+                                            : link.url
+                                              ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </DynamicLayout>
     );

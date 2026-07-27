@@ -31,7 +31,7 @@ class SupplierBillController extends Controller
             ->when($request->string('status')->toString(), fn ($q, $status) => $q->where('status', $status))
             ->latest('bill_date')
             ->latest('id')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return inertia('Modules/Payables/Bills/Index', [
