@@ -7,11 +7,12 @@ use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Inventory\Support\AccessibleWarehouses;
-use Modules\Inventory\Support\StockMovementRecorder;
+use Modules\Inventory\Support\SellableStock;
 use Modules\Inventory\Support\WarehouseKind;
 use Modules\Pos\Models\PosSale;
 use Modules\Pos\Models\PosShift;
@@ -40,21 +41,13 @@ class TerminalController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'kind']);
 
-        $favorites = [];
+        $catalog = [];
 
         if ($openShift !== null) {
-            $favorites = $this->productPayload(
-                Product::query()
-                    ->where('status', 'active')
-                    ->where(function ($q): void {
-                        $q->where('is_favorite', true)
-                            ->orWhereNotNull('barcode');
-                    })
-                    ->orderByDesc('is_favorite')
-                    ->orderBy('name')
-                    ->limit(48)
-                    ->get(),
-                (int) $openShift->warehouse_id,
+            $warehouseId = (int) $openShift->warehouse_id;
+            $catalog = $this->productPayload(
+                $this->catalogProductsForStore($warehouseId),
+                $warehouseId,
             );
         }
 
@@ -71,7 +64,7 @@ class TerminalController extends Controller
         return Inertia::render('Modules/Pos/Terminal/Show', [
             'shift' => $openShift?->load(['warehouse:id,name', 'opener:id,name']),
             'stores' => $stores,
-            'favorites' => $favorites,
+            'favorites' => $catalog,
             'lastSale' => $lastSale,
             'tax' => [
                 'enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
@@ -116,15 +109,60 @@ class TerminalController extends Controller
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Product>  $products
+     * Active sellable catalog for a store: merchandise with on-hand at this
+     * warehouse, plus services. Favorites float to the top.
+     *
+     * @return Collection<int, Product>
+     */
+    protected function catalogProductsForStore(int $warehouseId): Collection
+    {
+        $stockedIds = SellableStock::query()
+            ->where('warehouse_id', $warehouseId)
+            ->select('product_id')
+            ->groupBy('product_id')
+            ->havingRaw('SUM(on_hand - reserved) > 0')
+            ->pluck('product_id');
+
+        return Product::query()
+            ->where('status', 'active')
+            ->where(function ($query) use ($stockedIds): void {
+                $query->whereIn('id', $stockedIds)
+                    ->orWhere('category', 'service');
+            })
+            ->orderByDesc('is_favorite')
+            ->orderBy('name')
+            ->limit(96)
+            ->get();
+    }
+
+    /**
+     * @param  Collection<int, Product>  $products
      * @return list<array<string, mixed>>
      */
-    protected function productPayload($products, int $warehouseId): array
+    protected function productPayload(Collection $products, int $warehouseId): array
     {
-        return $products->map(function (Product $product) use ($warehouseId): array {
+        $merchandiseIds = $products
+            ->reject(fn (Product $product): bool => $product->isService())
+            ->pluck('id')
+            ->all();
+
+        $availability = $merchandiseIds === []
+            ? collect()
+            : SellableStock::query()
+                ->where('warehouse_id', $warehouseId)
+                ->whereIn('product_id', $merchandiseIds)
+                ->get(['product_id', 'on_hand', 'reserved'])
+                ->groupBy(fn ($level): int => (int) $level->product_id)
+                ->map(function ($levels): float {
+                    return max(0, (float) $levels->sum(
+                        fn ($level): float => (float) $level->on_hand - (float) $level->reserved
+                    ));
+                });
+
+        return $products->map(function (Product $product) use ($availability): array {
             $available = $product->isService()
                 ? null
-                : (float) StockMovementRecorder::availableOnHand($product->id, $warehouseId);
+                : (float) ($availability->get($product->id) ?? 0);
 
             return [
                 'id' => $product->id,

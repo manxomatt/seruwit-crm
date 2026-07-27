@@ -70,6 +70,76 @@ class PosSaleWorkflowTest extends TestCase
             ->assertRedirect(route('module.pos.shifts.index', ['open' => 1], false));
     }
 
+    public function test_terminal_catalog_lists_store_stock_with_available_qty(): void
+    {
+        ['store' => $store, 'product' => $inStock, 'shift' => $shift, 'user' => $user, 'location' => $location] = $this->seededShift(12);
+
+        $outOfStock = Product::factory()->create([
+            'category' => 'merchandise',
+            'status' => 'active',
+            'price' => 5000,
+            'name' => 'ZZ Empty Stock Item',
+        ]);
+
+        StockLevel::factory()->create([
+            'product_id' => $outOfStock->id,
+            'warehouse_id' => $store->id,
+            'location_id' => $location->id,
+            'batch_number' => 'LOT-EMPTY',
+            'expiry_date' => now()->addMonths(3)->toDateString(),
+            'on_hand' => 0,
+            'reserved' => 0,
+        ]);
+
+        $otherStore = Warehouse::factory()->asStore()->create(['status' => 'active']);
+        $otherStore->createDefaultLocations();
+        $otherLocation = $otherStore->locations()->where('code', 'STOCK')->first();
+        $onlyElsewhere = Product::factory()->create([
+            'category' => 'merchandise',
+            'status' => 'active',
+            'price' => 8000,
+            'name' => 'Only At Other Store',
+        ]);
+        StockLevel::factory()->create([
+            'product_id' => $onlyElsewhere->id,
+            'warehouse_id' => $otherStore->id,
+            'location_id' => $otherLocation->id,
+            'batch_number' => 'LOT-OTHER',
+            'expiry_date' => now()->addMonths(3)->toDateString(),
+            'on_hand' => 30,
+            'reserved' => 0,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('module.pos.terminal', [], false))
+            ->assertOk();
+
+        $favorites = $response->original->getData()['page']['props']['favorites'];
+        $ids = collect($favorites)->pluck('id')->all();
+
+        $this->assertContains($inStock->id, $ids);
+        $this->assertNotContains($outOfStock->id, $ids);
+        $this->assertNotContains($onlyElsewhere->id, $ids);
+
+        $row = collect($favorites)->firstWhere('id', $inStock->id);
+        $this->assertSame(12.0, (float) $row['available']);
+        $this->assertSame($store->id, $shift->warehouse_id);
+    }
+
+    public function test_product_search_includes_available_for_shift_store(): void
+    {
+        ['store' => $store, 'product' => $product, 'user' => $user] = $this->seededShift(7);
+
+        $this->actingAs($user)
+            ->getJson(route('module.pos.products.search', [
+                'q' => $product->name,
+                'warehouse_id' => $store->id,
+            ], false))
+            ->assertOk()
+            ->assertJsonPath('products.0.id', $product->id)
+            ->assertJsonPath('products.0.available', 7);
+    }
+
     public function test_opening_shift_and_completing_cash_sale_deducts_stock(): void
     {
         ['store' => $store, 'product' => $product, 'user' => $user] = $this->seededShift(50);

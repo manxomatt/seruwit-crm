@@ -449,9 +449,9 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
                                 {t('pos.actions.park')}
                             </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4">
-                            {searching && <p className="mb-3 text-sm text-[var(--pos-muted)]">…</p>}
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                        <div className="flex-1 overflow-y-auto p-3">
+                            {searching && <p className="mb-2 text-xs text-[var(--pos-muted)]">…</p>}
+                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
                                 {results.map((product) => {
                                     const disabled =
                                         !product.is_service && product.available !== null && product.available <= 0;
@@ -462,31 +462,33 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
                                             type="button"
                                             disabled={disabled || !can.sell}
                                             onClick={() => addProduct(product)}
-                                            className={`flex flex-col overflow-hidden rounded-xl border bg-white text-left transition ${
+                                            className={`flex min-h-[7.5rem] flex-col overflow-hidden rounded-lg border bg-white text-left transition ${
                                                 disabled
                                                     ? 'cursor-not-allowed opacity-50'
-                                                    : 'hover:-translate-y-0.5 hover:border-[var(--pos-accent)] hover:shadow-sm'
+                                                    : 'hover:border-[var(--pos-accent)] hover:shadow-sm'
                                             }`}
                                         >
-                                            <div className="aspect-[4/3] bg-slate-100">
+                                            <div className="aspect-square max-h-20 w-full shrink-0 bg-slate-100 sm:max-h-24">
                                                 {product.image ? (
                                                     <img src={product.image} alt="" className="h-full w-full object-cover" />
                                                 ) : (
-                                                    <div className="flex h-full items-center justify-center text-2xl font-semibold text-slate-400">
+                                                    <div className="flex h-full items-center justify-center text-lg font-semibold text-slate-400">
                                                         {product.name.slice(0, 1).toUpperCase()}
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="flex flex-1 flex-col gap-1 p-3">
-                                                <p className="line-clamp-2 text-sm font-medium leading-snug">{product.name}</p>
+                                            <div className="flex min-h-0 flex-1 flex-col gap-0.5 p-1.5">
+                                                <p className="line-clamp-2 text-[11px] font-medium leading-tight sm:text-xs">
+                                                    {product.name}
+                                                </p>
                                                 <p
-                                                    className="mt-auto text-sm font-semibold tabular-nums text-[var(--pos-ink)]"
+                                                    className="mt-auto text-[11px] font-semibold tabular-nums text-[var(--pos-ink)] sm:text-xs"
                                                     style={{ fontFamily: '"IBM Plex Mono", ui-monospace, monospace' }}
                                                 >
                                                     {formatMoney(product.price)}
                                                 </p>
                                                 {!product.is_service && (
-                                                    <p className="text-xs text-[var(--pos-muted)]">
+                                                    <p className="text-[10px] leading-tight text-[var(--pos-muted)]">
                                                         {t('pos.terminal.stock')}: {product.available ?? '—'}
                                                     </p>
                                                 )}
