@@ -39,6 +39,8 @@ return [
         'back_terminal' => 'Back to terminal',
         'park' => 'Park',
         'clear_cart' => 'Clear cart',
+        'enter_fullscreen' => 'Full screen',
+        'exit_fullscreen' => 'Exit full screen',
     ],
 
     'terminal' => [

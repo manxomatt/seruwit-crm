@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { CSSProperties, PropsWithChildren, ReactNode } from 'react';
+import { CSSProperties, PropsWithChildren, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 
@@ -11,16 +11,133 @@ interface Props {
     title?: string;
     header?: ReactNode;
     fullBleed?: boolean;
+    /** Show enter/exit browser fullscreen control (cashier terminal). */
+    allowFullscreen?: boolean;
+}
+
+function ExpandIcon(): JSX.Element {
+    return (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" />
+        </svg>
+    );
+}
+
+function CompressIcon(): JSX.Element {
+    return (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 4H5v4M15 4h4v4M9 20H5v-4M15 20h4v-4" />
+        </svg>
+    );
+}
+
+function getFullscreenElement(): Element | null {
+    const doc = document as Document & {
+        webkitFullscreenElement?: Element | null;
+    };
+
+    return document.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+}
+
+async function requestFullscreen(el: HTMLElement): Promise<void> {
+    const anyEl = el as HTMLElement & {
+        webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+
+    if (el.requestFullscreen) {
+        await el.requestFullscreen();
+        return;
+    }
+
+    if (anyEl.webkitRequestFullscreen) {
+        await anyEl.webkitRequestFullscreen();
+    }
+}
+
+async function exitFullscreen(): Promise<void> {
+    const doc = document as Document & {
+        webkitExitFullscreen?: () => Promise<void> | void;
+    };
+
+    if (document.exitFullscreen) {
+        await document.exitFullscreen();
+        return;
+    }
+
+    if (doc.webkitExitFullscreen) {
+        await doc.webkitExitFullscreen();
+    }
 }
 
 /**
  * Full-viewport POS chrome — no CRM sidebar. Cool gray-blue ambient with
  * slate accent; pay CTAs stay emerald on the terminal page itself.
  */
-export default function PosLayout({ title, header, fullBleed = false, children }: PropsWithChildren<Props>): JSX.Element {
+export default function PosLayout({
+    title,
+    header,
+    fullBleed = false,
+    allowFullscreen = false,
+    children,
+}: PropsWithChildren<Props>): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { flash } = usePage().props as unknown as FlashProps;
+    const rootRef = useRef<HTMLDivElement>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const syncFullscreen = useCallback((): void => {
+        const root = rootRef.current;
+        setIsFullscreen(Boolean(root && getFullscreenElement() === root));
+    }, []);
+
+    useEffect(() => {
+        if (!allowFullscreen) {
+            return;
+        }
+
+        const events = ['fullscreenchange', 'webkitfullscreenchange'] as const;
+        events.forEach((event) => document.addEventListener(event, syncFullscreen));
+        syncFullscreen();
+
+        return () => {
+            events.forEach((event) => document.removeEventListener(event, syncFullscreen));
+        };
+    }, [allowFullscreen, syncFullscreen]);
+
+    const toggleFullscreen = useCallback(async (): Promise<void> => {
+        const root = rootRef.current;
+        if (!root) {
+            return;
+        }
+
+        try {
+            if (getFullscreenElement() === root) {
+                await exitFullscreen();
+            } else {
+                await requestFullscreen(root);
+            }
+        } catch {
+            // Browser may deny without a recent user gesture; ignore.
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!allowFullscreen) {
+            return;
+        }
+
+        const onKey = (event: KeyboardEvent): void => {
+            // F11 is reserved by most browsers; F9 toggles POS fullscreen.
+            if (event.key === 'F9') {
+                event.preventDefault();
+                void toggleFullscreen();
+            }
+        };
+
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [allowFullscreen, toggleFullscreen]);
 
     const tabs = [
         { labelKey: 'pos.nav.terminal', route: 'pos.terminal', patterns: ['pos.terminal'] },
@@ -30,7 +147,8 @@ export default function PosLayout({ title, header, fullBleed = false, children }
 
     return (
         <div
-            className="min-h-screen"
+            ref={rootRef}
+            className={`flex min-h-screen flex-col ${isFullscreen ? 'h-screen overflow-hidden' : ''}`}
             style={
                 {
                     ['--pos-bg' as string]: '#F0F3F7',
@@ -85,12 +203,26 @@ export default function PosLayout({ title, header, fullBleed = false, children }
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                         {header}
-                        <Link
-                            href={route('module.dashboard')}
-                            className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--pos-muted)] hover:bg-slate-50 hover:text-[var(--pos-ink)]"
-                        >
-                            CRM
-                        </Link>
+                        {allowFullscreen && (
+                            <button
+                                type="button"
+                                onClick={() => void toggleFullscreen()}
+                                title={`${t(isFullscreen ? 'pos.actions.exit_fullscreen' : 'pos.actions.enter_fullscreen')} (F9)`}
+                                aria-label={t(isFullscreen ? 'pos.actions.exit_fullscreen' : 'pos.actions.enter_fullscreen')}
+                                aria-pressed={isFullscreen}
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[var(--pos-muted)] hover:bg-slate-50 hover:text-[var(--pos-ink)]"
+                            >
+                                {isFullscreen ? <CompressIcon /> : <ExpandIcon />}
+                            </button>
+                        )}
+                        {!isFullscreen && (
+                            <Link
+                                href={route('module.dashboard')}
+                                className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--pos-muted)] hover:bg-slate-50 hover:text-[var(--pos-ink)]"
+                            >
+                                CRM
+                            </Link>
+                        )}
                     </div>
                 </div>
                 {!fullBleed && (
@@ -114,12 +246,12 @@ export default function PosLayout({ title, header, fullBleed = false, children }
                 )}
             </header>
 
-            <main className={fullBleed ? '' : 'mx-auto max-w-6xl px-4 py-6 lg:px-6'}>
+            <main className={fullBleed ? 'flex min-h-0 flex-1 flex-col' : 'mx-auto max-w-6xl px-4 py-6 lg:px-6'}>
                 {flash?.success && (
                     <div className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{flash.success}</div>
                 )}
                 {flash?.error && <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">{flash.error}</div>}
-                {children}
+                {fullBleed ? <div className="flex min-h-0 flex-1 flex-col">{children}</div> : children}
             </main>
         </div>
     );

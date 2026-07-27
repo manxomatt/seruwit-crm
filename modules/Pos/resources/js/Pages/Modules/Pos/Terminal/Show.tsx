@@ -348,9 +348,9 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
 
     if (!shift) {
         return (
-            <PosLayout title={t('pos.terminal.title')} fullBleed>
+            <PosLayout title={t('pos.terminal.title')} fullBleed allowFullscreen>
                 <Head title={t('pos.terminal.title')} />
-                <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+                <div className="flex min-h-[70vh] flex-1 flex-col items-center justify-center px-6 text-center">
                     <p className="text-lg text-[var(--pos-muted)]">{t('pos.terminal.no_shift')}</p>
                     <button
                         type="button"
@@ -368,6 +368,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
         <PosLayout
             title={t('pos.terminal.title')}
             fullBleed
+            allowFullscreen
             header={
                 <div className="hidden items-center gap-3 text-sm text-[var(--pos-muted)] md:flex">
                     <span className="font-medium text-[var(--pos-ink)]">{shift.warehouse.name}</span>
@@ -389,7 +390,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
             )}
 
             {successSale && (
-                <div className="flex min-h-[calc(100vh-4.5rem)] flex-col items-center justify-center bg-emerald-50/80 px-6 py-12 text-center animate-[pulse_0.6s_ease-out_1]">
+                <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-emerald-50/80 px-6 py-12 text-center animate-[pulse_0.6s_ease-out_1]">
                     <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">{t('pos.terminal.success_title')}</p>
                     <p className="mt-2 text-2xl font-semibold text-emerald-900">
                         {t('pos.terminal.success_receipt', { code: successSale.code })}
@@ -429,7 +430,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
             )}
 
             {!successSale && (
-                <div className="flex h-[calc(100vh-4.5rem)] flex-col lg:flex-row">
+                <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
                     <section className="flex min-h-0 flex-1 flex-col border-b border-slate-200 lg:border-b-0 lg:border-r">
                         <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-3">
                             <input

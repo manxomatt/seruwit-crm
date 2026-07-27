@@ -39,6 +39,8 @@ return [
         'back_terminal' => 'Kembali ke terminal',
         'park' => 'Parkir',
         'clear_cart' => 'Kosongkan',
+        'enter_fullscreen' => 'Layar penuh',
+        'exit_fullscreen' => 'Keluar layar penuh',
     ],
 
     'terminal' => [
