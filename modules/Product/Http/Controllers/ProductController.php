@@ -156,6 +156,11 @@ class ProductController extends Controller
         $attributeIds = $validated['attribute_ids'] ?? [];
         unset($validated['tag_ids'], $validated['packagings'], $validated['attribute_ids']);
 
+        if (array_key_exists('image', $validated)) {
+            $validated['images'] = Product::imagesFromUpload($validated['image'] ?? null);
+            unset($validated['image']);
+        }
+
         if (($validated['category'] ?? null) === 'service') {
             $validated['brand_id'] = null;
             $validated['product_type_id'] = null;
@@ -236,6 +241,11 @@ class ProductController extends Controller
         $packagings = $validated['packagings'] ?? null;
         $attributeIds = $validated['attribute_ids'] ?? null;
         unset($validated['tag_ids'], $validated['packagings'], $validated['attribute_ids']);
+
+        if (array_key_exists('image', $validated)) {
+            $validated['images'] = Product::imagesFromUpload($validated['image'] ?? null);
+            unset($validated['image']);
+        }
 
         if (($validated['category'] ?? $product->category) === 'service') {
             $validated['brand_id'] = null;

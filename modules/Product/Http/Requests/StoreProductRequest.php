@@ -51,6 +51,7 @@ class StoreProductRequest extends FormRequest
             'packagings.*.sort' => ['nullable', 'integer', 'min:0'],
             'attribute_ids' => ['nullable', 'array'],
             'attribute_ids.*' => ['integer', 'exists:product_attributes,id'],
+            'image' => ['nullable', 'string', 'max:2048'],
         ];
     }
 

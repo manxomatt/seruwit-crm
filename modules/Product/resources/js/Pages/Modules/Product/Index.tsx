@@ -30,6 +30,7 @@ interface Product {
     unit: string;
     price: string | null;
     status: string;
+    images: string[] | null;
     brand: Brand | null;
     product_type: { id: number; name: string } | null;
 }
@@ -192,6 +193,7 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.fields.image')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.products.index.columns.code')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.products.index.columns.name')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('products.products.index.columns.brand')}</th>
@@ -205,6 +207,19 @@ export default function Index({ products, brands, productTypes, filters, can }: 
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {products.data.map((product) => (
                                             <tr key={product.id} className="hover:bg-gray-50">
+                                                <td className="whitespace-nowrap px-6 py-4">
+                                                    {product.images?.[0] ? (
+                                                        <img
+                                                            src={product.images[0]}
+                                                            alt={product.name}
+                                                            className="h-10 w-10 rounded object-cover"
+                                                        />
+                                                    ) : (
+                                                        <span className="inline-flex h-10 w-10 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">
+                                                            —
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{product.code}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
                                                     <Link href={prefixedRoute('products.show', product.id)} className="text-indigo-600 hover:text-indigo-900">

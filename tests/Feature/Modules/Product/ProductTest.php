@@ -143,6 +143,58 @@ class ProductTest extends TestCase
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
 
+    public function test_admin_can_create_a_product_with_image(): void
+    {
+        $user = $this->createAdminUser();
+
+        $response = $this->actingAs($user)->post(route('module.products.store'), [
+            'name' => 'Produk Bergambar',
+            'unit' => 'pcs',
+            'status' => 'active',
+            'image' => 'https://example.test/products/demo.jpg',
+        ]);
+
+        $product = Product::query()->firstWhere('name', 'Produk Bergambar');
+        $this->assertNotNull($product);
+        $response->assertRedirect(route('module.products.show', $product));
+        $this->assertSame(['https://example.test/products/demo.jpg'], $product->images);
+        $this->assertSame('https://example.test/products/demo.jpg', $product->primaryImage());
+    }
+
+    public function test_admin_can_update_a_product_image(): void
+    {
+        $user = $this->createAdminUser();
+        $product = Product::factory()->create([
+            'images' => ['https://example.test/old.jpg'],
+        ]);
+
+        $this->actingAs($user)->patch(route('module.products.update', $product), [
+            'name' => $product->name,
+            'unit' => $product->unit,
+            'status' => $product->status,
+            'image' => 'https://example.test/new.jpg',
+        ])->assertRedirect(route('module.products.show', $product));
+
+        $this->assertSame(['https://example.test/new.jpg'], $product->fresh()->images);
+    }
+
+    public function test_admin_can_clear_a_product_image(): void
+    {
+        $user = $this->createAdminUser();
+        $product = Product::factory()->create([
+            'images' => ['https://example.test/old.jpg'],
+        ]);
+
+        $this->actingAs($user)->patch(route('module.products.update', $product), [
+            'name' => $product->name,
+            'unit' => $product->unit,
+            'status' => $product->status,
+            'image' => '',
+        ])->assertRedirect(route('module.products.show', $product));
+
+        $this->assertNull($product->fresh()->images);
+    }
+
     /**
      * Product has no knowledge of Trip, so this is enforced by the
      * database's own foreign key constraint on trip_items.product_id (see

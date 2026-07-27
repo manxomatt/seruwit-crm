@@ -135,6 +135,31 @@ class Product extends Model
         return $this->category === 'service';
     }
 
+    public function primaryImage(): ?string
+    {
+        $images = $this->images;
+
+        if (! is_array($images) || $images === []) {
+            return null;
+        }
+
+        $first = $images[0] ?? null;
+
+        return is_string($first) && $first !== '' ? $first : null;
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    public static function imagesFromUpload(?string $imageUrl): ?array
+    {
+        if ($imageUrl === null || $imageUrl === '') {
+            return null;
+        }
+
+        return [$imageUrl];
+    }
+
     public static function nextCode(): string
     {
         $lastNumber = (int) static::query()

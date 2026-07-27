@@ -46,7 +46,7 @@ class ProductModule implements ModuleContract
     }
 
     /**
-     * Fully standalone — no photo field, so no Media dependency either.
+     * Soft Media dependency for product image upload; URL entry still works without it.
      */
     public function requires(): array
     {

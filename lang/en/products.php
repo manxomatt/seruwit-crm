@@ -66,6 +66,7 @@ return [
         'price' => 'Price',
         'cost' => 'Cost',
         'description' => 'Description',
+        'image' => 'Image',
         'notes' => 'Notes',
         'parent' => 'Parent',
         'color' => 'Color',

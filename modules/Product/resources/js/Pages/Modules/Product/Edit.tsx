@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import ImageUploader from '@/Components/ImageUploader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 
@@ -52,6 +53,7 @@ interface Product {
     is_storable: boolean;
     reorder_threshold: number;
     reorder_quantity: number;
+    images: string[] | null;
     tags: Tag[];
     packagings: Packaging[];
     product_attributes: ProductAttribute[];
@@ -131,6 +133,7 @@ export default function Edit({ product, units, brands, productTypes, tags, attri
         is_storable: boolean;
         reorder_threshold: string;
         reorder_quantity: string;
+        image: string;
         tag_ids: number[];
         attribute_ids: number[];
         packagings: PackagingRow[];
@@ -154,6 +157,7 @@ export default function Edit({ product, units, brands, productTypes, tags, attri
         is_storable: product.is_storable ?? true,
         reorder_threshold: String(product.reorder_threshold ?? 10),
         reorder_quantity: String(product.reorder_quantity ?? 50),
+        image: product.images?.[0] || '',
         tag_ids: product.tags.map((tg) => tg.id),
         attribute_ids: (product.product_attributes || []).map((pa) => pa.attribute_id),
         packagings: product.packagings.map((p) => ({
@@ -231,6 +235,11 @@ export default function Edit({ product, units, brands, productTypes, tags, attri
                                 <InputLabel htmlFor="name" value={t('products.fields.name')} />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required autoFocus />
                                 <InputError message={errors.name} className="mt-2" />
+                            </div>
+                            <div className="sm:col-span-2">
+                                <InputLabel value={t('products.fields.image')} />
+                                <ImageUploader value={data.image} onChange={(value) => setData('image', value)} className="mt-1" />
+                                <InputError message={errors.image} className="mt-2" />
                             </div>
                             {!isService && (
                                 <>

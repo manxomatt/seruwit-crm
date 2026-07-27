@@ -75,6 +75,7 @@ interface Product {
     packagings: Packaging[];
     variants: Variant[];
     product_attributes: ProductAttributeData[];
+    images: string[] | null;
 }
 
 interface Props {
@@ -143,6 +144,13 @@ export default function Show({ product, can }: Props): JSX.Element {
             <div className="space-y-6">
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
+                        {product.images?.[0] && (
+                            <img
+                                src={product.images[0]}
+                                alt={product.name}
+                                className="mb-6 h-48 w-full rounded-lg object-cover sm:w-64"
+                            />
+                        )}
                         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">{t('products.products.show.general')}</h3>
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>

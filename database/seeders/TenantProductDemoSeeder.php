@@ -389,6 +389,10 @@ class TenantProductDemoSeeder extends Seeder
             $payload['category'] = 'merchandise';
         }
 
+        if (Schema::hasColumn('products', 'images')) {
+            $payload['images'] = [sprintf('https://picsum.photos/seed/product-demo-%d/640/640', $num + 1)];
+        }
+
         $product = Product::query()->create($payload);
 
         if ($tags !== []) {
@@ -485,6 +489,11 @@ class TenantProductDemoSeeder extends Seeder
 
             if (Schema::hasColumn('products', 'category')) {
                 $variantPayload['category'] = $parent->category ?? 'merchandise';
+            }
+
+            if (Schema::hasColumn('products', 'images')) {
+                $variantPayload['images'] = $parent->images
+                    ?? [sprintf('https://picsum.photos/seed/product-variant-%s-%d/640/640', $parent->id, $index + 1)];
             }
 
             $variant = Product::query()->create($variantPayload);

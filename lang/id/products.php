@@ -66,6 +66,7 @@ return [
         'price' => 'Harga',
         'cost' => 'HPP',
         'description' => 'Deskripsi',
+        'image' => 'Gambar',
         'notes' => 'Catatan',
         'parent' => 'Induk',
         'color' => 'Warna',

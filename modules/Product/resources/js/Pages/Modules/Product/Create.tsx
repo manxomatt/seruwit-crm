@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import ImageUploader from '@/Components/ImageUploader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 
@@ -99,6 +100,7 @@ export default function Create({ units, brands, productTypes, tags, attributes }
         is_storable: boolean;
         reorder_threshold: string;
         reorder_quantity: string;
+        image: string;
         tag_ids: number[];
         attribute_ids: number[];
         packagings: PackagingRow[];
@@ -122,6 +124,7 @@ export default function Create({ units, brands, productTypes, tags, attributes }
         is_storable: true,
         reorder_threshold: '10',
         reorder_quantity: '50',
+        image: '',
         tag_ids: [],
         attribute_ids: [],
         packagings: [],
@@ -195,6 +198,11 @@ export default function Create({ units, brands, productTypes, tags, attributes }
                                 <InputLabel htmlFor="name" value={t('products.fields.name')} />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required autoFocus />
                                 <InputError message={errors.name} className="mt-2" />
+                            </div>
+                            <div className="sm:col-span-2">
+                                <InputLabel value={t('products.fields.image')} />
+                                <ImageUploader value={data.image} onChange={(value) => setData('image', value)} className="mt-1" />
+                                <InputError message={errors.image} className="mt-2" />
                             </div>
                             {!isService && (
                                 <>
