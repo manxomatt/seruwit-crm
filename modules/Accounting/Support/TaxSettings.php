@@ -23,6 +23,17 @@ class TaxSettings
      */
     public static function snapshot(?string $preferCode = null): array
     {
+        // Legacy force-off still honored during gradual migration from ecommerce.tax_*.
+        if (Setting::getValue('ecommerce.tax_enabled', '1') !== '1') {
+            return [
+                'enabled' => false,
+                'rate' => 0.0,
+                'calculation' => TaxCode::CALC_EXCLUSIVE,
+                'tax_code_id' => null,
+                'tax_code' => 'NONTAX',
+            ];
+        }
+
         if (Schema::hasTable('tax_codes')) {
             $code = null;
 

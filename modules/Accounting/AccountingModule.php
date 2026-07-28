@@ -10,10 +10,15 @@ use Modules\Accounting\Http\Controllers\AccountingDashboardController;
 use Modules\Accounting\Http\Controllers\BalanceSheetController;
 use Modules\Accounting\Http\Controllers\BankReconciliationController;
 use Modules\Accounting\Http\Controllers\BankTransactionController;
+use Modules\Accounting\Http\Controllers\BudgetController;
+use Modules\Accounting\Http\Controllers\CashFlowController;
 use Modules\Accounting\Http\Controllers\CompanyBankAccountController;
 use Modules\Accounting\Http\Controllers\FiscalPeriodController;
+use Modules\Accounting\Http\Controllers\FixedAssetController;
+use Modules\Accounting\Http\Controllers\GeneralLedgerController;
 use Modules\Accounting\Http\Controllers\JournalEntryController;
 use Modules\Accounting\Http\Controllers\OpeningBalanceController;
+use Modules\Accounting\Http\Controllers\PartnerStatementController;
 use Modules\Accounting\Http\Controllers\ProfitAndLossController;
 use Modules\Accounting\Http\Controllers\TaxCodeController;
 use Modules\Accounting\Http\Controllers\TrialBalanceController;
@@ -47,7 +52,7 @@ class AccountingModule implements ModuleContract
 
     public function permissions(): array
     {
-        return ['view', 'manage_coa', 'journal', 'post', 'period', 'bank', 'manage_tax'];
+        return ['view', 'manage_coa', 'journal', 'post', 'period', 'bank', 'manage_tax', 'manage_assets', 'manage_budget'];
     }
 
     public function requires(): array
@@ -171,6 +176,31 @@ class AccountingModule implements ModuleContract
                     ->name('reports.profit-loss');
                 Route::get('/reports/balance-sheet', [BalanceSheetController::class, 'show'])
                     ->name('reports.balance-sheet');
+                Route::get('/reports/cash-flow', [CashFlowController::class, 'show'])
+                    ->name('reports.cash-flow');
+                Route::get('/reports/general-ledger', [GeneralLedgerController::class, 'show'])
+                    ->name('reports.general-ledger');
+                Route::get('/reports/partner-statement', [PartnerStatementController::class, 'show'])
+                    ->name('reports.partner-statement');
+
+                Route::get('/fixed-assets', [FixedAssetController::class, 'index'])->name('fixed-assets.index');
+                Route::get('/fixed-assets/create', [FixedAssetController::class, 'create'])
+                    ->middleware('permission:accounting,manage_assets')
+                    ->name('fixed-assets.create');
+                Route::post('/fixed-assets', [FixedAssetController::class, 'store'])
+                    ->middleware('permission:accounting,manage_assets')
+                    ->name('fixed-assets.store');
+                Route::post('/fixed-assets/depreciate', [FixedAssetController::class, 'depreciate'])
+                    ->middleware('permission:accounting,manage_assets')
+                    ->name('fixed-assets.depreciate');
+
+                Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+                Route::get('/budgets/create', [BudgetController::class, 'create'])
+                    ->middleware('permission:accounting,manage_budget')
+                    ->name('budgets.create');
+                Route::post('/budgets', [BudgetController::class, 'store'])
+                    ->middleware('permission:accounting,manage_budget')
+                    ->name('budgets.store');
 
                 Route::get('/bank-accounts', [CompanyBankAccountController::class, 'index'])
                     ->name('bank-accounts.index');

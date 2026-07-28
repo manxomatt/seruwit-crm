@@ -5,7 +5,22 @@ import { Head, Link } from '@inertiajs/react';
 import { ReactNode } from 'react';
 
 interface Props {
-    active: 'dashboard' | 'accounts' | 'periods' | 'journals' | 'trial_balance' | 'profit_loss' | 'balance_sheet' | 'bank' | 'opening' | 'tax_codes';
+    active:
+        | 'dashboard'
+        | 'accounts'
+        | 'periods'
+        | 'journals'
+        | 'trial_balance'
+        | 'profit_loss'
+        | 'balance_sheet'
+        | 'cash_flow'
+        | 'general_ledger'
+        | 'partner_statement'
+        | 'bank'
+        | 'opening'
+        | 'tax_codes'
+        | 'fixed_assets'
+        | 'budgets';
     title: string;
     headerActions?: ReactNode;
     children: ReactNode;
@@ -19,6 +34,8 @@ export default function AccountingShell({ active, title, headerActions, children
         { key: 'dashboard', href: prefixedRoute('accounting.dashboard'), label: t('accounting.nav.dashboard') },
         { key: 'accounts', href: prefixedRoute('accounting.accounts.index'), label: t('accounting.nav.accounts') },
         { key: 'tax_codes', href: prefixedRoute('accounting.tax-codes.index'), label: t('accounting.nav.tax_codes') },
+        { key: 'fixed_assets', href: prefixedRoute('accounting.fixed-assets.index'), label: t('accounting.nav.fixed_assets') },
+        { key: 'budgets', href: prefixedRoute('accounting.budgets.index'), label: t('accounting.nav.budgets') },
         { key: 'bank', href: prefixedRoute('accounting.bank-accounts.index'), label: t('accounting.nav.bank') },
         { key: 'journals', href: prefixedRoute('accounting.journals.index'), label: t('accounting.nav.journals') },
         { key: 'periods', href: prefixedRoute('accounting.periods.index'), label: t('accounting.nav.periods') },
@@ -26,6 +43,9 @@ export default function AccountingShell({ active, title, headerActions, children
         { key: 'trial_balance', href: prefixedRoute('accounting.reports.trial-balance'), label: t('accounting.nav.trial_balance') },
         { key: 'profit_loss', href: prefixedRoute('accounting.reports.profit-loss'), label: t('accounting.nav.profit_loss') },
         { key: 'balance_sheet', href: prefixedRoute('accounting.reports.balance-sheet'), label: t('accounting.nav.balance_sheet') },
+        { key: 'cash_flow', href: prefixedRoute('accounting.reports.cash-flow'), label: t('accounting.nav.cash_flow') },
+        { key: 'general_ledger', href: prefixedRoute('accounting.reports.general-ledger'), label: t('accounting.nav.general_ledger') },
+        { key: 'partner_statement', href: prefixedRoute('accounting.reports.partner-statement'), label: t('accounting.nav.partner_statement') },
     ];
 
     return (
