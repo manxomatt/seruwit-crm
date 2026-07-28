@@ -91,17 +91,20 @@ export default function StockMovementCreate({ products, warehouses, locations }:
 
               <div>
                 <InputLabel htmlFor="location_id" value={t('inventory.movements.location_optional')} />
-                <select
+                <Select
                   id="location_id"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1"
                   value={data.location_id}
-                  onChange={(e) => setData('location_id', e.target.value)}
-                >
-                  <option value="">{t('inventory.movements.all_locations')}</option>
-                  {filteredLocations.map((l) => (
-                    <option key={l.id} value={String(l.id)}>{l.code} — {l.name}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setData('location_id', value)}
+                  placeholder={t('inventory.movements.all_locations')}
+                  options={[
+                    { value: '', label: t('inventory.movements.all_locations') },
+                    ...filteredLocations.map((l) => ({
+                      value: String(l.id),
+                      label: `${l.code} — ${l.name}`,
+                    })),
+                  ]}
+                />
                 <InputError message={errors.location_id} className="mt-2" />
               </div>
 

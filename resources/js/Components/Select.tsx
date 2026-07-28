@@ -1,7 +1,18 @@
-import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
+import {
+    Combobox,
+    ComboboxButton,
+    ComboboxInput,
+    ComboboxOption,
+    ComboboxOptions,
+    Listbox,
+    ListboxButton,
+    ListboxOption,
+    ListboxOptions,
+} from '@headlessui/react';
 import { useMemo, useState } from 'react';
+import { useTrans } from '@/hooks/useTrans';
 
-interface SelectOption {
+export interface SelectOption {
     value: string;
     label: string;
     disabled?: boolean;
@@ -17,17 +28,18 @@ interface Props {
     emptyText?: string;
     noResultsText?: string;
     disabled?: boolean;
+    /**
+     * true — always searchable
+     * false — always plain list
+     * undefined — searchable automatically when options exceed the visible limit
+     */
     searchable?: boolean;
-    /** Cap visible options in searchable mode (empty query and search results). */
+    /** Cap visible rows in searchable mode (default 10). */
     maxVisibleOptions?: number;
     className?: string;
 }
 
-/** Visible rows when the combobox opens with an empty query. */
-const DEFAULT_VISIBLE_OPTIONS = 8;
-
-/** Cap for filtered search results so the list stays short. */
-const SEARCH_VISIBLE_OPTIONS = 25;
+const DEFAULT_VISIBLE_OPTIONS = 10;
 
 const ChevronUpDownIcon = () => (
     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -41,23 +53,54 @@ const CheckIcon = () => (
     </svg>
 );
 
+const triggerClassName =
+    'w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm';
+
+const optionsPanelClassName =
+    'z-[200] mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm';
+
+const listboxPanelClassName =
+    'z-[200] mt-1 max-h-60 w-[var(--button-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm';
+
+const optionClassName =
+    'group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white data-[disabled]:cursor-not-allowed data-[disabled]:text-gray-400';
+
+function shouldUseSearchable(searchable: boolean | undefined, optionCount: number, limit: number): boolean {
+    if (searchable === true) {
+        return true;
+    }
+
+    if (searchable === false) {
+        return false;
+    }
+
+    return optionCount > limit;
+}
+
 function SearchableSelect({
     id,
     value,
     onChange,
     options,
-    placeholder = 'Select...',
-    searchPlaceholder = 'Search…',
-    emptyText = 'No options available',
-    noResultsText = 'No matching results',
+    placeholder,
+    searchPlaceholder,
+    emptyText,
+    noResultsText,
     disabled = false,
-    maxVisibleOptions,
+    maxVisibleOptions = DEFAULT_VISIBLE_OPTIONS,
     className = '',
-}: Omit<Props, 'searchable'>): JSX.Element {
+}: Omit<Props, 'searchable'> & {
+    placeholder: string;
+    searchPlaceholder: string;
+    emptyText: string;
+    noResultsText: string;
+}): JSX.Element {
+    const { t } = useTrans();
     const [query, setQuery] = useState('');
 
     const selected = options.find((option) => option.value === value);
     const needle = query.trim().toLowerCase();
+    const limit = Math.max(1, maxVisibleOptions);
 
     const filtered = useMemo(() => {
         if (needle === '') {
@@ -68,13 +111,10 @@ function SearchableSelect({
     }, [options, needle]);
 
     const visible = useMemo(() => {
-        const emptyLimit = maxVisibleOptions ?? DEFAULT_VISIBLE_OPTIONS;
-        const searchLimit = maxVisibleOptions ?? SEARCH_VISIBLE_OPTIONS;
-        const limit = needle === '' ? emptyLimit : searchLimit;
         let list = filtered.slice(0, limit);
 
         if (value && !list.some((option) => option.value === value)) {
-            const selectedOption = filtered.find((option) => option.value === value);
+            const selectedOption = filtered.find((option) => option.value === value) ?? selected;
             if (selectedOption) {
                 list = [selectedOption, ...list.filter((option) => option.value !== value)].slice(0, limit);
             }
@@ -84,7 +124,7 @@ function SearchableSelect({
             list,
             hiddenCount: Math.max(0, filtered.length - list.length),
         };
-    }, [filtered, needle, value, maxVisibleOptions]);
+    }, [filtered, limit, value, selected]);
 
     return (
         <Combobox
@@ -101,7 +141,7 @@ function SearchableSelect({
                 <div className="relative">
                     <ComboboxInput
                         id={id}
-                        className="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                        className={triggerClassName}
                         displayValue={() => selected?.label ?? ''}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder={selected ? searchPlaceholder : placeholder}
@@ -112,11 +152,7 @@ function SearchableSelect({
                     </ComboboxButton>
                 </div>
 
-                <ComboboxOptions
-                    transition
-                    anchor="bottom start"
-                    className="z-[200] mt-1 max-h-48 w-[var(--input-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
-                >
+                <ComboboxOptions transition anchor="bottom start" className={optionsPanelClassName}>
                     {filtered.length === 0 ? (
                         <div className="px-3 py-2 text-sm text-gray-400">
                             {options.length === 0 ? emptyText : noResultsText}
@@ -128,7 +164,7 @@ function SearchableSelect({
                                     key={option.value}
                                     value={option.value}
                                     disabled={option.disabled}
-                                    className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white data-[disabled]:cursor-not-allowed data-[disabled]:text-gray-400"
+                                    className={optionClassName}
                                 >
                                     <span className="block truncate group-data-[selected]:font-semibold">{option.label}</span>
                                     <span className="absolute inset-y-0 right-0 hidden items-center pr-3 text-indigo-600 group-data-[focus]:text-white group-data-[selected]:flex">
@@ -139,8 +175,8 @@ function SearchableSelect({
                             {visible.hiddenCount > 0 && (
                                 <div className="border-t border-gray-100 px-3 py-2 text-xs text-gray-400">
                                     {needle === ''
-                                        ? `Type to search (${visible.hiddenCount} more)`
-                                        : `${visible.hiddenCount} more — refine your search`}
+                                        ? t('common.select_type_to_search', { count: visible.hiddenCount })
+                                        : t('common.select_refine_search', { count: visible.hiddenCount })}
                                 </div>
                             )}
                         </>
@@ -156,28 +192,36 @@ export default function Select({
     value,
     onChange,
     options,
-    placeholder = 'Select...',
-    searchPlaceholder = 'Search…',
-    emptyText = 'No options available',
-    noResultsText = 'No matching results',
+    placeholder,
+    searchPlaceholder,
+    emptyText,
+    noResultsText,
     disabled = false,
-    searchable = false,
-    maxVisibleOptions,
+    searchable,
+    maxVisibleOptions = DEFAULT_VISIBLE_OPTIONS,
     className = '',
 }: Props): JSX.Element {
-    if (searchable) {
+    const { t } = useTrans();
+
+    const resolvedPlaceholder = placeholder ?? t('common.select_placeholder', undefined, 'Select...');
+    const resolvedSearchPlaceholder = searchPlaceholder ?? t('common.search', undefined, 'Search…');
+    const resolvedEmptyText = emptyText ?? t('common.no_options');
+    const resolvedNoResultsText = noResultsText ?? t('common.no_results');
+    const limit = Math.max(1, maxVisibleOptions);
+
+    if (shouldUseSearchable(searchable, options.length, limit)) {
         return (
             <SearchableSelect
                 id={id}
                 value={value}
                 onChange={onChange}
                 options={options}
-                placeholder={placeholder}
-                searchPlaceholder={searchPlaceholder}
-                emptyText={emptyText}
-                noResultsText={noResultsText}
+                placeholder={resolvedPlaceholder}
+                searchPlaceholder={resolvedSearchPlaceholder}
+                emptyText={resolvedEmptyText}
+                noResultsText={resolvedNoResultsText}
                 disabled={disabled}
-                maxVisibleOptions={maxVisibleOptions}
+                maxVisibleOptions={limit}
                 className={className}
             />
         );
@@ -188,32 +232,25 @@ export default function Select({
     return (
         <Listbox value={value} onChange={onChange} disabled={disabled}>
             <div className={`relative ${className}`}>
-                <ListboxButton
-                    id={id}
-                    className="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
-                >
+                <ListboxButton id={id} className={`relative cursor-default ${triggerClassName}`}>
                     <span className={`block truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
-                        {selected ? selected.label : placeholder}
+                        {selected ? selected.label : resolvedPlaceholder}
                     </span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         <ChevronUpDownIcon />
                     </span>
                 </ListboxButton>
 
-                <ListboxOptions
-                    transition
-                    anchor="bottom start"
-                    className="z-[200] mt-1 max-h-48 w-[var(--button-width)] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 transition duration-100 ease-in focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-75 sm:text-sm"
-                >
+                <ListboxOptions transition anchor="bottom start" className={listboxPanelClassName}>
                     {options.length === 0 && (
-                        <div className="px-3 py-2 text-sm text-gray-400">{emptyText}</div>
+                        <div className="px-3 py-2 text-sm text-gray-400">{resolvedEmptyText}</div>
                     )}
                     {options.map((option) => (
                         <ListboxOption
                             key={option.value}
                             value={option.value}
                             disabled={option.disabled}
-                            className="group relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white data-[disabled]:cursor-not-allowed data-[disabled]:text-gray-400"
+                            className={optionClassName}
                         >
                             <span className="block truncate group-data-[selected]:font-semibold">{option.label}</span>
                             <span className="absolute inset-y-0 right-0 hidden items-center pr-3 text-indigo-600 group-data-[focus]:text-white group-data-[selected]:flex">

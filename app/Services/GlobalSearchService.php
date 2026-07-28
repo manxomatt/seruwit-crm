@@ -9,12 +9,20 @@ use App\Models\User;
 use App\Modules\Facades\Modules;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
+use Modules\Accounting\Models\Account;
+use Modules\Accounting\Models\Budget;
+use Modules\Accounting\Models\CompanyBankAccount;
+use Modules\Accounting\Models\FixedAsset;
+use Modules\Accounting\Models\JournalEntry;
+use Modules\Accounting\Models\TaxCode;
 use Modules\Approvals\Models\ApprovalRequest;
 use Modules\Billing\Models\Tariff;
 use Modules\Billing\Models\TripAllowance;
+use Modules\Canvassing\Models\CanvassingVisit;
 use Modules\Canvassing\Models\Salesperson;
 use Modules\Carousels\Models\Carousel;
 use Modules\Document\Models\Document;
+use Modules\DriverScoring\Models\DriverIncentiveRule;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Inventory\Models\Warehouse;
@@ -23,7 +31,11 @@ use Modules\Maintenance\Models\WorkOrder;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Outbound\Models\PickList;
 use Modules\Pages\Models\Page;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
+use Modules\Payables\Models\BillPayment;
+use Modules\Payables\Models\SupplierBill;
+use Modules\Pos\Models\PosSale;
 use Modules\Posts\Models\Post;
 use Modules\Product\Models\Brand;
 use Modules\Product\Models\Principal;
@@ -36,6 +48,8 @@ use Modules\Purchasing\Models\PurchaseOrder;
 use Modules\Receivables\Models\Payment;
 use Modules\Rental\Models\Rental;
 use Modules\Routing\Models\RoutePlan;
+use Modules\Sales\Models\GoodsIssueNote;
+use Modules\Sales\Models\SalesOrder;
 use Modules\Tracking\Models\GpsDevice;
 use Modules\TradePromotions\Models\TradePromoProgram;
 use Modules\TransportationManagement\Models\Trip;
@@ -81,6 +95,7 @@ class GlobalSearchService
             $this->pages(...),
             $this->carousels(...),
             $this->partners(...),
+            $this->locations(...),
             $this->products(...),
             $this->principals(...),
             $this->brands(...),
@@ -93,14 +108,20 @@ class GlobalSearchService
             $this->trips(...),
             $this->tripSchedules(...),
             $this->invoices(...),
+            $this->salesOrders(...),
+            $this->goodsIssueNotes(...),
             $this->purchaseOrders(...),
             $this->grns(...),
             $this->payments(...),
+            $this->supplierBills(...),
+            $this->billPayments(...),
+            $this->posSales(...),
             $this->warehouses(...),
             $this->workOrders(...),
             $this->pickLists(...),
             $this->rentals(...),
             $this->salespeople(...),
+            $this->canvassingVisits(...),
             $this->routePlans(...),
             $this->approvalRequests(...),
             $this->promoPrograms(...),
@@ -108,6 +129,13 @@ class GlobalSearchService
             $this->tripAllowances(...),
             $this->documents(...),
             $this->gpsDevices(...),
+            $this->accounts(...),
+            $this->journalEntries(...),
+            $this->companyBankAccounts(...),
+            $this->taxCodes(...),
+            $this->fixedAssets(...),
+            $this->budgets(...),
+            $this->incentiveRules(...),
         ];
     }
 
@@ -307,6 +335,37 @@ class GlobalSearchService
                 'type' => 'partner',
                 'icon' => 'partner',
                 'url' => route('module.partners.show', $partner),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function locations(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'partners', Location::class, 'locations')) {
+            return [];
+        }
+
+        return Location::query()
+            ->where(fn (Builder $q) => $q
+                ->where('code', 'ilike', "%{$query}%")
+                ->orWhere('name', 'ilike', "%{$query}%")
+                ->orWhere('address', 'ilike', "%{$query}%")
+                ->orWhere('city', 'ilike', "%{$query}%")
+                ->orWhere('province', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (Location $location) => [
+                'id' => $location->id,
+                'title' => $location->name,
+                'subtitle' => collect([
+                    $location->code,
+                    $location->city,
+                    $location->is_active ? __('shell.search.active') : __('shell.search.inactive'),
+                ])->filter()->implode(' • '),
+                'type' => 'location',
+                'icon' => 'location',
+                'url' => route('module.partners.locations.index', ['search' => $location->code]),
             ])
             ->all();
     }
@@ -618,6 +677,57 @@ class GlobalSearchService
     }
 
     /** @return list<array<string, mixed>> */
+    private function salesOrders(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'sales', SalesOrder::class, 'sales_orders')) {
+            return [];
+        }
+
+        return SalesOrder::query()
+            ->with('partner:id,name')
+            ->where(fn (Builder $q) => $q
+                ->where('so_number', 'ilike', "%{$query}%")
+                ->orWhere('notes', 'ilike', "%{$query}%")
+                ->orWhereHas('partner', fn (Builder $partner) => $partner->where('name', 'ilike', "%{$query}%")))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (SalesOrder $order) => [
+                'id' => $order->id,
+                'title' => $order->so_number,
+                'subtitle' => collect([$order->status, $order->partner?->name])->filter()->implode(' • '),
+                'type' => 'sales_order',
+                'icon' => 'sales_order',
+                'url' => route('module.sales.sales-orders.show', $order),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function goodsIssueNotes(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'sales', GoodsIssueNote::class, 'goods_issue_notes')) {
+            return [];
+        }
+
+        return GoodsIssueNote::query()
+            ->where(fn (Builder $q) => $q
+                ->where('gin_number', 'ilike', "%{$query}%")
+                ->orWhere('delivery_note_number', 'ilike', "%{$query}%")
+                ->orWhere('notes', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (GoodsIssueNote $gin) => [
+                'id' => $gin->id,
+                'title' => $gin->gin_number,
+                'subtitle' => collect([$gin->status, $gin->delivery_note_number])->filter()->implode(' • '),
+                'type' => 'gin',
+                'icon' => 'sales_order',
+                'url' => route('module.sales.gin.show', $gin),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
     private function purchaseOrders(User $user, string $query): array
     {
         if (! $this->canSearch($user, 'purchasing', PurchaseOrder::class, 'purchase_orders')) {
@@ -687,6 +797,85 @@ class GlobalSearchService
                 'type' => 'payment',
                 'icon' => 'payment',
                 'url' => route('module.receivables.payments.show', $payment),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function supplierBills(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'payables', SupplierBill::class, 'supplier_bills')) {
+            return [];
+        }
+
+        return SupplierBill::query()
+            ->with('partner:id,name')
+            ->where(fn (Builder $q) => $q
+                ->where('code', 'ilike', "%{$query}%")
+                ->orWhere('notes', 'ilike', "%{$query}%")
+                ->orWhereHas('partner', fn (Builder $partner) => $partner->where('name', 'ilike', "%{$query}%")))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (SupplierBill $bill) => [
+                'id' => $bill->id,
+                'title' => $bill->code,
+                'subtitle' => collect([$bill->status, $bill->partner?->name])->filter()->implode(' • '),
+                'type' => 'supplier_bill',
+                'icon' => 'payment',
+                'url' => route('module.payables.bills.show', $bill),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function billPayments(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'payables', BillPayment::class, 'bill_payments')) {
+            return [];
+        }
+
+        return BillPayment::query()
+            ->with('partner:id,name')
+            ->where(fn (Builder $q) => $q
+                ->where('code', 'ilike', "%{$query}%")
+                ->orWhere('reference_number', 'ilike', "%{$query}%")
+                ->orWhere('notes', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (BillPayment $payment) => [
+                'id' => $payment->id,
+                'title' => $payment->code,
+                'subtitle' => collect([$payment->status, $payment->partner?->name])->filter()->implode(' • '),
+                'type' => 'bill_payment',
+                'icon' => 'payment',
+                'url' => route('module.payables.payments.show', $payment),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function posSales(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'pos', PosSale::class, 'pos_sales')) {
+            return [];
+        }
+
+        return PosSale::query()
+            ->with(['partner:id,name', 'cashier:id,name'])
+            ->where(fn (Builder $q) => $q
+                ->where('code', 'ilike', "%{$query}%")
+                ->orWhere('notes', 'ilike', "%{$query}%")
+                ->orWhereHas('partner', fn (Builder $partner) => $partner->where('name', 'ilike', "%{$query}%"))
+                ->orWhereHas('cashier', fn (Builder $cashier) => $cashier->where('name', 'ilike', "%{$query}%")))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (PosSale $sale) => [
+                'id' => $sale->id,
+                'title' => $sale->code,
+                'subtitle' => collect([$sale->status, $sale->partner?->name, $sale->cashier?->name])->filter()->implode(' • '),
+                'type' => 'pos_sale',
+                'icon' => 'pos',
+                'url' => route('module.pos.sales.show', $sale),
             ])
             ->all();
     }
@@ -819,6 +1008,38 @@ class GlobalSearchService
     }
 
     /** @return list<array<string, mixed>> */
+    private function canvassingVisits(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'canvassing', CanvassingVisit::class, 'canvassing_visits')) {
+            return [];
+        }
+
+        return CanvassingVisit::query()
+            ->with(['partner:id,name', 'salesperson:id,name'])
+            ->where(fn (Builder $q) => $q
+                ->where('notes', 'ilike', "%{$query}%")
+                ->orWhere('outcome', 'ilike', "%{$query}%")
+                ->orWhereHas('partner', fn (Builder $partner) => $partner->where('name', 'ilike', "%{$query}%"))
+                ->orWhereHas('salesperson', fn (Builder $salesperson) => $salesperson
+                    ->where('name', 'ilike', "%{$query}%")
+                    ->orWhere('employee_code', 'ilike', "%{$query}%")))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (CanvassingVisit $visit) => [
+                'id' => $visit->id,
+                'title' => $visit->partner?->name ?? '#'.$visit->id,
+                'subtitle' => collect([
+                    $visit->salesperson?->name,
+                    $visit->outcome,
+                ])->filter()->implode(' • '),
+                'type' => 'canvassing_visit',
+                'icon' => 'salesperson',
+                'url' => route('module.canvassing.visits.show', $visit),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
     private function routePlans(User $user, string $query): array
     {
         if (! $this->canSearch($user, 'routing', RoutePlan::class, 'route_plans')) {
@@ -898,9 +1119,21 @@ class GlobalSearchService
         }
 
         return Tariff::query()
-            ->where(fn (Builder $q) => $q
-                ->where('origin', 'ilike', "%{$query}%")
-                ->orWhere('destination', 'ilike', "%{$query}%"))
+            ->where(function (Builder $q) use ($query): void {
+                $q->where('origin', 'ilike', "%{$query}%")
+                    ->orWhere('destination', 'ilike', "%{$query}%");
+
+                if (Schema::hasTable('locations') && Schema::hasColumn('tariffs', 'origin_location_id')) {
+                    $q->orWhereHas('originLocation', fn (Builder $location) => $location
+                        ->where('name', 'ilike', "%{$query}%")
+                        ->orWhere('code', 'ilike', "%{$query}%")
+                        ->orWhere('city', 'ilike', "%{$query}%"))
+                        ->orWhereHas('destinationLocation', fn (Builder $location) => $location
+                            ->where('name', 'ilike', "%{$query}%")
+                            ->orWhere('code', 'ilike', "%{$query}%")
+                            ->orWhere('city', 'ilike', "%{$query}%"));
+                }
+            })
             ->limit(self::LIMIT)
             ->get()
             ->map(fn (Tariff $tariff) => [
@@ -998,6 +1231,196 @@ class GlobalSearchService
                 'type' => 'gps_device',
                 'icon' => 'tracking',
                 'url' => route('module.tracking.devices.index', ['search' => $query]),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function accounts(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'accounting', Account::class, 'accounts')) {
+            return [];
+        }
+
+        return Account::query()
+            ->where(fn (Builder $q) => $q
+                ->where('code', 'ilike', "%{$query}%")
+                ->orWhere('name', 'ilike', "%{$query}%")
+                ->orWhere('system_role', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (Account $account) => [
+                'id' => $account->id,
+                'title' => $account->code.' · '.$account->name,
+                'subtitle' => collect([
+                    $account->type,
+                    $account->is_active ? __('shell.search.active') : __('shell.search.inactive'),
+                ])->filter()->implode(' • '),
+                'type' => 'account',
+                'icon' => 'accounting',
+                'url' => $user->hasPermissionFor('accounting', 'manage_coa')
+                    ? route('module.accounting.accounts.edit', $account)
+                    : route('module.accounting.accounts.index', ['search' => $account->code]),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function journalEntries(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'accounting', JournalEntry::class, 'journal_entries')) {
+            return [];
+        }
+
+        return JournalEntry::query()
+            ->where(fn (Builder $q) => $q
+                ->where('number', 'ilike', "%{$query}%")
+                ->orWhere('memo', 'ilike', "%{$query}%")
+                ->orWhere('event', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (JournalEntry $entry) => [
+                'id' => $entry->id,
+                'title' => $entry->number,
+                'subtitle' => collect([$entry->status, $entry->type, $entry->memo])->filter()->implode(' • '),
+                'type' => 'journal',
+                'icon' => 'accounting',
+                'url' => route('module.accounting.journals.show', $entry),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function companyBankAccounts(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'accounting', CompanyBankAccount::class, 'company_bank_accounts')) {
+            return [];
+        }
+
+        return CompanyBankAccount::query()
+            ->where(fn (Builder $q) => $q
+                ->where('name', 'ilike', "%{$query}%")
+                ->orWhere('bank_name', 'ilike', "%{$query}%")
+                ->orWhere('account_number', 'ilike', "%{$query}%")
+                ->orWhere('account_holder', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (CompanyBankAccount $account) => [
+                'id' => $account->id,
+                'title' => $account->name,
+                'subtitle' => collect([
+                    $account->kind,
+                    $account->bank_name,
+                    $account->account_number,
+                ])->filter()->implode(' • '),
+                'type' => 'company_bank',
+                'icon' => 'accounting',
+                'url' => $user->hasPermissionFor('accounting', 'bank')
+                    ? route('module.accounting.bank-accounts.edit', $account)
+                    : route('module.accounting.bank-accounts.index'),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function taxCodes(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'accounting', TaxCode::class, 'tax_codes')) {
+            return [];
+        }
+
+        return TaxCode::query()
+            ->where(fn (Builder $q) => $q
+                ->where('code', 'ilike', "%{$query}%")
+                ->orWhere('name', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (TaxCode $taxCode) => [
+                'id' => $taxCode->id,
+                'title' => $taxCode->code.' · '.$taxCode->name,
+                'subtitle' => collect([$taxCode->category, $taxCode->direction])->filter()->implode(' • '),
+                'type' => 'tax_code',
+                'icon' => 'accounting',
+                'url' => $user->hasPermissionFor('accounting', 'manage_tax')
+                    ? route('module.accounting.tax-codes.edit', $taxCode)
+                    : route('module.accounting.tax-codes.index'),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function fixedAssets(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'accounting', FixedAsset::class, 'fixed_assets')) {
+            return [];
+        }
+
+        return FixedAsset::query()
+            ->where(fn (Builder $q) => $q
+                ->where('code', 'ilike', "%{$query}%")
+                ->orWhere('name', 'ilike', "%{$query}%")
+                ->orWhere('category', 'ilike', "%{$query}%")
+                ->orWhere('notes', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (FixedAsset $asset) => [
+                'id' => $asset->id,
+                'title' => $asset->code.' · '.$asset->name,
+                'subtitle' => collect([$asset->category, $asset->status])->filter()->implode(' • '),
+                'type' => 'fixed_asset',
+                'icon' => 'accounting',
+                'url' => route('module.accounting.fixed-assets.index', ['search' => $asset->code]),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function budgets(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'accounting', Budget::class, 'budgets')) {
+            return [];
+        }
+
+        return Budget::query()
+            ->where('name', 'ilike', "%{$query}%")
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (Budget $budget) => [
+                'id' => $budget->id,
+                'title' => $budget->name,
+                'subtitle' => $budget->is_active ? __('shell.search.active') : __('shell.search.inactive'),
+                'type' => 'budget',
+                'icon' => 'accounting',
+                'url' => route('module.accounting.budgets.index', ['search' => $budget->name]),
+            ])
+            ->all();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function incentiveRules(User $user, string $query): array
+    {
+        if (! $this->canSearch($user, 'scoring', DriverIncentiveRule::class, 'driver_incentive_rules')) {
+            return [];
+        }
+
+        return DriverIncentiveRule::query()
+            ->where(fn (Builder $q) => $q
+                ->where('name', 'ilike', "%{$query}%")
+                ->orWhere('reward_label', 'ilike', "%{$query}%")
+                ->orWhere('notes', 'ilike', "%{$query}%"))
+            ->limit(self::LIMIT)
+            ->get()
+            ->map(fn (DriverIncentiveRule $rule) => [
+                'id' => $rule->id,
+                'title' => $rule->name,
+                'subtitle' => collect([
+                    $rule->period,
+                    $rule->reward_label,
+                    $rule->is_active ? __('shell.search.active') : __('shell.search.inactive'),
+                ])->filter()->implode(' • '),
+                'type' => 'incentive_rule',
+                'icon' => 'scoring',
+                'url' => route('module.scoring.incentives.index'),
             ])
             ->all();
     }

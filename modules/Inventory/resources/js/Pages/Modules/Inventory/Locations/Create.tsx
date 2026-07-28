@@ -5,6 +5,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import InventoryNav from '../../../../InventoryNav';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -93,32 +94,36 @@ export default function Create({ warehouse, parentOptions }: Props): JSX.Element
 
                         <div>
                             <InputLabel htmlFor="type" value={t('inventory.locations.type')} />
-                            <select
+                            <Select
                                 id="type"
+                                className="mt-1"
                                 value={data.type}
-                                onChange={(e) => setData('type', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                {LOCATION_TYPE_VALUES.map((value) => (
-                                    <option key={value} value={value}>{t(`inventory.location_types.${value}`)}</option>
-                                ))}
-                            </select>
+                                onChange={(value) => setData('type', value)}
+                                searchable={false}
+                                options={LOCATION_TYPE_VALUES.map((value) => ({
+                                    value,
+                                    label: t(`inventory.location_types.${value}`),
+                                }))}
+                            />
                             <InputError message={errors.type} className="mt-2" />
                         </div>
 
                         <div>
                             <InputLabel htmlFor="parent_id" value={t('inventory.locations.parent')} />
-                            <select
+                            <Select
                                 id="parent_id"
-                                value={data.parent_id}
-                                onChange={(e) => setData('parent_id', e.target.value ? Number(e.target.value) : '')}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                <option value="">{t('inventory.locations.no_parent')}</option>
-                                {parentOptions.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
-                                ))}
-                            </select>
+                                className="mt-1"
+                                value={data.parent_id === '' ? '' : String(data.parent_id)}
+                                onChange={(value) => setData('parent_id', value ? Number(value) : '')}
+                                placeholder={t('inventory.locations.no_parent')}
+                                options={[
+                                    { value: '', label: t('inventory.locations.no_parent') },
+                                    ...parentOptions.map((p) => ({
+                                        value: String(p.id),
+                                        label: `${p.code} — ${p.name}`,
+                                    })),
+                                ]}
+                            />
                             <InputError message={errors.parent_id} className="mt-2" />
                         </div>
 

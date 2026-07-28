@@ -1,5 +1,6 @@
 import CanvassingLayout from '@/Layouts/CanvassingLayout';
 import InputError from '@/Components/InputError';
+import Select from '@/Components/Select';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useRef, useState } from 'react';
@@ -208,16 +209,19 @@ export default function VisitDetail({ salesperson, visit, orderCapture }: Props)
                     {(orderCapture?.warehouses?.length ?? 0) > 0 && (
                         <div>
                             <label className="mb-1 block text-xs font-medium text-gray-500">{t('canvassing.portal.warehouse')}</label>
-                            <select
+                            <Select
+                                className="w-full"
                                 value={orderForm.data.warehouse_id}
-                                onChange={(e) => orderForm.setData('warehouse_id', e.target.value)}
-                                className="w-full rounded-md border-gray-300 text-sm"
-                            >
-                                <option value="">—</option>
-                                {orderCapture?.warehouses.map((warehouse) => (
-                                    <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
-                                ))}
-                            </select>
+                                onChange={(value) => orderForm.setData('warehouse_id', value)}
+                                placeholder="—"
+                                options={[
+                                    { value: '', label: '—' },
+                                    ...(orderCapture?.warehouses ?? []).map((warehouse) => ({
+                                        value: String(warehouse.id),
+                                        label: warehouse.name,
+                                    })),
+                                ]}
+                            />
                         </div>
                     )}
 
@@ -227,16 +231,20 @@ export default function VisitDetail({ salesperson, visit, orderCapture }: Props)
                         <div className="space-y-2">
                             {orderForm.data.items.map((item, index) => (
                                 <div key={index} className="grid grid-cols-12 gap-2 rounded border border-gray-100 p-2">
-                                    <select
-                                        className="col-span-7 rounded-md border-gray-300 text-sm"
-                                        value={item.product_id}
-                                        onChange={(e) => updateOrderLine(index, 'product_id', e.target.value)}
-                                    >
-                                        <option value="">—</option>
-                                        {(orderCapture?.products ?? []).map((product) => (
-                                            <option key={product.id} value={product.id}>{product.name}</option>
-                                        ))}
-                                    </select>
+                                    <div className="col-span-7">
+                                        <Select
+                                            value={item.product_id}
+                                            onChange={(value) => updateOrderLine(index, 'product_id', value)}
+                                            placeholder="—"
+                                            options={[
+                                                { value: '', label: '—' },
+                                                ...(orderCapture?.products ?? []).map((product) => ({
+                                                    value: String(product.id),
+                                                    label: product.code ? `${product.code} — ${product.name}` : product.name,
+                                                })),
+                                            ]}
+                                        />
+                                    </div>
                                     <input
                                         type="number"
                                         min="0"

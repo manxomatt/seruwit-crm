@@ -4,16 +4,21 @@ namespace Tests\Feature\Modules;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Accounting\Models\Account;
+use Modules\DriverScoring\Models\DriverIncentiveRule;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
+use Modules\Payables\Models\SupplierBill;
 use Modules\Product\Models\Brand;
 use Modules\Product\Models\Principal;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductAttribute;
 use Modules\Product\Models\ProductTag;
 use Modules\Product\Models\ProductType;
+use Modules\Sales\Models\SalesOrder;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -154,5 +159,73 @@ class GlobalSearchTest extends TestCase
         $brandHit = collect($response->json('results'))->firstWhere('type', 'brand');
         $this->assertSame($brand->name, $brandHit['title']);
         $this->assertStringContainsString('/brands/', $brandHit['url']);
+    }
+
+    public function test_search_finds_newer_module_records(): void
+    {
+        $user = $this->createAdminUser();
+
+        $location = Location::factory()->create([
+            'code' => 'LOC-NOVA01',
+            'name' => 'Nova City Hub',
+            'city' => 'Novapolis',
+        ]);
+        $salesOrder = SalesOrder::factory()->create([
+            'so_number' => 'SO-NOVA-0001',
+        ]);
+        $partner = Partner::factory()->create(['name' => 'Nova Supplier Co']);
+        $bill = SupplierBill::query()->create([
+            'code' => 'BILL-NOVA-01',
+            'partner_id' => $partner->id,
+            'status' => SupplierBill::STATUS_DRAFT,
+            'bill_date' => now()->toDateString(),
+            'subtotal' => 100000,
+            'tax_amount' => 0,
+            'total' => 100000,
+            'amount_paid' => 0,
+        ]);
+        $account = Account::query()->create([
+            'code' => '1-NOVA',
+            'name' => 'Nova Cash Account',
+            'type' => Account::TYPE_ASSET,
+            'normal_balance' => Account::NORMAL_DEBIT,
+            'is_postable' => true,
+            'is_active' => true,
+        ]);
+        DriverIncentiveRule::query()->create([
+            'name' => 'Nova Top Driver Bonus',
+            'period' => DriverIncentiveRule::PERIOD_MONTHLY,
+            'min_score' => 80,
+            'min_days' => 20,
+            'reward_amount' => 500000,
+            'reward_label' => 'Nova Bonus',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson(route('module.search', ['q' => 'Nova']))
+            ->assertOk();
+
+        $types = collect($response->json('results'))->pluck('type')->unique()->values()->all();
+
+        $this->assertContains('location', $types);
+        $this->assertContains('sales_order', $types);
+        $this->assertContains('supplier_bill', $types);
+        $this->assertContains('account', $types);
+        $this->assertContains('incentive_rule', $types);
+
+        $locationHit = collect($response->json('results'))->firstWhere('type', 'location');
+        $this->assertSame($location->name, $locationHit['title']);
+        $this->assertStringContainsString('/partners/locations', $locationHit['url']);
+
+        $soHit = collect($response->json('results'))->firstWhere('type', 'sales_order');
+        $this->assertSame($salesOrder->so_number, $soHit['title']);
+        $this->assertStringContainsString('/sales/sales-orders/', $soHit['url']);
+
+        $billHit = collect($response->json('results'))->firstWhere('type', 'supplier_bill');
+        $this->assertSame($bill->code, $billHit['title']);
+
+        $accountHit = collect($response->json('results'))->firstWhere('type', 'account');
+        $this->assertStringContainsString($account->code, $accountHit['title']);
     }
 }

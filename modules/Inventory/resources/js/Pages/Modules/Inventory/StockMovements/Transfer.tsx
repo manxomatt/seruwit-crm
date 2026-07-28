@@ -119,18 +119,19 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                                 </div>
                                 <div>
                                     <InputLabel value={t('inventory.movements.source_location')} />
-                                    <select
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    <Select
+                                        className="mt-1"
                                         value={data.from_location_id}
-                                        onChange={(e) => setData('from_location_id', e.target.value)}
-                                    >
-                                        <option value="">{t('inventory.movements.no_specific')}</option>
-                                        {fromLocations.map((l) => (
-                                            <option key={l.id} value={String(l.id)}>
-                                                {l.code} — {l.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(value) => setData('from_location_id', value)}
+                                        placeholder={t('inventory.movements.no_specific')}
+                                        options={[
+                                            { value: '', label: t('inventory.movements.no_specific') },
+                                            ...fromLocations.map((l) => ({
+                                                value: String(l.id),
+                                                label: `${l.code} — ${l.name}`,
+                                            })),
+                                        ]}
+                                    />
                                     <InputError message={errors.from_location_id} className="mt-2" />
                                 </div>
                             </div>
@@ -152,18 +153,19 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
                                 </div>
                                 <div>
                                     <InputLabel value={t('inventory.movements.dest_location')} />
-                                    <select
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    <Select
+                                        className="mt-1"
                                         value={data.to_location_id}
-                                        onChange={(e) => setData('to_location_id', e.target.value)}
-                                    >
-                                        <option value="">{t('inventory.movements.no_specific')}</option>
-                                        {toLocations.map((l) => (
-                                            <option key={l.id} value={String(l.id)}>
-                                                {l.code} — {l.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(value) => setData('to_location_id', value)}
+                                        placeholder={t('inventory.movements.no_specific')}
+                                        options={[
+                                            { value: '', label: t('inventory.movements.no_specific') },
+                                            ...toLocations.map((l) => ({
+                                                value: String(l.id),
+                                                label: `${l.code} — ${l.name}`,
+                                            })),
+                                        ]}
+                                    />
                                     <InputError message={errors.to_location_id} className="mt-2" />
                                 </div>
                             </div>
