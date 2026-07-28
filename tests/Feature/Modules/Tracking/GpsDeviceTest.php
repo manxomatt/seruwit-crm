@@ -141,6 +141,45 @@ class GpsDeviceTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_sky_track_sync_imports_objects_by_imei(): void
+    {
+        $user = $this->createAdminUser();
+        TrackingConfig::factory()->skyTrack('sky-secret-key')->create();
+        $existing = GpsDevice::factory()->create([
+            'traccar_device_id' => 358735072143802,
+            'unique_id' => '358735072143802',
+            'name' => 'Old name',
+            'status' => 'offline',
+        ]);
+
+        Http::fake([
+            'api.sky-track.example.test/api/objects' => Http::response([
+                [
+                    'imei' => '358735072143802',
+                    'name' => 'Vehicle 1 Test Update',
+                    'active' => 'true',
+                ],
+                [
+                    'imei' => '352503094515944',
+                    'name' => 'Hiace D 7047 VE',
+                    'active' => 'false',
+                ],
+            ]),
+        ]);
+
+        $this->actingAs($user)->post(route('module.tracking.devices.sync'))->assertSessionHas('success');
+
+        $this->assertSame(2, GpsDevice::count());
+        $this->assertSame('Vehicle 1 Test Update', $existing->fresh()->name);
+        $this->assertSame('online', $existing->fresh()->status);
+
+        $created = GpsDevice::query()->where('unique_id', '352503094515944')->first();
+        $this->assertNotNull($created);
+        $this->assertSame('Hiace D 7047 VE', $created->name);
+        $this->assertSame('offline', $created->status);
+        $this->assertSame(352503094515944, $created->traccar_device_id);
+    }
+
     public function test_pairing_captures_the_vehicles_odometer_as_the_baseline(): void
     {
         $user = $this->createAdminUser();

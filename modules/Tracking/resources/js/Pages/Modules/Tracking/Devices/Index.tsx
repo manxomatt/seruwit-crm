@@ -154,7 +154,7 @@ export default function Index({ devices, pairableVehicles, filters, can }: Props
                             </h3>
                             {!hasSearch && (
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Use “Sync from Traccar” to import the trackers on your account.
+                                    {t('tracking.pages.devices.empty_hint')}
                                 </p>
                             )}
                         </div>

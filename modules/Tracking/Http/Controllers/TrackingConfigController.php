@@ -10,6 +10,7 @@ use Inertia\Response;
 use Modules\Tracking\Exceptions\TraccarException;
 use Modules\Tracking\Http\Requests\UpdateTrackingConfigRequest;
 use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Services\SkyTrackClient;
 use Modules\Tracking\Services\TraccarClient;
 
 class TrackingConfigController extends Controller
@@ -23,7 +24,7 @@ class TrackingConfigController extends Controller
     }
 
     /**
-     * Show the Traccar connection settings.
+     * Show the GPS provider connection settings.
      */
     public function edit(): Response
     {
@@ -34,6 +35,7 @@ class TrackingConfigController extends Controller
             // The stored secrets are deliberately absent from the payload; the
             // page only needs to know whether one exists.
             'config' => $config->only([
+                'provider',
                 'base_url',
                 'auth_type',
                 'email',
@@ -70,13 +72,19 @@ class TrackingConfigController extends Controller
             }
         }
 
+        if (($validated['provider'] ?? null) === TrackingConfig::PROVIDER_SKY_TRACK) {
+            $validated['auth_type'] = TrackingConfig::AUTH_API_KEY;
+            $validated['email'] = null;
+            $validated['password'] = null;
+        }
+
         $config->update($validated);
 
         return back()->with('success', __('tracking.messages.settings_saved'));
     }
 
     /**
-     * Try the stored credentials against the Traccar server.
+     * Try the stored credentials against the configured GPS provider.
      */
     public function test(): RedirectResponse
     {
@@ -87,7 +95,11 @@ class TrackingConfigController extends Controller
         }
 
         try {
-            (new TraccarClient($config))->verify();
+            if ($config->usesSkyTrack()) {
+                (new SkyTrackClient($config))->verify();
+            } else {
+                (new TraccarClient($config))->verify();
+            }
         } catch (TraccarException $e) {
             $config->forceFill(['last_poll_error' => $e->getMessage()])->save();
 

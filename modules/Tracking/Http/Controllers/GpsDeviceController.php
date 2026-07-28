@@ -14,6 +14,7 @@ use Modules\Tracking\Exceptions\TraccarException;
 use Modules\Tracking\Http\Requests\PairGpsDeviceRequest;
 use Modules\Tracking\Models\GpsDevice;
 use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Services\SkyTrackClient;
 use Modules\Tracking\Services\TraccarClient;
 
 class GpsDeviceController extends Controller
@@ -71,8 +72,9 @@ class GpsDeviceController extends Controller
     }
 
     /**
-     * Import the device list from Traccar. Existing rows are updated rather
-     * than replaced so pairings and odometer baselines survive a re-sync.
+     * Import the device list from the configured GPS provider. Existing rows
+     * are updated rather than replaced so pairings and odometer baselines
+     * survive a re-sync.
      */
     public function sync(): RedirectResponse
     {
@@ -83,11 +85,22 @@ class GpsDeviceController extends Controller
         }
 
         try {
-            $devices = (new TraccarClient($config))->devices();
+            $synced = $config->usesSkyTrack()
+                ? $this->syncFromSkyTrack($config)
+                : $this->syncFromTraccar($config);
         } catch (TraccarException $e) {
             return back()->with('error', $e->getMessage());
         }
 
+        return back()->with('success', __('tracking.messages.synced', ['count' => $synced]));
+    }
+
+    /**
+     * @throws TraccarException
+     */
+    private function syncFromTraccar(TrackingConfig $config): int
+    {
+        $devices = (new TraccarClient($config))->devices();
         $synced = 0;
 
         foreach ($devices as $device) {
@@ -110,7 +123,42 @@ class GpsDeviceController extends Controller
             $synced++;
         }
 
-        return back()->with('success', __('tracking.messages.synced', ['count' => $synced]));
+        return $synced;
+    }
+
+    /**
+     * Sky Track keys objects by IMEI; we store that as unique_id and as the
+     * local provider device id (IMEIs are numeric and fit unsignedBigInteger).
+     *
+     * @throws TraccarException
+     */
+    private function syncFromSkyTrack(TrackingConfig $config): int
+    {
+        $objects = (new SkyTrackClient($config))->objects();
+        $synced = 0;
+
+        foreach ($objects as $object) {
+            $imei = trim((string) Arr::get($object, 'imei', ''));
+
+            if ($imei === '' || ! ctype_digit($imei)) {
+                continue;
+            }
+
+            $active = filter_var(Arr::get($object, 'active'), FILTER_VALIDATE_BOOLEAN);
+
+            GpsDevice::updateOrCreate(
+                ['traccar_device_id' => (int) $imei],
+                [
+                    'unique_id' => $imei,
+                    'name' => (string) (Arr::get($object, 'name') ?: $imei),
+                    'status' => $active ? 'online' : 'offline',
+                ],
+            );
+
+            $synced++;
+        }
+
+        return $synced;
     }
 
     /**

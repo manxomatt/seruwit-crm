@@ -28,6 +28,7 @@ class TrackingConfigTest extends TestCase
     private function payload(array $overrides = []): array
     {
         return array_replace([
+            'provider' => 'traccar',
             'base_url' => 'https://gps.example.test',
             'auth_type' => 'basic',
             'email' => 'ops@example.test',
@@ -49,6 +50,7 @@ class TrackingConfigTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Tracking/Settings')
+                ->where('config.provider', 'traccar')
                 ->where('hasPassword', true)
                 ->missing('config.password')
                 ->missing('config.token')
@@ -83,6 +85,41 @@ class TrackingConfigTest extends TestCase
         $this->assertSame(350, $config->geofence_radius_m);
     }
 
+    public function test_sky_track_settings_store_url_and_api_key(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->patch(route('module.tracking.settings.update'), $this->payload([
+            'provider' => 'sky_track',
+            'base_url' => 'https://api.sky-track.example.test',
+            'auth_type' => 'api_key',
+            'email' => 'ignored@example.test',
+            'password' => 'ignored',
+            'token' => 'sky-secret-key',
+        ]))->assertSessionHas('success');
+
+        $config = TrackingConfig::first();
+        $this->assertSame('sky_track', $config->provider);
+        $this->assertSame('api_key', $config->auth_type);
+        $this->assertSame('https://api.sky-track.example.test', $config->base_url);
+        $this->assertSame('sky-secret-key', $config->token);
+        $this->assertNull($config->email);
+        $this->assertNull($config->password);
+        $this->assertTrue($config->isConfigured());
+    }
+
+    public function test_sky_track_requires_a_base_url(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->patch(route('module.tracking.settings.update'), $this->payload([
+            'provider' => 'sky_track',
+            'base_url' => '',
+            'auth_type' => 'api_key',
+            'token' => 'sky-secret-key',
+        ]))->assertSessionHasErrors(['base_url']);
+    }
+
     public function test_thresholds_are_validated(): void
     {
         $user = $this->createAdminUser();
@@ -91,7 +128,8 @@ class TrackingConfigTest extends TestCase
             'geofence_radius_m' => 1,
             'retention_days' => 0,
             'auth_type' => 'carrier-pigeon',
-        ]))->assertSessionHasErrors(['geofence_radius_m', 'retention_days', 'auth_type']);
+            'provider' => 'not-a-provider',
+        ]))->assertSessionHasErrors(['geofence_radius_m', 'retention_days', 'auth_type', 'provider']);
     }
 
     public function test_the_connection_test_reports_success(): void
@@ -102,6 +140,21 @@ class TrackingConfigTest extends TestCase
 
         $this->actingAs($user)->post(route('module.tracking.settings.test'))->assertSessionHas('success');
 
+        $this->assertNull(TrackingConfig::first()->last_poll_error);
+    }
+
+    public function test_the_sky_track_connection_test_sends_x_api_key_header(): void
+    {
+        $user = $this->createAdminUser();
+        TrackingConfig::factory()->skyTrack('sky-secret-key')->create();
+        Http::fake([
+            'api.sky-track.example.test/api/objects' => Http::response([]),
+        ]);
+
+        $this->actingAs($user)->post(route('module.tracking.settings.test'))->assertSessionHas('success');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.sky-track.example.test/api/objects'
+            && $request->hasHeader('X-Api-Key', 'sky-secret-key'));
         $this->assertNull(TrackingConfig::first()->last_poll_error);
     }
 

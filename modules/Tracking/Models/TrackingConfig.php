@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Tracking\Database\Factories\TrackingConfigFactory;
 
 /**
- * The tenant's connection to its own Traccar account, plus the thresholds that
+ * The tenant's connection to its GPS provider account, plus the thresholds that
  * decide how noisy telemetry becomes trip data. One row per tenant.
  */
 class TrackingConfig extends Model
@@ -16,9 +16,15 @@ class TrackingConfig extends Model
     /** @use HasFactory<TrackingConfigFactory> */
     use HasFactory;
 
+    public const PROVIDER_TRACCAR = 'traccar';
+
+    public const PROVIDER_SKY_TRACK = 'sky_track';
+
     public const AUTH_BASIC = 'basic';
 
     public const AUTH_TOKEN = 'token';
+
+    public const AUTH_API_KEY = 'api_key';
 
     /**
      * Factory resolution assumes App\Models, so a module's models must point at
@@ -33,6 +39,7 @@ class TrackingConfig extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'provider',
         'base_url',
         'auth_type',
         'email',
@@ -71,17 +78,45 @@ class TrackingConfig extends Model
     public static function current(): self
     {
         return static::query()->firstOrCreate([], [
+            'provider' => self::PROVIDER_TRACCAR,
             'base_url' => config('services.traccar.base_url'),
         ]);
     }
 
     /**
+     * @return list<string>
+     */
+    public static function providers(): array
+    {
+        return [
+            self::PROVIDER_TRACCAR,
+            self::PROVIDER_SKY_TRACK,
+        ];
+    }
+
+    public function usesSkyTrack(): bool
+    {
+        return $this->provider === self::PROVIDER_SKY_TRACK;
+    }
+
+    public function usesTraccar(): bool
+    {
+        return $this->provider === self::PROVIDER_TRACCAR;
+    }
+
+    /**
      * The server this tenant talks to: its own override, else the company's
-     * default server from config.
+     * default Traccar server from config (Traccar provider only).
      */
     public function baseUrl(): ?string
     {
-        return $this->base_url ?: config('services.traccar.base_url');
+        if ($this->base_url) {
+            return $this->base_url;
+        }
+
+        return $this->usesTraccar()
+            ? config('services.traccar.base_url')
+            : null;
     }
 
     /**
@@ -93,6 +128,10 @@ class TrackingConfig extends Model
     {
         if (! $this->baseUrl()) {
             return false;
+        }
+
+        if ($this->usesSkyTrack()) {
+            return filled($this->token);
         }
 
         return $this->auth_type === self::AUTH_TOKEN

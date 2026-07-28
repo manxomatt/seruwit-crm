@@ -7,11 +7,12 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
 import TrackingNav from '../../../TrackingNav';
 
 interface Config {
+    provider: string;
     base_url: string | null;
     auth_type: string;
     email: string | null;
@@ -35,24 +36,9 @@ interface Props {
 export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl, lastPolledAt, lastPollError, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
-    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-    useEffect(() => {
-        if (flash?.success) {
-            setToast({ type: 'success', message: flash.success });
-        } else if (flash?.error) {
-            setToast({ type: 'error', message: flash.error });
-        }
-    }, [flash]);
-
-    useEffect(() => {
-        if (!toast) return;
-        const timer = setTimeout(() => setToast(null), 5000);
-        return () => clearTimeout(timer);
-    }, [toast]);
 
     const { data, setData, patch, processing, errors } = useForm({
+        provider: config.provider ?? 'traccar',
         base_url: config.base_url ?? '',
         auth_type: config.auth_type,
         email: config.email ?? '',
@@ -80,36 +66,27 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
         });
     };
 
-    const usesToken = data.auth_type === 'token';
+    const isSkyTrack = data.provider === 'sky_track';
+    const usesToken = !isSkyTrack && data.auth_type === 'token';
+
+    const setProvider = (provider: string) => {
+        setData({
+            ...data,
+            provider,
+            auth_type: provider === 'sky_track'
+                ? 'api_key'
+                : (data.auth_type === 'api_key' ? 'basic' : data.auth_type),
+            email: provider === 'sky_track' ? '' : data.email,
+            password: provider === 'sky_track' ? '' : data.password,
+            token: '',
+        });
+    };
 
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>}>
             <Head title={t('tracking.pages.settings.title')} />
 
             <TrackingNav />
-
-            {toast && (
-                <div
-                    className={`mb-6 flex items-center justify-between rounded-lg p-4 text-sm ring-1 ${
-                        toast.type === 'success'
-                            ? 'bg-green-50 text-green-800 ring-green-200'
-                            : 'bg-red-50 text-red-800 ring-red-200'
-                    }`}
-                >
-                    <span>{toast.message}</span>
-                    <button
-                        type="button"
-                        onClick={() => setToast(null)}
-                        className={`ml-4 shrink-0 rounded p-1 transition hover:bg-opacity-20 ${
-                            toast.type === 'success' ? 'hover:bg-green-600' : 'hover:bg-red-600'
-                        }`}
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            )}
 
             {lastPollError && (
                 <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800">
@@ -121,39 +98,48 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                 <div className="p-6">
                     <form onSubmit={submit} className="max-w-2xl space-y-6">
                         <div>
-                            <InputLabel htmlFor="base_url" value={t('tracking.fields.base_url')} />
+                            <InputLabel htmlFor="provider" value={t('tracking.fields.provider')} />
+                            <Select
+                                id="provider"
+                                className="mt-1"
+                                value={data.provider}
+                                onChange={setProvider}
+                                options={[
+                                    { value: 'traccar', label: t('tracking.providers.traccar') },
+                                    { value: 'sky_track', label: t('tracking.providers.sky_track') },
+                                ]}
+                            />
+                            <InputError message={errors.provider} className="mt-2" />
+                            <p className="mt-1 text-xs text-gray-500">
+                                {isSkyTrack
+                                    ? t('tracking.pages.settings.sky_track_hint')
+                                    : t('tracking.pages.settings.traccar_hint')}
+                            </p>
+                        </div>
+
+                        <div>
+                            <InputLabel
+                                htmlFor="base_url"
+                                value={isSkyTrack ? t('tracking.fields.sky_track_url') : t('tracking.fields.base_url')}
+                            />
                             <TextInput
                                 id="base_url"
                                 type="url"
                                 className="mt-1 block w-full"
                                 value={data.base_url}
                                 onChange={(e) => setData('base_url', e.target.value)}
-                                placeholder={defaultBaseUrl ?? 'https://gps.example.com'}
+                                placeholder={isSkyTrack ? 'https://api.sky-track.example.com' : (defaultBaseUrl ?? 'https://gps.example.com')}
+                                required={isSkyTrack}
                             />
                             <InputError message={errors.base_url} className="mt-2" />
-                            {defaultBaseUrl && (
+                            {!isSkyTrack && defaultBaseUrl && (
                                 <p className="mt-1 text-xs text-gray-500">Leave blank to use the default server: {defaultBaseUrl}</p>
                             )}
                         </div>
 
-                        <div>
-                            <InputLabel htmlFor="auth_type" value={t('tracking.fields.auth_type')} />
-                            <Select
-                                id="auth_type"
-                                className="mt-1"
-                                value={data.auth_type}
-                                onChange={(value) => setData('auth_type', value)}
-                                options={[
-                                    { value: 'basic', label: t('tracking.auth_types.basic') },
-                                    { value: 'token', label: t('tracking.auth_types.token') },
-                                ]}
-                            />
-                            <InputError message={errors.auth_type} className="mt-2" />
-                        </div>
-
-                        {usesToken ? (
+                        {isSkyTrack ? (
                             <div>
-                                <InputLabel htmlFor="token" value={t('tracking.fields.token')} />
+                                <InputLabel htmlFor="token" value={t('tracking.fields.api_key')} />
                                 <TextInput
                                     id="token"
                                     type="password"
@@ -163,34 +149,67 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                     placeholder={hasToken ? '•••••••• (unchanged)' : ''}
                                 />
                                 <InputError message={errors.token} className="mt-2" />
-                                <p className="mt-1 text-xs text-gray-500">Leave blank to keep the stored token.</p>
+                                <p className="mt-1 text-xs text-gray-500">{t('tracking.pages.settings.api_key_hint')}</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <>
                                 <div>
-                                    <InputLabel htmlFor="email" value={t('tracking.fields.email')} />
-                                    <TextInput
-                                        id="email"
-                                        className="mt-1 block w-full"
-                                        value={data.email}
-                                        onChange={(e) => setData('email', e.target.value)}
+                                    <InputLabel htmlFor="auth_type" value={t('tracking.fields.auth_type')} />
+                                    <Select
+                                        id="auth_type"
+                                        className="mt-1"
+                                        value={data.auth_type}
+                                        onChange={(value) => setData('auth_type', value)}
+                                        options={[
+                                            { value: 'basic', label: t('tracking.auth_types.basic') },
+                                            { value: 'token', label: t('tracking.auth_types.token') },
+                                        ]}
                                     />
-                                    <InputError message={errors.email} className="mt-2" />
+                                    <InputError message={errors.auth_type} className="mt-2" />
                                 </div>
-                                <div>
-                                    <InputLabel htmlFor="password" value={t('tracking.fields.password')} />
-                                    <TextInput
-                                        id="password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        value={data.password}
-                                        onChange={(e) => setData('password', e.target.value)}
-                                        placeholder={hasPassword ? '•••••••• (unchanged)' : ''}
-                                    />
-                                    <InputError message={errors.password} className="mt-2" />
-                                    <p className="mt-1 text-xs text-gray-500">Leave blank to keep the stored password.</p>
-                                </div>
-                            </div>
+
+                                {usesToken ? (
+                                    <div>
+                                        <InputLabel htmlFor="token" value={t('tracking.fields.token')} />
+                                        <TextInput
+                                            id="token"
+                                            type="password"
+                                            className="mt-1 block w-full"
+                                            value={data.token}
+                                            onChange={(e) => setData('token', e.target.value)}
+                                            placeholder={hasToken ? '•••••••• (unchanged)' : ''}
+                                        />
+                                        <InputError message={errors.token} className="mt-2" />
+                                        <p className="mt-1 text-xs text-gray-500">Leave blank to keep the stored token.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                        <div>
+                                            <InputLabel htmlFor="email" value={t('tracking.fields.email')} />
+                                            <TextInput
+                                                id="email"
+                                                className="mt-1 block w-full"
+                                                value={data.email}
+                                                onChange={(e) => setData('email', e.target.value)}
+                                            />
+                                            <InputError message={errors.email} className="mt-2" />
+                                        </div>
+                                        <div>
+                                            <InputLabel htmlFor="password" value={t('tracking.fields.password')} />
+                                            <TextInput
+                                                id="password"
+                                                type="password"
+                                                className="mt-1 block w-full"
+                                                value={data.password}
+                                                onChange={(e) => setData('password', e.target.value)}
+                                                placeholder={hasPassword ? '•••••••• (unchanged)' : ''}
+                                            />
+                                            <InputError message={errors.password} className="mt-2" />
+                                            <p className="mt-1 text-xs text-gray-500">Leave blank to keep the stored password.</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         <label className="flex items-center gap-2 text-sm text-gray-700">

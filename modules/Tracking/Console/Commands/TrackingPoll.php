@@ -44,7 +44,9 @@ class TrackingPoll extends Command
 
                     $config = TrackingConfig::current();
 
-                    if (! $config->poll_enabled || ! $config->isConfigured()) {
+                    // Sky Track ingest is not wired yet — settings can be saved,
+                    // but polling still only runs against Traccar-compatible APIs.
+                    if (! $config->poll_enabled || ! $config->isConfigured() || ! $config->usesTraccar()) {
                         return null;
                     }
 

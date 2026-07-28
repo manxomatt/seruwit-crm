@@ -17,15 +17,37 @@ class UpdateTrackingConfigRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('provider') === TrackingConfig::PROVIDER_SKY_TRACK) {
+            $this->merge([
+                'auth_type' => TrackingConfig::AUTH_API_KEY,
+                'email' => null,
+                'password' => null,
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
+        $isSkyTrack = $this->input('provider') === TrackingConfig::PROVIDER_SKY_TRACK;
+
         return [
-            'base_url' => ['nullable', 'url', 'max:255'],
-            'auth_type' => ['required', Rule::in([TrackingConfig::AUTH_BASIC, TrackingConfig::AUTH_TOKEN])],
+            'provider' => ['required', Rule::in(TrackingConfig::providers())],
+            'base_url' => [$isSkyTrack ? 'required' : 'nullable', 'url', 'max:255'],
+            'auth_type' => [
+                'required',
+                Rule::in($isSkyTrack
+                    ? [TrackingConfig::AUTH_API_KEY]
+                    : [TrackingConfig::AUTH_BASIC, TrackingConfig::AUTH_TOKEN]),
+            ],
             'email' => ['nullable', 'string', 'max:255'],
             // Secrets are never sent back to the browser, so an empty field
             // means "leave what is stored alone" rather than "clear it".

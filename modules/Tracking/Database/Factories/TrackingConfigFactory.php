@@ -26,6 +26,7 @@ class TrackingConfigFactory extends Factory
     public function definition(): array
     {
         return [
+            'provider' => TrackingConfig::PROVIDER_TRACCAR,
             'base_url' => 'https://gps.example.test',
             'auth_type' => TrackingConfig::AUTH_BASIC,
             'email' => 'ops@example.test',
@@ -49,6 +50,21 @@ class TrackingConfigFactory extends Factory
             'email' => null,
             'password' => null,
             'token' => $token,
+        ]);
+    }
+
+    /**
+     * Indicate that the tenant uses the custom Sky Track provider.
+     */
+    public function skyTrack(string $apiKey = 'sky-track-key'): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'provider' => TrackingConfig::PROVIDER_SKY_TRACK,
+            'base_url' => 'https://api.sky-track.example.test',
+            'auth_type' => TrackingConfig::AUTH_API_KEY,
+            'email' => null,
+            'password' => null,
+            'token' => $apiKey,
         ]);
     }
 
