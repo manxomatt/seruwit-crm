@@ -16,6 +16,8 @@ return [
         'cash_flow' => 'Cash Flow',
         'general_ledger' => 'General Ledger',
         'partner_statement' => 'Partner statement',
+        'tax_register' => 'PPN tax register',
+        'wht_payable' => 'WHT payable',
         'bank' => 'Bank & Cash',
         'aria' => 'Accounting sections',
         'groups' => [
@@ -367,6 +369,50 @@ return [
         'partner' => 'Partner',
         'from' => 'From',
         'to' => 'To',
+    ],
+
+    'tax_register' => [
+        'title' => 'PPN tax register',
+        'hint' => 'Manual keluaran / masukan register for review and CSV export. Not a DJP e-Faktur file.',
+        'side' => 'Register',
+        'from' => 'From',
+        'to' => 'To',
+        'export_csv' => 'Export CSV',
+        'empty' => 'No taxable documents in this period.',
+        'totals' => 'Totals',
+        'sides' => [
+            'output' => 'Output (sales / keluaran)',
+            'input' => 'Input (purchases / masukan)',
+        ],
+        'columns' => [
+            'date' => 'Date',
+            'document' => 'Document',
+            'partner' => 'Partner',
+            'npwp' => 'NPWP',
+            'tax_code' => 'Tax code',
+            'dpp' => 'DPP',
+            'tax' => 'PPN',
+            'gross' => 'Gross',
+        ],
+    ],
+
+    'wht_payable' => [
+        'title' => 'WHT payable (PPh)',
+        'hint' => 'PPh withheld on supplier bill payments — remittance checklist.',
+        'from' => 'From',
+        'to' => 'To',
+        'empty' => 'No withholding in this period.',
+        'totals' => 'Totals',
+        'columns' => [
+            'date' => 'Date',
+            'document' => 'Payment',
+            'partner' => 'Partner',
+            'npwp' => 'NPWP',
+            'wht_code' => 'WHT code',
+            'base' => 'Base',
+            'wht' => 'WHT',
+            'paid_net' => 'Paid net',
+        ],
     ],
 
     'fa' => [

@@ -67,9 +67,9 @@ class PurchaseBillService
         }
 
         $po = $grn->purchaseOrder;
-        [$taxEnabled, $taxRate] = $this->taxSettings();
+        $taxAttrs = $this->taxSettings();
 
-        return DB::transaction(function () use ($grn, $billable, $po, $taxEnabled, $taxRate) {
+        return DB::transaction(function () use ($grn, $billable, $po, $taxAttrs) {
             $bill = SupplierBill::query()->create([
                 'code' => SupplierBill::nextCode(),
                 'partner_id' => $po->partner_id,
@@ -78,8 +78,7 @@ class PurchaseBillService
                 'status' => SupplierBill::STATUS_DRAFT,
                 'bill_date' => now()->toDateString(),
                 'due_date' => null,
-                'tax_enabled' => $taxEnabled,
-                'tax_rate' => $taxEnabled ? $taxRate : 0,
+                ...$taxAttrs,
                 'subtotal' => 0,
                 'tax_amount' => 0,
                 'total' => 0,
@@ -138,9 +137,9 @@ class PurchaseBillService
         }
 
         $po = $purchaseReturn->purchaseOrder;
-        [$taxEnabled, $taxRate] = $this->taxSettings();
+        $taxAttrs = $this->taxSettings();
 
-        return DB::transaction(function () use ($purchaseReturn, $creditable, $po, $taxEnabled, $taxRate) {
+        return DB::transaction(function () use ($purchaseReturn, $creditable, $po, $taxAttrs) {
             $bill = SupplierBill::query()->create([
                 'code' => SupplierBill::nextCode(),
                 'partner_id' => $po->partner_id,
@@ -149,8 +148,7 @@ class PurchaseBillService
                 'status' => SupplierBill::STATUS_ISSUED,
                 'bill_date' => now()->toDateString(),
                 'due_date' => null,
-                'tax_enabled' => $taxEnabled,
-                'tax_rate' => $taxEnabled ? $taxRate : 0,
+                ...$taxAttrs,
                 'subtotal' => 0,
                 'tax_amount' => 0,
                 'total' => 0,
@@ -193,17 +191,29 @@ class PurchaseBillService
     }
 
     /**
-     * @return array{0: bool, 1: float}
+     * @return array{
+     *     tax_enabled: bool,
+     *     tax_rate: float,
+     *     tax_code_id: int|null,
+     *     tax_code: string|null,
+     *     tax_calculation: string
+     * }
      */
     private function taxSettings(): array
     {
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-            return \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+            return \Modules\Accounting\Support\TaxSettings::documentAttributes();
         }
 
         $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
         $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
 
-        return [$taxEnabled, $taxRate];
+        return [
+            'tax_enabled' => $taxEnabled,
+            'tax_rate' => $taxEnabled ? $taxRate : 0,
+            'tax_code_id' => null,
+            'tax_code' => null,
+            'tax_calculation' => 'exclusive',
+        ];
     }
 }

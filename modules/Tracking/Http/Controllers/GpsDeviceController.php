@@ -4,6 +4,7 @@ namespace Modules\Tracking\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -28,20 +29,39 @@ class GpsDeviceController extends Controller
     /**
      * Display the tenant's trackers and what they are paired to.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user = Auth::user();
+        $search = trim((string) $request->input('search', ''));
 
         return Inertia::render('Modules/Tracking/Devices/Index', [
             'devices' => GpsDevice::query()
                 ->with('vehicle:id,name,plate_number')
+                ->when($search !== '', function ($query) use ($search) {
+                    $like = '%'.$search.'%';
+
+                    $query->where(function ($q) use ($like) {
+                        $q->where('name', 'ilike', $like)
+                            ->orWhere('unique_id', 'ilike', $like)
+                            ->orWhereHas('vehicle', function ($vehicleQuery) use ($like) {
+                                $vehicleQuery->where(function ($vq) use ($like) {
+                                    $vq->where('name', 'ilike', $like)
+                                        ->orWhere('plate_number', 'ilike', $like);
+                                });
+                            });
+                    });
+                })
                 ->orderBy('name')
-                ->get(),
+                ->paginate(15)
+                ->withQueryString(),
             // Only vehicles without a tracker: a vehicle carries at most one.
             'pairableVehicles' => Vehicle::query()
                 ->whereDoesntHave('gpsDevice')
                 ->orderBy('name')
                 ->get(['id', 'name', 'plate_number', 'odometer_km']),
+            'filters' => [
+                'search' => $search !== '' ? $search : null,
+            ],
             'can' => [
                 'create' => $user->hasPermissionFor('tracking', 'create'),
                 'update' => $user->hasPermissionFor('tracking', 'update'),

@@ -25,6 +25,7 @@ class UpdateInvoiceRequest extends FormRequest
             'issue_date' => ['sometimes', 'required', 'date'],
             'due_date' => ['nullable', 'date'],
             'tax_enabled' => ['sometimes', 'boolean'],
+            'tax_code_id' => ['sometimes', 'nullable', 'integer'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

@@ -16,6 +16,8 @@ return [
         'cash_flow' => 'Arus Kas',
         'general_ledger' => 'Buku Besar',
         'partner_statement' => 'Rekening koran mitra',
+        'tax_register' => 'Register PPN',
+        'wht_payable' => 'Hutang PPh',
         'bank' => 'Kas & Bank',
         'aria' => 'Bagian akuntansi',
         'groups' => [
@@ -367,6 +369,50 @@ return [
         'partner' => 'Mitra',
         'from' => 'Dari',
         'to' => 'Sampai',
+    ],
+
+    'tax_register' => [
+        'title' => 'Register PPN',
+        'hint' => 'Register keluaran / masukan manual untuk review dan ekspor CSV. Bukan file e-Faktur DJP.',
+        'side' => 'Register',
+        'from' => 'Dari',
+        'to' => 'Sampai',
+        'export_csv' => 'Ekspor CSV',
+        'empty' => 'Tidak ada dokumen berpajak pada periode ini.',
+        'totals' => 'Total',
+        'sides' => [
+            'output' => 'Keluaran (penjualan)',
+            'input' => 'Masukan (pembelian)',
+        ],
+        'columns' => [
+            'date' => 'Tanggal',
+            'document' => 'Dokumen',
+            'partner' => 'Mitra',
+            'npwp' => 'NPWP',
+            'tax_code' => 'Kode pajak',
+            'dpp' => 'DPP',
+            'tax' => 'PPN',
+            'gross' => 'Bruto',
+        ],
+    ],
+
+    'wht_payable' => [
+        'title' => 'Hutang PPh (WHT)',
+        'hint' => 'PPh dipotong pada pembayaran tagihan pemasok — daftar setor.',
+        'from' => 'Dari',
+        'to' => 'Sampai',
+        'empty' => 'Tidak ada potongan pada periode ini.',
+        'totals' => 'Total',
+        'columns' => [
+            'date' => 'Tanggal',
+            'document' => 'Pembayaran',
+            'partner' => 'Mitra',
+            'npwp' => 'NPWP',
+            'wht_code' => 'Kode PPh',
+            'base' => 'Dasar',
+            'wht' => 'PPh',
+            'paid_net' => 'Dibayar netto',
+        ],
     ],
 
     'fa' => [

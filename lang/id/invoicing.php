@@ -73,6 +73,8 @@ return [
         'remove' => 'Hapus',
         'subtotal' => 'Subtotal',
         'tax' => 'PPN (:rate%)',
+        'tax_code' => 'Kode pajak',
+        'tax_calculation' => 'Perhitungan: :mode',
         'total' => 'Total',
         'paid' => 'Dibayar',
         'balance' => 'Sisa Tagihan',

@@ -365,7 +365,7 @@ php artisan document:scan-expiring [--tenant=]        # 06:00
 - ✅ **Time-window dispatch** — `scheduled_end_at` + overlap nyata; schedule `duration_minutes`; Routing apply mengisi end dari jarak
 - Portal driver: berfungsi, tapi belum PWA offline-first
 - Rental → auto-invoice & payment terms master: gap ops sebelum “finance sempurna”
-- Accounting: WHT/PPh, e-Faktur DJP, multi-currency, cost center — masih fase lanjut
+- Accounting: ✅ tax codes + PPN register CSV + WHT remittance list (MVP); e-Faktur/SPT DJP, multi-currency, cost center — masih fase lanjut
 - Promotions: channel e-commerce di luar scope
 - Skala `tracking:poll` & retensi `vehicle_positions`
 - Odometer: belum read-only saat device ter-pair (risiko drift bila diedit manual)
@@ -397,7 +397,7 @@ Urutan di bawah menyeimbangkan **nilai bisnis**, **utang teknis yang menghambat 
 
 ### Prioritas P2 — diferensiasi & compliance (kuartal berikutnya)
 
-10. **Accounting compliance ID** — tax codes penuh, WHT (PPh 23), ekspor e-Faktur/SPT (bukan blocker GL, tapi penjualan enterprise).
+10. **Accounting compliance ID** — ✅ MVP: tax code snapshot on docs, exclusive/inclusive, PPN register + CSV, WHT payable list; next: e-Faktur/SPT DJP export.
 11. **Cost center / analytic dimensions** — journal lines + budget vs actual per gudang/rute/projek.
 12. **Self-host map tiles + queue fan-out GPS** — sebelum skala tenant/device.
 13. **HR/Payroll ringan** — atau cukup posting insentif Scoring → GL dulu.

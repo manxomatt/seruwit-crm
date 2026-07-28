@@ -7,6 +7,7 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
+import TextInput from '@/Components/TextInput';
 import { formatCoordinate, formatSpeedKph } from '@/utils/geo';
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -31,21 +32,69 @@ interface Vehicle {
     odometer_km: number;
 }
 
+interface PaginatedDevices {
+    data: Device[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+}
+
 interface Props {
-    devices: Device[];
+    devices: PaginatedDevices;
     pairableVehicles: Vehicle[];
+    filters: { search: string | null };
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-export default function Index({ devices, pairableVehicles, can }: Props): JSX.Element {
+const LinkIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+        />
+    </svg>
+);
+
+const UnlinkIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1M6 18L18 6"
+        />
+    </svg>
+);
+
+export default function Index({ devices, pairableVehicles, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [pairing, setPairing] = useState<Device | null>(null);
+    const [search, setSearch] = useState(filters.search || '');
 
     const form = useForm({ vehicle_id: '' });
+    const hasSearch = Boolean(filters.search);
 
     const sync = () => {
         router.post(prefixedRoute('tracking.devices.sync'), {}, { preserveScroll: true });
+    };
+
+    const handleSearch: FormEventHandler = (e) => {
+        e.preventDefault();
+        router.get(
+            prefixedRoute('tracking.devices.index'),
+            { search: search || undefined },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const clearSearch = () => {
+        setSearch('');
+        router.get(prefixedRoute('tracking.devices.index'), {}, { preserveState: true, replace: true });
     };
 
     const submitPair: FormEventHandler = (e) => {
@@ -80,72 +129,138 @@ export default function Index({ devices, pairableVehicles, can }: Props): JSX.El
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
-                    {devices.length === 0 ? (
+                    <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
+                        <div className="min-w-[220px] flex-1">
+                            <TextInput
+                                type="text"
+                                placeholder={t('tracking.pages.devices.search')}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full"
+                            />
+                        </div>
+                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
+                        {hasSearch && (
+                            <SecondaryButton type="button" onClick={clearSearch}>
+                                {t('common.clear_filters')}
+                            </SecondaryButton>
+                        )}
+                    </form>
+
+                    {devices.data.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">{t('tracking.pages.devices.empty')}</h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                                Use “Sync from Traccar” to import the trackers on your account.
-                            </p>
+                            <h3 className="text-sm font-medium text-gray-900">
+                                {hasSearch ? t('tracking.pages.devices.empty_search') : t('tracking.pages.devices.empty')}
+                            </h3>
+                            {!hasSearch && (
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Use “Sync from Traccar” to import the trackers on your account.
+                                </p>
+                            )}
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.device')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">IMEI</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.vehicle')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Fix</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.status')}</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 bg-white">
-                                    {devices.map((device) => (
-                                        <tr key={device.id} className="hover:bg-gray-50">
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{device.name}</td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{device.unique_id}</td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                {device.vehicle ? `${device.vehicle.name} (${device.vehicle.plate_number})` : (
-                                                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                                                        {t('tracking.status.unpaired')}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                {device.last_latitude && device.last_longitude ? (
-                                                    <>
-                                                        {formatCoordinate(device.last_latitude, device.last_longitude)}
-                                                        <span className="block text-xs text-gray-400">
-                                                            {formatSpeedKph(device.last_speed_kph)} — {device.last_recorded_at}
-                                                        </span>
-                                                    </>
-                                                ) : '—'}
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${device.status === 'online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                    {device.status === 'online' ? t('tracking.status.online') : t('tracking.status.unknown')}
-                                                </span>
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end gap-3">
-                                                    {can.update && !device.vehicle && (
-                                                        <button onClick={() => setPairing(device)} className="text-indigo-600 hover:text-indigo-900">
-                                                            {t('tracking.actions.pair')}
-                                                        </button>
-                                                    )}
-                                                    {can.update && device.vehicle && (
-                                                        <button onClick={() => unpair(device)} className="text-amber-600 hover:text-amber-900">
-                                                            {t('tracking.actions.unpair')}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.device')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">IMEI</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.vehicle')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Fix</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.status')}</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 bg-white">
+                                        {devices.data.map((device) => (
+                                            <tr key={device.id} className="hover:bg-gray-50">
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{device.name}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{device.unique_id}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                    {device.vehicle ? `${device.vehicle.name} (${device.vehicle.plate_number})` : (
+                                                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                                            {t('tracking.status.unpaired')}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                    {device.last_latitude && device.last_longitude ? (
+                                                        <>
+                                                            {formatCoordinate(device.last_latitude, device.last_longitude)}
+                                                            <span className="block text-xs text-gray-400">
+                                                                {formatSpeedKph(device.last_speed_kph)} — {device.last_recorded_at}
+                                                            </span>
+                                                        </>
+                                                    ) : '—'}
+                                                </td>
+                                                <td className="whitespace-nowrap px-6 py-4">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${device.status === 'online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                        {device.status === 'online' ? t('tracking.status.online') : t('tracking.status.unknown')}
+                                                    </span>
+                                                </td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {can.update && !device.vehicle && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPairing(device)}
+                                                                className="text-indigo-600 hover:text-indigo-900"
+                                                                title={t('tracking.actions.pair')}
+                                                                aria-label={t('tracking.actions.pair')}
+                                                            >
+                                                                <LinkIcon />
+                                                            </button>
+                                                        )}
+                                                        {can.update && device.vehicle && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => unpair(device)}
+                                                                className="text-amber-600 hover:text-amber-900"
+                                                                title={t('tracking.actions.unpair')}
+                                                                aria-label={t('tracking.actions.unpair')}
+                                                            >
+                                                                <UnlinkIcon />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {devices.last_page > 1 && (
+                                <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
+                                    <p className="text-sm text-gray-700">
+                                        {t('common.showing_results', {
+                                            from: (devices.current_page - 1) * devices.per_page + 1,
+                                            to: Math.min(devices.current_page * devices.per_page, devices.total),
+                                            total: devices.total,
+                                        })}
+                                    </p>
+                                    <div className="flex gap-1">
+                                        {devices.links.map((link, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => link.url && router.get(link.url)}
+                                                disabled={!link.url}
+                                                className={`rounded px-3 py-1 text-sm ${
+                                                    link.active
+                                                        ? 'bg-indigo-600 text-white'
+                                                        : link.url
+                                                          ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                          : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                                }`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

@@ -7,6 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -29,6 +30,9 @@ interface Invoice {
     due_date: string | null;
     tax_enabled: boolean;
     tax_rate: string;
+    tax_code_id?: number | null;
+    tax_code?: string | null;
+    tax_calculation?: string | null;
     subtotal: string;
     tax_amount: string;
     total: string;
@@ -37,6 +41,14 @@ interface Invoice {
     notes: string | null;
     partner: { id: number; code: string; name: string; credit_limit?: string | null };
     lines: InvoiceLine[];
+}
+
+interface TaxCodeOption {
+    id: number;
+    code: string;
+    name: string;
+    rate: number;
+    calculation: string;
 }
 
 interface CreditSnapshot {
@@ -52,6 +64,7 @@ interface Props {
     credit?: CreditSnapshot | null;
     can: { create: boolean; update: boolean; delete: boolean };
     canRecordPayment?: boolean;
+    taxCodes?: TaxCodeOption[];
 }
 
 const getStatusBadgeColor = (status: string) => {
@@ -69,7 +82,7 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ invoice, credit, can, canRecordPayment = false }: Props): JSX.Element {
+export default function Show({ invoice, credit, can, canRecordPayment = false, taxCodes = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [showLineModal, setShowLineModal] = useState(false);
@@ -84,6 +97,7 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
     const printable = isOpen || invoice.status === 'paid';
     const canEditLines = isDraft && can.update;
     const balanceDue = Math.max(0, parseFloat(invoice.total) - parseFloat(invoice.amount_paid || '0'));
+    const canEditTax = can.update && isDraft && taxCodes.length > 0;
 
     const issue = () => {
         router.post(prefixedRoute('invoicing.invoices.issue', invoice.id), {}, { preserveScroll: true });
@@ -98,6 +112,14 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
             preserveScroll: true,
             onSuccess: () => setShowVoidModal(false),
         });
+    };
+
+    const changeTaxCode = (value: string) => {
+        router.patch(
+            prefixedRoute('invoicing.invoices.update', invoice.id),
+            { tax_code_id: value === '' ? null : Number(value) },
+            { preserveScroll: true },
+        );
     };
 
     const toggleTax = () => {
@@ -244,16 +266,41 @@ export default function Show({ invoice, credit, can, canRecordPayment = false }:
                                     <dd className="text-sm text-gray-900">{formatMoney(invoice.subtotal)}</dd>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <dt className="flex items-center gap-2 text-sm text-gray-500">
-                                        {can.update && isDraft && (
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                checked={invoice.tax_enabled}
-                                                onChange={toggleTax}
-                                            />
+                                    <dt className="flex flex-col gap-1 text-sm text-gray-500">
+                                        {canEditTax ? (
+                                            <>
+                                                <span>{t('invoicing.show.tax_code')}</span>
+                                                <Select
+                                                    className="min-w-[12rem] text-gray-900"
+                                                    searchable
+                                                    value={invoice.tax_code_id ? String(invoice.tax_code_id) : ''}
+                                                    onChange={changeTaxCode}
+                                                    options={taxCodes.map((code) => ({
+                                                        value: String(code.id),
+                                                        label: `${code.code} — ${code.name} (${code.rate}%)`,
+                                                    }))}
+                                                />
+                                                {invoice.tax_calculation ? (
+                                                    <span className="text-xs text-gray-400">
+                                                        {t('invoicing.show.tax_calculation', { mode: invoice.tax_calculation })}
+                                                    </span>
+                                                ) : null}
+                                            </>
+                                        ) : (
+                                            <span className="flex items-center gap-2">
+                                                {can.update && isDraft && (
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                        checked={invoice.tax_enabled}
+                                                        onChange={toggleTax}
+                                                    />
+                                                )}
+                                                {invoice.tax_code
+                                                    ? `${invoice.tax_code} · ${t('invoicing.show.tax', { rate: Number(invoice.tax_rate) })}`
+                                                    : t('invoicing.show.tax', { rate: Number(invoice.tax_rate) })}
+                                            </span>
                                         )}
-                                        {t('invoicing.show.tax', { rate: Number(invoice.tax_rate) })}
                                     </dt>
                                     <dd className="text-sm text-gray-900">{invoice.tax_enabled ? formatMoney(invoice.tax_amount) : '—'}</dd>
                                 </div>

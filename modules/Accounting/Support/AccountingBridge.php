@@ -51,6 +51,9 @@ class AccountingBridge
             ],
             partnerId: (int) $invoice->partner_id,
             memo: __('accounting.messages.source_invoice', ['code' => $invoice->code]),
+            context: [
+                'tax_code_id' => $invoice->tax_code_id ?? null,
+            ],
         ));
     }
 
@@ -138,7 +141,10 @@ class AccountingBridge
             ],
             partnerId: (int) $bill->partner_id,
             memo: __('accounting.messages.source_bill', ['code' => $bill->code]),
-            context: ['has_grn' => $bill->good_receipt_note_id !== null],
+            context: [
+                'has_grn' => $bill->good_receipt_note_id !== null,
+                'tax_code_id' => $bill->tax_code_id ?? null,
+            ],
         ));
     }
 

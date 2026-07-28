@@ -73,6 +73,8 @@ return [
         'remove' => 'Remove',
         'subtotal' => 'Subtotal',
         'tax' => 'VAT (:rate%)',
+        'tax_code' => 'Tax code',
+        'tax_calculation' => 'Calculation: :mode',
         'total' => 'Total',
         'paid' => 'Paid',
         'balance' => 'Balance Due',

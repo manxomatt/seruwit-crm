@@ -1219,15 +1219,24 @@ class GlobalSearchService
         }
 
         return GpsDevice::query()
+            ->with('vehicle:id,name,plate_number')
             ->where(fn (Builder $q) => $q
                 ->where('name', 'ilike', "%{$query}%")
-                ->orWhere('unique_id', 'ilike', "%{$query}%"))
+                ->orWhere('unique_id', 'ilike', "%{$query}%")
+                ->orWhereHas('vehicle', fn (Builder $vehicle) => $vehicle
+                    ->where(fn (Builder $vq) => $vq
+                        ->where('name', 'ilike', "%{$query}%")
+                        ->orWhere('plate_number', 'ilike', "%{$query}%"))))
             ->limit(self::LIMIT)
             ->get()
             ->map(fn (GpsDevice $device) => [
                 'id' => $device->id,
                 'title' => $device->name ?: $device->unique_id,
-                'subtitle' => collect([$device->unique_id, $device->status])->filter()->implode(' • '),
+                'subtitle' => collect([
+                    $device->unique_id,
+                    $device->vehicle?->name,
+                    $device->status,
+                ])->filter()->implode(' • '),
                 'type' => 'gps_device',
                 'icon' => 'tracking',
                 'url' => route('module.tracking.devices.index', ['search' => $query]),

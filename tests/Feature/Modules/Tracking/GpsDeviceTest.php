@@ -33,7 +33,83 @@ class GpsDeviceTest extends TestCase
         $user = $this->createAdminUser();
         GpsDevice::factory()->count(2)->create();
 
-        $this->actingAs($user)->get(route('module.tracking.devices.index'))->assertOk();
+        $this->actingAs($user)
+            ->get(route('module.tracking.devices.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Tracking/Devices/Index')
+                ->has('devices.data', 2)
+                ->where('devices.total', 2)
+                ->where('devices.per_page', 15)
+                ->where('filters.search', null)
+            );
+    }
+
+    public function test_the_device_list_paginates_results(): void
+    {
+        $user = $this->createAdminUser();
+        GpsDevice::factory()->count(16)->create();
+
+        $this->actingAs($user)
+            ->get(route('module.tracking.devices.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('devices.data', 15)
+                ->where('devices.total', 16)
+                ->where('devices.current_page', 1)
+                ->where('devices.last_page', 2)
+            );
+
+        $this->actingAs($user)
+            ->get(route('module.tracking.devices.index', ['page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('devices.data', 1)
+                ->where('devices.current_page', 2)
+            );
+    }
+
+    public function test_the_device_list_can_be_filtered_by_search(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create(['name' => 'Alpha Truck', 'plate_number' => 'B 1234 XYZ']);
+        GpsDevice::factory()->create(['name' => 'Tracker Alpha', 'unique_id' => '860000000000111']);
+        GpsDevice::factory()->pairedTo($vehicle)->create(['name' => 'Tracker Beta', 'unique_id' => '860000000000222']);
+        GpsDevice::factory()->create(['name' => 'Other Unit', 'unique_id' => '860000000000333']);
+
+        $this->actingAs($user)
+            ->get(route('module.tracking.devices.index', ['search' => 'Alpha']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('devices.data', 2)
+                ->where('devices.total', 2)
+                ->where('filters.search', 'Alpha')
+            );
+
+        $this->actingAs($user)
+            ->get(route('module.tracking.devices.index', ['search' => '000222']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('devices.data', 1)
+                ->where('devices.data.0.unique_id', '860000000000222')
+            );
+
+        $this->actingAs($user)
+            ->get(route('module.tracking.devices.index', ['search' => '1234 XYZ']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('devices.data', 1)
+                ->where('devices.data.0.name', 'Tracker Beta')
+            );
+
+        $this->actingAs($user)
+            ->get(route('module.tracking.devices.index', ['search' => 'alpha truck']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('devices.data', 1)
+                ->where('devices.data.0.name', 'Tracker Beta')
+                ->where('devices.data.0.vehicle.name', 'Alpha Truck')
+            );
     }
 
     public function test_syncing_imports_devices_and_updates_existing_ones(): void

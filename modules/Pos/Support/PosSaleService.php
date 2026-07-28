@@ -355,16 +355,25 @@ class PosSaleService
     {
         $merchandise = round(collect($lines)->sum(fn (array $line): float => (float) $line['line_total']), 2);
 
-        if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+        if (class_exists(\Modules\Accounting\Support\TaxSettings::class)
+            && class_exists(\Modules\Accounting\Support\TaxComputation::class)) {
             $snap = \Modules\Accounting\Support\TaxSettings::snapshot();
-            $taxEnabled = $snap['enabled'];
-            $taxRate = $snap['rate'];
-        } else {
-            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
-            $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+            // POS retail defaults to inclusive unless the tax code says exclusive.
+            if (($snap['calculation'] ?? '') !== \Modules\Accounting\Models\TaxCode::CALC_EXCLUSIVE) {
+                $snap['calculation'] = \Modules\Accounting\Models\TaxCode::CALC_INCLUSIVE;
+            }
+            $computed = \Modules\Accounting\Support\TaxComputation::fromLineTotal($merchandise, $snap);
+
+            return [
+                'subtotal' => $computed['net'],
+                'tax_total' => $computed['tax'],
+                'grand_total' => $computed['gross'],
+            ];
         }
 
-        // Retail prices are treated as tax-inclusive.
+        $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+        $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+
         if ($taxEnabled && $taxRate > 0) {
             $taxTotal = round($merchandise * $taxRate / (100 + $taxRate), 2);
             $subtotal = round($merchandise - $taxTotal, 2);

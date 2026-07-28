@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Accounting\Models\TaxCode;
 use Modules\Partners\Models\Partner;
 
 class BillPayment extends Model
@@ -77,6 +78,12 @@ class BillPayment extends Model
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    /** @return BelongsTo<TaxCode, $this> */
+    public function whtTaxCode(): BelongsTo
+    {
+        return $this->belongsTo(TaxCode::class, 'wht_tax_code_id');
     }
 
     /** @return BelongsTo<User, $this> */

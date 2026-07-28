@@ -228,10 +228,17 @@ class SalesReturnConfirmationService
     {
         $so = $salesReturn->salesOrder;
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-            [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+            $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributes();
         } else {
             $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
             $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+            $taxAttrs = [
+                'tax_enabled' => $taxEnabled,
+                'tax_rate' => $taxEnabled ? $taxRate : 0,
+                'tax_code_id' => null,
+                'tax_code' => null,
+                'tax_calculation' => 'exclusive',
+            ];
         }
 
         $invoice = Invoice::create([
@@ -240,8 +247,7 @@ class SalesReturnConfirmationService
             'status' => Invoice::STATUS_DRAFT,
             'issue_date' => now()->toDateString(),
             'due_date' => null,
-            'tax_enabled' => $taxEnabled,
-            'tax_rate' => $taxEnabled ? $taxRate : 0,
+            ...$taxAttrs,
             'subtotal' => 0,
             'tax_amount' => 0,
             'total' => 0,

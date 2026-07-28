@@ -92,6 +92,8 @@ export default function AccountingShell({ active, title, headerActions, children
         { key: 'cash_flow', href: prefixedRoute('accounting.reports.cash-flow'), label: t('accounting.nav.cash_flow') },
         { key: 'general_ledger', href: prefixedRoute('accounting.reports.general-ledger'), label: t('accounting.nav.general_ledger') },
         { key: 'partner_statement', href: prefixedRoute('accounting.reports.partner-statement'), label: t('accounting.nav.partner_statement') },
+        { key: 'tax_register', href: prefixedRoute('accounting.reports.tax-register'), label: t('accounting.nav.tax_register') },
+        { key: 'wht_payable', href: prefixedRoute('accounting.reports.wht-payable'), label: t('accounting.nav.wht_payable') },
     ];
 
     const setup: NavLink[] = [

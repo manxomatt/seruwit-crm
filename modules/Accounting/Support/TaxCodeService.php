@@ -58,6 +58,26 @@ class TaxCodeService
             ->all();
     }
 
+    /**
+     * @return list<array{id: int, code: string, name: string, rate: float, calculation: string}>
+     */
+    public function ppnOptions(): array
+    {
+        return TaxCode::query()
+            ->whereIn('category', [TaxCode::CATEGORY_PPN, TaxCode::CATEGORY_NONE])
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get(['id', 'code', 'name', 'rate', 'calculation'])
+            ->map(fn (TaxCode $code): array => [
+                'id' => $code->id,
+                'code' => $code->code,
+                'name' => $code->name,
+                'rate' => (float) $code->rate,
+                'calculation' => (string) $code->calculation,
+            ])
+            ->all();
+    }
+
     public function computeWht(float $baseAmount, ?TaxCode $code, ?float $overrideAmount = null): float
     {
         if ($overrideAmount !== null) {

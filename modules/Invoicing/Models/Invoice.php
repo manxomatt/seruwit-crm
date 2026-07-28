@@ -45,6 +45,9 @@ class Invoice extends Model
         'due_date',
         'tax_enabled',
         'tax_rate',
+        'tax_code_id',
+        'tax_code',
+        'tax_calculation',
         'subtotal',
         'tax_amount',
         'total',
@@ -63,6 +66,7 @@ class Invoice extends Model
             'due_date' => 'date:Y-m-d',
             'tax_enabled' => 'boolean',
             'tax_rate' => 'decimal:2',
+            'tax_code_id' => 'integer',
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',
@@ -109,13 +113,30 @@ class Invoice extends Model
      */
     public function recalculate(): void
     {
-        $subtotal = (float) $this->lines()->sum('amount');
-        $taxAmount = $this->tax_enabled ? round($subtotal * ((float) $this->tax_rate) / 100, 2) : 0;
+        $lineTotal = (float) $this->lines()->sum('amount');
+
+        if (class_exists(\Modules\Accounting\Support\TaxComputation::class)) {
+            $computed = \Modules\Accounting\Support\TaxComputation::fromLineTotal($lineTotal, [
+                'enabled' => (bool) $this->tax_enabled,
+                'rate' => (float) $this->tax_rate,
+                'calculation' => (string) ($this->tax_calculation ?: 'exclusive'),
+            ]);
+
+            $this->update([
+                'subtotal' => $computed['net'],
+                'tax_amount' => $computed['tax'],
+                'total' => $computed['gross'],
+            ]);
+
+            return;
+        }
+
+        $taxAmount = $this->tax_enabled ? round($lineTotal * ((float) $this->tax_rate) / 100, 2) : 0;
 
         $this->update([
-            'subtotal' => $subtotal,
+            'subtotal' => $lineTotal,
             'tax_amount' => $taxAmount,
-            'total' => $subtotal + $taxAmount,
+            'total' => $lineTotal + $taxAmount,
         ]);
     }
 

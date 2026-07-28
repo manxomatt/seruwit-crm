@@ -83,10 +83,17 @@ class InvoiceController extends Controller
         $validated = $request->validated();
 
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-            [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+            $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributes();
         } else {
             $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
             $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+            $taxAttrs = [
+                'tax_enabled' => $taxEnabled,
+                'tax_rate' => $taxEnabled ? $taxRate : 0,
+                'tax_code_id' => null,
+                'tax_code' => null,
+                'tax_calculation' => 'exclusive',
+            ];
         }
 
         $invoice = Invoice::create([
@@ -95,8 +102,7 @@ class InvoiceController extends Controller
             'status' => Invoice::STATUS_DRAFT,
             'issue_date' => $validated['issue_date'] ?? now()->toDateString(),
             'due_date' => $validated['due_date'] ?? null,
-            'tax_enabled' => $taxEnabled,
-            'tax_rate' => $taxEnabled ? $taxRate : 0,
+            ...$taxAttrs,
             'notes' => $validated['notes'] ?? null,
         ]);
 
@@ -121,6 +127,9 @@ class InvoiceController extends Controller
             'credit' => $credit,
             'can' => $this->abilitiesFor(),
             'canRecordPayment' => Schema::hasTable('payments'),
+            'taxCodes' => class_exists(\Modules\Accounting\Support\TaxCodeService::class)
+                ? app(\Modules\Accounting\Support\TaxCodeService::class)->ppnOptions()
+                : [],
         ]);
     }
 
@@ -133,7 +142,22 @@ class InvoiceController extends Controller
             return back()->with('error', __('invoicing.messages.edit_draft_only'));
         }
 
-        $invoice->update($request->validated());
+        $validated = $request->validated();
+
+        if (array_key_exists('tax_code_id', $validated) && class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+            $taxCodeId = $validated['tax_code_id'] !== null ? (int) $validated['tax_code_id'] : null;
+            $validated = [
+                ...$validated,
+                ...\Modules\Accounting\Support\TaxSettings::documentAttributes($taxCodeId),
+            ];
+        } elseif (array_key_exists('tax_enabled', $validated) && ! $validated['tax_enabled']) {
+            $validated['tax_rate'] = 0;
+            $validated['tax_code_id'] = null;
+            $validated['tax_code'] = 'NONTAX';
+            $validated['tax_calculation'] = 'none';
+        }
+
+        $invoice->update($validated);
         $invoice->recalculate();
 
         return back()->with('success', __('invoicing.messages.updated'));

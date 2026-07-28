@@ -58,6 +58,8 @@ return [
         'devices' => [
             'title' => 'GPS Devices',
             'empty' => 'No devices yet.',
+            'empty_search' => 'No devices match your search.',
+            'search' => 'Search by device, IMEI, or paired vehicle…',
             'all_paired' => 'Every vehicle already has a tracker.',
         ],
         'settings' => [

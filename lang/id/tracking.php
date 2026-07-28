@@ -58,6 +58,8 @@ return [
         'devices' => [
             'title' => 'Perangkat GPS',
             'empty' => 'Belum ada perangkat.',
+            'empty_search' => 'Tidak ada perangkat yang cocok dengan pencarian.',
+            'search' => 'Cari perangkat, IMEI, atau kendaraan ter-pair…',
             'all_paired' => 'Semua kendaraan sudah punya tracker.',
         ],
         'settings' => [

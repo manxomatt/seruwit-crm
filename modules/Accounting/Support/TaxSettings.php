@@ -21,7 +21,7 @@ class TaxSettings
      *     tax_code: string|null
      * }
      */
-    public static function snapshot(?string $preferCode = null): array
+    public static function snapshot(?string $preferCode = null, ?int $taxCodeId = null): array
     {
         // Legacy force-off still honored during gradual migration from ecommerce.tax_*.
         if (Setting::getValue('ecommerce.tax_enabled', '1') !== '1') {
@@ -37,7 +37,15 @@ class TaxSettings
         if (Schema::hasTable('tax_codes')) {
             $code = null;
 
-            if ($preferCode !== null) {
+            if ($taxCodeId !== null) {
+                $code = TaxCode::query()
+                    ->whereKey($taxCodeId)
+                    ->where('is_active', true)
+                    ->whereIn('category', [TaxCode::CATEGORY_PPN, TaxCode::CATEGORY_NONE])
+                    ->first();
+            }
+
+            if ($code === null && $preferCode !== null) {
                 $code = TaxCode::query()
                     ->where('code', $preferCode)
                     ->where('is_active', true)
@@ -80,6 +88,30 @@ class TaxSettings
             'calculation' => TaxCode::CALC_EXCLUSIVE,
             'tax_code_id' => null,
             'tax_code' => null,
+        ];
+    }
+
+    /**
+     * Attributes to stamp onto invoices / supplier bills.
+     *
+     * @return array{
+     *     tax_enabled: bool,
+     *     tax_rate: float,
+     *     tax_code_id: int|null,
+     *     tax_code: string|null,
+     *     tax_calculation: string
+     * }
+     */
+    public static function documentAttributes(?int $taxCodeId = null): array
+    {
+        $snap = self::snapshot(taxCodeId: $taxCodeId);
+
+        return [
+            'tax_enabled' => $snap['enabled'],
+            'tax_rate' => $snap['enabled'] ? $snap['rate'] : 0.0,
+            'tax_code_id' => $snap['tax_code_id'],
+            'tax_code' => $snap['tax_code'],
+            'tax_calculation' => $snap['calculation'],
         ];
     }
 
