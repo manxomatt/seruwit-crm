@@ -5,6 +5,7 @@ namespace Modules\Pos\Support;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Inventory\Models\WarehouseLocation;
 use Modules\Inventory\Support\StockMovementRecorder;
@@ -51,8 +52,12 @@ class PosSaleService
         }
 
         return DB::transaction(function () use ($shift, $cashier, $payload, $warehouse, $items) {
-            $built = $this->buildLines($items, (int) $warehouse->id);
+            $partnerId = isset($payload['partner_id']) ? (int) $payload['partner_id'] : null;
+            $built = $this->buildLines($items, (int) $warehouse->id, $partnerId);
+            $priced = $this->applyCheckoutPromotions($built['lines'], (int) $warehouse->id, $partnerId);
+            $built['lines'] = $priced['lines'];
             $totals = $this->totalsFromLines($built['lines']);
+            $totals['discount_total'] = $priced['discount_total'];
 
             $method = $payload['payment_method'];
             $amountTendered = isset($payload['amount_tendered']) ? (float) $payload['amount_tendered'] : null;
@@ -76,7 +81,7 @@ class PosSaleService
                 'partner_id' => $payload['partner_id'] ?? null,
                 'status' => PosSale::STATUS_COMPLETED,
                 'subtotal' => $totals['subtotal'],
-                'discount_total' => 0,
+                'discount_total' => $totals['discount_total'],
                 'tax_total' => $totals['tax_total'],
                 'grand_total' => $totals['grand_total'],
                 'amount_tendered' => $amountTendered,
@@ -86,9 +91,11 @@ class PosSaleService
             ]);
 
             foreach ($built['lines'] as $line) {
+                $itemPayload = $line;
+                unset($itemPayload['program_id'], $itemPayload['meta']);
                 PosSaleItem::query()->create([
                     'pos_sale_id' => $sale->id,
-                    ...$line,
+                    ...$itemPayload,
                 ]);
             }
 
@@ -98,6 +105,11 @@ class PosSaleService
                 'amount' => $method === PosPayment::METHOD_CASH ? $amountTendered : $totals['grand_total'],
                 'reference' => $payload['payment_reference'] ?? null,
             ]);
+
+            if (class_exists(\Modules\TradePromotions\Support\PromotionPricing::class)) {
+                app(\Modules\TradePromotions\Support\PromotionPricing::class)
+                    ->recordApplications('pos_sale', (int) $sale->id, $built['lines']);
+            }
 
             $locationId = $this->resolveStockLocationId((int) $warehouse->id);
 
@@ -219,10 +231,11 @@ class PosSaleService
      * @param  list<array{product_id: int, quantity: float|int|string, unit_price?: float|int|string|null}>  $items
      * @return array{lines: list<array<string, mixed>>, products: array<int, Product>}
      */
-    protected function buildLines(array $items, int $warehouseId): array
+    protected function buildLines(array $items, int $warehouseId, ?int $partnerId = null): array
     {
         $lines = [];
         $products = [];
+        $priceListId = $this->partnerPriceListId($partnerId);
 
         foreach ($items as $row) {
             $productId = (int) $row['product_id'];
@@ -239,9 +252,12 @@ class PosSaleService
                 throw new RuntimeException(__('pos.messages.product_inactive', ['name' => $product->name]));
             }
 
-            $unitPrice = array_key_exists('unit_price', $row) && $row['unit_price'] !== null
-                ? round((float) $row['unit_price'], 2)
-                : round((float) ($product->price ?? 0), 2);
+            $listPrice = $this->resolveListUnitPrice($priceListId, $productId, $product);
+            $unitPrice = $listPrice !== null
+                ? $listPrice
+                : (array_key_exists('unit_price', $row) && $row['unit_price'] !== null
+                    ? round((float) $row['unit_price'], 2)
+                    : round((float) ($product->price ?? 0), 2));
 
             if (! $product->isService()) {
                 $available = (float) StockMovementRecorder::availableOnHand($productId, $warehouseId);
@@ -266,6 +282,8 @@ class PosSaleService
                 'tax_amount' => 0,
                 'line_total' => $lineTotal,
                 'unit' => $product->unit,
+                'program_id' => null,
+                'meta' => null,
             ];
         }
 
@@ -274,7 +292,48 @@ class PosSaleService
 
     /**
      * @param  list<array<string, mixed>>  $lines
-     * @return array{subtotal: float, tax_total: float, grand_total: float}
+     * @return array{lines: list<array<string, mixed>>, discount_total: float}
+     */
+    protected function applyCheckoutPromotions(array $lines, int $warehouseId, mixed $partnerId = null): array
+    {
+        if (! class_exists(\Modules\TradePromotions\Support\PromotionPricing::class)) {
+            return ['lines' => $lines, 'discount_total' => 0.0];
+        }
+
+        $quote = app(\Modules\TradePromotions\Support\PromotionPricing::class)->quote([
+            'channel' => 'pos',
+            'warehouse_id' => $warehouseId,
+            'partner_id' => $partnerId !== null ? (int) $partnerId : null,
+            'lines' => array_map(fn (array $line): array => [
+                'product_id' => (int) $line['product_id'],
+                'quantity' => (float) $line['quantity'],
+                'unit_price' => (float) $line['unit_price'],
+            ], $lines),
+        ]);
+
+        $byProduct = collect($quote['lines'])->keyBy('product_id');
+
+        $merged = [];
+        foreach ($lines as $line) {
+            $quoted = $byProduct->get($line['product_id']);
+            if ($quoted) {
+                $line['line_discount'] = $quoted['line_discount'];
+                $line['line_total'] = $quoted['line_total'];
+                $line['program_id'] = $quoted['program_id'];
+                $line['meta'] = $quoted['meta'];
+            }
+            $merged[] = $line;
+        }
+
+        return [
+            'lines' => $merged,
+            'discount_total' => (float) $quote['discount_total'],
+        ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $lines
+     * @return array{subtotal: float, tax_total: float, grand_total: float, discount_total?: float}
      */
     protected function totalsFromLines(array $lines): array
     {
@@ -297,5 +356,31 @@ class PosSaleService
             'tax_total' => $taxTotal,
             'grand_total' => $merchandise,
         ];
+    }
+
+    protected function partnerPriceListId(?int $partnerId): ?int
+    {
+        if ($partnerId === null
+            || ! class_exists(\Modules\Partners\Models\Partner::class)
+            || ! Schema::hasColumn('partners', 'price_list_id')) {
+            return null;
+        }
+
+        $priceListId = \Modules\Partners\Models\Partner::query()
+            ->whereKey($partnerId)
+            ->value('price_list_id');
+
+        return $priceListId ? (int) $priceListId : null;
+    }
+
+    protected function resolveListUnitPrice(?int $priceListId, int $productId, Product $product): ?float
+    {
+        if ($priceListId === null || ! class_exists(\Modules\Sales\Support\PriceListResolver::class)) {
+            return null;
+        }
+
+        $resolved = \Modules\Sales\Support\PriceListResolver::resolveUnitPrice($priceListId, $productId);
+
+        return $resolved;
     }
 }

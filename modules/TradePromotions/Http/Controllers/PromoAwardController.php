@@ -5,20 +5,29 @@ namespace Modules\TradePromotions\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Modules\TradePromotions\Models\TradePromoAward;
+use Modules\TradePromotions\Support\PromoAwardSettlementService;
+use RuntimeException;
 
 class PromoAwardController extends Controller
 {
-    public function settle(TradePromoAward $award): RedirectResponse
+    public function settle(TradePromoAward $award, PromoAwardSettlementService $settlement): RedirectResponse
     {
-        if ($award->status === TradePromoAward::STATUS_SETTLED) {
-            return back()->with('error', __('promotions.messages.award_already_settled'));
+        try {
+            $result = $settlement->settle($award);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
-        $award->update([
-            'status' => TradePromoAward::STATUS_SETTLED,
-            'settled_at' => now(),
-        ]);
+        $message = match ($result['settlement_type']) {
+            PromoAwardSettlementService::SETTLEMENT_CREDIT_NOTE => __('promotions.messages.award_settled_credit', [
+                'id' => $result['settlement_id'],
+            ]),
+            PromoAwardSettlementService::SETTLEMENT_SALES_ORDER => __('promotions.messages.award_settled_so', [
+                'id' => $result['settlement_id'],
+            ]),
+            default => __('promotions.messages.award_settled'),
+        };
 
-        return back()->with('success', __('promotions.messages.award_settled'));
+        return back()->with('success', $message);
     }
 }

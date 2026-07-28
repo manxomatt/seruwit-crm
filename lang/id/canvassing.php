@@ -185,6 +185,13 @@ return [
         'checkout' => 'Check Out & Selesai',
         'visit_done' => 'Kunjungan Selesai',
         'result' => 'Hasil: :outcome',
+        'order_section' => 'Capture order',
+        'add_line' => 'Tambah produk',
+        'create_so' => 'Buat draft SO',
+        'so_linked' => 'SO :number',
+        'warehouse' => 'Gudang',
+        'qty' => 'Qty',
+        'no_products' => 'Tidak ada produk',
     ],
 
     'months' => [
@@ -214,5 +221,12 @@ return [
         'plan_removed' => 'Rencana dihapus.',
         'checked_in' => 'Check-in berhasil.',
         'checked_out' => 'Check-out berhasil.',
+        'order_saved' => 'Order kunjungan disimpan.',
+        'order_converted' => 'Draft SO :number dibuat.',
+        'sales_module_required' => 'Modul Sales diperlukan untuk membuat order.',
+        'order_already_converted' => 'Kunjungan ini sudah punya sales order.',
+        'order_items_required' => 'Tambahkan minimal satu produk sebelum membuat order.',
+        'warehouse_required' => 'Pilih gudang untuk sales order.',
+        'so_from_visit' => 'Dibuat dari kunjungan canvassing #:id',
     ],
 ];

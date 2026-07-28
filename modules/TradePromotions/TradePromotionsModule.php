@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\TradePromotions\Http\Controllers\PromoAwardController;
 use Modules\TradePromotions\Http\Controllers\PromoProgramController;
 use Modules\TradePromotions\Http\Controllers\PromoRealizationController;
+use Modules\TradePromotions\Http\Controllers\PromoReportController;
 
 /**
  * Trade promotion programs for FMCG principals: volume discount, free goods,
@@ -42,7 +43,7 @@ class TradePromotionsModule implements ModuleContract
 
     public function requires(): array
     {
-        return ['partners', 'products'];
+        return ['partners', 'products', 'inventory'];
     }
 
     public function menu(): ?array
@@ -94,6 +95,8 @@ class TradePromotionsModule implements ModuleContract
 
                 Route::get('/realizations', [PromoRealizationController::class, 'index'])->name('realizations.index');
                 Route::post('/programs/{program}/sync', [PromoRealizationController::class, 'sync'])->middleware('permission:promotions,update')->name('programs.sync');
+
+                Route::get('/reports', [PromoReportController::class, 'index'])->name('reports.index');
 
                 Route::post('/awards/{award}/settle', [PromoAwardController::class, 'settle'])->middleware('permission:promotions,settle')->name('awards.settle');
             });

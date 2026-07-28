@@ -146,7 +146,7 @@ class SalesInvoiceService
                 $productName = $soItem?->product?->name ?? 'Product';
                 $unit = $soItem?->unit ?? $soItem?->product?->unit ?? '';
                 $qty = (float) $ginItem->quantity_issued;
-                $amount = round($qty * (float) ($soItem?->unit_price ?? 0), 2);
+                $amount = round($qty * (float) ($soItem?->netUnitPrice() ?? $soItem?->unit_price ?? 0), 2);
 
                 InvoiceLine::create([
                     'invoice_id' => $invoice->id,

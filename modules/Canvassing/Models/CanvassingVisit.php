@@ -46,6 +46,8 @@ class CanvassingVisit extends Model
         'longitude',
         'outcome',
         'notes',
+        'sales_order_id',
+        'warehouse_id',
     ];
 
     /** @return array<string, string> */
@@ -87,6 +89,12 @@ class CanvassingVisit extends Model
     public function photos(): HasMany
     {
         return $this->hasMany(CanvassingPhoto::class);
+    }
+
+    /** @return HasMany<CanvassingVisitOrderItem, $this> */
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(CanvassingVisitOrderItem::class);
     }
 
     /**

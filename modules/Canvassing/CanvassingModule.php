@@ -114,6 +114,7 @@ class CanvassingModule implements ModuleContract
             Route::get('/canvassing/portal/checkin', [CanvassingPortalController::class, 'checkInForm'])->name('canvassing.portal.checkin');
             Route::post('/canvassing/portal/checkin', [CanvassingPortalController::class, 'checkIn'])->name('canvassing.portal.checkin.store');
             Route::get('/canvassing/portal/visits/{visit}', [CanvassingPortalController::class, 'visitDetail'])->name('canvassing.portal.visits.show');
+            Route::post('/canvassing/portal/visits/{visit}/order', [CanvassingPortalController::class, 'syncOrder'])->name('canvassing.portal.visits.order');
             Route::post('/canvassing/portal/visits/{visit}/checkout', [CanvassingPortalController::class, 'checkOut'])->name('canvassing.portal.visits.checkout');
         });
     }

@@ -36,6 +36,8 @@ class TradePromoAward extends Model
         'free_qty',
         'status',
         'settled_at',
+        'settlement_type',
+        'settlement_id',
         'notes',
     ];
 

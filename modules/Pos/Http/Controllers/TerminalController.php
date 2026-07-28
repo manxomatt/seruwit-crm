@@ -65,6 +65,8 @@ class TerminalController extends Controller
             'shift' => $openShift?->load(['warehouse:id,name', 'opener:id,name']),
             'stores' => $stores,
             'favorites' => $catalog,
+            'customers' => $this->customerPayload(),
+            'priceMaps' => $this->priceMapsPayload(),
             'lastSale' => $lastSale,
             'tax' => [
                 'enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
@@ -177,6 +179,48 @@ class TerminalController extends Controller
                 'available' => $available,
             ];
         })->values()->all();
+    }
+
+    /**
+     * @return list<array{id: int, name: string, code: string|null, price_list_id: int|null}>
+     */
+    protected function customerPayload(): array
+    {
+        if (! class_exists(\Modules\Partners\Models\Partner::class)) {
+            return [];
+        }
+
+        $query = \Modules\Partners\Models\Partner::query()
+            ->where('customer_rank', '>', 0)
+            ->orderBy('name')
+            ->limit(200);
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('partners', 'price_list_id')) {
+            $query->select(['id', 'name', 'code', 'price_list_id']);
+        } else {
+            $query->select(['id', 'name', 'code']);
+        }
+
+        return $query->get()->map(fn ($partner): array => [
+            'id' => (int) $partner->id,
+            'name' => (string) $partner->name,
+            'code' => $partner->code,
+            'price_list_id' => isset($partner->price_list_id) && $partner->price_list_id
+                ? (int) $partner->price_list_id
+                : null,
+        ])->all();
+    }
+
+    /**
+     * @return array<int, array<int, float>>
+     */
+    protected function priceMapsPayload(): array
+    {
+        if (! class_exists(\Modules\Sales\Support\PriceListResolver::class)) {
+            return [];
+        }
+
+        return \Modules\Sales\Support\PriceListResolver::activePriceMaps();
     }
 
     protected function currentOpenShift(): ?PosShift

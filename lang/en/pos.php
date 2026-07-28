@@ -47,6 +47,8 @@ return [
         'title' => 'Cashier terminal',
         'search_placeholder' => 'Scan or search product…',
         'cart' => 'Cart',
+        'customer' => 'Customer',
+        'walk_in' => 'Walk-in',
         'empty_cart' => 'Scan a product to start',
         'subtotal' => 'Subtotal',
         'tax' => 'Tax',

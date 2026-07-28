@@ -347,6 +347,48 @@ class CanvassingCrudTest extends TestCase
         $this->assertDatabaseMissing('canvassing_plans', ['salesperson_id' => $salesperson->id]);
     }
 
+    public function test_salesperson_can_convert_visit_order_to_draft_sales_order(): void
+    {
+        [$user, $salesperson] = $this->createLinkedSalesperson();
+        $partner = Partner::factory()->create(['customer_rank' => 1]);
+        $warehouse = \Modules\Inventory\Models\Warehouse::factory()->create(['status' => 'active']);
+        $product = \Modules\Product\Models\Product::factory()->create([
+            'status' => 'active',
+            'price' => 12000,
+            'unit' => 'pcs',
+        ]);
+
+        $visit = CanvassingVisit::factory()->open()->create([
+            'salesperson_id' => $salesperson->id,
+            'partner_id' => $partner->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('module.canvassing.portal.visits.order', $visit, false), [
+                'warehouse_id' => $warehouse->id,
+                'convert' => true,
+                'items' => [
+                    [
+                        'product_id' => $product->id,
+                        'quantity' => 5,
+                        'unit_price' => 12000,
+                        'unit' => 'pcs',
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('module.canvassing.portal.visits.show', $visit, false));
+
+        $visit->refresh();
+        $this->assertNotNull($visit->sales_order_id);
+
+        $so = \Modules\Sales\Models\SalesOrder::query()->find($visit->sales_order_id);
+        $this->assertNotNull($so);
+        $this->assertSame(\Modules\Sales\Models\SalesOrder::STATUS_DRAFT, $so->status);
+        $this->assertSame($partner->id, (int) $so->partner_id);
+        $this->assertEquals(60000, (float) $so->total_amount);
+        $this->assertSame(1, $so->items()->count());
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────
 
     private function createUserWithCheckinPermission(): User

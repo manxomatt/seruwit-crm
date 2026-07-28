@@ -50,6 +50,8 @@ interface Props {
     partners: Option[];
     products: Option[];
     principals: Option[];
+    warehouses?: Array<{ id: number; name: string }>;
+    canManageGlobal?: boolean;
 }
 
 function toLocal(value: string): string {
@@ -57,12 +59,23 @@ function toLocal(value: string): string {
     return value.slice(0, 16);
 }
 
-export default function Edit({ program, partners, products, principals }: Props): JSX.Element {
+export default function Edit({
+    program,
+    partners,
+    products,
+    principals,
+    warehouses = [],
+    canManageGlobal = true,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         name: program.name,
         description: program.description || '',
+        mode: (program as Program & { mode?: string }).mode || 'trade',
+        scope: (program as Program & { scope?: string }).scope || 'global',
+        channels: (program as Program & { channels?: string[] | null }).channels || ['pos', 'sales'],
+        warehouse_ids: ((program as Program & { warehouses?: { id: number }[] }).warehouses || []).map((w) => w.id),
         type: program.type,
         starts_at: toLocal(program.starts_at),
         ends_at: toLocal(program.ends_at),
@@ -87,6 +100,9 @@ export default function Edit({ program, partners, products, principals }: Props)
         rebate_per_unit: program.rebate_rule?.rebate_per_unit != null ? String(program.rebate_rule.rebate_per_unit) : '',
         calc_basis: program.rebate_rule?.calc_basis || 'qty',
     });
+
+    void warehouses;
+    void canManageGlobal;
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Inventory\Models\Warehouse;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Principal;
 use Modules\Product\Models\Product;
@@ -19,6 +20,26 @@ class TradePromoProgram extends Model
     public const TYPE_FREE_GOODS = 'free_goods';
 
     public const TYPE_REBATE = 'rebate';
+
+    public const TYPE_CHECKOUT_DISCOUNT = 'checkout_discount';
+
+    public const TYPE_CHECKOUT_BOGO = 'checkout_bogo';
+
+    public const TYPE_CHECKOUT_BUNDLE = 'checkout_bundle';
+
+    public const MODE_TRADE = 'trade';
+
+    public const MODE_CHECKOUT = 'checkout';
+
+    public const SCOPE_GLOBAL = 'global';
+
+    public const SCOPE_SITES = 'sites';
+
+    public const CHANNEL_POS = 'pos';
+
+    public const CHANNEL_SALES = 'sales';
+
+    public const CHANNEL_CANVASSING = 'canvassing';
 
     public const STATUS_DRAFT = 'draft';
 
@@ -40,6 +61,9 @@ class TradePromoProgram extends Model
         'name',
         'description',
         'type',
+        'mode',
+        'scope',
+        'channels',
         'status',
         'starts_at',
         'ends_at',
@@ -59,6 +83,7 @@ class TradePromoProgram extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'target_amount' => 'decimal:2',
+            'channels' => 'array',
         ];
     }
 
@@ -111,6 +136,15 @@ class TradePromoProgram extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'trade_promo_program_products')
+            ->withTimestamps();
+    }
+
+    /**
+     * @return BelongsToMany<Warehouse, $this>
+     */
+    public function warehouses(): BelongsToMany
+    {
+        return $this->belongsToMany(Warehouse::class, 'trade_promo_program_warehouses')
             ->withTimestamps();
     }
 

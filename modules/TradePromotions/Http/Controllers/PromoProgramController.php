@@ -8,12 +8,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Inventory\Support\AccessibleWarehouses;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Principal;
 use Modules\Product\Models\Product;
 use Modules\TradePromotions\Http\Requests\StorePromoProgramRequest;
 use Modules\TradePromotions\Http\Requests\UpdatePromoProgramRequest;
 use Modules\TradePromotions\Models\TradePromoProgram;
+use Modules\TradePromotions\Support\PromoProgramAuthorizer;
 
 class PromoProgramController extends Controller
 {
@@ -46,6 +48,8 @@ class PromoProgramController extends Controller
             'partners' => Partner::query()->where('customer_rank', '>', 0)->orderBy('name')->get(['id', 'code', 'name']),
             'products' => Product::query()->orderBy('name')->limit(200)->get(['id', 'code', 'sku', 'name', 'price']),
             'principals' => Principal::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'warehouses' => AccessibleWarehouses::query()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'kind']),
+            'canManageGlobal' => PromoProgramAuthorizer::canManageGlobal(request()->user()),
         ]);
     }
 
@@ -53,17 +57,23 @@ class PromoProgramController extends Controller
     {
         $program = DB::transaction(function () use ($request): TradePromoProgram {
             $data = $request->validated();
+            $isCheckout = ($data['mode'] ?? TradePromoProgram::MODE_TRADE) === TradePromoProgram::MODE_CHECKOUT;
 
             $program = TradePromoProgram::query()->create([
                 'code' => TradePromoProgram::nextCode(),
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'type' => $data['type'],
+                'mode' => $data['mode'],
+                'scope' => $data['scope'],
+                'channels' => $isCheckout
+                    ? ($data['channels'] ?? [TradePromoProgram::CHANNEL_POS, TradePromoProgram::CHANNEL_SALES])
+                    : null,
                 'status' => TradePromoProgram::STATUS_DRAFT,
                 'starts_at' => $data['starts_at'],
                 'ends_at' => $data['ends_at'],
                 'principal_id' => $data['principal_id'] ?? null,
-                'target_metric' => $data['target_metric'],
+                'target_metric' => $data['target_metric'] ?? TradePromoProgram::METRIC_VOLUME,
                 'target_amount' => $data['target_amount'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $request->user()?->id,
@@ -85,6 +95,7 @@ class PromoProgramController extends Controller
             'principal:id,name,code',
             'partners:id,code,name',
             'products:id,code,sku,name',
+            'warehouses:id,name,kind',
             'tiers.freeProduct:id,code,name',
             'rebateRule',
             'realizations.partner:id,code,name',
@@ -104,13 +115,15 @@ class PromoProgramController extends Controller
 
     public function edit(TradePromoProgram $program): Response
     {
-        $program->load(['partners:id', 'products:id', 'tiers', 'rebateRule']);
+        $program->load(['partners:id', 'products:id', 'warehouses:id', 'tiers', 'rebateRule']);
 
         return Inertia::render('Modules/TradePromotions/Programs/Edit', [
             'program' => $program,
             'partners' => Partner::query()->where('customer_rank', '>', 0)->orderBy('name')->get(['id', 'code', 'name']),
             'products' => Product::query()->orderBy('name')->limit(200)->get(['id', 'code', 'sku', 'name', 'price']),
             'principals' => Principal::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'warehouses' => AccessibleWarehouses::query()->where('status', 'active')->orderBy('name')->get(['id', 'name', 'kind']),
+            'canManageGlobal' => PromoProgramAuthorizer::canManageGlobal(request()->user()),
         ]);
     }
 
@@ -122,15 +135,21 @@ class PromoProgramController extends Controller
 
         DB::transaction(function () use ($request, $program): void {
             $data = $request->validated();
+            $isCheckout = ($data['mode'] ?? TradePromoProgram::MODE_TRADE) === TradePromoProgram::MODE_CHECKOUT;
 
             $program->update([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'type' => $data['type'],
+                'mode' => $data['mode'],
+                'scope' => $data['scope'],
+                'channels' => $isCheckout
+                    ? ($data['channels'] ?? [TradePromoProgram::CHANNEL_POS, TradePromoProgram::CHANNEL_SALES])
+                    : null,
                 'starts_at' => $data['starts_at'],
                 'ends_at' => $data['ends_at'],
                 'principal_id' => $data['principal_id'] ?? null,
-                'target_metric' => $data['target_metric'],
+                'target_metric' => $data['target_metric'] ?? TradePromoProgram::METRIC_VOLUME,
                 'target_amount' => $data['target_amount'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -178,11 +197,18 @@ class PromoProgramController extends Controller
         $program->partners()->sync($data['partner_ids'] ?? []);
         $program->products()->sync($data['product_ids'] ?? []);
 
+        if (($data['scope'] ?? TradePromoProgram::SCOPE_GLOBAL) === TradePromoProgram::SCOPE_SITES) {
+            $program->warehouses()->sync($data['warehouse_ids'] ?? []);
+        } else {
+            $program->warehouses()->sync([]);
+        }
+
         $program->tiers()->delete();
         foreach ($data['tiers'] ?? [] as $index => $tier) {
             if (($tier['min_qty'] ?? null) === null
                 && ($tier['min_value'] ?? null) === null
                 && ($tier['discount_percent'] ?? null) === null
+                && ($tier['discount_amount'] ?? null) === null
                 && ($tier['free_qty'] ?? null) === null) {
                 continue;
             }

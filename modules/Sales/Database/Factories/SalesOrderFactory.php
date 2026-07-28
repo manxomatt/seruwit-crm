@@ -26,6 +26,7 @@ class SalesOrderFactory extends Factory
             'promised_at' => null,
             'notes' => null,
             'total_amount' => 0,
+            'discount_total' => 0,
         ];
     }
 

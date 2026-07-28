@@ -2,10 +2,18 @@ import CanvassingLayout from '@/Layouts/CanvassingLayout';
 import InputError from '@/Components/InputError';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler, useRef, useState } from 'react';
+import { FormEventHandler, useMemo, useRef, useState } from 'react';
 
 interface Partner { id: number; name: string; phone: string | null; }
 interface Photo { id: number; url: string; }
+interface OrderItem {
+    id?: number;
+    product_id: number;
+    quantity: string;
+    unit_price: string;
+    unit?: string | null;
+    product?: { id: number; name: string; code: string | null };
+}
 interface Visit {
     id: number;
     partner: Partner;
@@ -15,10 +23,24 @@ interface Visit {
     notes: string | null;
     photos: Photo[];
     is_open: boolean;
+    warehouse_id?: number | null;
+    sales_order_id?: number | null;
+    order_items?: OrderItem[];
 }
 interface Salesperson { id: number; name: string; }
+interface ProductOption { id: number; name: string; code: string | null; unit: string | null; price: string | number | null; }
+interface WarehouseOption { id: number; name: string; }
 
-interface Props { salesperson: Salesperson; visit: Visit; }
+interface Props {
+    salesperson: Salesperson;
+    visit: Visit;
+    orderCapture?: {
+        enabled: boolean;
+        warehouses: WarehouseOption[];
+        products: ProductOption[];
+        sales_order_id: number | null;
+    };
+}
 
 const OUTCOME_OPTIONS = [
     { value: 'contacted', color: 'border-blue-400 bg-blue-50 text-blue-700' },
@@ -28,17 +50,35 @@ const OUTCOME_OPTIONS = [
     { value: 'callback', color: 'border-purple-400 bg-purple-50 text-purple-700' },
 ];
 
-export default function VisitDetail({ salesperson, visit }: Props): JSX.Element {
+export default function VisitDetail({ salesperson, visit, orderCapture }: Props): JSX.Element {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
     const [photos, setPhotos] = useState<string[]>([]);
     const fileRef = useRef<HTMLInputElement>(null);
+    const captureEnabled = orderCapture?.enabled ?? false;
 
     const { data, setData, post, processing, errors } = useForm({
         outcome: '',
         notes: visit.notes ?? '',
         photos: [] as string[],
     });
+
+    const orderForm = useForm({
+        warehouse_id: visit.warehouse_id ? String(visit.warehouse_id) : '',
+        items: (visit.order_items ?? []).map((item) => ({
+            product_id: String(item.product_id),
+            quantity: String(item.quantity),
+            unit_price: String(item.unit_price),
+            unit: item.unit ?? '',
+        })),
+        convert: false,
+    });
+
+    const productMap = useMemo(() => {
+        const map = new Map<number, ProductOption>();
+        (orderCapture?.products ?? []).forEach((product) => map.set(product.id, product));
+        return map;
+    }, [orderCapture?.products]);
 
     const addPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
@@ -72,6 +112,58 @@ export default function VisitDetail({ salesperson, visit }: Props): JSX.Element 
         post(route('module.canvassing.portal.visits.checkout', visit.id));
     };
 
+    const addOrderLine = (): void => {
+        const first = orderCapture?.products?.[0];
+        orderForm.setData('items', [
+            ...orderForm.data.items,
+            {
+                product_id: first ? String(first.id) : '',
+                quantity: '1',
+                unit_price: first?.price != null ? String(first.price) : '0',
+                unit: first?.unit ?? '',
+            },
+        ]);
+    };
+
+    const updateOrderLine = (index: number, key: string, value: string): void => {
+        const next = orderForm.data.items.map((item, i) => {
+            if (i !== index) {
+                return item;
+            }
+            const updated = { ...item, [key]: value };
+            if (key === 'product_id') {
+                const product = productMap.get(Number(value));
+                updated.unit_price = product?.price != null ? String(product.price) : '0';
+                updated.unit = product?.unit ?? '';
+            }
+            return updated;
+        });
+        orderForm.setData('items', next);
+    };
+
+    const removeOrderLine = (index: number): void => {
+        orderForm.setData('items', orderForm.data.items.filter((_, i) => i !== index));
+    };
+
+    const saveOrder = (convert: boolean): void => {
+        orderForm.transform((payload) => ({
+            ...payload,
+            convert,
+            warehouse_id: payload.warehouse_id !== '' ? Number(payload.warehouse_id) : null,
+            items: payload.items
+                .filter((item) => item.product_id !== '')
+                .map((item) => ({
+                    product_id: Number(item.product_id),
+                    quantity: Number(item.quantity),
+                    unit_price: Number(item.unit_price),
+                    unit: item.unit || null,
+                })),
+        }));
+        orderForm.post(route('module.canvassing.portal.visits.order', visit.id), {
+            preserveScroll: true,
+        });
+    };
+
     const checkinTime = new Date(visit.checked_in_at);
     const elapsed = Math.round((Date.now() - checkinTime.getTime()) / 60000);
 
@@ -79,7 +171,6 @@ export default function VisitDetail({ salesperson, visit }: Props): JSX.Element 
         <CanvassingLayout salespersonName={salesperson.name} title={visit.partner.name} back={route('module.canvassing.portal.today')}>
             <Head title={visit.partner.name} />
 
-            {/* Visit header */}
             <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <p className="text-sm font-semibold text-gray-900">{visit.partner.name}</p>
                 {visit.partner.phone && <p className="text-sm text-gray-500">{visit.partner.phone}</p>}
@@ -87,9 +178,13 @@ export default function VisitDetail({ salesperson, visit }: Props): JSX.Element 
                     {t('canvassing.portal.check_in_at', { time: checkinTime.toLocaleTimeString(localeTag, { hour: '2-digit', minute: '2-digit' }) })}
                     {visit.is_open && <span className="ml-2 text-orange-500">{t('canvassing.portal.elapsed', { count: elapsed })}</span>}
                 </p>
+                {visit.sales_order_id && (
+                    <p className="mt-2 text-xs font-medium text-emerald-700">
+                        {t('canvassing.portal.so_linked', { number: `#${visit.sales_order_id}` })}
+                    </p>
+                )}
             </div>
 
-            {/* Existing photos (completed visit) */}
             {visit.photos.length > 0 && (
                 <div className="mb-4 rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                     <p className="mb-2 text-xs font-semibold text-gray-500">{t('canvassing.portal.photos', { count: visit.photos.length })}</p>
@@ -101,10 +196,93 @@ export default function VisitDetail({ salesperson, visit }: Props): JSX.Element 
                 </div>
             )}
 
-            {/* Checkout form — only when open */}
+            {captureEnabled && visit.is_open && !visit.sales_order_id && (
+                <div className="mb-4 space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-700">{t('canvassing.portal.order_section')}</p>
+                        <button type="button" onClick={addOrderLine} className="text-xs font-medium text-emerald-600">
+                            {t('canvassing.portal.add_line')}
+                        </button>
+                    </div>
+
+                    {(orderCapture?.warehouses?.length ?? 0) > 0 && (
+                        <div>
+                            <label className="mb-1 block text-xs font-medium text-gray-500">{t('canvassing.portal.warehouse')}</label>
+                            <select
+                                value={orderForm.data.warehouse_id}
+                                onChange={(e) => orderForm.setData('warehouse_id', e.target.value)}
+                                className="w-full rounded-md border-gray-300 text-sm"
+                            >
+                                <option value="">—</option>
+                                {orderCapture?.warehouses.map((warehouse) => (
+                                    <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {orderForm.data.items.length === 0 ? (
+                        <p className="text-xs text-gray-400">{t('canvassing.portal.no_products')}</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {orderForm.data.items.map((item, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-2 rounded border border-gray-100 p-2">
+                                    <select
+                                        className="col-span-7 rounded-md border-gray-300 text-sm"
+                                        value={item.product_id}
+                                        onChange={(e) => updateOrderLine(index, 'product_id', e.target.value)}
+                                    >
+                                        <option value="">—</option>
+                                        {(orderCapture?.products ?? []).map((product) => (
+                                            <option key={product.id} value={product.id}>{product.name}</option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        className="col-span-3 rounded-md border-gray-300 text-sm"
+                                        value={item.quantity}
+                                        onChange={(e) => updateOrderLine(index, 'quantity', e.target.value)}
+                                        placeholder={t('canvassing.portal.qty')}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeOrderLine(index)}
+                                        className="col-span-2 text-sm text-red-500"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <InputError message={errors.order || orderForm.errors.order || orderForm.errors.items} className="mt-1" />
+
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            disabled={orderForm.processing}
+                            onClick={() => saveOrder(false)}
+                            className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700"
+                        >
+                            {t('common.save')}
+                        </button>
+                        <button
+                            type="button"
+                            disabled={orderForm.processing || orderForm.data.items.length === 0}
+                            onClick={() => saveOrder(true)}
+                            className="flex-1 rounded-lg bg-indigo-600 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                        >
+                            {t('canvassing.portal.create_so')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {visit.is_open ? (
                 <form onSubmit={submit} className="space-y-4">
-                    {/* Outcome selection */}
                     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                         <label className="mb-2 block text-sm font-semibold text-gray-700">{t('canvassing.portal.outcome_label')}</label>
                         <div className="grid grid-cols-1 gap-2">
@@ -122,7 +300,6 @@ export default function VisitDetail({ salesperson, visit }: Props): JSX.Element 
                         <InputError message={errors.outcome} className="mt-1" />
                     </div>
 
-                    {/* Notes */}
                     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                         <label htmlFor="notes" className="mb-1 block text-sm font-semibold text-gray-700">{t('canvassing.portal.notes')}</label>
                         <textarea
@@ -135,7 +312,6 @@ export default function VisitDetail({ salesperson, visit }: Props): JSX.Element 
                         />
                     </div>
 
-                    {/* Photos */}
                     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                         <div className="mb-2 flex items-center justify-between">
                             <label className="text-sm font-semibold text-gray-700">{t('canvassing.portal.photos_count', { count: photos.length })}</label>
@@ -173,7 +349,7 @@ export default function VisitDetail({ salesperson, visit }: Props): JSX.Element 
                 </form>
             ) : (
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('canvassing.portal.visit_done')}</p>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">{t('canvassing.portal.visit_done')}</p>
                     <p className="text-sm text-gray-900">{t('canvassing.portal.result', { outcome: t(`canvassing.outcomes.${visit.outcome}`, undefined, visit.outcome) })}</p>
                     {visit.notes && <p className="mt-2 text-sm text-gray-600">{visit.notes}</p>}
                 </div>

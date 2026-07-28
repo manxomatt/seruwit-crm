@@ -40,6 +40,7 @@ class SalesOrder extends Model
         'promised_at',
         'notes',
         'total_amount',
+        'discount_total',
     ];
 
     /** @return array<string, string> */
@@ -49,6 +50,7 @@ class SalesOrder extends Model
             'ordered_at' => 'date:Y-m-d',
             'promised_at' => 'date:Y-m-d',
             'total_amount' => 'decimal:2',
+            'discount_total' => 'decimal:2',
         ];
     }
 
@@ -80,11 +82,17 @@ class SalesOrder extends Model
 
     public function recalculateTotal(): void
     {
-        $total = $this->items()
-            ->get()
-            ->sum(fn (SalesOrderItem $item): float => (float) $item->quantity_ordered * (float) $item->unit_price);
+        $items = $this->items()->get();
 
-        $this->update(['total_amount' => $total]);
+        $gross = $items->sum(
+            fn (SalesOrderItem $item): float => (float) $item->quantity_ordered * (float) $item->unit_price
+        );
+        $discount = $items->sum(fn (SalesOrderItem $item): float => (float) $item->line_discount);
+
+        $this->update([
+            'discount_total' => round($discount, 2),
+            'total_amount' => round(max(0, $gross - $discount), 2),
+        ]);
     }
 
     public function deliveringProgress(): array

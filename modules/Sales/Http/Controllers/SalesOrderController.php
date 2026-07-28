@@ -16,6 +16,7 @@ use Modules\Sales\Models\SalesOrder;
 use Modules\Sales\Support\PriceListResolver;
 use Modules\Sales\Support\SalesInvoiceService;
 use Modules\Sales\Support\SalesOrderConfirmationService;
+use Modules\Sales\Support\SalesOrderPromotionApplier;
 use RuntimeException;
 
 class SalesOrderController extends Controller
@@ -102,6 +103,12 @@ class SalesOrderController extends Controller
         $validated = $request->validated();
 
         $so = DB::transaction(function () use ($validated) {
+            $priced = app(SalesOrderPromotionApplier::class)->apply(
+                (int) $validated['warehouse_id'],
+                isset($validated['partner_id']) ? (int) $validated['partner_id'] : null,
+                $validated['items'],
+            );
+
             $so = SalesOrder::create([
                 'partner_id' => $validated['partner_id'],
                 'warehouse_id' => $validated['warehouse_id'],
@@ -112,21 +119,24 @@ class SalesOrderController extends Controller
                 'promised_at' => $validated['promised_at'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'total_amount' => 0,
+                'discount_total' => $priced['discount_total'],
             ]);
 
-            foreach ($validated['items'] as $item) {
+            foreach ($priced['items'] as $item) {
                 $so->items()->create([
                     'product_id' => $item['product_id'],
                     'product_packaging_id' => $item['product_packaging_id'] ?? null,
                     'quantity_ordered' => $item['quantity_ordered'],
                     'quantity_delivered' => 0,
                     'unit_price' => $item['unit_price'],
+                    'line_discount' => $item['line_discount'] ?? 0,
                     'unit' => $item['unit'] ?? null,
                     'notes' => $item['notes'] ?? null,
                 ]);
             }
 
             $so->recalculateTotal();
+            app(SalesOrderPromotionApplier::class)->record($so, $priced['items']);
 
             return $so;
         });
@@ -207,29 +217,38 @@ class SalesOrderController extends Controller
         $validated = $request->validated();
 
         DB::transaction(function () use ($so, $validated): void {
+            $priced = app(SalesOrderPromotionApplier::class)->apply(
+                (int) $validated['warehouse_id'],
+                isset($validated['partner_id']) ? (int) $validated['partner_id'] : null,
+                $validated['items'],
+            );
+
             $so->update([
                 'partner_id' => $validated['partner_id'],
                 'warehouse_id' => $validated['warehouse_id'],
                 'ordered_at' => $validated['ordered_at'],
                 'promised_at' => $validated['promised_at'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'discount_total' => $priced['discount_total'],
             ]);
 
             $so->items()->delete();
 
-            foreach ($validated['items'] as $item) {
+            foreach ($priced['items'] as $item) {
                 $so->items()->create([
                     'product_id' => $item['product_id'],
                     'product_packaging_id' => $item['product_packaging_id'] ?? null,
                     'quantity_ordered' => $item['quantity_ordered'],
                     'quantity_delivered' => 0,
                     'unit_price' => $item['unit_price'],
+                    'line_discount' => $item['line_discount'] ?? 0,
                     'unit' => $item['unit'] ?? null,
                     'notes' => $item['notes'] ?? null,
                 ]);
             }
 
             $so->recalculateTotal();
+            app(SalesOrderPromotionApplier::class)->record($so, $priced['items']);
         });
 
         return redirect()->route($this->getRoutePrefix().'.sales.sales-orders.show', $so)

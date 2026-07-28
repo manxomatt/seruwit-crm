@@ -13,6 +13,8 @@ interface Award {
     amount: string | number | null;
     free_qty: string | number | null;
     status: string;
+    settlement_type?: string | null;
+    settlement_id?: number | null;
 }
 
 interface Realization {
@@ -232,6 +234,9 @@ export default function Show({ program, can }: Props): JSX.Element {
                                                     {a.amount != null ? ` Rp ${Number(a.amount).toLocaleString()}` : ''}
                                                     {a.free_qty != null ? ` ×${a.free_qty}` : ''} ·{' '}
                                                     {t(`promotions.status.${a.status}`, undefined, a.status)}
+                                                    {a.settlement_type && a.settlement_id
+                                                        ? ` → ${t(`promotions.settlement_types.${a.settlement_type}`, undefined, a.settlement_type)} #${a.settlement_id}`
+                                                        : ''}
                                                 </span>
                                                 {can.settle && a.status === 'accrued' && (
                                                     <button

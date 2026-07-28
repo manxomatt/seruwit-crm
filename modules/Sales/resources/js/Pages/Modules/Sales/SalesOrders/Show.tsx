@@ -13,6 +13,7 @@ interface SoItem {
     quantity_ordered: string;
     quantity_delivered: string;
     unit_price: string;
+    line_discount?: string;
     unit: string | null;
     product: { id: number; name: string; code: string | null };
     packaging?: { id: number; name: string; qty: string } | null;
@@ -34,6 +35,7 @@ interface Order {
     promised_at: string | null;
     notes: string | null;
     total_amount: string;
+    discount_total?: string;
     partner: { id: number; name: string; code: string };
     warehouse: { id: number; name: string };
     created_by: { id: number; name: string } | null;
@@ -76,6 +78,9 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
     };
 
     const remaining = (item: SoItem) => Math.max(0, Number(item.quantity_ordered) - Number(item.quantity_delivered));
+    const lineNet = (item: SoItem) =>
+        Math.max(0, Number(item.quantity_ordered) * Number(item.unit_price) - Number(item.line_discount || 0));
+    const discountTotal = Number(order.discount_total || 0);
     const canIssue = ['confirmed', 'partial_delivered'].includes(order.status);
     const canInvoice = can.invoice;
 
@@ -169,14 +174,24 @@ export default function Show({ order, progress, can }: Props): JSX.Element {
                                             </td>
                                             <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-700">{formatMoney(item.unit_price)}</td>
                                             <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-900">
-                                                {formatMoney(Number(item.quantity_ordered) * Number(item.unit_price))}
+                                                {formatMoney(lineNet(item))}
+                                                {Number(item.line_discount || 0) > 0 && (
+                                                    <div className="text-xs font-normal text-emerald-700">
+                                                        −{formatMoney(item.line_discount || 0)}
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                        <div className="flex justify-end border-t border-gray-200 px-4 py-3">
+                        <div className="flex flex-col items-end gap-1 border-t border-gray-200 px-4 py-3">
+                            {discountTotal > 0 && (
+                                <span className="text-sm tabular-nums text-emerald-700">
+                                    {t('sales.sales_orders.show.discount', { amount: formatMoney(discountTotal) })}
+                                </span>
+                            )}
                             <span className="text-sm font-bold tabular-nums text-gray-900">
                                 {t('sales.sales_orders.show.total', { amount: formatMoney(order.total_amount) })}
                             </span>

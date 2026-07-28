@@ -24,6 +24,7 @@ class SalesOrderItem extends Model
         'quantity_ordered',
         'quantity_delivered',
         'unit_price',
+        'line_discount',
         'unit',
         'notes',
     ];
@@ -35,6 +36,7 @@ class SalesOrderItem extends Model
             'quantity_ordered' => 'decimal:2',
             'quantity_delivered' => 'decimal:2',
             'unit_price' => 'decimal:2',
+            'line_discount' => 'decimal:2',
         ];
     }
 
@@ -50,7 +52,23 @@ class SalesOrderItem extends Model
 
     public function lineTotal(): float
     {
-        return (float) $this->quantity_ordered * (float) $this->unit_price;
+        $gross = (float) $this->quantity_ordered * (float) $this->unit_price;
+
+        return round(max(0, $gross - (float) $this->line_discount), 2);
+    }
+
+    /**
+     * Net unit price after line discount (for invoicing delivered qty).
+     */
+    public function netUnitPrice(): float
+    {
+        $qty = (float) $this->quantity_ordered;
+
+        if ($qty <= 0) {
+            return (float) $this->unit_price;
+        }
+
+        return round($this->lineTotal() / $qty, 4);
     }
 
     /** @return BelongsTo<SalesOrder, $this> */

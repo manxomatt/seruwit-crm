@@ -23,6 +23,7 @@ class SalesOrderItemFactory extends Factory
             'quantity_ordered' => fake()->randomFloat(2, 1, 100),
             'quantity_delivered' => 0,
             'unit_price' => fake()->randomFloat(2, 1000, 100000),
+            'line_discount' => 0,
             'unit' => 'pcs',
             'notes' => null,
         ];

@@ -291,4 +291,39 @@ class PosSaleWorkflowTest extends TestCase
             ->assertRedirect()
             ->assertSessionHasErrors('warehouse_id');
     }
+
+    public function test_partner_price_list_overrides_catalog_unit_price(): void
+    {
+        ['product' => $product, 'shift' => $shift, 'user' => $user] = $this->seededShift(10);
+
+        $list = \Modules\Sales\Models\PriceList::query()->create([
+            'name' => 'Dealer',
+            'code' => 'PL-POS-1',
+            'is_active' => true,
+        ]);
+        \Modules\Sales\Models\PriceListItem::query()->create([
+            'price_list_id' => $list->id,
+            'product_id' => $product->id,
+            'unit_price' => 8000,
+        ]);
+
+        $partner = \Modules\Partners\Models\Partner::factory()->create([
+            'customer_rank' => 1,
+            'price_list_id' => $list->id,
+        ]);
+
+        $this->actingAs($user)->post(route('module.pos.sales.store', [], false), [
+            'pos_shift_id' => $shift->id,
+            'partner_id' => $partner->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 2, 'unit_price' => 10000]],
+            'payment_method' => PosPayment::METHOD_CASH,
+            'amount_tendered' => 16000,
+        ])->assertRedirect();
+
+        $sale = PosSale::query()->first();
+        $this->assertNotNull($sale);
+        $this->assertSame($partner->id, (int) $sale->partner_id);
+        $this->assertEquals(8000.0, (float) $sale->items()->first()->unit_price);
+        $this->assertEquals(16000.0, (float) $sale->grand_total);
+    }
 }

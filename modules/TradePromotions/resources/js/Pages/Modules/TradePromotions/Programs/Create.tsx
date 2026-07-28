@@ -23,6 +23,8 @@ interface Props {
     partners: Option[];
     products: Option[];
     principals: Option[];
+    warehouses: Array<{ id: number; name: string; kind?: string }>;
+    canManageGlobal: boolean;
 }
 
 type Tier = {
@@ -34,16 +36,20 @@ type Tier = {
     free_qty: string;
 };
 
-const PROGRAM_TYPES = ['volume_discount', 'free_goods', 'rebate'] as const;
+const TRADE_TYPES = ['volume_discount', 'free_goods', 'rebate'] as const;
 const TARGET_METRICS = ['volume', 'value'] as const;
 const CALC_BASIS_OPTIONS = ['qty', 'net_value'] as const;
 
-export default function Create({ partners, products, principals }: Props): JSX.Element {
+export default function Create({ partners, products, principals, warehouses, canManageGlobal }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
+        mode: 'trade',
+        scope: canManageGlobal ? 'global' : 'sites',
+        channels: ['pos', 'sales'] as string[],
+        warehouse_ids: [] as number[],
         type: 'volume_discount',
         starts_at: '',
         ends_at: '',
@@ -59,10 +65,13 @@ export default function Create({ partners, products, principals }: Props): JSX.E
         calc_basis: 'qty',
     });
 
-    const typeOptions = useMemo(
-        () => PROGRAM_TYPES.map((type) => ({ value: type, label: t(`promotions.types.${type}`) })),
-        [t],
-    );
+    const typeOptions = useMemo(() => {
+        const types =
+            data.mode === 'checkout'
+                ? (['checkout_discount', 'checkout_bogo', 'checkout_bundle'] as const)
+                : TRADE_TYPES;
+        return types.map((type) => ({ value: type, label: t(`promotions.types.${type}`) }));
+    }, [t, data.mode]);
 
     const metricOptions = useMemo(
         () => TARGET_METRICS.map((metric) => ({ value: metric, label: t(`promotions.metrics.${metric}`) })),
@@ -79,9 +88,39 @@ export default function Create({ partners, products, principals }: Props): JSX.E
         post(prefixedRoute('promotions.programs.store'));
     };
 
-    const toggleId = (field: 'partner_ids' | 'product_ids', id: number): void => {
+    const setMode = (mode: string): void => {
+        setData({
+            ...data,
+            mode,
+            type: mode === 'checkout' ? 'checkout_discount' : 'volume_discount',
+            channels: mode === 'checkout' ? ['pos', 'sales', 'canvassing'] : data.channels,
+            tiers:
+                mode === 'checkout'
+                    ? [{ min_qty: '1', min_value: '', discount_percent: '10', discount_amount: '', free_product_id: '', free_qty: '' }]
+                    : [{ min_qty: '100', min_value: '', discount_percent: '5', discount_amount: '', free_product_id: '', free_qty: '' }],
+        });
+    };
+
+    const setType = (type: string): void => {
+        const nextTier =
+            type === 'checkout_bogo'
+                ? [{ min_qty: '2', min_value: '', discount_percent: '', discount_amount: '', free_product_id: '', free_qty: '1' }]
+                : type === 'checkout_bundle'
+                    ? [{ min_qty: '1', min_value: '', discount_percent: '10', discount_amount: '', free_product_id: '', free_qty: '' }]
+                    : data.tiers;
+        setData({ ...data, type, tiers: nextTier });
+    };
+
+    const toggleId = (field: 'partner_ids' | 'product_ids' | 'warehouse_ids', id: number): void => {
         const list = data[field];
         setData(field, list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+    };
+
+    const toggleChannel = (channel: string): void => {
+        setData(
+            'channels',
+            data.channels.includes(channel) ? data.channels.filter((c) => c !== channel) : [...data.channels, channel],
+        );
     };
 
     const updateTier = (index: number, key: keyof Tier, value: string): void => {
@@ -103,11 +142,37 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                                 <InputError message={errors.name} className="mt-1" />
                             </div>
                             <div>
+                                <InputLabel value="Mode" />
+                                <Select
+                                    className="mt-1"
+                                    value={data.mode}
+                                    onChange={setMode}
+                                    options={[
+                                        { value: 'trade', label: t('promotions.modes.trade') },
+                                        { value: 'checkout', label: t('promotions.modes.checkout') },
+                                    ]}
+                                />
+                                <InputError message={errors.mode} className="mt-1" />
+                            </div>
+                            <div>
+                                <InputLabel value="Scope" />
+                                <Select
+                                    className="mt-1"
+                                    value={data.scope}
+                                    onChange={(value) => setData('scope', value)}
+                                    options={[
+                                        ...(canManageGlobal ? [{ value: 'global', label: t('promotions.scopes.global') }] : []),
+                                        { value: 'sites', label: t('promotions.scopes.sites') },
+                                    ]}
+                                />
+                                <InputError message={errors.scope} className="mt-1" />
+                            </div>
+                            <div>
                                 <InputLabel value={t('promotions.fields.type')} />
                                 <Select
                                     className="mt-1"
                                     value={data.type}
-                                    onChange={(value) => setData('type', value)}
+                                    onChange={setType}
                                     options={typeOptions}
                                 />
                             </div>
@@ -121,6 +186,42 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                                     options={principals.map((p) => ({ value: String(p.id), label: p.name }))}
                                 />
                             </div>
+                            {data.mode === 'checkout' && (
+                                <div className="sm:col-span-2">
+                                    <InputLabel value="Channels" />
+                                    <div className="mt-2 flex flex-wrap gap-4">
+                                        {(['pos', 'sales', 'canvassing'] as const).map((channel) => (
+                                            <label key={channel} className="flex items-center gap-2 text-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.channels.includes(channel)}
+                                                    onChange={() => toggleChannel(channel)}
+                                                />
+                                                {t(`promotions.channels.${channel}`)}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.channels} className="mt-1" />
+                                </div>
+                            )}
+                            {data.scope === 'sites' && (
+                                <div className="sm:col-span-2">
+                                    <h3 className="mb-2 text-sm font-medium">{t('promotions.scopes.sites')}</h3>
+                                    <div className="max-h-40 overflow-y-auto rounded border border-gray-200">
+                                        {warehouses.map((w) => (
+                                            <label key={w.id} className="flex items-center gap-2 border-b border-gray-50 px-3 py-2 text-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.warehouse_ids.includes(w.id)}
+                                                    onChange={() => toggleId('warehouse_ids', w.id)}
+                                                />
+                                                {w.name}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.warehouse_ids} className="mt-1" />
+                                </div>
+                            )}
                             <div>
                                 <InputLabel value={t('promotions.fields.starts_at')} />
                                 <TextInput type="datetime-local" className="mt-1 block w-full" value={data.starts_at} onChange={(e) => setData('starts_at', e.target.value)} required />
@@ -131,19 +232,23 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                                 <TextInput type="datetime-local" className="mt-1 block w-full" value={data.ends_at} onChange={(e) => setData('ends_at', e.target.value)} required />
                                 <InputError message={errors.ends_at} className="mt-1" />
                             </div>
-                            <div>
-                                <InputLabel value={t('promotions.fields.target_metric')} />
-                                <Select
-                                    className="mt-1"
-                                    value={data.target_metric}
-                                    onChange={(value) => setData('target_metric', value)}
-                                    options={metricOptions}
-                                />
-                            </div>
-                            <div>
-                                <InputLabel value={t('promotions.fields.target_amount')} />
-                                <TextInput type="number" className="mt-1 block w-full" value={data.target_amount} onChange={(e) => setData('target_amount', e.target.value)} />
-                            </div>
+                            {data.mode === 'trade' && (
+                                <>
+                                    <div>
+                                        <InputLabel value={t('promotions.fields.target_metric')} />
+                                        <Select
+                                            className="mt-1"
+                                            value={data.target_metric}
+                                            onChange={(value) => setData('target_metric', value)}
+                                            options={metricOptions}
+                                        />
+                                    </div>
+                                    <div>
+                                        <InputLabel value={t('promotions.fields.target_amount')} />
+                                        <TextInput type="number" className="mt-1 block w-full" value={data.target_amount} onChange={(e) => setData('target_amount', e.target.value)} />
+                                    </div>
+                                </>
+                            )}
                             <div className="sm:col-span-2">
                                 <InputLabel value={t('promotions.fields.description')} />
                                 <textarea
@@ -155,6 +260,7 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                             </div>
                         </div>
 
+                        {data.mode === 'trade' && (
                         <div>
                             <h3 className="mb-2 text-sm font-medium">{t('promotions.programs.create.eligible_distributors')}</h3>
                             <div className="max-h-40 overflow-y-auto rounded border border-gray-200">
@@ -166,6 +272,7 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                                 ))}
                             </div>
                         </div>
+                        )}
 
                         <div>
                             <h3 className="mb-2 text-sm font-medium">{t('promotions.programs.create.eligible_products')}</h3>
@@ -183,30 +290,47 @@ export default function Create({ partners, products, principals }: Props): JSX.E
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-medium">{t('promotions.programs.create.tiers')}</h3>
-                                    <SecondaryButton
-                                        type="button"
-                                        onClick={() =>
-                                            setData('tiers', [
-                                                ...data.tiers,
-                                                { min_qty: '', min_value: '', discount_percent: '', discount_amount: '', free_product_id: '', free_qty: '' },
-                                            ])
-                                        }
-                                    >
-                                        {t('promotions.programs.create.add_tier')}
-                                    </SecondaryButton>
+                                    {data.mode === 'trade' && (
+                                        <SecondaryButton
+                                            type="button"
+                                            onClick={() =>
+                                                setData('tiers', [
+                                                    ...data.tiers,
+                                                    { min_qty: '', min_value: '', discount_percent: '', discount_amount: '', free_product_id: '', free_qty: '' },
+                                                ])
+                                            }
+                                        >
+                                            {t('promotions.programs.create.add_tier')}
+                                        </SecondaryButton>
+                                    )}
                                 </div>
                                 {data.tiers.map((tier, index) => (
                                     <div key={index} className="grid grid-cols-2 gap-3 rounded border border-gray-100 p-3 sm:grid-cols-3">
                                         <div>
-                                            <InputLabel value={t('promotions.fields.min_qty')} />
+                                            <InputLabel value={data.type === 'checkout_bogo' ? t('promotions.fields.buy_qty') : t('promotions.fields.min_qty')} />
                                             <TextInput className="mt-1 block w-full" value={tier.min_qty} onChange={(e) => updateTier(index, 'min_qty', e.target.value)} />
                                         </div>
-                                        {data.type === 'volume_discount' ? (
+                                        {(data.type === 'volume_discount' || data.type === 'checkout_discount' || data.type === 'checkout_bundle') && (
+                                            <>
+                                                <div>
+                                                    <InputLabel value={t('promotions.fields.discount_percent')} />
+                                                    <TextInput className="mt-1 block w-full" value={tier.discount_percent} onChange={(e) => updateTier(index, 'discount_percent', e.target.value)} />
+                                                </div>
+                                                {(data.type === 'checkout_discount' || data.type === 'checkout_bundle') && (
+                                                    <div>
+                                                        <InputLabel value={t('promotions.fields.discount_amount')} />
+                                                        <TextInput className="mt-1 block w-full" value={tier.discount_amount} onChange={(e) => updateTier(index, 'discount_amount', e.target.value)} />
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                        {data.type === 'checkout_bogo' && (
                                             <div>
-                                                <InputLabel value={t('promotions.fields.discount_percent')} />
-                                                <TextInput className="mt-1 block w-full" value={tier.discount_percent} onChange={(e) => updateTier(index, 'discount_percent', e.target.value)} />
+                                                <InputLabel value={t('promotions.fields.free_qty')} />
+                                                <TextInput className="mt-1 block w-full" value={tier.free_qty} onChange={(e) => updateTier(index, 'free_qty', e.target.value)} />
                                             </div>
-                                        ) : (
+                                        )}
+                                        {data.type === 'free_goods' && (
                                             <>
                                                 <div>
                                                     <InputLabel value={t('promotions.fields.free_product')} />

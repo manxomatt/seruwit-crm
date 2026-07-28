@@ -10,10 +10,15 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Canvassing\Http\Requests\CheckInRequest;
 use Modules\Canvassing\Http\Requests\CheckOutRequest;
+use Modules\Canvassing\Http\Requests\SyncVisitOrderRequest;
 use Modules\Canvassing\Models\CanvassingPhoto;
 use Modules\Canvassing\Models\CanvassingVisit;
 use Modules\Canvassing\Models\Salesperson;
+use Modules\Canvassing\Support\VisitOrderToSalesOrderConverter;
+use Modules\Inventory\Support\AccessibleWarehouses;
 use Modules\Partners\Models\Partner;
+use Modules\Product\Models\Product;
+use RuntimeException;
 
 class CanvassingPortalController extends Controller
 {
@@ -109,12 +114,70 @@ class CanvassingPortalController extends Controller
         $salesperson = $this->resolveSalesperson();
         abort_unless($visit->salesperson_id === $salesperson->id, 403);
 
-        $visit->load(['partner', 'photos']);
+        $visit->load(['partner', 'photos', 'orderItems.product:id,name,code,unit,price']);
+        $converter = app(VisitOrderToSalesOrderConverter::class);
+
+        $warehouses = [];
+        $products = [];
+
+        if ($converter->salesAvailable() && class_exists(AccessibleWarehouses::class)) {
+            $warehouses = AccessibleWarehouses::query()
+                ->where('status', 'active')
+                ->salesOutbound()
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
+
+        if ($visit->is_open && class_exists(Product::class)) {
+            $products = Product::query()
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->limit(200)
+                ->get(['id', 'name', 'code', 'unit', 'price']);
+        }
 
         return Inertia::render('Modules/Canvassing/Portal/VisitDetail', [
             'salesperson' => $salesperson->only('id', 'name'),
             'visit' => $visit,
+            'orderCapture' => [
+                'enabled' => $converter->salesAvailable(),
+                'warehouses' => $warehouses,
+                'products' => $products,
+                'sales_order_id' => $visit->sales_order_id,
+            ],
         ]);
+    }
+
+    public function syncOrder(
+        SyncVisitOrderRequest $request,
+        CanvassingVisit $visit,
+        VisitOrderToSalesOrderConverter $converter,
+    ): RedirectResponse {
+        $salesperson = $this->resolveSalesperson();
+        abort_unless($visit->salesperson_id === $salesperson->id, 403);
+        abort_unless($visit->checked_out_at === null, 422, 'This visit is already checked out.');
+        abort_unless($converter->salesAvailable(), 422, __('canvassing.messages.sales_module_required'));
+
+        $validated = $request->validated();
+
+        try {
+            if (isset($validated['warehouse_id'])) {
+                $visit->update(['warehouse_id' => $validated['warehouse_id']]);
+            }
+
+            $converter->syncItems($visit, $validated['items'] ?? []);
+
+            if ($request->boolean('convert')) {
+                $so = $converter->convert($visit->fresh(['orderItems']), $validated['warehouse_id'] ?? null);
+
+                return redirect()->route('module.canvassing.portal.visits.show', $visit)
+                    ->with('success', __('canvassing.messages.order_converted', ['number' => $so->so_number]));
+            }
+        } catch (RuntimeException $e) {
+            return back()->withErrors(['order' => $e->getMessage()]);
+        }
+
+        return back()->with('success', __('canvassing.messages.order_saved'));
     }
 
     public function checkOut(CheckOutRequest $request, CanvassingVisit $visit): RedirectResponse

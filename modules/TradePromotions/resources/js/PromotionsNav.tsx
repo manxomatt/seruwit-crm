@@ -5,6 +5,7 @@ import { Link } from '@inertiajs/react';
 const TABS = [
     { labelKey: 'promotions.nav.programs', route: 'promotions.programs.index', pattern: 'promotions.programs.*' },
     { labelKey: 'promotions.nav.realizations', route: 'promotions.realizations.index', pattern: 'promotions.realizations.*' },
+    { labelKey: 'promotions.nav.reports', route: 'promotions.reports.index', pattern: 'promotions.reports.*' },
 ] as const;
 
 export default function PromotionsNav(): JSX.Element {

@@ -55,6 +55,8 @@ interface TaxConfig {
 interface Props {
     shift: Shift | null;
     favorites: PosProduct[];
+    customers?: Array<{ id: number; name: string; code: string | null; price_list_id: number | null }>;
+    priceMaps?: Record<number, Record<number, number>>;
     lastSale: LastSale | null;
     tax: TaxConfig;
     can: { sell: boolean; open_shift: boolean; close_shift: boolean; void: boolean };
@@ -71,7 +73,16 @@ function formatMoney(value: number): string {
 
 const PARK_KEY = 'pos_parked_cart';
 
-export default function Show({ shift, favorites, lastSale, tax, can, cashier }: Props): JSX.Element {
+export default function Show({
+    shift,
+    favorites,
+    customers = [],
+    priceMaps = {},
+    lastSale,
+    tax,
+    can,
+    cashier,
+}: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
     const { errors } = usePage().props as { errors?: Record<string, string> };
@@ -80,12 +91,14 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
     const [results, setResults] = useState<PosProduct[]>(favorites);
     const [searching, setSearching] = useState(false);
     const [cart, setCart] = useState<CartLine[]>([]);
+    const [partnerId, setPartnerId] = useState<string>('');
     const [payOpen, setPayOpen] = useState(false);
     const [successSale, setSuccessSale] = useState<LastSale | null>(lastSale);
     const [toast, setToast] = useState<string | null>(null);
 
     const payForm = useForm({
         pos_shift_id: shift?.id ?? 0,
+        partner_id: '' as string | number,
         items: [] as Array<{ product_id: number; quantity: number; unit_price: number }>,
         payment_method: 'cash',
         amount_tendered: '' as string | number,
@@ -93,9 +106,37 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
         notes: '',
     });
 
+    const selectedPartner = useMemo(
+        () => customers.find((customer) => String(customer.id) === partnerId) ?? null,
+        [customers, partnerId],
+    );
+
+    const resolveUnitPrice = useCallback(
+        (productId: number, catalogPrice: number): number => {
+            const listId = selectedPartner?.price_list_id;
+            if (listId && priceMaps[listId]?.[productId] !== undefined) {
+                return Number(priceMaps[listId][productId]);
+            }
+
+            return catalogPrice;
+        },
+        [priceMaps, selectedPartner],
+    );
+
     useEffect(() => {
         setResults(favorites);
     }, [favorites]);
+
+    useEffect(() => {
+        setCart((prev) =>
+            prev.map((line) => {
+                const catalog = favorites.find((product) => product.id === line.product_id);
+                const base = catalog?.price ?? line.unit_price;
+
+                return { ...line, unit_price: resolveUnitPrice(line.product_id, base) };
+            }),
+        );
+    }, [partnerId, resolveUnitPrice, favorites]);
 
     useEffect(() => {
         if (lastSale) {
@@ -163,7 +204,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
                         product_id: product.id,
                         name: product.name,
                         unit: product.unit,
-                        unit_price: product.price,
+                        unit_price: resolveUnitPrice(product.id, product.price),
                         quantity: 1,
                         available: product.available,
                         is_service: product.is_service,
@@ -173,7 +214,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
             });
             setSuccessSale(null);
         },
-        [t],
+        [t, resolveUnitPrice],
     );
 
     const setQty = (productId: number, quantity: number): void => {
@@ -310,6 +351,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
 
         payForm.setData({
             pos_shift_id: shift.id,
+            partner_id: partnerId !== '' ? Number(partnerId) : '',
             items: cart.map((line) => ({
                 product_id: line.product_id,
                 quantity: line.quantity,
@@ -326,6 +368,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
 
         payForm.transform((data) => ({
             ...data,
+            partner_id: partnerId !== '' ? Number(partnerId) : null,
             amount_tendered:
                 data.payment_method === 'cash' ? Number(data.amount_tendered) || totals.grandTotal : totals.grandTotal,
             items: cart.map((line) => ({
@@ -340,6 +383,7 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
             preserveScroll: true,
             onSuccess: () => {
                 setCart([]);
+                setPartnerId('');
                 setPayOpen(false);
                 sessionStorage.removeItem(PARK_KEY);
             },
@@ -524,6 +568,27 @@ export default function Show({ shift, favorites, lastSale, tax, can, cashier }: 
                                 </button>
                             </div>
                         </div>
+
+                        {customers.length > 0 && (
+                            <div className="border-b border-slate-200 px-4 py-2">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--pos-muted)]">
+                                    {t('pos.terminal.customer')}
+                                </label>
+                                <select
+                                    value={partnerId}
+                                    onChange={(e) => setPartnerId(e.target.value)}
+                                    className="h-10 w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-[var(--pos-accent)] focus:ring-[var(--pos-accent)]"
+                                >
+                                    <option value="">{t('pos.terminal.walk_in')}</option>
+                                    {customers.map((customer) => (
+                                        <option key={customer.id} value={customer.id}>
+                                            {customer.name}
+                                            {customer.code ? ` (${customer.code})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         <div className="flex-1 overflow-y-auto px-4 py-2">
                             {cart.length === 0 ? (

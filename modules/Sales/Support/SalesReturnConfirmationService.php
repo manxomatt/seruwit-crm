@@ -238,7 +238,7 @@ class SalesReturnConfirmationService
             /** @var SalesReturnItem $item */
             $soItem = $item->salesOrderItem;
             $qty = (float) $item->quantity_returned;
-            $amount = -1 * round($qty * (float) ($soItem?->unit_price ?? 0), 2);
+            $amount = -1 * round($qty * (float) ($soItem?->netUnitPrice() ?? $soItem?->unit_price ?? 0), 2);
 
             InvoiceLine::create([
                 'invoice_id' => $invoice->id,

@@ -47,6 +47,8 @@ return [
         'title' => 'Terminal kasir',
         'search_placeholder' => 'Scan atau cari produk…',
         'cart' => 'Keranjang',
+        'customer' => 'Pelanggan',
+        'walk_in' => 'Walk-in',
         'empty_cart' => 'Scan barang untuk mulai',
         'subtotal' => 'Subtotal',
         'tax' => 'Pajak',

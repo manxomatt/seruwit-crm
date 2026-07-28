@@ -185,6 +185,13 @@ return [
         'checkout' => 'Check Out & Finish',
         'visit_done' => 'Visit Complete',
         'result' => 'Result: :outcome',
+        'order_section' => 'Order capture',
+        'add_line' => 'Add product',
+        'create_so' => 'Create draft SO',
+        'so_linked' => 'SO :number',
+        'warehouse' => 'Warehouse',
+        'qty' => 'Qty',
+        'no_products' => 'No products available',
     ],
 
     'months' => [
@@ -214,5 +221,12 @@ return [
         'plan_removed' => 'Plan removed.',
         'checked_in' => 'Checked in successfully.',
         'checked_out' => 'Checked out successfully.',
+        'order_saved' => 'Visit order saved.',
+        'order_converted' => 'Draft sales order :number created.',
+        'sales_module_required' => 'Sales module is required to create an order.',
+        'order_already_converted' => 'This visit already has a sales order.',
+        'order_items_required' => 'Add at least one product before creating an order.',
+        'warehouse_required' => 'Select a warehouse for the sales order.',
+        'so_from_visit' => 'Created from canvassing visit #:id',
     ],
 ];
