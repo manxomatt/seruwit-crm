@@ -9,6 +9,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect } from 'react';
+import PayablesNav from '../../../../PayablesNav';
 
 interface OpenBill {
     id: number;
@@ -123,6 +124,7 @@ export default function Create({
             }
         >
             <Head title={t('payables.payments.create')} />
+            <PayablesNav />
 
             <form onSubmit={submit} className="max-w-2xl space-y-4 overflow-visible rounded-lg bg-white p-6 shadow-sm">
                 <div>

@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import FinanceNav from '@/Components/FinanceNav';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
@@ -16,6 +17,8 @@ type AccountingNavKey =
     | 'cash_flow'
     | 'general_ledger'
     | 'partner_statement'
+    | 'tax_register'
+    | 'wht_payable'
     | 'bank'
     | 'opening'
     | 'tax_codes'
@@ -143,6 +146,8 @@ export default function AccountingShell({ active, title, headerActions, children
             }
         >
             <Head title={title} />
+
+            <FinanceNav />
 
             <div className="mb-6 border-b border-gray-200">
                 <nav className="-mb-px flex gap-5 overflow-x-auto" aria-label={t('accounting.nav.aria')}>

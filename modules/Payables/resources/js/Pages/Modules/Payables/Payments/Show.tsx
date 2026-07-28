@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { formatMoney } from '@/utils/money';
 import { Head, router } from '@inertiajs/react';
+import PayablesNav from '../../../../PayablesNav';
 
 interface Payment {
     id: number;
@@ -40,6 +41,7 @@ export default function Show({ payment, can }: Props): JSX.Element {
             }
         >
             <Head title={payment.code} />
+            <PayablesNav />
             <div className="mb-4 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <p className="text-xs text-gray-500">Supplier</p>

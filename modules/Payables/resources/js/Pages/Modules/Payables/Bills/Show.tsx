@@ -7,6 +7,7 @@ import TextInput from '@/Components/TextInput';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import PayablesNav from '../../../../PayablesNav';
 
 interface BillLine {
     id: number;
@@ -131,6 +132,7 @@ export default function Show({ bill, match, can }: Props): JSX.Element {
             }
         >
             <Head title={bill.code} />
+            <PayablesNav />
             <div className="mb-4 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-lg bg-white p-4 shadow-sm">
                     <p className="text-xs text-gray-500">Supplier</p>

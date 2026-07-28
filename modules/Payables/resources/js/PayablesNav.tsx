@@ -4,10 +4,11 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { labelKey: 'invoicing.nav.invoices', route: 'invoicing.invoices.index', pattern: 'invoicing.invoices.*' },
+    { labelKey: 'payables.nav.bills', route: 'payables.bills.index', pattern: 'payables.bills.*' },
+    { labelKey: 'payables.nav.payments', route: 'payables.payments.index', pattern: 'payables.payments.*' },
 ] as const;
 
-export default function InvoicingNav(): JSX.Element {
+export default function PayablesNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
 
@@ -18,6 +19,7 @@ export default function InvoicingNav(): JSX.Element {
                 <nav className="-mb-px flex gap-6">
                     {TABS.map((tab) => {
                         const active = isCurrentRoute(tab.pattern);
+
                         return (
                             <Link
                                 key={tab.route}

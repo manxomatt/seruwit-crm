@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
+import PayablesNav from '../../../../PayablesNav';
 
 interface Payment {
     id: number;
@@ -47,14 +48,7 @@ export default function Index({ payments, can }: Props): JSX.Element {
             }
         >
             <Head title={t('payables.payments.title')} />
-            <div className="mb-4 flex gap-4 text-sm">
-                <Link href={prefixedRoute('payables.bills.index')} className="text-gray-600 hover:text-gray-900">
-                    {t('payables.nav.bills')}
-                </Link>
-                <Link href={prefixedRoute('payables.payments.index')} className="font-medium text-indigo-600">
-                    {t('payables.nav.payments')}
-                </Link>
-            </div>
+            <PayablesNav />
             <div className="overflow-hidden rounded-lg bg-white shadow-sm">
                 <table className="w-full">
                     <thead className="border-b bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
