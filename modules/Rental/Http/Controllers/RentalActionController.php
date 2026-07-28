@@ -8,14 +8,22 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\SettleRentalDepositRequest;
+use Modules\Rental\Http\Requests\StoreRentalAddonChargeRequest;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalDamage;
+use Modules\Rental\Notifications\RentalLifecycleMailNotification;
+use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalInvoiceService;
+use Modules\Rental\Support\RentalMailer;
 
 class RentalActionController extends Controller
 {
-    public function __construct(private readonly RentalInvoiceService $invoices) {}
+    public function __construct(
+        private readonly RentalInvoiceService $invoices,
+        private readonly RentalMailer $mailer,
+    ) {}
 
     protected function getRoutePrefix(): string
     {
@@ -44,6 +52,8 @@ class RentalActionController extends Controller
 
         $this->invoices->invoiceBase($rental->fresh());
 
+        $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CONFIRMED);
+
         return back()->with('success', __('rental.messages.confirmed'));
     }
 
@@ -70,6 +80,8 @@ class RentalActionController extends Controller
             'checkout_checklist' => RentalHandoverChecklist::normalize($request->input('checkout_checklist')),
             'checkout_notes' => $request->checkout_notes,
         ]);
+
+        $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CHECKED_OUT);
 
         return back()->with('success', __('rental.messages.checked_out'));
     }
@@ -139,6 +151,8 @@ class RentalActionController extends Controller
                 'deposit_refunded_amount' => (float) $rental->deposit_amount,
             ]);
         }
+
+        $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_RETURNED);
 
         return back()->with('success', __('rental.messages.returned'));
     }
@@ -304,5 +318,75 @@ class RentalActionController extends Controller
         $rental->recalculateTotalAmount();
 
         return back()->with('success', __('rental.messages.damage_removed'));
+    }
+
+    /**
+     * Add a billable extra (insurance, baby seat, chauffeur, …) and raise a draft invoice.
+     */
+    public function storeAddon(StoreRentalAddonChargeRequest $request, Rental $rental): RedirectResponse
+    {
+        abort_if(
+            ! in_array($rental->status, [
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+                Rental::STATUS_RETURNED,
+            ], true),
+            422,
+            __('rental.errors.addon_status_only'),
+        );
+
+        $code = $request->string('addon_code')->toString();
+        $description = trim((string) $request->input('description', ''));
+
+        if ($description === '') {
+            $description = RentalAddonCatalog::defaultDescription($code);
+        }
+
+        $charge = RentalCharge::query()->create([
+            'rental_id' => $rental->id,
+            'kind' => RentalCharge::KIND_ADDON,
+            'addon_code' => $code,
+            'amount' => $request->input('amount'),
+            'description' => $description,
+        ]);
+
+        $rental->recalculateTotalAmount();
+        $this->invoices->invoiceAddon($rental->fresh(), $charge);
+
+        return back()->with('success', __('rental.messages.addon_recorded'));
+    }
+
+    /**
+     * Remove an add-on charge — blocked once its invoice has left draft.
+     */
+    public function destroyAddon(Rental $rental, RentalCharge $charge): RedirectResponse
+    {
+        abort_if($charge->rental_id !== $rental->id, 403);
+        abort_if($charge->kind !== RentalCharge::KIND_ADDON, 422, __('rental.errors.addon_only'));
+
+        $charge->load('invoiceLine.invoice');
+
+        if ($this->invoices->chargeHasActiveInvoice($charge)) {
+            $invoice = $charge->invoiceLine?->invoice;
+
+            if ($invoice !== null && $invoice->status !== Invoice::STATUS_DRAFT) {
+                return back()->with('error', __('rental.errors.addon_already_invoiced'));
+            }
+
+            $charge->invoiceLine?->delete();
+
+            if ($invoice !== null) {
+                $invoice->recalculate();
+
+                if ($invoice->lines()->count() === 0) {
+                    $invoice->delete();
+                }
+            }
+        }
+
+        $charge->delete();
+        $rental->recalculateTotalAmount();
+
+        return back()->with('success', __('rental.messages.addon_removed'));
     }
 }

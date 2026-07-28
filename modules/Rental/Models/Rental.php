@@ -171,18 +171,22 @@ class Rental extends Model
     }
 
     /**
-     * Recalculate rental total from base, excess KM, late fees, and damages.
+     * Recalculate rental total from base, excess KM, late fees, damages, and add-ons.
      */
     public function recalculateTotalAmount(): void
     {
         $damagesTotal = (float) $this->damages()->sum('amount');
+        $addonsTotal = (float) $this->charges()
+            ->where('kind', RentalCharge::KIND_ADDON)
+            ->sum('amount');
 
         $this->update([
             'total_amount' => round(
                 (float) $this->base_amount
                 + (float) $this->excess_amount
                 + (float) $this->late_fee_amount
-                + $damagesTotal,
+                + $damagesTotal
+                + $addonsTotal,
                 2
             ),
         ]);
@@ -254,6 +258,39 @@ class Rental extends Model
     public function scopeActive(Builder $query): void
     {
         $query->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_ACTIVE]);
+    }
+
+    /**
+     * Currently checked out (on hire).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeCheckedOut(Builder $query): void
+    {
+        $query->where('status', self::STATUS_ACTIVE);
+    }
+
+    /**
+     * Active past scheduled end date.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeOverdue(Builder $query): void
+    {
+        $query->where('status', self::STATUS_ACTIVE)
+            ->whereDate('end_date', '<', now()->toDateString());
+    }
+
+    /**
+     * Active rentals ending within the next $days (inclusive of today).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeEndingSoon(Builder $query, int $days = 3): void
+    {
+        $query->where('status', self::STATUS_ACTIVE)
+            ->whereDate('end_date', '>=', now()->toDateString())
+            ->whereDate('end_date', '<=', now()->addDays($days)->toDateString());
     }
 
     /**

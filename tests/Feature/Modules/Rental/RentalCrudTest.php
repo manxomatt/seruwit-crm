@@ -197,9 +197,12 @@ class RentalCrudTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Rental/Show')
+                ->has('addonCharges')
+                ->has('addonCodes')
                 ->has('trackingEnabled')
                 ->has('hasGpsDevice')
                 ->where('livePosition', null)
+                ->has('gpsSummary')
                 ->has('payment')
                 ->has('invoicingEnabled')
                 ->has('checklistItems')
@@ -225,6 +228,8 @@ class RentalCrudTest extends TestCase
                 ->where('livePosition.latitude', '-6.2000000')
                 ->where('livePosition.longitude', '106.8000000')
                 ->where('livePosition.speed_kph', '42.00')
+                ->has('gpsSummary.distance_km')
+                ->has('gpsSummary.points')
             );
     }
 

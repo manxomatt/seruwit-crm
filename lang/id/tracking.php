@@ -5,6 +5,8 @@ return [
 
     'nav' => [
         'map' => 'Live Map',
+        'history' => 'Riwayat',
+        'geofences' => 'Geofence',
         'devices' => 'Perangkat',
         'settings' => 'Pengaturan',
     ],
@@ -13,6 +15,7 @@ return [
         'online' => 'Online',
         'unknown' => 'Tidak diketahui',
         'unpaired' => 'Belum ter-pair',
+        'inactive' => 'Nonaktif',
     ],
 
     'providers' => [
@@ -35,6 +38,12 @@ return [
         'api_key' => 'API key',
         'email' => 'User Traccar',
         'password' => 'Password',
+        'poll_enabled' => 'Ambil posisi setiap menit',
+        'alerts_enabled' => 'Kirim alert tracking',
+        'alert_speed_kph' => 'Alert overspeed (km/jam)',
+        'alert_stale_minutes' => 'Device stale setelah (menit)',
+        'alert_idle_minutes' => 'Idle sewa setelah (menit)',
+        'alert_cooldown_minutes' => 'Cooldownoldown alert (menit)',
         'geofence_radius_m' => 'Radius kedatangan (m)',
         'retain_positions_days' => 'Simpan posisi mentah (hari)',
         'trail_every_m' => 'Titik trail setiap (m)',
@@ -42,6 +51,14 @@ return [
         'vehicle' => 'Kendaraan',
         'device' => 'Perangkat',
         'status' => 'Status',
+        'from' => 'Dari',
+        'to' => 'Sampai',
+        'geofence_name' => 'Nama zona',
+        'radius_m' => 'Radius (m)',
+        'alert_on' => 'Alert saat',
+        'active_rentals_only' => 'Hanya sewa aktif',
+        'is_active' => 'Aktif',
+        'centre' => 'Titik pusat',
     ],
 
     'placeholders' => [
@@ -56,6 +73,33 @@ return [
         'test_connection' => 'Tes koneksi',
         'pause_live' => 'Jeda live',
         'resume_live' => 'Lanjut live',
+        'show_trail' => 'Tampilkan jejak',
+        'play_playback' => 'Putar',
+        'pause_playback' => 'Jeda',
+        'add_geofence' => 'Tambah geofence',
+    ],
+
+    'geofence' => [
+        'alert_on' => [
+            'exit' => 'Keluar',
+            'enter' => 'Masuk',
+            'both' => 'Masuk & keluar',
+        ],
+        'events' => [
+            'exit' => 'keluar dari',
+            'enter' => 'masuk ke',
+        ],
+    ],
+
+    'alerts' => [
+        'overspeed_title' => 'Alert overspeed',
+        'overspeed_body' => ':vehicle melaju :speed km/jam (batas :limit).',
+        'stale_title' => 'Device offline',
+        'stale_body' => ':vehicle tidak laporan lebih dari :minutes menit.',
+        'idle_title' => 'Sewa idle',
+        'idle_body' => ':vehicle diam lebih dari :minutes menit saat sedang disewa.',
+        'geofence_title' => 'Alert geofence',
+        'geofence_body' => ':vehicle :event zona ":zone".',
     ],
 
     'pages' => [
@@ -70,6 +114,7 @@ return [
             'filter_all_vehicles' => 'Semua kendaraan',
             'filter_status' => 'Status',
             'filter_all' => 'Semua status',
+            'filter_active_rental' => 'Sewa aktif',
             'filter_moving' => 'Bergerak',
             'filter_idle' => 'Diam',
             'filter_stale' => 'Tidak update',
@@ -80,6 +125,25 @@ return [
             'never' => 'belum pernah',
             'polling_off' => 'Polling dimatikan. Posisi tidak akan diperbarui otomatis.',
             'last_poll_failed' => 'Poll terakhir gagal: :error',
+        ],
+        'history' => [
+            'title' => 'Riwayat GPS',
+            'points' => 'Titik',
+            'distance' => 'Jarak',
+            'max_speed' => 'Kecepatan maks',
+            'empty' => 'Pilih kendaraan dan rentang waktu untuk melihat jejaknya.',
+            'playback_marker' => 'Playback',
+        ],
+        'geofences' => [
+            'title' => 'Geofence',
+            'empty' => 'Belum ada geofence. Tambah zona kota atau area terlarang untuk alert masuk/keluar.',
+            'create' => 'Buat geofence',
+            'edit' => 'Edit geofence',
+            'delete_title' => 'Hapus geofence',
+            'delete_confirm' => 'Hapus zona ":name"? Alert untuk zona ini akan berhenti.',
+            'summary' => ':radius m · alert :alert · :scope',
+            'active_rentals_only' => 'hanya sewa aktif',
+            'all_vehicles' => 'semua kendaraan',
         ],
         'devices' => [
             'title' => 'Perangkat GPS',
@@ -110,5 +174,8 @@ return [
         'unpaired' => 'Perangkat di-unpair.',
         'unpair_before_delete' => 'Unpair perangkat dari kendaraan sebelum menghapus.',
         'deleted' => 'Perangkat dihapus.',
+        'geofence_created' => 'Geofence dibuat.',
+        'geofence_updated' => 'Geofence diperbarui.',
+        'geofence_deleted' => 'Geofence dihapus.',
     ],
 ];

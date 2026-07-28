@@ -40,6 +40,7 @@ class TrackingMapTest extends TestCase
                 ->component('Modules/Tracking/Map')
                 ->has('devices', 2)
                 ->has('pairableVehicles', 1)
+                ->has('activeRentalVehicleIds')
                 ->where('can.update', true)
             );
     }

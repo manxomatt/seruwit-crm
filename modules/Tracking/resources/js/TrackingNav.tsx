@@ -4,6 +4,8 @@ import { Link } from '@inertiajs/react';
 
 const TABS = [
     { labelKey: 'tracking.nav.map', route: 'tracking.map', pattern: 'tracking.map' },
+    { labelKey: 'tracking.nav.history', route: 'tracking.history', pattern: 'tracking.history' },
+    { labelKey: 'tracking.nav.geofences', route: 'tracking.geofences.index', pattern: 'tracking.geofences.*' },
     { labelKey: 'tracking.nav.devices', route: 'tracking.devices.index', pattern: 'tracking.devices.*' },
     { labelKey: 'tracking.nav.settings', route: 'tracking.settings.edit', pattern: 'tracking.settings.*' },
 ] as const;

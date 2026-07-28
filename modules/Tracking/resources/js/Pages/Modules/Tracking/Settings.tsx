@@ -17,6 +17,11 @@ interface Config {
     auth_type: string;
     email: string | null;
     poll_enabled: boolean;
+    alerts_enabled: boolean;
+    alert_speed_kph: number;
+    alert_stale_minutes: number;
+    alert_idle_minutes: number;
+    alert_cooldown_minutes: number;
     geofence_radius_m: number;
     checkpoint_min_distance_m: number;
     checkpoint_min_interval_minutes: number;
@@ -45,6 +50,11 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
         password: '',
         token: '',
         poll_enabled: config.poll_enabled,
+        alerts_enabled: config.alerts_enabled ?? true,
+        alert_speed_kph: config.alert_speed_kph ?? 80,
+        alert_stale_minutes: config.alert_stale_minutes ?? 15,
+        alert_idle_minutes: config.alert_idle_minutes ?? 30,
+        alert_cooldown_minutes: config.alert_cooldown_minutes ?? 30,
         geofence_radius_m: config.geofence_radius_m,
         checkpoint_min_distance_m: config.checkpoint_min_distance_m,
         checkpoint_min_interval_minutes: config.checkpoint_min_interval_minutes,
@@ -219,8 +229,71 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                 checked={data.poll_enabled}
                                 onChange={(e) => setData('poll_enabled', e.target.checked)}
                             />
-                            Pull positions every minute
+                            {t('tracking.fields.poll_enabled')}
                         </label>
+
+                        <div className="space-y-4 border-t border-gray-200 pt-6">
+                            <label className="flex items-center gap-2 text-sm text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                    checked={data.alerts_enabled}
+                                    onChange={(e) => setData('alerts_enabled', e.target.checked)}
+                                />
+                                {t('tracking.fields.alerts_enabled')}
+                            </label>
+
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <div>
+                                    <InputLabel htmlFor="alert_speed_kph" value={t('tracking.fields.alert_speed_kph')} />
+                                    <TextInput
+                                        id="alert_speed_kph"
+                                        type="number"
+                                        min={20}
+                                        className="mt-1 block w-full"
+                                        value={data.alert_speed_kph}
+                                        onChange={(e) => setData('alert_speed_kph', Number(e.target.value))}
+                                    />
+                                    <InputError message={errors.alert_speed_kph} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="alert_stale_minutes" value={t('tracking.fields.alert_stale_minutes')} />
+                                    <TextInput
+                                        id="alert_stale_minutes"
+                                        type="number"
+                                        min={5}
+                                        className="mt-1 block w-full"
+                                        value={data.alert_stale_minutes}
+                                        onChange={(e) => setData('alert_stale_minutes', Number(e.target.value))}
+                                    />
+                                    <InputError message={errors.alert_stale_minutes} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="alert_idle_minutes" value={t('tracking.fields.alert_idle_minutes')} />
+                                    <TextInput
+                                        id="alert_idle_minutes"
+                                        type="number"
+                                        min={5}
+                                        className="mt-1 block w-full"
+                                        value={data.alert_idle_minutes}
+                                        onChange={(e) => setData('alert_idle_minutes', Number(e.target.value))}
+                                    />
+                                    <InputError message={errors.alert_idle_minutes} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="alert_cooldown_minutes" value={t('tracking.fields.alert_cooldown_minutes')} />
+                                    <TextInput
+                                        id="alert_cooldown_minutes"
+                                        type="number"
+                                        min={5}
+                                        className="mt-1 block w-full"
+                                        value={data.alert_cooldown_minutes}
+                                        onChange={(e) => setData('alert_cooldown_minutes', Number(e.target.value))}
+                                    />
+                                    <InputError message={errors.alert_cooldown_minutes} className="mt-2" />
+                                </div>
+                            </div>
+                        </div>
 
                         <div className="grid grid-cols-1 gap-6 border-t border-gray-200 pt-6 sm:grid-cols-2">
                             <div>

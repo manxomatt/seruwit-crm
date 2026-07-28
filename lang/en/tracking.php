@@ -5,6 +5,8 @@ return [
 
     'nav' => [
         'map' => 'Live Map',
+        'history' => 'History',
+        'geofences' => 'Geofences',
         'devices' => 'Devices',
         'settings' => 'Settings',
     ],
@@ -13,6 +15,7 @@ return [
         'online' => 'Online',
         'unknown' => 'Unknown',
         'unpaired' => 'Not paired',
+        'inactive' => 'Inactive',
     ],
 
     'providers' => [
@@ -35,6 +38,12 @@ return [
         'api_key' => 'API key',
         'email' => 'Traccar user',
         'password' => 'Password',
+        'poll_enabled' => 'Pull positions every minute',
+        'alerts_enabled' => 'Send tracking alerts',
+        'alert_speed_kph' => 'Overspeed alert (km/h)',
+        'alert_stale_minutes' => 'Stale device after (minutes)',
+        'alert_idle_minutes' => 'Idle rental after (minutes)',
+        'alert_cooldown_minutes' => 'Alert cooldown (minutes)',
         'geofence_radius_m' => 'Arrival radius (m)',
         'retain_positions_days' => 'Keep raw positions (days)',
         'trail_every_m' => 'Trail point every (m)',
@@ -42,6 +51,14 @@ return [
         'vehicle' => 'Vehicle',
         'device' => 'Device',
         'status' => 'Status',
+        'from' => 'From',
+        'to' => 'To',
+        'geofence_name' => 'Zone name',
+        'radius_m' => 'Radius (m)',
+        'alert_on' => 'Alert when',
+        'active_rentals_only' => 'Active rentals only',
+        'is_active' => 'Active',
+        'centre' => 'Centre point',
     ],
 
     'placeholders' => [
@@ -56,6 +73,33 @@ return [
         'test_connection' => 'Test connection',
         'pause_live' => 'Pause live',
         'resume_live' => 'Resume live',
+        'show_trail' => 'Show trail',
+        'play_playback' => 'Play',
+        'pause_playback' => 'Pause',
+        'add_geofence' => 'Add geofence',
+    ],
+
+    'geofence' => [
+        'alert_on' => [
+            'exit' => 'Exit',
+            'enter' => 'Enter',
+            'both' => 'Enter & exit',
+        ],
+        'events' => [
+            'exit' => 'left',
+            'enter' => 'entered',
+        ],
+    ],
+
+    'alerts' => [
+        'overspeed_title' => 'Overspeed alert',
+        'overspeed_body' => ':vehicle is doing :speed km/h (limit :limit).',
+        'stale_title' => 'Device offline',
+        'stale_body' => ':vehicle has not reported for over :minutes minutes.',
+        'idle_title' => 'Idle rental',
+        'idle_body' => ':vehicle has been idle for over :minutes minutes while on hire.',
+        'geofence_title' => 'Geofence alert',
+        'geofence_body' => ':vehicle :event zone ":zone".',
     ],
 
     'pages' => [
@@ -70,6 +114,7 @@ return [
             'filter_all_vehicles' => 'All vehicles',
             'filter_status' => 'Status',
             'filter_all' => 'All statuses',
+            'filter_active_rental' => 'Active rentals',
             'filter_moving' => 'Moving',
             'filter_idle' => 'Idle',
             'filter_stale' => 'Stale',
@@ -80,6 +125,25 @@ return [
             'never' => 'never',
             'polling_off' => 'Polling is switched off. Positions will not update automatically.',
             'last_poll_failed' => 'Last poll failed: :error',
+        ],
+        'history' => [
+            'title' => 'GPS History',
+            'points' => 'Points',
+            'distance' => 'Distance',
+            'max_speed' => 'Max speed',
+            'empty' => 'Select a vehicle and time range to view its trail.',
+            'playback_marker' => 'Playback',
+        ],
+        'geofences' => [
+            'title' => 'Geofences',
+            'empty' => 'No geofences yet. Add a city or restricted zone to get exit/enter alerts.',
+            'create' => 'Create geofence',
+            'edit' => 'Edit geofence',
+            'delete_title' => 'Delete geofence',
+            'delete_confirm' => 'Delete zone ":name"? Alerts for this zone will stop.',
+            'summary' => ':radius m · alert on :alert · :scope',
+            'active_rentals_only' => 'active rentals only',
+            'all_vehicles' => 'all vehicles',
         ],
         'devices' => [
             'title' => 'GPS Devices',
@@ -110,5 +174,8 @@ return [
         'unpaired' => 'Device unpaired.',
         'unpair_before_delete' => 'Unpair the device from its vehicle before deleting it.',
         'deleted' => 'Device deleted.',
+        'geofence_created' => 'Geofence created.',
+        'geofence_updated' => 'Geofence updated.',
+        'geofence_deleted' => 'Geofence deleted.',
     ],
 ];

@@ -108,6 +108,18 @@
                     <td colspan="4">Rp {{ number_format((float) ($rental->late_fee_per_day ?? ($rental->period_type === 'daily' ? $rental->rate_per_period : 0)), 0, ',', '.') }}</td>
                 </tr>
             @endif
+            @php
+                $addonCharges = $rental->charges ?? collect();
+            @endphp
+            @if ($addonCharges->isNotEmpty())
+                @foreach ($addonCharges as $addon)
+                    <tr>
+                        <td class="label">Add-on</td><td class="sep">:</td>
+                        <td colspan="2">{{ $addon->description }}</td>
+                        <td class="money" colspan="2">Rp {{ number_format((float) $addon->amount, 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            @endif
         </table>
     </div>
 

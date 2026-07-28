@@ -20,10 +20,13 @@ class RentalCharge extends Model
 
     public const KIND_LATE_FEE = 'late_fee';
 
+    public const KIND_ADDON = 'addon';
+
     /** @var list<string> */
     protected $fillable = [
         'rental_id',
         'kind',
+        'addon_code',
         'amount',
         'description',
         'rental_extension_id',

@@ -5,13 +5,18 @@ namespace Modules\Tracking;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Console\Application as Artisan;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Console\Commands\TrackingPoll;
 use Modules\Tracking\Console\Commands\TrackingPrune;
+use Modules\Tracking\Events\VehiclePositionsRecorded;
 use Modules\Tracking\Http\Controllers\GpsDeviceController;
 use Modules\Tracking\Http\Controllers\TrackingConfigController;
+use Modules\Tracking\Http\Controllers\TrackingGeofenceController;
+use Modules\Tracking\Http\Controllers\TrackingHistoryController;
 use Modules\Tracking\Http\Controllers\TrackingMapController;
+use Modules\Tracking\Listeners\DetectTrackingAlerts;
 use Modules\Tracking\Models\GpsDevice;
 
 /**
@@ -100,6 +105,8 @@ class TrackingModule implements ModuleContract
             TrackingPoll::class,
             TrackingPrune::class,
         ]));
+
+        Event::listen(VehiclePositionsRecorded::class, DetectTrackingAlerts::class);
     }
 
     public function routes(): void
@@ -107,6 +114,13 @@ class TrackingModule implements ModuleContract
         Route::redirect('/tracking', '/tracking/map');
 
         Route::get('/tracking/map', [TrackingMapController::class, 'index'])->middleware('permission:tracking,view')->name('tracking.map');
+
+        Route::get('/tracking/history', [TrackingHistoryController::class, 'index'])->middleware('permission:tracking,view')->name('tracking.history');
+
+        Route::get('/tracking/geofences', [TrackingGeofenceController::class, 'index'])->middleware('permission:tracking,view')->name('tracking.geofences.index');
+        Route::post('/tracking/geofences', [TrackingGeofenceController::class, 'store'])->middleware('permission:tracking,create')->name('tracking.geofences.store');
+        Route::patch('/tracking/geofences/{geofence}', [TrackingGeofenceController::class, 'update'])->middleware('permission:tracking,update')->name('tracking.geofences.update');
+        Route::delete('/tracking/geofences/{geofence}', [TrackingGeofenceController::class, 'destroy'])->middleware('permission:tracking,delete')->name('tracking.geofences.destroy');
 
         Route::get('/tracking/devices', [GpsDeviceController::class, 'index'])->middleware('permission:tracking,view')->name('tracking.devices.index');
         Route::post('/tracking/devices/sync', [GpsDeviceController::class, 'sync'])->middleware('permission:tracking,create')->name('tracking.devices.sync');

@@ -4,10 +4,13 @@ namespace Modules\Rental;
 
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
+use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
+use Modules\Rental\Console\Commands\RentalScanEnding;
 use Modules\Rental\Http\Controllers\RentalActionController;
 use Modules\Rental\Http\Controllers\RentalAvailabilityController;
 use Modules\Rental\Http\Controllers\RentalController;
+use Modules\Rental\Http\Controllers\RentalDashboardController;
 use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
 
@@ -61,7 +64,7 @@ class RentalModule implements ModuleContract
             'name' => 'Rental',
             'slug' => 'rental',
             'icon' => 'key',
-            'route_name' => 'rental.index',
+            'route_name' => 'rental.dashboard',
             'permission_module' => 'rental',
             'permission_action' => 'view',
             'sort_order' => 11,
@@ -80,12 +83,17 @@ class RentalModule implements ModuleContract
 
     public function boot(): void
     {
-        //
+        Artisan::starting(fn (Artisan $artisan) => $artisan->resolveCommands([
+            RentalScanEnding::class,
+        ]));
     }
 
     public function routes(): void
     {
-        Route::redirect('/rental', '/rental/list');
+        Route::redirect('/rental', '/rental/dashboard');
+
+        Route::get('/rental/dashboard', [RentalDashboardController::class, 'index'])->middleware('permission:rental,view')->name('rental.dashboard');
+        Route::get('/rental/dashboard/export', [RentalDashboardController::class, 'export'])->middleware('permission:rental,view')->name('rental.dashboard.export');
 
         // Tariff rates
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');
@@ -119,5 +127,7 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/deposit-settle', [RentalActionController::class, 'settleDeposit'])->middleware('permission:rental,update')->name('rental.deposit.settle');
         Route::post('/rental/{rental}/damages', [RentalActionController::class, 'storeDamage'])->middleware('permission:rental,update')->name('rental.damages.store');
         Route::delete('/rental/{rental}/damages/{damage}', [RentalActionController::class, 'destroyDamage'])->middleware('permission:rental,update')->name('rental.damages.destroy');
+        Route::post('/rental/{rental}/addons', [RentalActionController::class, 'storeAddon'])->middleware('permission:rental,update')->name('rental.addons.store');
+        Route::delete('/rental/{rental}/addons/{charge}', [RentalActionController::class, 'destroyAddon'])->middleware('permission:rental,update')->name('rental.addons.destroy');
     }
 }

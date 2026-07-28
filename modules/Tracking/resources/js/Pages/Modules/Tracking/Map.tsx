@@ -36,6 +36,8 @@ interface PairableVehicle {
 interface Props {
     devices: Device[];
     pairableVehicles: PairableVehicle[];
+    activeRentalVehicleIds: number[];
+    rentalFilterAvailable: boolean;
     pollEnabled: boolean;
     lastPolledAt: string | null;
     lastPollError: string | null;
@@ -43,7 +45,7 @@ interface Props {
 }
 
 type DeviceTone = 'moving' | 'idle' | 'stale';
-type StatusFilter = 'all' | DeviceTone | 'unpaired';
+type StatusFilter = 'all' | DeviceTone | 'unpaired' | 'active_rental';
 
 interface PositionedDevice {
     device: Device;
@@ -90,6 +92,8 @@ function deviceLabel(device: Device): string {
 export default function Map({
     devices,
     pairableVehicles,
+    activeRentalVehicleIds,
+    rentalFilterAvailable,
     pollEnabled,
     lastPolledAt,
     lastPollError,
@@ -108,7 +112,7 @@ export default function Map({
     // faster than this would just re-read the same rows.
     const { start, stop } = usePoll(
         15000,
-        { only: ['devices', 'pairableVehicles', 'lastPolledAt', 'lastPollError'] },
+        { only: ['devices', 'pairableVehicles', 'activeRentalVehicleIds', 'lastPolledAt', 'lastPollError'] },
         { autoStart: true },
     );
     const [live, setLive] = useState(true);
@@ -189,12 +193,15 @@ export default function Map({
     const statusOptions = useMemo(
         () => [
             { value: 'all', label: t('tracking.pages.map.filter_all') },
+            ...(rentalFilterAvailable
+                ? [{ value: 'active_rental', label: t('tracking.pages.map.filter_active_rental') }]
+                : []),
             { value: 'moving', label: t('tracking.pages.map.filter_moving') },
             { value: 'idle', label: t('tracking.pages.map.filter_idle') },
             { value: 'stale', label: t('tracking.pages.map.filter_stale') },
             { value: 'unpaired', label: t('tracking.status.unpaired') },
         ],
-        [t],
+        [rentalFilterAvailable, t],
     );
 
     const filtered = useMemo(() => {
@@ -211,9 +218,13 @@ export default function Map({
                 return device.vehicle === null;
             }
 
+            if (statusFilter === 'active_rental') {
+                return device.vehicle !== null && activeRentalVehicleIds.includes(device.vehicle.id);
+            }
+
             return tone === statusFilter;
         });
-    }, [positioned, deviceId, statusFilter]);
+    }, [positioned, deviceId, statusFilter, activeRentalVehicleIds]);
 
     const lastPage = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 

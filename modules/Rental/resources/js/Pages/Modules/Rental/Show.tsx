@@ -21,11 +21,27 @@ const formatMoney = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id
 
 interface Extension { id: number; original_end_date: string; new_end_date: string; extended_periods: number; additional_amount: string; notes: string | null; }
 interface Damage { id: number; description: string; amount: string; photo_path: string | null; reported_at: string; }
+interface AddonCharge {
+    id: number;
+    addon_code: string | null;
+    description: string;
+    amount: number;
+    is_invoiced: boolean;
+    can_delete: boolean;
+}
+interface AddonCodeOption { value: string; label: string; }
 interface LivePosition {
     latitude: string;
     longitude: string;
     speed_kph: string | null;
     recorded_at: string | null;
+}
+interface GpsSummary {
+    distance_km: number;
+    points: number;
+    odometer_km: number | null;
+    from: string;
+    to: string;
 }
 interface PaymentInvoice {
     id: number;
@@ -78,9 +94,12 @@ interface Rental {
 
 interface Props {
     rental: Rental;
+    addonCharges: AddonCharge[];
+    addonCodes: AddonCodeOption[];
     trackingEnabled: boolean;
     hasGpsDevice: boolean;
     livePosition: LivePosition | null;
+    gpsSummary: GpsSummary | null;
     payment: PaymentSummary;
     invoicingEnabled: boolean;
     checklistItems: string[];
@@ -107,9 +126,12 @@ function emptyChecklist(items: string[]): Record<string, boolean> {
 
 export default function Show({
     rental,
+    addonCharges = [],
+    addonCodes = [],
     trackingEnabled,
     hasGpsDevice,
     livePosition,
+    gpsSummary,
     payment,
     invoicingEnabled,
     checklistItems,
@@ -117,7 +139,7 @@ export default function Show({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const [modal, setModal] = useState<'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'deposit' | null>(null);
+    const [modal, setModal] = useState<'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | null>(null);
 
     const cancelForm = useForm({ cancelled_reason: '' });
     const checkoutForm = useForm({
@@ -136,6 +158,11 @@ export default function Show({
     });
     const extendForm = useForm({ new_end_date: '', notes: '' });
     const damageForm = useForm({ description: '', amount: '', photo_path: '' });
+    const addonForm = useForm({
+        addon_code: addonCodes[0]?.value ?? 'other',
+        amount: '',
+        description: '',
+    });
     const depositForm = useForm({
         deposit_applied_amount: '0',
         deposit_refunded_amount: String(rental.deposit_amount ?? '0'),
@@ -149,6 +176,15 @@ export default function Show({
     const submitReturn: FormEventHandler = (e) => { e.preventDefault(); returnForm.post(prefixedRoute('rental.return', rental.id), { onSuccess: () => setModal(null) }); };
     const submitExtend: FormEventHandler = (e) => { e.preventDefault(); extendForm.post(prefixedRoute('rental.extend', rental.id), { onSuccess: () => setModal(null) }); };
     const submitDamage: FormEventHandler = (e) => { e.preventDefault(); damageForm.post(prefixedRoute('rental.damages.store', rental.id), { onSuccess: () => setModal(null) }); };
+    const submitAddon: FormEventHandler = (e) => {
+        e.preventDefault();
+        addonForm.post(prefixedRoute('rental.addons.store', rental.id), {
+            onSuccess: () => {
+                setModal(null);
+                addonForm.reset('amount', 'description');
+            },
+        });
+    };
     const submitDeposit: FormEventHandler = (e) => {
         e.preventDefault();
         depositForm.post(prefixedRoute('rental.deposit.settle', rental.id), { onSuccess: () => setModal(null) });
@@ -219,16 +255,23 @@ export default function Show({
                             </Link>
                         )}
                         {is('draft') && <PrimaryButton onClick={() => action('confirm')}>{t('rental.actions.confirm')}</PrimaryButton>}
-                        {is('confirmed') && <PrimaryButton onClick={() => setModal('checkout')}>{t('rental.actions.checkout')}</PrimaryButton>}
+                        {is('confirmed') && (
+                            <>
+                                <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
+                                <PrimaryButton onClick={() => setModal('checkout')}>{t('rental.actions.checkout')}</PrimaryButton>
+                            </>
+                        )}
                         {is('active') && (
                             <>
                                 <SecondaryButton onClick={() => setModal('extend')}>{t('rental.actions.extend')}</SecondaryButton>
+                                <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
                                 <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
                                 <PrimaryButton onClick={() => setModal('return')}>{t('rental.actions.return')}</PrimaryButton>
                             </>
                         )}
                         {is('returned') && (
                             <>
+                                <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
                                 <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
                                 {canSettleDeposit && (
                                     <SecondaryButton onClick={() => setModal('deposit')}>{t('rental.actions.settle_deposit')}</SecondaryButton>
@@ -260,12 +303,26 @@ export default function Show({
                                 </span>
                             )}
                         </div>
-                        {live && (
-                            <p className="text-xs text-gray-500">
-                                {formatSpeedKph(livePosition?.speed_kph)}
-                                {recordedLabel ? ` — ${t('rental.tracking.last_seen', { time: recordedLabel })}` : ''}
-                            </p>
-                        )}
+                        <div className="flex flex-wrap items-center gap-3">
+                            {live && (
+                                <p className="text-xs text-gray-500">
+                                    {formatSpeedKph(livePosition?.speed_kph)}
+                                    {recordedLabel ? ` — ${t('rental.tracking.last_seen', { time: recordedLabel })}` : ''}
+                                </p>
+                            )}
+                            {trackingEnabled && hasGpsDevice && gpsSummary && (
+                                <Link
+                                    href={prefixedRoute('tracking.history', {
+                                        vehicle_id: rental.vehicle.id,
+                                        from: gpsSummary.from,
+                                        to: gpsSummary.to,
+                                    })}
+                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-900"
+                                >
+                                    {t('rental.tracking.view_trail')}
+                                </Link>
+                            )}
+                        </div>
                     </div>
 
                     {live ? (
@@ -291,6 +348,17 @@ export default function Show({
                             {isLiveTracking && (
                                 <p className="mt-2 text-xs text-gray-400">{t('rental.tracking.hint_active')}</p>
                             )}
+                            {gpsSummary && (
+                                <div className="mt-3 grid grid-cols-1 gap-2 rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600 sm:grid-cols-3">
+                                    <p>{t('rental.tracking.gps_km', { km: gpsSummary.distance_km.toLocaleString('id-ID') })}</p>
+                                    <p>
+                                        {gpsSummary.odometer_km !== null
+                                            ? t('rental.tracking.odometer_km', { km: gpsSummary.odometer_km.toLocaleString('id-ID') })
+                                            : t('rental.tracking.odometer_pending')}
+                                    </p>
+                                    <p>{t('rental.tracking.gps_points', { count: gpsSummary.points })}</p>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="px-4 py-10 text-center">
@@ -307,6 +375,18 @@ export default function Show({
                                       ? t('rental.tracking.no_device')
                                       : t('rental.tracking.no_fix')}
                             </p>
+                            {trackingEnabled && hasGpsDevice && gpsSummary && gpsSummary.points > 0 && (
+                                <Link
+                                    href={prefixedRoute('tracking.history', {
+                                        vehicle_id: rental.vehicle.id,
+                                        from: gpsSummary.from,
+                                        to: gpsSummary.to,
+                                    })}
+                                    className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-900"
+                                >
+                                    {t('rental.tracking.view_trail')}
+                                </Link>
+                            )}
                         </div>
                     )}
                 </div>
@@ -500,6 +580,42 @@ export default function Show({
                                                 <span className="ml-2 text-gray-400">(+{ext.extended_periods} {periodLabel})</span>
                                             </div>
                                             <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(ext.additional_amount)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Add-ons */}
+                        {addonCharges.length > 0 && (
+                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.addons')}</h2>
+                                </div>
+                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {addonCharges.map((charge) => (
+                                        <div key={charge.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                                            <div>
+                                                <p className="text-gray-900 dark:text-white">{charge.description}</p>
+                                                <p className="text-xs text-gray-400">
+                                                    {charge.addon_code
+                                                        ? t(`rental.addon.codes.${charge.addon_code}`, undefined, charge.addon_code)
+                                                        : t('rental.addon.codes.other')}
+                                                    {charge.is_invoiced ? ` · ${t('rental.addon.invoiced')}` : ''}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(charge.amount)}</span>
+                                                {charge.can_delete && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => router.delete(prefixedRoute('rental.addons.destroy', [rental.id, charge.id]), { preserveScroll: true })}
+                                                        className="text-xs text-gray-400 hover:text-red-600"
+                                                    >
+                                                        {t('rental.actions.remove')}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -750,6 +866,41 @@ export default function Show({
                     <div className="mt-4 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
                         <PrimaryButton disabled={damageForm.processing}>{t('rental.actions.save_damage')}</PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal show={modal === 'addon'} onClose={() => setModal(null)}>
+                <form onSubmit={submitAddon} className="p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.addon')}</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <InputLabel value={`${t('rental.fields.addon_code')} *`} />
+                            <select
+                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                value={addonForm.data.addon_code}
+                                onChange={(e) => addonForm.setData('addon_code', e.target.value)}
+                            >
+                                {addonCodes.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <InputError message={addonForm.errors.addon_code} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="addon_amount" value={`${t('rental.fields.addon_amount')} *`} />
+                            <TextInput id="addon_amount" type="number" min="0" step="0.01" value={addonForm.data.amount} onChange={(e) => addonForm.setData('amount', e.target.value)} className="mt-1 w-full" />
+                            <InputError message={addonForm.errors.amount} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="addon_desc" value={t('rental.fields.addon_description')} />
+                            <TextInput id="addon_desc" value={addonForm.data.description} onChange={(e) => addonForm.setData('description', e.target.value)} className="mt-1 w-full" placeholder={t('rental.placeholders.addon_description')} />
+                            <InputError message={addonForm.errors.description} className="mt-1" />
+                        </div>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={addonForm.processing}>{t('rental.actions.save_addon')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>

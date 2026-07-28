@@ -37,3 +37,9 @@ Schedule::command('document:scan-expiring')
     ->dailyAt('06:00')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Alerts staff about rentals ending soon or already overdue.
+Schedule::command('rental:scan-ending')
+    ->dailyAt('06:30')
+    ->withoutOverlapping()
+    ->onOneServer();

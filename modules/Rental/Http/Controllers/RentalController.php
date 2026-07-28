@@ -13,7 +13,9 @@ use Modules\Partners\Models\Partner;
 use Modules\Rental\Http\Requests\StoreRentalRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRequest;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalInvoiceService;
 
@@ -99,11 +101,16 @@ class RentalController extends Controller
             'confirmedBy:id,name',
             'extensions',
             'damages',
+            'charges' => fn ($query) => $query
+                ->where('kind', RentalCharge::KIND_ADDON)
+                ->with('invoiceLine.invoice')
+                ->orderBy('id'),
         ]);
 
         $trackingEnabled = Modules::available('tracking');
         $livePosition = null;
         $hasGpsDevice = false;
+        $gpsSummary = null;
 
         // Soft dependency: Tracking registers Vehicle::gpsDevice at boot. Only
         // surface a fix when the module is actually available for this tenant.
@@ -119,13 +126,54 @@ class RentalController extends Controller
                     'recorded_at' => $device->last_recorded_at?->toDateTimeString(),
                 ];
             }
+
+            if (class_exists(\Modules\Tracking\Models\VehiclePosition::class)
+                && class_exists(\Modules\Tracking\Support\PositionTrail::class)) {
+                $from = $rental->checked_out_at ?? $rental->start_date;
+                $to = $rental->returned_at ?? now();
+
+                $positions = \Modules\Tracking\Models\VehiclePosition::query()
+                    ->where('vehicle_id', $rental->vehicle_id)
+                    ->whereBetween('recorded_at', [$from, $to])
+                    ->orderBy('recorded_at')
+                    ->get();
+
+                $odometerKm = null;
+                if ($rental->start_odometer !== null && $rental->end_odometer !== null) {
+                    $odometerKm = max(0, (int) $rental->end_odometer - (int) $rental->start_odometer);
+                }
+
+                $gpsSummary = [
+                    'distance_km' => \Modules\Tracking\Support\PositionTrail::distanceKm($positions),
+                    'points' => $positions->count(),
+                    'odometer_km' => $odometerKm,
+                    'from' => \Illuminate\Support\Carbon::parse($from)->toDateTimeString(),
+                    'to' => \Illuminate\Support\Carbon::parse($to)->toDateTimeString(),
+                ];
+            }
         }
 
         return Inertia::render('Modules/Rental/Show', [
             'rental' => $rental->append('is_overdue'),
+            'addonCharges' => $rental->charges->map(fn (RentalCharge $charge): array => [
+                'id' => $charge->id,
+                'addon_code' => $charge->addon_code,
+                'description' => $charge->description,
+                'amount' => (float) $charge->amount,
+                'is_invoiced' => $charge->isInvoiced(),
+                'can_delete' => ! $charge->isInvoiced()
+                    || $charge->invoiceLine?->invoice?->status === \Modules\Invoicing\Models\Invoice::STATUS_DRAFT,
+            ])->values()->all(),
+            'addonCodes' => collect(RentalAddonCatalog::codes())
+                ->map(fn (string $code): array => [
+                    'value' => $code,
+                    'label' => RentalAddonCatalog::label($code),
+                ])
+                ->all(),
             'trackingEnabled' => $trackingEnabled,
             'hasGpsDevice' => $hasGpsDevice,
             'livePosition' => $livePosition,
+            'gpsSummary' => $gpsSummary,
             'payment' => $this->invoices->paymentSummary($rental),
             'invoicingEnabled' => $this->invoices->isAvailable(),
             'checklistItems' => RentalHandoverChecklist::itemKeys(),

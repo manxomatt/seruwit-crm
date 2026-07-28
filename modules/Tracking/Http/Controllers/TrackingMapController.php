@@ -3,6 +3,7 @@
 namespace Modules\Tracking\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,12 +40,25 @@ class TrackingMapController extends Controller
             ->orderBy('name')
             ->get();
 
+        $activeRentalVehicleIds = [];
+
+        if (Modules::available('rental') && class_exists(\Modules\Rental\Models\Rental::class)) {
+            $activeRentalVehicleIds = \Modules\Rental\Models\Rental::query()
+                ->where('status', \Modules\Rental\Models\Rental::STATUS_ACTIVE)
+                ->pluck('vehicle_id')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
+        }
+
         return Inertia::render('Modules/Tracking/Map', [
             'devices' => $devices,
             'pairableVehicles' => Vehicle::query()
                 ->whereDoesntHave('gpsDevice')
                 ->orderBy('name')
                 ->get(['id', 'name', 'plate_number', 'odometer_km']),
+            'activeRentalVehicleIds' => $activeRentalVehicleIds,
+            'rentalFilterAvailable' => Modules::available('rental'),
             'pollEnabled' => $config->poll_enabled,
             'lastPolledAt' => $config->last_polled_at?->toDateTimeString(),
             'lastPollError' => $config->last_poll_error,

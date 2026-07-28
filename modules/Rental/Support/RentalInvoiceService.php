@@ -135,6 +135,22 @@ class RentalInvoiceService
     }
 
     /**
+     * Bill a one-off add-on (insurance, baby seat, etc.). Always creates a new charge row.
+     */
+    public function invoiceAddon(Rental $rental, RentalCharge $charge): ?Invoice
+    {
+        if (! $this->isAvailable() || (float) $charge->amount <= 0) {
+            return null;
+        }
+
+        return $this->invoiceCharge(
+            $rental,
+            $charge,
+            __('rental.invoice.notes_addon', ['code' => $rental->code]),
+        );
+    }
+
+    /**
      * @return array{
      *     status: string,
      *     total_invoiced: float,
