@@ -4,6 +4,16 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import Select from '@/Components/Select';
 import PosLayout from '../../../../PosLayout';
+import {
+    MAX_PARKED_CARTS,
+    ParkedCart,
+    cartItemCount,
+    cartMerchandise,
+    parkCurrentCart,
+    readParkedCarts,
+    removeParkedCart,
+    takeParkedCart,
+} from '../../../../parkedCarts';
 
 interface PosProduct {
     id: number;
@@ -72,8 +82,6 @@ function formatMoney(value: number): string {
     }).format(value);
 }
 
-const PARK_KEY = 'pos_parked_cart';
-
 export default function Show({
     shift,
     favorites,
@@ -96,6 +104,8 @@ export default function Show({
     const [payOpen, setPayOpen] = useState(false);
     const [successSale, setSuccessSale] = useState<LastSale | null>(lastSale);
     const [toast, setToast] = useState<string | null>(null);
+    const [parkedList, setParkedList] = useState<ParkedCart[]>([]);
+    const [parkedOpen, setParkedOpen] = useState(false);
 
     const payForm = useForm({
         pos_shift_id: shift?.id ?? 0,
@@ -161,6 +171,28 @@ export default function Show({
     useEffect(() => {
         searchRef.current?.focus();
     }, [shift?.id]);
+
+    useEffect(() => {
+        if (!shift) {
+            setParkedList([]);
+            return;
+        }
+
+        setParkedList(readParkedCarts(sessionStorage, shift.id));
+    }, [shift?.id]);
+
+    const customerNameById = useCallback(
+        (id: string): string => {
+            if (!id) {
+                return t('pos.terminal.walk_in');
+            }
+
+            const customer = customers.find((item) => String(item.id) === id);
+
+            return customer?.name ?? t('pos.terminal.walk_in');
+        },
+        [customers, t],
+    );
 
     const merchandise = useMemo(
         () => cart.reduce((sum, line) => sum + line.quantity * line.unit_price, 0),
@@ -322,6 +354,7 @@ export default function Show({
             }
             if (event.key === 'Escape') {
                 setPayOpen(false);
+                setParkedOpen(false);
             }
         };
 
@@ -333,26 +366,56 @@ export default function Show({
         if (!shift || cart.length === 0) {
             return;
         }
-        sessionStorage.setItem(PARK_KEY, JSON.stringify({ shift_id: shift.id, cart }));
-        setCart([]);
-        showToast(t('pos.actions.park'));
-    };
 
-    const restorePark = (): void => {
-        const raw = sessionStorage.getItem(PARK_KEY);
-        if (!raw || !shift) {
+        const result = parkCurrentCart(sessionStorage, shift.id, cart, partnerId);
+        if (!result.ok) {
+            if (result.reason === 'full') {
+                showToast(t('pos.terminal.held_full', { max: MAX_PARKED_CARTS }));
+                setParkedOpen(true);
+            }
             return;
         }
-        try {
-            const parsed = JSON.parse(raw) as { shift_id: number; cart: CartLine[] };
-            if (parsed.shift_id === shift.id && parsed.cart?.length) {
-                setCart(parsed.cart);
-                sessionStorage.removeItem(PARK_KEY);
-                showToast(t('pos.terminal.held_restored'));
-            }
-        } catch {
-            sessionStorage.removeItem(PARK_KEY);
+
+        setParkedList(result.list);
+        setCart([]);
+        setPartnerId('');
+        showToast(t('pos.terminal.held_parked', { count: result.list.length }));
+    };
+
+    const discardParked = (id: string): void => {
+        if (!shift) {
+            return;
         }
+
+        setParkedList(removeParkedCart(sessionStorage, shift.id, id));
+    };
+
+    const restoreParked = (id: string): void => {
+        if (!shift) {
+            return;
+        }
+
+        if (cart.length > 0) {
+            const parked = parkCurrentCart(sessionStorage, shift.id, cart, partnerId);
+            if (!parked.ok) {
+                showToast(t('pos.terminal.held_full', { max: MAX_PARKED_CARTS }));
+                return;
+            }
+            setParkedList(parked.list);
+            showToast(t('pos.terminal.held_auto_parked'));
+        }
+
+        const taken = takeParkedCart(sessionStorage, shift.id, id);
+        if (!taken) {
+            setParkedList(readParkedCarts(sessionStorage, shift.id));
+            return;
+        }
+
+        setParkedList(taken.list);
+        setCart(taken.ticket.cart);
+        setPartnerId(taken.ticket.partner_id || '');
+        setParkedOpen(false);
+        showToast(t('pos.terminal.held_restored'));
     };
 
     const submitPay = (event: FormEvent): void => {
@@ -499,12 +562,75 @@ export default function Show({
                             />
                             <button
                                 type="button"
-                                onClick={restorePark}
-                                className="hidden h-12 shrink-0 rounded-xl border border-slate-200 px-3 text-sm text-[var(--pos-muted)] hover:bg-slate-50 sm:block"
+                                onClick={() => setParkedOpen((open) => !open)}
+                                className="relative hidden h-12 shrink-0 rounded-xl border border-slate-200 px-3 text-sm text-[var(--pos-muted)] hover:bg-slate-50 sm:block"
                             >
-                                {t('pos.actions.park')}
+                                {t('pos.actions.recall')}
+                                {parkedList.length > 0 && (
+                                    <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--pos-accent)] px-1 text-[10px] font-semibold text-white">
+                                        {parkedList.length}
+                                    </span>
+                                )}
                             </button>
                         </div>
+                        {parkedOpen && (
+                            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                                <div className="mb-2 flex items-center justify-between">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--pos-muted)]">
+                                        {t('pos.terminal.held_title')}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setParkedOpen(false)}
+                                        className="text-xs text-[var(--pos-muted)] hover:text-[var(--pos-ink)]"
+                                    >
+                                        {t('common.cancel')}
+                                    </button>
+                                </div>
+                                {parkedList.length === 0 ? (
+                                    <p className="text-sm text-[var(--pos-muted)]">{t('pos.terminal.held_empty')}</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {parkedList.map((ticket, index) => (
+                                            <li
+                                                key={ticket.id}
+                                                className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium text-[var(--pos-ink)]">
+                                                        #{index + 1} · {customerNameById(ticket.partner_id)}
+                                                    </p>
+                                                    <p className="text-xs text-[var(--pos-muted)]">
+                                                        {t('pos.terminal.held_items', { count: cartItemCount(ticket.cart) })}
+                                                        {' · '}
+                                                        <span
+                                                            className="tabular-nums"
+                                                            style={{ fontFamily: '"IBM Plex Mono", ui-monospace, monospace' }}
+                                                        >
+                                                            {formatMoney(cartMerchandise(ticket.cart))}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => restoreParked(ticket.id)}
+                                                    className="rounded-lg bg-[var(--pos-accent)] px-3 py-1.5 text-xs font-semibold text-white"
+                                                >
+                                                    {t('pos.terminal.held_restore')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => discardParked(ticket.id)}
+                                                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-[var(--pos-danger)]"
+                                                >
+                                                    {t('pos.terminal.held_discard')}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
                         <div className="flex-1 overflow-y-auto p-3">
                             {searching && <p className="mb-2 text-xs text-[var(--pos-muted)]">…</p>}
                             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
@@ -562,6 +688,14 @@ export default function Show({
                                 {t('pos.terminal.cart')}
                             </h2>
                             <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setParkedOpen((open) => !open)}
+                                    className="relative text-xs font-medium text-[var(--pos-muted)] hover:text-[var(--pos-ink)] sm:hidden"
+                                >
+                                    {t('pos.actions.recall')}
+                                    {parkedList.length > 0 ? ` (${parkedList.length})` : ''}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={parkCart}

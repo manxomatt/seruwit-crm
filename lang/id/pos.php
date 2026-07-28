@@ -38,6 +38,7 @@ return [
         'void' => 'Void',
         'back_terminal' => 'Kembali ke terminal',
         'park' => 'Parkir',
+        'recall' => 'Parkiran',
         'clear_cart' => 'Kosongkan',
         'enter_fullscreen' => 'Layar penuh',
         'exit_fullscreen' => 'Keluar layar penuh',
@@ -68,6 +69,14 @@ return [
         'success_receipt' => 'Struk :code',
         'reference' => 'Referensi',
         'held_restored' => 'Keranjang parkir dipulihkan',
+        'held_parked' => 'Keranjang diparkir (:count menunggu)',
+        'held_full' => 'Parkiran penuh (maks :max). Pulihkan atau buang salah satu dulu.',
+        'held_empty' => 'Tidak ada keranjang parkir',
+        'held_title' => 'Keranjang parkir',
+        'held_items' => ':count item',
+        'held_restore' => 'Pulihkan',
+        'held_discard' => 'Buang',
+        'held_auto_parked' => 'Keranjang aktif diparkir dulu',
     ],
 
     'shifts' => [

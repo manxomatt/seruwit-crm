@@ -38,6 +38,7 @@ return [
         'void' => 'Void',
         'back_terminal' => 'Back to terminal',
         'park' => 'Park',
+        'recall' => 'Parked',
         'clear_cart' => 'Clear cart',
         'enter_fullscreen' => 'Full screen',
         'exit_fullscreen' => 'Exit full screen',
@@ -68,6 +69,14 @@ return [
         'success_receipt' => 'Receipt :code',
         'reference' => 'Reference',
         'held_restored' => 'Parked cart restored',
+        'held_parked' => 'Cart parked (:count waiting)',
+        'held_full' => 'Parked list is full (max :max). Restore or discard one first.',
+        'held_empty' => 'No parked carts',
+        'held_title' => 'Parked carts',
+        'held_items' => ':count items',
+        'held_restore' => 'Restore',
+        'held_discard' => 'Discard',
+        'held_auto_parked' => 'Current cart was parked first',
     ],
 
     'shifts' => [
