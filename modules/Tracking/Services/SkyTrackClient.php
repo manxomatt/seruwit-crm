@@ -34,13 +34,31 @@ class SkyTrackClient
      */
     public function objects(): array
     {
-        $data = $this->json($this->send('/api/objects'));
+        return $this->listJson('/api/objects');
+    }
+
+    /**
+     * Fetch the latest live position for every object.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function latestPositions(): array
+    {
+        return $this->listJson('/api/tracking/objects');
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function listJson(string $path): array
+    {
+        $data = $this->json($this->send($path));
 
         if ($data === []) {
             return [];
         }
 
-        // List endpoint returns a JSON array; reject unexpected object envelopes.
+        // List endpoints return a JSON array; reject unexpected object envelopes.
         if (array_is_list($data)) {
             /** @var array<int, array<string, mixed>> $data */
             return $data;

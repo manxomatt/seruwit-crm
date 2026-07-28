@@ -98,4 +98,71 @@ class PositionPayloadTest extends TestCase
         $this->assertNull(PositionPayload::fromTraccar($this->row(['latitude' => null])));
         $this->assertNull(PositionPayload::fromTraccar($this->row(['fixTime' => null, 'deviceTime' => null, 'serverTime' => null])));
     }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function skyTrackRow(array $overrides = []): array
+    {
+        return array_replace_recursive([
+            'imei' => '358735072143802',
+            'status' => 'm',
+            'data' => [
+                'dt_server' => '2026-07-19 10:00:05',
+                'dt_tracker' => '2026-07-19 10:00:00',
+                'lat' => -7.036783,
+                'lng' => 107.396587,
+                'altitude' => 12,
+                'angle' => 176,
+                'speed' => 42,
+                'params' => [
+                    'acc' => 1,
+                    'motion' => true,
+                    'totalDistance' => 2113841.13,
+                    'batl' => 6,
+                ],
+            ],
+            'odometer' => 166,
+        ], $overrides);
+    }
+
+    public function test_it_maps_a_sky_track_row_without_converting_speed(): void
+    {
+        $payload = PositionPayload::fromSkyTrack($this->skyTrackRow());
+
+        $this->assertSame(358735072143802, $payload->traccarDeviceId);
+        $this->assertSame(-7.036783, $payload->latitude);
+        $this->assertSame(107.396587, $payload->longitude);
+        // Sky Track already reports km/h — do not apply the Traccar knots factor.
+        $this->assertSame(42.0, $payload->speedKph);
+        $this->assertSame(176.0, $payload->course);
+        $this->assertSame(12.0, $payload->altitude);
+        $this->assertTrue($payload->ignition);
+        $this->assertTrue($payload->motion);
+        $this->assertSame(2113841, $payload->totalDistanceM);
+        $this->assertSame('2026-07-19 10:00:00', $payload->recordedAt->toDateTimeString());
+        $this->assertSame(6, $payload->attributes['batl']);
+    }
+
+    public function test_it_falls_back_to_sky_track_server_time(): void
+    {
+        $payload = PositionPayload::fromSkyTrack($this->skyTrackRow([
+            'data' => ['dt_tracker' => null],
+        ]));
+
+        $this->assertSame('2026-07-19 10:00:05', $payload->recordedAt->toDateTimeString());
+    }
+
+    public function test_it_rejects_unusable_sky_track_rows(): void
+    {
+        $this->assertNull(PositionPayload::fromSkyTrack($this->skyTrackRow(['imei' => ''])));
+        $this->assertNull(PositionPayload::fromSkyTrack($this->skyTrackRow(['imei' => 'ABC'])));
+        $this->assertNull(PositionPayload::fromSkyTrack($this->skyTrackRow([
+            'data' => ['lat' => 0, 'lng' => 0],
+        ])));
+        $this->assertNull(PositionPayload::fromSkyTrack($this->skyTrackRow([
+            'data' => ['dt_tracker' => null, 'dt_server' => null],
+        ])));
+    }
 }

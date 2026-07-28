@@ -3,6 +3,7 @@
 namespace Modules\Tracking\Services;
 
 use App\Support\Geo;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Events\VehiclePositionsRecorded;
@@ -12,16 +13,16 @@ use Modules\Tracking\Models\VehiclePosition;
 use Modules\Tracking\Support\PositionPayload;
 
 /**
- * Turns one Traccar poll into stored positions, refreshed device state and
+ * Turns one provider poll into stored positions, refreshed device state and
  * updated odometers, then announces what landed.
  */
 class PositionIngestor
 {
-    public function __construct(private readonly TraccarClient $client) {}
+    public function __construct(private readonly TrackingConfig $config) {}
 
     public static function for(TrackingConfig $config): self
     {
-        return new self(new TraccarClient($config));
+        return new self($config);
     }
 
     /**
@@ -30,10 +31,7 @@ class PositionIngestor
      */
     public function ingest(TrackingConfig $config): int
     {
-        $payloads = collect($this->client->latestPositions())
-            ->map(fn (array $row) => PositionPayload::fromTraccar($row))
-            ->filter()
-            ->values();
+        $payloads = $this->latestPayloads();
 
         // Unpaired devices are loaded too: their last fix still updates, which
         // is what lets the pairing screen show live candidates.
@@ -88,10 +86,28 @@ class PositionIngestor
     }
 
     /**
+     * @return Collection<int, PositionPayload>
+     */
+    private function latestPayloads(): Collection
+    {
+        if ($this->config->usesSkyTrack()) {
+            return collect((new SkyTrackClient($this->config))->latestPositions())
+                ->map(fn (array $row) => PositionPayload::fromSkyTrack($row))
+                ->filter()
+                ->values();
+        }
+
+        return collect((new TraccarClient($this->config))->latestPositions())
+            ->map(fn (array $row) => PositionPayload::fromTraccar($row))
+            ->filter()
+            ->values();
+    }
+
+    /**
      * Refreshes a device's denormalized last fix and rolls its odometer
      * forward.
      *
-     * @param  \Illuminate\Support\Collection<int, PositionPayload>  $group
+     * @param  Collection<int, PositionPayload>  $group
      */
     private function applyToDevice(GpsDevice $device, PositionPayload $latest, $group): void
     {
@@ -115,12 +131,12 @@ class PositionIngestor
     /**
      * Metres covered since the previous poll, in whole metres.
      *
-     * Traccar keeps its own per-device odometer, which is more trustworthy than
-     * anything derived from two sampled points, so it is preferred whenever it
-     * is present and moving forward. A device reset zeroes that counter, which
-     * shows up as a backwards value and falls through to haversine.
+     * Providers keep their own per-device odometer, which is more trustworthy
+     * than anything derived from two sampled points, so it is preferred whenever
+     * it is present and moving forward. A device reset zeroes that counter,
+     * which shows up as a backwards value and falls through to haversine.
      *
-     * @param  \Illuminate\Support\Collection<int, PositionPayload>  $group
+     * @param  Collection<int, PositionPayload>  $group
      */
     private function distanceTravelled(GpsDevice $device, $group): int
     {
@@ -155,7 +171,7 @@ class PositionIngestor
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, PositionPayload>  $group
+     * @param  Collection<int, PositionPayload>  $group
      */
     private function haversineDelta(GpsDevice $device, $group): int
     {

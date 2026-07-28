@@ -45,8 +45,8 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
     const { t } = useTrans();
     const [focused, setFocused] = useState<LatLng | null>(null);
 
-    // The server only refreshes from Traccar once a minute, so polling faster
-    // than this would just re-read the same rows.
+    // The server only refreshes from the GPS provider once a minute, so polling
+    // faster than this would just re-read the same rows.
     const { start, stop } = usePoll(15000, { only: ['devices', 'lastPolledAt', 'lastPollError'] }, { autoStart: true });
     const [live, setLive] = useState(true);
 
@@ -100,14 +100,14 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-baseline justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">Vehicles</h3>
-                            <span className="text-xs text-gray-500">{positioned.length} reporting</span>
+                            <h3 className="text-lg font-medium text-gray-900">{t('tracking.pages.map.vehicles')}</h3>
+                            <span className="text-xs text-gray-500">
+                                {t('tracking.pages.map.reporting', { count: positioned.length })}
+                            </span>
                         </div>
 
                         {positioned.length === 0 ? (
-                            <p className="text-sm text-gray-500">
-                                No device has reported a position yet. Sync from Traccar on the Devices tab, then wait for the next poll.
-                            </p>
+                            <p className="text-sm text-gray-500">{t('tracking.pages.map.empty')}</p>
                         ) : (
                             <ul className="divide-y divide-gray-200">
                                 {positioned.map(({ device, position }) => (
@@ -138,11 +138,15 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
 
                         {focused && (
                             <button onClick={() => setFocused(null)} className="mt-4 text-sm text-indigo-600 hover:text-indigo-900">
-                                Show all vehicles
+                                {t('tracking.pages.map.show_all')}
                             </button>
                         )}
 
-                        <p className="mt-4 text-xs text-gray-400">Last refreshed from Traccar: {lastPolledAt ?? 'never'}</p>
+                        <p className="mt-4 text-xs text-gray-400">
+                            {t('tracking.pages.map.last_refreshed', {
+                                time: lastPolledAt ?? t('tracking.pages.map.never'),
+                            })}
+                        </p>
                     </div>
                 </div>
 

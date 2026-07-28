@@ -6,10 +6,13 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 
 /**
- * One Traccar position row, normalised into the shapes this application stores
- * and reasons about. Kept as a plain value object so it can travel to other
- * modules in an event without dragging Eloquent models across a module
+ * One GPS provider position row, normalised into the shapes this application
+ * stores and reasons about. Kept as a plain value object so it can travel to
+ * other modules in an event without dragging Eloquent models across a module
  * boundary.
+ *
+ * `traccarDeviceId` is the local provider key: Traccar's device id, or Sky
+ * Track's numeric IMEI (stored the same way on gps_devices).
  */
 class PositionPayload
 {
@@ -107,6 +110,75 @@ class PositionPayload
             recordedAt: $recordedAt,
             serverTime: self::parseTime(Arr::get($row, 'serverTime')),
             attributes: $attributes,
+        );
+    }
+
+    /**
+     * Builds a payload from a Sky Track `/api/tracking/objects` row, or null
+     * when the fix is not usable. Speed is already km/h; IMEI is the device key.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    public static function fromSkyTrack(array $row): ?self
+    {
+        $imei = trim((string) Arr::get($row, 'imei', ''));
+
+        if ($imei === '' || ! ctype_digit($imei)) {
+            return null;
+        }
+
+        $data = Arr::get($row, 'data');
+        $data = is_array($data) ? $data : [];
+
+        $latitude = Arr::get($data, 'lat');
+        $longitude = Arr::get($data, 'lng');
+
+        if (! is_numeric($latitude) || ! is_numeric($longitude)) {
+            return null;
+        }
+
+        $latitude = (float) $latitude;
+        $longitude = (float) $longitude;
+
+        if (abs($latitude) > 90 || abs($longitude) > 180) {
+            return null;
+        }
+
+        if ($latitude === 0.0 && $longitude === 0.0) {
+            return null;
+        }
+
+        $recordedAt = self::parseTime(
+            Arr::get($data, 'dt_tracker')
+            ?? Arr::get($data, 'dt_server')
+        );
+
+        if ($recordedAt === null) {
+            return null;
+        }
+
+        if ($recordedAt->isAfter(now()->addMinutes((int) config('tracking.max_future_fix_minutes', 10)))) {
+            return null;
+        }
+
+        $params = Arr::get($data, 'params');
+        $params = is_array($params) ? $params : null;
+
+        $totalDistance = Arr::get($params ?? [], 'totalDistance');
+
+        return new self(
+            traccarDeviceId: (int) $imei,
+            latitude: $latitude,
+            longitude: $longitude,
+            speedKph: round((float) (Arr::get($data, 'speed') ?? 0), 2),
+            course: is_numeric(Arr::get($data, 'angle')) ? (float) $data['angle'] : null,
+            altitude: is_numeric(Arr::get($data, 'altitude')) ? (float) $data['altitude'] : null,
+            ignition: self::parseBool(Arr::get($params ?? [], 'acc')),
+            motion: self::parseBool(Arr::get($params ?? [], 'motion')),
+            totalDistanceM: is_numeric($totalDistance) ? (int) round((float) $totalDistance) : null,
+            recordedAt: $recordedAt,
+            serverTime: self::parseTime(Arr::get($data, 'dt_server')),
+            attributes: $params,
         );
     }
 

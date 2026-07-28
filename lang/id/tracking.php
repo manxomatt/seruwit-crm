@@ -49,7 +49,7 @@ return [
     ],
 
     'actions' => [
-        'sync' => 'Sync dari Traccar',
+        'sync' => 'Sinkronisasi perangkat',
         'pair' => 'Pair',
         'unpair' => 'Unpair',
         'save' => 'Simpan Pengaturan',
@@ -61,6 +61,12 @@ return [
     'pages' => [
         'map' => [
             'title' => 'Live Map',
+            'vehicles' => 'Kendaraan',
+            'reporting' => ':count melapor',
+            'empty' => 'Belum ada perangkat yang melaporkan posisi. Sinkronkan perangkat di tab Perangkat, lalu tunggu poll berikutnya.',
+            'show_all' => 'Tampilkan semua kendaraan',
+            'last_refreshed' => 'Poll terakhir: :time',
+            'never' => 'belum pernah',
             'polling_off' => 'Polling dimatikan. Posisi tidak akan diperbarui otomatis.',
             'last_poll_failed' => 'Poll terakhir gagal: :error',
         ],

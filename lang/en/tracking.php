@@ -49,7 +49,7 @@ return [
     ],
 
     'actions' => [
-        'sync' => 'Sync from Traccar',
+        'sync' => 'Sync devices',
         'pair' => 'Pair',
         'unpair' => 'Unpair',
         'save' => 'Save Settings',
@@ -61,6 +61,12 @@ return [
     'pages' => [
         'map' => [
             'title' => 'Live Map',
+            'vehicles' => 'Vehicles',
+            'reporting' => ':count reporting',
+            'empty' => 'No device has reported a position yet. Sync devices on the Devices tab, then wait for the next poll.',
+            'show_all' => 'Show all vehicles',
+            'last_refreshed' => 'Last poll: :time',
+            'never' => 'never',
             'polling_off' => 'Polling is switched off. Positions will not update automatically.',
             'last_poll_failed' => 'Last poll failed: :error',
         ],

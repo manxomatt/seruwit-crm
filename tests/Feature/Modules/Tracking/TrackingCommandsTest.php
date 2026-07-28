@@ -123,6 +123,40 @@ class TrackingCommandsTest extends TestCase
         $tenant->run(fn () => $this->assertSame(0, VehiclePosition::count()));
     }
 
+    public function test_it_polls_a_sky_track_tenant(): void
+    {
+        $tenant = $this->trackedTenant('Sky Track One', 'sky-track-one', 'owner@sky-track-one.test');
+        $imei = '358735072143802';
+
+        $tenant->run(function () use ($imei) {
+            TrackingConfig::factory()->skyTrack()->create();
+            GpsDevice::factory()->create([
+                'traccar_device_id' => (int) $imei,
+                'unique_id' => $imei,
+            ]);
+        });
+
+        Http::fake([
+            'api.sky-track.example.test/api/tracking/objects' => Http::response([[
+                'imei' => $imei,
+                'data' => [
+                    'dt_server' => now()->toDateTimeString(),
+                    'dt_tracker' => now()->toDateTimeString(),
+                    'lat' => -7.036783,
+                    'lng' => 107.396587,
+                    'speed' => 12,
+                    'angle' => 90,
+                    'altitude' => 0,
+                    'params' => ['acc' => 1, 'motion' => true, 'totalDistance' => 1000],
+                ],
+            ]]),
+        ]);
+
+        $this->artisan('tracking:poll')->assertSuccessful();
+
+        $tenant->run(fn () => $this->assertSame(1, VehiclePosition::count()));
+    }
+
     public function test_a_tenant_without_the_module_installed_is_skipped(): void
     {
         $tenant = $this->provisionTenant('No Track', 'no-track', 'owner@no-track.test');

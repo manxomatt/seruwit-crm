@@ -302,4 +302,44 @@ class PositionIngestorTest extends TestCase
 
         Event::assertNotDispatched(VehiclePositionsRecorded::class);
     }
+
+    public function test_it_ingests_sky_track_live_positions_by_imei(): void
+    {
+        $imei = '358735072143802';
+        $device = GpsDevice::factory()->create([
+            'traccar_device_id' => (int) $imei,
+            'unique_id' => $imei,
+        ]);
+
+        Http::fake([
+            'api.sky-track.example.test/api/tracking/objects' => Http::response([[
+                'imei' => $imei,
+                'status' => 'm',
+                'data' => [
+                    'dt_server' => now()->toDateTimeString(),
+                    'dt_tracker' => now()->toDateTimeString(),
+                    'lat' => -7.036783,
+                    'lng' => 107.396587,
+                    'altitude' => 0,
+                    'angle' => 176,
+                    'speed' => 42,
+                    'params' => [
+                        'acc' => 1,
+                        'motion' => true,
+                        'totalDistance' => 2113841.13,
+                    ],
+                ],
+            ]]),
+        ]);
+
+        $config = TrackingConfig::factory()->skyTrack()->create();
+
+        $this->assertSame(1, PositionIngestor::for($config)->ingest($config));
+        $this->assertSame(1, VehiclePosition::count());
+
+        $device->refresh();
+        $this->assertSame('-7.0367830', $device->last_latitude);
+        $this->assertSame('42.00', $device->last_speed_kph);
+        $this->assertSame(2113841, $device->traccar_total_distance_m);
+    }
 }

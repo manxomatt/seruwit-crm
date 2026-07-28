@@ -11,11 +11,11 @@ use Modules\Tracking\Services\PositionIngestor;
 use Throwable;
 
 /**
- * Pulls the latest vehicle positions from each tenant's Traccar server.
+ * Pulls the latest vehicle positions from each tenant's GPS provider.
  *
  * Runs per tenant and keeps going if one fails, so a single expired token or
  * unreachable server cannot stall tracking for everybody else — the same shape
- * as modules:purge-expired. A Traccar failure is recorded on the tenant's own
+ * as modules:purge-expired. A provider failure is recorded on the tenant's own
  * config so it surfaces on their settings page rather than only in the log.
  */
 class TrackingPoll extends Command
@@ -23,7 +23,7 @@ class TrackingPoll extends Command
     protected $signature = 'tracking:poll
                             {--tenant= : Limit to a single tenant id}';
 
-    protected $description = 'Fetch the latest GPS positions from each tenant\'s Traccar server';
+    protected $description = 'Fetch the latest GPS positions from each tenant\'s tracking provider';
 
     public function handle(): int
     {
@@ -44,9 +44,7 @@ class TrackingPoll extends Command
 
                     $config = TrackingConfig::current();
 
-                    // Sky Track ingest is not wired yet — settings can be saved,
-                    // but polling still only runs against Traccar-compatible APIs.
-                    if (! $config->poll_enabled || ! $config->isConfigured() || ! $config->usesTraccar()) {
+                    if (! $config->poll_enabled || ! $config->isConfigured()) {
                         return null;
                     }
 
