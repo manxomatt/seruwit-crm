@@ -24,9 +24,17 @@ interface Props {
     selectedBillId: number | null;
     openBills: OpenBill[];
     methods: string[];
+    companyBankAccounts?: Array<{ id: number; name: string; kind: string; account_code: string | null }>;
 }
 
-export default function Create({ partners, selectedPartnerId, selectedBillId, openBills, methods }: Props): JSX.Element {
+export default function Create({
+    partners,
+    selectedPartnerId,
+    selectedBillId,
+    openBills,
+    methods,
+    companyBankAccounts = [],
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
 
@@ -37,6 +45,7 @@ export default function Create({ partners, selectedPartnerId, selectedBillId, op
             ? String(openBills.find((b) => b.id === selectedBillId)?.balance ?? '')
             : '',
         method: 'transfer',
+        company_bank_account_id: '',
         reference_number: '',
         notes: '',
         allocations: selectedBillId
@@ -159,6 +168,37 @@ export default function Create({ partners, selectedPartnerId, selectedBillId, op
                         />
                         <InputError message={form.errors.method} className="mt-1" />
                     </div>
+                    {companyBankAccounts.length > 0 && (
+                        <div>
+                            <InputLabel
+                                htmlFor="company_bank_account_id"
+                                value={t('accounting.bank.posts_to')}
+                            />
+                            <Select
+                                id="company_bank_account_id"
+                                className="mt-1"
+                                value={form.data.company_bank_account_id}
+                                onChange={(value) => form.setData('company_bank_account_id', value)}
+                                placeholder={t('accounting.bank.use_method_default')}
+                                options={[
+                                    { value: '', label: t('accounting.bank.use_method_default') },
+                                    ...companyBankAccounts
+                                        .filter((account) =>
+                                            form.data.method === 'cash'
+                                                ? account.kind === 'cash'
+                                                : account.kind === 'bank',
+                                        )
+                                        .map((account) => ({
+                                            value: String(account.id),
+                                            label: account.account_code
+                                                ? `${account.name} (${account.account_code})`
+                                                : account.name,
+                                        })),
+                                ]}
+                            />
+                            <InputError message={form.errors.company_bank_account_id} className="mt-1" />
+                        </div>
+                    )}
                 </div>
 
                 {form.data.partner_id && openBills.length === 0 && (

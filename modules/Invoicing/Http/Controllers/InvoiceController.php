@@ -200,6 +200,10 @@ class InvoiceController extends Controller
 
         $invoice->update(['status' => Invoice::STATUS_ISSUED]);
 
+        if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+            \Modules\Accounting\Support\AccountingBridge::invoiceIssued($invoice->fresh());
+        }
+
         return back()->with('success', __('invoicing.messages.issued'));
     }
 
@@ -245,6 +249,10 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($invoice) {
             $invoice->lines()->delete();
             $invoice->update(['status' => Invoice::STATUS_VOID]);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::invoiceVoided($invoice->fresh());
+            }
         });
 
         return back()->with('success', __('invoicing.messages.voided'));

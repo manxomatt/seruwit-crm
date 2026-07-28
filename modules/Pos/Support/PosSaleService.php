@@ -99,12 +99,18 @@ class PosSaleService
                 ]);
             }
 
-            PosPayment::query()->create([
+            $paymentPayload = [
                 'pos_sale_id' => $sale->id,
                 'method' => $method,
                 'amount' => $method === PosPayment::METHOD_CASH ? $amountTendered : $totals['grand_total'],
                 'reference' => $payload['payment_reference'] ?? null,
-            ]);
+            ];
+
+            if (Schema::hasColumn('pos_payments', 'company_bank_account_id')) {
+                $paymentPayload['company_bank_account_id'] = $payload['company_bank_account_id'] ?? null;
+            }
+
+            PosPayment::query()->create($paymentPayload);
 
             if (class_exists(\Modules\TradePromotions\Support\PromotionPricing::class)) {
                 app(\Modules\TradePromotions\Support\PromotionPricing::class)
@@ -135,7 +141,13 @@ class PosSaleService
                 ]);
             }
 
-            return $sale->fresh(['items.product', 'payments', 'cashier', 'warehouse']);
+            $sale = $sale->fresh(['items.product', 'payments', 'cashier', 'warehouse']);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::posSaleCompleted($sale);
+            }
+
+            return $sale;
         });
     }
 
@@ -175,6 +187,10 @@ class PosSaleService
                 'voided_by' => $actor->id,
                 'void_reason' => $reason,
             ]);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::posSaleVoided($sale);
+            }
 
             return $sale->fresh(['items.product', 'payments', 'cashier', 'voider']);
         });

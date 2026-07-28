@@ -36,6 +36,7 @@ interface Props {
     openInvoices: OpenInvoice[];
     types: string[];
     methods: string[];
+    companyBankAccounts?: Array<{ id: number; name: string; kind: string; account_code: string | null }>;
 }
 
 function typeOptionKey(type: string): string {
@@ -49,6 +50,7 @@ export default function Create({
     openInvoices,
     types,
     methods,
+    companyBankAccounts = [],
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -60,6 +62,7 @@ export default function Create({
         amount: '',
         type: 'installment',
         method: 'transfer',
+        company_bank_account_id: '',
         reference_number: '',
         notes: '',
         allocations: [] as Array<{ invoice_id: number; amount: string }>,
@@ -130,6 +133,7 @@ export default function Create({
             amount: Number(data.amount || allocatedTotal),
             type: data.type,
             method: data.method,
+            company_bank_account_id: data.company_bank_account_id ? Number(data.company_bank_account_id) : null,
             reference_number: data.reference_number || null,
             notes: data.notes || null,
             allocations,
@@ -204,6 +208,29 @@ export default function Create({
                                 </select>
                                 <InputError message={errors.method} className="mt-2" />
                             </div>
+                            {companyBankAccounts.length > 0 && (
+                                <div>
+                                    <InputLabel value={t('accounting.bank.posts_to')} />
+                                    <select
+                                        className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        value={data.company_bank_account_id}
+                                        onChange={(e) => setData('company_bank_account_id', e.target.value)}
+                                    >
+                                        <option value="">{t('accounting.bank.use_method_default')}</option>
+                                        {companyBankAccounts
+                                            .filter((account) =>
+                                                data.method === 'cash' ? account.kind === 'cash' : account.kind === 'bank',
+                                            )
+                                            .map((account) => (
+                                                <option key={account.id} value={account.id}>
+                                                    {account.name}
+                                                    {account.account_code ? ` (${account.account_code})` : ''}
+                                                </option>
+                                            ))}
+                                    </select>
+                                    <InputError message={errors.company_bank_account_id} className="mt-2" />
+                                </div>
+                            )}
                             <div>
                                 <InputLabel htmlFor="amount" value={`${t('receivables.fields.payment_amount')} *`} />
                                 <TextInput

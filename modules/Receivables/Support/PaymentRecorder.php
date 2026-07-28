@@ -44,7 +44,7 @@ class PaymentRecorder
                 ]);
             }
 
-            $payment = Payment::query()->create([
+            $attributes = [
                 'code' => Payment::nextCode(),
                 'partner_id' => $data['partner_id'],
                 'payment_date' => $data['payment_date'],
@@ -55,7 +55,13 @@ class PaymentRecorder
                 'status' => Payment::STATUS_POSTED,
                 'notes' => $data['notes'] ?? null,
                 'recorded_by' => $data['recorded_by'] ?? Auth::id(),
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('payments', 'company_bank_account_id')) {
+                $attributes['company_bank_account_id'] = $data['company_bank_account_id'] ?? null;
+            }
+
+            $payment = Payment::query()->create($attributes);
 
             $touchedInvoiceIds = [];
 
@@ -101,7 +107,13 @@ class PaymentRecorder
                 self::syncInvoice((int) $invoiceId);
             }
 
-            return $payment->fresh(['allocations', 'partner']);
+            $payment = $payment->fresh(['allocations', 'partner']);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::paymentRecorded($payment);
+            }
+
+            return $payment;
         });
     }
 
@@ -149,6 +161,10 @@ class PaymentRecorder
 
             foreach ($invoiceIds as $invoiceId) {
                 self::syncInvoice((int) $invoiceId);
+            }
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::paymentVoided($payment->fresh());
             }
         });
     }

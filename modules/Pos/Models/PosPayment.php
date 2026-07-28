@@ -23,6 +23,7 @@ class PosPayment extends Model
     protected $fillable = [
         'pos_sale_id',
         'method',
+        'company_bank_account_id',
         'amount',
         'reference',
     ];

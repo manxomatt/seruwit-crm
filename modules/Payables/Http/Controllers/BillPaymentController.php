@@ -66,6 +66,9 @@ class BillPaymentController extends Controller
             'selectedBillId' => $billId,
             'openBills' => $openBills,
             'methods' => BillPayment::methods(),
+            'companyBankAccounts' => class_exists(\Modules\Accounting\Support\PaymentAccountResolver::class)
+                ? \Modules\Accounting\Support\PaymentAccountResolver::optionsForForms()
+                : [],
         ]);
     }
 

@@ -52,6 +52,7 @@ class Payment extends Model
         'amount',
         'type',
         'method',
+        'company_bank_account_id',
         'reference_number',
         'status',
         'notes',

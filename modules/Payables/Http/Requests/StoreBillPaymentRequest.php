@@ -3,6 +3,7 @@
 namespace Modules\Payables\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Modules\Payables\Models\BillPayment;
 
@@ -18,7 +19,7 @@ class StoreBillPaymentRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'partner_id' => ['required', 'integer', 'exists:partners,id'],
             'payment_date' => ['required', 'date'],
             'amount' => ['required', 'numeric', 'min:0.01'],
@@ -29,5 +30,11 @@ class StoreBillPaymentRequest extends FormRequest
             'allocations.*.supplier_bill_id' => ['required', 'integer', 'exists:supplier_bills,id'],
             'allocations.*.amount' => ['required', 'numeric', 'min:0.01'],
         ];
+
+        if (Schema::hasTable('company_bank_accounts')) {
+            $rules['company_bank_account_id'] = ['nullable', 'integer', 'exists:company_bank_accounts,id'];
+        }
+
+        return $rules;
     }
 }

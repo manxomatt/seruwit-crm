@@ -90,6 +90,10 @@ class GrnConfirmationService
 
             LowStockNotifier::checkAndNotify();
 
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::grnConfirmed($grn->fresh(['items.purchaseOrderItem']));
+            }
+
             return $grn->fresh(['items.location', 'purchaseOrder', 'warehouse', 'receivedBy']);
         });
     }
@@ -176,6 +180,10 @@ class GrnConfirmationService
             $this->recalculatePurchaseOrderStatus($po->fresh(['items']));
 
             LowStockNotifier::checkAndNotify();
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::grnVoided($grn);
+            }
 
             return $grn->fresh(['items.location', 'purchaseOrder', 'warehouse', 'receivedBy']);
         });

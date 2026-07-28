@@ -115,6 +115,12 @@ class SalesReturnConfirmationService
             $salesReturn->update(['status' => SalesReturn::STATUS_CONFIRMED]);
             app(GinConfirmationService::class)->recalculateSalesOrderStatus($salesReturn->salesOrder->fresh(['items']));
 
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::salesReturnConfirmed(
+                    $salesReturn->fresh(['items.salesOrderItem.product', 'items.salesOrderItem.packaging'])
+                );
+            }
+
             if ($createCreditNote && Modules::available('invoicing') && Schema::hasTable('invoices')) {
                 $this->createCreditInvoice($salesReturn->fresh(['items.salesOrderItem.product', 'salesOrder']));
             }
@@ -178,6 +184,10 @@ class SalesReturnConfirmationService
             $salesReturn->update(['status' => SalesReturn::STATUS_VOIDED]);
             app(GinConfirmationService::class)->recalculateSalesOrderStatus($so->fresh(['items']));
 
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::salesReturnVoided($salesReturn);
+            }
+
             return $salesReturn->fresh(['items', 'salesOrder', 'warehouse']);
         });
     }
@@ -206,6 +216,10 @@ class SalesReturnConfirmationService
                 }
 
                 $invoice->update(['status' => Invoice::STATUS_VOID]);
+
+                if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                    \Modules\Accounting\Support\AccountingBridge::invoiceVoided($invoice->fresh());
+                }
             }
         }
     }
@@ -255,6 +269,10 @@ class SalesReturnConfirmationService
 
         $invoice->recalculate();
         $invoice->update(['status' => Invoice::STATUS_ISSUED]);
+
+        if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+            \Modules\Accounting\Support\AccountingBridge::invoiceIssued($invoice->fresh());
+        }
 
         return $invoice;
     }

@@ -157,6 +157,12 @@ class StockOpnameController extends Controller
                 }
 
                 $opname->update(['status' => 'completed', 'completed_at' => now()]);
+
+                if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                    \Modules\Accounting\Support\AccountingBridge::stockOpnameFinalized(
+                        $opname->fresh(['items.product'])
+                    );
+                }
             });
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());

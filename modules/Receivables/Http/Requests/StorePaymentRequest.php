@@ -3,6 +3,7 @@
 namespace Modules\Receivables\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Modules\Receivables\Models\Payment;
 
@@ -18,7 +19,7 @@ class StorePaymentRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'partner_id' => ['required', 'integer', 'exists:partners,id'],
             'payment_date' => ['required', 'date'],
             'amount' => ['required', 'numeric', 'gt:0'],
@@ -30,6 +31,12 @@ class StorePaymentRequest extends FormRequest
             'allocations.*.invoice_id' => ['required', 'integer', 'exists:invoices,id'],
             'allocations.*.amount' => ['required', 'numeric', 'gt:0'],
         ];
+
+        if (Schema::hasTable('company_bank_accounts')) {
+            $rules['company_bank_account_id'] = ['nullable', 'integer', 'exists:company_bank_accounts,id'];
+        }
+
+        return $rules;
     }
 
     /**

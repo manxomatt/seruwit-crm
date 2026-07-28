@@ -99,6 +99,9 @@ class PaymentController extends Controller
             'openInvoices' => $openInvoices,
             'types' => Payment::types(),
             'methods' => Payment::methods(),
+            'companyBankAccounts' => class_exists(\Modules\Accounting\Support\PaymentAccountResolver::class)
+                ? \Modules\Accounting\Support\PaymentAccountResolver::optionsForForms()
+                : [],
         ]);
     }
 

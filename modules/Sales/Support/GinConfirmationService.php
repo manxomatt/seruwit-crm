@@ -102,6 +102,12 @@ class GinConfirmationService
 
             LowStockNotifier::checkAndNotify();
 
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::ginConfirmed(
+                    $gin->fresh(['items.salesOrderItem.product', 'items.salesOrderItem.packaging'])
+                );
+            }
+
             return $gin->fresh(['items.location', 'salesOrder', 'warehouse', 'issuedBy']);
         });
     }
@@ -196,6 +202,10 @@ class GinConfirmationService
             $this->recalculateSalesOrderStatus($so->fresh(['items']));
 
             LowStockNotifier::checkAndNotify();
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::ginVoided($gin);
+            }
 
             return $gin->fresh(['items.location', 'salesOrder', 'warehouse', 'issuedBy']);
         });

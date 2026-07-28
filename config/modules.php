@@ -23,6 +23,7 @@ return [
         Modules\Fleet\FleetModule::class,
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,
+        Modules\Accounting\AccountingModule::class,
         Modules\Purchasing\PurchasingModule::class,
         Modules\Sales\SalesModule::class,
         Modules\Receivables\ReceivablesModule::class,

@@ -115,6 +115,10 @@ class SupplierBillController extends Controller
 
         $bill->update(['status' => SupplierBill::STATUS_ISSUED]);
 
+        if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+            \Modules\Accounting\Support\AccountingBridge::billIssued($bill->fresh());
+        }
+
         return back()->with('success', __('payables.messages.bill_issued'));
     }
 
@@ -129,6 +133,10 @@ class SupplierBillController extends Controller
         }
 
         $bill->update(['status' => SupplierBill::STATUS_VOID]);
+
+        if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+            \Modules\Accounting\Support\AccountingBridge::billVoided($bill->fresh());
+        }
 
         return back()->with('success', __('payables.messages.bill_voided'));
     }

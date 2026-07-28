@@ -31,5 +31,9 @@ class IssueInvoiceAfterApproval
         }
 
         $invoice->update(['status' => Invoice::STATUS_ISSUED]);
+
+        if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+            \Modules\Accounting\Support\AccountingBridge::invoiceIssued($invoice->fresh());
+        }
     }
 }

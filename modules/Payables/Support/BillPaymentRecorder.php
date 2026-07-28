@@ -43,7 +43,7 @@ class BillPaymentRecorder
                 ]);
             }
 
-            $payment = BillPayment::query()->create([
+            $attributes = [
                 'code' => BillPayment::nextCode(),
                 'partner_id' => $data['partner_id'],
                 'payment_date' => $data['payment_date'],
@@ -53,7 +53,13 @@ class BillPaymentRecorder
                 'status' => BillPayment::STATUS_POSTED,
                 'notes' => $data['notes'] ?? null,
                 'recorded_by' => $data['recorded_by'] ?? Auth::id(),
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('bill_payments', 'company_bank_account_id')) {
+                $attributes['company_bank_account_id'] = $data['company_bank_account_id'] ?? null;
+            }
+
+            $payment = BillPayment::query()->create($attributes);
 
             $touched = [];
 
@@ -93,7 +99,13 @@ class BillPaymentRecorder
                 self::syncBill((int) $billId);
             }
 
-            return $payment->fresh(['allocations', 'partner']);
+            $payment = $payment->fresh(['allocations', 'partner']);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::billPaymentRecorded($payment);
+            }
+
+            return $payment;
         });
     }
 
@@ -118,7 +130,13 @@ class BillPaymentRecorder
                 self::syncBill((int) $billId);
             }
 
-            return $payment->fresh(['allocations', 'partner']);
+            $payment = $payment->fresh(['allocations', 'partner']);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::billPaymentVoided($payment);
+            }
+
+            return $payment;
         });
     }
 

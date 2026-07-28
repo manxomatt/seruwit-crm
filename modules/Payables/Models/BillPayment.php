@@ -29,6 +29,7 @@ class BillPayment extends Model
         'payment_date',
         'amount',
         'method',
+        'company_bank_account_id',
         'reference_number',
         'status',
         'notes',

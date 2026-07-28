@@ -182,7 +182,13 @@ class PurchaseBillService
 
             $bill->recalculate();
 
-            return $bill->fresh(['lines', 'partner']);
+            $bill = $bill->fresh(['lines', 'partner']);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::billIssued($bill);
+            }
+
+            return $bill;
         });
     }
 

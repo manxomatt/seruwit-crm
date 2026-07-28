@@ -116,6 +116,16 @@ class PurchaseReturnConfirmationService
                 $purchaseReturn->purchaseOrder->fresh(['items'])
             );
 
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::purchaseReturnConfirmed(
+                    $purchaseReturn->fresh([
+                        'items.purchaseOrderItem.packaging',
+                        'items.grnItem',
+                        'goodReceiptNote.items.purchaseOrderItem',
+                    ])
+                );
+            }
+
             if (class_exists(PurchaseBillService::class)) {
                 app(PurchaseBillService::class)->createCreditFromPurchaseReturn(
                     $purchaseReturn->fresh(['items.purchaseOrderItem.product', 'items.grnItem', 'purchaseOrder', 'goodReceiptNote'])
@@ -194,6 +204,10 @@ class PurchaseReturnConfirmationService
             $purchaseReturn->update(['status' => PurchaseReturn::STATUS_VOIDED]);
             $grnService->recalculatePurchaseOrderStatus($po->fresh(['items']));
 
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::purchaseReturnVoided($purchaseReturn);
+            }
+
             return $purchaseReturn->fresh(['items', 'purchaseOrder', 'warehouse']);
         });
     }
@@ -231,6 +245,10 @@ class PurchaseReturnConfirmationService
                 }
 
                 $bill->update(['status' => SupplierBill::STATUS_VOID]);
+
+                if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                    \Modules\Accounting\Support\AccountingBridge::billVoided($bill->fresh());
+                }
             }
         }
     }

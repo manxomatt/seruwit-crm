@@ -16,6 +16,8 @@ return [
     'purchasing' => 'Pembelian',
     'sales' => 'Penjualan',
     'receivables' => 'Piutang',
+    'payables' => 'Utang',
+    'accounting' => 'Akuntansi',
     'approvals' => 'Persetujuan',
     'orders' => 'Pesanan',
     'routing' => 'Optimasi Rute',

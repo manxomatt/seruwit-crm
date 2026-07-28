@@ -16,6 +16,8 @@ return [
     'purchasing' => 'Purchasing',
     'sales' => 'Sales',
     'receivables' => 'Receivables',
+    'payables' => 'Payables',
+    'accounting' => 'Accounting',
     'approvals' => 'Approvals',
     'orders' => 'Orders',
     'routing' => 'Route Optimization',
