@@ -2,6 +2,7 @@ export interface Trip {
     id: number;
     code: string;
     scheduled_at: string;
+    scheduled_end_at?: string | null;
     status: string;
     vehicle: { id: number; name: string; plate_number: string };
     driver: { id: number; name: string };

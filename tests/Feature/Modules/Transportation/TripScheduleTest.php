@@ -189,21 +189,23 @@ class TripScheduleTest extends TestCase
         $this->assertSame(1, Trip::count());
     }
 
-    public function test_generate_skips_a_same_date_conflict_instead_of_failing(): void
+    public function test_generate_skips_an_overlapping_window_conflict_instead_of_failing(): void
     {
         $user = $this->createAdminUser();
         $monday = Carbon::parse('next monday')->startOfDay();
         $schedule = TripSchedule::factory()->create([
             'days_of_week' => [1],
             'time_of_day' => '08:00:00',
+            'duration_minutes' => 480,
             'starts_on' => $monday->toDateString(),
         ]);
 
-        // The schedule's own vehicle already has an unrelated active trip that same day.
+        // Overlaps the generated 08:00–16:00 window.
         Trip::factory()->create([
             'vehicle_id' => $schedule->vehicle_id,
             'status' => Trip::STATUS_SCHEDULED,
             'scheduled_at' => $monday->copy()->setTime(6, 0),
+            'scheduled_end_at' => $monday->copy()->setTime(10, 0),
         ]);
 
         $this->actingAs($user)->post(route('module.transportation.schedules.generate'), [
@@ -211,8 +213,34 @@ class TripScheduleTest extends TestCase
             'to' => $monday->toDateString(),
         ])->assertSessionHas('warning');
 
-        // Only the pre-existing trip exists; nothing generated for the conflicting date.
         $this->assertSame(1, Trip::count());
+    }
+
+    public function test_generate_allows_same_day_when_windows_do_not_overlap(): void
+    {
+        $user = $this->createAdminUser();
+        $monday = Carbon::parse('next monday')->startOfDay();
+        $schedule = TripSchedule::factory()->create([
+            'days_of_week' => [1],
+            'time_of_day' => '14:00:00',
+            'duration_minutes' => 120,
+            'starts_on' => $monday->toDateString(),
+        ]);
+
+        Trip::factory()->create([
+            'vehicle_id' => $schedule->vehicle_id,
+            'driver_id' => $schedule->driver_id,
+            'status' => Trip::STATUS_SCHEDULED,
+            'scheduled_at' => $monday->copy()->setTime(6, 0),
+            'scheduled_end_at' => $monday->copy()->setTime(10, 0),
+        ]);
+
+        $this->actingAs($user)->post(route('module.transportation.schedules.generate'), [
+            'from' => $monday->toDateString(),
+            'to' => $monday->toDateString(),
+        ])->assertSessionHasNoErrors()->assertSessionMissing('warning');
+
+        $this->assertSame(2, Trip::count());
     }
 
     public function test_schedules_index_includes_active_schedule_count(): void

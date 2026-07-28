@@ -48,8 +48,29 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
         destination: '',
         cargo_notes: '',
         scheduled_at: '',
+        scheduled_end_at: '',
         distance_km: '',
     });
+
+    const toLocalInput = (date: Date): string => {
+        const pad = (n: number) => String(n).padStart(2, '0');
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+
+    const setScheduledStart = (value: string): void => {
+        const next: Partial<typeof data> = { scheduled_at: value };
+
+        if (value && !data.scheduled_end_at) {
+            const end = new Date(value);
+            if (!Number.isNaN(end.getTime())) {
+                end.setHours(end.getHours() + 8);
+                next.scheduled_end_at = toLocalInput(end);
+            }
+        }
+
+        setData({ ...data, ...next });
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -127,8 +148,14 @@ export default function Create({ vehicles, drivers, partners }: Props): JSX.Elem
                             </div>
                             <div>
                                 <InputLabel htmlFor="scheduled_at" value={t('transportation.fields.scheduled_at')} />
-                                <TextInput id="scheduled_at" type="datetime-local" className="mt-1 block w-full" value={data.scheduled_at} onChange={(e) => setData('scheduled_at', e.target.value)} required />
+                                <TextInput id="scheduled_at" type="datetime-local" className="mt-1 block w-full" value={data.scheduled_at} onChange={(e) => setScheduledStart(e.target.value)} required />
                                 <InputError message={errors.scheduled_at} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="scheduled_end_at" value={t('transportation.fields.scheduled_end_at')} />
+                                <TextInput id="scheduled_end_at" type="datetime-local" className="mt-1 block w-full" value={data.scheduled_end_at} onChange={(e) => setData('scheduled_end_at', e.target.value)} required />
+                                <p className="mt-1 text-xs text-gray-500">{t('transportation.hints.scheduled_window')}</p>
+                                <InputError message={errors.scheduled_end_at} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="distance_km" value={`${t('transportation.fields.distance_km')} (optional)`} />

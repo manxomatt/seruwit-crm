@@ -41,6 +41,7 @@ class TripSchedule extends Model
         'distance_km',
         'days_of_week',
         'time_of_day',
+        'duration_minutes',
         'starts_on',
         'ends_on',
         'is_active',
@@ -54,6 +55,7 @@ class TripSchedule extends Model
         return [
             'days_of_week' => 'array',
             'distance_km' => 'decimal:2',
+            'duration_minutes' => 'integer',
             'starts_on' => 'date:Y-m-d',
             'ends_on' => 'date:Y-m-d',
             'is_active' => 'boolean',
@@ -97,7 +99,7 @@ class TripSchedule extends Model
      * template's days of week and falls within its own active window
      * (starts_on/ends_on). Idempotent: re-running over an overlapping range
      * never creates a second trip for a date already generated, and a
-     * same-date vehicle/driver conflict is skipped rather than raised.
+     * time-window vehicle/driver conflict is skipped rather than raised.
      *
      * @return array{created: \Illuminate\Support\Collection<int, Trip>, skipped: list<array{date: string, reason: string}>}
      */
@@ -120,6 +122,9 @@ class TripSchedule extends Model
             return ['created' => $created, 'skipped' => $skipped];
         }
 
+        $durationMinutes = max(1, (int) ($this->duration_minutes ?: Trip::DEFAULT_DURATION_MINUTES));
+        $distance = $this->distance_km !== null ? (float) $this->distance_km : null;
+
         for ($date = $rangeStart->copy(); $date->lte($rangeEnd); $date->addDay()) {
             if (! in_array((int) $date->dayOfWeek, array_map('intval', $this->days_of_week ?? []), true)) {
                 continue;
@@ -133,9 +138,12 @@ class TripSchedule extends Model
                 continue;
             }
 
+            $startsAt = Carbon::parse($dateString.' '.$this->time_of_day);
+            $endsAt = $startsAt->copy()->addMinutes($durationMinutes);
+
             $reasons = array_merge(
-                $this->vehicle ? Trip::vehicleDispatchReasons($this->vehicle, $dateString) : [],
-                $this->driver ? Trip::driverDispatchReasons($this->driver, $dateString) : [],
+                $this->vehicle ? Trip::vehicleDispatchReasons($this->vehicle, $startsAt, $endsAt, null, $distance, $durationMinutes) : [],
+                $this->driver ? Trip::driverDispatchReasons($this->driver, $startsAt, $endsAt, null, $distance, $durationMinutes) : [],
             );
 
             if ($reasons !== []) {
@@ -154,7 +162,8 @@ class TripSchedule extends Model
                 'destination' => $this->destination,
                 'cargo_notes' => $this->cargo_notes,
                 'distance_km' => $this->distance_km,
-                'scheduled_at' => Carbon::parse($dateString.' '.$this->time_of_day),
+                'scheduled_at' => $startsAt,
+                'scheduled_end_at' => $endsAt,
                 'status' => Trip::STATUS_SCHEDULED,
             ]));
         }

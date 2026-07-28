@@ -41,7 +41,8 @@ export default function DayTripsPanel({ dateKey, trips, prefixedRoute }: Props):
                             >
                                 <span className="flex items-center gap-2 font-medium">
                                     <span className={`h-2 w-2 shrink-0 rounded-full ${config.dot}`} />
-                                    {formatTime(trip.scheduled_at)} · {trip.code}
+                                    {formatTime(trip.scheduled_at)}
+                                    {trip.scheduled_end_at ? `–${formatTime(trip.scheduled_end_at)}` : ''} · {trip.code}
                                 </span>
                                 <span className="mt-0.5 block truncate pl-4 text-xs opacity-80">
                                     {trip.vehicle.plate_number} · {trip.driver.name}

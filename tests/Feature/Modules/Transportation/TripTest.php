@@ -49,18 +49,23 @@ class TripTest extends TestCase
         $this->assertSame('Jakarta', $trip->origin);
         $this->assertSame(Trip::STATUS_SCHEDULED, $trip->status);
         $this->assertNotEmpty($trip->code);
+        $this->assertNotNull($trip->scheduled_end_at);
+        $this->assertTrue($trip->scheduled_end_at->gt($trip->scheduled_at));
     }
 
-    public function test_a_vehicle_already_on_an_active_trip_the_same_date_cannot_be_double_booked(): void
+    public function test_a_vehicle_already_on_an_overlapping_trip_cannot_be_double_booked(): void
     {
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
         $partner = Partner::factory()->create();
-        // Fixed mid-day time so adding hours never crosses midnight — the
-        // conflict rule is scoped to the calendar date.
         $date = now()->addDay()->setTime(8, 0);
-        Trip::factory()->create(['vehicle_id' => $vehicle->id, 'status' => Trip::STATUS_SCHEDULED, 'scheduled_at' => $date]);
+        Trip::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'status' => Trip::STATUS_SCHEDULED,
+            'scheduled_at' => $date,
+            'scheduled_end_at' => $date->copy()->addHours(4),
+        ]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
@@ -69,19 +74,23 @@ class TripTest extends TestCase
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
+            'scheduled_end_at' => $date->copy()->addHours(6)->format('Y-m-d H:i:s'),
         ])->assertSessionHasErrors('vehicle_id');
     }
 
-    public function test_a_driver_already_on_an_active_trip_the_same_date_cannot_be_double_booked(): void
+    public function test_a_driver_already_on_an_overlapping_trip_cannot_be_double_booked(): void
     {
         $user = $this->createAdminUser();
         $vehicle = Vehicle::factory()->create();
         $driver = Driver::factory()->create();
         $partner = Partner::factory()->create();
-        // Fixed mid-day time so adding hours never crosses midnight — the
-        // conflict rule is scoped to the calendar date.
         $date = now()->addDay()->setTime(8, 0);
-        Trip::factory()->create(['driver_id' => $driver->id, 'status' => Trip::STATUS_IN_PROGRESS, 'scheduled_at' => $date]);
+        Trip::factory()->create([
+            'driver_id' => $driver->id,
+            'status' => Trip::STATUS_IN_PROGRESS,
+            'scheduled_at' => $date,
+            'scheduled_end_at' => $date->copy()->addHours(4),
+        ]);
 
         $this->actingAs($user)->post(route('module.transportation.trips.store'), [
             'vehicle_id' => $vehicle->id,
@@ -90,13 +99,40 @@ class TripTest extends TestCase
             'origin' => 'Jakarta',
             'destination' => 'Bandung',
             'scheduled_at' => $date->copy()->addHours(2)->format('Y-m-d H:i:s'),
+            'scheduled_end_at' => $date->copy()->addHours(6)->format('Y-m-d H:i:s'),
         ])->assertSessionHasErrors('driver_id');
     }
 
+    public function test_same_day_non_overlapping_windows_are_allowed(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+        $driver = Driver::factory()->create();
+        $partner = Partner::factory()->create();
+        $date = now()->addDay()->setTime(8, 0);
+        Trip::factory()->create([
+            'vehicle_id' => $vehicle->id,
+            'driver_id' => $driver->id,
+            'status' => Trip::STATUS_SCHEDULED,
+            'scheduled_at' => $date,
+            'scheduled_end_at' => $date->copy()->addHours(2),
+        ]);
+
+        $this->actingAs($user)->post(route('module.transportation.trips.store'), [
+            'vehicle_id' => $vehicle->id,
+            'driver_id' => $driver->id,
+            'partner_id' => $partner->id,
+            'origin' => 'Jakarta',
+            'destination' => 'Bandung',
+            'scheduled_at' => $date->copy()->addHours(3)->format('Y-m-d H:i:s'),
+            'scheduled_end_at' => $date->copy()->addHours(5)->format('Y-m-d H:i:s'),
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('trips', 2);
+    }
+
     /**
-     * Trip has no duration/end time, so the double-booking rule is scoped to
-     * the calendar date rather than "ever" — the same vehicle can be
-     * dispatched again on a different day.
+     * The same vehicle can be dispatched again on a different day.
      */
     public function test_a_vehicle_can_be_booked_again_on_a_different_date(): void
     {

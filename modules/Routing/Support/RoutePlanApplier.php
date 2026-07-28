@@ -51,6 +51,9 @@ class RoutePlanApplier
     private function applyRoute(RoutePlan $plan, RoutePlanRoute $route): void
     {
         $last = $route->stops->last();
+        $startsAt = $plan->planned_date->copy()->setTime(8, 0);
+        $distance = $route->estimated_distance_km !== null ? (float) $route->estimated_distance_km : null;
+        $endsAt = Trip::estimateEndAt($startsAt, $distance);
 
         $trip = Trip::query()->create([
             'code' => Trip::nextCode(),
@@ -59,7 +62,8 @@ class RoutePlanApplier
             'origin' => $plan->depot_address ?: sprintf('Depot (%.5f, %.5f)', $plan->depot_lat, $plan->depot_lng),
             'destination' => $last?->address ?? ($plan->depot_address ?: 'Depot'),
             'cargo_notes' => sprintf('Route plan %s · route #%d', $plan->code, $route->sequence),
-            'scheduled_at' => $plan->planned_date->copy()->setTime(8, 0),
+            'scheduled_at' => $startsAt,
+            'scheduled_end_at' => $endsAt,
             'distance_km' => $route->estimated_distance_km,
             'status' => Trip::STATUS_SCHEDULED,
         ]);

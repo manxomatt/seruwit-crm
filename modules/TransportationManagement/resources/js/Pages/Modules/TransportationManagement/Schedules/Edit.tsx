@@ -43,6 +43,7 @@ interface TripSchedule {
     distance_km: string | null;
     days_of_week: number[];
     time_of_day: string;
+    duration_minutes: number;
     starts_on: string;
     ends_on: string | null;
     is_active: boolean;
@@ -78,6 +79,7 @@ export default function Edit({ schedule, vehicles, drivers, partners }: Props): 
         distance_km: schedule.distance_km || '',
         days_of_week: schedule.days_of_week,
         time_of_day: schedule.time_of_day.slice(0, 5),
+        duration_minutes: String(schedule.duration_minutes ?? 480),
         starts_on: schedule.starts_on,
         ends_on: schedule.ends_on || '',
         is_active: schedule.is_active,
@@ -154,6 +156,12 @@ export default function Edit({ schedule, vehicles, drivers, partners }: Props): 
                                 <InputLabel htmlFor="time_of_day" value={t('transportation.fields.time_of_day')} />
                                 <TextInput id="time_of_day" type="time" className="mt-1 block w-full" value={data.time_of_day} onChange={(e) => setData('time_of_day', e.target.value)} required />
                                 <InputError message={errors.time_of_day} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="duration_minutes" value={t('transportation.fields.duration_minutes')} />
+                                <TextInput id="duration_minutes" type="number" min={15} step={15} className="mt-1 block w-full" value={data.duration_minutes} onChange={(e) => setData('duration_minutes', e.target.value)} required />
+                                <p className="mt-1 text-xs text-gray-500">{t('transportation.hints.duration_minutes')}</p>
+                                <InputError message={errors.duration_minutes} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="distance_km" value={`${t('transportation.fields.distance_km')} (optional)`} />

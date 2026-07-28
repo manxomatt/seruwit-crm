@@ -36,6 +36,7 @@ class TripScheduleFactory extends Factory
             'distance_km' => fake()->optional()->randomFloat(2, 5, 500),
             'days_of_week' => [1, 4], // Monday and Thursday
             'time_of_day' => '08:00:00',
+            'duration_minutes' => 480,
             'starts_on' => now()->toDateString(),
             'ends_on' => null,
             'is_active' => true,

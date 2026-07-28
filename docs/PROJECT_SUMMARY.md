@@ -362,6 +362,7 @@ php artisan document:scan-expiring [--tenant=]        # 06:00
 - ✅ **`rental` / `canvassing` di paket Pro** — entitle via `PlanSeeder` + migrasi additive ke row Pro yang sudah ada
 - Push email/WA ke pelanggan: event `ShipmentStatusChanged` ada, listener channel belum
 - Time-overlap dispatch sejati: masih per-tanggal; butuh `scheduled_end_at` / durasi
+- ✅ **Time-window dispatch** — `scheduled_end_at` + overlap nyata; schedule `duration_minutes`; Routing apply mengisi end dari jarak
 - Portal driver: berfungsi, tapi belum PWA offline-first
 - Rental → auto-invoice & payment terms master: gap ops sebelum “finance sempurna”
 - Accounting: WHT/PPh, e-Faktur DJP, multi-currency, cost center — masih fase lanjut
@@ -389,7 +390,7 @@ Urutan di bawah menyeimbangkan **nilai bisnis**, **utang teknis yang menghambat 
 ### Prioritas P1 — lengkapi siklus yang sudah hampir tutup (1–2 bulan)
 
 5. **Driver PWA offline** — service worker + antrian POD saat sinyal lemah (fase 3 “sejati”).
-6. **Time-window dispatch** — `scheduled_end_at` / durasi trip; bentrok waktu nyata + integrasi Routing.
+6. ✅ **Time-window dispatch** — `scheduled_end_at` + overlap waktu nyata; schedule `duration_minutes`; Routing apply isi end dari jarak.
 7. **Payment terms + giro/clearing** — due date standar di invoice/bill; status `pending_clearance` untuk bank recon.
 8. **Rental invoice otomatis** — tutup gap `requires: invoicing` yang belum dimanfaatkan penuh; lalu mapping Accounting.
 9. **Canvassing → SO conversion UX** — alur satu ketukan dari visit sukses ke Sales Order + promo.

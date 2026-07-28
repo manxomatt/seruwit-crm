@@ -32,6 +32,7 @@ class UpdateTripScheduleRequest extends FormRequest
             'days_of_week' => ['sometimes', 'required', 'array', 'min:1'],
             'days_of_week.*' => ['integer', 'between:0,6'],
             'time_of_day' => ['sometimes', 'required', 'date_format:H:i'],
+            'duration_minutes' => ['sometimes', 'nullable', 'integer', 'min:15', 'max:10080'],
             'starts_on' => ['sometimes', 'required', 'date'],
             'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
             'is_active' => ['boolean'],

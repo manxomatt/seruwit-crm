@@ -35,12 +35,26 @@ class TripFactory extends Factory
             'destination' => fake()->city(),
             'cargo_notes' => fake()->optional()->sentence(),
             'scheduled_at' => fake()->dateTimeBetween('now', '+1 week'),
+            'scheduled_end_at' => null,
             'started_at' => null,
             'completed_at' => null,
             'distance_km' => fake()->optional()->randomFloat(2, 5, 500),
             'status' => Trip::STATUS_SCHEDULED,
             'cancelled_reason' => null,
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Trip $trip): void {
+            if ($trip->scheduled_at === null) {
+                return;
+            }
+
+            if ($trip->scheduled_end_at === null || $trip->scheduled_end_at <= $trip->scheduled_at) {
+                $trip->scheduled_end_at = Trip::estimateEndAt($trip->scheduled_at);
+            }
+        });
     }
 
     /**

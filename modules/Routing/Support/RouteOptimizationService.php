@@ -148,11 +148,13 @@ class RouteOptimizationService
      */
     private function eligibleVehicles(\DateTimeInterface|string $date): Collection
     {
+        [$startsAt, $endsAt] = $this->planningWindow($date);
+
         return Vehicle::query()
             ->where('status', Vehicle::STATUS_ACTIVE)
             ->orderBy('id')
             ->get()
-            ->filter(fn (Vehicle $vehicle): bool => Trip::vehicleDispatchReasons($vehicle, $date) === [])
+            ->filter(fn (Vehicle $vehicle): bool => Trip::vehicleDispatchReasons($vehicle, $startsAt, $endsAt) === [])
             ->values();
     }
 
@@ -161,11 +163,25 @@ class RouteOptimizationService
      */
     private function eligibleDrivers(\DateTimeInterface|string $date): Collection
     {
+        [$startsAt, $endsAt] = $this->planningWindow($date);
+
         return Driver::query()
             ->where('status', Driver::STATUS_AVAILABLE)
             ->orderBy('id')
             ->get()
-            ->filter(fn (Driver $driver): bool => Trip::driverDispatchReasons($driver, $date) === [])
+            ->filter(fn (Driver $driver): bool => Trip::driverDispatchReasons($driver, $startsAt, $endsAt) === [])
             ->values();
+    }
+
+    /**
+     * Default apply window used by RoutePlanApplier (08:00 + default duration).
+     *
+     * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}
+     */
+    private function planningWindow(\DateTimeInterface|string $date): array
+    {
+        $startsAt = \Illuminate\Support\Carbon::parse($date)->copy()->setTime(8, 0);
+
+        return [$startsAt, Trip::estimateEndAt($startsAt)];
     }
 }

@@ -10,17 +10,12 @@ use Modules\TransportationManagement\Models\Trip;
 
 class UpdateTripRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -33,43 +28,85 @@ class UpdateTripRequest extends FormRequest
             'destination' => ['sometimes', 'required', 'string', 'max:255'],
             'cargo_notes' => ['nullable', 'string', 'max:2000'],
             'scheduled_at' => ['sometimes', 'required', 'date'],
+            'scheduled_end_at' => ['sometimes', 'nullable', 'date', 'after:scheduled_at'],
             'distance_km' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
-    /**
-     * The reassigned vehicle/driver must be dispatchable for the effective
-     * date, excluding this trip itself. Only a resource actually present in the
-     * request is checked, so editing an unrelated field never fails because a
-     * paper expired since dispatch. Same rule as Store, shared on Trip.
-     */
+    protected function prepareForValidation(): void
+    {
+        /** @var Trip|null $trip */
+        $trip = $this->route('trip');
+        $startsAt = $this->input('scheduled_at', $trip?->scheduled_at);
+
+        if (! $startsAt) {
+            return;
+        }
+
+        if ($this->filled('scheduled_end_at')) {
+            return;
+        }
+
+        if (! $this->has('scheduled_at') && ! $this->has('distance_km') && $trip?->scheduled_end_at) {
+            return;
+        }
+
+        $distance = $this->filled('distance_km')
+            ? (float) $this->input('distance_km')
+            : ($trip?->distance_km !== null ? (float) $trip->distance_km : null);
+
+        $this->merge([
+            'scheduled_end_at' => Trip::estimateEndAt($startsAt, $distance)->toDateTimeString(),
+        ]);
+    }
+
     public function withValidator(Validator $validator): void
     {
-        $validator->after(function (Validator $validator) {
+        $validator->after(function (Validator $validator): void {
+            /** @var Trip|null $trip */
             $trip = $this->route('trip');
-            $date = $this->input('scheduled_at', $trip?->scheduled_at);
+            $startsAt = $this->input('scheduled_at', $trip?->scheduled_at);
+            $endsAt = $this->input('scheduled_end_at', $trip?->scheduled_end_at);
 
-            if (! $date) {
+            if (! $startsAt) {
                 return;
             }
 
-            if ($this->has('vehicle_id') && ($vehicle = Vehicle::find($this->input('vehicle_id')))) {
-                foreach (Trip::vehicleDispatchReasons($vehicle, $date, $trip?->id) as $reason) {
-                    $validator->errors()->add('vehicle_id', $reason);
+            $distance = $this->filled('distance_km')
+                ? (float) $this->input('distance_km')
+                : ($trip?->distance_km !== null ? (float) $trip->distance_km : null);
+
+            $windowTouched = $this->has('scheduled_at')
+                || $this->has('scheduled_end_at')
+                || $this->has('vehicle_id')
+                || $this->has('driver_id')
+                || $this->has('distance_km');
+
+            if (! $windowTouched) {
+                return;
+            }
+
+            if ($this->has('vehicle_id') || $this->has('scheduled_at') || $this->has('scheduled_end_at') || $this->has('distance_km')) {
+                $vehicleId = $this->input('vehicle_id', $trip?->vehicle_id);
+                if ($vehicle = Vehicle::find($vehicleId)) {
+                    foreach (Trip::vehicleDispatchReasons($vehicle, $startsAt, $endsAt, $trip?->id, $distance) as $reason) {
+                        $validator->errors()->add('vehicle_id', $reason);
+                    }
                 }
             }
 
-            if ($this->has('driver_id') && ($driver = Driver::find($this->input('driver_id')))) {
-                foreach (Trip::driverDispatchReasons($driver, $date, $trip?->id) as $reason) {
-                    $validator->errors()->add('driver_id', $reason);
+            if ($this->has('driver_id') || $this->has('scheduled_at') || $this->has('scheduled_end_at') || $this->has('distance_km')) {
+                $driverId = $this->input('driver_id', $trip?->driver_id);
+                if ($driver = Driver::find($driverId)) {
+                    foreach (Trip::driverDispatchReasons($driver, $startsAt, $endsAt, $trip?->id, $distance) as $reason) {
+                        $validator->errors()->add('driver_id', $reason);
+                    }
                 }
             }
         });
     }
 
     /**
-     * Get custom messages for validator errors.
-     *
      * @return array<string, string>
      */
     public function messages(): array
@@ -78,6 +115,7 @@ class UpdateTripRequest extends FormRequest
             'vehicle_id.exists' => __('transportation.validation.vehicle_exists'),
             'driver_id.exists' => __('transportation.validation.driver_exists'),
             'partner_id.exists' => __('transportation.validation.partner_exists'),
+            'scheduled_end_at.after' => __('transportation.validation.scheduled_end_after'),
         ];
     }
 }

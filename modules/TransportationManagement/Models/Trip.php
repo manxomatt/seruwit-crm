@@ -25,6 +25,15 @@ class Trip extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    /** Default planned window when no end time / duration / distance is given. */
+    public const DEFAULT_DURATION_MINUTES = 480;
+
+    /** Assumed average speed (km/h) when estimating end from distance. */
+    public const ESTIMATE_SPEED_KPH = 40;
+
+    /** Buffer minutes added on top of travel time estimates (loading / stops). */
+    public const ESTIMATE_BUFFER_MINUTES = 60;
+
     /**
      * Factory resolution assumes App\Models, so a module's models must point at
      * their own factory explicitly.
@@ -47,6 +56,7 @@ class Trip extends Model
         'destination',
         'cargo_notes',
         'scheduled_at',
+        'scheduled_end_at',
         'started_at',
         'completed_at',
         'distance_km',
@@ -61,6 +71,7 @@ class Trip extends Model
     {
         return [
             'scheduled_at' => 'datetime',
+            'scheduled_end_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'distance_km' => 'decimal:2',
@@ -146,25 +157,108 @@ class Trip extends Model
     }
 
     /**
-     * Whether $column (vehicle_id or driver_id) already has an active trip on
-     * $date. Trip has no duration/end time, so "conflict" is scoped to the
-     * calendar date rather than a true time-overlap check — a vehicle/driver
-     * can be dispatched again on a different day, just not twice on the same
-     * one. Shared by StoreTripRequest/UpdateTripRequest and
-     * TripSchedule::generateTripsBetween() so the rule has one definition.
+     * Estimate a planned end time from start + optional duration or distance.
      */
-    public static function hasActiveTripOn(string $column, int $id, string|\DateTimeInterface $date, ?int $excludingTripId = null): bool
-    {
+    public static function estimateEndAt(
+        \DateTimeInterface|string $startsAt,
+        ?float $distanceKm = null,
+        ?int $durationMinutes = null,
+    ): \Illuminate\Support\Carbon {
+        $start = \Illuminate\Support\Carbon::parse($startsAt);
+
+        if ($durationMinutes !== null) {
+            return $start->copy()->addMinutes(max(1, $durationMinutes));
+        }
+
+        if ($distanceKm !== null && $distanceKm > 0) {
+            $travelMinutes = (int) round(($distanceKm / self::ESTIMATE_SPEED_KPH) * 60);
+            $minutes = max(60, $travelMinutes + self::ESTIMATE_BUFFER_MINUTES);
+
+            return $start->copy()->addMinutes($minutes);
+        }
+
+        return $start->copy()->addMinutes(self::DEFAULT_DURATION_MINUTES);
+    }
+
+    /**
+     * Resolve a dispatch window. A date-only string (no clock time) with no
+     * explicit end becomes the full calendar day — used by rental day checks.
+     *
+     * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}
+     */
+    public static function resolveWindow(
+        \DateTimeInterface|string $startsAt,
+        \DateTimeInterface|string|null $endsAt = null,
+        ?float $distanceKm = null,
+        ?int $durationMinutes = null,
+    ): array {
+        $start = \Illuminate\Support\Carbon::parse($startsAt);
+
+        if ($endsAt !== null) {
+            $end = \Illuminate\Support\Carbon::parse($endsAt);
+
+            if ($end->lte($start)) {
+                $end = $start->copy()->addMinute();
+            }
+
+            return [$start, $end];
+        }
+
+        if (is_string($startsAt) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startsAt) === 1) {
+            return [$start->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
+        return [$start, self::estimateEndAt($start, $distanceKm, $durationMinutes)];
+    }
+
+    /**
+     * Whether $column (vehicle_id or driver_id) already has an active trip
+     * whose planned window overlaps [$startsAt, $endsAt).
+     */
+    public static function hasOverlappingTrip(
+        string $column,
+        int $id,
+        \DateTimeInterface|string $startsAt,
+        \DateTimeInterface|string|null $endsAt = null,
+        ?int $excludingTripId = null,
+        ?float $distanceKm = null,
+        ?int $durationMinutes = null,
+    ): bool {
+        [$start, $end] = self::resolveWindow($startsAt, $endsAt, $distanceKm, $durationMinutes);
+
         return static::query()
             ->where($column, $id)
             ->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS])
-            ->whereDate('scheduled_at', $date)
+            ->where('scheduled_at', '<', $end)
+            ->where(function ($query) use ($start): void {
+                $query->where('scheduled_end_at', '>', $start)
+                    ->orWhere(function ($legacy) use ($start): void {
+                        $legacy->whereNull('scheduled_end_at')
+                            ->whereRaw('scheduled_at + interval \''.self::defaultDurationSql().'\' > ?', [$start]);
+                    });
+            })
             ->when($excludingTripId, fn ($query) => $query->where('id', '!=', $excludingTripId))
             ->exists();
     }
 
+    private static function defaultDurationSql(): string
+    {
+        return self::DEFAULT_DURATION_MINUTES.' minutes';
+    }
+
     /**
-     * Reasons a vehicle cannot be dispatched on $date, empty when it can.
+     * @deprecated Prefer hasOverlappingTrip() — kept as a date-scoped alias for
+     * rental day checks (full calendar day window).
+     */
+    public static function hasActiveTripOn(string $column, int $id, string|\DateTimeInterface $date, ?int $excludingTripId = null): bool
+    {
+        $day = \Illuminate\Support\Carbon::parse($date)->toDateString();
+
+        return self::hasOverlappingTrip($column, $id, $day, null, $excludingTripId);
+    }
+
+    /**
+     * Reasons a vehicle cannot be dispatched in the given window, empty when it can.
      *
      * Reads Fleet's own columns (status, STNK/KIR expiry) — a downward
      * dependency, so Fleet stays ignorant of Transportation. Expiry dates
@@ -175,8 +269,14 @@ class Trip extends Model
      *
      * @return list<string>
      */
-    public static function vehicleDispatchReasons(Vehicle $vehicle, string|\DateTimeInterface $date, ?int $excludingTripId = null): array
-    {
+    public static function vehicleDispatchReasons(
+        Vehicle $vehicle,
+        \DateTimeInterface|string $startsAt,
+        \DateTimeInterface|string|null $endsAt = null,
+        ?int $excludingTripId = null,
+        ?float $distanceKm = null,
+        ?int $durationMinutes = null,
+    ): array {
         $reasons = [];
 
         if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
@@ -186,7 +286,7 @@ class Trip extends Model
             ]);
         }
 
-        if (self::hasActiveTripOn('vehicle_id', $vehicle->id, $date, $excludingTripId)) {
+        if (self::hasOverlappingTrip('vehicle_id', $vehicle->id, $startsAt, $endsAt, $excludingTripId, $distanceKm, $durationMinutes)) {
             $reasons[] = __('transportation.messages.vehicle_has_trip', ['name' => $vehicle->name]);
         }
 
@@ -202,12 +302,18 @@ class Trip extends Model
     }
 
     /**
-     * Reasons a driver cannot be dispatched on $date, empty when they can.
+     * Reasons a driver cannot be dispatched in the given window, empty when they can.
      *
      * @return list<string>
      */
-    public static function driverDispatchReasons(Driver $driver, string|\DateTimeInterface $date, ?int $excludingTripId = null): array
-    {
+    public static function driverDispatchReasons(
+        Driver $driver,
+        \DateTimeInterface|string $startsAt,
+        \DateTimeInterface|string|null $endsAt = null,
+        ?int $excludingTripId = null,
+        ?float $distanceKm = null,
+        ?int $durationMinutes = null,
+    ): array {
         $reasons = [];
 
         if ($driver->status !== Driver::STATUS_AVAILABLE) {
@@ -217,7 +323,7 @@ class Trip extends Model
             ]);
         }
 
-        if (self::hasActiveTripOn('driver_id', $driver->id, $date, $excludingTripId)) {
+        if (self::hasOverlappingTrip('driver_id', $driver->id, $startsAt, $endsAt, $excludingTripId, $distanceKm, $durationMinutes)) {
             $reasons[] = __('transportation.messages.driver_has_trip', ['name' => $driver->name]);
         }
 

@@ -5,6 +5,7 @@ namespace Modules\TransportationManagement\Http\Requests;
 use App\Modules\Facades\Modules;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Models\Rental;
@@ -12,17 +13,12 @@ use Modules\TransportationManagement\Models\Trip;
 
 class StoreTripRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -35,55 +31,75 @@ class StoreTripRequest extends FormRequest
             'destination' => ['required', 'string', 'max:255'],
             'cargo_notes' => ['nullable', 'string', 'max:2000'],
             'scheduled_at' => ['required', 'date'],
+            'scheduled_end_at' => ['nullable', 'date', 'after:scheduled_at'],
             'distance_km' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('scheduled_at')) {
+            return;
+        }
+
+        if ($this->filled('scheduled_end_at')) {
+            return;
+        }
+
+        $distance = $this->filled('distance_km') ? (float) $this->input('distance_km') : null;
+
+        $this->merge([
+            'scheduled_end_at' => Trip::estimateEndAt($this->input('scheduled_at'), $distance)->toDateTimeString(),
+        ]);
+    }
+
     /**
-     * A vehicle/driver must be dispatchable for the chosen date: not
-     * double-booked, active/available, and with valid papers. The rule lives
-     * on Trip (reading Fleet's columns downward) so Store, Update and recurring
-     * generation all share one definition.
+     * A vehicle/driver must be dispatchable for the chosen time window: not
+     * overlapping another active trip, active/available, and with valid papers.
      */
     public function withValidator(Validator $validator): void
     {
-        $validator->after(function (Validator $validator) {
-            $date = $this->input('scheduled_at');
+        $validator->after(function (Validator $validator): void {
+            $startsAt = $this->input('scheduled_at');
+            $endsAt = $this->input('scheduled_end_at');
 
-            if (! $date) {
+            if (! $startsAt) {
                 return;
             }
 
+            $distance = $this->filled('distance_km') ? (float) $this->input('distance_km') : null;
+
             if ($vehicle = Vehicle::find($this->input('vehicle_id'))) {
-                foreach (Trip::vehicleDispatchReasons($vehicle, $date, $this->excludingTripId()) as $reason) {
+                foreach (Trip::vehicleDispatchReasons($vehicle, $startsAt, $endsAt, $this->excludingTripId(), $distance) as $reason) {
                     $validator->errors()->add('vehicle_id', $reason);
                 }
 
-                // Guard against double-booking a vehicle that is in an active rental.
-                if (Modules::available('rental') && Rental::hasOverlapFor($vehicle->id, $date, $date, null)) {
-                    $validator->errors()->add('vehicle_id', "Vehicle {$vehicle->name} is blocked by an active rental on this date.");
+                if (Modules::available('rental')) {
+                    $startDay = Carbon::parse($startsAt)->toDateString();
+                    $endDay = Carbon::parse($endsAt ?: $startsAt)->toDateString();
+
+                    if (Rental::hasOverlapFor($vehicle->id, $startDay, $endDay, null)) {
+                        $validator->errors()->add('vehicle_id', __('transportation.messages.vehicle_rental_blocked', [
+                            'name' => $vehicle->name,
+                        ]));
+                    }
                 }
             }
 
             if ($driver = Driver::find($this->input('driver_id'))) {
-                foreach (Trip::driverDispatchReasons($driver, $date, $this->excludingTripId()) as $reason) {
+                foreach (Trip::driverDispatchReasons($driver, $startsAt, $endsAt, $this->excludingTripId(), $distance) as $reason) {
                     $validator->errors()->add('driver_id', $reason);
                 }
             }
         });
     }
 
-    /**
-     * The trip to exclude from double-booking checks — none when creating.
-     */
     protected function excludingTripId(): ?int
     {
         return null;
     }
 
     /**
-     * Get custom messages for validator errors.
-     *
      * @return array<string, string>
      */
     public function messages(): array
@@ -95,6 +111,7 @@ class StoreTripRequest extends FormRequest
             'driver_id.exists' => __('transportation.validation.driver_exists'),
             'partner_id.required' => __('transportation.validation.partner_required'),
             'partner_id.exists' => __('transportation.validation.partner_exists'),
+            'scheduled_end_at.after' => __('transportation.validation.scheduled_end_after'),
         ];
     }
 }

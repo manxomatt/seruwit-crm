@@ -79,6 +79,7 @@ interface Trip {
     destination: string;
     cargo_notes: string | null;
     scheduled_at: string;
+    scheduled_end_at: string | null;
     started_at: string | null;
     completed_at: string | null;
     distance_km: string | null;
@@ -383,6 +384,12 @@ export default function Show({ trip, products, ordersEnabled, trackingEnabled, l
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.scheduled_at')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{formatDateTime(trip.scheduled_at, localeTag)}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-gray-500">{t('transportation.fields.scheduled_end_at')}</dt>
+                                <dd className="mt-1 text-sm text-gray-900">
+                                    {trip.scheduled_end_at ? formatDateTime(trip.scheduled_end_at, localeTag) : '—'}
+                                </dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Started At</dt>

@@ -32,10 +32,18 @@ class StoreTripScheduleRequest extends FormRequest
             'days_of_week' => ['required', 'array', 'min:1'],
             'days_of_week.*' => ['integer', 'between:0,6'],
             'time_of_day' => ['required', 'date_format:H:i'],
+            'duration_minutes' => ['nullable', 'integer', 'min:15', 'max:10080'],
             'starts_on' => ['required', 'date'],
             'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
             'is_active' => ['boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('duration_minutes')) {
+            $this->merge(['duration_minutes' => 480]);
+        }
     }
 
     /**
