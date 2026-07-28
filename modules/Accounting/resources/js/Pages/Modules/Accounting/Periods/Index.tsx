@@ -1,7 +1,9 @@
 import AccountingShell from '../AccountingShell';
+import { HardCloseIcon, ReopenIcon, SoftCloseIcon } from '../icons';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import { Link, router, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
@@ -40,22 +42,20 @@ export default function Index({ year, years, periods, can }: Props): JSX.Element
     return (
         <AccountingShell active="periods" title={t('accounting.periods.title')}>
             <div className="mb-4 flex flex-wrap items-center gap-3">
-                <label className="text-sm text-gray-600">
-                    {t('accounting.periods.year')}
-                    <select
-                        className="ml-2 rounded-md border-gray-300 text-sm shadow-sm"
-                        value={year}
-                        onChange={(e) =>
-                            router.get(prefixedRoute('accounting.periods.index'), { year: e.target.value }, { preserveState: true })
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">{t('accounting.periods.year')}</span>
+                    <Select
+                        className="w-32"
+                        value={String(year)}
+                        onChange={(value) =>
+                            router.get(prefixedRoute('accounting.periods.index'), { year: value }, { preserveState: true })
                         }
-                    >
-                        {years.map((y) => (
-                            <option key={y.id} value={y.year}>
-                                {y.year}
-                            </option>
-                        ))}
-                    </select>
-                </label>
+                        options={years.map((y) => ({
+                            value: String(y.year),
+                            label: String(y.year),
+                        }))}
+                    />
+                </div>
                 {can.period && (
                     <form onSubmit={ensureYear} className="flex items-center gap-2">
                         <input
@@ -76,7 +76,9 @@ export default function Index({ year, years, periods, can }: Props): JSX.Element
                             <th className="px-4 py-3">{t('accounting.periods.name')}</th>
                             <th className="px-4 py-3">{t('accounting.periods.range')}</th>
                             <th className="px-4 py-3">{t('accounting.periods.status')}</th>
-                            {can.period && <th className="px-4 py-3" />}
+                            {can.period && (
+                                <th className="px-4 py-3 text-right">{t('common.actions')}</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -90,37 +92,42 @@ export default function Index({ year, years, periods, can }: Props): JSX.Element
                                     {t(`accounting.period_status.${period.status}`, undefined, period.status)}
                                 </td>
                                 {can.period && (
-                                    <td className="space-x-2 px-4 py-3 text-right text-sm">
-                                        {period.status !== 'soft_close' && period.status !== 'hard_close' && (
-                                            <Link
-                                                href={prefixedRoute('accounting.periods.soft-close', period.id)}
-                                                method="post"
-                                                as="button"
-                                                className="text-amber-600 hover:text-amber-800"
-                                            >
-                                                {t('accounting.periods.soft_close')}
-                                            </Link>
-                                        )}
-                                        {period.status !== 'hard_close' && (
-                                            <Link
-                                                href={prefixedRoute('accounting.periods.hard-close', period.id)}
-                                                method="post"
-                                                as="button"
-                                                className="text-red-600 hover:text-red-800"
-                                            >
-                                                {t('accounting.periods.hard_close')}
-                                            </Link>
-                                        )}
-                                        {period.status !== 'open' && (
-                                            <Link
-                                                href={prefixedRoute('accounting.periods.reopen', period.id)}
-                                                method="post"
-                                                as="button"
-                                                className="text-indigo-600 hover:text-indigo-800"
-                                            >
-                                                {t('accounting.periods.reopen')}
-                                            </Link>
-                                        )}
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            {period.status !== 'soft_close' && period.status !== 'hard_close' && (
+                                                <Link
+                                                    href={prefixedRoute('accounting.periods.soft-close', period.id)}
+                                                    method="post"
+                                                    as="button"
+                                                    className="text-amber-600 hover:text-amber-800"
+                                                    title={t('accounting.periods.soft_close')}
+                                                >
+                                                    <SoftCloseIcon />
+                                                </Link>
+                                            )}
+                                            {period.status !== 'hard_close' && (
+                                                <Link
+                                                    href={prefixedRoute('accounting.periods.hard-close', period.id)}
+                                                    method="post"
+                                                    as="button"
+                                                    className="text-red-600 hover:text-red-800"
+                                                    title={t('accounting.periods.hard_close')}
+                                                >
+                                                    <HardCloseIcon />
+                                                </Link>
+                                            )}
+                                            {period.status !== 'open' && (
+                                                <Link
+                                                    href={prefixedRoute('accounting.periods.reopen', period.id)}
+                                                    method="post"
+                                                    as="button"
+                                                    className="text-indigo-600 hover:text-indigo-900"
+                                                    title={t('accounting.periods.reopen')}
+                                                >
+                                                    <ReopenIcon />
+                                                </Link>
+                                            )}
+                                        </div>
                                     </td>
                                 )}
                             </tr>

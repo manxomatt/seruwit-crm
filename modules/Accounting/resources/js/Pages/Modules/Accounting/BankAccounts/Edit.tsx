@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
@@ -42,7 +43,7 @@ export default function Edit({ account, kinds, ledgerAccounts }: Props): JSX.Ele
         bank_name: account.bank_name ?? '',
         account_number: account.account_number ?? '',
         account_holder: account.account_holder ?? '',
-        account_id: account.account_id,
+        account_id: String(account.account_id),
         is_default: account.is_default,
         is_active: account.is_active,
         currency: account.currency,
@@ -63,34 +64,34 @@ export default function Edit({ account, kinds, ledgerAccounts }: Props): JSX.Ele
                 </div>
                 <div>
                     <InputLabel htmlFor="kind" value={t('accounting.bank.kind')} />
-                    <select
+                    <Select
                         id="kind"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        className="mt-1"
                         value={data.kind}
-                        onChange={(e) => setData('kind', e.target.value)}
-                    >
-                        {kinds.map((kind) => (
-                            <option key={kind} value={kind}>
-                                {t(`accounting.bank.kinds.${kind}`, undefined, kind)}
-                            </option>
-                        ))}
-                    </select>
+                        onChange={(value) => setData('kind', value)}
+                        options={kinds.map((kind) => ({
+                            value: kind,
+                            label: t(`accounting.bank.kinds.${kind}`, undefined, kind),
+                        }))}
+                    />
                 </div>
                 <div>
                     <InputLabel htmlFor="account_id" value={t('accounting.bank.coa')} />
-                    <select
+                    <Select
                         id="account_id"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                        value={data.account_id}
-                        onChange={(e) => setData('account_id', Number(e.target.value))}
-                        required
-                    >
-                        {ledgerAccounts.map((ledger) => (
-                            <option key={ledger.id} value={ledger.id}>
-                                {ledger.code} — {ledger.name}
-                            </option>
-                        ))}
-                    </select>
+                        className="mt-1"
+                        searchable
+                        value={String(data.account_id)}
+                        onChange={(value) => setData('account_id', value)}
+                        placeholder={t('accounting.bank.select_coa')}
+                        searchPlaceholder={t('common.search')}
+                        emptyText={t('common.no_options')}
+                        noResultsText={t('common.no_results')}
+                        options={ledgerAccounts.map((ledger) => ({
+                            value: String(ledger.id),
+                            label: `${ledger.code} — ${ledger.name}`,
+                        }))}
+                    />
                     <InputError message={errors.account_id} className="mt-1" />
                 </div>
                 {data.kind === 'bank' && (

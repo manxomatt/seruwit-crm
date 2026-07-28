@@ -91,6 +91,7 @@ return [
             'empty' => 'Belum ada pembayaran.',
             'overdue_alert' => ':count invoice overdue — :amount past due.',
             'view_aging' => 'Lihat aging',
+            'all_statuses' => 'Semua status',
         ],
         'create' => [
             'title' => 'Rekam Pembayaran',

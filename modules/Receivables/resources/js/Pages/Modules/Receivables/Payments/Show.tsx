@@ -2,7 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
-import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
 import ReceivablesNav from '../../../../ReceivablesNav';
@@ -56,7 +56,7 @@ export default function Show({ payment, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-semibold text-gray-800">{payment.code}</h2>
                         <span
@@ -69,7 +69,7 @@ export default function Show({ payment, can }: Props): JSX.Element {
                     </div>
                     <div className="flex gap-2">
                         <Link href={prefixedRoute('receivables.payments.index')}>
-                            <PrimaryButton>{t('receivables.actions.back')}</PrimaryButton>
+                            <SecondaryButton type="button">{t('common.back')}</SecondaryButton>
                         </Link>
                         {can.delete && payment.status === 'posted' && (
                             <DangerButton onClick={voidPayment}>{t('receivables.actions.void')}</DangerButton>
@@ -79,56 +79,71 @@ export default function Show({ payment, can }: Props): JSX.Element {
             }
         >
             <Head title={payment.code} />
-            <div className="py-6">
-                <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <ReceivablesNav />
 
-                    <div className="grid gap-4 rounded-lg border border-gray-200 bg-white p-6 sm:grid-cols-2">
-                        <div>
-                            <p className="text-xs text-gray-500">{t('receivables.fields.partner')}</p>
-                            <p className="font-medium">{payment.partner.name}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">{t('receivables.fields.date')}</p>
-                            <p className="font-medium">{new Date(payment.payment_date).toLocaleDateString(localeTag)}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">{t('receivables.fields.type_method')}</p>
-                            <p className="font-medium">
-                                {t(`receivables.types.${payment.type}`, undefined, payment.type)} ·{' '}
-                                {t(`receivables.methods.${payment.method}`, undefined, payment.method)}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">{t('receivables.fields.amount')}</p>
-                            <p className="text-xl font-semibold tabular-nums">{formatMoney(payment.amount)}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">{t('receivables.fields.reference_number')}</p>
-                            <p className="font-medium">{payment.reference_number || '—'}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500">{t('receivables.fields.recorded_by')}</p>
-                            <p className="font-medium">{payment.recorder?.name ?? '—'}</p>
-                        </div>
-                        {payment.notes && (
-                            <div className="sm:col-span-2">
-                                <p className="text-xs text-gray-500">{t('receivables.fields.notes')}</p>
-                                <p className="text-gray-700">{payment.notes}</p>
-                            </div>
-                        )}
+            <ReceivablesNav />
+
+            <div className="max-w-4xl space-y-6">
+                <div className="grid gap-4 rounded-lg bg-white p-6 shadow-sm sm:grid-cols-2">
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-500">{t('receivables.fields.partner')}</p>
+                        <p className="mt-1 font-medium text-gray-900">{payment.partner.name}</p>
                     </div>
-
-                    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-800">
-                            {t('receivables.payments.show.allocations')}
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-500">{t('receivables.fields.date')}</p>
+                        <p className="mt-1 font-medium text-gray-900">
+                            {new Date(payment.payment_date).toLocaleDateString(localeTag)}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-500">{t('receivables.fields.type_method')}</p>
+                        <p className="mt-1 font-medium text-gray-900">
+                            {t(`receivables.types.${payment.type}`, undefined, payment.type)} ·{' '}
+                            {t(`receivables.methods.${payment.method}`, undefined, payment.method)}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-500">{t('receivables.fields.amount')}</p>
+                        <p className="mt-1 text-xl font-semibold tabular-nums text-gray-900">
+                            {formatMoney(payment.amount)}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-500">
+                            {t('receivables.fields.reference_number')}
+                        </p>
+                        <p className="mt-1 font-medium text-gray-900">{payment.reference_number || '—'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs uppercase tracking-wider text-gray-500">
+                            {t('receivables.fields.recorded_by')}
+                        </p>
+                        <p className="mt-1 font-medium text-gray-900">{payment.recorder?.name ?? '—'}</p>
+                    </div>
+                    {payment.notes && (
+                        <div className="sm:col-span-2">
+                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('receivables.fields.notes')}</p>
+                            <p className="mt-1 text-gray-700">{payment.notes}</p>
                         </div>
+                    )}
+                </div>
+
+                <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+                    <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-800">
+                        {t('receivables.payments.show.allocations')}
+                    </div>
+                    <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.invoice')}</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('receivables.fields.status')}</th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">{t('receivables.fields.allocated')}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        {t('receivables.fields.invoice')}
+                                    </th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        {t('receivables.fields.status')}
+                                    </th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        {t('receivables.fields.allocated')}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -142,8 +157,12 @@ export default function Show({ payment, can }: Props): JSX.Element {
                                                 {row.invoice.code}
                                             </Link>
                                         </td>
-                                        <td className="px-4 py-2 capitalize text-gray-600">{row.invoice.status.replace('_', ' ')}</td>
-                                        <td className="px-4 py-2 text-right tabular-nums">{formatMoney(row.amount)}</td>
+                                        <td className="px-4 py-2 capitalize text-gray-600">
+                                            {row.invoice.status.replace('_', ' ')}
+                                        </td>
+                                        <td className="px-4 py-2 text-right tabular-nums">
+                                            {formatMoney(row.amount)}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

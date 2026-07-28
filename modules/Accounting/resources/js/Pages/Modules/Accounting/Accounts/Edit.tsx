@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
@@ -40,7 +41,7 @@ export default function Edit({ account, types, parents }: Props): JSX.Element {
         code: account.code,
         name: account.name,
         type: account.type,
-        parent_id: account.parent_id ?? ('' as string | number),
+        parent_id: account.parent_id ? String(account.parent_id) : '',
         is_postable: account.is_postable,
         is_active: account.is_active,
         normal_balance: account.normal_balance,
@@ -67,34 +68,37 @@ export default function Edit({ account, types, parents }: Props): JSX.Element {
                 </div>
                 <div>
                     <InputLabel htmlFor="type" value={t('accounting.accounts.type')} />
-                    <select
+                    <Select
                         id="type"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        className="mt-1"
                         value={data.type}
-                        onChange={(e) => setData('type', e.target.value)}
-                    >
-                        {types.map((type) => (
-                            <option key={type} value={type}>
-                                {t(`accounting.types.${type}`, undefined, type)}
-                            </option>
-                        ))}
-                    </select>
+                        onChange={(value) => setData('type', value)}
+                        options={types.map((type) => ({
+                            value: type,
+                            label: t(`accounting.types.${type}`, undefined, type),
+                        }))}
+                    />
                 </div>
                 <div>
                     <InputLabel htmlFor="parent_id" value={t('accounting.accounts.parent')} />
-                    <select
+                    <Select
                         id="parent_id"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                        value={data.parent_id}
-                        onChange={(e) => setData('parent_id', e.target.value)}
-                    >
-                        <option value="">{t('accounting.accounts.no_parent')}</option>
-                        {parents.map((parent) => (
-                            <option key={parent.id} value={parent.id}>
-                                {parent.code} — {parent.name}
-                            </option>
-                        ))}
-                    </select>
+                        className="mt-1"
+                        searchable
+                        value={String(data.parent_id)}
+                        onChange={(value) => setData('parent_id', value)}
+                        placeholder={t('accounting.accounts.no_parent')}
+                        searchPlaceholder={t('common.search')}
+                        emptyText={t('common.no_options')}
+                        noResultsText={t('common.no_results')}
+                        options={[
+                            { value: '', label: t('accounting.accounts.no_parent') },
+                            ...parents.map((parent) => ({
+                                value: String(parent.id),
+                                label: `${parent.code} — ${parent.name}`,
+                            })),
+                        ]}
+                    />
                 </div>
                 <div className="flex gap-6">
                     <label className="flex items-center gap-2 text-sm text-gray-700">

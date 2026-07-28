@@ -1,6 +1,7 @@
 import AccountingShell from '../AccountingShell';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
+import Select from '@/Components/Select';
 import { formatMoney } from '@/utils/money';
 import { router } from '@inertiajs/react';
 
@@ -20,26 +21,28 @@ export default function TrialBalance({ period, periods, rows, total_debit, total
     return (
         <AccountingShell active="trial_balance" title={t('accounting.trial_balance.title')}>
             <div className="mb-4 flex flex-wrap items-center gap-3">
-                <label className="text-sm text-gray-600">
-                    {t('accounting.trial_balance.period')}
-                    <select
-                        className="ml-2 rounded-md border-gray-300 text-sm shadow-sm"
-                        value={period.id}
-                        onChange={(e) =>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">{t('accounting.trial_balance.period')}</span>
+                    <Select
+                        className="w-56"
+                        searchable
+                        value={String(period.id)}
+                        onChange={(value) =>
                             router.get(
                                 prefixedRoute('accounting.reports.trial-balance'),
-                                { period_id: e.target.value },
+                                { period_id: value },
                                 { preserveState: true },
                             )
                         }
-                    >
-                        {periods.map((p) => (
-                            <option key={p.id} value={p.id}>
-                                {p.name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
+                        searchPlaceholder={t('common.search')}
+                        emptyText={t('common.no_options')}
+                        noResultsText={t('common.no_results')}
+                        options={periods.map((p) => ({
+                            value: String(p.id),
+                            label: p.name,
+                        }))}
+                    />
+                </div>
                 <span className={`text-sm ${is_balanced ? 'text-green-700' : 'text-red-600'}`}>
                     {is_balanced ? t('accounting.trial_balance.balanced') : t('accounting.trial_balance.unbalanced')}
                 </span>

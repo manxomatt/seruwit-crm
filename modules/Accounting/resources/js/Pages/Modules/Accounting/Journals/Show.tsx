@@ -1,7 +1,7 @@
 import AccountingShell from '../AccountingShell';
+import { PencilIcon, PostIcon, TrashIcon } from '../icons';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import PrimaryButton from '@/Components/PrimaryButton';
 import { formatMoney } from '@/utils/money';
 import { Link } from '@inertiajs/react';
 
@@ -39,31 +39,44 @@ export default function Show({ journal, can }: Props): JSX.Element {
             active="journals"
             title={journal.number}
             headerActions={
-                <div className="flex gap-2">
-                    {journal.status === 'draft' && can.journal && (
-                        <Link href={prefixedRoute('accounting.journals.edit', journal.id)}>
-                            <PrimaryButton>{t('common.edit')}</PrimaryButton>
-                        </Link>
-                    )}
-                    {journal.status === 'draft' && can.post && (
-                        <Link href={prefixedRoute('accounting.journals.post', journal.id)} method="post" as="button">
-                            <PrimaryButton>{t('accounting.journals.post')}</PrimaryButton>
-                        </Link>
-                    )}
-                    {journal.status === 'draft' && can.journal && (
-                        <Link
-                            href={prefixedRoute('accounting.journals.destroy', journal.id)}
-                            method="delete"
-                            as="button"
-                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white"
-                        >
-                            {t('common.delete')}
-                        </Link>
-                    )}
-                </div>
+                journal.status === 'draft' ? (
+                    <div className="flex items-center gap-2">
+                        {can.journal && (
+                            <Link
+                                href={prefixedRoute('accounting.journals.edit', journal.id)}
+                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 p-2 text-white hover:bg-indigo-700"
+                                title={t('common.edit')}
+                            >
+                                <PencilIcon />
+                            </Link>
+                        )}
+                        {can.post && (
+                            <Link
+                                href={prefixedRoute('accounting.journals.post', journal.id)}
+                                method="post"
+                                as="button"
+                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 p-2 text-white hover:bg-green-700"
+                                title={t('accounting.journals.post')}
+                            >
+                                <PostIcon />
+                            </Link>
+                        )}
+                        {can.journal && (
+                            <Link
+                                href={prefixedRoute('accounting.journals.destroy', journal.id)}
+                                method="delete"
+                                as="button"
+                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 p-2 text-white hover:bg-red-700"
+                                title={t('common.delete')}
+                            >
+                                <TrashIcon />
+                            </Link>
+                        )}
+                    </div>
+                ) : undefined
             }
         >
-            <div className="mb-4 rounded-lg bg-white p-4 shadow-sm text-sm text-gray-700">
+            <div className="mb-4 rounded-lg bg-white p-4 text-sm text-gray-700 shadow-sm">
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                         <p className="text-xs uppercase text-gray-500">{t('accounting.journals.date')}</p>

@@ -4,10 +4,12 @@ import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { formatMoney } from '@/utils/money';
 import { useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
+import { TrashIcon } from '../icons';
 
 interface AccountOption {
     id: number;
@@ -42,12 +44,17 @@ export default function Edit({ journal, accounts }: Props): JSX.Element {
         entry_date: journal.entry_date,
         memo: journal.memo ?? '',
         lines: journal.lines.map((line) => ({
-            account_id: line.account_id,
-            debit: line.debit === 0 ? '' : String(line.debit),
-            credit: line.credit === 0 ? '' : String(line.credit),
+            account_id: line.account_id ? String(line.account_id) : '',
+            debit: line.debit === 0 || line.debit === '0' ? '' : String(line.debit),
+            credit: line.credit === 0 || line.credit === '0' ? '' : String(line.credit),
             memo: line.memo ?? '',
         })),
     });
+
+    const accountOptions = accounts.map((account) => ({
+        value: String(account.id),
+        label: `${account.code} — ${account.name}`,
+    }));
 
     const updateLine = (index: number, field: keyof Line, value: string) => {
         const lines = data.lines.map((line, i) => (i === index ? { ...line, [field]: value } : line));
@@ -99,19 +106,17 @@ export default function Edit({ journal, accounts }: Props): JSX.Element {
                             {data.lines.map((line, index) => (
                                 <tr key={index} className="border-b">
                                     <td className="px-2 py-2">
-                                        <select
-                                            className="w-full rounded-md border-gray-300 text-sm shadow-sm"
-                                            value={line.account_id}
-                                            onChange={(e) => updateLine(index, 'account_id', e.target.value)}
-                                            required
-                                        >
-                                            <option value="">{t('accounting.journals.select_account')}</option>
-                                            {accounts.map((account) => (
-                                                <option key={account.id} value={account.id}>
-                                                    {account.code} — {account.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <Select
+                                            searchable
+                                            className="min-w-[220px]"
+                                            value={String(line.account_id)}
+                                            onChange={(value) => updateLine(index, 'account_id', value)}
+                                            placeholder={t('accounting.journals.select_account')}
+                                            searchPlaceholder={t('common.search')}
+                                            emptyText={t('common.no_options')}
+                                            noResultsText={t('common.no_results')}
+                                            options={accountOptions}
+                                        />
                                     </td>
                                     <td className="px-2 py-2">
                                         <TextInput
@@ -144,10 +149,11 @@ export default function Edit({ journal, accounts }: Props): JSX.Element {
                                         {data.lines.length > 2 && (
                                             <button
                                                 type="button"
-                                                className="text-sm text-red-600"
+                                                className="inline-flex text-red-600 hover:text-red-800"
                                                 onClick={() => setData('lines', data.lines.filter((_, i) => i !== index))}
+                                                title={t('common.delete')}
                                             >
-                                                {t('common.delete')}
+                                                <TrashIcon />
                                             </button>
                                         )}
                                     </td>

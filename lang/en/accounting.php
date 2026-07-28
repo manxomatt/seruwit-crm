@@ -34,6 +34,16 @@ return [
         'posts_to' => 'Posts to',
         'use_method_default' => 'Use method default',
         'save_maps' => 'Save mapping',
+        'select_coa' => 'Select GL account',
+        'select_account' => 'Select cash/bank account',
+        'methods' => [
+            'cash' => 'Cash',
+            'transfer' => 'Transfer',
+            'giro' => 'Giro',
+            'card' => 'Card',
+            'qris' => 'QRIS',
+            'other' => 'Other',
+        ],
     ],
 
     'dashboard' => [

@@ -1,4 +1,5 @@
 import AccountingShell from '../AccountingShell';
+import { PencilIcon } from '../icons';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -46,7 +47,9 @@ export default function Index({ accounts, can }: Props): JSX.Element {
                             <th className="px-4 py-3">{t('accounting.accounts.type')}</th>
                             <th className="px-4 py-3">{t('accounting.accounts.normal_balance')}</th>
                             <th className="px-4 py-3">{t('accounting.accounts.status')}</th>
-                            {can.manage_coa && <th className="px-4 py-3" />}
+                            {can.manage_coa && (
+                                <th className="px-4 py-3 text-right">{t('common.actions')}</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -76,13 +79,16 @@ export default function Index({ accounts, can }: Props): JSX.Element {
                                           : t('accounting.accounts.header')}
                                 </td>
                                 {can.manage_coa && (
-                                    <td className="px-4 py-3 text-right text-sm">
-                                        <Link
-                                            href={prefixedRoute('accounting.accounts.edit', account.id)}
-                                            className="text-indigo-600 hover:text-indigo-800"
-                                        >
-                                            {t('common.edit')}
-                                        </Link>
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Link
+                                                href={prefixedRoute('accounting.accounts.edit', account.id)}
+                                                className="text-indigo-600 hover:text-indigo-900"
+                                                title={t('common.edit')}
+                                            >
+                                                <PencilIcon />
+                                            </Link>
+                                        </div>
                                     </td>
                                 )}
                             </tr>

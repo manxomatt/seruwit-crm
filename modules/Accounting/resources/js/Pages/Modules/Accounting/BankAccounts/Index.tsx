@@ -1,7 +1,9 @@
 import AccountingShell from '../AccountingShell';
+import { PencilIcon } from '../icons';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import { Link, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
@@ -51,6 +53,11 @@ export default function Index({ accounts, methods, maps, can }: Props): JSX.Elem
 
     const { data, setData, put, processing } = useForm({ maps: initialMaps });
 
+    const accountOptions = accounts.map((account) => ({
+        value: String(account.id),
+        label: `${account.name} (${t(`accounting.bank.kinds.${account.kind}`, undefined, account.kind)})`,
+    }));
+
     const submitMaps = (e: FormEvent) => {
         e.preventDefault();
         put(prefixedRoute('accounting.payment-method-maps.update'));
@@ -87,7 +94,9 @@ export default function Index({ accounts, methods, maps, can }: Props): JSX.Elem
                             <th className="px-4 py-3">{t('accounting.bank.coa')}</th>
                             <th className="px-4 py-3">{t('accounting.bank.details')}</th>
                             <th className="px-4 py-3">{t('accounting.accounts.status')}</th>
-                            {can.bank && <th className="px-4 py-3" />}
+                            {can.bank && (
+                                <th className="px-4 py-3 text-right">{t('common.actions')}</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -119,13 +128,16 @@ export default function Index({ accounts, methods, maps, can }: Props): JSX.Elem
                                     {account.is_active ? t('accounting.accounts.active') : t('accounting.accounts.inactive')}
                                 </td>
                                 {can.bank && (
-                                    <td className="px-4 py-3 text-right text-sm">
-                                        <Link
-                                            href={prefixedRoute('accounting.bank-accounts.edit', account.id)}
-                                            className="text-indigo-600 hover:text-indigo-800"
-                                        >
-                                            {t('common.edit')}
-                                        </Link>
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Link
+                                                href={prefixedRoute('accounting.bank-accounts.edit', account.id)}
+                                                className="text-indigo-600 hover:text-indigo-900"
+                                                title={t('common.edit')}
+                                            >
+                                                <PencilIcon />
+                                            </Link>
+                                        </div>
                                     </td>
                                 )}
                             </tr>
@@ -149,20 +161,22 @@ export default function Index({ accounts, methods, maps, can }: Props): JSX.Elem
                     <tbody>
                         {data.maps.map((row, index) => (
                             <tr key={row.payment_method} className="border-b">
-                                <td className="px-4 py-3 text-sm font-medium">{row.payment_method}</td>
+                                <td className="px-4 py-3 text-sm font-medium">
+                                    {t(`accounting.bank.methods.${row.payment_method}`, undefined, row.payment_method)}
+                                </td>
                                 <td className="px-4 py-3">
-                                    <select
-                                        className="w-full max-w-md rounded-md border-gray-300 text-sm shadow-sm"
-                                        value={row.company_bank_account_id}
+                                    <Select
+                                        className="max-w-md"
+                                        searchable
+                                        value={row.company_bank_account_id ? String(row.company_bank_account_id) : ''}
                                         disabled={!can.bank}
-                                        onChange={(e) => updateMap(index, Number(e.target.value))}
-                                    >
-                                        {accounts.map((account) => (
-                                            <option key={account.id} value={account.id}>
-                                                {account.name} ({account.kind})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(value) => updateMap(index, Number(value))}
+                                        placeholder={t('accounting.bank.select_account')}
+                                        searchPlaceholder={t('common.search')}
+                                        emptyText={t('common.no_options')}
+                                        noResultsText={t('common.no_results')}
+                                        options={accountOptions}
+                                    />
                                 </td>
                             </tr>
                         ))}

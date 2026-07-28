@@ -180,21 +180,22 @@ export default function Create({
                                 value={form.data.company_bank_account_id}
                                 onChange={(value) => form.setData('company_bank_account_id', value)}
                                 placeholder={t('accounting.bank.use_method_default')}
-                                options={[
-                                    { value: '', label: t('accounting.bank.use_method_default') },
-                                    ...companyBankAccounts
-                                        .filter((account) =>
-                                            form.data.method === 'cash'
-                                                ? account.kind === 'cash'
-                                                : account.kind === 'bank',
-                                        )
-                                        .map((account) => ({
-                                            value: String(account.id),
-                                            label: account.account_code
-                                                ? `${account.name} (${account.account_code})`
-                                                : account.name,
-                                        })),
-                                ]}
+                                searchable
+                                searchPlaceholder={t('common.search')}
+                                emptyText={t('common.no_options')}
+                                noResultsText={t('common.no_results')}
+                                options={companyBankAccounts
+                                    .filter((account) =>
+                                        form.data.method === 'cash'
+                                            ? account.kind === 'cash'
+                                            : account.kind === 'bank',
+                                    )
+                                    .map((account) => ({
+                                        value: String(account.id),
+                                        label: account.account_code
+                                            ? `${account.name} (${account.account_code})`
+                                            : account.name,
+                                    }))}
                             />
                             <InputError message={form.errors.company_bank_account_id} className="mt-1" />
                         </div>

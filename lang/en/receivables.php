@@ -91,6 +91,7 @@ return [
             'empty' => 'No payments yet.',
             'overdue_alert' => ':count invoice overdue — :amount past due.',
             'view_aging' => 'View aging',
+            'all_statuses' => 'All statuses',
         ],
         'create' => [
             'title' => 'Record Payment',

@@ -34,6 +34,16 @@ return [
         'posts_to' => 'Posting ke',
         'use_method_default' => 'Gunakan default metode',
         'save_maps' => 'Simpan pemetaan',
+        'select_coa' => 'Pilih akun GL',
+        'select_account' => 'Pilih rekening kas/bank',
+        'methods' => [
+            'cash' => 'Tunai',
+            'transfer' => 'Transfer',
+            'giro' => 'Giro',
+            'card' => 'Kartu',
+            'qris' => 'QRIS',
+            'other' => 'Lainnya',
+        ],
     ],
 
     'dashboard' => [
