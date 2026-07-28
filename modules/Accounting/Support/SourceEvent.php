@@ -10,6 +10,8 @@ namespace Modules\Accounting\Support;
  *     tax?: float,
  *     total?: float,
  *     paid?: float,
+ *     paid_net?: float,
+ *     wht?: float,
  *     gross?: float
  * }
  */

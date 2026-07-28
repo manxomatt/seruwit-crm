@@ -77,8 +77,31 @@ class FiscalCalendarService
         return $period;
     }
 
+    public function reopen(FiscalPeriod $period): FiscalPeriod
+    {
+        $period->loadMissing('fiscalYear');
+
+        if ($period->fiscalYear?->is_closed) {
+            throw ValidationException::withMessages([
+                'period' => __('accounting.validation.year_closed'),
+            ]);
+        }
+
+        $period->update(['status' => FiscalPeriod::STATUS_OPEN]);
+
+        return $period->fresh();
+    }
+
     public function softClose(FiscalPeriod $period): FiscalPeriod
     {
+        $period->loadMissing('fiscalYear');
+
+        if ($period->fiscalYear?->is_closed) {
+            throw ValidationException::withMessages([
+                'period' => __('accounting.validation.year_closed'),
+            ]);
+        }
+
         if ($period->status === FiscalPeriod::STATUS_HARD_CLOSE) {
             throw ValidationException::withMessages([
                 'period' => __('accounting.validation.period_hard_closed'),
@@ -92,14 +115,26 @@ class FiscalCalendarService
 
     public function hardClose(FiscalPeriod $period): FiscalPeriod
     {
+        $period->loadMissing('fiscalYear');
+
+        if ($period->fiscalYear?->is_closed) {
+            throw ValidationException::withMessages([
+                'period' => __('accounting.validation.year_closed'),
+            ]);
+        }
+
+        if ($period->isHardClosed()) {
+            return $period;
+        }
+
+        $tb = app(TrialBalanceService::class)->forPeriod($period);
+        if (! $tb['is_balanced']) {
+            throw ValidationException::withMessages([
+                'period' => __('accounting.validation.period_tb_unbalanced'),
+            ]);
+        }
+
         $period->update(['status' => FiscalPeriod::STATUS_HARD_CLOSE]);
-
-        return $period->fresh();
-    }
-
-    public function reopen(FiscalPeriod $period): FiscalPeriod
-    {
-        $period->update(['status' => FiscalPeriod::STATUS_OPEN]);
 
         return $period->fresh();
     }

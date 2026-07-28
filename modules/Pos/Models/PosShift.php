@@ -26,6 +26,8 @@ class PosShift extends Model
         'closing_cash_counted',
         'expected_cash',
         'cash_variance',
+        'deposit_to_company_bank_account_id',
+        'deposit_amount',
         'opened_at',
         'closed_at',
         'notes',
@@ -41,6 +43,8 @@ class PosShift extends Model
             'closing_cash_counted' => 'decimal:2',
             'expected_cash' => 'decimal:2',
             'cash_variance' => 'decimal:2',
+            'deposit_to_company_bank_account_id' => 'integer',
+            'deposit_amount' => 'decimal:2',
             'opened_at' => 'datetime',
             'closed_at' => 'datetime',
         ];

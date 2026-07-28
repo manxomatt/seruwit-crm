@@ -28,6 +28,8 @@ class BillPayment extends Model
         'partner_id',
         'payment_date',
         'amount',
+        'wht_amount',
+        'wht_tax_code_id',
         'method',
         'company_bank_account_id',
         'reference_number',
@@ -43,6 +45,7 @@ class BillPayment extends Model
         return [
             'payment_date' => 'date:Y-m-d',
             'amount' => 'decimal:2',
+            'wht_amount' => 'decimal:2',
             'voided_at' => 'datetime',
         ];
     }
@@ -80,6 +83,11 @@ class BillPayment extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function cashAmount(): float
+    {
+        return round(max(0, (float) $this->amount - (float) ($this->wht_amount ?? 0)), 2);
     }
 
     /** @return HasMany<BillPaymentAllocation, $this> */

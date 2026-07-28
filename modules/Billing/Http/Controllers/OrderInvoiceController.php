@@ -69,13 +69,20 @@ class OrderInvoiceController extends Controller
         }
 
         $invoice = DB::transaction(function () use ($partnerId, $orders): Invoice {
+            if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+                [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+            } else {
+                $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+                $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+            }
+
             $invoice = Invoice::create([
                 'code' => Invoice::nextCode(),
                 'partner_id' => $partnerId,
                 'status' => Invoice::STATUS_DRAFT,
                 'issue_date' => now()->toDateString(),
-                'tax_enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
-                'tax_rate' => (float) Setting::getValue('ecommerce.tax_rate', '11'),
+                'tax_enabled' => $taxEnabled,
+                'tax_rate' => $taxEnabled ? $taxRate : 0,
             ]);
 
             $this->addLinesFor($invoice, $orders);

@@ -25,6 +25,7 @@ interface Props {
     openBills: OpenBill[];
     methods: string[];
     companyBankAccounts?: Array<{ id: number; name: string; kind: string; account_code: string | null }>;
+    whtCodes?: Array<{ id: number; code: string; name: string; rate: number }>;
 }
 
 export default function Create({
@@ -34,6 +35,7 @@ export default function Create({
     openBills,
     methods,
     companyBankAccounts = [],
+    whtCodes = [],
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -46,6 +48,8 @@ export default function Create({
             : '',
         method: 'transfer',
         company_bank_account_id: '',
+        wht_tax_code_id: '',
+        wht_amount: '',
         reference_number: '',
         notes: '',
         allocations: selectedBillId
@@ -246,6 +250,60 @@ export default function Create({
                     />
                     <InputError message={form.errors.amount} className="mt-1" />
                 </div>
+
+                {whtCodes.length > 0 && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <InputLabel htmlFor="wht_tax_code_id" value={t('payables.fields.wht_code')} />
+                            <Select
+                                id="wht_tax_code_id"
+                                className="mt-1"
+                                value={form.data.wht_tax_code_id}
+                                onChange={(value) => {
+                                    const code = whtCodes.find((row) => String(row.id) === value);
+                                    const base = Number(form.data.amount || 0);
+                                    form.setData({
+                                        ...form.data,
+                                        wht_tax_code_id: value,
+                                        wht_amount:
+                                            code && base > 0
+                                                ? String(Math.round(base * code.rate) / 100)
+                                                : form.data.wht_amount,
+                                    });
+                                }}
+                                placeholder={t('payables.placeholders.no_wht')}
+                                options={[
+                                    { value: '', label: t('payables.placeholders.no_wht') },
+                                    ...whtCodes.map((code) => ({
+                                        value: String(code.id),
+                                        label: `${code.code} — ${code.name} (${code.rate}%)`,
+                                    })),
+                                ]}
+                            />
+                            <InputError message={form.errors.wht_tax_code_id} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="wht_amount" value={t('payables.fields.wht_amount')} />
+                            <TextInput
+                                id="wht_amount"
+                                type="number"
+                                step="0.01"
+                                className="mt-1 block w-full"
+                                value={form.data.wht_amount}
+                                onChange={(e) => form.setData('wht_amount', e.target.value)}
+                            />
+                            <InputError message={form.errors.wht_amount} className="mt-1" />
+                            {Number(form.data.wht_amount || 0) > 0 && (
+                                <p className="mt-1 text-xs text-gray-500">
+                                    {t('payables.payments.cash_out')}:{' '}
+                                    {(
+                                        Number(form.data.amount || 0) - Number(form.data.wht_amount || 0)
+                                    ).toLocaleString()}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div>
                     <InputLabel htmlFor="reference_number" value={t('payables.fields.reference')} />

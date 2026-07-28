@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Inventory\Support\AccessibleWarehouses;
@@ -112,9 +114,22 @@ class PosShiftController extends Controller
             ? $service->expectedCashForShift($shift)
             : (float) ($shift->expected_cash ?? 0);
 
+        $depositAccount = null;
+        if (Schema::hasColumn('pos_shifts', 'deposit_to_company_bank_account_id')
+            && $shift->deposit_to_company_bank_account_id
+            && class_exists(\Modules\Accounting\Models\CompanyBankAccount::class)) {
+            $depositAccount = \Modules\Accounting\Models\CompanyBankAccount::query()
+                ->whereKey($shift->deposit_to_company_bank_account_id)
+                ->first(['id', 'name', 'kind']);
+        }
+
         return Inertia::render('Modules/Pos/Shifts/Show', [
             'shift' => $shift,
             'expectedCash' => $expectedCash,
+            'depositAccounts' => $this->depositAccountOptions(),
+            'depositAccount' => $depositAccount
+                ? ['id' => $depositAccount->id, 'name' => $depositAccount->name, 'kind' => $depositAccount->kind]
+                : null,
             'can' => $this->abilitiesFor(),
         ]);
     }
@@ -133,7 +148,7 @@ class PosShiftController extends Controller
             $expected = $service->expectedCashForShift($shift);
             $counted = round((float) $request->input('closing_cash_counted'), 2);
 
-            $shift->update([
+            $payload = [
                 'status' => PosShift::STATUS_CLOSED,
                 'closed_by' => Auth::id(),
                 'closed_at' => now(),
@@ -143,7 +158,29 @@ class PosShiftController extends Controller
                 'notes' => $request->filled('notes')
                     ? trim(($shift->notes ? $shift->notes."\n" : '').$request->string('notes'))
                     : $shift->notes,
-            ]);
+            ];
+
+            if (Schema::hasColumn('pos_shifts', 'deposit_to_company_bank_account_id')) {
+                $toId = $request->filled('deposit_to_company_bank_account_id')
+                    ? $request->integer('deposit_to_company_bank_account_id')
+                    : null;
+                $depositAmount = null;
+                if ($toId) {
+                    $depositAmount = $request->filled('deposit_amount')
+                        ? round((float) $request->input('deposit_amount'), 2)
+                        : $counted;
+                }
+                $payload['deposit_to_company_bank_account_id'] = $toId;
+                $payload['deposit_amount'] = $depositAmount;
+            }
+
+            DB::transaction(function () use ($shift, $payload): void {
+                $shift->update($payload);
+
+                if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                    \Modules\Accounting\Support\AccountingBridge::posShiftClosed($shift->fresh());
+                }
+            });
         } catch (RuntimeException $e) {
             return back()->withErrors(['shift' => $e->getMessage()]);
         }
@@ -151,6 +188,26 @@ class PosShiftController extends Controller
         return redirect()
             ->route($this->getRoutePrefix().'.pos.shifts.show', $shift)
             ->with('success', __('pos.messages.shift_closed_ok'));
+    }
+
+    /**
+     * @return list<array{id: int, name: string, kind: string, account_code: string|null, account_name: string|null}>
+     */
+    protected function depositAccountOptions(): array
+    {
+        if (! class_exists(\Modules\Accounting\Support\PaymentAccountResolver::class)) {
+            return [];
+        }
+
+        if (! \Modules\Accounting\Support\PaymentAccountResolver::tablesReady()) {
+            return [];
+        }
+
+        if (! Schema::hasColumn('pos_shifts', 'deposit_to_company_bank_account_id')) {
+            return [];
+        }
+
+        return \Modules\Accounting\Support\PaymentAccountResolver::optionsForForms();
     }
 
     /**

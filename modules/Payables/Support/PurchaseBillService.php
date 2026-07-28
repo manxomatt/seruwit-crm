@@ -197,6 +197,10 @@ class PurchaseBillService
      */
     private function taxSettings(): array
     {
+        if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+            return \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+        }
+
         $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
         $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
 

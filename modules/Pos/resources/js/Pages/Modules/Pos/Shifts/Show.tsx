@@ -2,6 +2,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
+import Select from '@/Components/Select';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
@@ -18,6 +19,14 @@ interface SaleRow {
     payments: Array<{ method: string; amount: string | number }>;
 }
 
+interface DepositAccountOption {
+    id: number;
+    name: string;
+    kind: string;
+    account_code: string | null;
+    account_name: string | null;
+}
+
 interface Shift {
     id: number;
     status: string;
@@ -25,6 +34,8 @@ interface Shift {
     closing_cash_counted: string | number | null;
     expected_cash: string | number | null;
     cash_variance: string | number | null;
+    deposit_to_company_bank_account_id?: number | null;
+    deposit_amount?: string | number | null;
     opened_at: string;
     closed_at: string | null;
     notes: string | null;
@@ -37,6 +48,8 @@ interface Shift {
 interface Props {
     shift: Shift;
     expectedCash: number;
+    depositAccounts: DepositAccountOption[];
+    depositAccount: { id: number; name: string; kind: string } | null;
     can: { open_shift: boolean; close_shift: boolean; sell: boolean };
 }
 
@@ -48,13 +61,20 @@ function formatMoney(value: number): string {
     }).format(value);
 }
 
-export default function Show({ shift, expectedCash, can }: Props): JSX.Element {
+export default function Show({ shift, expectedCash, depositAccounts = [], depositAccount, can }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
     const [closing, setClosing] = useState(false);
 
+    const defaultDepositTo =
+        depositAccounts.find((account) => account.kind === 'bank')?.id ??
+        depositAccounts[0]?.id ??
+        '';
+
     const form = useForm({
         closing_cash_counted: String(expectedCash),
+        deposit_to_company_bank_account_id: defaultDepositTo ? String(defaultDepositTo) : '',
+        deposit_amount: String(expectedCash),
         notes: '',
     });
 
@@ -63,11 +83,25 @@ export default function Show({ shift, expectedCash, can }: Props): JSX.Element {
         form.transform((data) => ({
             ...data,
             closing_cash_counted: Number(data.closing_cash_counted),
+            deposit_to_company_bank_account_id: data.deposit_to_company_bank_account_id
+                ? Number(data.deposit_to_company_bank_account_id)
+                : null,
+            deposit_amount: data.deposit_to_company_bank_account_id
+                ? Number(data.deposit_amount || data.closing_cash_counted)
+                : null,
         }));
         form.post(prefixedRoute('pos.shifts.close', shift.id), {
             onSuccess: () => setClosing(false),
         });
     };
+
+    const depositOptions = [
+        { value: '', label: t('pos.shifts.show.deposit_skip') },
+        ...depositAccounts.map((account) => ({
+            value: String(account.id),
+            label: `${account.name}${account.account_code ? ` (${account.account_code})` : ''}`,
+        })),
+    ];
 
     return (
         <PosLayout title={t('pos.shifts.show.title', { id: shift.id })}>
@@ -116,6 +150,16 @@ export default function Show({ shift, expectedCash, can }: Props): JSX.Element {
                     </p>
                 </div>
             </div>
+
+            {shift.status === 'closed' && (depositAccount || shift.deposit_amount != null) && (
+                <div className="mb-8 rounded-xl bg-white p-4 shadow-sm">
+                    <p className="text-xs uppercase text-[var(--pos-muted)]">{t('pos.shifts.show.deposit')}</p>
+                    <p className="mt-1 text-sm text-gray-800">
+                        {depositAccount ? depositAccount.name : t('pos.shifts.show.deposit_skip')}
+                        {shift.deposit_amount != null ? ` · ${formatMoney(Number(shift.deposit_amount))}` : ''}
+                    </p>
+                </div>
+            )}
 
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[var(--pos-muted)]">
                 {t('pos.shifts.show.sales')}
@@ -181,11 +225,48 @@ export default function Show({ shift, expectedCash, can }: Props): JSX.Element {
                                 step="1"
                                 className="mt-1 block w-full"
                                 value={form.data.closing_cash_counted}
-                                onChange={(e) => form.setData('closing_cash_counted', e.target.value)}
+                                onChange={(e) => {
+                                    form.setData('closing_cash_counted', e.target.value);
+                                    if (!form.data.deposit_amount || form.data.deposit_amount === form.data.closing_cash_counted) {
+                                        form.setData('deposit_amount', e.target.value);
+                                    }
+                                }}
                             />
                             <InputError message={form.errors.closing_cash_counted} className="mt-1" />
                             <InputError message={form.errors.shift} className="mt-1" />
                         </div>
+
+                        {depositAccounts.length > 0 && (
+                            <>
+                                <div className="mt-4">
+                                    <InputLabel value={t('pos.shifts.show.deposit_to')} />
+                                    <Select
+                                        className="mt-1"
+                                        options={depositOptions}
+                                        value={form.data.deposit_to_company_bank_account_id}
+                                        onChange={(value) => form.setData('deposit_to_company_bank_account_id', value)}
+                                        searchable
+                                    />
+                                    <p className="mt-1 text-xs text-[var(--pos-muted)]">{t('pos.shifts.show.deposit_help')}</p>
+                                    <InputError message={form.errors.deposit_to_company_bank_account_id} className="mt-1" />
+                                </div>
+                                {form.data.deposit_to_company_bank_account_id !== '' && (
+                                    <div className="mt-4">
+                                        <InputLabel value={t('pos.shifts.show.deposit_amount')} />
+                                        <TextInput
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            className="mt-1 block w-full"
+                                            value={form.data.deposit_amount}
+                                            onChange={(e) => form.setData('deposit_amount', e.target.value)}
+                                        />
+                                        <InputError message={form.errors.deposit_amount} className="mt-1" />
+                                    </div>
+                                )}
+                            </>
+                        )}
+
                         <div className="mt-4">
                             <InputLabel value={t('pos.shifts.open_form.notes')} />
                             <TextInput

@@ -35,6 +35,11 @@ class StoreBillPaymentRequest extends FormRequest
             $rules['company_bank_account_id'] = ['nullable', 'integer', 'exists:company_bank_accounts,id'];
         }
 
+        if (Schema::hasColumn('bill_payments', 'wht_amount')) {
+            $rules['wht_amount'] = ['nullable', 'numeric', 'min:0'];
+            $rules['wht_tax_code_id'] = ['nullable', 'integer', 'exists:tax_codes,id'];
+        }
+
         return $rules;
     }
 }

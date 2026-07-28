@@ -46,6 +46,9 @@ return [
         'bill_not_open' => 'Bill :code is not open for payment.',
         'allocation_invalid' => 'Invalid allocation for bill :code.',
         'payment_already_void' => 'Payment is already voided.',
+        'wht_code_invalid' => 'Withholding tax code is invalid.',
+        'wht_code_required' => 'Choose a withholding tax code when WHT amount is set.',
+        'wht_amount_invalid' => 'WHT amount must be between 0 and the payment amount.',
     ],
 
     'bills' => [
@@ -69,6 +72,7 @@ return [
         'empty' => 'No payments yet.',
         'open_bills' => 'Open bills',
         'no_open_bills' => 'No open bills for this supplier.',
+        'cash_out' => 'Cash out',
     ],
 
     'fields' => [
@@ -76,6 +80,8 @@ return [
         'payment_date' => 'Payment date',
         'method' => 'Method',
         'amount' => 'Amount',
+        'wht_code' => 'WHT (PPh)',
+        'wht_amount' => 'WHT amount',
         'reference' => 'Reference',
         'notes' => 'Notes',
     ],
@@ -84,6 +90,7 @@ return [
         'select_supplier' => 'Select supplier',
         'search_supplier' => 'Search supplier…',
         'select_method' => 'Select method',
+        'no_wht' => 'No withholding',
     ],
 
     'methods' => [

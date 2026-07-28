@@ -123,8 +123,12 @@ class SalesInvoiceService
         $so->loadMissing('partner');
 
         return DB::transaction(function () use ($so, $ginItems, $notes) {
-            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
-            $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+            if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+                [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+            } else {
+                $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+                $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+            }
 
             $invoice = Invoice::create([
                 'code' => Invoice::nextCode(),

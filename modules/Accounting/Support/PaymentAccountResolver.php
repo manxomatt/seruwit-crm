@@ -21,29 +21,40 @@ class PaymentAccountResolver
 
     public function resolve(SourceEvent $event): ?Account
     {
+        $company = $this->resolveCompanyAccount(
+            method: (string) ($event->context['payment_method'] ?? ''),
+            companyBankAccountId: isset($event->context['company_bank_account_id'])
+                ? (int) $event->context['company_bank_account_id']
+                : null,
+        );
+
+        $ledger = $company?->ledgerAccount;
+        if ($ledger !== null && $ledger->is_active && $ledger->is_postable) {
+            return $ledger;
+        }
+
+        return null;
+    }
+
+    public function resolveCompanyAccount(?string $method = null, ?int $companyBankAccountId = null): ?CompanyBankAccount
+    {
         if (! self::tablesReady()) {
             return null;
         }
 
-        $companyAccountId = isset($event->context['company_bank_account_id'])
-            ? (int) $event->context['company_bank_account_id']
-            : null;
-
-        if ($companyAccountId > 0) {
+        if ($companyBankAccountId !== null && $companyBankAccountId > 0) {
             $company = CompanyBankAccount::query()
                 ->with('ledgerAccount')
-                ->whereKey($companyAccountId)
+                ->whereKey($companyBankAccountId)
                 ->where('is_active', true)
                 ->first();
 
-            if ($company?->ledgerAccount !== null
-                && $company->ledgerAccount->is_active
-                && $company->ledgerAccount->is_postable) {
-                return $company->ledgerAccount;
+            if ($company !== null) {
+                return $company;
             }
         }
 
-        $method = (string) ($event->context['payment_method'] ?? '');
+        $method = (string) ($method ?? '');
 
         if ($method !== '') {
             $map = PaymentMethodAccountMap::query()
@@ -51,28 +62,20 @@ class PaymentAccountResolver
                 ->where('payment_method', $method)
                 ->first();
 
-            $ledger = $map?->companyBankAccount?->ledgerAccount;
-            if ($ledger !== null && $ledger->is_active && $ledger->is_postable) {
-                return $ledger;
+            if ($map?->companyBankAccount !== null && $map->companyBankAccount->is_active) {
+                return $map->companyBankAccount;
             }
         }
 
         $kind = $method === 'cash' ? CompanyBankAccount::KIND_CASH : CompanyBankAccount::KIND_BANK;
 
-        $fallback = CompanyBankAccount::query()
+        return CompanyBankAccount::query()
             ->with('ledgerAccount')
             ->where('kind', $kind)
             ->where('is_active', true)
             ->orderByDesc('is_default')
             ->orderBy('id')
             ->first();
-
-        $ledger = $fallback?->ledgerAccount;
-        if ($ledger !== null && $ledger->is_active && $ledger->is_postable) {
-            return $ledger;
-        }
-
-        return null;
     }
 
     /**

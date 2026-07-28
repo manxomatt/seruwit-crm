@@ -3,12 +3,17 @@
 namespace Modules\Accounting\Support;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Modules\Accounting\Models\CompanyBankAccount;
 use Modules\Accounting\Models\JournalEntry;
 use Modules\Inventory\Models\StockOpname;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Payables\Models\BillPayment;
 use Modules\Payables\Models\SupplierBill;
 use Modules\Pos\Models\PosSale;
+use Modules\Pos\Models\PosShift;
 use Modules\Purchasing\Models\GoodReceiptNote;
 use Modules\Purchasing\Models\PurchaseReturn;
 use Modules\Receivables\Models\Payment;
@@ -74,7 +79,7 @@ class AccountingBridge
             return null;
         }
 
-        return app(AccountingPoster::class)->post(new SourceEvent(
+        $entry = app(AccountingPoster::class)->post(new SourceEvent(
             key: 'ar_payment.recorded',
             sourceType: $payment->getMorphClass(),
             sourceId: (int) $payment->id,
@@ -87,6 +92,10 @@ class AccountingBridge
                 'company_bank_account_id' => $payment->company_bank_account_id,
             ],
         ));
+
+        app(BankBookService::class)->recordInboundPayment($payment);
+
+        return $entry;
     }
 
     public static function paymentVoided(Payment $payment): ?JournalEntry
@@ -95,7 +104,7 @@ class AccountingBridge
             return null;
         }
 
-        return app(AccountingPoster::class)->reverse(
+        $entry = app(AccountingPoster::class)->reverse(
             sourceType: $payment->getMorphClass(),
             sourceId: (int) $payment->id,
             originalEvent: 'ar_payment.recorded',
@@ -103,6 +112,10 @@ class AccountingBridge
             occurredAt: now()->toDateString(),
             memo: __('accounting.messages.source_ar_payment_void', ['code' => $payment->code]),
         );
+
+        app(BankBookService::class)->voidForSource($payment);
+
+        return $entry;
     }
 
     public static function billIssued(SupplierBill $bill): ?JournalEntry
@@ -154,19 +167,32 @@ class AccountingBridge
             return null;
         }
 
-        return app(AccountingPoster::class)->post(new SourceEvent(
+        $paid = round((float) $payment->amount, 2);
+        $wht = round((float) ($payment->wht_amount ?? 0), 2);
+        $paidNet = round(max(0, $paid - $wht), 2);
+
+        $entry = app(AccountingPoster::class)->post(new SourceEvent(
             key: 'bill_payment.recorded',
             sourceType: $payment->getMorphClass(),
             sourceId: (int) $payment->id,
             occurredAt: ($payment->payment_date ?? now())->toDateString(),
-            amounts: ['paid' => (float) $payment->amount],
+            amounts: [
+                'paid' => $paid,
+                'wht' => $wht,
+                'paid_net' => $paidNet,
+            ],
             partnerId: (int) $payment->partner_id,
             memo: __('accounting.messages.source_bill_payment', ['code' => $payment->code]),
             context: [
                 'payment_method' => $payment->method,
                 'company_bank_account_id' => $payment->company_bank_account_id,
+                'wht_tax_code_id' => $payment->wht_tax_code_id ?? null,
             ],
         ));
+
+        app(BankBookService::class)->recordOutboundBillPayment($payment);
+
+        return $entry;
     }
 
     public static function billPaymentVoided(BillPayment $payment): ?JournalEntry
@@ -175,7 +201,7 @@ class AccountingBridge
             return null;
         }
 
-        return app(AccountingPoster::class)->reverse(
+        $entry = app(AccountingPoster::class)->reverse(
             sourceType: $payment->getMorphClass(),
             sourceId: (int) $payment->id,
             originalEvent: 'bill_payment.recorded',
@@ -183,6 +209,149 @@ class AccountingBridge
             occurredAt: now()->toDateString(),
             memo: __('accounting.messages.source_bill_payment_void', ['code' => $payment->code]),
         );
+
+        app(BankBookService::class)->voidForSource($payment);
+
+        return $entry;
+    }
+
+    public static function posShiftClosed(PosShift $shift): ?JournalEntry
+    {
+        if (! self::available()) {
+            return null;
+        }
+
+        $varianceEntry = self::postPosShiftVariance($shift);
+        self::postPosShiftDeposit($shift);
+
+        return $varianceEntry;
+    }
+
+    public static function postPosShiftVariance(PosShift $shift): ?JournalEntry
+    {
+        if (! self::available()) {
+            return null;
+        }
+
+        $variance = round((float) ($shift->cash_variance ?? 0), 2);
+        if (abs($variance) < 0.005) {
+            return null;
+        }
+
+        $isShortage = $variance < 0;
+
+        return app(AccountingPoster::class)->post(new SourceEvent(
+            key: $isShortage ? 'pos_shift.shortage' : 'pos_shift.overage',
+            sourceType: $shift->getMorphClass(),
+            sourceId: (int) $shift->id,
+            occurredAt: ($shift->closed_at ?? now())->toDateString(),
+            amounts: ['variance' => abs($variance)],
+            warehouseId: (int) $shift->warehouse_id,
+            memo: $isShortage
+                ? __('accounting.messages.source_pos_shift_shortage', ['id' => (string) $shift->id])
+                : __('accounting.messages.source_pos_shift_overage', ['id' => (string) $shift->id]),
+            context: [
+                'payment_method' => 'cash',
+            ],
+        ));
+    }
+
+    public static function postPosShiftDeposit(PosShift $shift): ?JournalEntry
+    {
+        if (! self::available() || ! BankBookService::isReady()) {
+            return null;
+        }
+
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('pos_shifts', 'deposit_to_company_bank_account_id')) {
+            return null;
+        }
+
+        $amount = round((float) ($shift->deposit_amount ?? 0), 2);
+        $toId = (int) ($shift->deposit_to_company_bank_account_id ?? 0);
+
+        if ($amount < 0.005 || $toId < 1) {
+            return null;
+        }
+
+        $poster = app(AccountingPoster::class);
+        $existing = $poster->findPosted($shift->getMorphClass(), (int) $shift->id, 'pos_shift.deposit');
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $from = app(PaymentAccountResolver::class)->resolveCompanyAccount(method: 'cash');
+        $to = CompanyBankAccount::query()
+            ->with('ledgerAccount')
+            ->whereKey($toId)
+            ->where('is_active', true)
+            ->first();
+
+        if ($from === null || $to === null) {
+            throw ValidationException::withMessages([
+                'deposit_to_company_bank_account_id' => __('accounting.validation.bank_account_inactive'),
+            ]);
+        }
+
+        if ((int) $from->id === (int) $to->id) {
+            return null;
+        }
+
+        $from->loadMissing('ledgerAccount');
+        $fromLedger = $from->ledgerAccount;
+        $toLedger = $to->ledgerAccount;
+
+        if ($fromLedger === null || ! $fromLedger->is_active || ! $fromLedger->is_postable
+            || $toLedger === null || ! $toLedger->is_active || ! $toLedger->is_postable) {
+            throw ValidationException::withMessages([
+                'deposit_to_company_bank_account_id' => __('accounting.validation.bank_account_coa_invalid'),
+            ]);
+        }
+
+        $date = ($shift->closed_at ?? now())->toDateString();
+        $memo = __('accounting.messages.source_pos_shift_deposit', ['id' => (string) $shift->id]);
+
+        return DB::transaction(function () use ($shift, $from, $to, $fromLedger, $toLedger, $amount, $date, $memo): ?JournalEntry {
+            app(BankBookService::class)->recordTransfer(
+                from: $from,
+                to: $to,
+                amount: $amount,
+                date: $date,
+                reference: 'POS-SHIFT-'.$shift->id,
+                memo: $memo,
+                source: $shift,
+            );
+
+            if ((int) $fromLedger->id === (int) $toLedger->id) {
+                return null;
+            }
+
+            $again = app(AccountingPoster::class)->findPosted(
+                $shift->getMorphClass(),
+                (int) $shift->id,
+                'pos_shift.deposit',
+            );
+            if ($again !== null) {
+                return $again;
+            }
+
+            $entry = app(JournalService::class)->createDraft([
+                'entry_date' => $date,
+                'type' => JournalEntry::TYPE_AUTO,
+                'memo' => $memo,
+                'lines' => [
+                    ['account_id' => $toLedger->id, 'debit' => $amount, 'credit' => 0, 'warehouse_id' => (int) $shift->warehouse_id],
+                    ['account_id' => $fromLedger->id, 'debit' => 0, 'credit' => $amount, 'warehouse_id' => (int) $shift->warehouse_id],
+                ],
+            ], Auth::id());
+
+            $entry->update([
+                'source_type' => $shift->getMorphClass(),
+                'source_id' => (int) $shift->id,
+                'event' => 'pos_shift.deposit',
+            ]);
+
+            return app(JournalService::class)->post($entry, Auth::id());
+        });
     }
 
     public static function grnConfirmed(GoodReceiptNote $grn): ?JournalEntry

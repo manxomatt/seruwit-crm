@@ -89,8 +89,12 @@ class PromoAwardSettlementService
             return null;
         }
 
-        $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
-        $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+        if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+            [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+        } else {
+            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+            $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+        }
         $amount = -1 * round((float) $award->amount, 2);
 
         $invoice = Invoice::query()->create([

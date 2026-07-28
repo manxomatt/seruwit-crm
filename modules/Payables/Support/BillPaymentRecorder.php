@@ -16,6 +16,8 @@ class BillPaymentRecorder
      *     partner_id: int,
      *     payment_date: string,
      *     amount: float|int|string,
+     *     wht_amount?: float|int|string|null,
+     *     wht_tax_code_id?: int|null,
      *     method?: string,
      *     reference_number?: string|null,
      *     notes?: string|null,
@@ -43,6 +45,46 @@ class BillPaymentRecorder
                 ]);
             }
 
+            $whtAmount = 0.0;
+            $whtTaxCodeId = null;
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('bill_payments', 'wht_amount')) {
+                $whtTaxCodeId = isset($data['wht_tax_code_id']) ? (int) $data['wht_tax_code_id'] : null;
+                $whtCode = null;
+
+                if ($whtTaxCodeId && class_exists(\Modules\Accounting\Models\TaxCode::class)) {
+                    $whtCode = \Modules\Accounting\Models\TaxCode::query()
+                        ->whereKey($whtTaxCodeId)
+                        ->where('category', \Modules\Accounting\Models\TaxCode::CATEGORY_WHT)
+                        ->where('is_active', true)
+                        ->first();
+
+                    if ($whtCode === null) {
+                        throw ValidationException::withMessages([
+                            'wht_tax_code_id' => __('payables.validation.wht_code_invalid'),
+                        ]);
+                    }
+                }
+
+                if (array_key_exists('wht_amount', $data) && $data['wht_amount'] !== null && $data['wht_amount'] !== '') {
+                    $whtAmount = round((float) $data['wht_amount'], 2);
+                } elseif ($whtCode !== null && class_exists(\Modules\Accounting\Support\TaxCodeService::class)) {
+                    $whtAmount = app(\Modules\Accounting\Support\TaxCodeService::class)->computeWht($amount, $whtCode);
+                }
+
+                if ($whtAmount < 0 || $whtAmount - $amount > 0.009) {
+                    throw ValidationException::withMessages([
+                        'wht_amount' => __('payables.validation.wht_amount_invalid'),
+                    ]);
+                }
+
+                if ($whtAmount > 0.009 && $whtTaxCodeId === null) {
+                    throw ValidationException::withMessages([
+                        'wht_tax_code_id' => __('payables.validation.wht_code_required'),
+                    ]);
+                }
+            }
+
             $attributes = [
                 'code' => BillPayment::nextCode(),
                 'partner_id' => $data['partner_id'],
@@ -57,6 +99,11 @@ class BillPaymentRecorder
 
             if (\Illuminate\Support\Facades\Schema::hasColumn('bill_payments', 'company_bank_account_id')) {
                 $attributes['company_bank_account_id'] = $data['company_bank_account_id'] ?? null;
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('bill_payments', 'wht_amount')) {
+                $attributes['wht_amount'] = $whtAmount;
+                $attributes['wht_tax_code_id'] = $whtAmount > 0.009 ? $whtTaxCodeId : null;
             }
 
             $payment = BillPayment::query()->create($attributes);

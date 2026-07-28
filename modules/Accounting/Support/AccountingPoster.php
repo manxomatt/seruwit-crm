@@ -43,9 +43,11 @@ class AccountingPoster
         }
 
         $period = $this->calendar->periodForDate($event->occurredAt);
-        if (! $period->allowsPosting()) {
+        if (! $period->allowsOperationalPosting()) {
             throw ValidationException::withMessages([
-                'accounting' => __('accounting.validation.period_hard_closed'),
+                'accounting' => $period->isHardClosed()
+                    ? __('accounting.validation.period_hard_closed')
+                    : __('accounting.validation.period_soft_closed'),
             ]);
         }
 
@@ -120,9 +122,11 @@ class AccountingPoster
         }
 
         $period = $this->calendar->periodForDate($occurredAt);
-        if (! $period->allowsPosting()) {
+        if (! $period->allowsOperationalPosting()) {
             throw ValidationException::withMessages([
-                'accounting' => __('accounting.validation.period_hard_closed'),
+                'accounting' => $period->isHardClosed()
+                    ? __('accounting.validation.period_hard_closed')
+                    : __('accounting.validation.period_soft_closed'),
             ]);
         }
 
@@ -236,6 +240,11 @@ class AccountingPoster
             return $account;
         }
 
+        $mapped = $this->resolveMappedTaxAccount($systemRole, $event);
+        if ($mapped !== null) {
+            return $mapped;
+        }
+
         $resolved = match ($systemRole) {
             'purchase_clearing' => ! empty($event->context['has_grn']) ? 'grni' : 'opex',
             default => $systemRole,
@@ -255,5 +264,35 @@ class AccountingPoster
         }
 
         return $account;
+    }
+
+    private function resolveMappedTaxAccount(string $systemRole, SourceEvent $event): ?Account
+    {
+        $taxCodeId = $event->context['tax_code_id'] ?? $event->context['wht_tax_code_id'] ?? null;
+        if ($taxCodeId === null || ! Schema::hasTable('tax_codes')) {
+            return null;
+        }
+
+        $taxCode = \Modules\Accounting\Models\TaxCode::query()->find((int) $taxCodeId);
+        if ($taxCode === null) {
+            return null;
+        }
+
+        $accountId = match ($systemRole) {
+            'tax_output' => $taxCode->output_account_id,
+            'tax_input' => $taxCode->input_account_id,
+            'wht_payable' => $taxCode->wht_account_id,
+            default => null,
+        };
+
+        if ($accountId === null) {
+            return null;
+        }
+
+        return Account::query()
+            ->whereKey($accountId)
+            ->where('is_active', true)
+            ->where('is_postable', true)
+            ->first();
     }
 }

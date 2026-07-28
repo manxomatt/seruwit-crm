@@ -68,11 +68,23 @@ class TerminalController extends Controller
             'customers' => $this->customerPayload(),
             'priceMaps' => $this->priceMapsPayload(),
             'lastSale' => $lastSale,
-            'tax' => [
-                'enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
-                'rate' => (float) Setting::getValue('ecommerce.tax_rate', '11'),
-                'inclusive' => true,
-            ],
+            'tax' => (function (): array {
+                if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+                    $snap = \Modules\Accounting\Support\TaxSettings::snapshot();
+
+                    return [
+                        'enabled' => $snap['enabled'],
+                        'rate' => $snap['rate'],
+                        'inclusive' => true,
+                    ];
+                }
+
+                return [
+                    'enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
+                    'rate' => (float) Setting::getValue('ecommerce.tax_rate', '11'),
+                    'inclusive' => true,
+                ];
+            })(),
             'can' => $this->abilitiesFor(),
             'cashier' => Auth::user()?->only(['id', 'name']),
         ]);

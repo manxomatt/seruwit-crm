@@ -76,10 +76,37 @@ export default function Index({ accounts, methods, maps, can }: Props): JSX.Elem
             title={t('accounting.bank.title')}
             headerActions={
                 can.bank ? (
-                    <Link href={prefixedRoute('accounting.bank-accounts.create')}>
-                        <PrimaryButton>{t('accounting.bank.create')}</PrimaryButton>
-                    </Link>
-                ) : undefined
+                    <div className="flex flex-wrap gap-2">
+                        <Link href={prefixedRoute('accounting.bank-transactions.index')}>
+                            <button
+                                type="button"
+                                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                {t('accounting.transactions.title')}
+                            </button>
+                        </Link>
+                        <Link href={prefixedRoute('accounting.bank-reconciliations.index')}>
+                            <button
+                                type="button"
+                                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                {t('accounting.recon.title')}
+                            </button>
+                        </Link>
+                        <Link href={prefixedRoute('accounting.bank-accounts.create')}>
+                            <PrimaryButton>{t('accounting.bank.create')}</PrimaryButton>
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap gap-3 text-sm">
+                        <Link href={prefixedRoute('accounting.bank-transactions.index')} className="text-indigo-600 hover:text-indigo-800">
+                            {t('accounting.transactions.title')}
+                        </Link>
+                        <Link href={prefixedRoute('accounting.bank-reconciliations.index')} className="text-indigo-600 hover:text-indigo-800">
+                            {t('accounting.recon.title')}
+                        </Link>
+                    </div>
+                )
             }
         >
             <div className="mb-8 overflow-hidden rounded-lg bg-white shadow-sm">

@@ -59,6 +59,20 @@ class FiscalPeriod extends Model
             && ! ($this->fiscalYear?->is_closed ?? false);
     }
 
+    /**
+     * Operational / auto posting (ops documents). Blocked when soft- or hard-closed.
+     */
+    public function allowsOperationalPosting(): bool
+    {
+        return $this->status === self::STATUS_OPEN
+            && ! ($this->fiscalYear?->is_closed ?? false);
+    }
+
+    public function isSoftClosed(): bool
+    {
+        return $this->status === self::STATUS_SOFT_CLOSE;
+    }
+
     public function isHardClosed(): bool
     {
         return $this->status === self::STATUS_HARD_CLOSE;

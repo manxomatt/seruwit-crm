@@ -49,6 +49,11 @@ class CompanyBankAccount extends Model
         return $this->hasMany(PaymentMethodAccountMap::class);
     }
 
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(BankTransaction::class);
+    }
+
     public function isCash(): bool
     {
         return $this->kind === self::KIND_CASH;

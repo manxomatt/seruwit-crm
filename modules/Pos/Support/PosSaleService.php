@@ -355,8 +355,14 @@ class PosSaleService
     {
         $merchandise = round(collect($lines)->sum(fn (array $line): float => (float) $line['line_total']), 2);
 
-        $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
-        $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+        if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+            $snap = \Modules\Accounting\Support\TaxSettings::snapshot();
+            $taxEnabled = $snap['enabled'];
+            $taxRate = $snap['rate'];
+        } else {
+            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+            $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+        }
 
         // Retail prices are treated as tax-inclusive.
         if ($taxEnabled && $taxRate > 0) {

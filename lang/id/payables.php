@@ -46,6 +46,9 @@ return [
         'bill_not_open' => 'Tagihan :code tidak terbuka untuk pembayaran.',
         'allocation_invalid' => 'Alokasi tidak valid untuk tagihan :code.',
         'payment_already_void' => 'Pembayaran sudah di-void.',
+        'wht_code_invalid' => 'Kode potongan pajak tidak valid.',
+        'wht_code_required' => 'Pilih kode PPh jika ada jumlah potongan.',
+        'wht_amount_invalid' => 'Jumlah PPh harus antara 0 dan jumlah pembayaran.',
     ],
 
     'bills' => [
@@ -69,6 +72,7 @@ return [
         'empty' => 'Belum ada pembayaran.',
         'open_bills' => 'Tagihan terbuka',
         'no_open_bills' => 'Tidak ada tagihan terbuka untuk supplier ini.',
+        'cash_out' => 'Kas keluar',
     ],
 
     'fields' => [
@@ -76,6 +80,8 @@ return [
         'payment_date' => 'Tanggal pembayaran',
         'method' => 'Metode',
         'amount' => 'Jumlah',
+        'wht_code' => 'PPh (WHT)',
+        'wht_amount' => 'Jumlah PPh',
         'reference' => 'Referensi',
         'notes' => 'Catatan',
     ],
@@ -84,6 +90,7 @@ return [
         'select_supplier' => 'Pilih supplier',
         'search_supplier' => 'Cari supplier…',
         'select_method' => 'Pilih metode',
+        'no_wht' => 'Tanpa potongan',
     ],
 
     'methods' => [

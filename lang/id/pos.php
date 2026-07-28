@@ -100,6 +100,11 @@ return [
             'counted' => 'Kas dihitung',
             'variance' => 'Selisih',
             'close_title' => 'Tutup shift',
+            'deposit' => 'Setoran kas',
+            'deposit_to' => 'Setor ke rekening',
+            'deposit_amount' => 'Jumlah setoran',
+            'deposit_skip' => 'Tidak setor (biarkan di kas)',
+            'deposit_help' => 'Opsional: pindahkan kas dihitung dari Kas Tunai ke rekening tujuan (GL + buku kas/bank).',
             'sales' => 'Penjualan di shift ini',
             'no_sales' => 'Belum ada penjualan.',
         ],
@@ -149,5 +154,9 @@ return [
         'warehouse_not_store' => 'POS hanya bisa menjual dari gudang jenis toko.',
         'warehouse_cannot_sell' => 'Lokasi ini tidak boleh menjual stok.',
         'shift_is_closed' => 'Shift sudah ditutup.',
+    ],
+
+    'validation' => [
+        'deposit_exceeds_counted' => 'Jumlah setoran tidak boleh melebihi kas dihitung.',
     ],
 ];

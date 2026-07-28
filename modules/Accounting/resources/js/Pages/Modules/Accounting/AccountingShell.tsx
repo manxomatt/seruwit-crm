@@ -5,7 +5,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ReactNode } from 'react';
 
 interface Props {
-    active: 'dashboard' | 'accounts' | 'periods' | 'journals' | 'trial_balance' | 'bank';
+    active: 'dashboard' | 'accounts' | 'periods' | 'journals' | 'trial_balance' | 'profit_loss' | 'balance_sheet' | 'bank' | 'opening' | 'tax_codes';
     title: string;
     headerActions?: ReactNode;
     children: ReactNode;
@@ -18,10 +18,14 @@ export default function AccountingShell({ active, title, headerActions, children
     const links: Array<{ key: Props['active']; href: string; label: string }> = [
         { key: 'dashboard', href: prefixedRoute('accounting.dashboard'), label: t('accounting.nav.dashboard') },
         { key: 'accounts', href: prefixedRoute('accounting.accounts.index'), label: t('accounting.nav.accounts') },
+        { key: 'tax_codes', href: prefixedRoute('accounting.tax-codes.index'), label: t('accounting.nav.tax_codes') },
         { key: 'bank', href: prefixedRoute('accounting.bank-accounts.index'), label: t('accounting.nav.bank') },
         { key: 'journals', href: prefixedRoute('accounting.journals.index'), label: t('accounting.nav.journals') },
         { key: 'periods', href: prefixedRoute('accounting.periods.index'), label: t('accounting.nav.periods') },
+        { key: 'opening', href: prefixedRoute('accounting.opening-balances.create'), label: t('accounting.nav.opening') },
         { key: 'trial_balance', href: prefixedRoute('accounting.reports.trial-balance'), label: t('accounting.nav.trial_balance') },
+        { key: 'profit_loss', href: prefixedRoute('accounting.reports.profit-loss'), label: t('accounting.nav.profit_loss') },
+        { key: 'balance_sheet', href: prefixedRoute('accounting.reports.balance-sheet'), label: t('accounting.nav.balance_sheet') },
     ];
 
     return (

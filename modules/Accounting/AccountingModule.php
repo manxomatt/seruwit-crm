@@ -7,9 +7,15 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Accounting\Http\Controllers\AccountController;
 use Modules\Accounting\Http\Controllers\AccountingDashboardController;
+use Modules\Accounting\Http\Controllers\BalanceSheetController;
+use Modules\Accounting\Http\Controllers\BankReconciliationController;
+use Modules\Accounting\Http\Controllers\BankTransactionController;
 use Modules\Accounting\Http\Controllers\CompanyBankAccountController;
 use Modules\Accounting\Http\Controllers\FiscalPeriodController;
 use Modules\Accounting\Http\Controllers\JournalEntryController;
+use Modules\Accounting\Http\Controllers\OpeningBalanceController;
+use Modules\Accounting\Http\Controllers\ProfitAndLossController;
+use Modules\Accounting\Http\Controllers\TaxCodeController;
 use Modules\Accounting\Http\Controllers\TrialBalanceController;
 
 /**
@@ -41,7 +47,7 @@ class AccountingModule implements ModuleContract
 
     public function permissions(): array
     {
-        return ['view', 'manage_coa', 'journal', 'post', 'period', 'bank'];
+        return ['view', 'manage_coa', 'journal', 'post', 'period', 'bank', 'manage_tax'];
     }
 
     public function requires(): array
@@ -110,6 +116,33 @@ class AccountingModule implements ModuleContract
                 Route::post('/years', [FiscalPeriodController::class, 'ensureYear'])
                     ->middleware('permission:accounting,period')
                     ->name('years.ensure');
+                Route::post('/years/close', [FiscalPeriodController::class, 'closeYear'])
+                    ->middleware('permission:accounting,period')
+                    ->name('years.close');
+                Route::post('/years/reopen', [FiscalPeriodController::class, 'reopenYear'])
+                    ->middleware('permission:accounting,period')
+                    ->name('years.reopen');
+
+                Route::get('/opening-balances', [OpeningBalanceController::class, 'create'])
+                    ->middleware('permission:accounting,period')
+                    ->name('opening-balances.create');
+                Route::post('/opening-balances', [OpeningBalanceController::class, 'store'])
+                    ->middleware('permission:accounting,period')
+                    ->name('opening-balances.store');
+
+                Route::get('/tax-codes', [TaxCodeController::class, 'index'])->name('tax-codes.index');
+                Route::get('/tax-codes/create', [TaxCodeController::class, 'create'])
+                    ->middleware('permission:accounting,manage_tax')
+                    ->name('tax-codes.create');
+                Route::post('/tax-codes', [TaxCodeController::class, 'store'])
+                    ->middleware('permission:accounting,manage_tax')
+                    ->name('tax-codes.store');
+                Route::get('/tax-codes/{taxCode}/edit', [TaxCodeController::class, 'edit'])
+                    ->middleware('permission:accounting,manage_tax')
+                    ->name('tax-codes.edit');
+                Route::patch('/tax-codes/{taxCode}', [TaxCodeController::class, 'update'])
+                    ->middleware('permission:accounting,manage_tax')
+                    ->name('tax-codes.update');
 
                 Route::get('/journals', [JournalEntryController::class, 'index'])->name('journals.index');
                 Route::get('/journals/create', [JournalEntryController::class, 'create'])
@@ -134,6 +167,10 @@ class AccountingModule implements ModuleContract
 
                 Route::get('/reports/trial-balance', [TrialBalanceController::class, 'show'])
                     ->name('reports.trial-balance');
+                Route::get('/reports/profit-loss', [ProfitAndLossController::class, 'show'])
+                    ->name('reports.profit-loss');
+                Route::get('/reports/balance-sheet', [BalanceSheetController::class, 'show'])
+                    ->name('reports.balance-sheet');
 
                 Route::get('/bank-accounts', [CompanyBankAccountController::class, 'index'])
                     ->name('bank-accounts.index');
@@ -152,6 +189,56 @@ class AccountingModule implements ModuleContract
                 Route::put('/payment-method-maps', [CompanyBankAccountController::class, 'updateMaps'])
                     ->middleware('permission:accounting,bank')
                     ->name('payment-method-maps.update');
+
+                Route::get('/bank-transactions', [BankTransactionController::class, 'index'])
+                    ->name('bank-transactions.index');
+                Route::get('/bank-transactions/create', [BankTransactionController::class, 'create'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-transactions.create');
+                Route::post('/bank-transactions', [BankTransactionController::class, 'store'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-transactions.store');
+                Route::post('/bank-transactions/clear', [BankTransactionController::class, 'clear'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-transactions.clear');
+                Route::post('/bank-transactions/unclear', [BankTransactionController::class, 'unclear'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-transactions.unclear');
+
+                Route::get('/bank-reconciliations', [BankReconciliationController::class, 'index'])
+                    ->name('bank-reconciliations.index');
+                Route::get('/bank-reconciliations/create', [BankReconciliationController::class, 'create'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.create');
+                Route::post('/bank-reconciliations', [BankReconciliationController::class, 'store'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.store');
+                Route::get('/bank-reconciliations/{bankReconciliation}', [BankReconciliationController::class, 'show'])
+                    ->name('bank-reconciliations.show');
+                Route::post('/bank-reconciliations/{bankReconciliation}/import', [BankReconciliationController::class, 'import'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.import');
+                Route::post('/bank-reconciliations/{bankReconciliation}/lines/{line}/match', [BankReconciliationController::class, 'match'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.match');
+                Route::post('/bank-reconciliations/{bankReconciliation}/lines/{line}/unmatch', [BankReconciliationController::class, 'unmatch'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.unmatch');
+                Route::post('/bank-reconciliations/{bankReconciliation}/lines/{line}/ignore', [BankReconciliationController::class, 'ignore'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.ignore');
+                Route::post('/bank-reconciliations/{bankReconciliation}/lines/{line}/unignore', [BankReconciliationController::class, 'unignore'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.unignore');
+                Route::post('/bank-reconciliations/{bankReconciliation}/lines/{line}/adjust', [BankReconciliationController::class, 'adjust'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.adjust');
+                Route::post('/bank-reconciliations/{bankReconciliation}/complete', [BankReconciliationController::class, 'complete'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.complete');
+                Route::delete('/bank-reconciliations/{bankReconciliation}', [BankReconciliationController::class, 'destroy'])
+                    ->middleware('permission:accounting,bank')
+                    ->name('bank-reconciliations.destroy');
             });
         });
     }

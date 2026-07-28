@@ -69,6 +69,9 @@ class BillPaymentController extends Controller
             'companyBankAccounts' => class_exists(\Modules\Accounting\Support\PaymentAccountResolver::class)
                 ? \Modules\Accounting\Support\PaymentAccountResolver::optionsForForms()
                 : [],
+            'whtCodes' => class_exists(\Modules\Accounting\Support\TaxCodeService::class)
+                ? app(\Modules\Accounting\Support\TaxCodeService::class)->whtOptions()
+                : [],
         ]);
     }
 

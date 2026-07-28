@@ -82,14 +82,21 @@ class InvoiceController extends Controller
     {
         $validated = $request->validated();
 
+        if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
+            [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+        } else {
+            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+            $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
+        }
+
         $invoice = Invoice::create([
             'code' => Invoice::nextCode(),
             'partner_id' => $validated['partner_id'],
             'status' => Invoice::STATUS_DRAFT,
             'issue_date' => $validated['issue_date'] ?? now()->toDateString(),
             'due_date' => $validated['due_date'] ?? null,
-            'tax_enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
-            'tax_rate' => (float) Setting::getValue('ecommerce.tax_rate', '11'),
+            'tax_enabled' => $taxEnabled,
+            'tax_rate' => $taxEnabled ? $taxRate : 0,
             'notes' => $validated['notes'] ?? null,
         ]);
 

@@ -100,6 +100,11 @@ return [
             'counted' => 'Cash counted',
             'variance' => 'Variance',
             'close_title' => 'Close shift',
+            'deposit' => 'Cash deposit',
+            'deposit_to' => 'Deposit to account',
+            'deposit_amount' => 'Deposit amount',
+            'deposit_skip' => 'Do not deposit (keep in cash)',
+            'deposit_help' => 'Optional: move counted cash from Cash on Hand to the destination account (GL + bank book).',
             'sales' => 'Sales in this shift',
             'no_sales' => 'No sales yet.',
         ],
@@ -149,5 +154,9 @@ return [
         'warehouse_not_store' => 'POS can only sell from a store warehouse.',
         'warehouse_cannot_sell' => 'This location cannot sell stock.',
         'shift_is_closed' => 'The shift is closed.',
+    ],
+
+    'validation' => [
+        'deposit_exceeds_counted' => 'Deposit amount cannot exceed cash counted.',
     ],
 ];
