@@ -15,7 +15,8 @@ class UpdateDeliveryOrderRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Partial updates are common on draft orders, so address/location pairs are
+     * optional here. Create-time completeness is enforced by StoreDeliveryOrderRequest.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
@@ -24,8 +25,10 @@ class UpdateDeliveryOrderRequest extends FormRequest
         return [
             'partner_id' => ['sometimes', 'required', 'integer', 'exists:partners,id'],
             'order_date' => ['sometimes', 'required', 'date'],
-            'pickup_address' => ['sometimes', 'required', 'string', 'max:255'],
-            'delivery_address' => ['sometimes', 'required', 'string', 'max:255'],
+            'pickup_location_id' => ['sometimes', 'nullable', 'integer', 'exists:locations,id'],
+            'delivery_location_id' => ['sometimes', 'nullable', 'integer', 'exists:locations,id', 'different:pickup_location_id'],
+            'pickup_address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'delivery_address' => ['sometimes', 'nullable', 'string', 'max:255'],
             'delivery_lat' => ['nullable', 'numeric', 'between:-90,90'],
             'delivery_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'demand_kg' => ['nullable', 'numeric', 'min:0'],
@@ -36,8 +39,6 @@ class UpdateDeliveryOrderRequest extends FormRequest
     }
 
     /**
-     * Get the custom error messages for validation rules.
-     *
      * @return array<string, string>
      */
     public function messages(): array
@@ -45,6 +46,7 @@ class UpdateDeliveryOrderRequest extends FormRequest
         return [
             'partner_id.required' => 'Please select a customer.',
             'partner_id.exists' => 'The selected customer does not exist.',
+            'delivery_location_id.different' => 'Pickup and delivery locations must differ.',
         ];
     }
 }

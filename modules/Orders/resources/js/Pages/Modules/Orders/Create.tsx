@@ -17,17 +17,30 @@ interface Partner {
     name: string;
 }
 
+interface LocationOption {
+    id: number;
+    code: string;
+    name: string;
+    address: string | null;
+    city: string | null;
+    latitude: string | number | null;
+    longitude: string | number | null;
+}
+
 interface Props {
     partners: Partner[];
+    locations: LocationOption[];
     canGeocode?: boolean;
 }
 
-export default function Create({ partners, canGeocode = false }: Props): JSX.Element {
+export default function Create({ partners, locations, canGeocode = false }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
         partner_id: '',
         order_date: '',
+        pickup_location_id: '',
+        delivery_location_id: '',
         pickup_address: '',
         delivery_address: '',
         delivery_lat: '',
@@ -35,6 +48,30 @@ export default function Create({ partners, canGeocode = false }: Props): JSX.Ele
         demand_kg: '',
         notes: '',
     });
+
+    const applyLocation = (field: 'pickup' | 'delivery', locationId: string) => {
+        const location = locations.find((item) => String(item.id) === locationId);
+        if (field === 'pickup') {
+            setData((current) => ({
+                ...current,
+                pickup_location_id: locationId,
+                pickup_address: location
+                    ? [location.address, location.city].filter(Boolean).join(', ') || location.name
+                    : current.pickup_address,
+            }));
+            return;
+        }
+
+        setData((current) => ({
+            ...current,
+            delivery_location_id: locationId,
+            delivery_address: location
+                ? [location.address, location.city].filter(Boolean).join(', ') || location.name
+                : current.delivery_address,
+            delivery_lat: location?.latitude != null ? String(location.latitude) : current.delivery_lat,
+            delivery_lng: location?.longitude != null ? String(location.longitude) : current.delivery_lng,
+        }));
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -47,11 +84,16 @@ export default function Create({ partners, canGeocode = false }: Props): JSX.Ele
                 ...current,
                 delivery_lat: next.latitude,
                 delivery_lng: next.longitude,
-                ...(next.address ? { delivery_address: next.address } : {}),
+                ...(next.address && !current.delivery_location_id ? { delivery_address: next.address } : {}),
             }));
         },
         [setData],
     );
+
+    const locationOptions = locations.map((location) => ({
+        value: String(location.id),
+        label: `${location.name} (${location.code})`,
+    }));
 
     return (
         <DynamicLayout
@@ -84,8 +126,33 @@ export default function Create({ partners, canGeocode = false }: Props): JSX.Ele
                                 <InputError message={errors.order_date} className="mt-2" />
                             </div>
                             <div>
+                                <InputLabel htmlFor="pickup_location_id" value={t('orders.create.pickup_location')} />
+                                <Select
+                                    id="pickup_location_id"
+                                    className="mt-1 w-full"
+                                    value={data.pickup_location_id}
+                                    onChange={(value) => applyLocation('pickup', value)}
+                                    placeholder={t('orders.create.select_location')}
+                                    options={locationOptions}
+                                />
+                                <InputError message={errors.pickup_location_id} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="delivery_location_id" value={t('orders.create.delivery_location')} />
+                                <Select
+                                    id="delivery_location_id"
+                                    className="mt-1 w-full"
+                                    value={data.delivery_location_id}
+                                    onChange={(value) => applyLocation('delivery', value)}
+                                    placeholder={t('orders.create.select_location')}
+                                    options={locationOptions}
+                                />
+                                <InputError message={errors.delivery_location_id} className="mt-2" />
+                            </div>
+                            <div>
                                 <InputLabel htmlFor="pickup_address" value={t('orders.create.pickup_address')} />
-                                <TextInput id="pickup_address" className="mt-1 block w-full" value={data.pickup_address} onChange={(e) => setData('pickup_address', e.target.value)} required />
+                                <TextInput id="pickup_address" className="mt-1 block w-full" value={data.pickup_address} onChange={(e) => setData('pickup_address', e.target.value)} />
+                                <p className="mt-1 text-xs text-gray-500">{t('orders.create.location_or_address_hint')}</p>
                                 <InputError message={errors.pickup_address} className="mt-2" />
                             </div>
                             <div>
@@ -114,7 +181,6 @@ export default function Create({ partners, canGeocode = false }: Props): JSX.Ele
                                 className="mt-1 block w-full"
                                 value={data.delivery_address}
                                 onChange={(e) => setData('delivery_address', e.target.value)}
-                                required
                             />
                             <p className="mt-1 text-xs text-gray-500">{t('orders.create.address_hint')}</p>
                             <InputError message={errors.delivery_address} className="mt-2" />
@@ -130,7 +196,7 @@ export default function Create({ partners, canGeocode = false }: Props): JSX.Ele
                                     className="mt-1 block w-full"
                                     value={data.delivery_lat}
                                     onChange={(e) => setData('delivery_lat', e.target.value)}
-                                    readOnly
+                                    readOnly={Boolean(data.delivery_location_id)}
                                 />
                                 <InputError message={errors.delivery_lat} className="mt-2" />
                             </div>
@@ -143,7 +209,7 @@ export default function Create({ partners, canGeocode = false }: Props): JSX.Ele
                                     className="mt-1 block w-full"
                                     value={data.delivery_lng}
                                     onChange={(e) => setData('delivery_lng', e.target.value)}
-                                    readOnly
+                                    readOnly={Boolean(data.delivery_location_id)}
                                 />
                                 <InputError message={errors.delivery_lng} className="mt-2" />
                             </div>

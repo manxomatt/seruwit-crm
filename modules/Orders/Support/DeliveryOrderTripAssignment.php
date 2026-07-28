@@ -107,11 +107,18 @@ class DeliveryOrderTripAssignment
      */
     private function resolvePickupCoordinates(DeliveryOrder $order): array
     {
+        $order->loadMissing(['pickupLocation', 'goodsIssueNote.warehouse']);
+
+        if ($order->pickupLocation?->latitude !== null && $order->pickupLocation?->longitude !== null) {
+            return [
+                'lat' => (float) $order->pickupLocation->latitude,
+                'lng' => (float) $order->pickupLocation->longitude,
+            ];
+        }
+
         if (! $order->isFromGin()) {
             return ['lat' => null, 'lng' => null];
         }
-
-        $order->loadMissing('goodsIssueNote.warehouse');
 
         $warehouse = $order->goodsIssueNote?->warehouse;
 

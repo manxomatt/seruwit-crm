@@ -10,6 +10,7 @@ use Inertia\Response;
 use Modules\Billing\Http\Requests\StoreTariffRequest;
 use Modules\Billing\Http\Requests\UpdateTariffRequest;
 use Modules\Billing\Models\Tariff;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 
 class TariffController extends Controller
@@ -30,7 +31,11 @@ class TariffController extends Controller
         $user = Auth::user();
 
         $tariffs = Tariff::query()
-            ->with('partner:id,code,name')
+            ->with([
+                'partner:id,code,name',
+                'originLocation:id,code,name',
+                'destinationLocation:id,code,name',
+            ])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('origin', 'like', "%{$search}%")
@@ -46,6 +51,7 @@ class TariffController extends Controller
         return Inertia::render('Modules/Billing/Tariffs/Index', [
             'tariffs' => $tariffs,
             'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'locations' => Location::query()->active()->orderBy('name')->get(['id', 'code', 'name', 'city']),
             'filters' => [
                 'search' => request('search'),
                 'partner_id' => request('partner_id'),
@@ -63,7 +69,7 @@ class TariffController extends Controller
      */
     public function store(StoreTariffRequest $request): RedirectResponse
     {
-        Tariff::create($request->validated());
+        Tariff::create($this->payload($request->validated()));
 
         return redirect()->route($this->getRoutePrefix().'.billing.tariffs.index')
             ->with('success', __('billing.messages.tariff_created'));
@@ -74,7 +80,7 @@ class TariffController extends Controller
      */
     public function update(UpdateTariffRequest $request, Tariff $tariff): RedirectResponse
     {
-        $tariff->update($request->validated());
+        $tariff->update($this->payload($request->validated()));
 
         return redirect()->route($this->getRoutePrefix().'.billing.tariffs.index')
             ->with('success', __('billing.messages.tariff_updated'));
@@ -90,5 +96,32 @@ class TariffController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.billing.tariffs.index')
             ->with('success', __('billing.messages.tariff_deleted'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function payload(array $data): array
+    {
+        $originLocationId = isset($data['origin_location_id']) ? (int) $data['origin_location_id'] : null;
+        $destinationLocationId = isset($data['destination_location_id']) ? (int) $data['destination_location_id'] : null;
+
+        if ($originLocationId) {
+            $origin = Location::query()->find($originLocationId);
+            $data['origin'] = $origin?->name ?? ($data['origin'] ?? '');
+        }
+
+        if ($destinationLocationId) {
+            $destination = Location::query()->find($destinationLocationId);
+            $data['destination'] = $destination?->name ?? ($data['destination'] ?? '');
+        }
+
+        $data['origin_location_id'] = $originLocationId;
+        $data['destination_location_id'] = $destinationLocationId;
+        $data['partner_id'] = filled($data['partner_id'] ?? null) ? (int) $data['partner_id'] : null;
+        $data['is_active'] = $data['is_active'] ?? true;
+
+        return $data;
     }
 }

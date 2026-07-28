@@ -1,6 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 interface Stats {
@@ -289,9 +289,6 @@ function SectionCard({ title, action, children }: { title: string; action?: { la
 export default function Dashboard({ user, primaryRole, stats, logistics, alerts, recentActivity, recentPosts, recentPages, period }: Props): JSX.Element {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
-    const { auth } = usePage().props as any;
-    const permissions = auth.user?.permissions || {};
-    const permissionModules = Object.keys(permissions);
 
     const hasLogistics = !!(logistics.trips || logistics.orders || logistics.fleet || logistics.invoices);
     const currentPeriod = PERIOD_OPTIONS.find((p) => p.key === period) ?? PERIOD_OPTIONS[1];
@@ -609,26 +606,6 @@ export default function Dashboard({ user, primaryRole, stats, logistics, alerts,
                             </SectionCard>
                         )}
                     </>
-                )}
-
-                {/* Permissions overview */}
-                {permissionModules.length > 0 && (
-                    <SectionCard title={t('dashboard.sections.access_permissions')}>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {permissionModules.map((mod) => (
-                                <div key={mod} className="rounded-lg border border-gray-200 p-3">
-                                    <h4 className="text-sm font-medium capitalize text-gray-800">{mod.replace('-', ' ')}</h4>
-                                    <div className="mt-1.5 flex flex-wrap gap-1">
-                                        {permissions[mod].map((action: string) => (
-                                            <span key={action} className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-700">
-                                                {action}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </SectionCard>
                 )}
             </div>
         </DynamicLayout>

@@ -46,6 +46,8 @@ return [
         'partner_optional' => 'Partner (kosongkan untuk tarif umum)',
         'origin' => 'Asal',
         'destination' => 'Tujuan',
+        'select_location' => 'Pilih lokasi',
+        'no_locations_hint' => 'Buat lokasi dulu di Partners → Lokasi, lalu atur tarif per pasangan lokasi.',
         'price' => 'Harga (Rp)',
         'active' => 'Aktif',
         'columns' => [

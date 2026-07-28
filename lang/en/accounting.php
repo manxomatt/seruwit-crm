@@ -17,6 +17,11 @@ return [
         'general_ledger' => 'General Ledger',
         'partner_statement' => 'Partner statement',
         'bank' => 'Bank & Cash',
+        'aria' => 'Accounting sections',
+        'groups' => [
+            'reports' => 'Reports',
+            'setup' => 'Setup',
+        ],
     ],
 
     'bank' => [
@@ -142,6 +147,36 @@ return [
         'no_open_period' => 'None',
     ],
 
+    'readiness' => [
+        'title' => 'Cutover readiness',
+        'help' => 'Checklist before posting live invoices, payments, GRN/GIN, or POS sales into the ledger.',
+        'status_ready' => 'Ready',
+        'status_warnings' => 'Warnings',
+        'status_blocked' => 'Blocked',
+        'ok' => 'OK',
+        'fail' => 'Fail',
+        'checks' => [
+            'schema' => 'Accounting tables installed',
+            'coa_roles' => 'Required COA system roles',
+            'posting_rules' => 'Core posting rules',
+            'open_period' => 'Open fiscal period for today',
+            'bank_accounts' => 'Company cash/bank accounts',
+            'opening_balance' => 'Opening balances posted',
+        ],
+        'details' => [
+            'schema_missing' => 'Install the Accounting module and run modules:migrate.',
+            'missing_roles' => 'Missing roles: :roles',
+            'missing_events' => 'Missing events: :events',
+            'no_open_period' => 'No open period covers today — add or reopen a period.',
+            'bank_count' => ':count active account(s)',
+            'no_bank_accounts' => 'Create at least one company cash or bank account.',
+            'no_fiscal_year' => 'No fiscal year found — ensure the year from Accounting → Periods.',
+            'opening_posted' => 'Opening balances posted for :year.',
+            'opening_pending' => 'No opening journal yet for :year — post before go-live if you have opening balances.',
+            'opening_blocked' => 'Year :year already has posted activity; opening balances are cutover-only.',
+        ],
+    ],
+
     'accounts' => [
         'title' => 'Chart of Accounts',
         'create' => 'New account',
@@ -159,6 +194,10 @@ return [
         'inactive' => 'Inactive',
         'system_role' => 'System role',
         'empty' => 'No accounts yet.',
+        'search_placeholder' => 'Search code, name, or system role…',
+        'all_types' => 'All types',
+        'all_statuses' => 'All statuses',
+        'all_postable' => 'All kinds',
     ],
 
     'periods' => [

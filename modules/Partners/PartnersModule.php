@@ -5,6 +5,7 @@ namespace Modules\Partners;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Partners\Http\Controllers\LocationController;
 use Modules\Partners\Http\Controllers\PartnerAddressController;
 use Modules\Partners\Http\Controllers\PartnerBankAccountController;
 use Modules\Partners\Http\Controllers\PartnerController;
@@ -76,6 +77,12 @@ class PartnersModule implements ModuleContract
         Route::get('/partners/list', [PartnerController::class, 'index'])->middleware('permission:partners,view')->name('partners.index');
         Route::get('/partners/create', [PartnerController::class, 'create'])->middleware('permission:partners,create')->name('partners.create');
         Route::post('/partners', [PartnerController::class, 'store'])->middleware('permission:partners,create')->name('partners.store');
+
+        Route::get('/partners/locations', [LocationController::class, 'index'])->middleware('permission:partners,view')->name('partners.locations.index');
+        Route::post('/partners/locations', [LocationController::class, 'store'])->middleware('permission:partners,create')->name('partners.locations.store');
+        Route::patch('/partners/locations/{location}', [LocationController::class, 'update'])->middleware('permission:partners,update')->name('partners.locations.update');
+        Route::delete('/partners/locations/{location}', [LocationController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.locations.destroy');
+
         Route::get('/partners/{partner}', [PartnerController::class, 'show'])->middleware('permission:partners,view')->name('partners.show');
         Route::get('/partners/{partner}/edit', [PartnerController::class, 'edit'])->middleware('permission:partners,update')->name('partners.edit');
         Route::patch('/partners/{partner}', [PartnerController::class, 'update'])->middleware('permission:partners,update')->name('partners.update');

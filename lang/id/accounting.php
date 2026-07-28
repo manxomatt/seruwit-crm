@@ -17,6 +17,11 @@ return [
         'general_ledger' => 'Buku Besar',
         'partner_statement' => 'Rekening koran mitra',
         'bank' => 'Kas & Bank',
+        'aria' => 'Bagian akuntansi',
+        'groups' => [
+            'reports' => 'Laporan',
+            'setup' => 'Pengaturan',
+        ],
     ],
 
     'bank' => [
@@ -142,6 +147,36 @@ return [
         'no_open_period' => 'Tidak ada',
     ],
 
+    'readiness' => [
+        'title' => 'Kesiapan cutover',
+        'help' => 'Checklist sebelum memposting invoice, pembayaran, GRN/GIN, atau penjualan POS ke buku besar.',
+        'status_ready' => 'Siap',
+        'status_warnings' => 'Peringatan',
+        'status_blocked' => 'Terkunci',
+        'ok' => 'OK',
+        'fail' => 'Gagal',
+        'checks' => [
+            'schema' => 'Tabel Accounting terpasang',
+            'coa_roles' => 'System role COA wajib',
+            'posting_rules' => 'Aturan posting inti',
+            'open_period' => 'Periode fiskal terbuka hari ini',
+            'bank_accounts' => 'Rekening kas/bank perusahaan',
+            'opening_balance' => 'Saldo awal sudah diposting',
+        ],
+        'details' => [
+            'schema_missing' => 'Pasang modul Accounting lalu jalankan modules:migrate.',
+            'missing_roles' => 'Role hilang: :roles',
+            'missing_events' => 'Event hilang: :events',
+            'no_open_period' => 'Tidak ada periode terbuka yang mencakup hari ini — tambah atau buka kembali periode.',
+            'bank_count' => ':count rekening aktif',
+            'no_bank_accounts' => 'Buat minimal satu rekening kas atau bank perusahaan.',
+            'no_fiscal_year' => 'Tidak ada tahun fiskal — pastikan tahun di Accounting → Periode.',
+            'opening_posted' => 'Saldo awal :year sudah diposting.',
+            'opening_pending' => 'Belum ada jurnal saldo awal untuk :year — post sebelum go-live bila ada saldo bawa.',
+            'opening_blocked' => 'Tahun :year sudah punya aktivitas posted; saldo awal hanya untuk cutover.',
+        ],
+    ],
+
     'accounts' => [
         'title' => 'Bagan Akun',
         'create' => 'Akun baru',
@@ -159,6 +194,10 @@ return [
         'inactive' => 'Nonaktif',
         'system_role' => 'Peran sistem',
         'empty' => 'Belum ada akun.',
+        'search_placeholder' => 'Cari kode, nama, atau peran sistem…',
+        'all_types' => 'Semua tipe',
+        'all_statuses' => 'Semua status',
+        'all_postable' => 'Semua jenis',
     ],
 
     'periods' => [

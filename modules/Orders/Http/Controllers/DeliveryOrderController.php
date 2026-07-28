@@ -15,8 +15,10 @@ use Modules\Orders\Http\Requests\BatchAssignTripRequest;
 use Modules\Orders\Http\Requests\StoreDeliveryOrderRequest;
 use Modules\Orders\Http\Requests\UpdateDeliveryOrderRequest;
 use Modules\Orders\Models\DeliveryOrder;
+use Modules\Orders\Support\DeliveryOrderLocationHydrator;
 use Modules\Orders\Support\DeliveryOrderStock;
 use Modules\Orders\Support\DeliveryOrderTripAssignment;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Product\Models\Product;
 use Modules\TransportationManagement\Models\Trip;
@@ -88,6 +90,9 @@ class DeliveryOrderController extends Controller
     {
         return Inertia::render('Modules/Orders/Create', [
             'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'locations' => Location::query()->active()->orderBy('name')->get([
+                'id', 'code', 'name', 'address', 'city', 'latitude', 'longitude',
+            ]),
             'canGeocode' => Modules::available('inventory'),
         ]);
     }
@@ -95,10 +100,10 @@ class DeliveryOrderController extends Controller
     /**
      * Store a newly created delivery order in storage.
      */
-    public function store(StoreDeliveryOrderRequest $request): RedirectResponse
+    public function store(StoreDeliveryOrderRequest $request, DeliveryOrderLocationHydrator $hydrator): RedirectResponse
     {
         $order = DeliveryOrder::create([
-            ...$request->validated(),
+            ...$hydrator->hydrate($request->validated()),
             'code' => DeliveryOrder::nextCode(),
         ]);
 
@@ -155,19 +160,26 @@ class DeliveryOrderController extends Controller
         return Inertia::render('Modules/Orders/Edit', [
             'order' => $order,
             'partners' => Partner::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'locations' => Location::query()->active()->orderBy('name')->get([
+                'id', 'code', 'name', 'address', 'city', 'latitude', 'longitude',
+            ]),
+            'canGeocode' => Modules::available('inventory'),
         ]);
     }
 
     /**
      * Update the specified delivery order in storage.
      */
-    public function update(UpdateDeliveryOrderRequest $request, DeliveryOrder $order): RedirectResponse
-    {
+    public function update(
+        UpdateDeliveryOrderRequest $request,
+        DeliveryOrder $order,
+        DeliveryOrderLocationHydrator $hydrator,
+    ): RedirectResponse {
         if ($order->status !== DeliveryOrder::STATUS_DRAFT) {
             return back()->with('error', __('orders.messages.edit_draft_only'));
         }
 
-        $order->update($request->validated());
+        $order->update($hydrator->hydrate($request->validated()));
 
         return redirect()->route($this->getRoutePrefix().'.orders.show', $order)
             ->with('success', __('orders.messages.updated'));

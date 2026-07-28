@@ -20,14 +20,25 @@ interface Partner {
     name: string;
 }
 
+interface LocationOption {
+    id: number;
+    code: string;
+    name: string;
+    city: string | null;
+}
+
 interface Tariff {
     id: number;
     partner_id: number | null;
+    origin_location_id: number | null;
+    destination_location_id: number | null;
     origin: string;
     destination: string;
     price: string;
     is_active: boolean;
     partner: Partner | null;
+    origin_location?: LocationOption | null;
+    destination_location?: LocationOption | null;
 }
 
 interface PaginatedTariffs {
@@ -42,11 +53,12 @@ interface PaginatedTariffs {
 interface Props {
     tariffs: PaginatedTariffs;
     partners: Partner[];
+    locations: LocationOption[];
     filters: { search: string | null; partner_id: string | null };
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-export default function Index({ tariffs, partners, filters, can }: Props): JSX.Element {
+export default function Index({ tariffs, partners, locations, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
@@ -56,6 +68,8 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
 
     const form = useForm({
         partner_id: '',
+        origin_location_id: '',
+        destination_location_id: '',
         origin: '',
         destination: '',
         price: '',
@@ -74,6 +88,8 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
         form.clearErrors();
         form.setData({
             partner_id: tariff.partner_id ? String(tariff.partner_id) : '',
+            origin_location_id: tariff.origin_location_id ? String(tariff.origin_location_id) : '',
+            destination_location_id: tariff.destination_location_id ? String(tariff.destination_location_id) : '',
             origin: tariff.origin,
             destination: tariff.destination,
             price: tariff.price,
@@ -264,16 +280,39 @@ export default function Index({ tariffs, partners, filters, can }: Props): JSX.E
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <InputLabel htmlFor="t_origin" value={t('billing.tariffs.origin')} />
-                                <TextInput id="t_origin" className="mt-1 block w-full" value={form.data.origin} onChange={(e) => form.setData('origin', e.target.value)} required />
-                                <InputError message={form.errors.origin} className="mt-2" />
+                                <InputLabel htmlFor="t_origin_location" value={t('billing.tariffs.origin')} />
+                                <Select
+                                    id="t_origin_location"
+                                    className="mt-1"
+                                    value={form.data.origin_location_id}
+                                    onChange={(value) => form.setData('origin_location_id', value)}
+                                    placeholder={t('billing.tariffs.select_location')}
+                                    options={locations.map((location) => ({
+                                        value: String(location.id),
+                                        label: `${location.name} (${location.code})`,
+                                    }))}
+                                />
+                                <InputError message={form.errors.origin_location_id || form.errors.origin} className="mt-2" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="t_destination" value={t('billing.tariffs.destination')} />
-                                <TextInput id="t_destination" className="mt-1 block w-full" value={form.data.destination} onChange={(e) => form.setData('destination', e.target.value)} required />
-                                <InputError message={form.errors.destination} className="mt-2" />
+                                <InputLabel htmlFor="t_destination_location" value={t('billing.tariffs.destination')} />
+                                <Select
+                                    id="t_destination_location"
+                                    className="mt-1"
+                                    value={form.data.destination_location_id}
+                                    onChange={(value) => form.setData('destination_location_id', value)}
+                                    placeholder={t('billing.tariffs.select_location')}
+                                    options={locations.map((location) => ({
+                                        value: String(location.id),
+                                        label: `${location.name} (${location.code})`,
+                                    }))}
+                                />
+                                <InputError message={form.errors.destination_location_id || form.errors.destination} className="mt-2" />
                             </div>
                         </div>
+                        {locations.length === 0 && (
+                            <p className="text-sm text-amber-700">{t('billing.tariffs.no_locations_hint')}</p>
+                        )}
                         <div>
                             <InputLabel htmlFor="t_price" value={t('billing.tariffs.price')} />
                             <TextInput id="t_price" type="number" min={0} step="0.01" className="mt-1 block w-full" value={form.data.price} onChange={(e) => form.setData('price', e.target.value)} required />

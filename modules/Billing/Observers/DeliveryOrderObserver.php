@@ -29,7 +29,13 @@ class DeliveryOrderObserver
         }
 
         if ($order->status === DeliveryOrder::STATUS_CONFIRMED) {
-            $tariff = Tariff::findFor($order->partner_id, $order->pickup_address, $order->delivery_address);
+            $tariff = Tariff::findFor(
+                $order->partner_id,
+                $order->pickup_address,
+                $order->delivery_address,
+                $order->pickup_location_id,
+                $order->delivery_location_id,
+            );
 
             OrderCharge::firstOrCreate(
                 ['delivery_order_id' => $order->id],

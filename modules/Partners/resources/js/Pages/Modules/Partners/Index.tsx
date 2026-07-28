@@ -139,13 +139,18 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('partners.index.head')}</h2>
-                    {can.create && (
-                        <Link href={prefixedRoute('partners.create')}>
-                            <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
+                    <div className="flex items-center gap-3">
+                        <Link href={prefixedRoute('partners.locations.index')} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                            {t('partners.locations.nav')}
                         </Link>
-                    )}
+                        {can.create && (
+                            <Link href={prefixedRoute('partners.create')}>
+                                <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
+                            </Link>
+                        )}
+                    </div>
                 </div>
             }
         >

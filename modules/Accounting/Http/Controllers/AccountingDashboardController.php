@@ -7,6 +7,7 @@ use Inertia\Response;
 use Modules\Accounting\Models\Account;
 use Modules\Accounting\Models\FiscalPeriod;
 use Modules\Accounting\Models\JournalEntry;
+use Modules\Accounting\Support\AccountingReadinessService;
 
 class AccountingDashboardController extends Controller
 {
@@ -15,7 +16,7 @@ class AccountingDashboardController extends Controller
         return 'module';
     }
 
-    public function index(): Response
+    public function index(AccountingReadinessService $readiness): Response
     {
         $openPeriod = FiscalPeriod::query()
             ->where('status', FiscalPeriod::STATUS_OPEN)
@@ -23,12 +24,20 @@ class AccountingDashboardController extends Controller
             ->whereDate('ends_on', '>=', now()->toDateString())
             ->first();
 
+        $assessment = $readiness->assess();
+
         return inertia('Modules/Accounting/Dashboard', [
             'stats' => [
                 'accounts' => Account::query()->where('is_active', true)->count(),
                 'draft_journals' => JournalEntry::query()->where('status', JournalEntry::STATUS_DRAFT)->count(),
                 'posted_journals' => JournalEntry::query()->where('status', JournalEntry::STATUS_POSTED)->count(),
                 'open_period' => $openPeriod?->only(['id', 'name', 'starts_on', 'ends_on', 'status']),
+            ],
+            'readiness' => [
+                'ready' => $assessment['ready'],
+                'blocking' => $assessment['blocking'],
+                'warnings' => $assessment['warnings'],
+                'opening_status' => $assessment['summary']['opening_status'],
             ],
             'can' => $this->permissions(),
         ]);

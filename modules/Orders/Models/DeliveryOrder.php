@@ -63,7 +63,9 @@ class DeliveryOrder extends Model
         'status',
         'order_date',
         'pickup_address',
+        'pickup_location_id',
         'delivery_address',
+        'delivery_location_id',
         'delivery_lat',
         'delivery_lng',
         'demand_kg',
@@ -98,6 +100,22 @@ class DeliveryOrder extends Model
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    /**
+     * @return BelongsTo<\Modules\Partners\Models\Location, $this>
+     */
+    public function pickupLocation(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Partners\Models\Location::class, 'pickup_location_id');
+    }
+
+    /**
+     * @return BelongsTo<\Modules\Partners\Models\Location, $this>
+     */
+    public function deliveryLocation(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Partners\Models\Location::class, 'delivery_location_id');
     }
 
     /**

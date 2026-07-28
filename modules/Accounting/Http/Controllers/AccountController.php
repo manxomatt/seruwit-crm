@@ -4,6 +4,8 @@ namespace Modules\Accounting\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Response;
 use Modules\Accounting\Http\Requests\StoreAccountRequest;
 use Modules\Accounting\Http\Requests\UpdateAccountRequest;
@@ -16,13 +18,34 @@ class AccountController extends Controller
         return 'module';
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'string', Rule::in(Account::TYPES)],
+            'status' => ['nullable', 'string', Rule::in(['active', 'inactive'])],
+            'postable' => ['nullable', 'string', Rule::in(['1', '0'])],
+        ]);
+
         $accounts = Account::query()
             ->with('parent:id,code,name')
+            ->when(filled($filters['search'] ?? null), function ($query) use ($filters): void {
+                $search = (string) $filters['search'];
+                $query->where(function ($q) use ($search): void {
+                    $q->where('code', 'ilike', "%{$search}%")
+                        ->orWhere('name', 'ilike', "%{$search}%")
+                        ->orWhere('system_role', 'ilike', "%{$search}%");
+                });
+            })
+            ->when(filled($filters['type'] ?? null), fn ($query) => $query->where('type', $filters['type']))
+            ->when(($filters['status'] ?? null) === 'active', fn ($query) => $query->where('is_active', true))
+            ->when(($filters['status'] ?? null) === 'inactive', fn ($query) => $query->where('is_active', false))
+            ->when(($filters['postable'] ?? null) === '1', fn ($query) => $query->where('is_postable', true))
+            ->when(($filters['postable'] ?? null) === '0', fn ($query) => $query->where('is_postable', false))
             ->orderBy('code')
-            ->get()
-            ->map(fn (Account $account): array => [
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (Account $account): array => [
                 'id' => $account->id,
                 'code' => $account->code,
                 'name' => $account->name,
@@ -38,6 +61,13 @@ class AccountController extends Controller
 
         return inertia('Modules/Accounting/Accounts/Index', [
             'accounts' => $accounts,
+            'filters' => [
+                'search' => filled($filters['search'] ?? null) ? (string) $filters['search'] : null,
+                'type' => $filters['type'] ?? null,
+                'status' => $filters['status'] ?? null,
+                'postable' => $filters['postable'] ?? null,
+            ],
+            'types' => Account::TYPES,
             'can' => [
                 'manage_coa' => auth()->user()?->hasPermissionFor('accounting', 'manage_coa') ?? false,
             ],

@@ -4,7 +4,9 @@ namespace Modules\Accounting;
 
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
+use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
+use Modules\Accounting\Console\Commands\AccountingPreflight;
 use Modules\Accounting\Http\Controllers\AccountController;
 use Modules\Accounting\Http\Controllers\AccountingDashboardController;
 use Modules\Accounting\Http\Controllers\BalanceSheetController;
@@ -85,7 +87,9 @@ class AccountingModule implements ModuleContract
 
     public function boot(): void
     {
-        //
+        Artisan::starting(fn (Artisan $artisan) => $artisan->resolveCommands([
+            AccountingPreflight::class,
+        ]));
     }
 
     public function routes(): void

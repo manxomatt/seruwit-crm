@@ -46,6 +46,8 @@ return [
         'partner_optional' => 'Partner (leave empty for a general tariff)',
         'origin' => 'Origin',
         'destination' => 'Destination',
+        'select_location' => 'Select location',
+        'no_locations_hint' => 'Create locations under Partners → Locations first, then set tariffs by location pair.',
         'price' => 'Price (Rp)',
         'active' => 'Active',
         'columns' => [

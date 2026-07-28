@@ -152,7 +152,13 @@ class OrderInvoiceController extends Controller
     private function addLinesFor(Invoice $invoice, Collection $orders): void
     {
         foreach ($orders as $order) {
-            $tariff = Tariff::findFor($order->partner_id, $order->pickup_address, $order->delivery_address);
+            $tariff = Tariff::findFor(
+                $order->partner_id,
+                $order->pickup_address,
+                $order->delivery_address,
+                $order->pickup_location_id,
+                $order->delivery_location_id,
+            );
 
             $charge = OrderCharge::firstOrCreate(
                 ['delivery_order_id' => $order->id],

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Billing\Database\Factories\TariffFactory;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 
 class Tariff extends Model
@@ -29,6 +30,8 @@ class Tariff extends Model
      */
     protected $fillable = [
         'partner_id',
+        'origin_location_id',
+        'destination_location_id',
         'origin',
         'destination',
         'price',
@@ -58,6 +61,22 @@ class Tariff extends Model
     }
 
     /**
+     * @return BelongsTo<Location, $this>
+     */
+    public function originLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'origin_location_id');
+    }
+
+    /**
+     * @return BelongsTo<Location, $this>
+     */
+    public function destinationLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'destination_location_id');
+    }
+
+    /**
      * @param  Builder<self>  $query
      * @return Builder<self>
      */
@@ -67,13 +86,35 @@ class Tariff extends Model
     }
 
     /**
-     * The active tariff for a route, preferring a partner-specific one over a
-     * general one. Addresses are free text on delivery orders, so matching is
-     * exact (case-insensitive) — a typo simply yields no match and the charge
-     * is priced manually instead of being guessed wrong silently.
+     * Prefer master-location matching (stable IDs), then fall back to the
+     * legacy case-insensitive free-text route for older tariffs / orders.
+     * Partner-specific tariffs always win over general ones.
      */
-    public static function findFor(int $partnerId, string $origin, string $destination): ?self
-    {
+    public static function findFor(
+        int $partnerId,
+        string $origin,
+        string $destination,
+        ?int $originLocationId = null,
+        ?int $destinationLocationId = null,
+    ): ?self {
+        if ($originLocationId && $destinationLocationId) {
+            $byLocation = static::query()
+                ->active()
+                ->where('origin_location_id', $originLocationId)
+                ->where('destination_location_id', $destinationLocationId)
+                ->where(fn (Builder $query) => $query->where('partner_id', $partnerId)->orWhereNull('partner_id'))
+                ->orderByRaw('partner_id is null')
+                ->first();
+
+            if ($byLocation) {
+                return $byLocation;
+            }
+        }
+
+        if (! filled($origin) || ! filled($destination)) {
+            return null;
+        }
+
         return static::query()
             ->active()
             ->whereRaw('LOWER(origin) = ?', [mb_strtolower(trim($origin))])

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Orders\Models\DeliveryOrderItem;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerAddress;
 use Modules\Sales\Models\GoodsIssueNote;
@@ -74,7 +75,7 @@ class DeliveryOrderFromGinService
         }
 
         $destination = $this->resolveDeliveryDestination($partner);
-        $pickup = $this->resolvePickupAddress($gin->warehouse);
+        $pickup = $this->resolvePickup($gin->warehouse);
 
         return DB::transaction(function () use ($gin, $partner, $destination, $pickup) {
             $order = DeliveryOrder::query()->create([
@@ -83,8 +84,10 @@ class DeliveryOrderFromGinService
                 'goods_issue_note_id' => $gin->id,
                 'status' => DeliveryOrder::STATUS_DRAFT,
                 'order_date' => $gin->issued_at?->toDateString() ?? now()->toDateString(),
-                'pickup_address' => $pickup,
+                'pickup_address' => $pickup['address'],
+                'pickup_location_id' => $pickup['location_id'],
                 'delivery_address' => $destination['address'],
+                'delivery_location_id' => $destination['location_id'],
                 'delivery_lat' => $destination['lat'],
                 'delivery_lng' => $destination['lng'],
                 'notes' => __('sales.messages.do_from_gin_notes', [
@@ -142,7 +145,7 @@ class DeliveryOrderFromGinService
     }
 
     /**
-     * @return array{address: string, lat: ?float, lng: ?float}
+     * @return array{address: string, lat: ?float, lng: ?float, location_id: ?int}
      */
     private function resolveDeliveryDestination(Partner $partner): array
     {
@@ -167,30 +170,67 @@ class DeliveryOrderFromGinService
                 $shipping->country,
             ], fn ($part) => filled($part));
 
+            $address = implode(', ', $parts) ?: ($partner->address ?: $partner->name);
+            $matched = Location::findMatching($shipping->city)
+                ?? Location::findMatching($address);
+
             return [
-                'address' => implode(', ', $parts) ?: ($partner->address ?: $partner->name),
-                'lat' => $shipping->latitude !== null ? (float) $shipping->latitude : null,
-                'lng' => $shipping->longitude !== null ? (float) $shipping->longitude : null,
+                'address' => $matched?->displayAddress() ?? $address,
+                'lat' => $matched?->latitude !== null
+                    ? (float) $matched->latitude
+                    : ($shipping->latitude !== null ? (float) $shipping->latitude : null),
+                'lng' => $matched?->longitude !== null
+                    ? (float) $matched->longitude
+                    : ($shipping->longitude !== null ? (float) $shipping->longitude : null),
+                'location_id' => $matched?->id,
             ];
         }
 
+        $fallback = filled($partner->address) ? (string) $partner->address : $partner->name;
+        $matched = Location::findMatching($fallback);
+
         return [
-            'address' => filled($partner->address) ? (string) $partner->address : $partner->name,
-            'lat' => null,
-            'lng' => null,
+            'address' => $matched?->displayAddress() ?? $fallback,
+            'lat' => $matched?->latitude !== null ? (float) $matched->latitude : null,
+            'lng' => $matched?->longitude !== null ? (float) $matched->longitude : null,
+            'location_id' => $matched?->id,
         ];
     }
 
-    private function resolvePickupAddress(?Warehouse $warehouse): string
+    /**
+     * @return array{address: string, location_id: ?int}
+     */
+    private function resolvePickup(?Warehouse $warehouse): array
     {
         if (! $warehouse) {
-            return __('sales.messages.do_default_pickup');
+            $address = __('sales.messages.do_default_pickup');
+
+            return [
+                'address' => $address,
+                'location_id' => Location::findMatching($address)?->id,
+            ];
         }
 
-        if (filled($warehouse->location)) {
-            return (string) $warehouse->location;
+        $candidates = array_filter([
+            $warehouse->location,
+            $warehouse->name,
+        ], fn ($value) => filled($value));
+
+        foreach ($candidates as $candidate) {
+            $matched = Location::findMatching((string) $candidate);
+            if ($matched) {
+                return [
+                    'address' => $matched->displayAddress(),
+                    'location_id' => $matched->id,
+                ];
+            }
         }
 
-        return $warehouse->name;
+        return [
+            'address' => filled($warehouse->location)
+                ? (string) $warehouse->location
+                : $warehouse->name,
+            'location_id' => null,
+        ];
     }
 }
