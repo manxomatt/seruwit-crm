@@ -75,6 +75,9 @@ class Rental extends Model
         'deposit_applied_amount',
         'deposit_refunded_amount',
         'deposit_settled_at',
+        'deposit_received_at',
+        'deposit_payment_method',
+        'deposit_company_bank_account_id',
         'total_amount',
         'notes',
         'pickup_location',
@@ -119,6 +122,8 @@ class Rental extends Model
             'returned_at' => 'datetime',
             'completed_at' => 'datetime',
             'deposit_settled_at' => 'datetime',
+            'deposit_received_at' => 'datetime',
+            'deposit_company_bank_account_id' => 'integer',
         ];
     }
 
@@ -221,6 +226,12 @@ class Rental extends Model
         }
 
         return (int) $end->diffInDays($actual);
+    }
+
+    public function isDepositReceived(): bool
+    {
+        return (float) $this->deposit_amount < 0.005
+            || $this->deposit_received_at !== null;
     }
 
     /**

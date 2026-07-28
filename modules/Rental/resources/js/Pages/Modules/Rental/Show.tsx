@@ -68,6 +68,8 @@ interface Rental {
     deposit_applied_amount: string;
     deposit_refunded_amount: string;
     deposit_settled_at: string | null;
+    deposit_received_at: string | null;
+    deposit_payment_method: string | null;
     late_fee_per_day: string | null;
     overdue_days: number | null;
     late_fee_amount: string;
@@ -193,7 +195,8 @@ export default function Show({
     const is = (s: string) => rental.status === s;
     const isLiveTracking = trackingEnabled && is('active');
     const depositHeld = rental.deposit_status !== 'settled' && Number(rental.deposit_amount) > 0;
-    const canSettleDeposit = depositHeld && (is('returned') || is('completed'));
+    const canReceiveDeposit = depositHeld && !rental.deposit_received_at && (is('confirmed') || is('active') || is('returned'));
+    const canSettleDeposit = depositHeld && !!rental.deposit_received_at && (is('returned') || is('completed'));
     const canPrintContract = !is('draft') && !is('cancelled');
     const canPrintHandover = is('active') || is('returned') || is('completed');
 
@@ -257,12 +260,18 @@ export default function Show({
                         {is('draft') && <PrimaryButton onClick={() => action('confirm')}>{t('rental.actions.confirm')}</PrimaryButton>}
                         {is('confirmed') && (
                             <>
+                                {canReceiveDeposit && (
+                                    <SecondaryButton onClick={() => action('deposit.receive')}>{t('rental.actions.receive_deposit')}</SecondaryButton>
+                                )}
                                 <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
                                 <PrimaryButton onClick={() => setModal('checkout')}>{t('rental.actions.checkout')}</PrimaryButton>
                             </>
                         )}
                         {is('active') && (
                             <>
+                                {canReceiveDeposit && (
+                                    <SecondaryButton onClick={() => action('deposit.receive')}>{t('rental.actions.receive_deposit')}</SecondaryButton>
+                                )}
                                 <SecondaryButton onClick={() => setModal('extend')}>{t('rental.actions.extend')}</SecondaryButton>
                                 <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
                                 <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
@@ -271,6 +280,9 @@ export default function Show({
                         )}
                         {is('returned') && (
                             <>
+                                {canReceiveDeposit && (
+                                    <SecondaryButton onClick={() => action('deposit.receive')}>{t('rental.actions.receive_deposit')}</SecondaryButton>
+                                )}
                                 <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
                                 <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
                                 {canSettleDeposit && (
@@ -431,6 +443,12 @@ export default function Show({
                                     <span className={`ml-1 text-xs ${rental.deposit_status === 'settled' ? 'text-green-600' : 'text-amber-600'}`}>
                                         {t(`rental.deposit.${rental.deposit_status}`, undefined, rental.deposit_status)}
                                     </span>
+                                    {depositHeld && rental.deposit_received_at && (
+                                        <span className="ml-1 text-xs text-green-600">{t('rental.deposit.received')}</span>
+                                    )}
+                                    {depositHeld && !rental.deposit_received_at && (
+                                        <span className="ml-1 text-xs text-red-600">{t('rental.deposit.not_received')}</span>
+                                    )}
                                 </dd>
                                 {rental.deposit_status === 'settled' && Number(rental.deposit_amount) > 0 && (
                                     <>

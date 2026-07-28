@@ -38,6 +38,13 @@ class AccountingBridge
         }
 
         $eventKey = $invoice->isCreditNote() ? 'credit_note.issued' : 'invoice.issued';
+        $context = [
+            'tax_code_id' => $invoice->tax_code_id ?? null,
+        ];
+
+        if (! $invoice->isCreditNote() && self::invoiceHasRentalCharges($invoice)) {
+            $context['revenue_role'] = 'rental_revenue';
+        }
 
         return app(AccountingPoster::class)->post(new SourceEvent(
             key: $eventKey,
@@ -51,9 +58,7 @@ class AccountingBridge
             ],
             partnerId: (int) $invoice->partner_id,
             memo: __('accounting.messages.source_invoice', ['code' => $invoice->code]),
-            context: [
-                'tax_code_id' => $invoice->tax_code_id ?? null,
-            ],
+            context: $context,
         ));
     }
 
@@ -623,5 +628,137 @@ class AccountingBridge
             partnerId: $partnerId,
             context: $context,
         ));
+    }
+
+    public static function rentalDepositReceived(\Modules\Rental\Models\Rental $rental): ?JournalEntry
+    {
+        if (! self::available()) {
+            return null;
+        }
+
+        $amount = round((float) $rental->deposit_amount, 2);
+
+        if ($amount < 0.005) {
+            return null;
+        }
+
+        $entry = app(AccountingPoster::class)->post(new SourceEvent(
+            key: 'rental_deposit.received',
+            sourceType: $rental->getMorphClass(),
+            sourceId: (int) $rental->id,
+            occurredAt: ($rental->deposit_received_at ?? now())->toDateString(),
+            amounts: ['deposit' => $amount],
+            partnerId: (int) $rental->partner_id,
+            memo: __('accounting.messages.source_rental_deposit_received', ['code' => $rental->code]),
+            context: [
+                'payment_method' => $rental->deposit_payment_method ?? 'cash',
+                'company_bank_account_id' => $rental->deposit_company_bank_account_id,
+            ],
+        ));
+
+        app(BankBookService::class)->recordInboundFromSource(
+            source: $rental,
+            amount: $amount,
+            date: ($rental->deposit_received_at ?? now())->toDateString(),
+            method: (string) ($rental->deposit_payment_method ?? 'cash'),
+            companyBankAccountId: $rental->deposit_company_bank_account_id
+                ? (int) $rental->deposit_company_bank_account_id
+                : null,
+            reference: $rental->code,
+            memo: __('accounting.messages.source_rental_deposit_received', ['code' => $rental->code]),
+            eventKey: 'rental_deposit.received',
+        );
+
+        return $entry;
+    }
+
+    public static function rentalDepositApplied(
+        \Modules\Rental\Models\Rental $rental,
+        float $applied,
+        float $toAr,
+        float $forfeited,
+    ): ?JournalEntry {
+        if (! self::available()) {
+            return null;
+        }
+
+        $applied = round($applied, 2);
+        $toAr = round($toAr, 2);
+        $forfeited = round($forfeited, 2);
+
+        if ($applied < 0.005) {
+            return null;
+        }
+
+        return app(AccountingPoster::class)->post(new SourceEvent(
+            key: 'rental_deposit.applied',
+            sourceType: $rental->getMorphClass(),
+            sourceId: (int) $rental->id,
+            occurredAt: ($rental->deposit_settled_at ?? now())->toDateString(),
+            amounts: [
+                'applied' => $applied,
+                'to_ar' => $toAr,
+                'forfeited' => $forfeited,
+            ],
+            partnerId: (int) $rental->partner_id,
+            memo: __('accounting.messages.source_rental_deposit_applied', ['code' => $rental->code]),
+        ));
+    }
+
+    public static function rentalDepositRefunded(\Modules\Rental\Models\Rental $rental, float $refunded): ?JournalEntry
+    {
+        if (! self::available()) {
+            return null;
+        }
+
+        $refunded = round($refunded, 2);
+
+        if ($refunded < 0.005) {
+            return null;
+        }
+
+        $entry = app(AccountingPoster::class)->post(new SourceEvent(
+            key: 'rental_deposit.refunded',
+            sourceType: $rental->getMorphClass(),
+            sourceId: (int) $rental->id,
+            occurredAt: ($rental->deposit_settled_at ?? now())->toDateString(),
+            amounts: ['refunded' => $refunded],
+            partnerId: (int) $rental->partner_id,
+            memo: __('accounting.messages.source_rental_deposit_refunded', ['code' => $rental->code]),
+            context: [
+                'payment_method' => $rental->deposit_payment_method ?? 'cash',
+                'company_bank_account_id' => $rental->deposit_company_bank_account_id,
+            ],
+        ));
+
+        app(BankBookService::class)->recordOutboundFromSource(
+            source: $rental,
+            amount: $refunded,
+            date: ($rental->deposit_settled_at ?? now())->toDateString(),
+            method: (string) ($rental->deposit_payment_method ?? 'cash'),
+            companyBankAccountId: $rental->deposit_company_bank_account_id
+                ? (int) $rental->deposit_company_bank_account_id
+                : null,
+            reference: $rental->code,
+            memo: __('accounting.messages.source_rental_deposit_refunded', ['code' => $rental->code]),
+            eventKey: 'rental_deposit.refunded',
+        );
+
+        return $entry;
+    }
+
+    private static function invoiceHasRentalCharges(Invoice $invoice): bool
+    {
+        if (! class_exists(\Modules\Rental\Models\RentalCharge::class)) {
+            return false;
+        }
+
+        $morph = (new \Modules\Rental\Models\RentalCharge)->getMorphClass();
+
+        $invoice->loadMissing('lines');
+
+        return $invoice->lines->contains(
+            fn ($line): bool => (string) $line->source_type === $morph
+        );
     }
 }

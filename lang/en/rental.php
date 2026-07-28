@@ -121,6 +121,7 @@ return [
         'add_addon' => 'Add charge',
         'save_addon' => 'Save charge',
         'settle_deposit' => 'Settle Deposit',
+        'receive_deposit' => 'Receive deposit',
         'remove' => 'Remove',
         'new_rental' => 'New Rental',
         'create_rental' => 'Create Rental',
@@ -200,6 +201,8 @@ return [
         'settled' => 'Settled',
         'applied' => 'Applied',
         'refunded' => 'Refunded',
+        'received' => 'Cash received',
+        'not_received' => 'Not received',
     ],
 
     'invoice' => [
@@ -215,6 +218,7 @@ return [
         'notes_late_fee' => 'Auto-invoice for rental :code (late fee)',
         'notes_damage' => 'Auto-invoice for rental :code (damage)',
         'notes_addon' => 'Auto-invoice for rental :code (add-on)',
+        'notes_deposit_applied' => 'Deposit applied for rental :code',
     ],
 
     'tracking' => [
@@ -381,6 +385,7 @@ return [
         'damage_removed' => 'Damage record removed.',
         'addon_recorded' => 'Extra charge recorded.',
         'addon_removed' => 'Extra charge removed.',
+        'deposit_received' => 'Deposit cash recorded.',
         'deposit_settled' => 'Deposit settled.',
         'rate_created' => 'Rate created.',
         'rate_updated' => 'Rate updated.',
@@ -402,6 +407,10 @@ return [
         'addon_status_only' => 'Extra charges can only be added on confirmed, active, or returned rentals.',
         'addon_only' => 'Only add-on charges can be removed here.',
         'addon_already_invoiced' => 'This add-on has an active invoice and cannot be removed.',
+        'deposit_not_received' => 'Record the deposit cash before settling.',
+        'deposit_receive_status_only' => 'Deposit can only be received on confirmed, active, or returned rentals.',
+        'deposit_none' => 'This rental has no deposit.',
+        'deposit_already_received' => 'Deposit cash has already been recorded.',
         'settle_deposit_returned_only' => 'Deposit can only be settled on returned or completed rentals.',
         'deposit_already_settled' => 'Deposit has already been settled.',
         'pdf_contract_confirmed_only' => 'Print the contract after the rental is confirmed.',

@@ -316,13 +316,128 @@ class BankBookService
             ]);
     }
 
-    public function findPostedForSource(Model $source): ?BankTransaction
+    public function findPostedForSource(Model $source, ?string $event = null): ?BankTransaction
     {
-        return BankTransaction::query()
+        $query = BankTransaction::query()
             ->where('source_type', $source->getMorphClass())
             ->where('source_id', (int) $source->getKey())
-            ->where('status', BankTransaction::STATUS_POSTED)
-            ->first();
+            ->where('status', BankTransaction::STATUS_POSTED);
+
+        if ($event !== null && Schema::hasColumn('bank_transactions', 'event')) {
+            $query->where('event', $event);
+        }
+
+        return $query->first();
+    }
+
+    public function recordInboundFromSource(
+        Model $source,
+        float $amount,
+        string $date,
+        string $method,
+        ?int $companyBankAccountId,
+        ?string $reference,
+        ?string $memo,
+        ?string $eventKey = null,
+    ): ?BankTransaction {
+        if (! self::isReady()) {
+            return null;
+        }
+
+        $amount = round($amount, 2);
+
+        if ($amount < 0.005) {
+            return null;
+        }
+
+        $existing = $this->findPostedForSource($source, $eventKey);
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $account = app(PaymentAccountResolver::class)->resolveCompanyAccount(
+            method: $method,
+            companyBankAccountId: $companyBankAccountId,
+        );
+
+        if ($account === null) {
+            return null;
+        }
+
+        $attributes = [
+            'company_bank_account_id' => $account->id,
+            'type' => BankTransaction::TYPE_DEPOSIT,
+            'direction' => BankTransaction::DIRECTION_IN,
+            'transacted_on' => $date,
+            'amount' => $amount,
+            'reference' => $reference,
+            'memo' => $memo,
+            'source_type' => $source->getMorphClass(),
+            'source_id' => (int) $source->getKey(),
+            'status' => BankTransaction::STATUS_POSTED,
+            'created_by' => Auth::id(),
+        ];
+
+        if (Schema::hasColumn('bank_transactions', 'event')) {
+            $attributes['event'] = $eventKey;
+        }
+
+        return BankTransaction::query()->create($attributes);
+    }
+
+    public function recordOutboundFromSource(
+        Model $source,
+        float $amount,
+        string $date,
+        string $method,
+        ?int $companyBankAccountId,
+        ?string $reference,
+        ?string $memo,
+        ?string $eventKey = null,
+    ): ?BankTransaction {
+        if (! self::isReady()) {
+            return null;
+        }
+
+        $amount = round($amount, 2);
+
+        if ($amount < 0.005) {
+            return null;
+        }
+
+        $existing = $this->findPostedForSource($source, $eventKey);
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $account = app(PaymentAccountResolver::class)->resolveCompanyAccount(
+            method: $method,
+            companyBankAccountId: $companyBankAccountId,
+        );
+
+        if ($account === null) {
+            return null;
+        }
+
+        $attributes = [
+            'company_bank_account_id' => $account->id,
+            'type' => BankTransaction::TYPE_WITHDRAWAL,
+            'direction' => BankTransaction::DIRECTION_OUT,
+            'transacted_on' => $date,
+            'amount' => $amount,
+            'reference' => $reference,
+            'memo' => $memo,
+            'source_type' => $source->getMorphClass(),
+            'source_id' => (int) $source->getKey(),
+            'status' => BankTransaction::STATUS_POSTED,
+            'created_by' => Auth::id(),
+        ];
+
+        if (Schema::hasColumn('bank_transactions', 'event')) {
+            $attributes['event'] = $eventKey;
+        }
+
+        return BankTransaction::query()->create($attributes);
     }
 
     private function assertActiveAccount(int $id): void

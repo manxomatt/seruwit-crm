@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import GlobalSearch from '@/Components/GlobalSearch';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import SidebarNavScroll from '@/Components/SidebarNavScroll';
 import { useTrans } from '@/hooks/useTrans';
 import { Link, usePage, usePoll } from '@inertiajs/react';
 import { ReactNode, useMemo, useState } from 'react';
@@ -587,8 +588,9 @@ export default function ModuleLayout({ header, children }: Props) {
         <Link
             key={item.name}
             href={item.href}
+            aria-current={item.current ? 'page' : undefined}
             className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${item.current
-                ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                ? 'sidebar-nav-active bg-white/20 text-white shadow-lg backdrop-blur-sm'
                 : `${theme.text} hover:bg-white/10 hover:text-white`
                 }`}
         >
@@ -636,7 +638,7 @@ export default function ModuleLayout({ header, children }: Props) {
                         onClick={() => setSidebarOpen(false)}
                     />
                     <div className={`fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b ${theme.gradient}`}>
-                        <div className="flex h-16 items-center justify-between px-4">
+                        <div className="flex h-16 shrink-0 items-center justify-between px-4">
                             <Link href={getDashboardRoute(user)} className="flex items-center">
                                 {siteLogo ? (
                                     <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
@@ -653,11 +655,11 @@ export default function ModuleLayout({ header, children }: Props) {
                                 <CloseIcon />
                             </button>
                         </div>
-                        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
+                        <SidebarNavScroll>
                             {renderNavigation()}
-                        </nav>
+                        </SidebarNavScroll>
                         {/* Mobile sidebar user section */}
-                        <div className={`border-t ${theme.border} p-4`}>
+                        <div className={`shrink-0 border-t ${theme.border} p-4`}>
                             <Link href={route('profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
                                 <UserAvatar user={user} size="md" />
                                 <div className="ml-3">
@@ -673,7 +675,7 @@ export default function ModuleLayout({ header, children }: Props) {
             {/* Desktop sidebar */}
             <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
                 <div className={`flex min-h-0 flex-1 flex-col bg-gradient-to-b ${theme.gradient}`}>
-                    <div className={`flex h-16 items-center px-4 border-b ${theme.border}`}>
+                    <div className={`flex h-16 shrink-0 items-center px-4 border-b ${theme.border}`}>
                         <Link href={getDashboardRoute(user)} className="flex items-center">
                             {siteLogo ? (
                                 <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
@@ -683,11 +685,11 @@ export default function ModuleLayout({ header, children }: Props) {
                             <span className="ml-2 text-xl font-bold text-white">{siteName}</span>
                         </Link>
                     </div>
-                    <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+                    <SidebarNavScroll>
                         {renderNavigation()}
-                    </nav>
+                    </SidebarNavScroll>
                     {/* Desktop sidebar user section (kiri bawah) */}
-                    <div className={`border-t ${theme.border} p-4`}>
+                    <div className={`shrink-0 border-t ${theme.border} p-4`}>
                         <Link href={route('profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
                             <UserAvatar user={user} size="md" />
                             <div className="ml-3">

@@ -247,6 +247,9 @@ class AccountingPoster
 
         $resolved = match ($systemRole) {
             'purchase_clearing' => ! empty($event->context['has_grn']) ? 'grni' : 'opex',
+            'sales_revenue' => ! empty($event->context['revenue_role'])
+                ? (string) $event->context['revenue_role']
+                : 'sales_revenue',
             default => $systemRole,
         };
 

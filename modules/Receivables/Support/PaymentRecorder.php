@@ -21,6 +21,8 @@ class PaymentRecorder
      *     reference_number?: string|null,
      *     notes?: string|null,
      *     recorded_by?: int|null,
+     *     company_bank_account_id?: int|null,
+     *     post_accounting?: bool,
      *     allocations: list<array{invoice_id: int, amount: float|int|string}>
      * }  $data
      */
@@ -109,7 +111,7 @@ class PaymentRecorder
 
             $payment = $payment->fresh(['allocations', 'partner']);
 
-            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+            if (($data['post_accounting'] ?? true) && class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
                 \Modules\Accounting\Support\AccountingBridge::paymentRecorded($payment);
             }
 

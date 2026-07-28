@@ -31,6 +31,8 @@ class AccountingReadinessService
         'retained_earnings',
         'sales_revenue',
         'pos_revenue',
+        'rental_revenue',
+        'customer_deposit',
         'cogs',
         'cash_variance',
     ];
@@ -46,6 +48,9 @@ class AccountingReadinessService
         'grn.confirmed',
         'gin.confirmed',
         'pos_sale.completed',
+        'rental_deposit.received',
+        'rental_deposit.applied',
+        'rental_deposit.refunded',
     ];
 
     public function __construct(private readonly OpeningBalanceService $openingBalances) {}

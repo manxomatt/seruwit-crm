@@ -7,12 +7,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Rental\Http\Requests\ReceiveRentalDepositRequest;
 use Modules\Rental\Http\Requests\SettleRentalDepositRequest;
 use Modules\Rental\Http\Requests\StoreRentalAddonChargeRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalDamage;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
+use Modules\Rental\Support\RentalAccountingService;
 use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalInvoiceService;
@@ -22,6 +24,7 @@ class RentalActionController extends Controller
 {
     public function __construct(
         private readonly RentalInvoiceService $invoices,
+        private readonly RentalAccountingService $accounting,
         private readonly RentalMailer $mailer,
     ) {}
 
@@ -33,9 +36,14 @@ class RentalActionController extends Controller
     /**
      * Confirm a draft rental — blocks the vehicle and raises the base invoice.
      */
-    public function confirm(Rental $rental): RedirectResponse
+    public function confirm(Request $request, Rental $rental): RedirectResponse
     {
         abort_if($rental->status !== Rental::STATUS_DRAFT, 422, __('rental.errors.confirm_draft_only'));
+
+        $request->validate([
+            'payment_method' => ['nullable', 'string', Rule::in(['cash', 'transfer', 'giro', 'card', 'other'])],
+            'company_bank_account_id' => ['nullable', 'integer', 'min:1'],
+        ]);
 
         $rental->update([
             'status' => Rental::STATUS_CONFIRMED,
@@ -47,6 +55,11 @@ class RentalActionController extends Controller
             $rental->settleDeposit([
                 'deposit_applied_amount' => 0,
                 'deposit_refunded_amount' => 0,
+            ]);
+        } else {
+            $this->accounting->receiveDeposit($rental->fresh(), [
+                'payment_method' => $request->input('payment_method', 'cash'),
+                'company_bank_account_id' => $request->input('company_bank_account_id'),
             ]);
         }
 
@@ -146,7 +159,7 @@ class RentalActionController extends Controller
             ]);
         } elseif ($request->boolean('deposit_returned')) {
             // Shortcut: full refund on return (legacy checkbox).
-            $rental->settleDeposit([
+            $this->accounting->settleDeposit($rental->fresh(), [
                 'deposit_applied_amount' => 0,
                 'deposit_refunded_amount' => (float) $rental->deposit_amount,
             ]);
@@ -155,6 +168,30 @@ class RentalActionController extends Controller
         $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_RETURNED);
 
         return back()->with('success', __('rental.messages.returned'));
+    }
+
+    /**
+     * Record that the customer deposit cash was received (if not auto-posted on confirm).
+     */
+    public function receiveDeposit(ReceiveRentalDepositRequest $request, Rental $rental): RedirectResponse
+    {
+        abort_if(
+            ! in_array($rental->status, [
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+                Rental::STATUS_RETURNED,
+            ], true),
+            422,
+            __('rental.errors.deposit_receive_status_only'),
+        );
+
+        abort_if((float) $rental->deposit_amount < 0.005, 422, __('rental.errors.deposit_none'));
+        abort_if($rental->deposit_received_at !== null, 422, __('rental.errors.deposit_already_received'));
+        abort_if($rental->deposit_status === Rental::DEPOSIT_SETTLED, 422, __('rental.errors.deposit_already_settled'));
+
+        $this->accounting->receiveDeposit($rental, $request->validated());
+
+        return back()->with('success', __('rental.messages.deposit_received'));
     }
 
     /**
@@ -170,18 +207,20 @@ class RentalActionController extends Controller
 
         abort_if($rental->deposit_status === Rental::DEPOSIT_SETTLED, 422, __('rental.errors.deposit_already_settled'));
 
-        $rental->settleDeposit($request->validated());
+        $this->accounting->settleDeposit($rental, $request->validated());
 
         return back()->with('success', __('rental.messages.deposit_settled'));
     }
 
     /**
-     * Complete a returned rental — deposit must already be settled.
+     * Complete a returned rental — deposit must already be settled; issues remaining drafts.
      */
     public function complete(Rental $rental): RedirectResponse
     {
         abort_if($rental->status !== Rental::STATUS_RETURNED, 422, __('rental.errors.complete_returned_only'));
         abort_if(! $rental->isDepositSettled(), 422, __('rental.errors.complete_deposit_unsettled'));
+
+        $this->accounting->issueDraftInvoices($rental);
 
         $rental->update([
             'status' => Rental::STATUS_COMPLETED,
@@ -205,6 +244,10 @@ class RentalActionController extends Controller
         $request->validate([
             'cancelled_reason' => ['required', 'string', 'max:500'],
         ]);
+
+        if ($rental->status === Rental::STATUS_CONFIRMED) {
+            $this->accounting->refundDepositOnCancel($rental->fresh());
+        }
 
         $rental->update([
             'status' => Rental::STATUS_CANCELLED,

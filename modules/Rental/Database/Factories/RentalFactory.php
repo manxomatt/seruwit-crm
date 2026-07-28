@@ -51,6 +51,9 @@ class RentalFactory extends Factory
             'deposit_applied_amount' => 0,
             'deposit_refunded_amount' => 0,
             'deposit_settled_at' => null,
+            'deposit_received_at' => null,
+            'deposit_payment_method' => null,
+            'deposit_company_bank_account_id' => null,
             'total_amount' => $rate * $days,
             'notes' => null,
             'pickup_location' => null,
@@ -70,6 +73,8 @@ class RentalFactory extends Factory
         return $this->state(fn (array $a): array => [
             'status' => Rental::STATUS_CONFIRMED,
             'confirmed_at' => now(),
+            'deposit_received_at' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? now() : null,
+            'deposit_payment_method' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? 'cash' : null,
         ]);
     }
 
@@ -80,6 +85,8 @@ class RentalFactory extends Factory
             'confirmed_at' => now()->subDay(),
             'checked_out_at' => now(),
             'start_odometer' => fake()->numberBetween(10000, 100000),
+            'deposit_received_at' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? now()->subDay() : null,
+            'deposit_payment_method' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? 'cash' : null,
         ]);
     }
 
@@ -98,6 +105,8 @@ class RentalFactory extends Factory
             'deposit_refunded_amount' => $a['deposit_amount'] ?? 0,
             'deposit_returned' => true,
             'deposit_settled_at' => now(),
+            'deposit_received_at' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? now()->subDays(3) : null,
+            'deposit_payment_method' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? 'cash' : null,
         ]);
     }
 
@@ -114,6 +123,8 @@ class RentalFactory extends Factory
             'deposit_refunded_amount' => $a['deposit_amount'] ?? 0,
             'deposit_returned' => true,
             'deposit_settled_at' => now()->subDay(),
+            'deposit_received_at' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? now()->subDays(5) : null,
+            'deposit_payment_method' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? 'cash' : null,
         ]);
     }
 

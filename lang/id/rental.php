@@ -121,6 +121,7 @@ return [
         'add_addon' => 'Tambah biaya',
         'save_addon' => 'Simpan biaya',
         'settle_deposit' => 'Settle Deposit',
+        'receive_deposit' => 'Terima deposit',
         'remove' => 'Hapus',
         'new_rental' => 'Rental Baru',
         'create_rental' => 'Buat Rental',
@@ -200,6 +201,8 @@ return [
         'settled' => 'Settled',
         'applied' => 'Dipakai',
         'refunded' => 'Dikembalikan',
+        'received' => 'Kas diterima',
+        'not_received' => 'Belum diterima',
     ],
 
     'invoice' => [
@@ -215,6 +218,7 @@ return [
         'notes_late_fee' => 'Invoice otomatis rental :code (denda)',
         'notes_damage' => 'Invoice otomatis rental :code (damage)',
         'notes_addon' => 'Invoice otomatis rental :code (add-on)',
+        'notes_deposit_applied' => 'Deposit dipakai untuk rental :code',
     ],
 
     'tracking' => [
@@ -381,6 +385,7 @@ return [
         'damage_removed' => 'Catatan damage dihapus.',
         'addon_recorded' => 'Biaya tambahan dicatat.',
         'addon_removed' => 'Biaya tambahan dihapus.',
+        'deposit_received' => 'Penerimaan deposit dicatat.',
         'deposit_settled' => 'Deposit sudah di-settle.',
         'rate_created' => 'Tarif dibuat.',
         'rate_updated' => 'Tarif diperbarui.',
@@ -402,6 +407,10 @@ return [
         'addon_status_only' => 'Biaya tambahan hanya dapat ditambah pada rental confirmed, active, atau returned.',
         'addon_only' => 'Hanya biaya add-on yang dapat dihapus di sini.',
         'addon_already_invoiced' => 'Add-on ini sudah punya invoice aktif dan tidak dapat dihapus.',
+        'deposit_not_received' => 'Catat penerimaan kas deposit sebelum settle.',
+        'deposit_receive_status_only' => 'Deposit hanya dapat diterima pada rental confirmed, active, atau returned.',
+        'deposit_none' => 'Rental ini tidak punya deposit.',
+        'deposit_already_received' => 'Penerimaan deposit sudah dicatat.',
         'settle_deposit_returned_only' => 'Deposit hanya dapat di-settle pada rental yang sudah dikembalikan atau selesai.',
         'deposit_already_settled' => 'Deposit sudah di-settle.',
         'pdf_contract_confirmed_only' => 'Cetak kontrak setelah rental dikonfirmasi.',

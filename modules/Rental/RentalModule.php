@@ -124,6 +124,7 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/complete', [RentalActionController::class, 'complete'])->middleware('permission:rental,approve')->name('rental.complete');
         Route::post('/rental/{rental}/cancel', [RentalActionController::class, 'cancel'])->middleware('permission:rental,update')->name('rental.cancel');
         Route::post('/rental/{rental}/extend', [RentalActionController::class, 'extend'])->middleware('permission:rental,update')->name('rental.extend');
+        Route::post('/rental/{rental}/deposit-receive', [RentalActionController::class, 'receiveDeposit'])->middleware('permission:rental,update')->name('rental.deposit.receive');
         Route::post('/rental/{rental}/deposit-settle', [RentalActionController::class, 'settleDeposit'])->middleware('permission:rental,update')->name('rental.deposit.settle');
         Route::post('/rental/{rental}/damages', [RentalActionController::class, 'storeDamage'])->middleware('permission:rental,update')->name('rental.damages.store');
         Route::delete('/rental/{rental}/damages/{damage}', [RentalActionController::class, 'destroyDamage'])->middleware('permission:rental,update')->name('rental.damages.destroy');

@@ -45,6 +45,7 @@ class BankTransaction extends Model
         'memo',
         'source_type',
         'source_id',
+        'event',
         'status',
         'is_cleared',
         'cleared_on',
