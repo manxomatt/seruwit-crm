@@ -190,7 +190,7 @@ Opsional: `outbound`, `routing`, bridge dari `sales` (GIN → DO)
 
 Alur: tarif → booking (draft→confirmed→active→returned→completed) → damage/extension → invoice.
 
-> Keputusan komersial: `rental` **belum** di-entitle paket manapun di `PlanSeeder` — pasang manual via super admin sampai ada paket.
+> Paket **Pro** meng-entitle `rental` (Juli 2026).
 
 ### 4) Field sales / canvassing
 
@@ -199,7 +199,7 @@ Alur: tarif → booking (draft→confirmed→active→returned→completed) → 
 
 Alur: salesperson → rencana harian → check-in/out GPS → target → portal mobile.
 
-> Sama seperti rental: **belum** masuk paket default.
+> Paket **Pro** meng-entitle `canvassing` (Juli 2026).
 
 ### 5) CMS / website tenant saja
 
@@ -220,9 +220,9 @@ Paket bawaan (`PlanSeeder`, `firstOrCreate` — tidak menimpa definisi hidup):
 |---|---|---|
 | `free` | — | CMS inti saja |
 | `basic` | `carousels`, `pages`, `posts` | **Default** |
-| `pro` | Hampir semua modul operasional (lihat daftar di seeder) | Termasuk accounting, sales, purchasing, AR/AP, POS, outbound, routing, promotions, scoring, BI, dll. |
+| `pro` | Semua modul operasional termasuk `rental` + `canvassing` | Accounting, sales, purchasing, AR/AP, POS, outbound, routing, promotions, scoring, BI, rental, canvassing, dll. |
 
-> **`rental` dan `canvassing` belum masuk paket mana pun** — keputusan pricing pending. Kode aktif; install manual oleh super admin per tenant.
+> `rental` dan `canvassing` masuk paket **Pro** (keputusan Juli 2026). Tenant Pro bisa memasangnya dari Katalog Modul.
 
 ## Module Registry
 
@@ -353,19 +353,19 @@ php artisan document:scan-expiring [--tenant=]        # 06:00
 | Driver Scoring | ✅ |
 | Executive Dashboard (BI) | ✅ thin/read-only |
 | Accounting GL (COA → jurnal → bank → FS → FA/budget) | ✅ hampir penuh; Phase E (cash flow, GL detail, partner statement, FA, budget) sedang dilengkapi |
-| Rental / Canvassing | ✅ kode siap; ❌ belum di paket |
+| Rental / Canvassing | ✅ kode siap; ✅ entitle paket Pro |
 
 ### Hutang teknis / gap yang masih terbuka
 
 - ✅ **Master lokasi + matching tarif Billing** — `locations` di Partners; tarif & DO memakai location FK (fallback teks tetap ada)
 - ✅ **Cutover Accounting pilot** — dashboard readiness + `accounting:preflight`; COA/rules/bank/period di-seed saat install; opening balance tetap wizard manual
+- ✅ **`rental` / `canvassing` di paket Pro** — entitle via `PlanSeeder` + migrasi additive ke row Pro yang sudah ada
 - Push email/WA ke pelanggan: event `ShipmentStatusChanged` ada, listener channel belum
 - Time-overlap dispatch sejati: masih per-tanggal; butuh `scheduled_end_at` / durasi
 - Portal driver: berfungsi, tapi belum PWA offline-first
 - Rental → auto-invoice & payment terms master: gap ops sebelum “finance sempurna”
 - Accounting: WHT/PPh, e-Faktur DJP, multi-currency, cost center — masih fase lanjut
 - Promotions: channel e-commerce di luar scope
-- `rental` / `canvassing` entitlement paket: keputusan komersial
 - Skala `tracking:poll` & retensi `vehicle_positions`
 - Odometer: belum read-only saat device ter-pair (risiko drift bila diedit manual)
 
@@ -383,7 +383,7 @@ Urutan di bawah menyeimbangkan **nilai bisnis**, **utang teknis yang menghambat 
 |---|---|---|
 | 1 | Master lokasi + matching tarif Billing | ✅ Selesai — `locations` + matching by location ID |
 | 2 | Cutover Accounting di tenant pilot | ✅ Selesai — readiness dashboard + `accounting:preflight` |
-| 3 | Keputusan paket (`rental` / `canvassing` / paket vertikal) | Keputusan produk/pricing + update plan |
+| 3 | Keputusan paket (`rental` / `canvassing` → Pro) | ✅ Selesai — entitle di paket Pro |
 | 4 | Channel notifikasi pelanggan (email dulu, WA belakangan) | Listener ke `ShipmentStatusChanged` + mail driver produksi |
 
 ### Prioritas P1 — lengkapi siklus yang sudah hampir tutup (1–2 bulan)

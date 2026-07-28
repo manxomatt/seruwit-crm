@@ -263,4 +263,19 @@ class PlanManagementTest extends TestCase
         // what it is allowed to buy.
         $this->actingAs($admin)->get('http://nope-co.localhost/module/plans')->assertNotFound();
     }
+
+    public function test_pro_plan_entitles_rental_and_canvassing(): void
+    {
+        $pro = Plan::query()->firstWhere('key', 'pro');
+
+        $this->assertNotNull($pro);
+        $this->assertTrue($pro->includesModule('rental'));
+        $this->assertTrue($pro->includesModule('canvassing'));
+
+        $tenant = $this->provisionTenant('Vertical Co', 'vertical-co', 'owner@vertical.test');
+        $tenant->update(['plan' => 'pro']);
+
+        $this->assertTrue($tenant->fresh()->isEntitledTo('rental'));
+        $this->assertTrue($tenant->fresh()->isEntitledTo('canvassing'));
+    }
 }
