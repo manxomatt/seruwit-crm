@@ -2,6 +2,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
+import Select from '@/Components/Select';
 import PosLayout from '../../../../PosLayout';
 
 interface PosProduct {
@@ -109,6 +110,17 @@ export default function Show({
     const selectedPartner = useMemo(
         () => customers.find((customer) => String(customer.id) === partnerId) ?? null,
         [customers, partnerId],
+    );
+
+    const customerOptions = useMemo(
+        () => [
+            { value: '', label: t('pos.terminal.walk_in') },
+            ...customers.map((customer) => ({
+                value: String(customer.id),
+                label: customer.code ? `${customer.name} (${customer.code})` : customer.name,
+            })),
+        ],
+        [customers, t],
     );
 
     const resolveUnitPrice = useCallback(
@@ -574,19 +586,18 @@ export default function Show({
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--pos-muted)]">
                                     {t('pos.terminal.customer')}
                                 </label>
-                                <select
+                                <Select
+                                    searchable
+                                    maxVisibleOptions={10}
                                     value={partnerId}
-                                    onChange={(e) => setPartnerId(e.target.value)}
-                                    className="h-10 w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-[var(--pos-accent)] focus:ring-[var(--pos-accent)]"
-                                >
-                                    <option value="">{t('pos.terminal.walk_in')}</option>
-                                    {customers.map((customer) => (
-                                        <option key={customer.id} value={customer.id}>
-                                            {customer.name}
-                                            {customer.code ? ` (${customer.code})` : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={setPartnerId}
+                                    options={customerOptions}
+                                    placeholder={t('pos.terminal.walk_in')}
+                                    searchPlaceholder={t('pos.terminal.search_customer')}
+                                    emptyText={t('pos.terminal.no_customers')}
+                                    noResultsText={t('pos.terminal.no_customer_match')}
+                                    className="w-full"
+                                />
                             </div>
                         )}
 
