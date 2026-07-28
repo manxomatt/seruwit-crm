@@ -31,6 +31,10 @@ class Rental extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const DEPOSIT_HELD = 'held';
+
+    public const DEPOSIT_SETTLED = 'settled';
+
     protected static function newFactory(): Factory
     {
         return RentalFactory::new();
@@ -50,16 +54,32 @@ class Rental extends Model
         'rate_per_period',
         'km_limit_per_period',
         'excess_km_rate',
+        'late_fee_per_day',
         'deposit_amount',
         'total_periods',
         'base_amount',
         'start_odometer',
+        'start_fuel_level',
+        'checkout_checklist',
+        'checkout_notes',
         'end_odometer',
+        'end_fuel_level',
+        'return_checklist',
+        'return_notes',
         'excess_km',
         'excess_amount',
+        'overdue_days',
+        'late_fee_amount',
         'deposit_returned',
+        'deposit_status',
+        'deposit_applied_amount',
+        'deposit_refunded_amount',
+        'deposit_settled_at',
         'total_amount',
         'notes',
+        'pickup_location',
+        'return_location',
+        'fuel_policy_notes',
         'cancelled_reason',
         'confirmed_by',
         'confirmed_at',
@@ -77,20 +97,28 @@ class Rental extends Model
             'actual_return_date' => 'date:Y-m-d',
             'rate_per_period' => 'decimal:2',
             'excess_km_rate' => 'decimal:2',
+            'late_fee_per_day' => 'decimal:2',
             'deposit_amount' => 'decimal:2',
             'base_amount' => 'decimal:2',
             'excess_amount' => 'decimal:2',
+            'late_fee_amount' => 'decimal:2',
+            'deposit_applied_amount' => 'decimal:2',
+            'deposit_refunded_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'km_limit_per_period' => 'integer',
             'total_periods' => 'integer',
             'start_odometer' => 'integer',
             'end_odometer' => 'integer',
             'excess_km' => 'integer',
+            'overdue_days' => 'integer',
             'deposit_returned' => 'boolean',
+            'checkout_checklist' => 'array',
+            'return_checklist' => 'array',
             'confirmed_at' => 'datetime',
             'checked_out_at' => 'datetime',
             'returned_at' => 'datetime',
             'completed_at' => 'datetime',
+            'deposit_settled_at' => 'datetime',
         ];
     }
 
@@ -128,6 +156,84 @@ class Rental extends Model
     public function damages(): HasMany
     {
         return $this->hasMany(RentalDamage::class)->orderBy('reported_at');
+    }
+
+    /** @return HasMany<RentalCharge, $this> */
+    public function charges(): HasMany
+    {
+        return $this->hasMany(RentalCharge::class)->orderBy('id');
+    }
+
+    public function isDepositSettled(): bool
+    {
+        return $this->deposit_status === self::DEPOSIT_SETTLED
+            || (float) $this->deposit_amount <= 0;
+    }
+
+    /**
+     * Recalculate rental total from base, excess KM, late fees, and damages.
+     */
+    public function recalculateTotalAmount(): void
+    {
+        $damagesTotal = (float) $this->damages()->sum('amount');
+
+        $this->update([
+            'total_amount' => round(
+                (float) $this->base_amount
+                + (float) $this->excess_amount
+                + (float) $this->late_fee_amount
+                + $damagesTotal,
+                2
+            ),
+        ]);
+    }
+
+    /**
+     * Effective late fee per day: explicit snapshot, else daily rate for daily rentals.
+     */
+    public function resolveLateFeePerDay(): float
+    {
+        if ($this->late_fee_per_day !== null) {
+            return (float) $this->late_fee_per_day;
+        }
+
+        if ($this->period_type === 'daily') {
+            return (float) $this->rate_per_period;
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Days past scheduled end date (0 when returned on time or early).
+     */
+    public static function computeOverdueDays(string $endDate, string $actualReturnDate): int
+    {
+        $end = \Carbon\Carbon::parse($endDate)->startOfDay();
+        $actual = \Carbon\Carbon::parse($actualReturnDate)->startOfDay();
+
+        if ($actual->lte($end)) {
+            return 0;
+        }
+
+        return (int) $end->diffInDays($actual);
+    }
+
+    /**
+     * @param  array{deposit_applied_amount: float|int|string, deposit_refunded_amount: float|int|string}  $amounts
+     */
+    public function settleDeposit(array $amounts): void
+    {
+        $applied = round((float) $amounts['deposit_applied_amount'], 2);
+        $refunded = round((float) $amounts['deposit_refunded_amount'], 2);
+
+        $this->update([
+            'deposit_status' => self::DEPOSIT_SETTLED,
+            'deposit_applied_amount' => $applied,
+            'deposit_refunded_amount' => $refunded,
+            'deposit_returned' => $applied < 0.009 && abs($refunded - (float) $this->deposit_amount) < 0.009,
+            'deposit_settled_at' => now(),
+        ]);
     }
 
     /**

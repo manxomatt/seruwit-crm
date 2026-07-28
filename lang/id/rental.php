@@ -5,6 +5,7 @@ return [
 
     'nav' => [
         'list' => 'Rental',
+        'availability' => 'Ketersediaan',
         'rates' => 'Tarif',
         'back_to_list' => '← Kembali ke Rental',
         'back' => '← Kembali',
@@ -57,6 +58,12 @@ return [
         'base_amount' => 'Jumlah Dasar',
         'total_amount' => 'Total',
         'excess_km' => 'KM Lebih (:km km)',
+        'late_fee' => 'Denda keterlambatan (:days hari)',
+        'late_fee_per_day' => 'Denda per hari (Rp)',
+        'pickup_location' => 'Lokasi jemput',
+        'return_location' => 'Lokasi kembali',
+        'fuel_policy_notes' => 'Kebijakan BBM',
+        'damage_photo' => 'Foto damage',
         'start_odometer' => 'Odometer Awal (km)',
         'end_odometer' => 'Odometer Akhir (km)',
         'return_date' => 'Tanggal Kembali',
@@ -65,10 +72,20 @@ return [
         'repair_cost' => 'Biaya Perbaikan (Rp)',
         'cancel_reason' => 'Alasan',
         'deposit_returned' => 'Deposit dikembalikan ke pelanggan',
+        'deposit_applied' => 'Dipakai untuk tagihan (Rp)',
+        'deposit_refunded' => 'Dikembalikan ke pelanggan (Rp)',
+        'deposit_status' => 'Status deposit',
+        'fuel_level' => 'Level BBM',
+        'checkout_notes' => 'Catatan checkout',
+        'return_notes' => 'Catatan return',
         'rate_active' => 'Aktif (tersedia untuk booking baru)',
         'rate' => 'Tarif',
         'checkout' => 'Checkout',
         'return' => 'Kembali',
+        'payment_status' => 'Pembayaran',
+        'invoiced' => 'Ditagih',
+        'paid' => 'Dibayar',
+        'balance_due' => 'Sisa tagihan',
     ],
 
     'placeholders' => [
@@ -81,6 +98,8 @@ return [
         'any_vehicle' => 'Semua kendaraan',
         'vehicle_type' => 'mis. SUV, MPV',
         'unlimited' => 'Tanpa batas',
+        'late_fee_fallback' => 'Kosong = tarif harian (sewa harian)',
+        'fuel_policy' => 'mis. Kembalikan dengan level BBM yang sama',
     ],
 
     'actions' => [
@@ -94,12 +113,16 @@ return [
         'extend' => 'Perpanjang',
         'add_damage' => 'Tambah Damage',
         'save_damage' => 'Simpan Damage',
+        'settle_deposit' => 'Settle Deposit',
         'remove' => 'Hapus',
         'new_rental' => 'Rental Baru',
         'create_rental' => 'Buat Rental',
         'cancel_rental' => 'Batalkan Rental',
         'new_rate' => 'Tarif Baru',
         'create_rate' => 'Buat Tarif',
+        'view_invoice' => 'Buka',
+        'print_contract' => 'Cetak kontrak',
+        'print_handover' => 'Cetak BA serah terima',
     ],
 
     'sections' => [
@@ -107,11 +130,91 @@ return [
         'pricing' => 'Harga',
         'booking_details' => 'Detail Booking',
         'pricing_snapshot' => 'Snapshot Harga',
+        'locations' => 'Lokasi & kebijakan',
         'odometer' => 'Odometer',
+        'handover' => 'Serah terima',
         'extensions' => 'Perpanjangan',
         'damages' => 'Damage',
         'timeline' => 'Timeline',
         'notes' => 'Catatan',
+        'live_location' => 'Lokasi live',
+        'last_location' => 'Lokasi terakhir',
+        'billing' => 'Tagihan & pembayaran',
+        'deposit_settlement' => 'Settlement deposit',
+    ],
+
+    'availability' => [
+        'total' => 'Kendaraan',
+        'free' => 'Kosong',
+        'booked' => 'Terbooking',
+        'unavailable' => 'Tidak tersedia',
+        'column' => 'Ketersediaan',
+        'bookings' => 'Booking',
+    ],
+
+    'checklist' => [
+        'checkout' => 'Checklist checkout',
+        'return' => 'Checklist return',
+        'items' => [
+            'exterior_body' => 'Body luar',
+            'tires_wheels' => 'Ban & pelek',
+            'lights' => 'Lampu',
+            'interior' => 'Kebersihan interior',
+            'documents' => 'STNK / dokumen di kendaraan',
+            'spare_tools' => 'Ban serep & peralatan',
+            'ac' => 'AC berfungsi',
+            'keys' => 'Kunci & remote',
+        ],
+    ],
+
+    'fuel' => [
+        'empty' => 'Kosong',
+        '1/8' => '1/8',
+        '1/4' => '1/4',
+        '3/8' => '3/8',
+        '1/2' => '1/2',
+        '5/8' => '5/8',
+        '3/4' => '3/4',
+        '7/8' => '7/8',
+        'full' => 'Penuh',
+    ],
+
+    'payment' => [
+        'none' => 'Belum ada invoice',
+        'draft' => 'Invoice draft',
+        'unpaid' => 'Belum dibayar',
+        'partial' => 'Sebagian dibayar',
+        'paid' => 'Lunas',
+    ],
+
+    'deposit' => [
+        'held' => 'Ditahan',
+        'settled' => 'Settled',
+        'applied' => 'Dipakai',
+        'refunded' => 'Dikembalikan',
+    ],
+
+    'invoice' => [
+        'line_base' => 'Sewa kendaraan :code',
+        'line_extension' => 'Perpanjangan sewa :code (:from → :to)',
+        'line_excess_km' => 'KM lebih :code (:km km)',
+        'line_late_fee' => 'Denda keterlambatan :code (:days hari)',
+        'line_damage' => 'Damage :code — :description',
+        'notes_base' => 'Invoice otomatis rental :code (dasar)',
+        'notes_extension' => 'Invoice otomatis rental :code (perpanjangan)',
+        'notes_excess_km' => 'Invoice otomatis rental :code (KM lebih)',
+        'notes_late_fee' => 'Invoice otomatis rental :code (denda)',
+        'notes_damage' => 'Invoice otomatis rental :code (damage)',
+    ],
+
+    'tracking' => [
+        'live' => 'Live',
+        'last_seen' => 'Terakhir terlihat :time',
+        'speed' => ':speed',
+        'unavailable' => 'GPS tracking belum aktif di workspace ini.',
+        'no_device' => 'Kendaraan ini belum ter-pair dengan tracker GPS.',
+        'no_fix' => 'Tracker ter-pair belum melaporkan posisi.',
+        'hint_active' => 'Posisi diperbarui otomatis selama rental aktif.',
     ],
 
     'timeline' => [
@@ -149,6 +252,12 @@ return [
         'show' => [
             'title' => 'Rental :code',
         ],
+        'availability' => [
+            'title' => 'Ketersediaan kendaraan',
+            'head' => 'Ketersediaan',
+            'subtitle' => 'Lihat kendaraan yang kosong atau terbooking pada rentang tanggal.',
+            'empty' => 'Tidak ada kendaraan.',
+        ],
         'rates' => [
             'title' => 'Tarif',
             'head' => 'Tarif Rental',
@@ -166,6 +275,7 @@ return [
         'return' => 'Catat Pengembalian',
         'extend' => 'Perpanjang Rental',
         'damage' => 'Catat Damage',
+        'deposit' => 'Settle Deposit',
     ],
 
     'messages' => [
@@ -180,6 +290,7 @@ return [
         'extended' => 'Rental diperpanjang.',
         'damage_recorded' => 'Damage dicatat.',
         'damage_removed' => 'Catatan damage dihapus.',
+        'deposit_settled' => 'Deposit sudah di-settle.',
         'rate_created' => 'Tarif dibuat.',
         'rate_updated' => 'Tarif diperbarui.',
         'rate_deleted' => 'Tarif dihapus.',
@@ -192,9 +303,15 @@ return [
         'checkout_confirmed_only' => 'Hanya rental dikonfirmasi yang dapat di-check out.',
         'return_active_only' => 'Hanya rental aktif yang dapat dikembalikan.',
         'complete_returned_only' => 'Hanya rental yang sudah dikembalikan yang dapat diselesaikan.',
+        'complete_deposit_unsettled' => 'Settle deposit terlebih dahulu sebelum menyelesaikan rental.',
         'cancel_draft_confirmed_only' => 'Hanya rental draft atau dikonfirmasi yang dapat dibatalkan.',
         'extend_active_only' => 'Hanya rental aktif yang dapat diperpanjang.',
         'damage_active_returned_only' => 'Damage hanya dapat dicatat pada rental aktif atau dikembalikan.',
+        'damage_already_invoiced' => 'Damage ini sudah punya invoice aktif dan tidak dapat dihapus.',
+        'settle_deposit_returned_only' => 'Deposit hanya dapat di-settle pada rental yang sudah dikembalikan atau selesai.',
+        'deposit_already_settled' => 'Deposit sudah di-settle.',
+        'pdf_contract_confirmed_only' => 'Cetak kontrak setelah rental dikonfirmasi.',
+        'pdf_handover_checked_out_only' => 'Cetak BA serah terima setelah kendaraan di-check out.',
     ],
 
     'validation' => [
@@ -203,5 +320,6 @@ return [
         'vehicle_stnk_expired' => 'Kendaraan :name memiliki STNK kedaluwarsa.',
         'vehicle_kir_expired' => 'Kendaraan :name memiliki KIR kedaluwarsa.',
         'vehicle_trip_conflict' => 'Kendaraan :name sudah memiliki trip pada :date.',
+        'deposit_settlement_sum' => 'Jumlah dipakai + dikembalikan harus sama dengan deposit (:deposit).',
     ],
 ];

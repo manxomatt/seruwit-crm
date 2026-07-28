@@ -25,6 +25,7 @@ class RentalRateFactory extends Factory
             'rate_per_period' => fake()->randomFloat(2, 300000, 5000000),
             'km_limit_per_period' => fake()->optional()->randomElement([100, 200, 300, 500]),
             'excess_km_rate' => fake()->optional()->randomFloat(2, 3000, 10000),
+            'late_fee_per_day' => fake()->optional()->randomFloat(2, 300000, 1500000),
             'deposit_amount' => fake()->randomFloat(2, 500000, 5000000),
             'is_active' => true,
             'notes' => null,

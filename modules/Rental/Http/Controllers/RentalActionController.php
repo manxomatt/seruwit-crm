@@ -5,18 +5,25 @@ namespace Modules\Rental\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Modules\Invoicing\Models\Invoice;
+use Modules\Rental\Http\Requests\SettleRentalDepositRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalDamage;
+use Modules\Rental\Support\RentalHandoverChecklist;
+use Modules\Rental\Support\RentalInvoiceService;
 
 class RentalActionController extends Controller
 {
+    public function __construct(private readonly RentalInvoiceService $invoices) {}
+
     protected function getRoutePrefix(): string
     {
         return 'module';
     }
 
     /**
-     * Confirm a draft rental — blocks the vehicle for the booking period.
+     * Confirm a draft rental — blocks the vehicle and raises the base invoice.
      */
     public function confirm(Rental $rental): RedirectResponse
     {
@@ -27,6 +34,15 @@ class RentalActionController extends Controller
             'confirmed_by' => auth()->id(),
             'confirmed_at' => now(),
         ]);
+
+        if ((float) $rental->deposit_amount <= 0) {
+            $rental->settleDeposit([
+                'deposit_applied_amount' => 0,
+                'deposit_refunded_amount' => 0,
+            ]);
+        }
+
+        $this->invoices->invoiceBase($rental->fresh());
 
         return back()->with('success', __('rental.messages.confirmed'));
     }
@@ -40,19 +56,26 @@ class RentalActionController extends Controller
 
         $request->validate([
             'start_odometer' => ['nullable', 'integer', 'min:0'],
+            'start_fuel_level' => ['nullable', 'string', Rule::in(RentalHandoverChecklist::fuelLevels())],
+            'checkout_checklist' => ['nullable', 'array'],
+            'checkout_checklist.*' => ['boolean'],
+            'checkout_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $rental->update([
             'status' => Rental::STATUS_ACTIVE,
             'checked_out_at' => now(),
             'start_odometer' => $request->start_odometer,
+            'start_fuel_level' => $request->start_fuel_level,
+            'checkout_checklist' => RentalHandoverChecklist::normalize($request->input('checkout_checklist')),
+            'checkout_notes' => $request->checkout_notes,
         ]);
 
         return back()->with('success', __('rental.messages.checked_out'));
     }
 
     /**
-     * Record vehicle return — computes excess km and final amount.
+     * Record vehicle return — computes excess km, invoices it, and optionally settles deposit.
      */
     public function return(Request $request, Rental $rental): RedirectResponse
     {
@@ -61,6 +84,10 @@ class RentalActionController extends Controller
         $request->validate([
             'actual_return_date' => ['required', 'date'],
             'end_odometer' => ['nullable', 'integer', 'min:0'],
+            'end_fuel_level' => ['nullable', 'string', Rule::in(RentalHandoverChecklist::fuelLevels())],
+            'return_checklist' => ['nullable', 'array'],
+            'return_checklist.*' => ['boolean'],
+            'return_notes' => ['nullable', 'string', 'max:1000'],
             'deposit_returned' => ['boolean'],
         ]);
 
@@ -74,26 +101,73 @@ class RentalActionController extends Controller
             $excessAmount = $excessKm * (float) ($rental->excess_km_rate ?? 0);
         }
 
+        $overdueDays = Rental::computeOverdueDays(
+            $rental->end_date->toDateString(),
+            $request->actual_return_date,
+        );
+        $lateFeeAmount = $overdueDays * $rental->resolveLateFeePerDay();
+
         $rental->update([
             'status' => Rental::STATUS_RETURNED,
             'actual_return_date' => $request->actual_return_date,
             'end_odometer' => $request->end_odometer,
+            'end_fuel_level' => $request->end_fuel_level,
+            'return_checklist' => RentalHandoverChecklist::normalize($request->input('return_checklist')),
+            'return_notes' => $request->return_notes,
             'excess_km' => $excessKm,
             'excess_amount' => $excessAmount,
-            'deposit_returned' => $request->boolean('deposit_returned', false),
-            'total_amount' => (float) $rental->base_amount + $excessAmount,
+            'overdue_days' => $overdueDays,
+            'late_fee_amount' => $lateFeeAmount,
             'returned_at' => now(),
         ]);
+
+        $rental->recalculateTotalAmount();
+        $rental->refresh();
+
+        $this->invoices->invoiceExcessKm($rental);
+        $this->invoices->invoiceLateFee($rental);
+
+        if ((float) $rental->deposit_amount <= 0) {
+            $rental->settleDeposit([
+                'deposit_applied_amount' => 0,
+                'deposit_refunded_amount' => 0,
+            ]);
+        } elseif ($request->boolean('deposit_returned')) {
+            // Shortcut: full refund on return (legacy checkbox).
+            $rental->settleDeposit([
+                'deposit_applied_amount' => 0,
+                'deposit_refunded_amount' => (float) $rental->deposit_amount,
+            ]);
+        }
 
         return back()->with('success', __('rental.messages.returned'));
     }
 
     /**
-     * Complete a returned rental.
+     * Settle deposit: applied toward charges/damages + refunded to customer must equal deposit.
+     */
+    public function settleDeposit(SettleRentalDepositRequest $request, Rental $rental): RedirectResponse
+    {
+        abort_if(
+            ! in_array($rental->status, [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED], true),
+            422,
+            __('rental.errors.settle_deposit_returned_only'),
+        );
+
+        abort_if($rental->deposit_status === Rental::DEPOSIT_SETTLED, 422, __('rental.errors.deposit_already_settled'));
+
+        $rental->settleDeposit($request->validated());
+
+        return back()->with('success', __('rental.messages.deposit_settled'));
+    }
+
+    /**
+     * Complete a returned rental — deposit must already be settled.
      */
     public function complete(Rental $rental): RedirectResponse
     {
         abort_if($rental->status !== Rental::STATUS_RETURNED, 422, __('rental.errors.complete_returned_only'));
+        abort_if(! $rental->isDepositSettled(), 422, __('rental.errors.complete_deposit_unsettled'));
 
         $rental->update([
             'status' => Rental::STATUS_COMPLETED,
@@ -127,7 +201,7 @@ class RentalActionController extends Controller
     }
 
     /**
-     * Extend an active rental's end date.
+     * Extend an active rental's end date and invoice the extension.
      */
     public function extend(Request $request, Rental $rental): RedirectResponse
     {
@@ -147,7 +221,7 @@ class RentalActionController extends Controller
         );
         $additionalAmount = $extendedPeriods * (float) $rental->rate_per_period;
 
-        $rental->extensions()->create([
+        $extension = $rental->extensions()->create([
             'original_end_date' => $originalEnd,
             'new_end_date' => $newEnd,
             'extended_periods' => $extendedPeriods,
@@ -162,11 +236,13 @@ class RentalActionController extends Controller
             'total_amount' => (float) $rental->total_amount + $additionalAmount,
         ]);
 
+        $this->invoices->invoiceExtension($rental->fresh(), $extension);
+
         return back()->with('success', __('rental.messages.extended'));
     }
 
     /**
-     * Record a damage item found on return.
+     * Record a damage item and raise a damage invoice.
      */
     public function storeDamage(Request $request, Rental $rental): RedirectResponse
     {
@@ -182,24 +258,50 @@ class RentalActionController extends Controller
             'photo_path' => ['nullable', 'string'],
         ]);
 
-        $rental->damages()->create([
+        $damage = $rental->damages()->create([
             'description' => $request->description,
             'amount' => $request->amount,
             'photo_path' => $request->photo_path,
             'reported_at' => now(),
         ]);
 
+        $rental->recalculateTotalAmount();
+        $this->invoices->invoiceDamage($rental->fresh(), $damage);
+
         return back()->with('success', __('rental.messages.damage_recorded'));
     }
 
     /**
-     * Remove a damage record.
+     * Remove a damage record — blocked once its invoice has left draft.
      */
     public function destroyDamage(Rental $rental, RentalDamage $damage): RedirectResponse
     {
         abort_if($damage->rental_id !== $rental->id, 403);
 
+        $damage->load('charge.invoiceLine.invoice');
+        $charge = $damage->charge;
+
+        if ($charge && $this->invoices->chargeHasActiveInvoice($charge)) {
+            $invoice = $charge->invoiceLine?->invoice;
+
+            if ($invoice !== null && $invoice->status !== Invoice::STATUS_DRAFT) {
+                return back()->with('error', __('rental.errors.damage_already_invoiced'));
+            }
+
+            $charge->invoiceLine?->delete();
+
+            if ($invoice !== null) {
+                $invoice->recalculate();
+
+                if ($invoice->lines()->count() === 0) {
+                    $invoice->delete();
+                }
+            }
+        }
+
+        $charge?->delete();
         $damage->delete();
+        $rental->recalculateTotalAmount();
 
         return back()->with('success', __('rental.messages.damage_removed'));
     }

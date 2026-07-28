@@ -88,6 +88,7 @@ return [
             'empty_hint' => 'Use Sync to import trackers from your GPS provider.',
             'search' => 'Search by device, IMEI, or paired vehicle…',
             'all_paired' => 'Every vehicle already has a tracker.',
+            'pair_odometer_hint' => 'The vehicle\'s current odometer becomes the baseline; GPS kilometres are added on top of it.',
         ],
         'settings' => [
             'title' => 'Tracking Settings',

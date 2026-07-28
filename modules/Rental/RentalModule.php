@@ -6,7 +6,9 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Rental\Http\Controllers\RentalActionController;
+use Modules\Rental\Http\Controllers\RentalAvailabilityController;
 use Modules\Rental\Http\Controllers\RentalController;
+use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
 
 /**
@@ -73,7 +75,7 @@ class RentalModule implements ModuleContract
 
     public function viewsPath(): ?string
     {
-        return null;
+        return __DIR__.'/resources/views';
     }
 
     public function boot(): void
@@ -91,6 +93,9 @@ class RentalModule implements ModuleContract
         Route::patch('/rental/rates/{rate}', [RentalRateController::class, 'update'])->middleware('permission:rental,update')->name('rental.rates.update');
         Route::delete('/rental/rates/{rate}', [RentalRateController::class, 'destroy'])->middleware('permission:rental,delete')->name('rental.rates.destroy');
 
+        // Availability board (before {rental} wildcard)
+        Route::get('/rental/availability', [RentalAvailabilityController::class, 'index'])->middleware('permission:rental,view')->name('rental.availability.index');
+
         // Rentals CRUD
         Route::get('/rental/list', [RentalController::class, 'index'])->middleware('permission:rental,view')->name('rental.index');
         Route::get('/rental/create', [RentalController::class, 'create'])->middleware('permission:rental,create')->name('rental.create');
@@ -100,6 +105,10 @@ class RentalModule implements ModuleContract
         Route::patch('/rental/{rental}', [RentalController::class, 'update'])->middleware('permission:rental,update')->name('rental.update');
         Route::delete('/rental/{rental}', [RentalController::class, 'destroy'])->middleware('permission:rental,delete')->name('rental.destroy');
 
+        // PDFs
+        Route::get('/rental/{rental}/pdf/contract', [RentalPdfController::class, 'contract'])->middleware('permission:rental,view')->name('rental.pdf.contract');
+        Route::get('/rental/{rental}/pdf/handover', [RentalPdfController::class, 'handover'])->middleware('permission:rental,view')->name('rental.pdf.handover');
+
         // Lifecycle actions
         Route::post('/rental/{rental}/confirm', [RentalActionController::class, 'confirm'])->middleware('permission:rental,approve')->name('rental.confirm');
         Route::post('/rental/{rental}/checkout', [RentalActionController::class, 'checkout'])->middleware('permission:rental,update')->name('rental.checkout');
@@ -107,6 +116,7 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/complete', [RentalActionController::class, 'complete'])->middleware('permission:rental,approve')->name('rental.complete');
         Route::post('/rental/{rental}/cancel', [RentalActionController::class, 'cancel'])->middleware('permission:rental,update')->name('rental.cancel');
         Route::post('/rental/{rental}/extend', [RentalActionController::class, 'extend'])->middleware('permission:rental,update')->name('rental.extend');
+        Route::post('/rental/{rental}/deposit-settle', [RentalActionController::class, 'settleDeposit'])->middleware('permission:rental,update')->name('rental.deposit.settle');
         Route::post('/rental/{rental}/damages', [RentalActionController::class, 'storeDamage'])->middleware('permission:rental,update')->name('rental.damages.store');
         Route::delete('/rental/{rental}/damages/{damage}', [RentalActionController::class, 'destroyDamage'])->middleware('permission:rental,update')->name('rental.damages.destroy');
     }

@@ -49,10 +49,12 @@ export function getStatusBadgeClasses(status: DocumentStatus): string {
     }
 }
 
-export function getStatusBadge(status: DocumentStatus, t: Translate): { label: string; classes: string } {
+export function getStatusBadge(status: DocumentStatus | null | undefined, t: Translate): { label: string; classes: string } {
+    const resolved = status ?? 'valid';
+
     return {
-        label: t(`document.status.${status}`, undefined, status),
-        classes: getStatusBadgeClasses(status),
+        label: t(`document.status.${resolved}`, undefined, resolved),
+        classes: getStatusBadgeClasses(resolved),
     };
 }
 

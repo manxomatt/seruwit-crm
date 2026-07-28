@@ -16,6 +16,7 @@ class StoreRentalRateRequest extends FormRequest
             'rate_per_period' => ['required', 'numeric', 'min:0'],
             'km_limit_per_period' => ['nullable', 'integer', 'min:0'],
             'excess_km_rate' => ['nullable', 'numeric', 'min:0'],
+            'late_fee_per_day' => ['nullable', 'numeric', 'min:0'],
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
             'notes' => ['nullable', 'string'],

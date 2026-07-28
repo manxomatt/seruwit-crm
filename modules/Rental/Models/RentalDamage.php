@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\Rental\Database\Factories\RentalDamageFactory;
 
 class RentalDamage extends Model
@@ -40,5 +41,11 @@ class RentalDamage extends Model
     public function rental(): BelongsTo
     {
         return $this->belongsTo(Rental::class);
+    }
+
+    /** @return HasOne<RentalCharge, $this> */
+    public function charge(): HasOne
+    {
+        return $this->hasOne(RentalCharge::class, 'rental_damage_id');
     }
 }

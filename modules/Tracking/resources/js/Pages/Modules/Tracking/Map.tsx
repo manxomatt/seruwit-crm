@@ -1,13 +1,18 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
 import LeafletMap from '@/Components/Map/LeafletMap';
+import Modal from '@/Components/Modal';
+import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import VehicleMarker from '@/Components/Map/VehicleMarker';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { formatDateTimeDmYHis } from '@/utils/date';
 import { formatCoordinate, formatSpeedKph, toLatLng, type LatLng } from '@/utils/geo';
-import { Head, usePoll } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { Head, useForm, usePoll } from '@inertiajs/react';
+import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import TrackingNav from '../../../TrackingNav';
 
 interface Device {
@@ -21,11 +26,20 @@ interface Device {
     vehicle: { id: number; name: string; plate_number: string; status: string } | null;
 }
 
+interface PairableVehicle {
+    id: number;
+    name: string;
+    plate_number: string;
+    odometer_km: number;
+}
+
 interface Props {
     devices: Device[];
+    pairableVehicles: PairableVehicle[];
     pollEnabled: boolean;
     lastPolledAt: string | null;
     lastPollError: string | null;
+    can: { update: boolean };
 }
 
 type DeviceTone = 'moving' | 'idle' | 'stale';
@@ -38,6 +52,17 @@ interface PositionedDevice {
 }
 
 const PAGE_SIZE = 10;
+
+const LinkIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+        />
+    </svg>
+);
 
 /** Moving, stopped, or silent for long enough that the fix is stale. */
 function toneFor(device: Device): DeviceTone {
@@ -62,16 +87,30 @@ function deviceLabel(device: Device): string {
     return device.name;
 }
 
-export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError }: Props): JSX.Element {
+export default function Map({
+    devices,
+    pairableVehicles,
+    pollEnabled,
+    lastPolledAt,
+    lastPollError,
+    can,
+}: Props): JSX.Element {
     const { t } = useTrans();
+    const { prefixedRoute } = useRoutePrefix();
     const [focused, setFocused] = useState<LatLng | null>(null);
     const [deviceId, setDeviceId] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [page, setPage] = useState(1);
+    const [pairing, setPairing] = useState<Device | null>(null);
+    const pairForm = useForm({ vehicle_id: '' });
 
     // The server only refreshes from the GPS provider once a minute, so polling
     // faster than this would just re-read the same rows.
-    const { start, stop } = usePoll(15000, { only: ['devices', 'lastPolledAt', 'lastPollError'] }, { autoStart: true });
+    const { start, stop } = usePoll(
+        15000,
+        { only: ['devices', 'pairableVehicles', 'lastPolledAt', 'lastPollError'] },
+        { autoStart: true },
+    );
     const [live, setLive] = useState(true);
 
     const toggleLive = () => {
@@ -81,6 +120,43 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
             start();
         }
         setLive(!live);
+    };
+
+    const openPairing = (device: Device) => {
+        setPairing(device);
+        pairForm.reset();
+        pairForm.clearErrors();
+        if (live) {
+            stop();
+        }
+    };
+
+    const closePairing = () => {
+        setPairing(null);
+        pairForm.reset();
+        pairForm.clearErrors();
+        if (live) {
+            start();
+        }
+    };
+
+    const submitPair: FormEventHandler = (e) => {
+        e.preventDefault();
+
+        if (!pairing) {
+            return;
+        }
+
+        pairForm.patch(prefixedRoute('tracking.devices.pair', pairing.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setPairing(null);
+                pairForm.reset();
+                if (live) {
+                    start();
+                }
+            },
+        });
     };
 
     const positioned = useMemo(
@@ -264,11 +340,11 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
                             ) : (
                                 <ul className="divide-y divide-gray-200">
                                     {pageItems.map(({ device, position }) => (
-                                        <li key={device.id}>
+                                        <li key={device.id} className="flex items-start gap-2 py-3">
                                             <button
                                                 type="button"
                                                 onClick={() => setFocused(position)}
-                                                className="w-full py-3 text-left hover:bg-gray-50"
+                                                className="min-w-0 flex-1 text-left hover:bg-gray-50"
                                             >
                                                 <p className="text-sm font-medium text-gray-900">
                                                     {device.vehicle?.name ?? device.name}
@@ -285,6 +361,18 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
                                                 </p>
                                                 <p className="text-xs text-gray-400">{formatDateTimeDmYHis(device.last_recorded_at)}</p>
                                             </button>
+
+                                            {can.update && !device.vehicle && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openPairing(device)}
+                                                    className="shrink-0 rounded-md p-1.5 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900"
+                                                    title={t('tracking.actions.pair')}
+                                                    aria-label={t('tracking.actions.pair')}
+                                                >
+                                                    <LinkIcon />
+                                                </button>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
@@ -367,6 +455,44 @@ export default function Map({ devices, pollEnabled, lastPolledAt, lastPollError 
                     </div>
                 </div>
             </div>
+
+            <Modal show={pairing !== null} onClose={closePairing} maxWidth="md">
+                <form onSubmit={submitPair} className="p-6">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        {t('tracking.actions.pair')} {pairing?.name}
+                    </h3>
+
+                    {pairableVehicles.length === 0 ? (
+                        <p className="text-sm text-gray-500">{t('tracking.pages.devices.all_paired')}</p>
+                    ) : (
+                        <div>
+                            <InputLabel htmlFor="map_vehicle_id" value={t('tracking.fields.vehicle')} />
+                            <Select
+                                id="map_vehicle_id"
+                                className="mt-1"
+                                value={pairForm.data.vehicle_id}
+                                onChange={(value) => pairForm.setData('vehicle_id', value)}
+                                placeholder={t('tracking.placeholders.select_vehicle')}
+                                options={pairableVehicles.map((vehicle) => ({
+                                    value: String(vehicle.id),
+                                    label: `${vehicle.name} (${vehicle.plate_number}) — ${vehicle.odometer_km.toLocaleString('id-ID')} km`,
+                                }))}
+                            />
+                            <InputError message={pairForm.errors.vehicle_id} className="mt-2" />
+                            <p className="mt-3 text-xs text-gray-500">{t('tracking.pages.devices.pair_odometer_hint')}</p>
+                        </div>
+                    )}
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={closePairing}>
+                            {t('common.cancel')}
+                        </SecondaryButton>
+                        {pairableVehicles.length > 0 && (
+                            <PrimaryButton disabled={pairForm.processing}>{t('tracking.actions.pair')}</PrimaryButton>
+                        )}
+                    </div>
+                </form>
+            </Modal>
         </DynamicLayout>
     );
 }

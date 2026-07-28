@@ -9,6 +9,7 @@ use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalDamage;
 use Modules\Rental\Models\RentalExtension;
 use Modules\Rental\Models\RentalRate;
+use Modules\Tracking\Models\GpsDevice;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -194,7 +195,37 @@ class RentalCrudTest extends TestCase
         $this->actingAs($this->createUserWithRole())
             ->get(route('module.rental.show', $rental))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Modules/Rental/Show'));
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Show')
+                ->has('trackingEnabled')
+                ->has('hasGpsDevice')
+                ->where('livePosition', null)
+                ->has('payment')
+                ->has('invoicingEnabled')
+                ->has('checklistItems')
+                ->has('fuelLevels')
+            );
+    }
+
+    public function test_rental_show_includes_live_vehicle_position_when_tracker_has_a_fix(): void
+    {
+        $rental = Rental::factory()->create(['status' => Rental::STATUS_ACTIVE]);
+        GpsDevice::factory()->pairedTo($rental->vehicle)->at(-6.2, 106.8)->create([
+            'last_speed_kph' => 42,
+            'last_recorded_at' => now(),
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.rental.show', $rental))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Show')
+                ->where('trackingEnabled', true)
+                ->where('hasGpsDevice', true)
+                ->where('livePosition.latitude', '-6.2000000')
+                ->where('livePosition.longitude', '106.8000000')
+                ->where('livePosition.speed_kph', '42.00')
+            );
     }
 
     public function test_can_update_draft_rental(): void
@@ -279,13 +310,30 @@ class RentalCrudTest extends TestCase
         $rental = Rental::factory()->confirmed()->create();
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.checkout', $rental), ['start_odometer' => 50000])
+            ->post(route('module.rental.checkout', $rental), [
+                'start_odometer' => 50000,
+                'start_fuel_level' => '3/4',
+                'checkout_checklist' => [
+                    'exterior_body' => true,
+                    'tires_wheels' => true,
+                    'lights' => false,
+                    'interior' => true,
+                    'documents' => true,
+                    'spare_tools' => true,
+                    'ac' => true,
+                    'keys' => true,
+                ],
+                'checkout_notes' => 'Left rear light dim',
+            ])
             ->assertRedirect();
 
         $rental->refresh();
         $this->assertSame(Rental::STATUS_ACTIVE, $rental->status);
         $this->assertNotNull($rental->checked_out_at);
         $this->assertEquals(50000, $rental->start_odometer);
+        $this->assertSame('3/4', $rental->start_fuel_level);
+        $this->assertFalse($rental->checkout_checklist['lights']);
+        $this->assertSame('Left rear light dim', $rental->checkout_notes);
     }
 
     public function test_return_transitions_active_to_returned_with_excess_km(): void
@@ -416,6 +464,32 @@ class RentalCrudTest extends TestCase
     }
 
     // ── Model helpers ──────────────────────────────────────────────────────
+
+    public function test_can_record_damage_with_photo_path(): void
+    {
+        $rental = Rental::factory()->returned()->create(['deposit_amount' => 0]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.damages.store', $rental), [
+                'description' => 'Dent on door',
+                'amount' => 750000,
+                'photo_path' => 'https://cdn.example.test/damage.jpg',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('rental_damages', [
+            'rental_id' => $rental->id,
+            'description' => 'Dent on door',
+            'photo_path' => 'https://cdn.example.test/damage.jpg',
+        ]);
+    }
+
+    public function test_compute_overdue_days(): void
+    {
+        $this->assertSame(0, Rental::computeOverdueDays('2027-01-10', '2027-01-10'));
+        $this->assertSame(0, Rental::computeOverdueDays('2027-01-10', '2027-01-09'));
+        $this->assertSame(3, Rental::computeOverdueDays('2027-01-10', '2027-01-13'));
+    }
 
     public function test_compute_periods_daily(): void
     {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Models\GpsDevice;
 use Modules\Tracking\Models\TrackingConfig;
 
@@ -40,6 +41,10 @@ class TrackingMapController extends Controller
 
         return Inertia::render('Modules/Tracking/Map', [
             'devices' => $devices,
+            'pairableVehicles' => Vehicle::query()
+                ->whereDoesntHave('gpsDevice')
+                ->orderBy('name')
+                ->get(['id', 'name', 'plate_number', 'odometer_km']),
             'pollEnabled' => $config->poll_enabled,
             'lastPolledAt' => $config->last_polled_at?->toDateTimeString(),
             'lastPollError' => $config->last_poll_error,

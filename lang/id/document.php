@@ -38,7 +38,7 @@ return [
         'expiring_month_hint' => 'Dalam 30 hari ke depan',
         'problem_title' => 'Dokumen Bermasalah & Segera Expire',
         'all_valid' => 'Semua dokumen valid.',
-        'upload_new' => 'Upload Baru →',
+        'upload_new' => 'Upload Baru',
         'total' => 'Total :count dokumen',
         'columns' => [
             'entity' => 'Entitas',

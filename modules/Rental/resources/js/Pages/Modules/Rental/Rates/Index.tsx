@@ -51,6 +51,7 @@ interface Rate {
     rate_per_period: string;
     km_limit_per_period: number | null;
     excess_km_rate: string | null;
+    late_fee_per_day: string | null;
     deposit_amount: string;
     is_active: boolean;
     notes: string | null;
@@ -71,6 +72,7 @@ type FormData = {
     rate_per_period: string;
     km_limit_per_period: string;
     excess_km_rate: string;
+    late_fee_per_day: string;
     deposit_amount: string;
     is_active: boolean;
     notes: string;
@@ -84,6 +86,7 @@ const emptyForm: FormData = {
     rate_per_period: '',
     km_limit_per_period: '',
     excess_km_rate: '',
+    late_fee_per_day: '',
     deposit_amount: '',
     is_active: true,
     notes: '',
@@ -124,6 +127,7 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
             rate_per_period: rate.rate_per_period,
             km_limit_per_period: String(rate.km_limit_per_period ?? ''),
             excess_km_rate: rate.excess_km_rate ?? '',
+            late_fee_per_day: rate.late_fee_per_day ?? '',
             deposit_amount: rate.deposit_amount,
             is_active: rate.is_active,
             notes: rate.notes ?? '',
@@ -270,6 +274,17 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
                         min="0"
                         value={form.data.excess_km_rate}
                         onChange={(e) => form.setData('excess_km_rate', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                </div>
+                <div>
+                    <InputLabel htmlFor="late_fee_per_day" value={t('rental.fields.late_fee_per_day')} />
+                    <TextInput
+                        id="late_fee_per_day"
+                        type="number"
+                        min="0"
+                        value={form.data.late_fee_per_day}
+                        onChange={(e) => form.setData('late_fee_per_day', e.target.value)}
                         className="mt-1 w-full"
                     />
                 </div>

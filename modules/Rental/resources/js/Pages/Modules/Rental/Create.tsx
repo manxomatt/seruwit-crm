@@ -37,6 +37,7 @@ interface Rate {
     rate_per_period: string;
     km_limit_per_period: number | null;
     excess_km_rate: string | null;
+    late_fee_per_day: string | null;
     deposit_amount: string;
 }
 
@@ -57,7 +58,11 @@ type FormData = {
     rate_per_period: string;
     km_limit_per_period: string;
     excess_km_rate: string;
+    late_fee_per_day: string;
     deposit_amount: string;
+    pickup_location: string;
+    return_location: string;
+    fuel_policy_notes: string;
     notes: string;
 };
 
@@ -76,7 +81,11 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
         rate_per_period: '',
         km_limit_per_period: '',
         excess_km_rate: '',
+        late_fee_per_day: '',
         deposit_amount: '',
+        pickup_location: '',
+        return_location: '',
+        fuel_policy_notes: '',
         notes: '',
     });
 
@@ -121,6 +130,7 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
             rate_per_period: rate.rate_per_period,
             km_limit_per_period: rate.km_limit_per_period?.toString() ?? '',
             excess_km_rate: rate.excess_km_rate ?? '',
+            late_fee_per_day: rate.late_fee_per_day ?? '',
             deposit_amount: rate.deposit_amount,
         }));
     };
@@ -269,6 +279,19 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
                             <InputError message={errors.excess_km_rate} className="mt-1" />
                         </div>
                         <div>
+                            <InputLabel htmlFor="late_fee_per_day" value={t('rental.fields.late_fee_per_day')} />
+                            <TextInput
+                                id="late_fee_per_day"
+                                type="number"
+                                min="0"
+                                placeholder={t('rental.placeholders.late_fee_fallback')}
+                                value={data.late_fee_per_day}
+                                onChange={(e) => setData('late_fee_per_day', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={errors.late_fee_per_day} className="mt-1" />
+                        </div>
+                        <div>
                             <InputLabel htmlFor="deposit_amount" value={t('rental.fields.deposit')} />
                             <TextInput
                                 id="deposit_amount"
@@ -279,6 +302,44 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
                                 className="mt-1 w-full"
                             />
                             <InputError message={errors.deposit_amount} className="mt-1" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+                    <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">{t('rental.sections.locations')}</h2>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <InputLabel htmlFor="pickup_location" value={t('rental.fields.pickup_location')} />
+                            <TextInput
+                                id="pickup_location"
+                                value={data.pickup_location}
+                                onChange={(e) => setData('pickup_location', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={errors.pickup_location} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="return_location" value={t('rental.fields.return_location')} />
+                            <TextInput
+                                id="return_location"
+                                value={data.return_location}
+                                onChange={(e) => setData('return_location', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={errors.return_location} className="mt-1" />
+                        </div>
+                        <div className="sm:col-span-2">
+                            <InputLabel htmlFor="fuel_policy_notes" value={t('rental.fields.fuel_policy_notes')} />
+                            <textarea
+                                id="fuel_policy_notes"
+                                rows={2}
+                                value={data.fuel_policy_notes}
+                                onChange={(e) => setData('fuel_policy_notes', e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder={t('rental.placeholders.fuel_policy')}
+                            />
+                            <InputError message={errors.fuel_policy_notes} className="mt-1" />
                         </div>
                     </div>
                 </div>

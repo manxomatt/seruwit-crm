@@ -88,6 +88,7 @@ return [
             'empty_hint' => 'Gunakan Sinkronisasi untuk mengimpor tracker dari provider GPS.',
             'search' => 'Cari perangkat, IMEI, atau kendaraan ter-pair…',
             'all_paired' => 'Semua kendaraan sudah punya tracker.',
+            'pair_odometer_hint' => 'Odometer kendaraan saat ini menjadi baseline; kilometrage GPS ditambahkan di atasnya.',
         ],
         'settings' => [
             'title' => 'Pengaturan Tracking',

@@ -60,6 +60,9 @@ class DocumentCrudTest extends TestCase
                 ->component('Modules/Document/Index')
                 ->where('summary.expired', 1)
                 ->where('summary.expiring_week', 1)
+                ->has('documents.data', 2)
+                ->where('documents.data.0.status', 'expired')
+                ->where('documents.data.1.status', 'expiring_soon')
             );
     }
 

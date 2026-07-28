@@ -37,6 +37,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Sky Track Timestamp Timezone
+    |--------------------------------------------------------------------------
+    |
+    | /api/tracking/objects returns naive datetimes (no offset). Those clocks
+    | are local to the Sky Track server — typically Asia/Jakarta — so we parse
+    | them in this zone before converting into the app timezone. Treating them
+    | as UTC rejects every live fix as "in the future" when APP_TIMEZONE=UTC.
+    |
+    */
+
+    'sky_track_timezone' => env('TRACKING_SKY_TRACK_TIMEZONE', 'Asia/Jakarta'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Prune Chunk Size
     |--------------------------------------------------------------------------
     |

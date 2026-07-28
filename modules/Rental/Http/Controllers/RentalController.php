@@ -3,6 +3,7 @@
 namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,9 +14,13 @@ use Modules\Rental\Http\Requests\StoreRentalRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Support\RentalHandoverChecklist;
+use Modules\Rental\Support\RentalInvoiceService;
 
 class RentalController extends Controller
 {
+    public function __construct(private readonly RentalInvoiceService $invoices) {}
+
     protected function getRoutePrefix(): string
     {
         return 'module';
@@ -96,8 +101,35 @@ class RentalController extends Controller
             'damages',
         ]);
 
+        $trackingEnabled = Modules::available('tracking');
+        $livePosition = null;
+        $hasGpsDevice = false;
+
+        // Soft dependency: Tracking registers Vehicle::gpsDevice at boot. Only
+        // surface a fix when the module is actually available for this tenant.
+        if ($trackingEnabled && $rental->vehicle) {
+            $device = $rental->vehicle->gpsDevice;
+            $hasGpsDevice = $device !== null;
+
+            if ($device?->hasPosition()) {
+                $livePosition = [
+                    'latitude' => $device->last_latitude,
+                    'longitude' => $device->last_longitude,
+                    'speed_kph' => $device->last_speed_kph,
+                    'recorded_at' => $device->last_recorded_at?->toDateTimeString(),
+                ];
+            }
+        }
+
         return Inertia::render('Modules/Rental/Show', [
             'rental' => $rental->append('is_overdue'),
+            'trackingEnabled' => $trackingEnabled,
+            'hasGpsDevice' => $hasGpsDevice,
+            'livePosition' => $livePosition,
+            'payment' => $this->invoices->paymentSummary($rental),
+            'invoicingEnabled' => $this->invoices->isAvailable(),
+            'checklistItems' => RentalHandoverChecklist::itemKeys(),
+            'fuelLevels' => RentalHandoverChecklist::fuelLevels(),
         ]);
     }
 

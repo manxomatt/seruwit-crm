@@ -20,7 +20,11 @@ class UpdateRentalRequest extends FormRequest
             'rate_per_period' => ['required', 'numeric', 'min:0'],
             'km_limit_per_period' => ['nullable', 'integer', 'min:0'],
             'excess_km_rate' => ['nullable', 'numeric', 'min:0'],
+            'late_fee_per_day' => ['nullable', 'numeric', 'min:0'],
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
+            'pickup_location' => ['nullable', 'string', 'max:255'],
+            'return_location' => ['nullable', 'string', 'max:255'],
+            'fuel_policy_notes' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
         ];
     }

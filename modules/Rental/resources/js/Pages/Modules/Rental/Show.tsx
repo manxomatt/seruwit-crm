@@ -1,4 +1,6 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import LeafletMap from '@/Components/Map/LeafletMap';
+import VehicleMarker from '@/Components/Map/VehicleMarker';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import DangerButton from '@/Components/DangerButton';
@@ -8,7 +10,10 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import ImageUploader from '@/Components/ImageUploader';
+import { formatDateTimeDmYHi } from '@/utils/date';
+import { formatSpeedKph, toLatLng } from '@/utils/geo';
+import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import RentalNav from '../../../RentalNav';
 
@@ -16,14 +21,51 @@ const formatMoney = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id
 
 interface Extension { id: number; original_end_date: string; new_end_date: string; extended_periods: number; additional_amount: string; notes: string | null; }
 interface Damage { id: number; description: string; amount: string; photo_path: string | null; reported_at: string; }
+interface LivePosition {
+    latitude: string;
+    longitude: string;
+    speed_kph: string | null;
+    recorded_at: string | null;
+}
+interface PaymentInvoice {
+    id: number;
+    code: string;
+    status: string;
+    total: number;
+    amount_paid: number;
+    balance: number;
+}
+interface PaymentSummary {
+    status: string;
+    total_invoiced: number;
+    total_paid: number;
+    balance_due: number;
+    invoices: PaymentInvoice[];
+}
 interface Rental {
     id: number; code: string; status: string; is_overdue: boolean;
     start_date: string; end_date: string; actual_return_date: string | null;
     period_type: string; total_periods: number;
     rate_per_period: string; km_limit_per_period: number | null; excess_km_rate: string | null;
     deposit_amount: string; deposit_returned: boolean;
+    deposit_status: string;
+    deposit_applied_amount: string;
+    deposit_refunded_amount: string;
+    deposit_settled_at: string | null;
+    late_fee_per_day: string | null;
+    overdue_days: number | null;
+    late_fee_amount: string;
+    pickup_location: string | null;
+    return_location: string | null;
+    fuel_policy_notes: string | null;
     base_amount: string; excess_km: number | null; excess_amount: string; total_amount: string;
     start_odometer: number | null; end_odometer: number | null;
+    start_fuel_level: string | null;
+    end_fuel_level: string | null;
+    checkout_checklist: Record<string, boolean> | null;
+    return_checklist: Record<string, boolean> | null;
+    checkout_notes: string | null;
+    return_notes: string | null;
     notes: string | null; cancelled_reason: string | null;
     confirmed_at: string | null; checked_out_at: string | null; returned_at: string | null; completed_at: string | null;
     vehicle: { id: number; name: string; plate_number: string; type: string; status: string; };
@@ -34,7 +76,16 @@ interface Rental {
     damages: Damage[];
 }
 
-interface Props { rental: Rental; }
+interface Props {
+    rental: Rental;
+    trackingEnabled: boolean;
+    hasGpsDevice: boolean;
+    livePosition: LivePosition | null;
+    payment: PaymentSummary;
+    invoicingEnabled: boolean;
+    checklistItems: string[];
+    fuelLevels: string[];
+}
 
 const STATUS_COLORS: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700', confirmed: 'bg-blue-100 text-blue-700',
@@ -42,16 +93,53 @@ const STATUS_COLORS: Record<string, string> = {
     completed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700',
 };
 
-export default function Show({ rental }: Props): JSX.Element {
+const PAYMENT_COLORS: Record<string, string> = {
+    none: 'bg-gray-100 text-gray-600',
+    draft: 'bg-slate-100 text-slate-700',
+    unpaid: 'bg-red-100 text-red-700',
+    partial: 'bg-amber-100 text-amber-700',
+    paid: 'bg-green-100 text-green-700',
+};
+
+function emptyChecklist(items: string[]): Record<string, boolean> {
+    return Object.fromEntries(items.map((key) => [key, true]));
+}
+
+export default function Show({
+    rental,
+    trackingEnabled,
+    hasGpsDevice,
+    livePosition,
+    payment,
+    invoicingEnabled,
+    checklistItems,
+    fuelLevels,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const [modal, setModal] = useState<'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | null>(null);
+    const [modal, setModal] = useState<'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'deposit' | null>(null);
 
     const cancelForm = useForm({ cancelled_reason: '' });
-    const checkoutForm = useForm({ start_odometer: '' });
-    const returnForm = useForm({ actual_return_date: '', end_odometer: '', deposit_returned: false });
+    const checkoutForm = useForm({
+        start_odometer: '',
+        start_fuel_level: 'full',
+        checkout_checklist: emptyChecklist(checklistItems),
+        checkout_notes: '',
+    });
+    const returnForm = useForm({
+        actual_return_date: '',
+        end_odometer: '',
+        end_fuel_level: 'full',
+        return_checklist: emptyChecklist(checklistItems),
+        return_notes: '',
+        deposit_returned: false,
+    });
     const extendForm = useForm({ new_end_date: '', notes: '' });
     const damageForm = useForm({ description: '', amount: '', photo_path: '' });
+    const depositForm = useForm({
+        deposit_applied_amount: '0',
+        deposit_refunded_amount: String(rental.deposit_amount ?? '0'),
+    });
 
     const action = (name: string, extra: Record<string, unknown> = {}) =>
         router.post(prefixedRoute(`rental.${name}`, rental.id), extra as any, { preserveScroll: true });
@@ -61,17 +149,35 @@ export default function Show({ rental }: Props): JSX.Element {
     const submitReturn: FormEventHandler = (e) => { e.preventDefault(); returnForm.post(prefixedRoute('rental.return', rental.id), { onSuccess: () => setModal(null) }); };
     const submitExtend: FormEventHandler = (e) => { e.preventDefault(); extendForm.post(prefixedRoute('rental.extend', rental.id), { onSuccess: () => setModal(null) }); };
     const submitDamage: FormEventHandler = (e) => { e.preventDefault(); damageForm.post(prefixedRoute('rental.damages.store', rental.id), { onSuccess: () => setModal(null) }); };
+    const submitDeposit: FormEventHandler = (e) => {
+        e.preventDefault();
+        depositForm.post(prefixedRoute('rental.deposit.settle', rental.id), { onSuccess: () => setModal(null) });
+    };
 
     const is = (s: string) => rental.status === s;
+    const isLiveTracking = trackingEnabled && is('active');
+    const depositHeld = rental.deposit_status !== 'settled' && Number(rental.deposit_amount) > 0;
+    const canSettleDeposit = depositHeld && (is('returned') || is('completed'));
+    const canPrintContract = !is('draft') && !is('cancelled');
+    const canPrintHandover = is('active') || is('returned') || is('completed');
+
+    // Mirror trip Show: only refresh while the vehicle is out on an active rental.
+    usePoll(20000, { only: ['livePosition'] }, { autoStart: isLiveTracking });
+
+    const live = livePosition ? toLatLng(livePosition.latitude, livePosition.longitude) : null;
+    const liveTone = Number(livePosition?.speed_kph ?? 0) > 3 ? 'moving' : 'idle';
+    const recordedLabel = livePosition?.recorded_at
+        ? formatDateTimeDmYHi(livePosition.recorded_at)
+        : null;
 
     const periodLabel = t(`rental.period_type.${rental.period_type}`, undefined, rental.period_type);
 
     const timelineSteps = [
         { label: t('rental.timeline.created'), date: rental.confirmed_at ? '' : t('rental.timeline.pending'), done: true },
-        { label: t('rental.timeline.confirmed'), date: rental.confirmed_at, by: rental.confirmed_by?.name, done: !!rental.confirmed_at },
-        { label: t('rental.timeline.checked_out'), date: rental.checked_out_at, done: !!rental.checked_out_at },
-        { label: t('rental.timeline.returned'), date: rental.returned_at, done: !!rental.returned_at },
-        { label: t('rental.timeline.completed'), date: rental.completed_at, done: !!rental.completed_at },
+        { label: t('rental.timeline.confirmed'), date: rental.confirmed_at ? formatDateTimeDmYHi(rental.confirmed_at) : null, by: rental.confirmed_by?.name, done: !!rental.confirmed_at },
+        { label: t('rental.timeline.checked_out'), date: rental.checked_out_at ? formatDateTimeDmYHi(rental.checked_out_at) : null, done: !!rental.checked_out_at },
+        { label: t('rental.timeline.returned'), date: rental.returned_at ? formatDateTimeDmYHi(rental.returned_at) : null, done: !!rental.returned_at },
+        { label: t('rental.timeline.completed'), date: rental.completed_at ? formatDateTimeDmYHi(rental.completed_at) : null, done: !!rental.completed_at },
     ];
 
     return (
@@ -97,6 +203,16 @@ export default function Show({ rental }: Props): JSX.Element {
             <RentalNav />
 
             <div className="mb-6 flex flex-wrap justify-end gap-2">
+                        {canPrintContract && (
+                            <a href={prefixedRoute('rental.pdf.contract', rental.id)} target="_blank" rel="noreferrer">
+                                <SecondaryButton type="button">{t('rental.actions.print_contract')}</SecondaryButton>
+                            </a>
+                        )}
+                        {canPrintHandover && (
+                            <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer">
+                                <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
+                            </a>
+                        )}
                         {(is('draft') || is('confirmed')) && (
                             <Link href={prefixedRoute('rental.edit', rental.id)}>
                                 <SecondaryButton>{t('common.edit')}</SecondaryButton>
@@ -114,13 +230,86 @@ export default function Show({ rental }: Props): JSX.Element {
                         {is('returned') && (
                             <>
                                 <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
+                                {canSettleDeposit && (
+                                    <SecondaryButton onClick={() => setModal('deposit')}>{t('rental.actions.settle_deposit')}</SecondaryButton>
+                                )}
                                 <PrimaryButton onClick={() => action('complete')}>{t('rental.actions.complete')}</PrimaryButton>
                             </>
+                        )}
+                        {is('completed') && canSettleDeposit && (
+                            <SecondaryButton onClick={() => setModal('deposit')}>{t('rental.actions.settle_deposit')}</SecondaryButton>
                         )}
                         {(is('draft') || is('confirmed')) && (
                             <DangerButton onClick={() => setModal('cancel')}>{t('common.cancel')}</DangerButton>
                         )}
             </div>
+
+                {/* Vehicle position — primary visual while the unit is out */}
+                <div className="mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-sm font-semibold text-gray-700">
+                                {isLiveTracking && live
+                                    ? t('rental.sections.live_location')
+                                    : t('rental.sections.last_location')}
+                            </h2>
+                            {isLiveTracking && live && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                                    {t('rental.tracking.live')}
+                                </span>
+                            )}
+                        </div>
+                        {live && (
+                            <p className="text-xs text-gray-500">
+                                {formatSpeedKph(livePosition?.speed_kph)}
+                                {recordedLabel ? ` — ${t('rental.tracking.last_seen', { time: recordedLabel })}` : ''}
+                            </p>
+                        )}
+                    </div>
+
+                    {live ? (
+                        <div className="p-4">
+                            <LeafletMap bounds={[live]} height="360px">
+                                <VehicleMarker
+                                    position={live}
+                                    label={`${rental.vehicle.name} (${rental.vehicle.plate_number})`}
+                                    tone={liveTone}
+                                >
+                                    <>
+                                        <br />
+                                        {formatSpeedKph(livePosition?.speed_kph)}
+                                        {recordedLabel && (
+                                            <>
+                                                <br />
+                                                <span className="text-gray-500">{recordedLabel}</span>
+                                            </>
+                                        )}
+                                    </>
+                                </VehicleMarker>
+                            </LeafletMap>
+                            {isLiveTracking && (
+                                <p className="mt-2 text-xs text-gray-400">{t('rental.tracking.hint_active')}</p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="px-4 py-10 text-center">
+                            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                </svg>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                                {!trackingEnabled
+                                    ? t('rental.tracking.unavailable')
+                                    : !hasGpsDevice
+                                      ? t('rental.tracking.no_device')
+                                      : t('rental.tracking.no_fix')}
+                            </p>
+                        </div>
+                    )}
+                </div>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Left column */}
@@ -139,6 +328,9 @@ export default function Show({ rental }: Props): JSX.Element {
                                 <dt className="text-gray-500">{t('rental.fields.period')}</dt>
                                 <dd className="text-gray-900 dark:text-white">{rental.start_date} → {rental.end_date} ({rental.total_periods} {periodLabel})</dd>
                                 {rental.actual_return_date && <><dt className="text-gray-500">{t('rental.fields.actual_return')}</dt><dd className="text-gray-900 dark:text-white">{rental.actual_return_date}</dd></>}
+                                {rental.pickup_location && <><dt className="text-gray-500">{t('rental.fields.pickup_location')}</dt><dd className="text-gray-900 dark:text-white">{rental.pickup_location}</dd></>}
+                                {rental.return_location && <><dt className="text-gray-500">{t('rental.fields.return_location')}</dt><dd className="text-gray-900 dark:text-white">{rental.return_location}</dd></>}
+                                {rental.fuel_policy_notes && <><dt className="text-gray-500">{t('rental.fields.fuel_policy_notes')}</dt><dd className="text-gray-900 dark:text-white">{rental.fuel_policy_notes}</dd></>}
                             </dl>
                         </div>
 
@@ -152,8 +344,22 @@ export default function Show({ rental }: Props): JSX.Element {
                                 <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.rate_per_period)} / {periodLabel}</dd>
                                 {rental.km_limit_per_period && <><dt className="text-gray-500">{t('rental.fields.km_limit')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{t('rental.rates.km', { km: rental.km_limit_per_period })} / {periodLabel}</dd></>}
                                 {rental.excess_km_rate && <><dt className="text-gray-500">{t('rental.fields.excess_km_rate')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.excess_km_rate)} / km</dd></>}
+                                {rental.late_fee_per_day && <><dt className="text-gray-500">{t('rental.fields.late_fee_per_day')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.late_fee_per_day)} / day</dd></>}
                                 <dt className="text-gray-500">{t('rental.fields.deposit')}</dt>
-                                <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.deposit_amount)} {rental.deposit_returned && <span className="ml-1 text-xs text-green-600">{t('rental.timeline.deposit_returned')}</span>}</dd>
+                                <dd className="tabular-nums text-gray-900 dark:text-white">
+                                    {formatMoney(rental.deposit_amount)}{' '}
+                                    <span className={`ml-1 text-xs ${rental.deposit_status === 'settled' ? 'text-green-600' : 'text-amber-600'}`}>
+                                        {t(`rental.deposit.${rental.deposit_status}`, undefined, rental.deposit_status)}
+                                    </span>
+                                </dd>
+                                {rental.deposit_status === 'settled' && Number(rental.deposit_amount) > 0 && (
+                                    <>
+                                        <dt className="text-gray-500">{t('rental.deposit.applied')}</dt>
+                                        <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.deposit_applied_amount)}</dd>
+                                        <dt className="text-gray-500">{t('rental.deposit.refunded')}</dt>
+                                        <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.deposit_refunded_amount)}</dd>
+                                    </>
+                                )}
                                 <dt className="text-gray-500 font-medium">{t('rental.fields.base_amount')}</dt>
                                 <dd className="tabular-nums font-medium text-gray-900 dark:text-white">{formatMoney(rental.base_amount)}</dd>
                                 {Number(rental.excess_amount) > 0 && (
@@ -162,21 +368,121 @@ export default function Show({ rental }: Props): JSX.Element {
                                         <dd className="tabular-nums text-red-600">{formatMoney(rental.excess_amount)}</dd>
                                     </>
                                 )}
+                                {Number(rental.late_fee_amount) > 0 && (
+                                    <>
+                                        <dt className="text-gray-500">{t('rental.fields.late_fee', { days: rental.overdue_days ?? 0 })}</dt>
+                                        <dd className="tabular-nums text-red-600">{formatMoney(rental.late_fee_amount)}</dd>
+                                    </>
+                                )}
                                 <dt className="border-t border-gray-100 pt-2 text-gray-700 font-semibold dark:border-gray-700">{t('rental.fields.total_amount')}</dt>
                                 <dd className="border-t border-gray-100 pt-2 tabular-nums text-gray-900 font-semibold dark:border-gray-700 dark:text-white">{formatMoney(rental.total_amount)}</dd>
                             </dl>
                         </div>
 
-                        {/* Odometer */}
-                        {(rental.start_odometer || rental.end_odometer) && (
+                        {/* Billing */}
+                        {invoicingEnabled && (
                             <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.odometer')}</h2>
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.billing')}</h2>
+                                    <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${PAYMENT_COLORS[payment.status] ?? PAYMENT_COLORS.none}`}>
+                                        {t(`rental.payment.${payment.status}`, undefined, payment.status)}
+                                    </span>
                                 </div>
                                 <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-sm">
-                                    {rental.start_odometer && <><dt className="text-gray-500">{t('rental.fields.checkout')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{t('rental.rates.km', { km: rental.start_odometer.toLocaleString() })}</dd></>}
-                                    {rental.end_odometer && <><dt className="text-gray-500">{t('rental.fields.return')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{t('rental.rates.km', { km: rental.end_odometer.toLocaleString() })}</dd></>}
+                                    <dt className="text-gray-500">{t('rental.fields.invoiced')}</dt>
+                                    <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(payment.total_invoiced)}</dd>
+                                    <dt className="text-gray-500">{t('rental.fields.paid')}</dt>
+                                    <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(payment.total_paid)}</dd>
+                                    <dt className="text-gray-500 font-medium">{t('rental.fields.balance_due')}</dt>
+                                    <dd className="tabular-nums font-medium text-gray-900 dark:text-white">{formatMoney(payment.balance_due)}</dd>
                                 </dl>
+                                {payment.invoices.length > 0 && (
+                                    <div className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-gray-700 dark:border-gray-700">
+                                        {payment.invoices.map((inv) => (
+                                            <div key={inv.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                                                <div>
+                                                    <Link
+                                                        href={prefixedRoute('invoicing.invoices.show', inv.id)}
+                                                        className="font-mono text-indigo-600 hover:underline dark:text-indigo-400"
+                                                    >
+                                                        {inv.code}
+                                                    </Link>
+                                                    <span className="ml-2 text-xs text-gray-400">{inv.status}</span>
+                                                </div>
+                                                <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(inv.total)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Odometer / handover */}
+                        {(rental.start_odometer || rental.end_odometer || rental.checkout_checklist || rental.return_checklist) && (
+                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.handover')}</h2>
+                                </div>
+                                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-sm">
+                                    {rental.start_odometer != null && (
+                                        <>
+                                            <dt className="text-gray-500">{t('rental.fields.checkout')}</dt>
+                                            <dd className="tabular-nums text-gray-900 dark:text-white">
+                                                {t('rental.rates.km', { km: rental.start_odometer.toLocaleString() })}
+                                                {rental.start_fuel_level && (
+                                                    <span className="ml-2 text-xs text-gray-500">
+                                                        BBM: {t(`rental.fuel.${rental.start_fuel_level}`, undefined, rental.start_fuel_level)}
+                                                    </span>
+                                                )}
+                                            </dd>
+                                        </>
+                                    )}
+                                    {rental.end_odometer != null && (
+                                        <>
+                                            <dt className="text-gray-500">{t('rental.fields.return')}</dt>
+                                            <dd className="tabular-nums text-gray-900 dark:text-white">
+                                                {t('rental.rates.km', { km: rental.end_odometer.toLocaleString() })}
+                                                {rental.end_fuel_level && (
+                                                    <span className="ml-2 text-xs text-gray-500">
+                                                        BBM: {t(`rental.fuel.${rental.end_fuel_level}`, undefined, rental.end_fuel_level)}
+                                                    </span>
+                                                )}
+                                            </dd>
+                                        </>
+                                    )}
+                                </dl>
+                                {rental.checkout_checklist && (
+                                    <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{t('rental.checklist.checkout')}</p>
+                                        <ul className="grid gap-1 sm:grid-cols-2">
+                                            {checklistItems.map((key) => (
+                                                <li key={`out-${key}`} className="text-xs text-gray-700 dark:text-gray-300">
+                                                    <span className={rental.checkout_checklist?.[key] ? 'text-green-600' : 'text-red-600'}>
+                                                        {rental.checkout_checklist?.[key] ? '✓' : '✗'}
+                                                    </span>{' '}
+                                                    {t(`rental.checklist.items.${key}`)}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {rental.checkout_notes && <p className="mt-2 text-xs text-gray-500">{rental.checkout_notes}</p>}
+                                    </div>
+                                )}
+                                {rental.return_checklist && (
+                                    <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{t('rental.checklist.return')}</p>
+                                        <ul className="grid gap-1 sm:grid-cols-2">
+                                            {checklistItems.map((key) => (
+                                                <li key={`in-${key}`} className="text-xs text-gray-700 dark:text-gray-300">
+                                                    <span className={rental.return_checklist?.[key] ? 'text-green-600' : 'text-red-600'}>
+                                                        {rental.return_checklist?.[key] ? '✓' : '✗'}
+                                                    </span>{' '}
+                                                    {t(`rental.checklist.items.${key}`)}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {rental.return_notes && <p className="mt-2 text-xs text-gray-500">{rental.return_notes}</p>}
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -208,10 +514,17 @@ export default function Show({ rental }: Props): JSX.Element {
                                 </div>
                                 <div className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {rental.damages.map((dmg) => (
-                                        <div key={dmg.id} className="flex items-start justify-between px-4 py-3 text-sm">
-                                            <div className="flex-1">
-                                                <p className="text-gray-900 dark:text-white">{dmg.description}</p>
-                                                <p className="text-xs text-gray-400">{dmg.reported_at}</p>
+                                        <div key={dmg.id} className="flex items-start justify-between gap-3 px-4 py-3 text-sm">
+                                            <div className="flex flex-1 gap-3">
+                                                {dmg.photo_path && (
+                                                    <a href={dmg.photo_path} target="_blank" rel="noreferrer" className="shrink-0">
+                                                        <img src={dmg.photo_path} alt="" className="h-14 w-14 rounded object-cover ring-1 ring-gray-200" />
+                                                    </a>
+                                                )}
+                                                <div className="flex-1">
+                                                    <p className="text-gray-900 dark:text-white">{dmg.description}</p>
+                                                    <p className="text-xs text-gray-400">{formatDateTimeDmYHi(dmg.reported_at)}</p>
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="tabular-nums text-red-600">{formatMoney(dmg.amount)}</span>
@@ -277,9 +590,49 @@ export default function Show({ rental }: Props): JSX.Element {
             <Modal show={modal === 'checkout'} onClose={() => setModal(null)}>
                 <form onSubmit={submitCheckout} className="p-6">
                     <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.checkout')}</h2>
-                    <InputLabel htmlFor="start_odometer" value={t('rental.fields.start_odometer')} />
-                    <TextInput id="start_odometer" type="number" min="0" value={checkoutForm.data.start_odometer} onChange={(e) => checkoutForm.setData('start_odometer', e.target.value)} className="mt-1 w-full" />
-                    <InputError message={checkoutForm.errors.start_odometer} className="mt-1" />
+                    <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+                        <div>
+                            <InputLabel htmlFor="start_odometer" value={t('rental.fields.start_odometer')} />
+                            <TextInput id="start_odometer" type="number" min="0" value={checkoutForm.data.start_odometer} onChange={(e) => checkoutForm.setData('start_odometer', e.target.value)} className="mt-1 w-full" />
+                            <InputError message={checkoutForm.errors.start_odometer} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="start_fuel_level" value={t('rental.fields.fuel_level')} />
+                            <select
+                                id="start_fuel_level"
+                                value={checkoutForm.data.start_fuel_level}
+                                onChange={(e) => checkoutForm.setData('start_fuel_level', e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            >
+                                {fuelLevels.map((level) => (
+                                    <option key={level} value={level}>{t(`rental.fuel.${level}`, undefined, level)}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t('rental.checklist.checkout')}</p>
+                            <div className="space-y-1.5">
+                                {checklistItems.map((key) => (
+                                    <label key={key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!checkoutForm.data.checkout_checklist[key]}
+                                            onChange={(e) => checkoutForm.setData('checkout_checklist', {
+                                                ...checkoutForm.data.checkout_checklist,
+                                                [key]: e.target.checked,
+                                            })}
+                                            className="rounded"
+                                        />
+                                        {t(`rental.checklist.items.${key}`)}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="checkout_notes" value={t('rental.fields.checkout_notes')} />
+                            <textarea id="checkout_notes" rows={2} value={checkoutForm.data.checkout_notes} onChange={(e) => checkoutForm.setData('checkout_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                        </div>
+                    </div>
                     <div className="mt-4 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
                         <PrimaryButton disabled={checkoutForm.processing}>{t('rental.actions.checkout')}</PrimaryButton>
@@ -290,7 +643,7 @@ export default function Show({ rental }: Props): JSX.Element {
             <Modal show={modal === 'return'} onClose={() => setModal(null)}>
                 <form onSubmit={submitReturn} className="p-6">
                     <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.return')}</h2>
-                    <div className="space-y-4">
+                    <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
                         <div>
                             <InputLabel htmlFor="actual_return_date" value={`${t('rental.fields.return_date')} *`} />
                             <TextInput id="actual_return_date" type="date" value={returnForm.data.actual_return_date} onChange={(e) => returnForm.setData('actual_return_date', e.target.value)} className="mt-1 w-full" />
@@ -300,6 +653,42 @@ export default function Show({ rental }: Props): JSX.Element {
                             <InputLabel htmlFor="end_odometer" value={t('rental.fields.end_odometer')} />
                             <TextInput id="end_odometer" type="number" min="0" value={returnForm.data.end_odometer} onChange={(e) => returnForm.setData('end_odometer', e.target.value)} className="mt-1 w-full" />
                             <InputError message={returnForm.errors.end_odometer} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="end_fuel_level" value={t('rental.fields.fuel_level')} />
+                            <select
+                                id="end_fuel_level"
+                                value={returnForm.data.end_fuel_level}
+                                onChange={(e) => returnForm.setData('end_fuel_level', e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            >
+                                {fuelLevels.map((level) => (
+                                    <option key={level} value={level}>{t(`rental.fuel.${level}`, undefined, level)}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t('rental.checklist.return')}</p>
+                            <div className="space-y-1.5">
+                                {checklistItems.map((key) => (
+                                    <label key={key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!returnForm.data.return_checklist[key]}
+                                            onChange={(e) => returnForm.setData('return_checklist', {
+                                                ...returnForm.data.return_checklist,
+                                                [key]: e.target.checked,
+                                            })}
+                                            className="rounded"
+                                        />
+                                        {t(`rental.checklist.items.${key}`)}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="return_notes" value={t('rental.fields.return_notes')} />
+                            <textarea id="return_notes" rows={2} value={returnForm.data.return_notes} onChange={(e) => returnForm.setData('return_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                         </div>
                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                             <input type="checkbox" checked={returnForm.data.deposit_returned} onChange={(e) => returnForm.setData('deposit_returned', e.target.checked)} className="rounded" />
@@ -348,10 +737,68 @@ export default function Show({ rental }: Props): JSX.Element {
                             <TextInput id="damage_amount" type="number" min="0" value={damageForm.data.amount} onChange={(e) => damageForm.setData('amount', e.target.value)} className="mt-1 w-full" />
                             <InputError message={damageForm.errors.amount} className="mt-1" />
                         </div>
+                        <div>
+                            <InputLabel value={t('rental.fields.damage_photo')} />
+                            <ImageUploader
+                                value={damageForm.data.photo_path}
+                                onChange={(value) => damageForm.setData('photo_path', value)}
+                                className="mt-1"
+                            />
+                            <InputError message={damageForm.errors.photo_path} className="mt-1" />
+                        </div>
                     </div>
                     <div className="mt-4 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
                         <PrimaryButton disabled={damageForm.processing}>{t('rental.actions.save_damage')}</PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal show={modal === 'deposit'} onClose={() => setModal(null)}>
+                <form onSubmit={submitDeposit} className="p-6">
+                    <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.deposit')}</h2>
+                    <p className="mb-4 text-sm text-gray-500">
+                        {t('rental.fields.deposit')}: {formatMoney(rental.deposit_amount)}
+                    </p>
+                    <div className="space-y-4">
+                        <div>
+                            <InputLabel htmlFor="deposit_applied" value={t('rental.fields.deposit_applied')} />
+                            <TextInput
+                                id="deposit_applied"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={depositForm.data.deposit_applied_amount}
+                                onChange={(e) => {
+                                    const applied = e.target.value;
+                                    const deposit = Number(rental.deposit_amount);
+                                    const refunded = Math.max(0, deposit - Number(applied || 0));
+                                    depositForm.setData({
+                                        deposit_applied_amount: applied,
+                                        deposit_refunded_amount: String(refunded),
+                                    });
+                                }}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={depositForm.errors.deposit_applied_amount} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="deposit_refunded" value={t('rental.fields.deposit_refunded')} />
+                            <TextInput
+                                id="deposit_refunded"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={depositForm.data.deposit_refunded_amount}
+                                onChange={(e) => depositForm.setData('deposit_refunded_amount', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={depositForm.errors.deposit_refunded_amount} className="mt-1" />
+                        </div>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={depositForm.processing}>{t('rental.actions.settle_deposit')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>

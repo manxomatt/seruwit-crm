@@ -38,7 +38,7 @@ return [
         'expiring_month_hint' => 'Within the next 30 days',
         'problem_title' => 'Problem & Soon-to-Expire Documents',
         'all_valid' => 'All documents are valid.',
-        'upload_new' => 'Upload New →',
+        'upload_new' => 'Upload New',
         'total' => 'Total :count documents',
         'columns' => [
             'entity' => 'Entity',

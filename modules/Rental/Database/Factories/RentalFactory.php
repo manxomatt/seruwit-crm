@@ -36,6 +36,7 @@ class RentalFactory extends Factory
             'rate_per_period' => $rate,
             'km_limit_per_period' => null,
             'excess_km_rate' => null,
+            'late_fee_per_day' => null,
             'deposit_amount' => $rate,
             'total_periods' => $days,
             'base_amount' => $rate * $days,
@@ -43,9 +44,18 @@ class RentalFactory extends Factory
             'end_odometer' => null,
             'excess_km' => null,
             'excess_amount' => 0,
+            'overdue_days' => null,
+            'late_fee_amount' => 0,
             'deposit_returned' => false,
+            'deposit_status' => Rental::DEPOSIT_HELD,
+            'deposit_applied_amount' => 0,
+            'deposit_refunded_amount' => 0,
+            'deposit_settled_at' => null,
             'total_amount' => $rate * $days,
             'notes' => null,
+            'pickup_location' => null,
+            'return_location' => null,
+            'fuel_policy_notes' => null,
             'cancelled_reason' => null,
             'confirmed_by' => null,
             'confirmed_at' => null,
@@ -83,6 +93,11 @@ class RentalFactory extends Factory
             'start_odometer' => 50000,
             'end_odometer' => 50200,
             'excess_km' => 0,
+            'deposit_status' => Rental::DEPOSIT_SETTLED,
+            'deposit_applied_amount' => 0,
+            'deposit_refunded_amount' => $a['deposit_amount'] ?? 0,
+            'deposit_returned' => true,
+            'deposit_settled_at' => now(),
         ]);
     }
 
@@ -94,6 +109,11 @@ class RentalFactory extends Factory
             'checked_out_at' => now()->subDays(4),
             'returned_at' => now()->subDay(),
             'completed_at' => now(),
+            'deposit_status' => Rental::DEPOSIT_SETTLED,
+            'deposit_applied_amount' => 0,
+            'deposit_refunded_amount' => $a['deposit_amount'] ?? 0,
+            'deposit_returned' => true,
+            'deposit_settled_at' => now()->subDay(),
         ]);
     }
 

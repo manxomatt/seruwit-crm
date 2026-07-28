@@ -148,7 +148,7 @@ class PositionPayload
             return null;
         }
 
-        $recordedAt = self::parseTime(
+        $recordedAt = self::parseSkyTrackTime(
             Arr::get($data, 'dt_tracker')
             ?? Arr::get($data, 'dt_server')
         );
@@ -177,7 +177,7 @@ class PositionPayload
             motion: self::parseBool(Arr::get($params ?? [], 'motion')),
             totalDistanceM: is_numeric($totalDistance) ? (int) round((float) $totalDistance) : null,
             recordedAt: $recordedAt,
-            serverTime: self::parseTime(Arr::get($data, 'dt_server')),
+            serverTime: self::parseSkyTrackTime(Arr::get($data, 'dt_server')),
             attributes: $params,
         );
     }
@@ -215,6 +215,26 @@ class PositionPayload
 
         try {
             return CarbonImmutable::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Sky Track emits naive local datetimes. Parse them in the configured
+     * Sky Track zone, then convert into the app timezone for storage/compare.
+     */
+    private static function parseSkyTrackTime(mixed $value): ?CarbonImmutable
+    {
+        if (! is_string($value) || $value === '') {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::parse(
+                $value,
+                (string) config('tracking.sky_track_timezone', 'Asia/Jakarta'),
+            )->timezone((string) config('app.timezone', 'UTC'));
         } catch (\Throwable) {
             return null;
         }

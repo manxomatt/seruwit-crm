@@ -5,6 +5,7 @@ return [
 
     'nav' => [
         'list' => 'Rentals',
+        'availability' => 'Availability',
         'rates' => 'Rates',
         'back_to_list' => '← Back to Rentals',
         'back' => '← Back',
@@ -57,6 +58,12 @@ return [
         'base_amount' => 'Base Amount',
         'total_amount' => 'Total Amount',
         'excess_km' => 'Excess KM (:km km)',
+        'late_fee' => 'Late fee (:days day(s))',
+        'late_fee_per_day' => 'Late fee per day (Rp)',
+        'pickup_location' => 'Pickup location',
+        'return_location' => 'Return location',
+        'fuel_policy_notes' => 'Fuel policy',
+        'damage_photo' => 'Damage photo',
         'start_odometer' => 'Starting Odometer (km)',
         'end_odometer' => 'End Odometer (km)',
         'return_date' => 'Return Date',
@@ -65,10 +72,20 @@ return [
         'repair_cost' => 'Repair Cost (Rp)',
         'cancel_reason' => 'Reason',
         'deposit_returned' => 'Deposit returned to customer',
+        'deposit_applied' => 'Applied to charges (Rp)',
+        'deposit_refunded' => 'Refunded to customer (Rp)',
+        'deposit_status' => 'Deposit status',
+        'fuel_level' => 'Fuel level',
+        'checkout_notes' => 'Checkout notes',
+        'return_notes' => 'Return notes',
         'rate_active' => 'Active (available for new bookings)',
         'rate' => 'Rate',
         'checkout' => 'Checkout',
         'return' => 'Return',
+        'payment_status' => 'Payment',
+        'invoiced' => 'Invoiced',
+        'paid' => 'Paid',
+        'balance_due' => 'Balance due',
     ],
 
     'placeholders' => [
@@ -81,6 +98,8 @@ return [
         'any_vehicle' => 'Any vehicle',
         'vehicle_type' => 'e.g. SUV, MPV',
         'unlimited' => 'Unlimited',
+        'late_fee_fallback' => 'Blank = daily rate (daily rentals)',
+        'fuel_policy' => 'e.g. Return with the same fuel level',
     ],
 
     'actions' => [
@@ -94,12 +113,16 @@ return [
         'extend' => 'Extend',
         'add_damage' => 'Add Damage',
         'save_damage' => 'Save Damage',
+        'settle_deposit' => 'Settle Deposit',
         'remove' => 'Remove',
         'new_rental' => 'New Rental',
         'create_rental' => 'Create Rental',
         'cancel_rental' => 'Cancel Rental',
         'new_rate' => 'New Rate',
         'create_rate' => 'Create Rate',
+        'view_invoice' => 'Open',
+        'print_contract' => 'Print contract',
+        'print_handover' => 'Print handover',
     ],
 
     'sections' => [
@@ -107,11 +130,91 @@ return [
         'pricing' => 'Pricing',
         'booking_details' => 'Booking Details',
         'pricing_snapshot' => 'Pricing Snapshot',
+        'locations' => 'Locations & policy',
         'odometer' => 'Odometer',
+        'handover' => 'Handover',
         'extensions' => 'Extensions',
         'damages' => 'Damages',
         'timeline' => 'Timeline',
         'notes' => 'Notes',
+        'live_location' => 'Live location',
+        'last_location' => 'Last known location',
+        'billing' => 'Billing & payment',
+        'deposit_settlement' => 'Deposit settlement',
+    ],
+
+    'availability' => [
+        'total' => 'Vehicles',
+        'free' => 'Free',
+        'booked' => 'Booked',
+        'unavailable' => 'Unavailable',
+        'column' => 'Availability',
+        'bookings' => 'Bookings',
+    ],
+
+    'checklist' => [
+        'checkout' => 'Checkout checklist',
+        'return' => 'Return checklist',
+        'items' => [
+            'exterior_body' => 'Exterior body',
+            'tires_wheels' => 'Tires & wheels',
+            'lights' => 'Lights',
+            'interior' => 'Interior cleanliness',
+            'documents' => 'STNK / documents in vehicle',
+            'spare_tools' => 'Spare tire & tools',
+            'ac' => 'AC working',
+            'keys' => 'Keys & remote',
+        ],
+    ],
+
+    'fuel' => [
+        'empty' => 'Empty',
+        '1/8' => '1/8',
+        '1/4' => '1/4',
+        '3/8' => '3/8',
+        '1/2' => '1/2',
+        '5/8' => '5/8',
+        '3/4' => '3/4',
+        '7/8' => '7/8',
+        'full' => 'Full',
+    ],
+
+    'payment' => [
+        'none' => 'No invoices yet',
+        'draft' => 'Draft invoices',
+        'unpaid' => 'Unpaid',
+        'partial' => 'Partially paid',
+        'paid' => 'Paid',
+    ],
+
+    'deposit' => [
+        'held' => 'Held',
+        'settled' => 'Settled',
+        'applied' => 'Applied',
+        'refunded' => 'Refunded',
+    ],
+
+    'invoice' => [
+        'line_base' => 'Vehicle rental :code',
+        'line_extension' => 'Rental extension :code (:from → :to)',
+        'line_excess_km' => 'Excess KM :code (:km km)',
+        'line_late_fee' => 'Late fee :code (:days day(s))',
+        'line_damage' => 'Damage :code — :description',
+        'notes_base' => 'Auto-invoice for rental :code (base)',
+        'notes_extension' => 'Auto-invoice for rental :code (extension)',
+        'notes_excess_km' => 'Auto-invoice for rental :code (excess KM)',
+        'notes_late_fee' => 'Auto-invoice for rental :code (late fee)',
+        'notes_damage' => 'Auto-invoice for rental :code (damage)',
+    ],
+
+    'tracking' => [
+        'live' => 'Live',
+        'last_seen' => 'Last seen :time',
+        'speed' => ':speed',
+        'unavailable' => 'GPS tracking is not enabled for this workspace.',
+        'no_device' => 'This vehicle has no GPS tracker paired yet.',
+        'no_fix' => 'The paired tracker has not reported a position yet.',
+        'hint_active' => 'Position refreshes automatically while the rental is active.',
     ],
 
     'timeline' => [
@@ -149,6 +252,12 @@ return [
         'show' => [
             'title' => 'Rental :code',
         ],
+        'availability' => [
+            'title' => 'Vehicle availability',
+            'head' => 'Availability',
+            'subtitle' => 'See which vehicles are free or booked for a date range.',
+            'empty' => 'No vehicles found.',
+        ],
         'rates' => [
             'title' => 'Tariff Rates',
             'head' => 'Rental Rates',
@@ -166,6 +275,7 @@ return [
         'return' => 'Record Return',
         'extend' => 'Extend Rental',
         'damage' => 'Record Damage',
+        'deposit' => 'Settle Deposit',
     ],
 
     'messages' => [
@@ -180,6 +290,7 @@ return [
         'extended' => 'Rental extended.',
         'damage_recorded' => 'Damage recorded.',
         'damage_removed' => 'Damage record removed.',
+        'deposit_settled' => 'Deposit settled.',
         'rate_created' => 'Rate created.',
         'rate_updated' => 'Rate updated.',
         'rate_deleted' => 'Rate deleted.',
@@ -192,9 +303,15 @@ return [
         'checkout_confirmed_only' => 'Only confirmed rentals can be checked out.',
         'return_active_only' => 'Only active rentals can be returned.',
         'complete_returned_only' => 'Only returned rentals can be completed.',
+        'complete_deposit_unsettled' => 'Settle the deposit before completing this rental.',
         'cancel_draft_confirmed_only' => 'Only draft or confirmed rentals can be cancelled.',
         'extend_active_only' => 'Only active rentals can be extended.',
         'damage_active_returned_only' => 'Damages can only be recorded on active or returned rentals.',
+        'damage_already_invoiced' => 'This damage has an active invoice and cannot be removed.',
+        'settle_deposit_returned_only' => 'Deposit can only be settled on returned or completed rentals.',
+        'deposit_already_settled' => 'Deposit has already been settled.',
+        'pdf_contract_confirmed_only' => 'Print the contract after the rental is confirmed.',
+        'pdf_handover_checked_out_only' => 'Print the handover after the vehicle is checked out.',
     ],
 
     'validation' => [
@@ -203,5 +320,6 @@ return [
         'vehicle_stnk_expired' => 'Vehicle :name has an expired STNK.',
         'vehicle_kir_expired' => 'Vehicle :name has an expired KIR.',
         'vehicle_trip_conflict' => 'Vehicle :name already has a trip on :date.',
+        'deposit_settlement_sum' => 'Applied + refunded must equal the deposit (:deposit).',
     ],
 ];

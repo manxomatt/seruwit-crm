@@ -143,9 +143,18 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                                             <td className="px-6 py-4 text-right text-sm">
                                                 <Link
                                                     href={entityRoute}
-                                                    className="font-medium text-indigo-600 hover:text-indigo-800"
+                                                    className="inline-flex rounded-md p-1.5 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900"
+                                                    title={t('document.dashboard.upload_new')}
+                                                    aria-label={t('document.dashboard.upload_new')}
                                                 >
-                                                    {t('document.dashboard.upload_new')}
+                                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                                        />
+                                                    </svg>
                                                 </Link>
                                             </td>
                                         </tr>

@@ -141,7 +141,8 @@ class PositionPayloadTest extends TestCase
         $this->assertTrue($payload->ignition);
         $this->assertTrue($payload->motion);
         $this->assertSame(2113841, $payload->totalDistanceM);
-        $this->assertSame('2026-07-19 10:00:00', $payload->recordedAt->toDateTimeString());
+        // 10:00 Asia/Jakarta → 03:00 UTC when APP_TIMEZONE is UTC.
+        $this->assertSame('2026-07-19 03:00:00', $payload->recordedAt->toDateTimeString());
         $this->assertSame(6, $payload->attributes['batl']);
     }
 
@@ -151,7 +152,23 @@ class PositionPayloadTest extends TestCase
             'data' => ['dt_tracker' => null],
         ]));
 
-        $this->assertSame('2026-07-19 10:00:05', $payload->recordedAt->toDateTimeString());
+        $this->assertSame('2026-07-19 03:00:05', $payload->recordedAt->toDateTimeString());
+    }
+
+    public function test_it_accepts_live_sky_track_timestamps_in_jakarta_time(): void
+    {
+        // APP_TIMEZONE=UTC; Sky Track sends "20:00" meaning 20:00 WIB (= 13:00 UTC).
+        $this->travelTo(now()->utc()->setTimeFromTimeString('13:05:00'));
+
+        $payload = PositionPayload::fromSkyTrack($this->skyTrackRow([
+            'data' => [
+                'dt_tracker' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                'dt_server' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
+            ],
+        ]));
+
+        $this->assertNotNull($payload);
+        $this->assertTrue($payload->recordedAt->lte(now()->addMinutes(10)));
     }
 
     public function test_it_rejects_unusable_sky_track_rows(): void

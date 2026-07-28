@@ -8,6 +8,11 @@ const TABS = [
         route: 'rental.index',
         patterns: ['rental.index', 'rental.create', 'rental.show', 'rental.edit'],
     },
+    {
+        labelKey: 'rental.nav.availability',
+        route: 'rental.availability.index',
+        patterns: ['rental.availability.*'],
+    },
     { labelKey: 'rental.nav.rates', route: 'rental.rates.index', patterns: ['rental.rates.*'] },
 ] as const;
 

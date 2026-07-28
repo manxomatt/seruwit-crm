@@ -34,6 +34,13 @@ class Document extends Model
 
     public const STATUS_EXPIRED = 'expired';
 
+    /**
+     * @var list<string>
+     */
+    protected $appends = [
+        'status',
+    ];
+
     protected static function newFactory(): Factory
     {
         return DocumentFactory::new();

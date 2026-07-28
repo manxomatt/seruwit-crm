@@ -34,6 +34,7 @@ class RentalRate extends Model
         'rate_per_period',
         'km_limit_per_period',
         'excess_km_rate',
+        'late_fee_per_day',
         'deposit_amount',
         'is_active',
         'notes',
@@ -45,6 +46,7 @@ class RentalRate extends Model
         return [
             'rate_per_period' => 'decimal:2',
             'excess_km_rate' => 'decimal:2',
+            'late_fee_per_day' => 'decimal:2',
             'deposit_amount' => 'decimal:2',
             'km_limit_per_period' => 'integer',
             'is_active' => 'boolean',
