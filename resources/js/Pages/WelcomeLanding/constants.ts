@@ -1,4 +1,4 @@
-export const DEFAULT_SITE_NAME = 'Seruwit Biz';
+export { DEFAULT_SITE_NAME } from '@/constants/brand';
 
 export type ModuleTone = 'emerald' | 'cyan' | 'amber' | 'teal';
 

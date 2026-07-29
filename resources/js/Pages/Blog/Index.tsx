@@ -1,5 +1,6 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
+import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 
 interface Post {
@@ -43,7 +44,7 @@ interface BlogIndexProps {
 const BlogIndex: React.FC<BlogIndexProps> = ({ posts, settings }) => {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
-    const siteName = settings?.['general.site_name'] || 'Seruwit CMS';
+    const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
     const siteLogo = settings?.['site.logo'];
 
     const formatDate = (dateString: string) => {

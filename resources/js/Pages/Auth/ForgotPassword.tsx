@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 
@@ -24,7 +25,7 @@ export default function ForgotPassword({ status, settings }: Props) {
         post(route('password.email'));
     };
 
-    const siteName = settings?.['general.site_name'] || 'Sky Track';
+    const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
     const siteLogo = settings?.['site.logo'];
 
     return (

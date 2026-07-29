@@ -3,6 +3,7 @@ import Dropdown from '@/Components/Dropdown';
 import GlobalSearch from '@/Components/GlobalSearch';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import SidebarNavScroll from '@/Components/SidebarNavScroll';
+import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useTrans } from '@/hooks/useTrans';
 import { Link, usePage, usePoll } from '@inertiajs/react';
 import { ReactNode, useMemo, useState } from 'react';
@@ -428,7 +429,12 @@ export default function ModuleLayout({ header, children }: Props) {
     const pageProps = usePage().props as any;
     const { t, locale } = useTrans();
     const user = pageProps.auth.user as User | null;
-    const settings = pageProps.settings as Record<string, string> | undefined;
+    // Shared public key→value map. Never treat a page-level array as this map.
+    const settings = (
+        pageProps.settings && !Array.isArray(pageProps.settings)
+            ? pageProps.settings
+            : undefined
+    ) as Record<string, string> | undefined;
     const notifications = pageProps.notificationCenter as {
         unread_count: number;
         recent: Array<{ id: string; title: string; body: string; url: string | null; read_at: string | null; created_at: string | null }>;
@@ -450,7 +456,7 @@ export default function ModuleLayout({ header, children }: Props) {
 
     // Get logo and site name from settings
     const siteLogo = settings?.['site.logo'];
-    const siteName = settings?.['general.site_name'] || 'Sky Track';
+    const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
 
     const moduleLabel = (module: string): string => t(`modules.${module}`, undefined, moduleDisplayNames[module] || module);
 

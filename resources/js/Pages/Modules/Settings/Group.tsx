@@ -21,7 +21,7 @@ interface Setting {
 }
 
 interface Props {
-    settings: Setting[];
+    groupSettings: Setting[];
     groups: string[];
     currentGroup: string;
     canEditValues: boolean;
@@ -42,7 +42,7 @@ const TrashIcon = () => (
     </svg>
 );
 
-export default function Group({ settings, groups, currentGroup, canEditValues, canManageStructure }: Props): JSX.Element {
+export default function Group({ groupSettings, groups, currentGroup, canEditValues, canManageStructure }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
@@ -57,7 +57,7 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
 
     const { data, setData, post, processing, errors } = useForm({
         group: currentGroup,
-        settings: settings.map((setting) => ({ id: setting.id, value: setting.value ?? '' })),
+        settings: groupSettings.map((setting) => ({ id: setting.id, value: setting.value ?? '' })),
     });
     const fieldErrors = errors as Record<string, string>;
 
@@ -121,14 +121,14 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                         )}
                     </div>
 
-                    {settings.length === 0 ? (
+                    {groupSettings.length === 0 ? (
                         <div className="py-12 text-center">
                             <h3 className="text-sm font-medium text-gray-900">{t('settings.pages.group.empty_title')}</h3>
                             {canManageStructure && <p className="mt-1 text-sm text-gray-500">{t('settings.pages.group.empty_hint')}</p>}
                         </div>
                     ) : !canEditValues ? (
                         <div className="space-y-6">
-                            {settings.map((setting) => (
+                            {groupSettings.map((setting) => (
                                 <div key={setting.id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
                                     <InputLabel value={setting.label} />
                                     {setting.description && (
@@ -150,7 +150,7 @@ export default function Group({ settings, groups, currentGroup, canEditValues, c
                         </div>
                     ) : (
                         <form onSubmit={submit} className="space-y-6">
-                            {settings.map((setting, index) => (
+                            {groupSettings.map((setting, index) => (
                                 <div key={setting.id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">

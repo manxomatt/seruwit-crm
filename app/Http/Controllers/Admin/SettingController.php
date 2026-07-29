@@ -54,7 +54,9 @@ class SettingController extends Controller
         $user = Auth::user();
 
         return Inertia::render('Modules/Settings/Group', [
-            'settings' => $settings,
+            // Named distinctly from the shared Inertia `settings` map (site_name,
+            // logo, …) so the sidebar brand is not overwritten by this list.
+            'groupSettings' => $settings,
             'groups' => $groups,
             'currentGroup' => $group,
             // A tenant with the ordinary settings:update permission can edit

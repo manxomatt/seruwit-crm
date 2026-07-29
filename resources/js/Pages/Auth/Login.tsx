@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 
@@ -32,7 +33,7 @@ export default function Login({ status, canResetPassword, settings }: Props) {
         });
     };
 
-    const siteName = settings?.['general.site_name'] || 'Sky Track';
+    const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
     const siteLogo = settings?.['site.logo'];
 
     return (

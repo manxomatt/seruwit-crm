@@ -48,19 +48,62 @@ class SettingTest extends TestCase
     public function test_a_group_page_only_returns_that_groups_settings_in_sort_order(): void
     {
         $user = $this->createAdminUser();
+        Setting::factory()->group('general')->create([
+            'key' => 'general.site_name',
+            'label' => 'Site Name',
+            'value' => 'Seruwit Biz Demo',
+            'is_public' => true,
+            'sort_order' => 0,
+        ]);
         Setting::factory()->group('general')->create(['label' => 'Second', 'sort_order' => 2]);
         Setting::factory()->group('general')->create(['label' => 'First', 'sort_order' => 1]);
         Setting::factory()->group('site')->create(['label' => 'Other Group']);
+        Setting::factory()->group('appearance')->create(['label' => 'Accent']);
 
         $this->actingAs($user)->get(route('module.settings.group', 'general'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Settings/Group')
                 ->where('currentGroup', 'general')
-                ->has('settings', 2)
-                ->where('settings.0.label', 'First')
-                ->where('settings.1.label', 'Second')
-                ->has('groups', 2)
+                ->has('groupSettings', 3)
+                ->where('groupSettings.0.label', 'Site Name')
+                ->where('groupSettings.1.label', 'First')
+                ->where('groupSettings.2.label', 'Second')
+                ->has('groups', 3)
+                // Shared branding map must survive the page-level groupSettings prop.
+                ->has('settings', fn ($settings) => $settings
+                    ->where('general.site_name', 'Seruwit Biz Demo')
+                    ->etc()
+                )
+            );
+    }
+
+    public function test_appearance_group_page_keeps_shared_site_name_for_the_sidebar(): void
+    {
+        $user = $this->createAdminUser();
+        Setting::factory()->group('general')->create([
+            'key' => 'general.site_name',
+            'value' => 'Seruwit Biz Demo',
+            'is_public' => true,
+        ]);
+        Setting::factory()->group('appearance')->create([
+            'key' => 'appearance.primary_color',
+            'label' => 'Primary Color',
+            'value' => '#0f766e',
+            'type' => 'color',
+        ]);
+
+        $this->actingAs($user)->get(route('module.settings.group', 'appearance'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Settings/Group')
+                ->where('currentGroup', 'appearance')
+                ->has('groupSettings', 1)
+                ->where('groupSettings.0.key', 'appearance.primary_color')
+                ->has('settings', fn ($settings) => $settings
+                    ->where('general.site_name', 'Seruwit Biz Demo')
+                    ->etc()
+                )
             );
     }
 
