@@ -15,6 +15,7 @@ interface PlanRow {
     total_distance_km: string | number;
     total_cost: string | number;
     unassigned_count: number;
+    warehouse: { id: number; name: string; kind: string } | null;
     creator: { id: number; name: string } | null;
 }
 
@@ -114,6 +115,7 @@ export default function Index({ plans, filters, can }: Props): JSX.Element {
                         <tr>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.code')}</th>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.date')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.warehouse')}</th>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.objective')}</th>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('routing.fields.distance')}</th>
                             <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('routing.fields.cost')}</th>
@@ -124,7 +126,7 @@ export default function Index({ plans, filters, can }: Props): JSX.Element {
                     <tbody className="divide-y divide-gray-100">
                         {plans.data.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
                                     {t('routing.pages.index.empty')}
                                 </td>
                             </tr>
@@ -140,6 +142,7 @@ export default function Index({ plans, filters, can }: Props): JSX.Element {
                                         </Link>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-gray-700">{formatDateDmY(row.planned_date)}</td>
+                                    <td className="px-4 py-3 text-gray-700">{row.warehouse?.name ?? '—'}</td>
                                     <td className="px-4 py-3 text-gray-700">
                                         {t(`routing.objective.${row.objective}`, undefined, row.objective)}
                                     </td>

@@ -29,6 +29,7 @@ class RoutePlan extends Model
         'status',
         'objective',
         'planned_date',
+        'warehouse_id',
         'depot_address',
         'depot_lat',
         'depot_lng',
@@ -48,6 +49,7 @@ class RoutePlan extends Model
     {
         return [
             'planned_date' => 'date:Y-m-d',
+            'warehouse_id' => 'integer',
             'depot_lat' => 'decimal:7',
             'depot_lng' => 'decimal:7',
             'params' => 'array',
@@ -73,6 +75,16 @@ class RoutePlan extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Origin warehouse / store for this plan (depot). Soft-depends on Inventory.
+     *
+     * @return BelongsTo<\Modules\Inventory\Models\Warehouse, $this>
+     */
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Inventory\Models\Warehouse::class);
     }
 
     public static function nextCode(): string

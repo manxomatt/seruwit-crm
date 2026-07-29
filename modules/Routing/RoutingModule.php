@@ -41,7 +41,7 @@ class RoutingModule implements ModuleContract
 
     public function requires(): array
     {
-        return ['transportation', 'orders'];
+        return ['transportation', 'orders', 'inventory'];
     }
 
     public function menu(): ?array

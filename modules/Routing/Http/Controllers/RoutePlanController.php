@@ -5,10 +5,12 @@ namespace Modules\Routing\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Inventory\Models\Warehouse;
 use Modules\Orders\Models\DeliveryOrder;
 use Modules\Routing\Http\Requests\StoreRoutePlanRequest;
 use Modules\Routing\Http\Requests\UpdateRoutePlanRouteRequest;
@@ -23,7 +25,7 @@ class RoutePlanController extends Controller
     public function index(Request $request): Response
     {
         $plans = RoutePlan::query()
-            ->with('creator:id,name')
+            ->with(['creator:id,name', 'warehouse:id,name,kind'])
             ->when($request->string('status')->toString(), fn ($q, $status) => $q->where('status', $status))
             ->latest('id')
             ->paginate(15)
@@ -43,23 +45,53 @@ class RoutePlanController extends Controller
     public function create(Request $request): Response
     {
         $date = $request->date('planned_date')?->toDateString() ?? now()->toDateString();
+        $warehouses = $this->outboundWarehouses();
+        $warehouseId = $request->integer('warehouse_id') ?: (int) ($warehouses->first()?->id ?? 0);
+        $warehouse = $warehouseId > 0
+            ? $warehouses->firstWhere('id', $warehouseId)
+            : null;
 
-        $orders = DeliveryOrder::query()
-            ->with('partner:id,name')
-            ->where('status', DeliveryOrder::STATUS_CONFIRMED)
-            ->whereDate('order_date', $date)
-            ->orderBy('id')
-            ->get(['id', 'code', 'partner_id', 'delivery_address', 'delivery_lat', 'delivery_lng', 'demand_kg', 'order_date']);
+        if ($warehouse === null && $warehouses->isNotEmpty()) {
+            $warehouse = $warehouses->first();
+            $warehouseId = (int) $warehouse->id;
+        }
+
+        $orders = $warehouse !== null
+            ? $this->ordersForWarehouse($warehouse, $date)
+            : collect();
 
         return Inertia::render('Modules/Routing/Plans/Create', [
+            'warehouses' => $warehouses->map(fn (Warehouse $row): array => [
+                'id' => $row->id,
+                'name' => $row->name,
+                'kind' => $row->kind?->value ?? 'warehouse',
+                'location' => $row->location,
+                'latitude' => $row->latitude !== null ? (float) $row->latitude : null,
+                'longitude' => $row->longitude !== null ? (float) $row->longitude : null,
+                'has_coords' => $row->latitude !== null && $row->longitude !== null,
+            ])->values()->all(),
             'defaults' => [
+                'warehouse_id' => $warehouseId > 0 ? $warehouseId : null,
                 'planned_date' => $date,
                 'objective' => RoutePlan::OBJECTIVE_FUEL_COST,
-                'depot_address' => __('routing.defaults.depot_address'),
-                'depot_lat' => -6.2088000,
-                'depot_lng' => 106.8456000,
+                'depot_address' => $warehouse
+                    ? trim($warehouse->name.($warehouse->location ? ' — '.$warehouse->location : ''))
+                    : '',
+                'depot_lat' => $warehouse?->latitude !== null ? (float) $warehouse->latitude : null,
+                'depot_lng' => $warehouse?->longitude !== null ? (float) $warehouse->longitude : null,
             ],
-            'orders' => $orders,
+            'orders' => $orders->map(fn (DeliveryOrder $order): array => [
+                'id' => $order->id,
+                'code' => $order->code,
+                'delivery_address' => $order->delivery_address,
+                'delivery_lat' => $order->delivery_lat,
+                'delivery_lng' => $order->delivery_lng,
+                'demand_kg' => $order->demand_kg,
+                'from_gin' => $order->goods_issue_note_id !== null,
+                'partner' => $order->partner
+                    ? ['id' => $order->partner->id, 'name' => $order->partner->name]
+                    : null,
+            ])->values()->all(),
             'eligible_counts' => [
                 'geocoded' => $orders->filter(fn (DeliveryOrder $o): bool => $o->delivery_lat !== null && $o->delivery_lng !== null)->count(),
                 'missing_coords' => $orders->filter(fn (DeliveryOrder $o): bool => $o->delivery_lat === null || $o->delivery_lng === null)->count(),
@@ -72,18 +104,22 @@ class RoutePlanController extends Controller
     public function store(StoreRoutePlanRequest $request, RouteOptimizationService $optimizer): RedirectResponse
     {
         $data = $request->validated();
+        $warehouse = Warehouse::query()->findOrFail($data['warehouse_id']);
 
         $plan = RoutePlan::query()->create([
             'code' => RoutePlan::nextCode(),
             'status' => RoutePlan::STATUS_DRAFT,
             'objective' => $data['objective'],
             'planned_date' => $data['planned_date'],
-            'depot_address' => $data['depot_address'] ?? null,
-            'depot_lat' => $data['depot_lat'],
-            'depot_lng' => $data['depot_lng'],
+            'warehouse_id' => $warehouse->id,
+            'depot_address' => $data['depot_address']
+                ?: trim($warehouse->name.($warehouse->location ? ' — '.$warehouse->location : '')),
+            'depot_lat' => $data['depot_lat'] ?? $warehouse->latitude,
+            'depot_lng' => $data['depot_lng'] ?? $warehouse->longitude,
             'created_by' => $request->user()?->id,
             'params' => [
                 'delivery_order_ids' => $data['delivery_order_ids'] ?? null,
+                'warehouse_id' => $warehouse->id,
             ],
         ]);
 
@@ -98,6 +134,7 @@ class RoutePlanController extends Controller
     {
         $plan->load([
             'creator:id,name',
+            'warehouse:id,name,kind,location',
             'routes.vehicle:id,name,plate_number,capacity_kg,cost_per_km',
             'routes.driver:id,name',
             'routes.stops.deliveryOrder:id,code,partner_id',
@@ -173,5 +210,50 @@ class RoutePlanController extends Controller
         $routePlanRoute->update($request->validated());
 
         return back()->with('success', __('routing.messages.route_assignment_updated'));
+    }
+
+    /**
+     * Active warehouses/stores that can ship outbound (excludes showroom).
+     *
+     * @return Collection<int, Warehouse>
+     */
+    private function outboundWarehouses(): Collection
+    {
+        return Warehouse::query()
+            ->salesOutbound()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'kind', 'location', 'latitude', 'longitude', 'status']);
+    }
+
+    /**
+     * Confirmed DOs for the date that belong to this warehouse (via GIN) or
+     * are manual (no GIN) and thus can leave from the selected depot.
+     *
+     * @return Collection<int, DeliveryOrder>
+     */
+    private function ordersForWarehouse(Warehouse $warehouse, string $date): Collection
+    {
+        return DeliveryOrder::query()
+            ->with('partner:id,name')
+            ->where('status', DeliveryOrder::STATUS_CONFIRMED)
+            ->whereDate('order_date', $date)
+            ->where(function ($query) use ($warehouse): void {
+                $query
+                    ->whereHas('goodsIssueNote', fn ($gin) => $gin->where('warehouse_id', $warehouse->id))
+                    ->orWhereNull('goods_issue_note_id');
+            })
+            ->orderBy('id')
+            ->get([
+                'id',
+                'code',
+                'partner_id',
+                'goods_issue_note_id',
+                'delivery_address',
+                'delivery_lat',
+                'delivery_lng',
+                'demand_kg',
+                'order_date',
+            ]);
     }
 }

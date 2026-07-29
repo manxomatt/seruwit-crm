@@ -41,6 +41,7 @@ interface Plan {
     depot_address: string | null;
     depot_lat: string | number;
     depot_lng: string | number;
+    warehouse: { id: number; name: string; kind: string; location: string | null } | null;
     total_distance_km: string | number;
     total_cost: string | number;
     unassigned_count: number;
@@ -170,7 +171,11 @@ export default function Show({ plan, vehicles, drivers, can }: Props): JSX.Eleme
                     <div>
                         <h2 className="text-xl font-semibold text-gray-800">{plan.code}</h2>
                         <p className="text-sm text-gray-500">
-                            {plan.planned_date} · {t(`routing.objective.${plan.objective}`, undefined, plan.objective)} ·{' '}
+                            {plan.planned_date}
+                            {plan.warehouse ? ` · ${plan.warehouse.name}` : ''}
+                            {' · '}
+                            {t(`routing.objective.${plan.objective}`, undefined, plan.objective)}
+                            {' · '}
                             {t(`routing.status.${plan.status}`, undefined, plan.status)}
                         </p>
                     </div>

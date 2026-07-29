@@ -108,6 +108,12 @@ class RouteOptimizationTest extends TestCase
         ]);
 
         $date = now()->toDateString();
+        $warehouse = \Modules\Inventory\Models\Warehouse::factory()->create([
+            'status' => 'active',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+            'location' => 'Gudang Pusat',
+        ]);
         $orders = collect([
             DeliveryOrder::factory()->confirmed()->create([
                 'order_date' => $date,
@@ -130,16 +136,17 @@ class RouteOptimizationTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post(route('module.routing.plans.store'), [
+            'warehouse_id' => $warehouse->id,
             'planned_date' => $date,
             'objective' => RoutePlan::OBJECTIVE_FUEL_COST,
-            'depot_address' => 'Gudang Pusat',
-            'depot_lat' => -6.2088,
-            'depot_lng' => 106.8456,
             'delivery_order_ids' => $orders->pluck('id')->all(),
         ]);
 
         $plan = RoutePlan::query()->first();
         $this->assertNotNull($plan);
+        $this->assertSame($warehouse->id, $plan->warehouse_id);
+        $this->assertEquals(-6.2088, (float) $plan->depot_lat);
+        $this->assertEquals(106.8456, (float) $plan->depot_lng);
         $response->assertRedirect(route('module.routing.plans.show', $plan));
 
         $plan->load('routes.stops');

@@ -8,7 +8,17 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useMemo } from 'react';
+
+interface WarehouseOption {
+    id: number;
+    name: string;
+    kind: string;
+    location: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    has_coords: boolean;
+}
 
 interface OrderRow {
     id: number;
@@ -17,16 +27,19 @@ interface OrderRow {
     delivery_lat: string | number | null;
     delivery_lng: string | number | null;
     demand_kg: string | number | null;
+    from_gin: boolean;
     partner: { id: number; name: string } | null;
 }
 
 interface Props {
+    warehouses: WarehouseOption[];
     defaults: {
+        warehouse_id: number | null;
         planned_date: string;
         objective: string;
         depot_address: string;
-        depot_lat: number;
-        depot_lng: number;
+        depot_lat: number | null;
+        depot_lng: number | null;
     };
     orders: OrderRow[];
     eligible_counts: {
@@ -39,31 +52,93 @@ interface Props {
 
 const OBJECTIVES = ['fuel_cost', 'distance'] as const;
 
-export default function Create({ defaults, orders, eligible_counts }: Props): JSX.Element {
+function depotLabel(warehouse: WarehouseOption): string {
+    return trimJoin(warehouse.name, warehouse.location ? `— ${warehouse.location}` : '');
+}
+
+function trimJoin(...parts: string[]): string {
+    return parts.map((part) => part.trim()).filter(Boolean).join(' ');
+}
+
+export default function Create({ warehouses, defaults, orders, eligible_counts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const geocodedIds = orders.filter((o) => o.delivery_lat !== null && o.delivery_lng !== null).map((o) => o.id);
+    const geocodedIds = useMemo(
+        () => orders.filter((o) => o.delivery_lat !== null && o.delivery_lng !== null).map((o) => o.id),
+        [orders],
+    );
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
+        warehouse_id: defaults.warehouse_id ? String(defaults.warehouse_id) : '',
         planned_date: defaults.planned_date,
         objective: defaults.objective,
         depot_address: defaults.depot_address,
-        depot_lat: String(defaults.depot_lat),
-        depot_lng: String(defaults.depot_lng),
+        depot_lat: defaults.depot_lat != null ? String(defaults.depot_lat) : '',
+        depot_lng: defaults.depot_lng != null ? String(defaults.depot_lng) : '',
         delivery_order_ids: geocodedIds as number[],
     });
+
+    // After partial reloads (date / warehouse), re-apply depot + DO selection from server props.
+    useEffect(() => {
+        const warehouseId = defaults.warehouse_id ? String(defaults.warehouse_id) : '';
+        setData({
+            warehouse_id: warehouseId,
+            planned_date: defaults.planned_date,
+            depot_address: defaults.depot_address,
+            depot_lat: defaults.depot_lat != null ? String(defaults.depot_lat) : '',
+            depot_lng: defaults.depot_lng != null ? String(defaults.depot_lng) : '',
+            delivery_order_ids: geocodedIds,
+        });
+    }, [
+        defaults.warehouse_id,
+        defaults.planned_date,
+        defaults.depot_address,
+        defaults.depot_lat,
+        defaults.depot_lng,
+        geocodedIds,
+    ]);
+
+    transform((form) => {
+        const warehouseId = form.warehouse_id || (defaults.warehouse_id ? String(defaults.warehouse_id) : '');
+        const warehouse = warehouses.find((row) => String(row.id) === warehouseId);
+
+        return {
+            ...form,
+            warehouse_id: warehouseId ? Number(warehouseId) : null,
+            depot_address: form.depot_address
+                || (warehouse ? depotLabel(warehouse) : ''),
+            depot_lat: warehouse?.latitude != null ? warehouse.latitude : form.depot_lat,
+            depot_lng: warehouse?.longitude != null ? warehouse.longitude : form.depot_lng,
+        };
+    });
+
+    const selectedWarehouse = warehouses.find((w) => String(w.id) === data.warehouse_id) ?? null;
+    const warehouseReady = Boolean(selectedWarehouse?.has_coords);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(prefixedRoute('routing.plans.store'));
     };
 
-    const reloadOrders = (date: string): void => {
-        setData('planned_date', date);
+    const reloadCreate = (overrides: { planned_date?: string; warehouse_id?: string }): void => {
+        const plannedDate = overrides.planned_date ?? data.planned_date;
+        const warehouseId = overrides.warehouse_id ?? data.warehouse_id;
+
+        if (! warehouseId) {
+            return;
+        }
+
         router.get(
             prefixedRoute('routing.plans.create'),
-            { planned_date: date },
-            { preserveState: true, only: ['orders', 'eligible_counts', 'defaults'] },
+            {
+                planned_date: plannedDate,
+                warehouse_id: warehouseId,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['orders', 'eligible_counts', 'defaults', 'warehouses'],
+            },
         );
     };
 
@@ -83,134 +158,168 @@ export default function Create({ defaults, orders, eligible_counts }: Props): JS
             <Head title={t('routing.pages.create.title')} />
 
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
-                            <div className="text-xs text-gray-500">{t('routing.fields.geocoded_dos')}</div>
-                            <div className="text-lg font-semibold text-gray-900">{eligible_counts.geocoded}</div>
-                        </div>
-                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
-                            <div className="text-xs text-gray-500">{t('routing.fields.missing_coords')}</div>
-                            <div className="text-lg font-semibold text-amber-700">{eligible_counts.missing_coords}</div>
-                        </div>
-                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
-                            <div className="text-xs text-gray-500">{t('routing.fields.active_vehicles')}</div>
-                            <div className="text-lg font-semibold text-gray-900">{eligible_counts.vehicles}</div>
-                        </div>
-                        <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
-                            <div className="text-xs text-gray-500">{t('routing.fields.available_drivers')}</div>
-                            <div className="text-lg font-semibold text-gray-900">{eligible_counts.drivers}</div>
-                        </div>
+                <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
+                    <div className="text-xs text-gray-500">{t('routing.fields.geocoded_dos')}</div>
+                    <div className="text-lg font-semibold text-gray-900">{eligible_counts.geocoded}</div>
+                </div>
+                <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
+                    <div className="text-xs text-gray-500">{t('routing.fields.missing_coords')}</div>
+                    <div className="text-lg font-semibold text-amber-700">{eligible_counts.missing_coords}</div>
+                </div>
+                <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
+                    <div className="text-xs text-gray-500">{t('routing.fields.active_vehicles')}</div>
+                    <div className="text-lg font-semibold text-gray-900">{eligible_counts.vehicles}</div>
+                </div>
+                <div className="bg-white px-3 py-3 text-sm shadow-sm sm:rounded-lg">
+                    <div className="text-xs text-gray-500">{t('routing.fields.available_drivers')}</div>
+                    <div className="text-lg font-semibold text-gray-900">{eligible_counts.drivers}</div>
+                </div>
+            </div>
+
+            {warehouses.length === 0 && (
+                <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    {t('routing.pages.create.no_warehouses')}
+                </div>
+            )}
+
+            <form onSubmit={submit} className="space-y-6 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                        <InputLabel htmlFor="warehouse_id" value={`${t('routing.fields.warehouse')} *`} />
+                        <Select
+                            id="warehouse_id"
+                            className="mt-1"
+                            value={data.warehouse_id}
+                            onChange={(value) => {
+                                if (! value) {
+                                    return;
+                                }
+                                setData('warehouse_id', value);
+                                reloadCreate({ warehouse_id: value });
+                            }}
+                            searchable={false}
+                            options={warehouses.map((warehouse) => ({
+                                value: String(warehouse.id),
+                                label: `${warehouse.name}${warehouse.kind === 'store' ? ` (${t('routing.warehouse_kind.store')})` : ''}${warehouse.has_coords ? '' : ` — ${t('routing.pages.create.warehouse_no_coords')}`}`,
+                            }))}
+                        />
+                        <p className="mt-1 text-xs text-gray-500">{t('routing.pages.create.warehouse_hint')}</p>
+                        <InputError message={errors.warehouse_id} className="mt-2" />
                     </div>
 
-                    <form onSubmit={submit} className="space-y-6 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                            <div>
-                                <InputLabel htmlFor="planned_date" value={t('routing.fields.plan_date')} />
-                                <TextInput
-                                    id="planned_date"
-                                    type="date"
-                                    className="mt-1 block w-full"
-                                    value={data.planned_date}
-                                    onChange={(e) => reloadOrders(e.target.value)}
-                                    required
-                                />
-                                <InputError message={errors.planned_date} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="objective" value={t('routing.fields.objective')} />
-                                <Select
-                                    id="objective"
-                                    className="mt-1"
-                                    value={data.objective}
-                                    onChange={(value) => setData('objective', value)}
-                                    options={OBJECTIVES.map((objective) => ({
-                                        value: objective,
-                                        label: t(`routing.objective.${objective}`),
-                                    }))}
-                                />
-                                <InputError message={errors.objective} className="mt-2" />
-                            </div>
-                            <div className="sm:col-span-2">
-                                <InputLabel htmlFor="depot_address" value={t('routing.fields.depot_address')} />
-                                <TextInput
-                                    id="depot_address"
-                                    className="mt-1 block w-full"
-                                    value={data.depot_address}
-                                    onChange={(e) => setData('depot_address', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="depot_lat" value={t('routing.fields.depot_lat')} />
-                                <TextInput
-                                    id="depot_lat"
-                                    className="mt-1 block w-full"
-                                    value={data.depot_lat}
-                                    onChange={(e) => setData('depot_lat', e.target.value)}
-                                    required
-                                />
-                                <InputError message={errors.depot_lat} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="depot_lng" value={t('routing.fields.depot_lng')} />
-                                <TextInput
-                                    id="depot_lng"
-                                    className="mt-1 block w-full"
-                                    value={data.depot_lng}
-                                    onChange={(e) => setData('depot_lng', e.target.value)}
-                                    required
-                                />
-                                <InputError message={errors.depot_lng} className="mt-2" />
-                            </div>
-                        </div>
+                    <div>
+                        <InputLabel htmlFor="planned_date" value={t('routing.fields.plan_date')} />
+                        <TextInput
+                            id="planned_date"
+                            type="date"
+                            className="mt-1 block w-full"
+                            value={data.planned_date}
+                            onChange={(e) => {
+                                setData('planned_date', e.target.value);
+                                reloadCreate({ planned_date: e.target.value });
+                            }}
+                            required
+                        />
+                        <InputError message={errors.planned_date} className="mt-2" />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="objective" value={t('routing.fields.objective')} />
+                        <Select
+                            id="objective"
+                            className="mt-1"
+                            value={data.objective}
+                            onChange={(value) => setData('objective', value)}
+                            searchable={false}
+                            options={OBJECTIVES.map((objective) => ({
+                                value: objective,
+                                label: t(`routing.objective.${objective}`),
+                            }))}
+                        />
+                        <InputError message={errors.objective} className="mt-2" />
+                    </div>
 
-                        <div>
-                            <h3 className="mb-2 text-sm font-medium text-gray-900">{t('routing.pages.create.orders_section')}</h3>
-                            <p className="mb-3 text-xs text-gray-500">{t('routing.pages.create.orders_hint')}</p>
-                            <div className="max-h-72 overflow-y-auto rounded-md border border-gray-200">
-                                {orders.length === 0 ? (
-                                    <div className="px-4 py-8 text-center text-sm text-gray-500">{t('routing.pages.create.orders_empty')}</div>
-                                ) : (
-                                    <ul className="divide-y divide-gray-100">
-                                        {orders.map((order) => {
-                                            const hasCoords = order.delivery_lat !== null && order.delivery_lng !== null;
-                                            return (
-                                                <li key={order.id} className="flex items-start gap-3 px-4 py-3 text-sm">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="mt-1"
-                                                        disabled={!hasCoords}
-                                                        checked={data.delivery_order_ids.includes(order.id)}
-                                                        onChange={() => toggleOrder(order.id)}
-                                                    />
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="font-medium text-gray-900">
-                                                            {order.code}
-                                                            {order.partner ? ` · ${order.partner.name}` : ''}
-                                                        </div>
-                                                        <div className="truncate text-gray-600">{order.delivery_address}</div>
-                                                        <div className="text-xs text-gray-500">
-                                                            {hasCoords
-                                                                ? `${order.delivery_lat}, ${order.delivery_lng} · ${order.demand_kg ?? 1} kg`
-                                                                : t('routing.pages.create.missing_coordinates')}
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                )}
+                    <div className="sm:col-span-2 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                        <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                            {t('routing.fields.depot_from_warehouse')}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-900">
+                            {data.depot_address || t('routing.pages.create.pick_warehouse_first')}
+                        </div>
+                        {warehouseReady ? (
+                            <div className="mt-1 font-mono text-xs text-gray-600">
+                                {data.depot_lat}, {data.depot_lng}
                             </div>
-                            <InputError message={errors.delivery_order_ids} className="mt-2" />
-                        </div>
+                        ) : selectedWarehouse ? (
+                            <div className="mt-1 text-xs text-amber-700">{t('routing.pages.create.warehouse_no_coords')}</div>
+                        ) : null}
+                        <InputError message={errors.depot_lat || errors.depot_lng} className="mt-2" />
+                    </div>
+                </div>
 
-                        <div className="flex gap-3">
-                            <PrimaryButton disabled={processing || data.delivery_order_ids.length === 0}>
-                                {t('routing.actions.optimize_routes')}
-                            </PrimaryButton>
-                            <Link href={prefixedRoute('routing.plans.index')}>
-                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
-                            </Link>
-                        </div>
-                    </form>
+                <div>
+                    <h3 className="mb-2 text-sm font-medium text-gray-900">{t('routing.pages.create.orders_section')}</h3>
+                    <p className="mb-3 text-xs text-gray-500">{t('routing.pages.create.orders_hint')}</p>
+                    <div className="max-h-72 overflow-y-auto rounded-md border border-gray-200">
+                        {! data.warehouse_id ? (
+                            <div className="px-4 py-8 text-center text-sm text-gray-500">
+                                {t('routing.pages.create.pick_warehouse_first')}
+                            </div>
+                        ) : orders.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-sm text-gray-500">{t('routing.pages.create.orders_empty')}</div>
+                        ) : (
+                            <ul className="divide-y divide-gray-100">
+                                {orders.map((order) => {
+                                    const hasCoords = order.delivery_lat !== null && order.delivery_lng !== null;
+                                    return (
+                                        <li key={order.id} className="flex items-start gap-3 px-4 py-3 text-sm">
+                                            <input
+                                                type="checkbox"
+                                                className="mt-1"
+                                                disabled={!hasCoords || !warehouseReady}
+                                                checked={data.delivery_order_ids.includes(order.id)}
+                                                onChange={() => toggleOrder(order.id)}
+                                            />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="font-medium text-gray-900">
+                                                    {order.code}
+                                                    {order.partner ? ` · ${order.partner.name}` : ''}
+                                                    {! order.from_gin && (
+                                                        <span className="ml-2 text-xs font-normal text-slate-500">
+                                                            {t('routing.pages.create.manual_do')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="truncate text-gray-600">{order.delivery_address}</div>
+                                                <div className="text-xs text-gray-500">
+                                                    {hasCoords
+                                                        ? `${order.delivery_lat}, ${order.delivery_lng} · ${order.demand_kg ?? 1} kg`
+                                                        : t('routing.pages.create.missing_coordinates')}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </div>
+                    <InputError message={errors.delivery_order_ids} className="mt-2" />
+                </div>
+
+                <div className="flex gap-3">
+                    <PrimaryButton
+                        disabled={
+                            processing
+                            || !warehouseReady
+                            || data.delivery_order_ids.length === 0
+                        }
+                    >
+                        {t('routing.actions.optimize_routes')}
+                    </PrimaryButton>
+                    <Link href={prefixedRoute('routing.plans.index')}>
+                        <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                    </Link>
+                </div>
+            </form>
         </DynamicLayout>
     );
 }

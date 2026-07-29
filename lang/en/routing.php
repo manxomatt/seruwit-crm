@@ -27,6 +27,8 @@ return [
         'depot_address' => 'Depot address',
         'depot_lat' => 'Depot latitude',
         'depot_lng' => 'Depot longitude',
+        'depot_from_warehouse' => 'Depot (from warehouse / store)',
+        'warehouse' => 'Warehouse / store',
         'vehicle' => 'Vehicle',
         'driver' => 'Driver',
         'total_distance' => 'Total distance',
@@ -59,9 +61,14 @@ return [
         'create' => [
             'title' => 'New Route Plan',
             'orders_section' => 'Confirmed delivery orders',
-            'orders_hint' => 'Only orders with delivery coordinates are optimizable. Add lat/lng on the order form.',
-            'orders_empty' => 'No confirmed orders on this date.',
+            'orders_hint' => 'Orders from this warehouse (via GIN) plus manual DOs without a GIN. Only geocoded stops can be optimised.',
+            'orders_empty' => 'No confirmed orders for this warehouse on this date.',
             'missing_coordinates' => 'Missing coordinates',
+            'warehouse_hint' => 'Start from a warehouse or store you own. Depot coordinates are taken from that site.',
+            'warehouse_no_coords' => 'Set latitude/longitude on this warehouse first',
+            'no_warehouses' => 'No active warehouse or store available for outbound shipping. Create one in Inventory first.',
+            'pick_warehouse_first' => 'Select a warehouse or store first.',
+            'manual_do' => 'Manual DO',
         ],
         'show' => [
             'depot' => 'Depot: :address (:lat, :lng)',
@@ -106,5 +113,20 @@ return [
         'depot_lat_required' => 'Depot latitude is required for routing.',
         'depot_lng_required' => 'Depot longitude is required for routing.',
         'objective_in' => 'Choose distance or fuel cost as the objective.',
+        'warehouse_required' => 'Select a warehouse or store as the starting point.',
+        'warehouse_inactive' => 'That warehouse or store is not active.',
+        'warehouse_missing_coords' => 'Set latitude and longitude on the warehouse or store before planning routes.',
+        'warehouse_not_outbound' => 'Showrooms cannot be used as a shipping depot.',
+        'orders_required' => 'Select at least one delivery order.',
+    ],
+
+    'placeholders' => [
+        'select_warehouse' => 'Select warehouse or store…',
+    ],
+
+    'warehouse_kind' => [
+        'warehouse' => 'Warehouse',
+        'store' => 'Store',
+        'showroom' => 'Showroom',
     ],
 ];
