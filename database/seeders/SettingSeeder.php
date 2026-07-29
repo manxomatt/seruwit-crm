@@ -19,7 +19,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'general.site_name',
                 'group' => 'general',
-                'value' => 'Seruwit CMS',
+                'value' => 'Seruwit Biz',
                 'type' => 'text',
                 'label' => 'Site Name',
                 'description' => 'The name of your website displayed in the browser title and header.',
@@ -29,7 +29,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'general.site_tagline',
                 'group' => 'general',
-                'value' => 'Drag & Drop CMS with E-Commerce',
+                'value' => 'Operasi distribusi, logistik, dan penjualan dalam satu workspace',
                 'type' => 'text',
                 'label' => 'Site Tagline',
                 'description' => 'A short description or slogan for your website.',
@@ -39,7 +39,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'general.site_description',
                 'group' => 'general',
-                'value' => 'Seruwit adalah CMS Drag-and-Drop berbasis Laravel dengan kemampuan e-commerce terintegrasi.',
+                'value' => 'Seruwit Biz adalah platform operasi modular untuk distribusi, logistik, rental, dan penjualan lapangan.',
                 'type' => 'textarea',
                 'label' => 'Site Description',
                 'description' => 'A longer description of your website for SEO purposes.',
@@ -113,7 +113,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'site.copyright',
                 'group' => 'site',
-                'value' => '© 2026 Seruwit CMS. All rights reserved.',
+                'value' => '© 2026 Seruwit Biz. All rights reserved.',
                 'type' => 'text',
                 'label' => 'Copyright Text',
                 'description' => 'Copyright text displayed in the footer.',
@@ -167,7 +167,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'seo.meta_title',
                 'group' => 'seo',
-                'value' => 'Seruwit CMS - Drag & Drop Website Builder',
+                'value' => 'Seruwit Biz - Platform Operasi Distribusi & Logistik',
                 'type' => 'text',
                 'label' => 'Default Meta Title',
                 'description' => 'Default meta title for pages without a specific title.',
@@ -177,7 +177,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'seo.meta_description',
                 'group' => 'seo',
-                'value' => 'Build beautiful websites with Seruwit CMS. Drag-and-drop editor, e-commerce ready, and fully customizable.',
+                'value' => 'Jalankan gudang, armada, penjualan, dan keuangan dalam satu workspace modular. Siap pakai untuk distribusi, logistik, rental, dan field sales.',
                 'type' => 'textarea',
                 'label' => 'Default Meta Description',
                 'description' => 'Default meta description for SEO.',
@@ -315,7 +315,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'email.from_name',
                 'group' => 'email',
-                'value' => 'Seruwit CMS',
+                'value' => 'Seruwit Biz',
                 'type' => 'text',
                 'label' => 'Email From Name',
                 'description' => 'Name displayed as the sender in emails.',
@@ -345,7 +345,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'email.footer_text',
                 'group' => 'email',
-                'value' => 'This email was sent by Seruwit CMS. If you have any questions, please contact us.',
+                'value' => 'This email was sent by Seruwit Biz. If you have any questions, please contact us.',
                 'type' => 'textarea',
                 'label' => 'Email Footer Text',
                 'description' => 'Text displayed in the footer of all emails.',

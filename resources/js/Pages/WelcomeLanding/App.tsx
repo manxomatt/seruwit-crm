@@ -1,7 +1,8 @@
 import React from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import Features from './components/Features';
+import Modules from './components/Modules';
+import HowItWorks from './components/HowItWorks';
 import CTA from './components/CTA';
 import Footer from './components/Footer';
 
@@ -22,18 +23,21 @@ interface Settings {
 
 interface AppProps {
   settings?: Settings;
+  canLogin?: boolean;
+  canRegister?: boolean;
 }
 
-const App: React.FC<AppProps> = ({ settings }) => {
+const App: React.FC<AppProps> = ({ settings, canLogin = true, canRegister = true }) => {
   return (
-    <div className="flex flex-col min-h-screen bg-white text-slate-900 antialiased">
-      <Navbar settings={settings} />
+    <div className="landing-page flex min-h-screen flex-col bg-white text-slate-900 antialiased">
+      <Navbar settings={settings} canLogin={canLogin} canRegister={canRegister} />
       <main>
-        <Hero settings={settings} />
-        <Features />
-        <CTA settings={settings} />
+        <Hero settings={settings} canLogin={canLogin} canRegister={canRegister} />
+        <Modules />
+        <HowItWorks />
+        <CTA canLogin={canLogin} canRegister={canRegister} />
       </main>
-      <Footer settings={settings} />
+      <Footer settings={settings} canLogin={canLogin} canRegister={canRegister} />
     </div>
   );
 };

@@ -2,103 +2,208 @@
 
 return [
     'nav' => [
-        'features' => 'Features',
-        'benefits' => 'Benefits',
+        'features' => 'Modules',
+        'benefits' => 'How it works',
         'contact' => 'Contact',
         'login' => 'Log In',
-        'cta' => 'Try for Free',
+        'cta' => 'Start Free',
+        'language' => 'Language',
         'menu_toggle' => 'Open menu',
     ],
 
     'hero' => [
-        'badge' => 'The modern CRM for growing businesses',
-        'title_line1' => 'Build Customer Relationships That Are',
-        'title_highlight' => 'Closer',
-        'tagline_fallback' => 'Manage your customers, pipeline, and sales team in one simple platform.',
-        'cta_primary' => 'Start for Free',
-        'cta_secondary' => 'See Features',
+        'badge' => 'Operations platform for distribution, logistics, and sales',
+        'title_line1' => 'Run your entire business from',
+        'title_highlight' => 'one workspace',
+        'tagline_fallback' => 'Seruwit Biz connects warehouse, fleet, sales, and finance—ready to use, without heavy install.',
+        'cta_primary' => 'Start Free',
+        'cta_secondary' => 'Log In',
         'trust_no_card' => 'No credit card required',
-        'trust_setup_time' => 'Ready to use in 5 minutes',
-        'mock' => [
-            'pipeline_label' => 'Sales Pipeline',
-            'pipeline_value' => '$8,500',
-            'pipeline_growth' => '+18% this month',
-            'stage_prospect' => 'Prospect',
-            'stage_negotiation' => 'Negotiation',
-            'stage_offer' => 'Proposal',
-            'stage_deal' => 'Deal',
-            'contacts_suffix' => 'contacts',
-            'stat_contacts_value' => '1,240',
-            'stat_contacts_label' => 'Contacts',
-            'stat_deals_value' => '97',
-            'stat_deals_label' => 'Active Deals',
-            'stat_conversion_value' => '32%',
-            'stat_conversion_label' => 'Conversion',
-            'new_customer_label' => 'New customer',
-            'new_customer_name' => 'Acme Corp',
+        'trust_setup_time' => 'Workspace ready in minutes',
+    ],
+
+    'modules' => [
+        'eyebrow' => 'Business modules',
+        'title' => 'Color-coded for the operations you run',
+        'subtitle' => 'Enable modules for your line of business. Each area has a clear job—from stock to tracking to cashier.',
+        'groups' => [
+            'supply' => [
+                'label' => 'Supply & Warehouse',
+                'tone' => 'emerald',
+            ],
+            'fleet' => [
+                'label' => 'Fleet & Logistics',
+                'tone' => 'cyan',
+            ],
+            'commerce' => [
+                'label' => 'Sales & Field',
+                'tone' => 'amber',
+            ],
+            'finance' => [
+                'label' => 'Finance & Control',
+                'tone' => 'teal',
+            ],
+        ],
+        'items' => [
+            'inventory' => [
+                'group' => 'supply',
+                'title' => 'Inventory',
+                'description' => 'Warehouses, locations, stock, transfers, and stocktakes in one ledger.',
+            ],
+            'purchasing' => [
+                'group' => 'supply',
+                'title' => 'Purchasing',
+                'description' => 'PO → GRN → stock in with a clear cost trail.',
+            ],
+            'outbound' => [
+                'group' => 'supply',
+                'title' => 'Outbound',
+                'description' => 'Pick, pack, and dispatch outbound without blind spots.',
+            ],
+            'fleet' => [
+                'group' => 'fleet',
+                'title' => 'Fleet',
+                'description' => 'Vehicles & drivers plus live operational status.',
+            ],
+            'transportation' => [
+                'group' => 'fleet',
+                'title' => 'Transportation',
+                'description' => 'Multi-stop trip dispatch, checkpoints, and journey reports.',
+            ],
+            'tracking' => [
+                'group' => 'fleet',
+                'title' => 'Tracking',
+                'description' => 'Live GPS positions for vehicles on the move.',
+            ],
+            'orders' => [
+                'group' => 'fleet',
+                'title' => 'Delivery Orders',
+                'description' => 'Delivery notes, POD, and a driver portal in one flow.',
+            ],
+            'sales' => [
+                'group' => 'commerce',
+                'title' => 'Sales',
+                'description' => 'Sales orders through stock out, ready to invoice.',
+            ],
+            'pos' => [
+                'group' => 'commerce',
+                'title' => 'POS',
+                'description' => 'Store/branch cashier with shifts and real-time stock.',
+            ],
+            'canvassing' => [
+                'group' => 'commerce',
+                'title' => 'Canvassing',
+                'description' => 'Field visits, targets, and partner history on the road.',
+            ],
+            'promotions' => [
+                'group' => 'commerce',
+                'title' => 'Trade Promotions',
+                'description' => 'Measurable distributor promo programs under control.',
+            ],
+            'invoicing' => [
+                'group' => 'finance',
+                'title' => 'Invoicing',
+                'description' => 'Issue invoice PDFs from your operating documents.',
+            ],
+            'receivables' => [
+                'group' => 'finance',
+                'title' => 'Receivables',
+                'description' => 'Payments, aging, and partner credit limits.',
+            ],
+            'accounting' => [
+                'group' => 'finance',
+                'title' => 'Accounting',
+                'description' => 'Chart of accounts, journals, and GL reports above daily ops.',
+            ],
+            'approvals' => [
+                'group' => 'finance',
+                'title' => 'Approvals',
+                'description' => 'Multi-level approval flows for high-risk decisions.',
+            ],
         ],
     ],
 
     'features' => [
-        'eyebrow' => 'Features',
-        'title' => 'Everything you need to manage your customers',
-        'subtitle' => 'Focus on relationships, not admin work. Let the CRM handle the rest.',
+        'eyebrow' => 'Business modules',
+        'title' => 'Everything you need to run operations',
+        'subtitle' => 'Not a generic CRM—a modular platform for distribution, logistics, rental, and field sales.',
         'items' => [
             'contacts' => [
-                'title' => 'Contact Management',
-                'description' => 'Keep all customer data in one place — interaction history, notes, and documents in a single profile.',
+                'title' => 'Unified partners',
+                'description' => 'Customers, vendors, and suppliers in one partners master.',
             ],
             'pipeline' => [
-                'title' => 'Sales Pipeline',
-                'description' => 'Track every opportunity from prospect to deal with a clear, easy-to-organize pipeline view.',
+                'title' => 'Clear trade flows',
+                'description' => 'From PO/SO to stock movements with a full document trail.',
             ],
             'analytics' => [
-                'title' => 'Reports & Analytics',
-                'description' => 'Make decisions based on data — conversions, team performance, and sales trends in real time.',
+                'title' => 'Executive dashboard',
+                'description' => 'Operations and finance KPIs surfaced for faster decisions.',
             ],
             'tasks' => [
-                'title' => 'Task Management',
-                'description' => 'Schedule follow-ups, set reminders, and make sure no customer is ever missed.',
+                'title' => 'Fleet compliance',
+                'description' => 'STNK/KIR/SIM docs, maintenance, and driver scores stay visible.',
             ],
             'collaboration' => [
-                'title' => 'Team Collaboration',
-                'description' => 'Share customer information across teams with secure, role-based access.',
+                'title' => 'Secure multi-tenant',
+                'description' => 'Every company gets an isolated workspace with per-team roles.',
             ],
             'security' => [
-                'title' => 'Data Security',
-                'description' => 'Your customer data is protected with encryption and layered access controls.',
+                'title' => 'Layered access control',
+                'description' => 'Modules, permissions, and approvals protect data and critical decisions.',
             ],
         ],
         'highlights' => [
             'contacts' => [
-                'value' => '10,000+',
-                'label' => 'Contacts managed every day',
+                'value' => '28+',
+                'label' => 'Ready-to-use business modules',
             ],
             'uptime' => [
-                'value' => '99.9%',
-                'label' => 'Service uptime',
+                'value' => '4 lines',
+                'label' => 'Distribution, logistics, rental, field sales',
             ],
             'setup' => [
-                'value' => '5 minutes',
-                'label' => 'Average setup time',
+                'value' => 'Minutes',
+                'label' => 'Tenant workspace ready after signup',
+            ],
+        ],
+    ],
+
+    'how' => [
+        'eyebrow' => 'How it works',
+        'title' => 'From signup to operations—without setup drama',
+        'subtitle' => 'Three short steps to your business workspace.',
+        'steps' => [
+            'register' => [
+                'title' => 'Register your company',
+                'description' => 'Create an account and workspace. No self-hosted install.',
+            ],
+            'modules' => [
+                'title' => 'Enable the modules you need',
+                'description' => 'Add Inventory, Fleet, Sales, POS, or combine them by plan.',
+            ],
+            'operate' => [
+                'title' => 'Run daily operations',
+                'description' => 'Stock, trips, invoices, and reports move in one app.',
             ],
         ],
     ],
 
     'cta' => [
-        'title' => 'Ready to manage your customers better?',
-        'subtitle' => 'Start for free today — no credit card, no complicated setup. Your team can get to work in minutes.',
-        'primary' => 'Get Started Now',
-        'secondary' => 'Contact Us',
+        'title' => 'Ready to unify your business operations?',
+        'subtitle' => 'Start free now, or log in if your workspace is already set. No credit card.',
+        'primary' => 'Start Free',
+        'secondary' => 'Log In',
     ],
 
     'footer' => [
-        'description_fallback' => 'A simple CRM platform to help your business build better customer relationships.',
+        'description_fallback' => 'A modular operations platform for distribution, logistics, rental, and field sales.',
         'product_heading' => 'Product',
-        'features_link' => 'Features',
-        'benefits_link' => 'Benefits',
+        'features_link' => 'Modules',
+        'benefits_link' => 'How it works',
         'blog_link' => 'Blog',
         'login_link' => 'Log In',
+        'register_link' => 'Register',
         'contact_heading' => 'Contact',
         'copyright_fallback' => '© :year :name. All rights reserved.',
     ],

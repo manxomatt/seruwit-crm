@@ -2,6 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    .landing-reveal {
+        animation: landing-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .landing-route {
+        animation: landing-dash 18s linear infinite;
+    }
+
+    .landing-route-b {
+        animation-duration: 22s;
+        animation-direction: reverse;
+    }
+
+    .landing-route-c {
+        animation-duration: 26s;
+    }
+
+    .landing-node {
+        transform-origin: center;
+        animation: landing-pulse 3.6s ease-in-out infinite;
+    }
+
+    .landing-node-2 {
+        animation-delay: 0.4s;
+    }
+
+    .landing-node-3 {
+        animation-delay: 0.8s;
+    }
+
+    .landing-node-4 {
+        animation-delay: 1.2s;
+    }
+
+    .landing-node-5 {
+        animation-delay: 1.6s;
+    }
+
+    .landing-orb {
+        animation: landing-drift 12s ease-in-out infinite alternate;
+    }
+
+    .landing-orb-delay {
+        animation-delay: 2s;
+        animation-duration: 16s;
+    }
+
+    .landing-module-item {
+        animation: landing-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+}
+
 @layer utilities {
     /* Thin, themed scrollbar for the module sidebar nav */
     .sidebar-nav-scroll {
@@ -35,6 +88,57 @@
 
     .sidebar-nav-scroll::-webkit-scrollbar-thumb:active {
         background-color: rgb(34 211 238 / 0.75);
+    }
+}
+
+@keyframes landing-rise {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes landing-dash {
+    to {
+        stroke-dashoffset: -240;
+    }
+}
+
+@keyframes landing-pulse {
+    0%,
+    100% {
+        opacity: 0.85;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.06);
+    }
+}
+
+@keyframes landing-drift {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: translate3d(24px, -18px, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-reveal,
+    .landing-route,
+    .landing-node,
+    .landing-orb,
+    .landing-module-item {
+        animation: none !important;
     }
 }
 

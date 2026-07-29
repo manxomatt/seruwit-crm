@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from '@inertiajs/react';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { useTrans } from '@/hooks/useTrans';
+import { DEFAULT_SITE_NAME } from '../constants';
 
 interface Settings {
   'general.site_name'?: string;
@@ -9,36 +12,38 @@ interface Settings {
 
 interface NavbarProps {
   settings?: Settings;
+  canLogin?: boolean;
+  canRegister?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ settings }) => {
+const Navbar: React.FC<NavbarProps> = ({ settings, canLogin = true, canRegister = true }) => {
   const { t } = useTrans();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const siteName = settings?.['general.site_name'] || 'Seruwit CRM';
+  const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
   const siteLogo = settings?.['site.logo'];
 
   const navLinks = [
-    { label: t('landing.nav.features'), href: '#fitur' },
-    { label: t('landing.nav.benefits'), href: '#keunggulan' },
+    { label: t('landing.nav.features'), href: '#modul' },
+    { label: t('landing.nav.benefits'), href: '#cara-kerja' },
     { label: t('landing.nav.contact'), href: '#kontak' },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/70 bg-white/75 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <a href="/" className="flex items-center gap-2.5">
+        <div className="flex h-16 items-center justify-between gap-4">
+          <a href="/" className="flex min-w-0 items-center gap-2.5">
             {siteLogo ? (
               <img src={siteLogo} alt={siteName} className="h-8 w-auto" />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-white">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z" />
-                </svg>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-500 text-white shadow-sm shadow-teal-600/20">
+                <span className="material-symbols-outlined text-[20px]">hub</span>
               </span>
             )}
-            <span className="text-lg font-bold tracking-tight text-slate-900">{siteName}</span>
+            <span className="truncate font-display text-lg font-bold tracking-tight text-slate-900">
+              {siteName}
+            </span>
           </a>
 
           <nav className="hidden items-center gap-8 md:flex">
@@ -46,38 +51,46 @@ const Navbar: React.FC<NavbarProps> = ({ settings }) => {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-600 transition-colors hover:text-sky-500"
+                className="text-sm font-medium text-slate-600 transition-colors hover:text-teal-700"
               >
                 {link.label}
               </a>
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <a
-              href="/login"
-              className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-sky-500 sm:block"
-            >
-              {t('landing.nav.login')}
-            </a>
-            <a
-              href="/register"
-              className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-500/30 transition-colors hover:bg-sky-600"
-            >
-              {t('landing.nav.cta')}
-            </a>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageSwitcher
+              compact
+              className="hidden bg-slate-100 sm:inline-flex [&_button]:text-slate-500 [&_button.bg-white]:text-teal-800"
+            />
+            {canLogin && (
+              <Link
+                href={route('login')}
+                className="hidden text-sm font-semibold text-slate-700 transition-colors hover:text-teal-700 sm:inline"
+                prefetch
+              >
+                {t('landing.nav.login')}
+              </Link>
+            )}
+            {canRegister && (
+              <Link
+                href={route('register')}
+                className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-teal-700/25 transition hover:bg-teal-800 sm:px-5"
+                prefetch
+              >
+                {t('landing.nav.cta')}
+              </Link>
+            )}
             <button
-              className="p-2 text-slate-600 md:hidden"
+              type="button"
+              className="rounded-lg p-2 text-slate-600 md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={t('landing.nav.menu_toggle')}
+              aria-expanded={isMenuOpen}
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              <span className="material-symbols-outlined text-[24px]">
+                {isMenuOpen ? 'close' : 'menu'}
+              </span>
             </button>
           </div>
         </div>
@@ -89,19 +102,25 @@ const Navbar: React.FC<NavbarProps> = ({ settings }) => {
             <a
               key={link.href}
               href={link.href}
-              className="block rounded-lg px-3 py-2 text-base font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600"
+              className="block rounded-lg px-3 py-2 text-base font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-800"
               onClick={() => setIsMenuOpen(false)}
             >
               {link.label}
             </a>
           ))}
-          <a
-            href="/login"
-            className="block rounded-lg px-3 py-2 text-base font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            {t('landing.nav.login')}
-          </a>
+          {canLogin && (
+            <Link
+              href={route('login')}
+              className="block rounded-lg px-3 py-2 text-base font-medium text-slate-600 hover:bg-teal-50 hover:text-teal-800"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {t('landing.nav.login')}
+            </Link>
+          )}
+          <div className="flex items-center justify-between gap-3 rounded-lg px-3 py-2">
+            <span className="text-sm font-medium text-slate-500">{t('landing.nav.language')}</span>
+            <LanguageSwitcher compact className="bg-slate-100 [&_button.bg-white]:text-teal-800" />
+          </div>
         </div>
       )}
     </header>

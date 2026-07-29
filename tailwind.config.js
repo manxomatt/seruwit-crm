@@ -22,7 +22,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-                display: ['Figtree', ...defaultTheme.fontFamily.sans],
+                display: ['Plus Jakarta Sans', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 primary: defaultTheme.colors.teal?.[700] || '#0f766e',

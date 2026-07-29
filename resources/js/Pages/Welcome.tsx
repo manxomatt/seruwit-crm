@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import LandingApp from './WelcomeLanding/App';
+import { DEFAULT_SITE_NAME } from './WelcomeLanding/constants';
 
 interface Settings {
     'general.site_name'?: string;
@@ -24,13 +25,21 @@ interface WelcomeProps {
     settings: Settings;
 }
 
-export default function Welcome({ settings }: WelcomeProps): JSX.Element {
-    const siteName = settings?.['general.site_name'] || 'Sky Track';
-    
+export default function Welcome({
+    settings,
+    canLogin,
+    canRegister,
+}: WelcomeProps): JSX.Element {
+    const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
+
     return (
         <>
             <Head title={siteName} />
-            <LandingApp settings={settings} />
+            <LandingApp
+                settings={settings}
+                canLogin={canLogin}
+                canRegister={canRegister}
+            />
         </>
     );
 }

@@ -1,141 +1,72 @@
 import React from 'react';
+import { Link } from '@inertiajs/react';
 import { useTrans } from '@/hooks/useTrans';
+import { DEFAULT_SITE_NAME } from '../constants';
+import HeroVisual from './HeroVisual';
 
 interface Settings {
-  'general.site_tagline'?: string;
-  'general.site_description'?: string;
+  'general.site_name'?: string;
   [key: string]: string | undefined;
 }
 
 interface HeroProps {
   settings?: Settings;
+  canLogin?: boolean;
+  canRegister?: boolean;
 }
 
-const Hero: React.FC<HeroProps> = ({ settings }) => {
+const Hero: React.FC<HeroProps> = ({ settings, canLogin = true, canRegister = true }) => {
   const { t } = useTrans();
-  const tagline = settings?.['general.site_tagline'] || t('landing.hero.tagline_fallback');
-
-  const pipelineStages = [
-    { label: t('landing.hero.mock.stage_prospect'), count: 48, width: 'w-full', color: 'bg-sky-200' },
-    { label: t('landing.hero.mock.stage_negotiation'), count: 26, width: 'w-3/4', color: 'bg-sky-300' },
-    { label: t('landing.hero.mock.stage_offer'), count: 14, width: 'w-1/2', color: 'bg-sky-400' },
-    { label: t('landing.hero.mock.stage_deal'), count: 9, width: 'w-1/3', color: 'bg-sky-500' },
-  ];
+  const siteName = settings?.['general.site_name'] || DEFAULT_SITE_NAME;
+  // Marketing copy stays locale-aware via lang files; site_name remains from settings.
+  const tagline = t('landing.hero.tagline_fallback');
 
   return (
-    <section className="relative overflow-hidden bg-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-sky-100 blur-3xl" />
-        <div className="absolute bottom-0 -left-32 h-80 w-80 rounded-full bg-sky-50 blur-3xl" />
-      </div>
+    <section className="relative isolate min-h-[calc(100svh-4rem)] overflow-hidden bg-slate-50">
+      <HeroVisual />
 
-      <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 lg:px-8 lg:pb-28 lg:pt-24">
-        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
-          <div className="text-center lg:text-left">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-sky-50 px-4 py-1.5 text-sm font-medium text-sky-600 ring-1 ring-inset ring-sky-100">
-              <span className="h-2 w-2 rounded-full bg-sky-500" />
-              {t('landing.hero.badge')}
-            </div>
+      <div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="landing-reveal max-w-3xl">
+          <p className="font-display text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl xl:text-7xl">
+            {siteName}
+          </p>
 
-            <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              {t('landing.hero.title_line1')}{' '}
-              <span className="text-sky-500">{t('landing.hero.title_highlight')}</span>
-            </h1>
+          <h1 className="mt-5 max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-slate-800 sm:text-3xl lg:text-4xl">
+            {t('landing.hero.title_line1')}{' '}
+            <span className="bg-gradient-to-r from-teal-700 via-cyan-600 to-emerald-600 bg-clip-text text-transparent">
+              {t('landing.hero.title_highlight')}
+            </span>
+          </h1>
 
-            <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-slate-500 lg:mx-0">
-              {tagline}
-            </p>
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            {tagline}
+          </p>
 
-            <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-              <a
-                href="/register"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-sky-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-sky-500/25 transition-colors hover:bg-sky-600"
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+            {canRegister && (
+              <Link
+                href={route('register')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-700/25 transition hover:bg-teal-800"
+                prefetch
               >
                 {t('landing.hero.cta_primary')}
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5-5 5M6 12h12" />
-                </svg>
-              </a>
-              <a
-                href="#fitur"
-                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-8 py-3.5 text-base font-semibold text-slate-700 transition-colors hover:border-sky-200 hover:text-sky-600"
+                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+              </Link>
+            )}
+            {canLogin && (
+              <Link
+                href={route('login')}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300/80 bg-white/70 px-7 py-3.5 text-base font-semibold text-slate-800 backdrop-blur-sm transition hover:border-teal-300 hover:text-teal-800"
+                prefetch
               >
                 {t('landing.hero.cta_secondary')}
-              </a>
-            </div>
-
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-400 lg:justify-start">
-              <span className="flex items-center gap-1.5">
-                <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                {t('landing.hero.trust_no_card')}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                {t('landing.hero.trust_setup_time')}
-              </span>
-            </div>
-          </div>
-
-          <div className="relative mx-auto w-full max-w-lg">
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/60">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">{t('landing.hero.mock.pipeline_label')}</p>
-                  <p className="text-2xl font-bold text-slate-900">{t('landing.hero.mock.pipeline_value')}</p>
-                </div>
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                  {t('landing.hero.mock.pipeline_growth')}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                {pipelineStages.map((stage) => (
-                  <div key={stage.label}>
-                    <div className="mb-1.5 flex items-center justify-between text-sm">
-                      <span className="font-medium text-slate-600">{stage.label}</span>
-                      <span className="text-slate-400">{stage.count} {t('landing.hero.mock.contacts_suffix')}</span>
-                    </div>
-                    <div className="h-2.5 rounded-full bg-slate-100">
-                      <div className={`h-2.5 rounded-full ${stage.color} ${stage.width}`} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 grid grid-cols-3 gap-3 border-t border-slate-100 pt-6 text-center">
-                <div>
-                  <p className="text-lg font-bold text-slate-900">{t('landing.hero.mock.stat_contacts_value')}</p>
-                  <p className="text-xs text-slate-400">{t('landing.hero.mock.stat_contacts_label')}</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-slate-900">{t('landing.hero.mock.stat_deals_value')}</p>
-                  <p className="text-xs text-slate-400">{t('landing.hero.mock.stat_deals_label')}</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-slate-900">{t('landing.hero.mock.stat_conversion_value')}</p>
-                  <p className="text-xs text-slate-400">{t('landing.hero.mock.stat_conversion_label')}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute -right-4 -top-4 hidden items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-lg shadow-slate-200/60 sm:flex">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-500">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{t('landing.hero.mock.new_customer_label')}</p>
-                <p className="text-xs text-slate-400">{t('landing.hero.mock.new_customer_name')}</p>
-              </div>
-            </div>
+              </Link>
+            )}
           </div>
         </div>
       </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
     </section>
   );
 };
