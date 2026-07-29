@@ -2,15 +2,19 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Modules\Document\Models\Document;
 use Modules\Document\Models\DocumentType;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 
 /**
- * Seeds Document demo data using entities that already exist in the current
- * tenant schema. Run in a specific tenant via:
+ * Seeds compliance documents for the 30 demo vehicles + 30 demo drivers.
+ * Ensures fleet demos exist first (TenantVehicleDemoSeeder / TenantDriverDemoSeeder).
  *
  *   php artisan tenants:seed --class=TenantDocumentDemoSeeder --tenants={id}
  */
@@ -18,295 +22,437 @@ class TenantDocumentDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        $userId = \App\Models\User::query()->value('id');
-
-        if (! $userId) {
-            $this->command->warn('No users found in this tenant.');
+        if (! class_exists(Document::class) || ! Schema::hasTable('documents') || ! Schema::hasTable('document_types')) {
+            $this->command?->warn('Document tables missing. Install the document module first.');
 
             return;
         }
 
+        if (! class_exists(Vehicle::class) || ! Schema::hasTable('vehicles') || ! Schema::hasTable('drivers')) {
+            $this->command?->warn('Fleet tables missing. Install the fleet module first.');
+
+            return;
+        }
+
+        $userId = User::query()->value('id');
+
+        if (! $userId) {
+            $this->command?->warn('No users found in this tenant.');
+
+            return;
+        }
+
+        $this->call([
+            TenantVehicleDemoSeeder::class,
+            TenantDriverDemoSeeder::class,
+        ]);
+
         $vehicleTypes = DocumentType::query()
-            ->where('entity_type', 'vehicle')
+            ->where('entity_type', DocumentType::ENTITY_VEHICLE)
             ->orderBy('sort_order')
             ->get()
             ->keyBy('key');
 
         $driverTypes = DocumentType::query()
-            ->where('entity_type', 'driver')
+            ->where('entity_type', DocumentType::ENTITY_DRIVER)
             ->orderBy('sort_order')
             ->get()
             ->keyBy('key');
 
         if ($vehicleTypes->isEmpty() || $driverTypes->isEmpty()) {
-            $this->command->warn('Document types not found. Run migrations first.');
+            $this->command?->warn('Document types not found. Run document module migrations first.');
 
             return;
         }
 
-        $vehicles = Vehicle::query()->get();
-        $drivers = Driver::query()->get();
+        $vehicles = Vehicle::query()
+            ->where('plate_number', 'like', TenantVehicleDemoSeeder::PLATE_PREFIX.' %')
+            ->orderBy('plate_number')
+            ->get();
 
-        if ($vehicles->isEmpty() || $drivers->isEmpty()) {
-            $this->command->warn('No vehicles or drivers found. Seed Fleet data first.');
+        $drivers = Driver::query()
+            ->where('license_number', 'like', TenantDriverDemoSeeder::LICENSE_PREFIX.'-%')
+            ->orderBy('license_number')
+            ->get();
+
+        if ($vehicles->count() < 30 || $drivers->count() < 30) {
+            $this->command?->warn(sprintf(
+                'Expected 30 demo vehicles and drivers, found %d / %d.',
+                $vehicles->count(),
+                $drivers->count(),
+            ));
 
             return;
         }
 
-        // ── Vehicle 1: Truk Colt Diesel 1 — STNK expired, KIR expiring soon ─
-        $v1 = $vehicles->firstWhere('id', 1) ?? $vehicles->get(0);
-        if ($v1) {
-            $this->doc($v1, $vehicleTypes, 'stnk', $userId, [
-                'document_number' => 'STNK-2022-001',
-                'issued_at' => now()->subYears(2),
-                'expires_at' => now()->subDays(30),
-            ]);
-            $this->doc($v1, $vehicleTypes, 'kir', $userId, [
-                'document_number' => 'KIR-2024-001',
-                'issued_at' => now()->subMonths(5),
-                'expires_at' => now()->addDays(5),
-            ]);
-            $this->doc($v1, $vehicleTypes, 'vehicle_insurance', $userId, [
-                'document_number' => 'POL-2024-001',
-                'issued_at' => now()->subMonths(4),
-                'expires_at' => now()->addMonths(8),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(3),
-            ]);
-            $this->doc($v1, $vehicleTypes, 'bpkb', $userId, [
-                'document_number' => 'BPKB-2020-001',
-                'issued_at' => now()->subYears(4),
-                'expires_at' => null,
-            ]);
+        foreach ($vehicles->values() as $index => $vehicle) {
+            $this->seedVehicleDocuments($vehicle, $vehicleTypes, (int) $userId, $index + 1);
         }
 
-        // ── Vehicle 2: Truk Colt Diesel 2 — semua expiring soon (<30 hari) ──
-        $v2 = $vehicles->firstWhere('id', 2) ?? $vehicles->get(1);
-        if ($v2) {
-            $this->doc($v2, $vehicleTypes, 'stnk', $userId, [
-                'document_number' => 'STNK-2023-002',
-                'issued_at' => now()->subMonths(11),
-                'expires_at' => now()->addDays(22),
-            ]);
-            $this->doc($v2, $vehicleTypes, 'kir', $userId, [
-                'document_number' => 'KIR-2024-002',
-                'issued_at' => now()->subMonths(5),
-                'expires_at' => now()->addDays(15),
-            ]);
-            $this->doc($v2, $vehicleTypes, 'vehicle_insurance', $userId, [
-                'document_number' => 'POL-2023-002',
-                'issued_at' => now()->subMonths(11),
-                'expires_at' => now()->addDays(10),
-            ]);
+        foreach ($drivers->values() as $index => $driver) {
+            $this->seedDriverDocuments($driver, $driverTypes, (int) $userId, $index + 1);
         }
 
-        // ── Vehicle 3: Van Delivery 1 — semua valid & terverifikasi ──────────
-        $v3 = $vehicles->firstWhere('id', 3) ?? $vehicles->get(2);
-        if ($v3) {
-            $this->doc($v3, $vehicleTypes, 'stnk', $userId, [
-                'document_number' => 'STNK-2024-003',
-                'issued_at' => now()->subMonths(2),
-                'expires_at' => now()->addMonths(10),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(7),
-            ]);
-            $this->doc($v3, $vehicleTypes, 'kir', $userId, [
-                'document_number' => 'KIR-2024-003',
-                'issued_at' => now()->subMonths(1),
-                'expires_at' => now()->addMonths(5),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(2),
-            ]);
-            $this->doc($v3, $vehicleTypes, 'vehicle_insurance', $userId, [
-                'document_number' => 'POL-2024-003',
-                'issued_at' => now()->subMonths(1),
-                'expires_at' => now()->addMonths(11),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDay(),
-            ]);
-            $this->doc($v3, $vehicleTypes, 'bpkb', $userId, [
-                'document_number' => 'BPKB-2021-003',
-                'issued_at' => now()->subYears(3),
-                'expires_at' => null,
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(10),
-            ]);
-        }
-
-        // ── Vehicle 4: Van Delivery 2 — KIR belum ada, STNK valid ────────────
-        $v4 = $vehicles->firstWhere('id', 4) ?? $vehicles->get(3);
-        if ($v4) {
-            $this->doc($v4, $vehicleTypes, 'stnk', $userId, [
-                'document_number' => 'STNK-2024-004',
-                'issued_at' => now()->subMonths(3),
-                'expires_at' => now()->addMonths(9),
-            ]);
-            $this->doc($v4, $vehicleTypes, 'vehicle_insurance', $userId, [
-                'document_number' => 'POL-2024-004',
-                'issued_at' => now()->subMonths(2),
-                'expires_at' => now()->addMonths(10),
-            ]);
-            // KIR sengaja tidak ada untuk menguji tampilan "Belum ada"
-        }
-
-        // ── Vehicle 5: Mobil Box Lama — KIR & STNK keduanya expired ──────────
-        $v5 = $vehicles->firstWhere('id', 5) ?? $vehicles->get(4);
-        if ($v5) {
-            $this->doc($v5, $vehicleTypes, 'stnk', $userId, [
-                'document_number' => 'STNK-2021-005',
-                'issued_at' => now()->subYears(3),
-                'expires_at' => now()->subYears(2),
-            ]);
-            $this->doc($v5, $vehicleTypes, 'kir', $userId, [
-                'document_number' => 'KIR-2022-005',
-                'issued_at' => now()->subYears(2),
-                'expires_at' => now()->subMonths(8),
-            ]);
-        }
-
-        // ── Driver 1: Agus Setiawan (B2) — SIM B2 expired, KTP valid ─────────
-        $d1 = $drivers->firstWhere('id', 1) ?? $drivers->get(0);
-        if ($d1) {
-            $this->doc($d1, $driverTypes, 'ktp', $userId, [
-                'document_number' => '3271010101800001',
-                'issued_at' => now()->subYears(3),
-                'expires_at' => now()->addYears(2),
-                'verified_by' => $userId,
-                'verified_at' => now()->subWeek(),
-            ]);
-            $this->doc($d1, $driverTypes, 'sim_b2', $userId, [
-                'document_number' => 'SIM-B2-AGS001',
-                'issued_at' => now()->subYears(5),
-                'expires_at' => now()->subDays(45),
-            ]);
-            $this->doc($d1, $driverTypes, 'health_cert', $userId, [
-                'document_number' => 'MCU-2024-AGS001',
-                'issued_at' => now()->subMonths(6),
-                'expires_at' => now()->addMonths(6),
-            ]);
-        }
-
-        // ── Driver 2: Bambang Wijaya (B1) — SIM B1 expiring soon (8 hari) ───
-        $d2 = $drivers->firstWhere('id', 2) ?? $drivers->get(1);
-        if ($d2) {
-            $this->doc($d2, $driverTypes, 'ktp', $userId, [
-                'document_number' => '3271020202750002',
-                'issued_at' => now()->subYears(2),
-                'expires_at' => now()->addYears(3),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(5),
-            ]);
-            $this->doc($d2, $driverTypes, 'sim_b1', $userId, [
-                'document_number' => 'SIM-B1-BAM002',
-                'issued_at' => now()->subYears(5),
-                'expires_at' => now()->addDays(8),
-            ]);
-            $this->doc($d2, $driverTypes, 'skck', $userId, [
-                'document_number' => 'SKCK-2024-BAM002',
-                'issued_at' => now()->subMonths(8),
-                'expires_at' => now()->addMonths(4),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(2),
-            ]);
-        }
-
-        // ── Driver 3: Candra Kusuma (B2) — semua valid & terverifikasi ────────
-        $d3 = $drivers->firstWhere('id', 3) ?? $drivers->get(2);
-        if ($d3) {
-            $this->doc($d3, $driverTypes, 'ktp', $userId, [
-                'document_number' => '3271030303800003',
-                'issued_at' => now()->subYears(1),
-                'expires_at' => now()->addYears(4),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(14),
-            ]);
-            $this->doc($d3, $driverTypes, 'sim_b2', $userId, [
-                'document_number' => 'SIM-B2-CAN003',
-                'issued_at' => now()->subYears(2),
-                'expires_at' => now()->addYears(3),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(10),
-            ]);
-            $this->doc($d3, $driverTypes, 'skck', $userId, [
-                'document_number' => 'SKCK-2024-CAN003',
-                'issued_at' => now()->subMonths(3),
-                'expires_at' => now()->addMonths(9),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(1),
-            ]);
-            $this->doc($d3, $driverTypes, 'health_cert', $userId, [
-                'document_number' => 'MCU-2024-CAN003',
-                'issued_at' => now()->subMonths(4),
-                'expires_at' => now()->addMonths(8),
-            ]);
-        }
-
-        // ── Driver 4: Dedi Hermawan (A) — KTP + SIM A saja, SKCK belum ada ──
-        $d4 = $drivers->firstWhere('id', 4) ?? $drivers->get(3);
-        if ($d4) {
-            $this->doc($d4, $driverTypes, 'ktp', $userId, [
-                'document_number' => '3271040404850004',
-                'issued_at' => now()->subYears(4),
-                'expires_at' => now()->addYears(1),
-            ]);
-            $this->doc($d4, $driverTypes, 'sim_a', $userId, [
-                'document_number' => 'SIM-A-DED004',
-                'issued_at' => now()->subYears(3),
-                'expires_at' => now()->addYears(2),
-            ]);
-        }
-
-        // ── Driver 5: Eko Prasetyo (B2) — SIM B2 expiring soon (12 hari) ────
-        $d5 = $drivers->firstWhere('id', 5) ?? $drivers->get(4);
-        if ($d5) {
-            $this->doc($d5, $driverTypes, 'ktp', $userId, [
-                'document_number' => '3271050505900005',
-                'issued_at' => now()->subYears(2),
-                'expires_at' => now()->addYears(3),
-                'verified_by' => $userId,
-                'verified_at' => now()->subDays(3),
-            ]);
-            $this->doc($d5, $driverTypes, 'sim_b2', $userId, [
-                'document_number' => 'SIM-B2-EKO005',
-                'issued_at' => now()->subYears(5),
-                'expires_at' => now()->addDays(12),
-            ]);
-            $this->doc($d5, $driverTypes, 'health_cert', $userId, [
-                'document_number' => 'MCU-2023-EKO005',
-                'issued_at' => now()->subYears(1),
-                'expires_at' => now()->addMonths(11),
-            ]);
-        }
-
-        $this->command->info('Tenant document demo data seeded successfully.');
+        $this->command?->info(sprintf(
+            'Document demo ready for %d vehicles and %d drivers (%d documents total).',
+            $vehicles->count(),
+            $drivers->count(),
+            Document::query()->count(),
+        ));
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<string, DocumentType>  $types
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function seedVehicleDocuments(Vehicle $vehicle, Collection $types, int $userId, int $n): void
+    {
+        $pad = sprintf('%02d', $n);
+
+        match (($n - 1) % 5) {
+            0 => $this->vehicleScenarioExpiredStnk($vehicle, $types, $userId, $pad),
+            1 => $this->vehicleScenarioExpiringSoon($vehicle, $types, $userId, $pad),
+            2 => $this->vehicleScenarioAllValid($vehicle, $types, $userId, $pad),
+            3 => $this->vehicleScenarioMissingKir($vehicle, $types, $userId, $pad),
+            default => $this->vehicleScenarioExpiredDocs($vehicle, $types, $userId, $pad),
+        };
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function vehicleScenarioExpiredStnk(Vehicle $vehicle, Collection $types, int $userId, string $pad): void
+    {
+        $this->doc($vehicle, $types, 'stnk', $userId, [
+            'document_number' => "STNK-2022-{$pad}",
+            'issued_at' => now()->subYears(2),
+            'expires_at' => now()->subDays(30),
+            'notes' => 'Demo: STNK expired',
+        ]);
+        $this->doc($vehicle, $types, 'kir', $userId, [
+            'document_number' => "KIR-2024-{$pad}",
+            'issued_at' => now()->subMonths(5),
+            'expires_at' => now()->addDays(5),
+            'notes' => 'Demo: KIR expiring soon',
+        ]);
+        $this->doc($vehicle, $types, 'vehicle_insurance', $userId, [
+            'document_number' => "POL-2024-{$pad}",
+            'issued_at' => now()->subMonths(4),
+            'expires_at' => now()->addMonths(8),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(3),
+        ]);
+        $this->doc($vehicle, $types, 'bpkb', $userId, [
+            'document_number' => "BPKB-2020-{$pad}",
+            'issued_at' => now()->subYears(4),
+            'expires_at' => null,
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function vehicleScenarioExpiringSoon(Vehicle $vehicle, Collection $types, int $userId, string $pad): void
+    {
+        $this->doc($vehicle, $types, 'stnk', $userId, [
+            'document_number' => "STNK-2023-{$pad}",
+            'issued_at' => now()->subMonths(11),
+            'expires_at' => now()->addDays(22),
+        ]);
+        $this->doc($vehicle, $types, 'kir', $userId, [
+            'document_number' => "KIR-2024-{$pad}",
+            'issued_at' => now()->subMonths(5),
+            'expires_at' => now()->addDays(15),
+        ]);
+        $this->doc($vehicle, $types, 'vehicle_insurance', $userId, [
+            'document_number' => "POL-2023-{$pad}",
+            'issued_at' => now()->subMonths(11),
+            'expires_at' => now()->addDays(10),
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function vehicleScenarioAllValid(Vehicle $vehicle, Collection $types, int $userId, string $pad): void
+    {
+        $this->doc($vehicle, $types, 'stnk', $userId, [
+            'document_number' => "STNK-2024-{$pad}",
+            'issued_at' => now()->subMonths(2),
+            'expires_at' => now()->addMonths(10),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(7),
+        ]);
+        $this->doc($vehicle, $types, 'kir', $userId, [
+            'document_number' => "KIR-2024-{$pad}",
+            'issued_at' => now()->subMonths(1),
+            'expires_at' => now()->addMonths(5),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(2),
+        ]);
+        $this->doc($vehicle, $types, 'vehicle_insurance', $userId, [
+            'document_number' => "POL-2024-{$pad}",
+            'issued_at' => now()->subMonths(1),
+            'expires_at' => now()->addMonths(11),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDay(),
+        ]);
+        $this->doc($vehicle, $types, 'bpkb', $userId, [
+            'document_number' => "BPKB-2021-{$pad}",
+            'issued_at' => now()->subYears(3),
+            'expires_at' => null,
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(10),
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function vehicleScenarioMissingKir(Vehicle $vehicle, Collection $types, int $userId, string $pad): void
+    {
+        $this->doc($vehicle, $types, 'stnk', $userId, [
+            'document_number' => "STNK-2024-{$pad}",
+            'issued_at' => now()->subMonths(3),
+            'expires_at' => now()->addMonths(9),
+            'notes' => 'Demo: KIR missing',
+        ]);
+        $this->doc($vehicle, $types, 'vehicle_insurance', $userId, [
+            'document_number' => "POL-2024-{$pad}",
+            'issued_at' => now()->subMonths(2),
+            'expires_at' => now()->addMonths(10),
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function vehicleScenarioExpiredDocs(Vehicle $vehicle, Collection $types, int $userId, string $pad): void
+    {
+        $this->doc($vehicle, $types, 'stnk', $userId, [
+            'document_number' => "STNK-2021-{$pad}",
+            'issued_at' => now()->subYears(3),
+            'expires_at' => now()->subYears(2),
+            'notes' => 'Demo: STNK expired',
+        ]);
+        $this->doc($vehicle, $types, 'kir', $userId, [
+            'document_number' => "KIR-2022-{$pad}",
+            'issued_at' => now()->subYears(2),
+            'expires_at' => now()->subMonths(8),
+            'notes' => 'Demo: KIR expired',
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function seedDriverDocuments(Driver $driver, Collection $types, int $userId, int $n): void
+    {
+        $pad = sprintf('%02d', $n);
+        $simKey = $this->simTypeKey($driver->license_type);
+        $simNumber = sprintf('SIM-%s-DEMO-%s', strtoupper((string) ($driver->license_type ?: 'B2')), $pad);
+
+        match (($n - 1) % 5) {
+            0 => $this->driverScenarioExpiredSim($driver, $types, $userId, $pad, $simKey, $simNumber),
+            1 => $this->driverScenarioExpiringSoon($driver, $types, $userId, $pad, $simKey, $simNumber),
+            2 => $this->driverScenarioAllValid($driver, $types, $userId, $pad, $simKey, $simNumber),
+            3 => $this->driverScenarioMinimal($driver, $types, $userId, $pad, $simKey, $simNumber),
+            default => $this->driverScenarioExpiringWithHealth($driver, $types, $userId, $pad, $simKey, $simNumber),
+        };
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function driverScenarioExpiredSim(
+        Driver $driver,
+        Collection $types,
+        int $userId,
+        string $pad,
+        string $simKey,
+        string $simNumber,
+    ): void {
+        $this->doc($driver, $types, 'ktp', $userId, [
+            'document_number' => sprintf('327101%08d', (int) $pad),
+            'issued_at' => now()->subYears(3),
+            'expires_at' => now()->addYears(2),
+            'verified_by' => $userId,
+            'verified_at' => now()->subWeek(),
+        ]);
+        $this->doc($driver, $types, $simKey, $userId, [
+            'document_number' => $simNumber,
+            'issued_at' => now()->subYears(5),
+            'expires_at' => now()->subDays(45),
+            'notes' => 'Demo: SIM expired',
+        ]);
+        $this->doc($driver, $types, 'health_cert', $userId, [
+            'document_number' => "MCU-2024-{$pad}",
+            'issued_at' => now()->subMonths(6),
+            'expires_at' => now()->addMonths(6),
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function driverScenarioExpiringSoon(
+        Driver $driver,
+        Collection $types,
+        int $userId,
+        string $pad,
+        string $simKey,
+        string $simNumber,
+    ): void {
+        $this->doc($driver, $types, 'ktp', $userId, [
+            'document_number' => sprintf('327102%08d', (int) $pad),
+            'issued_at' => now()->subYears(2),
+            'expires_at' => now()->addYears(3),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(5),
+        ]);
+        $this->doc($driver, $types, $simKey, $userId, [
+            'document_number' => $simNumber,
+            'issued_at' => now()->subYears(5),
+            'expires_at' => now()->addDays(8),
+            'notes' => 'Demo: SIM expiring soon',
+        ]);
+        $this->doc($driver, $types, 'skck', $userId, [
+            'document_number' => "SKCK-2024-{$pad}",
+            'issued_at' => now()->subMonths(8),
+            'expires_at' => now()->addMonths(4),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(2),
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function driverScenarioAllValid(
+        Driver $driver,
+        Collection $types,
+        int $userId,
+        string $pad,
+        string $simKey,
+        string $simNumber,
+    ): void {
+        $this->doc($driver, $types, 'ktp', $userId, [
+            'document_number' => sprintf('327103%08d', (int) $pad),
+            'issued_at' => now()->subYears(1),
+            'expires_at' => now()->addYears(4),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(14),
+        ]);
+        $this->doc($driver, $types, $simKey, $userId, [
+            'document_number' => $simNumber,
+            'issued_at' => now()->subYears(2),
+            'expires_at' => now()->addYears(3),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(10),
+        ]);
+        $this->doc($driver, $types, 'skck', $userId, [
+            'document_number' => "SKCK-2024-{$pad}",
+            'issued_at' => now()->subMonths(3),
+            'expires_at' => now()->addMonths(9),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(1),
+        ]);
+        $this->doc($driver, $types, 'health_cert', $userId, [
+            'document_number' => "MCU-2024-{$pad}",
+            'issued_at' => now()->subMonths(4),
+            'expires_at' => now()->addMonths(8),
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function driverScenarioMinimal(
+        Driver $driver,
+        Collection $types,
+        int $userId,
+        string $pad,
+        string $simKey,
+        string $simNumber,
+    ): void {
+        $this->doc($driver, $types, 'ktp', $userId, [
+            'document_number' => sprintf('327104%08d', (int) $pad),
+            'issued_at' => now()->subYears(4),
+            'expires_at' => now()->addYears(1),
+            'notes' => 'Demo: SKCK/health missing',
+        ]);
+        $this->doc($driver, $types, $simKey, $userId, [
+            'document_number' => $simNumber,
+            'issued_at' => now()->subYears(3),
+            'expires_at' => now()->addYears(2),
+        ]);
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
+     */
+    private function driverScenarioExpiringWithHealth(
+        Driver $driver,
+        Collection $types,
+        int $userId,
+        string $pad,
+        string $simKey,
+        string $simNumber,
+    ): void {
+        $this->doc($driver, $types, 'ktp', $userId, [
+            'document_number' => sprintf('327105%08d', (int) $pad),
+            'issued_at' => now()->subYears(2),
+            'expires_at' => now()->addYears(3),
+            'verified_by' => $userId,
+            'verified_at' => now()->subDays(3),
+        ]);
+        $this->doc($driver, $types, $simKey, $userId, [
+            'document_number' => $simNumber,
+            'issued_at' => now()->subYears(5),
+            'expires_at' => now()->addDays(12),
+            'notes' => 'Demo: SIM expiring soon',
+        ]);
+        $this->doc($driver, $types, 'health_cert', $userId, [
+            'document_number' => "MCU-2023-{$pad}",
+            'issued_at' => now()->subYears(1),
+            'expires_at' => now()->addMonths(11),
+        ]);
+    }
+
+    private function simTypeKey(?string $licenseType): string
+    {
+        return match (strtoupper((string) $licenseType)) {
+            'A' => 'sim_a',
+            'B1' => 'sim_b1',
+            default => 'sim_b2',
+        };
+    }
+
+    /**
+     * @param  Collection<string, DocumentType>  $types
      * @param  array<string, mixed>  $overrides
      */
-    private function doc(
-        \Illuminate\Database\Eloquent\Model $entity,
-        \Illuminate\Support\Collection $types,
-        string $typeKey,
-        int $userId,
-        array $overrides,
-    ): void {
+    private function doc(Model $entity, Collection $types, string $typeKey, int $userId, array $overrides): void
+    {
         if (! $types->has($typeKey)) {
             return;
         }
 
+        /** @var DocumentType $type */
         $type = $types->get($typeKey);
 
-        Document::query()->create(array_merge([
-            'document_type_id' => $type->id,
-            'documentable_type' => $type->entity_type,
-            'documentable_id' => $entity->id,
-            'uploaded_by' => $userId,
-            'verified_by' => null,
-            'verified_at' => null,
-            'media_id' => null,
-            'notes' => null,
-        ], $overrides));
+        Document::query()->updateOrCreate(
+            [
+                'document_type_id' => $type->id,
+                'documentable_type' => $type->entity_type,
+                'documentable_id' => $entity->id,
+            ],
+            array_merge([
+                'uploaded_by' => $userId,
+                'verified_by' => null,
+                'verified_at' => null,
+                'media_id' => null,
+                'notes' => null,
+            ], $overrides),
+        );
     }
 }
