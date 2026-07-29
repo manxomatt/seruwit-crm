@@ -61,14 +61,14 @@ return [
         'create' => [
             'title' => 'New Route Plan',
             'orders_section' => 'Confirmed delivery orders',
-            'orders_hint' => 'Orders from this warehouse (via GIN) plus manual DOs without a GIN. Only geocoded stops can be optimised.',
-            'orders_empty' => 'No confirmed orders for this warehouse on this date.',
+            'orders_hint' => 'Only confirmed orders linked to this warehouse (via GIN or outbound pick list) are listed. Geocoded stops only can be optimised.',
+            'orders_empty' => 'No confirmed orders linked to this warehouse on this date.',
             'missing_coordinates' => 'Missing coordinates',
             'warehouse_hint' => 'Start from a warehouse or store you own. Depot coordinates are taken from that site.',
             'warehouse_no_coords' => 'Set latitude/longitude on this warehouse first',
             'no_warehouses' => 'No active warehouse or store available for outbound shipping. Create one in Inventory first.',
             'pick_warehouse_first' => 'Select a warehouse or store first.',
-            'manual_do' => 'Manual DO',
+            'manual_do' => 'Via pick list',
         ],
         'show' => [
             'depot' => 'Depot: :address (:lat, :lng)',
@@ -118,6 +118,7 @@ return [
         'warehouse_missing_coords' => 'Set latitude and longitude on the warehouse or store before planning routes.',
         'warehouse_not_outbound' => 'Showrooms cannot be used as a shipping depot.',
         'orders_required' => 'Select at least one delivery order.',
+        'orders_not_for_warehouse' => 'One or more selected orders are not linked to this warehouse.',
     ],
 
     'placeholders' => [

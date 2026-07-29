@@ -135,6 +135,13 @@ class RouteOptimizationTest extends TestCase
             ]),
         ]);
 
+        foreach ($orders as $order) {
+            \Modules\Outbound\Models\PickList::factory()->create([
+                'delivery_order_id' => $order->id,
+                'warehouse_id' => $warehouse->id,
+            ]);
+        }
+
         $response = $this->actingAs($user)->post(route('module.routing.plans.store'), [
             'warehouse_id' => $warehouse->id,
             'planned_date' => $date,

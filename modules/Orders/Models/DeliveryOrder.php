@@ -2,12 +2,14 @@
 
 namespace Modules\Orders\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Modules\Orders\Database\Factories\DeliveryOrderFactory;
 use Modules\Partners\Models\Partner;
@@ -132,6 +134,31 @@ class DeliveryOrder extends Model
     public function isFromGin(): bool
     {
         return $this->goods_issue_note_id !== null;
+    }
+
+    /**
+     * Orders linked to a warehouse via Sales GIN or Outbound pick list.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeForWarehouse(Builder $query, int $warehouseId): Builder
+    {
+        return $query->where(function (Builder $inner) use ($warehouseId): void {
+            $inner->whereHas(
+                'goodsIssueNote',
+                fn (Builder $gin) => $gin->where('warehouse_id', $warehouseId),
+            );
+
+            if (Schema::hasTable('pick_lists')) {
+                $inner->orWhereExists(function ($sub) use ($warehouseId): void {
+                    $sub->selectRaw('1')
+                        ->from('pick_lists')
+                        ->whereColumn('pick_lists.delivery_order_id', 'delivery_orders.id')
+                        ->where('pick_lists.warehouse_id', $warehouseId);
+                });
+            }
+        });
     }
 
     /**

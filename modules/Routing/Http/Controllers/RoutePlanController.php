@@ -227,8 +227,10 @@ class RoutePlanController extends Controller
     }
 
     /**
-     * Confirmed DOs for the date that belong to this warehouse (via GIN) or
-     * are manual (no GIN) and thus can leave from the selected depot.
+     * Confirmed DOs for the date that belong to this warehouse:
+     * - linked Sales GIN from this warehouse, or
+     * - Outbound pick list for this warehouse.
+     * Manual DOs with no warehouse link are excluded.
      *
      * @return Collection<int, DeliveryOrder>
      */
@@ -238,11 +240,7 @@ class RoutePlanController extends Controller
             ->with('partner:id,name')
             ->where('status', DeliveryOrder::STATUS_CONFIRMED)
             ->whereDate('order_date', $date)
-            ->where(function ($query) use ($warehouse): void {
-                $query
-                    ->whereHas('goodsIssueNote', fn ($gin) => $gin->where('warehouse_id', $warehouse->id))
-                    ->orWhereNull('goods_issue_note_id');
-            })
+            ->forWarehouse((int) $warehouse->id)
             ->orderBy('id')
             ->get([
                 'id',

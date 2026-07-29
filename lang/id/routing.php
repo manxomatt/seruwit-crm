@@ -61,14 +61,14 @@ return [
         'create' => [
             'title' => 'Rencana Rute Baru',
             'orders_section' => 'Delivery order terkonfirmasi',
-            'orders_hint' => 'Order dari gudang ini (via GIN) plus DO manual tanpa GIN. Hanya yang punya koordinat yang dapat dioptimasi.',
-            'orders_empty' => 'Tidak ada order terkonfirmasi untuk gudang ini pada tanggal ini.',
+            'orders_hint' => 'Hanya order terkonfirmasi yang terkait gudang ini (via GIN atau pick list outbound). Hanya yang punya koordinat yang dapat dioptimasi.',
+            'orders_empty' => 'Tidak ada order terkonfirmasi terkait gudang ini pada tanggal ini.',
             'missing_coordinates' => 'Koordinat kurang',
             'warehouse_hint' => 'Mulai dari gudang atau toko milik tenant. Koordinat depot diambil dari lokasi tersebut.',
             'warehouse_no_coords' => 'Isi latitude/longitude di master gudang dulu',
             'no_warehouses' => 'Belum ada gudang/toko aktif untuk pengiriman. Buat dulu di Inventory.',
             'pick_warehouse_first' => 'Pilih gudang atau toko terlebih dahulu.',
-            'manual_do' => 'DO manual',
+            'manual_do' => 'Via pick list',
         ],
         'show' => [
             'depot' => 'Depot: :address (:lat, :lng)',
@@ -118,6 +118,7 @@ return [
         'warehouse_missing_coords' => 'Isi latitude dan longitude gudang/toko sebelum membuat rencana rute.',
         'warehouse_not_outbound' => 'Showroom tidak dapat dipakai sebagai depot pengiriman.',
         'orders_required' => 'Pilih minimal satu delivery order.',
+        'orders_not_for_warehouse' => 'Satu atau lebih order yang dipilih tidak terkait gudang ini.',
     ],
 
     'placeholders' => [

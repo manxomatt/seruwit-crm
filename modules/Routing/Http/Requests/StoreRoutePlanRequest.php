@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use Modules\Inventory\Models\Warehouse;
+use Modules\Orders\Models\DeliveryOrder;
 use Modules\Routing\Models\RoutePlan;
 
 class StoreRoutePlanRequest extends FormRequest
@@ -79,6 +80,28 @@ class StoreRoutePlanRequest extends FormRequest
 
             if (! $warehouse->acceptsSalesOutbound()) {
                 $validator->errors()->add('warehouse_id', __('routing.validation.warehouse_not_outbound'));
+            }
+
+            $orderIds = array_values(array_filter(
+                array_map('intval', (array) $this->input('delivery_order_ids', [])),
+                fn (int $id): bool => $id > 0,
+            ));
+
+            if ($orderIds === []) {
+                return;
+            }
+
+            $allowedIds = DeliveryOrder::query()
+                ->forWarehouse($warehouseId)
+                ->whereIn('id', $orderIds)
+                ->pluck('id')
+                ->all();
+
+            if (count(array_diff($orderIds, $allowedIds)) > 0) {
+                $validator->errors()->add(
+                    'delivery_order_ids',
+                    __('routing.validation.orders_not_for_warehouse'),
+                );
             }
         });
     }
