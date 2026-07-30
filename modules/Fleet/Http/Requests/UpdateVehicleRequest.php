@@ -26,6 +26,7 @@ class UpdateVehicleRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'plate_number' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('vehicles')->ignore($this->route('vehicle'))],
             'type' => ['sometimes', 'required', 'string', 'in:car,truck,van,motorcycle,bus'],
+            'rental_class' => ['nullable', 'string', 'in:economy,mpv,suv,premium,other'],
             'brand' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
             'capacity' => ['nullable', 'string', 'max:100'],

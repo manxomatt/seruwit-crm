@@ -84,6 +84,9 @@ class RentalDashboardTest extends TestCase
                 ->has('board.idle_vehicles', 3)
                 ->has('board.compliance.documents')
                 ->has('board.compliance.maintenance')
+                ->has('board.kpis')
+                ->where('board.kpis.adr', fn ($value) => is_numeric($value))
+                ->where('board.kpis.revpac', fn ($value) => is_numeric($value))
                 ->has('exportUrl')
             );
     }

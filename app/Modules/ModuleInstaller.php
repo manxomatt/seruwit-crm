@@ -225,6 +225,41 @@ class ModuleInstaller
         Modules::flushInstalledState();
     }
 
+    /**
+     * Install every module in a vertical pack (respecting plan entitlement), then
+     * run the pack's demo seeders inside the tenant schema.
+     *
+     * @throws RuntimeException when the pack key is unknown or a module install fails
+     */
+    public function installPack(Tenant $tenant, string $packKey): void
+    {
+        $pack = VerticalPacks::find($packKey);
+
+        if (! $pack) {
+            throw new RuntimeException("Unknown vertical pack [{$packKey}].");
+        }
+
+        $tenant->run(function () use ($tenant, $pack): void {
+            foreach ($pack['modules'] as $moduleKey) {
+                $module = Modules::find($moduleKey);
+
+                if (! $module) {
+                    continue;
+                }
+
+                $this->installWithinTenant($tenant, $module);
+            }
+
+            foreach ($pack['seeders'] as $seederClass) {
+                if (! class_exists($seederClass)) {
+                    continue;
+                }
+
+                app($seederClass)->run();
+            }
+        });
+    }
+
     private function guardDependents(ModuleContract $module): void
     {
         foreach (Modules::all() as $candidate) {

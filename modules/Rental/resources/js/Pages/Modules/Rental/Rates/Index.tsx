@@ -57,16 +57,23 @@ interface Rate {
     notes: string | null;
     vehicle: Vehicle | null;
     vehicle_type: string | null;
+    rental_class: string | null;
+    valid_from: string | null;
+    valid_to: string | null;
+    min_periods: number | null;
+    priority: number;
 }
 
 interface Props {
     rates: Rate[];
     vehicles: Vehicle[];
+    rentalClasses: Array<{ value: string; label: string }>;
 }
 
 type FormData = {
     vehicle_id: string;
     vehicle_type: string;
+    rental_class: string;
     name: string;
     period_type: string;
     rate_per_period: string;
@@ -75,12 +82,17 @@ type FormData = {
     late_fee_per_day: string;
     deposit_amount: string;
     is_active: boolean;
+    valid_from: string;
+    valid_to: string;
+    min_periods: string;
+    priority: string;
     notes: string;
 };
 
 const emptyForm: FormData = {
     vehicle_id: '',
     vehicle_type: '',
+    rental_class: '',
     name: '',
     period_type: 'daily',
     rate_per_period: '',
@@ -89,6 +101,10 @@ const emptyForm: FormData = {
     late_fee_per_day: '',
     deposit_amount: '',
     is_active: true,
+    valid_from: '',
+    valid_to: '',
+    min_periods: '',
+    priority: '0',
     notes: '',
 };
 
@@ -101,6 +117,7 @@ interface RateFormProps {
     label: string;
     periodOptions: Array<{ value: string; label: string }>;
     vehicleOptions: Array<{ value: string; label: string }>;
+    rentalClassOptions: Array<{ value: string; label: string }>;
     labels: {
         rateName: string;
         periodType: string;
@@ -109,9 +126,15 @@ interface RateFormProps {
         specificVehicle: string;
         anyVehicle: string;
         vehicleType: string;
+        rentalClass: string;
+        anyClass: string;
         kmLimit: string;
         excessKmRate: string;
         lateFeePerDay: string;
+        validFrom: string;
+        validTo: string;
+        minPeriods: string;
+        priority: string;
         rateActive: string;
         cancel: string;
     };
@@ -128,6 +151,7 @@ function RateForm({
     label,
     periodOptions,
     vehicleOptions,
+    rentalClassOptions,
     labels,
 }: RateFormProps): JSX.Element {
     return (
@@ -185,6 +209,18 @@ function RateForm({
                     />
                 </div>
                 <div>
+                    <InputLabel htmlFor="rental_class" value={labels.rentalClass} />
+                    <Select
+                        id="rental_class"
+                        className="mt-1"
+                        value={form.data.rental_class}
+                        onChange={(value) => form.setData('rental_class', value)}
+                        placeholder={labels.anyClass}
+                        options={rentalClassOptions}
+                    />
+                    <InputError message={form.errors.rental_class} className="mt-1" />
+                </div>
+                <div>
                     <InputLabel htmlFor="vehicle_type" value={labels.vehicleType} />
                     <TextInput
                         id="vehicle_type"
@@ -192,6 +228,52 @@ function RateForm({
                         onChange={(e) => form.setData('vehicle_type', e.target.value)}
                         className="mt-1 w-full"
                     />
+                </div>
+                <div>
+                    <InputLabel htmlFor="priority" value={labels.priority} />
+                    <TextInput
+                        id="priority"
+                        type="number"
+                        min="0"
+                        value={form.data.priority}
+                        onChange={(e) => form.setData('priority', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                    <InputError message={form.errors.priority} className="mt-1" />
+                </div>
+                <div>
+                    <InputLabel htmlFor="valid_from" value={labels.validFrom} />
+                    <TextInput
+                        id="valid_from"
+                        type="date"
+                        value={form.data.valid_from}
+                        onChange={(e) => form.setData('valid_from', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                    <InputError message={form.errors.valid_from} className="mt-1" />
+                </div>
+                <div>
+                    <InputLabel htmlFor="valid_to" value={labels.validTo} />
+                    <TextInput
+                        id="valid_to"
+                        type="date"
+                        value={form.data.valid_to}
+                        onChange={(e) => form.setData('valid_to', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                    <InputError message={form.errors.valid_to} className="mt-1" />
+                </div>
+                <div>
+                    <InputLabel htmlFor="min_periods" value={labels.minPeriods} />
+                    <TextInput
+                        id="min_periods"
+                        type="number"
+                        min="1"
+                        value={form.data.min_periods}
+                        onChange={(e) => form.setData('min_periods', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                    <InputError message={form.errors.min_periods} className="mt-1" />
                 </div>
                 <div>
                     <InputLabel htmlFor="km_limit" value={labels.kmLimit} />
@@ -244,7 +326,7 @@ function RateForm({
     );
 }
 
-export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
+export default function RatesIndex({ rates, vehicles, rentalClasses }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [showCreate, setShowCreate] = useState(false);
@@ -266,6 +348,10 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
         ],
         [vehicles, t],
     );
+    const rentalClassOptions = useMemo(
+        () => [{ value: '', label: t('rental.placeholders.any_rental_class') }, ...rentalClasses],
+        [rentalClasses, t],
+    );
 
     const formLabels = useMemo(
         () => ({
@@ -276,9 +362,15 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
             specificVehicle: t('rental.fields.specific_vehicle'),
             anyVehicle: t('rental.placeholders.any_vehicle'),
             vehicleType: t('rental.fields.vehicle_type'),
+            rentalClass: t('rental.fields.rental_class'),
+            anyClass: t('rental.placeholders.any_rental_class'),
             kmLimit: t('rental.fields.km_limit'),
             excessKmRate: t('rental.fields.excess_km_rate'),
             lateFeePerDay: t('rental.fields.late_fee_per_day'),
+            validFrom: t('rental.fields.valid_from'),
+            validTo: t('rental.fields.valid_to'),
+            minPeriods: t('rental.fields.min_periods'),
+            priority: t('rental.fields.priority'),
             rateActive: t('rental.fields.rate_active'),
             cancel: t('common.cancel'),
         }),
@@ -290,6 +382,7 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
         editForm.setData({
             vehicle_id: String(rate.vehicle?.id ?? ''),
             vehicle_type: rate.vehicle_type ?? '',
+            rental_class: rate.rental_class ?? '',
             name: rate.name,
             period_type: rate.period_type,
             rate_per_period: rate.rate_per_period,
@@ -298,6 +391,10 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
             late_fee_per_day: rate.late_fee_per_day ?? '',
             deposit_amount: rate.deposit_amount,
             is_active: rate.is_active,
+            valid_from: rate.valid_from ?? '',
+            valid_to: rate.valid_to ?? '',
+            min_periods: String(rate.min_periods ?? ''),
+            priority: String(rate.priority ?? 0),
             notes: rate.notes ?? '',
         });
     };
@@ -376,6 +473,7 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
                         label={t('rental.actions.create_rate')}
                         periodOptions={periodOptions}
                         vehicleOptions={vehicleOptions}
+                        rentalClassOptions={rentalClassOptions}
                         labels={formLabels}
                     />
                 </div>
@@ -415,9 +513,13 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
                                 <td className="px-4 py-3 text-gray-600">
                                     {rate.vehicle
                                         ? rate.vehicle.name
-                                        : rate.vehicle_type
-                                          ? t('rental.rates.type_prefix', { type: rate.vehicle_type })
-                                          : t('rental.rates.all_vehicles')}
+                                        : rate.rental_class
+                                          ? t('rental.rates.class_prefix', {
+                                                class: t(`fleet.rental_class.${rate.rental_class}`, undefined, rate.rental_class),
+                                            })
+                                          : rate.vehicle_type
+                                            ? t('rental.rates.type_prefix', { type: rate.vehicle_type })
+                                            : t('rental.rates.all_vehicles')}
                                 </td>
                                 <td className="px-4 py-3 text-gray-600">
                                     {t(`rental.period_type.${rate.period_type}`, undefined, rate.period_type)}
@@ -472,6 +574,7 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
                         label={t('common.save')}
                         periodOptions={periodOptions}
                         vehicleOptions={vehicleOptions}
+                        rentalClassOptions={rentalClassOptions}
                         labels={formLabels}
                     />
                 </div>

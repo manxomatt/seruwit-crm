@@ -41,6 +41,7 @@ class Vehicle extends Model
         'name',
         'plate_number',
         'type',
+        'rental_class',
         'brand',
         'model_year',
         'capacity',

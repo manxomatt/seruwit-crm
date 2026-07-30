@@ -33,6 +33,15 @@ interface Board {
         fleet_active: number;
         idle: number;
     };
+    kpis?: {
+        adr: number;
+        revpac: number;
+        overdue_rate: number;
+        damage_rate: number;
+        rental_days_mtd: number;
+        closed_mtd: number;
+        damaged_mtd: number;
+    };
     revenue: {
         mtd: number;
         by_type: Array<{ type: string; total: number; count: number }>;
@@ -126,7 +135,7 @@ function RentalTable({ rows, empty }: { rows: RentalRow[]; empty: string }): JSX
 export default function Index({ board, exportUrl }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const { counts, utilisation, revenue, overdue, ending_soon, idle_vehicles, compliance } = board;
+    const { counts, utilisation, revenue, overdue, ending_soon, idle_vehicles, compliance, kpis } = board;
 
     const exportHref = (type: string) => `${exportUrl}?type=${encodeURIComponent(type)}`;
 
@@ -176,6 +185,36 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                     hint={t('rental.dashboard.ending_soon_hint', { count: counts.ending_soon })}
                 />
             </div>
+
+            {kpis && (
+                <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <StatCard
+                        label={t('rental.dashboard.kpi_adr')}
+                        value={money(kpis.adr)}
+                        hint={t('rental.dashboard.kpi_adr_hint', { days: kpis.rental_days_mtd })}
+                    />
+                    <StatCard
+                        label={t('rental.dashboard.kpi_revpac')}
+                        value={money(kpis.revpac)}
+                        hint={t('rental.dashboard.kpi_revpac_hint', { fleet: utilisation.fleet_active })}
+                    />
+                    <StatCard
+                        label={t('rental.dashboard.kpi_overdue_rate')}
+                        value={`${kpis.overdue_rate}%`}
+                        tone={kpis.overdue_rate > 0 ? 'warn' : undefined}
+                        hint={t('rental.dashboard.kpi_overdue_rate_hint')}
+                    />
+                    <StatCard
+                        label={t('rental.dashboard.kpi_damage_rate')}
+                        value={`${kpis.damage_rate}%`}
+                        tone={kpis.damage_rate > 0 ? 'warn' : undefined}
+                        hint={t('rental.dashboard.kpi_damage_rate_hint', {
+                            damaged: kpis.damaged_mtd,
+                            closed: kpis.closed_mtd,
+                        })}
+                    />
+                </div>
+            )}
 
             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard label={t('rental.dashboard.idle_units')} value={utilisation.idle} />

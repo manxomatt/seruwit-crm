@@ -30,6 +30,12 @@ interface Props {
     modules: ModuleEntry[];
     plan: Plan;
     graceDays: number;
+    packs?: Array<{
+        key: string;
+        label: string;
+        description: string;
+        modules: string[];
+    }>;
 }
 
 const STATE_BADGE_CLASS: Record<ModuleState, string> = {
@@ -44,7 +50,7 @@ const STATE_BADGE_CLASS: Record<ModuleState, string> = {
 
 const isDisabled = (state: ModuleState): boolean => state === 'disabled' || state === 'disabled_with_data';
 
-export default function Index({ modules, plan, graceDays }: Props): JSX.Element {
+export default function Index({ modules, plan, graceDays, packs = [] }: Props): JSX.Element {
     const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
     const [confirming, setConfirming] = useState<ModuleEntry | null>(null);
@@ -54,6 +60,15 @@ export default function Index({ modules, plan, graceDays }: Props): JSX.Element 
         setBusyKey(module.key);
         router.post(
             route('module.modules.install', module.key),
+            {},
+            { preserveScroll: true, onFinish: () => setBusyKey(null) },
+        );
+    };
+
+    const installPack = (packKey: string): void => {
+        setBusyKey(`pack:${packKey}`);
+        router.post(
+            route('module.modules.packs.install', packKey),
             {},
             { preserveScroll: true, onFinish: () => setBusyKey(null) },
         );
@@ -99,6 +114,39 @@ export default function Index({ modules, plan, graceDays }: Props): JSX.Element 
                             </span>
                         </div>
                     </div>
+
+                    {packs.length > 0 && (
+                        <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
+                            <div className="border-b border-gray-100 p-6">
+                                <h3 className="text-base font-semibold text-gray-900">{t('platform.modules_catalog.packs_heading')}</h3>
+                                <p className="mt-1 text-sm text-gray-500">{t('platform.modules_catalog.packs_hint')}</p>
+                            </div>
+                            <ul className="divide-y divide-gray-100">
+                                {packs.map((pack) => {
+                                    const busy = busyKey === `pack:${pack.key}`;
+
+                                    return (
+                                        <li key={pack.key} className="flex flex-wrap items-center gap-4 p-6">
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="font-medium text-gray-900">{pack.label}</h4>
+                                                <p className="mt-1 text-sm text-gray-500">{pack.description}</p>
+                                                <p className="mt-2 text-xs text-gray-400">
+                                                    {t('platform.modules_catalog.packs_modules_prefix')} {pack.modules.join(', ')}
+                                                </p>
+                                            </div>
+                                            <div className="shrink-0">
+                                                <PrimaryButton disabled={busy} onClick={() => installPack(pack.key)}>
+                                                    {busy
+                                                        ? t('platform.modules_catalog.actions.installing')
+                                                        : t('platform.modules_catalog.actions.install_pack')}
+                                                </PrimaryButton>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    )}
 
                     <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                         <div className="border-b border-gray-100 p-6">

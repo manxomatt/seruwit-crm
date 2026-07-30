@@ -25,6 +25,7 @@ class StoreVehicleRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'plate_number' => ['required', 'string', 'max:20', 'unique:vehicles,plate_number'],
             'type' => ['required', 'string', 'in:car,truck,van,motorcycle,bus'],
+            'rental_class' => ['nullable', 'string', 'in:economy,mpv,suv,premium,other'],
             'brand' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
             'capacity' => ['nullable', 'string', 'max:100'],

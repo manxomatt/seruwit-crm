@@ -29,6 +29,7 @@ class RentalRate extends Model
     protected $fillable = [
         'vehicle_id',
         'vehicle_type',
+        'rental_class',
         'name',
         'period_type',
         'rate_per_period',
@@ -37,6 +38,10 @@ class RentalRate extends Model
         'late_fee_per_day',
         'deposit_amount',
         'is_active',
+        'valid_from',
+        'valid_to',
+        'min_periods',
+        'priority',
         'notes',
     ];
 
@@ -49,7 +54,11 @@ class RentalRate extends Model
             'late_fee_per_day' => 'decimal:2',
             'deposit_amount' => 'decimal:2',
             'km_limit_per_period' => 'integer',
+            'min_periods' => 'integer',
+            'priority' => 'integer',
             'is_active' => 'boolean',
+            'valid_from' => 'date:Y-m-d',
+            'valid_to' => 'date:Y-m-d',
         ];
     }
 

@@ -95,6 +95,7 @@ class RentalStatusBoard
                 'fleet_active' => $activeFleet,
                 'idle' => max(0, $activeFleet - $onRent),
             ],
+            'kpis' => $this->kpiPack($revenueMtd, $activeFleet, $monthStart, $monthEnd),
             'revenue' => [
                 'mtd' => round($revenueMtd, 2),
                 'by_type' => $this->revenueByType($monthStart, $monthEnd),
@@ -109,6 +110,78 @@ class RentalStatusBoard
                 'maintenance' => $this->maintenanceSummary($onRentVehicleIds->all()),
                 'invoicing' => $this->invoicingSummary(),
             ],
+        ];
+    }
+
+    /**
+     * Commercial KPIs for the ops cockpit (MTD window unless noted).
+     *
+     * - ADR: revenue / rental-days in MTD bookings
+     * - RevPAC: revenue / active fleet units
+     * - Overdue rate: overdue count / currently active rentals
+     * - Damage rate: returned+completed MTD with ≥1 damage / returned+completed MTD
+     *
+     * @return array{
+     *     adr: float,
+     *     revpac: float,
+     *     overdue_rate: float,
+     *     damage_rate: float,
+     *     rental_days_mtd: int,
+     *     closed_mtd: int,
+     *     damaged_mtd: int
+     * }
+     */
+    private function kpiPack(float $revenueMtd, int $activeFleet, string $monthStart, string $monthEnd): array
+    {
+        $mtdRentals = Rental::query()
+            ->whereIn('status', [
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+                Rental::STATUS_RETURNED,
+                Rental::STATUS_COMPLETED,
+            ])
+            ->whereDate('start_date', '>=', $monthStart)
+            ->whereDate('start_date', '<=', $monthEnd)
+            ->get(['id', 'start_date', 'end_date', 'period_type', 'total_periods']);
+
+        $rentalDays = (int) $mtdRentals->sum(function (Rental $rental): int {
+            if ($rental->period_type === 'daily') {
+                return max(1, (int) $rental->total_periods);
+            }
+
+            $start = $rental->start_date?->copy() ?? now();
+            $end = $rental->end_date?->copy() ?? $start;
+
+            return max(1, (int) $start->diffInDays($end) + 1);
+        });
+
+        $activeCount = Rental::query()->where('status', Rental::STATUS_ACTIVE)->count();
+        $overdueCount = Rental::query()->overdue()->count();
+
+        $closedMtd = Rental::query()
+            ->whereIn('status', [Rental::STATUS_RETURNED, Rental::STATUS_COMPLETED])
+            ->whereDate('start_date', '>=', $monthStart)
+            ->whereDate('start_date', '<=', $monthEnd)
+            ->pluck('id');
+
+        $damagedMtd = 0;
+        if ($closedMtd->isNotEmpty() && Schema::hasTable('rental_damages')) {
+            $damagedMtd = (int) Rental::query()
+                ->whereIn('id', $closedMtd->all())
+                ->whereHas('damages')
+                ->count();
+        }
+
+        return [
+            'adr' => $rentalDays > 0 ? round($revenueMtd / $rentalDays, 2) : 0.0,
+            'revpac' => $activeFleet > 0 ? round($revenueMtd / $activeFleet, 2) : 0.0,
+            'overdue_rate' => $activeCount > 0 ? round(($overdueCount / $activeCount) * 100, 1) : 0.0,
+            'damage_rate' => $closedMtd->count() > 0
+                ? round(($damagedMtd / $closedMtd->count()) * 100, 1)
+                : 0.0,
+            'rental_days_mtd' => $rentalDays,
+            'closed_mtd' => $closedMtd->count(),
+            'damaged_mtd' => $damagedMtd,
         ];
     }
 

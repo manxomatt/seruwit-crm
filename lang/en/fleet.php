@@ -43,6 +43,8 @@ return [
         'name' => 'Name',
         'plate' => 'Plate number',
         'type' => 'Type',
+        'rental_class' => 'Rental class',
+        'rental_class_none' => 'Not set',
         'brand' => 'Brand',
         'model_year' => 'Model year',
         'capacity' => 'Capacity',
@@ -182,6 +184,14 @@ return [
         'on_leave' => 'On leave',
         'on_trip' => 'On trip',
         'off_duty' => 'Off duty',
+    ],
+
+    'rental_class' => [
+        'economy' => 'Economy',
+        'mpv' => 'MPV',
+        'suv' => 'SUV',
+        'premium' => 'Premium',
+        'other' => 'Other',
     ],
 
     'messages' => [

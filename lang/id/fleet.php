@@ -43,6 +43,8 @@ return [
         'name' => 'Nama',
         'plate' => 'Nomor polisi',
         'type' => 'Tipe',
+        'rental_class' => 'Kelas rental',
+        'rental_class_none' => 'Belum diisi',
         'brand' => 'Merek',
         'model_year' => 'Tahun model',
         'capacity' => 'Kapasitas',
@@ -182,6 +184,14 @@ return [
         'on_leave' => 'Cuti',
         'on_trip' => 'Dalam perjalanan',
         'off_duty' => 'Tidak bertugas',
+    ],
+
+    'rental_class' => [
+        'economy' => 'Ekonomi',
+        'mpv' => 'MPV',
+        'suv' => 'SUV',
+        'premium' => 'Premium',
+        'other' => 'Lainnya',
     ],
 
     'messages' => [

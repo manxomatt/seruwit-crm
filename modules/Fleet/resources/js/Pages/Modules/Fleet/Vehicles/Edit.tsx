@@ -18,6 +18,7 @@ interface Vehicle {
     name: string;
     plate_number: string;
     type: string;
+    rental_class: string | null;
     brand: string | null;
     model_year: number | null;
     capacity: string | null;
@@ -47,6 +48,7 @@ export default function Edit({ vehicle }: Props): JSX.Element {
         name: vehicle.name,
         plate_number: vehicle.plate_number,
         type: vehicle.type,
+        rental_class: vehicle.rental_class || '',
         brand: vehicle.brand || '',
         model_year: vehicle.model_year ?? '',
         capacity: vehicle.capacity || '',
@@ -106,6 +108,25 @@ export default function Edit({ vehicle }: Props): JSX.Element {
                                     ]}
                                 />
                                 <InputError message={errors.type} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="rental_class" value={t('fleet.vehicles.rental_class')} />
+                                <Select
+                                    id="rental_class"
+                                    className="mt-1"
+                                    value={data.rental_class}
+                                    onChange={(value) => setData('rental_class', value)}
+                                    placeholder={t('fleet.vehicles.rental_class_none')}
+                                    options={[
+                                        { value: '', label: t('fleet.vehicles.rental_class_none') },
+                                        { value: 'economy', label: t('fleet.rental_class.economy') },
+                                        { value: 'mpv', label: t('fleet.rental_class.mpv') },
+                                        { value: 'suv', label: t('fleet.rental_class.suv') },
+                                        { value: 'premium', label: t('fleet.rental_class.premium') },
+                                        { value: 'other', label: t('fleet.rental_class.other') },
+                                    ]}
+                                />
+                                <InputError message={errors.rental_class} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="fuel_type" value={t('fleet.vehicles.fuel_type')} />

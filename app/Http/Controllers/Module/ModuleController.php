@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleCatalog;
 use App\Modules\ModuleInstaller;
+use App\Modules\VerticalPacks;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -31,6 +32,15 @@ class ModuleController extends Controller
             'plan' => $this->catalog->currentPlan(),
             'plans' => $this->catalog->allPlans(),
             'graceDays' => config('modules.purge_after_days'),
+            'packs' => collect(VerticalPacks::all())
+                ->map(fn (array $pack, string $key): array => [
+                    'key' => $key,
+                    'label' => $pack['label'],
+                    'description' => $pack['description'],
+                    'modules' => $pack['modules'],
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -51,6 +61,25 @@ class ModuleController extends Controller
         }
 
         return back()->with('success', __('platform.messages.module_installed', ['module' => $module->label()]));
+    }
+
+    public function installPack(string $pack, ModuleInstaller $installer): RedirectResponse
+    {
+        $this->ensureWorkspaceContext();
+
+        if (! VerticalPacks::find($pack)) {
+            abort(404);
+        }
+
+        try {
+            $installer->installPack(tenant(), $pack);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $label = VerticalPacks::find($pack)['label'];
+
+        return back()->with('success', __('platform.messages.pack_installed', ['pack' => $label]));
     }
 
     public function uninstall(string $key, ModuleInstaller $installer): RedirectResponse

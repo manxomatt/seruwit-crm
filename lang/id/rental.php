@@ -54,6 +54,11 @@ return [
         'rate_name' => 'Nama Tarif',
         'specific_vehicle' => 'Kendaraan Tertentu',
         'vehicle_type' => 'Tipe Kendaraan',
+        'rental_class' => 'Kelas rental',
+        'valid_from' => 'Berlaku dari',
+        'valid_to' => 'Berlaku sampai',
+        'min_periods' => 'Minimum periode',
+        'priority' => 'Prioritas',
         'applies_to' => 'Berlaku Untuk',
         'actual_return' => 'Pengembalian Aktual',
         'base_amount' => 'Jumlah Dasar',
@@ -113,6 +118,7 @@ return [
         'apply_rate' => 'Terapkan template tarif…',
         'apply_rate_short' => 'Terapkan tarif…',
         'any_vehicle' => 'Semua kendaraan',
+        'any_rental_class' => 'Semua kelas rental',
         'vehicle_type' => 'mis. SUV, MPV',
         'unlimited' => 'Tanpa batas',
         'late_fee_fallback' => 'Kosong = tarif harian (sewa harian)',
@@ -286,6 +292,14 @@ return [
         'export_ending_soon' => 'CSV segera berakhir',
         'export_revenue' => 'CSV omzet MTD',
         'export_idle' => 'CSV unit idle',
+        'kpi_adr' => 'ADR',
+        'kpi_adr_hint' => 'Tarif harian rata-rata · :days hari sewa MTD',
+        'kpi_revpac' => 'RevPAC',
+        'kpi_revpac_hint' => 'Omzet per unit aktif · armada :fleet',
+        'kpi_overdue_rate' => 'Rasio overdue',
+        'kpi_overdue_rate_hint' => 'Overdue ÷ sedang on hire',
+        'kpi_damage_rate' => 'Rasio kerusakan',
+        'kpi_damage_rate_hint' => ':damaged dari :closed sewa selesai MTD ada damage',
     ],
 
     'reminders' => [
@@ -331,6 +345,7 @@ return [
     'rates' => [
         'all_vehicles' => 'Semua kendaraan',
         'type_prefix' => 'Tipe: :type',
+        'class_prefix' => 'Kelas: :class',
         'km' => ':km km',
     ],
 
@@ -474,5 +489,6 @@ return [
         'addon_amount_min' => 'Jumlah harus lebih dari nol.',
         'swap_vehicle_required' => 'Pilih kendaraan pengganti.',
         'swap_vehicle_same' => 'Pilih kendaraan yang berbeda.',
+        'min_periods' => 'Tarif ":rate" membutuhkan minimal :min periode.',
     ],
 ];

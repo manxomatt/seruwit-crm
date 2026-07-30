@@ -62,7 +62,7 @@ class RentalController extends Controller
             'vehicles' => Vehicle::query()
                 ->where('status', Vehicle::STATUS_ACTIVE)
                 ->orderBy('name')
-                ->get(['id', 'name', 'plate_number', 'type']),
+                ->get(['id', 'name', 'plate_number', 'type', 'rental_class']),
             'drivers' => Driver::query()
                 ->where('status', Driver::STATUS_AVAILABLE)
                 ->orderBy('name')
@@ -78,10 +78,27 @@ class RentalController extends Controller
             'rates' => RentalRate::query()
                 ->where('is_active', true)
                 ->orderBy('name')
-                ->get(),
+                ->get([
+                    'id',
+                    'name',
+                    'period_type',
+                    'rate_per_period',
+                    'km_limit_per_period',
+                    'excess_km_rate',
+                    'late_fee_per_day',
+                    'deposit_amount',
+                    'vehicle_id',
+                    'vehicle_type',
+                    'rental_class',
+                    'min_periods',
+                    'priority',
+                    'valid_from',
+                    'valid_to',
+                ]),
             'locations' => $this->locationOptions(),
             'insurancePackages' => $this->insurancePackageOptions(),
             'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
+            'suggestRateUrl' => route($this->getRoutePrefix().'.rental.rates.suggest'),
         ]);
     }
 

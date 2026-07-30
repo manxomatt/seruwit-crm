@@ -9,7 +9,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import MoneyInput from '@/Components/MoneyInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useMemo } from 'react';
+import { FormEventHandler, useEffect, useMemo, useRef } from 'react';
 import RentalNav from '../../../RentalNav';
 
 interface Vehicle {
@@ -17,6 +17,7 @@ interface Vehicle {
     name: string;
     plate_number: string;
     type: string;
+    rental_class: string | null;
 }
 
 interface Driver {
@@ -40,6 +41,10 @@ interface Rate {
     excess_km_rate: string | null;
     late_fee_per_day: string | null;
     deposit_amount: string;
+    vehicle_id?: number | null;
+    vehicle_type?: string | null;
+    rental_class?: string | null;
+    min_periods?: number | null;
 }
 
 interface LocationOption {
@@ -67,6 +72,7 @@ interface Props {
     locations?: LocationOption[];
     insurancePackages?: InsurancePackage[];
     defaultOneWayFee?: number;
+    suggestRateUrl?: string;
 }
 
 type FormData = {
@@ -106,9 +112,11 @@ export default function Create({
     locations = [],
     insurancePackages = [],
     defaultOneWayFee = 150000,
+    suggestRateUrl,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const suggestedRateId = useRef<number | null>(null);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         vehicle_id: '',
         driver_id: '',
@@ -232,6 +240,48 @@ export default function Create({
             deposit_amount: rate.deposit_amount,
         }));
     };
+
+    useEffect(() => {
+        if (!suggestRateUrl || !data.vehicle_id || !data.start_date || !data.end_date || !data.period_type) {
+            return;
+        }
+
+        const controller = new AbortController();
+        const params = new URLSearchParams({
+            vehicle_id: data.vehicle_id,
+            start_date: data.start_date,
+            end_date: data.end_date,
+            period_type: data.period_type,
+        });
+
+        fetch(`${suggestRateUrl}?${params.toString()}`, {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            signal: controller.signal,
+            credentials: 'same-origin',
+        })
+            .then(async (response) => {
+                if (!response.ok) {
+                    return;
+                }
+                const payload = (await response.json()) as { rate: Rate | null };
+                if (!payload.rate || suggestedRateId.current === payload.rate.id) {
+                    return;
+                }
+                suggestedRateId.current = payload.rate.id;
+                const rate = payload.rate;
+                setData((prev) => ({
+                    ...prev,
+                    rate_per_period: rate.rate_per_period,
+                    km_limit_per_period: rate.km_limit_per_period?.toString() ?? '',
+                    excess_km_rate: rate.excess_km_rate ?? '',
+                    late_fee_per_day: rate.late_fee_per_day ?? '',
+                    deposit_amount: rate.deposit_amount,
+                }));
+            })
+            .catch(() => undefined);
+
+        return () => controller.abort();
+    }, [suggestRateUrl, data.vehicle_id, data.start_date, data.end_date, data.period_type, setData]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

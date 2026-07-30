@@ -39,10 +39,14 @@ return [
         'requires_prefix' => 'Membutuhkan:',
         'actions' => [
             'install' => 'Pasang',
+            'install_pack' => 'Pasang pack',
             'installing' => 'Memasang…',
             'uninstall' => 'Copot',
             'needs_upgrade' => 'Perlu upgrade',
         ],
+        'packs_heading' => 'Pack vertikal',
+        'packs_hint' => 'Pasang sekumpulan modul untuk satu jenis bisnis sekaligus, plus data demo jika tersedia.',
+        'packs_modules_prefix' => 'Termasuk:',
         'uninstall_confirm' => [
             'title' => 'Copot modul :module?',
             'message' => 'Menu dan aksesnya dicabut sekarang, tapi datanya disimpan :days hari. Pasang lagi sebelum itu dan semuanya kembali utuh.',
@@ -54,6 +58,7 @@ return [
         'module_enabled' => 'Modul :module diaktifkan kembali.',
         'module_disabled' => 'Modul :module dinonaktifkan untuk semua tenant.',
         'module_installed' => 'Modul :module berhasil dipasang.',
+        'pack_installed' => 'Pack :pack berhasil dipasang.',
         'module_uninstalled' => 'Modul :module dicopot. Datanya disimpan :days hari — pasang lagi sebelum itu untuk memulihkannya.',
     ],
 ];

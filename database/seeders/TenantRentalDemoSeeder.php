@@ -93,17 +93,24 @@ class TenantRentalDemoSeeder extends Seeder
 
         while ($vehicles->count() < 6) {
             $index = $vehicles->count();
+            $classes = ['mpv', 'mpv', 'other', 'suv', 'economy', 'other'];
             $vehicle = Vehicle::query()->firstOrCreate(
                 ['plate_number' => $plates[$index]],
                 [
                     'name' => $names[$index],
-                    'type' => $index % 2 === 0 ? 'MPV' : 'SUV',
+                    'type' => 'car',
+                    'rental_class' => $classes[$index] ?? 'other',
                     'brand' => 'Toyota',
                     'fuel_type' => 'petrol',
                     'status' => Vehicle::STATUS_ACTIVE,
                     'notes' => self::TAG.' Demo vehicle.',
                 ],
             );
+
+            if (Schema::hasColumn('vehicles', 'rental_class') && blank($vehicle->rental_class)) {
+                $vehicle->update(['rental_class' => $classes[$index] ?? 'other']);
+            }
+
             $vehicles->push($vehicle);
         }
 
@@ -198,11 +205,11 @@ class TenantRentalDemoSeeder extends Seeder
         }
 
         $templates = [
-            ['name' => 'Harian Standar', 'period_type' => 'daily', 'rate_per_period' => 450000, 'deposit_amount' => 1000000, 'km_limit_per_period' => 200, 'excess_km_rate' => 3500],
-            ['name' => 'Mingguan Hemat', 'period_type' => 'weekly', 'rate_per_period' => 2800000, 'deposit_amount' => 2000000, 'km_limit_per_period' => 1000, 'excess_km_rate' => 3000],
-            ['name' => 'Bulanan Korporat', 'period_type' => 'monthly', 'rate_per_period' => 9500000, 'deposit_amount' => 5000000, 'km_limit_per_period' => 4000, 'excess_km_rate' => 2500],
-            ['name' => 'Harian SUV', 'period_type' => 'daily', 'rate_per_period' => 750000, 'deposit_amount' => 2000000, 'km_limit_per_period' => 250, 'excess_km_rate' => 5000],
-            ['name' => 'Mingguan MPV', 'period_type' => 'weekly', 'rate_per_period' => 3200000, 'deposit_amount' => 2500000, 'km_limit_per_period' => 1200, 'excess_km_rate' => 3500],
+            ['name' => 'Harian Standar', 'period_type' => 'daily', 'rate_per_period' => 450000, 'deposit_amount' => 1000000, 'km_limit_per_period' => 200, 'excess_km_rate' => 3500, 'rental_class' => null, 'min_periods' => null, 'priority' => 0],
+            ['name' => 'Mingguan Hemat', 'period_type' => 'weekly', 'rate_per_period' => 2800000, 'deposit_amount' => 2000000, 'km_limit_per_period' => 1000, 'excess_km_rate' => 3000, 'rental_class' => null, 'min_periods' => 1, 'priority' => 0],
+            ['name' => 'Bulanan Korporat', 'period_type' => 'monthly', 'rate_per_period' => 9500000, 'deposit_amount' => 5000000, 'km_limit_per_period' => 4000, 'excess_km_rate' => 2500, 'rental_class' => null, 'min_periods' => 1, 'priority' => 0],
+            ['name' => 'Harian SUV', 'period_type' => 'daily', 'rate_per_period' => 750000, 'deposit_amount' => 2000000, 'km_limit_per_period' => 250, 'excess_km_rate' => 5000, 'rental_class' => 'suv', 'min_periods' => 2, 'priority' => 10],
+            ['name' => 'Mingguan MPV', 'period_type' => 'weekly', 'rate_per_period' => 3200000, 'deposit_amount' => 2500000, 'km_limit_per_period' => 1200, 'excess_km_rate' => 3500, 'rental_class' => 'mpv', 'min_periods' => 1, 'priority' => 10],
         ];
 
         foreach ($templates as $template) {

@@ -54,6 +54,11 @@ return [
         'rate_name' => 'Rate Name',
         'specific_vehicle' => 'Specific Vehicle',
         'vehicle_type' => 'Vehicle Type',
+        'rental_class' => 'Rental class',
+        'valid_from' => 'Valid from',
+        'valid_to' => 'Valid to',
+        'min_periods' => 'Minimum periods',
+        'priority' => 'Priority',
         'applies_to' => 'Applies To',
         'actual_return' => 'Actual Return',
         'base_amount' => 'Base Amount',
@@ -113,6 +118,7 @@ return [
         'apply_rate' => 'Apply rate template…',
         'apply_rate_short' => 'Apply rate…',
         'any_vehicle' => 'Any vehicle',
+        'any_rental_class' => 'Any rental class',
         'vehicle_type' => 'e.g. SUV, MPV',
         'unlimited' => 'Unlimited',
         'late_fee_fallback' => 'Blank = daily rate (daily rentals)',
@@ -286,6 +292,14 @@ return [
         'export_ending_soon' => 'CSV ending soon',
         'export_revenue' => 'CSV revenue MTD',
         'export_idle' => 'CSV idle units',
+        'kpi_adr' => 'ADR',
+        'kpi_adr_hint' => 'Avg daily rate · :days rental-days MTD',
+        'kpi_revpac' => 'RevPAC',
+        'kpi_revpac_hint' => 'Revenue per active unit · fleet :fleet',
+        'kpi_overdue_rate' => 'Overdue rate',
+        'kpi_overdue_rate_hint' => 'Overdue ÷ currently on hire',
+        'kpi_damage_rate' => 'Damage rate',
+        'kpi_damage_rate_hint' => ':damaged of :closed closed MTD with damage',
     ],
 
     'reminders' => [
@@ -331,6 +345,7 @@ return [
     'rates' => [
         'all_vehicles' => 'All vehicles',
         'type_prefix' => 'Type: :type',
+        'class_prefix' => 'Class: :class',
         'km' => ':km km',
     ],
 
@@ -474,5 +489,6 @@ return [
         'addon_amount_min' => 'Amount must be greater than zero.',
         'swap_vehicle_required' => 'Choose a replacement vehicle.',
         'swap_vehicle_same' => 'Choose a different vehicle.',
+        'min_periods' => 'Rate ":rate" requires at least :min period(s).',
     ],
 ];

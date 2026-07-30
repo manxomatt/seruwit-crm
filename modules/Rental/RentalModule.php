@@ -98,6 +98,7 @@ class RentalModule implements ModuleContract
 
         // Tariff rates
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');
+        Route::get('/rental/rates/suggest', [RentalRateController::class, 'suggest'])->middleware('permission:rental,create')->name('rental.rates.suggest');
         Route::post('/rental/rates', [RentalRateController::class, 'store'])->middleware('permission:rental,create')->name('rental.rates.store');
         Route::patch('/rental/rates/{rate}', [RentalRateController::class, 'update'])->middleware('permission:rental,update')->name('rental.rates.update');
         Route::delete('/rental/rates/{rate}', [RentalRateController::class, 'destroy'])->middleware('permission:rental,delete')->name('rental.rates.destroy');
