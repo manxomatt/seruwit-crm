@@ -60,6 +60,7 @@ return [
         'route_stops' => 'Route stops',
         'manifest' => 'Passenger manifest',
         'total_km' => 'Total distance',
+        'map' => 'Route map',
     ],
     'bookings' => [
         'title' => 'Bookings',
@@ -78,6 +79,20 @@ return [
         'pool' => 'Pool',
         'door' => 'Door-to-door',
         'fare' => 'Fare',
+        'refund_status' => 'Refund',
+    ],
+    'portal' => [
+        'title' => 'My travel bookings',
+        'not_linked' => 'Your account is not linked to a partner portal.',
+        'empty_bookings' => 'No bookings yet.',
+        'open_invoices' => 'Open invoices',
+        'back' => 'Back to bookings',
+    ],
+    'refund' => [
+        'none' => 'None',
+        'voided' => 'Invoice voided',
+        'credited' => 'Credit note issued',
+        'skipped_paid' => 'Needs manual refund',
     ],
     'status' => [
         'open' => 'Open',
@@ -103,8 +118,12 @@ return [
         'departures_generated' => ':count departures generated (:skipped skipped).',
         'departure_locked' => 'Departure locked — new bookings closed.',
         'departure_optimized' => 'Route optimized: :stops stops, :km km.',
+        'optimize_eta' => 'ETA ~:minutes min.',
+        'optimize_osrm' => '(road distances via OSRM)',
         'optimize_unassigned' => 'Unassigned (missing coordinates): :items.',
         'optimize_invalid_status' => 'This departure cannot be optimized in its current status.',
+        'directions_need_points' => 'Provide at least two lat,lng points.',
+        'directions_failed' => 'Could not fetch road directions.',
         'departure_dispatched' => 'Departure dispatched.',
         'departure_completed' => 'Departure completed.',
         'booking_created' => 'Booking created as draft.',
@@ -131,6 +150,8 @@ return [
     'invoice' => [
         'line' => 'Travel :corridor · :date · :pax pax',
         'notes' => 'Shuttle booking :booking',
+        'credit_notes' => 'Credit for cancelled booking :booking (was :invoice)',
+        'credit_line' => 'Refund travel booking :booking',
     ],
     'days' => [
         '1' => 'Mon',

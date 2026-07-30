@@ -10,6 +10,8 @@ use Modules\Shuttle\Http\Controllers\BookingController;
 use Modules\Shuttle\Http\Controllers\CorridorController;
 use Modules\Shuttle\Http\Controllers\DepartureActionController;
 use Modules\Shuttle\Http\Controllers\DepartureController;
+use Modules\Shuttle\Http\Controllers\DirectionsController;
+use Modules\Shuttle\Http\Controllers\PartnerPortalController;
 use Modules\Shuttle\Http\Controllers\ScheduleController;
 use Modules\Shuttle\Http\Controllers\ShuttleDashboardController;
 
@@ -88,6 +90,10 @@ class ShuttleModule implements ModuleContract
             ->middleware('permission:shuttle,view')
             ->name('shuttle.dashboard');
 
+        Route::get('/shuttle/directions', DirectionsController::class)
+            ->middleware('permission:shuttle,view')
+            ->name('shuttle.directions');
+
         // Corridors
         Route::get('/shuttle/corridors', [CorridorController::class, 'index'])->middleware('permission:shuttle,view')->name('shuttle.corridors.index');
         Route::get('/shuttle/corridors/create', [CorridorController::class, 'create'])->middleware('permission:shuttle,create')->name('shuttle.corridors.create');
@@ -121,5 +127,11 @@ class ShuttleModule implements ModuleContract
         Route::post('/shuttle/bookings/{booking}/confirm', [BookingActionController::class, 'confirm'])->middleware('permission:shuttle,confirm')->name('shuttle.bookings.confirm');
         Route::post('/shuttle/bookings/{booking}/cancel', [BookingActionController::class, 'cancel'])->middleware('permission:shuttle,update')->name('shuttle.bookings.cancel');
         Route::post('/shuttle/bookings/{booking}/board', [BookingActionController::class, 'board'])->middleware('permission:shuttle,update')->name('shuttle.bookings.board');
+
+        Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (): void {
+            Route::get('/shuttle/bookings', [PartnerPortalController::class, 'index'])->name('shuttle.bookings.index');
+            Route::get('/shuttle/bookings/{booking}', [PartnerPortalController::class, 'show'])->name('shuttle.bookings.show');
+            Route::post('/shuttle/invoices/{invoice}/pay', [PartnerPortalController::class, 'payInvoice'])->name('shuttle.invoices.pay');
+        });
     }
 }

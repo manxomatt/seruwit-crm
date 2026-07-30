@@ -59,8 +59,11 @@ class ShuttleBooking extends Model
         'dropoff_lat',
         'dropoff_lng',
         'invoice_id',
+        'credit_invoice_id',
         'notes',
         'cancelled_at',
+        'refund_status',
+        'cancel_reason',
     ];
 
     /**
@@ -117,6 +120,14 @@ class ShuttleBooking extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * @return BelongsTo<Invoice, $this>
+     */
+    public function creditInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'credit_invoice_id');
     }
 
     /**

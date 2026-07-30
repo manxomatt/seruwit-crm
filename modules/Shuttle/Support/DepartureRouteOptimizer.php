@@ -2,18 +2,20 @@
 
 namespace Modules\Shuttle\Support;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Modules\Shuttle\Models\ShuttleBooking;
 use Modules\Shuttle\Models\ShuttleDeparture;
 use Modules\Shuttle\Models\ShuttleRouteStop;
 use RuntimeException;
+use Throwable;
 
 class DepartureRouteOptimizer
 {
     public function __construct(private readonly NearestNeighbourSequencer $sequencer = new NearestNeighbourSequencer) {}
 
     /**
-     * @return array{total_distance_km: float, stop_count: int, unassigned: list<string>}
+     * @return array{total_distance_km: float, stop_count: int, unassigned: list<string>, estimated_duration_minutes: int|null, used_osrm: bool}
      */
     public function optimize(ShuttleDeparture $departure): array
     {
@@ -121,16 +123,31 @@ class DepartureRouteOptimizer
                 $ordered[] = $stop;
             }
 
+            $osrmLegs = $this->osrmLegsFor($ordered);
+            $usedOsrm = $osrmLegs !== null;
+
             $totalDistance = 0.0;
+            $totalDuration = 0;
             $prevLat = null;
             $prevLng = null;
             $sequence = 1;
+            $cursor = $this->departureStartAt($departure);
 
-            foreach ($ordered as $stop) {
-                $leg = 0.0;
+            foreach ($ordered as $index => $stop) {
+                $legKm = 0.0;
+                $legSeconds = 0;
+
                 if ($prevLat !== null && $prevLng !== null) {
-                    $leg = round(Haversine::distanceKm($prevLat, $prevLng, $stop['lat'], $stop['lng']), 2);
-                    $totalDistance += $leg;
+                    if ($usedOsrm && isset($osrmLegs[$index - 1])) {
+                        $legKm = round($osrmLegs[$index - 1]['distance_m'] / 1000, 2);
+                        $legSeconds = (int) round($osrmLegs[$index - 1]['duration_s']);
+                    } else {
+                        $legKm = round(Haversine::distanceKm($prevLat, $prevLng, $stop['lat'], $stop['lng']), 2);
+                        $legSeconds = (int) round(($legKm / 40) * 3600);
+                    }
+                    $totalDistance += $legKm;
+                    $totalDuration += $legSeconds;
+                    $cursor = $cursor->copy()->addSeconds($legSeconds);
                 }
 
                 $departure->routeStops()->create([
@@ -140,7 +157,9 @@ class DepartureRouteOptimizer
                     'address' => $stop['address'],
                     'lat' => $stop['lat'],
                     'lng' => $stop['lng'],
-                    'distance_from_previous_km' => $leg,
+                    'eta_at' => $cursor,
+                    'distance_from_previous_km' => $legKm,
+                    'duration_from_previous_seconds' => $legSeconds,
                     'status' => ShuttleRouteStop::STATUS_PENDING,
                 ]);
 
@@ -148,16 +167,55 @@ class DepartureRouteOptimizer
                 $prevLng = $stop['lng'];
             }
 
+            $estimatedMinutes = $ordered === [] ? null : (int) max(1, (int) ceil($totalDuration / 60));
+
             $departure->update([
                 'status' => ShuttleDeparture::STATUS_OPTIMIZED,
                 'optimized_at' => now(),
+                'estimated_distance_km' => round($totalDistance, 2),
+                'estimated_duration_minutes' => $estimatedMinutes,
             ]);
 
             return [
                 'total_distance_km' => round($totalDistance, 2),
                 'stop_count' => count($ordered),
                 'unassigned' => $unassigned,
+                'estimated_duration_minutes' => $estimatedMinutes,
+                'used_osrm' => $usedOsrm,
             ];
         });
+    }
+
+    /**
+     * @param  list<array{lat: float, lng: float}>  $ordered
+     * @return list<array{distance_m: float, duration_s: float}>|null
+     */
+    private function osrmLegsFor(array $ordered): ?array
+    {
+        if (count($ordered) < 2 || ! class_exists(\Modules\TransportationManagement\Support\OsrmRouter::class)) {
+            return null;
+        }
+
+        try {
+            $waypoints = array_map(fn (array $stop): array => [$stop['lat'], $stop['lng']], $ordered);
+            $detailed = app(\Modules\TransportationManagement\Support\OsrmRouter::class)
+                ->drivingRouteDetailed($waypoints);
+
+            if (count($detailed['legs']) !== count($ordered) - 1) {
+                return null;
+            }
+
+            return $detailed['legs'];
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function departureStartAt(ShuttleDeparture $departure): Carbon
+    {
+        $date = $departure->depart_date?->toDateString() ?? now()->toDateString();
+        $time = substr((string) $departure->depart_time, 0, 8);
+
+        return Carbon::parse($date.' '.$time);
     }
 }

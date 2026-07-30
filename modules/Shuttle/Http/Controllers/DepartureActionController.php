@@ -36,6 +36,16 @@ class DepartureActionController extends Controller
             'km' => $result['total_distance_km'],
         ]);
 
+        if (($result['estimated_duration_minutes'] ?? null) !== null) {
+            $message .= ' '.__('shuttle.messages.optimize_eta', [
+                'minutes' => $result['estimated_duration_minutes'],
+            ]);
+        }
+
+        if (! empty($result['used_osrm'])) {
+            $message .= ' '.__('shuttle.messages.optimize_osrm');
+        }
+
         if ($result['unassigned'] !== []) {
             $message .= ' '.__('shuttle.messages.optimize_unassigned', [
                 'items' => implode(', ', $result['unassigned']),

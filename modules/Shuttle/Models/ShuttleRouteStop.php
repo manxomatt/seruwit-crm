@@ -34,6 +34,7 @@ class ShuttleRouteStop extends Model
         'lng',
         'eta_at',
         'distance_from_previous_km',
+        'duration_from_previous_seconds',
         'status',
         'completed_at',
     ];
@@ -49,6 +50,7 @@ class ShuttleRouteStop extends Model
             'lng' => 'decimal:7',
             'eta_at' => 'datetime',
             'distance_from_previous_km' => 'decimal:2',
+            'duration_from_previous_seconds' => 'integer',
             'completed_at' => 'datetime',
         ];
     }

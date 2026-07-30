@@ -1,5 +1,6 @@
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
+import PlanRoutesMap from '@/Components/Map/PlanRoutesMap';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
@@ -14,6 +15,8 @@ interface RouteStop {
     lat: string | number;
     lng: string | number;
     distance_from_previous_km: string | number;
+    duration_from_previous_seconds?: number;
+    eta_at?: string | null;
     booking?: { booking_number: string } | null;
 }
 
@@ -25,7 +28,7 @@ interface Booking {
     pickup_mode: string;
     dropoff_mode: string;
     partner?: { name: string } | null;
-    passengers?: Array<{ name: string; phone: string | null }>;
+    passengers?: Array<{ name: string; phone: string | null; seat_label: string | null }>;
 }
 
 interface Departure {
@@ -39,9 +42,12 @@ interface Departure {
     vehicle_id: number | null;
     driver_id: number | null;
     optimized_at: string | null;
+    estimated_duration_minutes: number | null;
+    estimated_distance_km: string | number | null;
     corridor?: { name: string; code: string } | null;
     vehicle?: { name: string; plate_number: string } | null;
     driver?: { name: string } | null;
+    origin_pool?: { latitude: string | number | null; longitude: string | number | null; name?: string } | null;
     bookings: Booking[];
     route_stops: RouteStop[];
 }
@@ -61,7 +67,14 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
         driver_id: departure.driver_id ? String(departure.driver_id) : '',
     });
 
-    const totalKm = departure.route_stops.reduce((sum, s) => sum + Number(s.distance_from_previous_km || 0), 0);
+    const totalKm =
+        departure.estimated_distance_km != null
+            ? Number(departure.estimated_distance_km)
+            : departure.route_stops.reduce((sum, s) => sum + Number(s.distance_from_previous_km || 0), 0);
+
+    const firstStop = departure.route_stops[0];
+    const depotLat = departure.origin_pool?.latitude ?? firstStop?.lat;
+    const depotLng = departure.origin_pool?.longitude ?? firstStop?.lng;
 
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{departure.departure_number}</h2>}>
@@ -86,7 +99,11 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                                         {departure.vehicle.name} ({departure.vehicle.plate_number})
                                     </span>
                                 )}
-                                {departure.optimized_at && <span>Optimized {departure.optimized_at}</span>}
+                                {departure.estimated_duration_minutes != null && (
+                                    <span>
+                                        ETA ~{departure.estimated_duration_minutes} min · {totalKm.toFixed(1)} km
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -143,6 +160,34 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                         </div>
                     </div>
 
+                    {depotLat != null && depotLng != null && departure.route_stops.length > 0 && (
+                        <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
+                            <div className="border-b border-gray-200 px-4 py-3 font-medium">{t('shuttle.departures.map')}</div>
+                            <PlanRoutesMap
+                                height="420px"
+                                directionsUrl={prefixedRoute('shuttle.directions')}
+                                depot={{ lat: depotLat, lng: depotLng, address: departure.origin_pool?.name }}
+                                routes={[
+                                    {
+                                        id: departure.id,
+                                        sequence: 1,
+                                        vehicleLabel: departure.vehicle
+                                            ? `${departure.vehicle.name} (${departure.vehicle.plate_number})`
+                                            : departure.departure_number,
+                                        stops: departure.route_stops.map((s) => ({
+                                            id: s.id,
+                                            sequence: s.sequence,
+                                            address: s.address,
+                                            lat: s.lat,
+                                            lng: s.lng,
+                                            label: `${s.stop_type}${s.booking ? ` · ${s.booking.booking_number}` : ''}`,
+                                        })),
+                                    },
+                                ]}
+                            />
+                        </div>
+                    )}
+
                     <div className="grid gap-4 lg:grid-cols-2">
                         <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
                             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
@@ -162,7 +207,11 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                                             </div>
                                             <div className="text-gray-600">{stop.address}</div>
                                             <div className="text-xs text-gray-400">
-                                                +{Number(stop.distance_from_previous_km).toFixed(1)} km · {stop.lat}, {stop.lng}
+                                                +{Number(stop.distance_from_previous_km).toFixed(1)} km
+                                                {stop.duration_from_previous_seconds
+                                                    ? ` · ${Math.round(stop.duration_from_previous_seconds / 60)} min`
+                                                    : ''}
+                                                {stop.eta_at ? ` · ETA ${stop.eta_at}` : ''}
                                             </div>
                                         </div>
                                     </li>
@@ -184,6 +233,13 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                                         <div className="text-gray-500">
                                             {t(`shuttle.status.${b.status}`)} · pickup {b.pickup_mode} · drop {b.dropoff_mode}
                                         </div>
+                                        {b.passengers && b.passengers.length > 0 && (
+                                            <div className="mt-1 text-xs text-gray-400">
+                                                {b.passengers
+                                                    .map((p) => (p.seat_label ? `${p.seat_label} ${p.name}` : p.name))
+                                                    .join(', ')}
+                                            </div>
+                                        )}
                                     </li>
                                 ))}
                                 {departure.bookings.length === 0 && <li className="px-4 py-6 text-center text-gray-500">No bookings yet.</li>}

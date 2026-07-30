@@ -4,6 +4,7 @@ namespace Modules\Shuttle\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Modules\Shuttle\Models\ShuttleBooking;
 use Modules\Shuttle\Support\BookingConfirmationService;
 use Throwable;
@@ -21,10 +22,14 @@ class BookingActionController extends Controller
         return back()->with('success', __('shuttle.messages.booking_confirmed'));
     }
 
-    public function cancel(ShuttleBooking $booking, BookingConfirmationService $service): RedirectResponse
+    public function cancel(Request $request, ShuttleBooking $booking, BookingConfirmationService $service): RedirectResponse
     {
+        $data = $request->validate([
+            'cancel_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
         try {
-            $service->cancel($booking);
+            $service->cancel($booking, $data['cancel_reason'] ?? null);
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }

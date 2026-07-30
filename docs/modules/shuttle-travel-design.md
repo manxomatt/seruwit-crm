@@ -406,6 +406,13 @@ permissions: ['view','create','update','delete','confirm','dispatch','optimize']
 9. Soft Tracking map on `in_transit`
 10. (Fase 1.1) Extract shared Haversine/sequencer; seat labels; refund rules; OSRM ETA
 
+### Fase 1.1 — implemented
+- `OsrmRouter::drivingRouteDetailed()` + Shuttle `/shuttle/directions` proxy
+- Departure Show: Leaflet map (`PlanRoutesMap`) + ETA/duration per stop
+- Seat labels (`A1`…) assigned on booking confirm
+- Cancel settle: void unpaid invoice **or** issue credit note if paid
+- Partner portal: `/module/portal/shuttle/bookings` (read + soft pay invoice)
+
 ---
 
 ## 11. Testing (wajib)

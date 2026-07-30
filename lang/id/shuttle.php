@@ -60,6 +60,7 @@ return [
         'route_stops' => 'Urutan stop',
         'manifest' => 'Manifest penumpang',
         'total_km' => 'Total jarak',
+        'map' => 'Peta rute',
     ],
     'bookings' => [
         'title' => 'Booking',
@@ -78,6 +79,20 @@ return [
         'pool' => 'Pool',
         'door' => 'Door-to-door',
         'fare' => 'Tarif',
+        'refund_status' => 'Refund',
+    ],
+    'portal' => [
+        'title' => 'Booking travel saya',
+        'not_linked' => 'Akun Anda belum terhubung ke portal partner.',
+        'empty_bookings' => 'Belum ada booking.',
+        'open_invoices' => 'Invoice terbuka',
+        'back' => 'Kembali ke booking',
+    ],
+    'refund' => [
+        'none' => 'Tidak ada',
+        'voided' => 'Invoice di-void',
+        'credited' => 'Credit note diterbitkan',
+        'skipped_paid' => 'Perlu refund manual',
     ],
     'status' => [
         'open' => 'Terbuka',
@@ -103,8 +118,12 @@ return [
         'departures_generated' => ':count keberangkatan dibuat (:skipped dilewati).',
         'departure_locked' => 'Keberangkatan dikunci — booking baru ditutup.',
         'departure_optimized' => 'Rute dioptimasi: :stops stop, :km km.',
+        'optimize_eta' => 'ETA ~:minutes menit.',
+        'optimize_osrm' => '(jarak jalan via OSRM)',
         'optimize_unassigned' => 'Belum masuk urutan (koordinat kosong): :items.',
         'optimize_invalid_status' => 'Keberangkatan ini tidak bisa dioptimasi pada status saat ini.',
+        'directions_need_points' => 'Minimal dua titik lat,lng.',
+        'directions_failed' => 'Gagal mengambil arah jalan.',
         'departure_dispatched' => 'Keberangkatan di-dispatch.',
         'departure_completed' => 'Keberangkatan selesai.',
         'booking_created' => 'Booking dibuat sebagai draft.',
@@ -131,6 +150,8 @@ return [
     'invoice' => [
         'line' => 'Travel :corridor · :date · :pax pax',
         'notes' => 'Booking travel :booking',
+        'credit_notes' => 'Kredit pembatalan booking :booking (dari :invoice)',
+        'credit_line' => 'Refund booking travel :booking',
     ],
     'days' => [
         '1' => 'Sen',

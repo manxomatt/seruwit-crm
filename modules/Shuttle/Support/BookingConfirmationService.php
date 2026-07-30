@@ -10,7 +10,10 @@ use RuntimeException;
 
 class BookingConfirmationService
 {
-    public function __construct(private readonly ShuttleInvoiceService $invoices = new ShuttleInvoiceService) {}
+    public function __construct(
+        private readonly ShuttleInvoiceService $invoices = new ShuttleInvoiceService,
+        private readonly SeatLabelAssigner $seats = new SeatLabelAssigner,
+    ) {}
 
     public function confirm(ShuttleBooking $booking): ShuttleBooking
     {
@@ -33,9 +36,12 @@ class BookingConfirmationService
                 throw new RuntimeException(__('shuttle.messages.insufficient_seats'));
             }
 
+            $seatOffset = (int) $departure->seats_booked;
             $departure->increment('seats_booked', $booking->passenger_count);
 
             $booking->update(['status' => ShuttleBooking::STATUS_CONFIRMED]);
+
+            $this->seats->assign($booking->fresh(['passengers']), $seatOffset);
 
             $invoice = $this->invoices->createFromBooking($booking->fresh(['partner', 'departure.corridor', 'passengers']));
             if ($invoice) {
@@ -46,13 +52,16 @@ class BookingConfirmationService
         });
     }
 
-    public function cancel(ShuttleBooking $booking): ShuttleBooking
+    public function cancel(ShuttleBooking $booking, ?string $reason = null): ShuttleBooking
     {
         if (! in_array($booking->status, [ShuttleBooking::STATUS_DRAFT, ShuttleBooking::STATUS_CONFIRMED], true)) {
             throw new RuntimeException(__('shuttle.messages.cancel_invalid_status'));
         }
 
-        return DB::transaction(function () use ($booking): ShuttleBooking {
+        return DB::transaction(function () use ($booking, $reason): ShuttleBooking {
+            $refundStatus = ShuttleInvoiceService::REFUND_NONE;
+            $creditInvoiceId = null;
+
             if ($booking->status === ShuttleBooking::STATUS_CONFIRMED) {
                 /** @var ShuttleDeparture $departure */
                 $departure = ShuttleDeparture::query()
@@ -71,14 +80,21 @@ class BookingConfirmationService
                 $departure->update([
                     'seats_booked' => max(0, $departure->seats_booked - $booking->passenger_count),
                 ]);
+
+                $settlement = $this->invoices->settleCancellation($booking);
+                $refundStatus = $settlement['status'];
+                $creditInvoiceId = $settlement['credit_invoice_id'];
             }
 
             $booking->update([
                 'status' => ShuttleBooking::STATUS_CANCELLED,
                 'cancelled_at' => now(),
+                'cancel_reason' => $reason,
+                'refund_status' => $refundStatus,
+                'credit_invoice_id' => $creditInvoiceId,
             ]);
 
-            return $booking->fresh();
+            return $booking->fresh(['invoice', 'passengers']);
         });
     }
 

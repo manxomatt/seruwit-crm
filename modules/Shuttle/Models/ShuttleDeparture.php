@@ -51,6 +51,8 @@ class ShuttleDeparture extends Model
         'origin_pool_id',
         'destination_pool_id',
         'optimized_at',
+        'estimated_duration_minutes',
+        'estimated_distance_km',
         'dispatched_at',
         'completed_at',
         'notes',
@@ -66,6 +68,8 @@ class ShuttleDeparture extends Model
             'seat_capacity' => 'integer',
             'seats_booked' => 'integer',
             'optimized_at' => 'datetime',
+            'estimated_duration_minutes' => 'integer',
+            'estimated_distance_km' => 'decimal:2',
             'dispatched_at' => 'datetime',
             'completed_at' => 'datetime',
         ];

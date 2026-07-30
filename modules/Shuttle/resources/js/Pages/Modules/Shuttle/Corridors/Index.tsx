@@ -6,6 +6,8 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
+import { ActionIconButton, PencilIcon, TrashIcon } from '../components/ActionIcons';
+import ShuttlePagination, { type PaginatedMeta } from '../components/ShuttlePagination';
 
 interface Corridor {
     id: number;
@@ -18,10 +20,7 @@ interface Corridor {
 }
 
 interface Props {
-    corridors: {
-        data: Corridor[];
-        links: Array<{ url: string | null; label: string; active: boolean }>;
-    };
+    corridors: PaginatedMeta & { data: Corridor[] };
     filters: { search: string | null };
     can: { create: boolean; update: boolean; delete: boolean };
 }
@@ -35,63 +34,106 @@ export default function Index({ corridors, filters, can }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get(prefixedRoute('shuttle.corridors.index'), { search }, { preserveState: true });
+        router.get(prefixedRoute('shuttle.corridors.index'), { search: search || undefined }, { preserveState: true, replace: true });
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.corridors.title')}</h2>}>
-            <Head title={t('shuttle.corridors.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
-                    <ShuttleNav active="corridors" />
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <form onSubmit={submit} className="flex gap-2">
-                            <TextInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" />
-                            <PrimaryButton type="submit">Search</PrimaryButton>
-                        </form>
-                        {can.create && (
-                            <Link href={prefixedRoute('shuttle.corridors.create')}>
-                                <PrimaryButton type="button">{t('shuttle.corridors.create')}</PrimaryButton>
-                            </Link>
-                        )}
-                    </div>
-                    <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-50 text-left text-gray-500">
-                                <tr>
-                                    <th className="px-4 py-2">{t('shuttle.corridors.code')}</th>
-                                    <th className="px-4 py-2">{t('shuttle.corridors.name')}</th>
-                                    <th className="px-4 py-2">{t('shuttle.corridors.base_fare')}</th>
-                                    <th className="px-4 py-2" />
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {corridors.data.map((c) => (
-                                    <tr key={c.id}>
-                                        <td className="px-4 py-2 font-medium">{c.code}</td>
-                                        <td className="px-4 py-2">
-                                            {c.name}
-                                            <div className="text-xs text-gray-500">
-                                                {c.origin_city} → {c.destination_city}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-2">{money(c.base_fare)}</td>
-                                        <td className="px-4 py-2 text-right">
-                                            {can.update && (
-                                                <Link
-                                                    href={prefixedRoute('shuttle.corridors.edit', c.id)}
-                                                    className="text-sky-700 hover:underline"
-                                                >
-                                                    Edit
-                                                </Link>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+        <DynamicLayout
+            header={
+                <div className="flex items-center justify-between gap-4">
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.corridors.title')}</h2>
+                    {can.create && (
+                        <Link href={prefixedRoute('shuttle.corridors.create')}>
+                            <PrimaryButton type="button">{t('shuttle.corridors.create')}</PrimaryButton>
+                        </Link>
+                    )}
                 </div>
+            }
+        >
+            <Head title={t('shuttle.corridors.title')} />
+            <ShuttleNav active="corridors" />
+
+            <form onSubmit={submit} className="mb-6 flex flex-wrap gap-2">
+                <TextInput
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t('common.search', undefined, 'Search…')}
+                    className="w-56"
+                />
+                <button type="submit" className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                    {t('common.search', undefined, 'Search')}
+                </button>
+            </form>
+
+            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.code')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.name')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.base_fare')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.active')}</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('common.actions', undefined, 'Actions')}</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {corridors.data.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                                    —
+                                </td>
+                            </tr>
+                        ) : (
+                            corridors.data.map((c) => (
+                                <tr key={c.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-gray-900">{c.code}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="font-medium text-gray-900">{c.name}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {c.origin_city} → {c.destination_city}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 tabular-nums text-gray-900">{money(c.base_fare)}</td>
+                                    <td className="px-4 py-3">
+                                        <span
+                                            className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
+                                                c.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            {c.is_active ? t('common.active', undefined, 'Active') : t('common.inactive', undefined, 'Inactive')}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center justify-end gap-1">
+                                            {can.update && (
+                                                <ActionIconButton
+                                                    title={t('common.edit', undefined, 'Edit')}
+                                                    href={prefixedRoute('shuttle.corridors.edit', c.id)}
+                                                >
+                                                    <PencilIcon />
+                                                </ActionIconButton>
+                                            )}
+                                            {can.delete && (
+                                                <ActionIconButton
+                                                    title={t('common.delete', undefined, 'Delete')}
+                                                    tone="red"
+                                                    onClick={() => {
+                                                        if (confirm(t('common.confirm_delete', undefined, 'Delete this item?'))) {
+                                                            router.delete(prefixedRoute('shuttle.corridors.destroy', c.id));
+                                                        }
+                                                    }}
+                                                >
+                                                    <TrashIcon />
+                                                </ActionIconButton>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+                <ShuttlePagination meta={corridors} />
             </div>
         </DynamicLayout>
     );

@@ -2,33 +2,66 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
-const links = [
-    { key: 'dashboard', route: 'shuttle.dashboard', labelKey: 'shuttle.nav.dashboard' },
-    { key: 'corridors', route: 'shuttle.corridors.index', labelKey: 'shuttle.nav.corridors' },
-    { key: 'schedules', route: 'shuttle.schedules.index', labelKey: 'shuttle.nav.schedules' },
-    { key: 'departures', route: 'shuttle.departures.index', labelKey: 'shuttle.nav.departures' },
-    { key: 'bookings', route: 'shuttle.bookings.index', labelKey: 'shuttle.nav.bookings' },
+const TABS = [
+    {
+        key: 'dashboard',
+        labelKey: 'shuttle.nav.dashboard',
+        route: 'shuttle.dashboard',
+        patterns: ['shuttle.dashboard'],
+    },
+    {
+        key: 'corridors',
+        labelKey: 'shuttle.nav.corridors',
+        route: 'shuttle.corridors.index',
+        patterns: ['shuttle.corridors.*'],
+    },
+    {
+        key: 'schedules',
+        labelKey: 'shuttle.nav.schedules',
+        route: 'shuttle.schedules.index',
+        patterns: ['shuttle.schedules.*'],
+    },
+    {
+        key: 'departures',
+        labelKey: 'shuttle.nav.departures',
+        route: 'shuttle.departures.index',
+        patterns: ['shuttle.departures.*'],
+    },
+    {
+        key: 'bookings',
+        labelKey: 'shuttle.nav.bookings',
+        route: 'shuttle.bookings.index',
+        patterns: ['shuttle.bookings.*'],
+    },
 ] as const;
 
-export default function ShuttleNav({ active }: { active: (typeof links)[number]['key'] }) {
-    const { prefixedRoute } = useRoutePrefix();
+export default function ShuttleNav({ active }: { active?: (typeof TABS)[number]['key'] }) {
+    const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
 
     return (
-        <nav className="mb-4 flex flex-wrap gap-2 border-b border-gray-200 pb-3">
-            {links.map((link) => (
-                <Link
-                    key={link.key}
-                    href={prefixedRoute(link.route)}
-                    className={
-                        active === link.key
-                            ? 'rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white'
-                            : 'rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100'
-                    }
-                >
-                    {t(link.labelKey)}
-                </Link>
-            ))}
-        </nav>
+        <div className="mb-6 border-b border-gray-200">
+            <nav className="-mb-px flex gap-6 overflow-x-auto">
+                {TABS.map((tab) => {
+                    const isActive = active
+                        ? active === tab.key
+                        : tab.patterns.some((pattern) => isCurrentRoute(pattern));
+
+                    return (
+                        <Link
+                            key={tab.route}
+                            href={prefixedRoute(tab.route)}
+                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
+                                isActive
+                                    ? 'border-indigo-600 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                            }`}
+                        >
+                            {t(tab.labelKey)}
+                        </Link>
+                    );
+                })}
+            </nav>
+        </div>
     );
 }

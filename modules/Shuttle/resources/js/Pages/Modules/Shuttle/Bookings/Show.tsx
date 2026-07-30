@@ -17,6 +17,7 @@ interface Booking {
     pickup_address: string | null;
     dropoff_address: string | null;
     notes: string | null;
+    refund_status?: string | null;
     partner?: { name: string; code: string } | null;
     departure?: {
         id: number;
@@ -25,7 +26,7 @@ interface Booking {
         depart_time: string;
         corridor?: { name: string } | null;
     } | null;
-    passengers: Array<{ id: number; name: string; phone: string | null }>;
+    passengers: Array<{ id: number; name: string; phone: string | null; seat_label?: string | null }>;
     invoice?: { id: number; code: string; status: string } | null;
 }
 
@@ -107,12 +108,19 @@ export default function Show({ booking, can }: Props) {
                             <ul className="mt-2 divide-y divide-gray-100 text-sm">
                                 {booking.passengers.map((p) => (
                                     <li key={p.id} className="py-2">
+                                        {p.seat_label ? <span className="mr-2 font-semibold">{p.seat_label}</span> : null}
                                         {p.name}
                                         {p.phone ? ` · ${p.phone}` : ''}
                                     </li>
                                 ))}
                             </ul>
                         </div>
+
+                        {booking.refund_status && (
+                            <div className="mt-4 text-sm text-gray-600">
+                                {t('shuttle.bookings.refund_status')}: {t(`shuttle.refund.${booking.refund_status}`)}
+                            </div>
+                        )}
 
                         {booking.departure && (
                             <div className="mt-6">

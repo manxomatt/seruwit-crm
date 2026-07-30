@@ -20,8 +20,29 @@ final class OsrmRouter
      */
     public function drivingRoute(array $waypoints): array
     {
+        return $this->drivingRouteDetailed($waypoints)['coordinates'];
+    }
+
+    /**
+     * Full OSRM route: geometry plus distance/duration and per-leg metrics.
+     *
+     * @param  list<array{0: float, 1: float}>  $waypoints  [lat, lng] pairs
+     * @return array{
+     *     coordinates: list<array{0: float, 1: float}>,
+     *     distance_m: float,
+     *     duration_s: float,
+     *     legs: list<array{distance_m: float, duration_s: float}>
+     * }
+     */
+    public function drivingRouteDetailed(array $waypoints): array
+    {
         if (count($waypoints) < 2) {
-            return [];
+            return [
+                'coordinates' => [],
+                'distance_m' => 0.0,
+                'duration_s' => 0.0,
+                'legs' => [],
+            ];
         }
 
         $coords = collect($waypoints)
@@ -53,9 +74,22 @@ final class OsrmRouter
             throw new RuntimeException(__('transportation.messages.directions_failed'));
         }
 
-        return array_map(
-            fn (array $pair): array => [(float) $pair[1], (float) $pair[0]],
-            $coordinates,
-        );
+        $legs = [];
+        foreach ($response->json('routes.0.legs') ?? [] as $leg) {
+            $legs[] = [
+                'distance_m' => (float) ($leg['distance'] ?? 0),
+                'duration_s' => (float) ($leg['duration'] ?? 0),
+            ];
+        }
+
+        return [
+            'coordinates' => array_map(
+                fn (array $pair): array => [(float) $pair[1], (float) $pair[0]],
+                $coordinates,
+            ),
+            'distance_m' => (float) ($response->json('routes.0.distance') ?? 0),
+            'duration_s' => (float) ($response->json('routes.0.duration') ?? 0),
+            'legs' => $legs,
+        ];
     }
 }

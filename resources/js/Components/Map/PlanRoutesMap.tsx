@@ -28,6 +28,8 @@ interface Props {
     depot: { lat: string | number; lng: string | number; address?: string | null };
     routes: PlanMapRoute[];
     height?: string;
+    /** Override OSRM proxy URL (default: routing.directions). */
+    directionsUrl?: string;
 }
 
 const ROUTE_COLOURS = ['#4f46e5', '#059669', '#d97706', '#e11d48', '#0284c8', '#7c3aed'];
@@ -112,10 +114,10 @@ function RoadRoute({
 /**
  * Multi-route map for a routing plan: depot + one road polyline per route.
  */
-export default function PlanRoutesMap({ depot, routes, height = '480px' }: Props): JSX.Element | null {
+export default function PlanRoutesMap({ depot, routes, height = '480px', directionsUrl: directionsUrlProp }: Props): JSX.Element | null {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const directionsUrl = prefixedRoute('routing.directions');
+    const directionsUrl = directionsUrlProp ?? prefixedRoute('routing.directions');
 
     const depotPosition = useMemo(() => toLatLng(depot.lat, depot.lng), [depot.lat, depot.lng]);
 
