@@ -5,6 +5,7 @@ namespace Modules\Rental\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
@@ -17,6 +18,7 @@ use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalHandoverChecklist;
+use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 
 class RentalController extends Controller
@@ -63,6 +65,11 @@ class RentalController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'phone']),
             'partners' => Partner::query()
+                ->where('status', 'active')
+                ->when(
+                    Schema::hasColumn('partners', 'is_blacklisted'),
+                    fn ($query) => $query->where('is_blacklisted', false),
+                )
                 ->orderBy('name')
                 ->get(['id', 'name', 'code']),
             'rates' => RentalRate::query()
@@ -178,6 +185,12 @@ class RentalController extends Controller
             'invoicingEnabled' => $this->invoices->isAvailable(),
             'checklistItems' => RentalHandoverChecklist::itemKeys(),
             'fuelLevels' => RentalHandoverChecklist::fuelLevels(),
+            'handoverEvidence' => [
+                'checkout_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->checkout_photos),
+                'checkout_signature_url' => app(RentalHandoverMedia::class)->publicUrl($rental->checkout_signature_path),
+                'return_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->return_photos),
+                'return_signature_url' => app(RentalHandoverMedia::class)->publicUrl($rental->return_signature_path),
+            ],
         ]);
     }
 
@@ -202,6 +215,11 @@ class RentalController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'phone']),
             'partners' => Partner::query()
+                ->where('status', 'active')
+                ->when(
+                    Schema::hasColumn('partners', 'is_blacklisted'),
+                    fn ($query) => $query->where('is_blacklisted', false),
+                )
                 ->orderBy('name')
                 ->get(['id', 'name', 'code']),
             'rates' => RentalRate::query()

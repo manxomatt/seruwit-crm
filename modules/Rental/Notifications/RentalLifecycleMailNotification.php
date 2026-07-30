@@ -25,8 +25,12 @@ class RentalLifecycleMailNotification extends Notification
 
     public const EVENT_OVERDUE = 'overdue';
 
+    public const EVENT_INVOICE_ISSUED = 'invoice_issued';
+
+    public const EVENT_DEPOSIT_SETTLED = 'deposit_settled';
+
     /**
-     * @param  array{days?: int}  $context
+     * @param  array{days?: int, invoice_count?: int, applied?: float, refunded?: float}  $context
      */
     public function __construct(
         public readonly Rental $rental,
@@ -60,6 +64,8 @@ class RentalLifecycleMailNotification extends Notification
                 'days' => (int) ($this->context['days'] ?? 0),
             ]),
             self::EVENT_OVERDUE => __('rental.mail.overdue_subject', ['code' => $rental->code]),
+            self::EVENT_INVOICE_ISSUED => __('rental.mail.invoice_issued_subject', ['code' => $rental->code]),
+            self::EVENT_DEPOSIT_SETTLED => __('rental.mail.deposit_settled_subject', ['code' => $rental->code]),
             default => __('rental.mail.default_subject', ['code' => $rental->code]),
         };
 
@@ -95,6 +101,19 @@ class RentalLifecycleMailNotification extends Notification
                 'vehicle' => $vehicle,
                 'partner' => $partner,
                 'date' => $rental->end_date?->toDateString(),
+            ]),
+            self::EVENT_INVOICE_ISSUED => __('rental.mail.invoice_issued_body', [
+                'code' => $rental->code,
+                'vehicle' => $vehicle,
+                'partner' => $partner,
+                'count' => (int) ($this->context['invoice_count'] ?? 1),
+            ]),
+            self::EVENT_DEPOSIT_SETTLED => __('rental.mail.deposit_settled_body', [
+                'code' => $rental->code,
+                'vehicle' => $vehicle,
+                'partner' => $partner,
+                'applied' => number_format((float) ($this->context['applied'] ?? 0), 0, ',', '.'),
+                'refunded' => number_format((float) ($this->context['refunded'] ?? 0), 0, ',', '.'),
             ]),
             default => __('rental.mail.default_body', ['code' => $rental->code]),
         };

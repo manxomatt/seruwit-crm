@@ -6,10 +6,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Invoicing\Support\PaymentTerms;
 use Modules\Receivables\Models\Payment;
 use Modules\Receivables\Support\PaymentRecorder;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
+use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 
 /**
  * Soft-depend bridge between rental ops and Accounting / Receivables.
@@ -17,7 +19,10 @@ use Modules\Rental\Models\RentalCharge;
  */
 class RentalAccountingService
 {
-    public function __construct(private readonly RentalInvoiceService $invoices) {}
+    public function __construct(
+        private readonly RentalInvoiceService $invoices,
+        private readonly RentalMailer $mailer,
+    ) {}
 
     public function accountingAvailable(): bool
     {
@@ -43,24 +48,38 @@ class RentalAccountingService
         }
 
         $issued = [];
+        $rental->loadMissing('partner');
 
         foreach ($this->draftInvoicesFor($rental) as $invoice) {
             if (! $invoice->lines()->exists()) {
                 continue;
             }
 
+            $issueDate = $invoice->issue_date?->toDateString() ?? now()->toDateString();
+            $dueDate = $invoice->due_date?->toDateString()
+                ?? PaymentTerms::dueDateFor($issueDate, $rental->partner);
+
             $invoice->update([
                 'status' => Invoice::STATUS_ISSUED,
-                'issue_date' => $invoice->issue_date ?? now()->toDateString(),
+                'issue_date' => $issueDate,
+                'due_date' => $dueDate,
             ]);
 
-            $fresh = $invoice->fresh(['lines']);
+            $fresh = $invoice->fresh(['lines', 'partner']);
 
             if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
                 \Modules\Accounting\Support\AccountingBridge::invoiceIssued($fresh);
             }
 
             $issued[] = $fresh;
+        }
+
+        if ($issued !== []) {
+            $this->mailer->notify(
+                $rental->fresh(['vehicle', 'partner']),
+                RentalLifecycleMailNotification::EVENT_INVOICE_ISSUED,
+                ['invoice_count' => count($issued)],
+            );
         }
 
         return $issued;
@@ -157,6 +176,17 @@ class RentalAccountingService
                 \Modules\Accounting\Support\AccountingBridge::rentalDepositRefunded($fresh, $refunded);
             }
         });
+
+        if ($deposit >= 0.005) {
+            $this->mailer->notify(
+                $rental->fresh(['vehicle', 'partner']),
+                RentalLifecycleMailNotification::EVENT_DEPOSIT_SETTLED,
+                [
+                    'applied' => $applied,
+                    'refunded' => $refunded,
+                ],
+            );
+        }
     }
 
     /**

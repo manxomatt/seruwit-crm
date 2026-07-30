@@ -407,6 +407,16 @@ class SettingSeeder extends Seeder
                 'sort_order' => 4,
             ],
             [
+                'key' => 'invoicing.default_payment_term_days',
+                'group' => 'invoicing',
+                'value' => '0',
+                'type' => 'number',
+                'label' => 'Default Payment Term (Days)',
+                'description' => 'Days until invoice due date. 0 = due on issue date (COD). Partner override wins when set.',
+                'is_public' => false,
+                'sort_order' => 1,
+            ],
+            [
                 'key' => 'ecommerce.free_shipping_threshold',
                 'group' => 'ecommerce',
                 'value' => '500000',

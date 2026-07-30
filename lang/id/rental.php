@@ -78,6 +78,11 @@ return [
         'deposit_returned' => 'Deposit dikembalikan ke pelanggan',
         'deposit_applied' => 'Dipakai untuk tagihan (Rp)',
         'deposit_refunded' => 'Dikembalikan ke pelanggan (Rp)',
+        'checkout_photos' => 'Foto kondisi (checkout)',
+        'return_photos' => 'Foto kondisi (return)',
+        'signature' => 'Tanda tangan pelanggan',
+        'issue_date' => 'Tanggal terbit',
+        'due_date' => 'Jatuh tempo',
         'deposit_status' => 'Status deposit',
         'fuel_level' => 'Level BBM',
         'checkout_notes' => 'Catatan checkout',
@@ -295,6 +300,10 @@ return [
         'ending_body' => 'Sewa :code (:vehicle / :partner) jatuh tempo :date (sisa :days hari).',
         'overdue_subject' => 'Sewa :code terlambat',
         'overdue_body' => 'Sewa :code (:vehicle / :partner) jatuh tempo :date dan masih keluar.',
+        'invoice_issued_subject' => 'Invoice terbit untuk sewa :code',
+        'invoice_issued_body' => ':count invoice diterbitkan untuk sewa :code (:vehicle / :partner). Mohon lunasi sebelum jatuh tempo.',
+        'deposit_settled_subject' => 'Deposit di-settle — sewa :code',
+        'deposit_settled_body' => 'Deposit sewa :code (:vehicle / :partner) sudah di-settle. Dipakai: Rp :applied · Dikembalikan: Rp :refunded.',
     ],
 
     'timeline' => [
@@ -415,6 +424,13 @@ return [
         'deposit_already_settled' => 'Deposit sudah di-settle.',
         'pdf_contract_confirmed_only' => 'Cetak kontrak setelah rental dikonfirmasi.',
         'pdf_handover_checked_out_only' => 'Cetak BA serah terima setelah kendaraan di-check out.',
+        'partner_inactive' => 'Pelanggan ini tidak aktif dan tidak dapat menyewa.',
+        'partner_blacklisted' => 'Pelanggan ini diblacklist: :reason',
+        'partner_blacklisted_default' => 'diblokir untuk rental',
+        'partner_license_expired' => 'SIM pelanggan kedaluwarsa pada :date.',
+        'partner_missing' => 'Pelanggan rental wajib sebelum konfirmasi.',
+        'handover_photo_required' => 'Tambahkan minimal satu foto kondisi.',
+        'handover_signature_required' => 'Tanda tangan pelanggan wajib.',
     ],
 
     'validation' => [

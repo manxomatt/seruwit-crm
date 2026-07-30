@@ -8,12 +8,14 @@ use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 use Modules\Rental\Support\RentalMailer;
+use Tests\Support\WithRentalHandoverEvidence;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
 class RentalMailNotificationTest extends TestCase
 {
     use RefreshDatabase;
+    use WithRentalHandoverEvidence;
     use WithRoles;
 
     protected function setUp(): void
@@ -68,10 +70,10 @@ class RentalMailNotificationTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('module.rental.checkout', $rental), [
+            ->post(route('module.rental.checkout', $rental), $this->rentalCheckoutPayload([
                 'start_odometer' => 1000,
                 'start_fuel_level' => 'full',
-            ])
+            ]))
             ->assertRedirect();
 
         Notification::assertSentTo(
@@ -83,11 +85,11 @@ class RentalMailNotificationTest extends TestCase
         $rental->refresh();
 
         $this->actingAs($admin)
-            ->post(route('module.rental.return', $rental), [
+            ->post(route('module.rental.return', $rental), $this->rentalReturnPayload([
                 'actual_return_date' => now()->toDateString(),
                 'end_odometer' => 1100,
                 'end_fuel_level' => 'full',
-            ])
+            ]))
             ->assertRedirect();
 
         Notification::assertSentTo(

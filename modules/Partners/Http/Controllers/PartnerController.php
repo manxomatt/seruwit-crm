@@ -173,6 +173,18 @@ class PartnerController extends Controller
             unset($validated['is_supplier']);
         }
 
+        if (array_key_exists('is_blacklisted', $validated)) {
+            $blacklisted = (bool) $validated['is_blacklisted'];
+            $validated['is_blacklisted'] = $blacklisted;
+            $validated['blacklisted_at'] = $blacklisted
+                ? ($partner->blacklisted_at ?? now())
+                : null;
+
+            if (! $blacklisted) {
+                $validated['blacklist_reason'] = null;
+            }
+        }
+
         $partner->update($validated);
 
         if ($tagIds !== null) {

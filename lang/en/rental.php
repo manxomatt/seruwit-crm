@@ -78,6 +78,11 @@ return [
         'deposit_returned' => 'Deposit returned to customer',
         'deposit_applied' => 'Applied to charges (Rp)',
         'deposit_refunded' => 'Refunded to customer (Rp)',
+        'checkout_photos' => 'Condition photos (checkout)',
+        'return_photos' => 'Condition photos (return)',
+        'signature' => 'Customer signature',
+        'issue_date' => 'Issue date',
+        'due_date' => 'Due date',
         'deposit_status' => 'Deposit status',
         'fuel_level' => 'Fuel level',
         'checkout_notes' => 'Checkout notes',
@@ -295,6 +300,10 @@ return [
         'ending_body' => 'Rental :code (:vehicle / :partner) is due back on :date (:days day(s) left).',
         'overdue_subject' => 'Rental :code is overdue',
         'overdue_body' => 'Rental :code (:vehicle / :partner) was due on :date and is still out.',
+        'invoice_issued_subject' => 'Invoice issued for rental :code',
+        'invoice_issued_body' => ':count invoice(s) were issued for rental :code (:vehicle / :partner). Please settle by the due date.',
+        'deposit_settled_subject' => 'Deposit settled — rental :code',
+        'deposit_settled_body' => 'Deposit for rental :code (:vehicle / :partner) is settled. Applied: Rp :applied · Refunded: Rp :refunded.',
     ],
 
     'timeline' => [
@@ -415,6 +424,13 @@ return [
         'deposit_already_settled' => 'Deposit has already been settled.',
         'pdf_contract_confirmed_only' => 'Print the contract after the rental is confirmed.',
         'pdf_handover_checked_out_only' => 'Print the handover after the vehicle is checked out.',
+        'partner_inactive' => 'This customer is inactive and cannot rent.',
+        'partner_blacklisted' => 'This customer is blacklisted: :reason',
+        'partner_blacklisted_default' => 'blocked for rental',
+        'partner_license_expired' => 'Customer driving license expired on :date.',
+        'partner_missing' => 'Rental customer is required before confirm.',
+        'handover_photo_required' => 'Add at least one condition photo.',
+        'handover_signature_required' => 'Customer signature is required.',
     ],
 
     'validation' => [

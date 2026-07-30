@@ -8,12 +8,14 @@ use Modules\Invoicing\Models\InvoiceLine;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalDamage;
+use Tests\Support\WithRentalHandoverEvidence;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
 class RentalInvoiceTest extends TestCase
 {
     use RefreshDatabase;
+    use WithRentalHandoverEvidence;
     use WithRoles;
 
     protected function setUp(): void
@@ -23,9 +25,14 @@ class RentalInvoiceTest extends TestCase
         $this->setUpRoles();
     }
 
-    public function test_confirm_creates_draft_base_invoice(): void
+    public function test_confirm_creates_issued_base_invoice_with_due_date(): void
     {
+        $partner = \Modules\Partners\Models\Partner::factory()->create([
+            'payment_term_days' => 7,
+        ]);
+
         $rental = Rental::factory()->create([
+            'partner_id' => $partner->id,
             'status' => Rental::STATUS_DRAFT,
             'base_amount' => 1500000,
             'total_amount' => 1500000,
@@ -51,9 +58,14 @@ class RentalInvoiceTest extends TestCase
 
         $this->assertNotNull($line);
         $invoice = $line->invoice;
-        $this->assertSame(Invoice::STATUS_DRAFT, $invoice->status);
+        $this->assertSame(Invoice::STATUS_ISSUED, $invoice->status);
         $this->assertSame($rental->partner_id, $invoice->partner_id);
         $this->assertEquals(1500000, (float) $invoice->subtotal);
+        $this->assertNotNull($invoice->due_date);
+        $this->assertSame(
+            $invoice->issue_date->copy()->addDays(7)->toDateString(),
+            $invoice->due_date->toDateString(),
+        );
     }
 
     public function test_confirm_is_idempotent_for_invoicing(): void
@@ -123,10 +135,10 @@ class RentalInvoiceTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.return', $rental), [
+            ->post(route('module.rental.return', $rental), $this->rentalReturnPayload([
                 'actual_return_date' => '2027-01-15',
                 'end_odometer' => 50400,
-            ])
+            ]))
             ->assertRedirect();
 
         $excess = RentalCharge::query()
@@ -151,9 +163,9 @@ class RentalInvoiceTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.return', $rental), [
+            ->post(route('module.rental.return', $rental), $this->rentalReturnPayload([
                 'actual_return_date' => '2027-01-13',
-            ])
+            ]))
             ->assertRedirect();
 
         $rental->refresh();
@@ -241,19 +253,36 @@ class RentalInvoiceTest extends TestCase
         $rental = Rental::factory()->returned()->create([
             'base_amount' => 1000000,
             'excess_amount' => 0,
-            'total_amount' => 1000000,
+            'total_amount' => 1150000,
             'deposit_amount' => 0,
         ]);
 
-        $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.damages.store', $rental), [
-                'description' => 'Scratch',
-                'amount' => 150000,
-            ])
-            ->assertRedirect();
+        $damage = RentalDamage::factory()->create([
+            'rental_id' => $rental->id,
+            'amount' => 150000,
+            'description' => 'Scratch',
+        ]);
 
-        $damage = RentalDamage::query()->where('rental_id', $rental->id)->first();
-        $this->assertNotNull($damage);
+        $charge = RentalCharge::query()->create([
+            'rental_id' => $rental->id,
+            'kind' => RentalCharge::KIND_DAMAGE,
+            'amount' => 150000,
+            'description' => 'Scratch',
+            'rental_damage_id' => $damage->id,
+        ]);
+
+        $invoice = Invoice::factory()->create([
+            'partner_id' => $rental->partner_id,
+            'status' => Invoice::STATUS_DRAFT,
+        ]);
+
+        InvoiceLine::query()->create([
+            'invoice_id' => $invoice->id,
+            'description' => 'Scratch',
+            'amount' => 150000,
+            'source_type' => $charge->getMorphClass(),
+            'source_id' => $charge->id,
+        ]);
 
         $this->actingAs($this->createAdminUser())
             ->delete(route('module.rental.damages.destroy', [$rental, $damage]))
@@ -341,8 +370,9 @@ class RentalInvoiceTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Rental/Show')
                 ->where('invoicingEnabled', true)
-                ->where('payment.status', 'draft')
+                ->where('payment.status', 'unpaid')
                 ->has('payment.invoices', 1)
+                ->where('payment.invoices.0.due_date', fn ($v) => is_string($v) && $v !== '')
                 ->where('payment.total_invoiced', fn ($v) => (float) $v > 0));
     }
 }

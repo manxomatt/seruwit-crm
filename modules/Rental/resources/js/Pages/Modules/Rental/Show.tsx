@@ -11,13 +11,32 @@ import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import ImageUploader from '@/Components/ImageUploader';
+import SignaturePad from '@/Components/SignaturePad';
 import { formatDateTimeDmYHi } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
 import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { ChangeEvent, FormEventHandler, useState } from 'react';
 import RentalNav from '../../../RentalNav';
 
 const formatMoney = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id-ID');
+
+async function filesToDataUrls(files: FileList | null): Promise<string[]> {
+    if (! files || files.length === 0) {
+        return [];
+    }
+
+    const urls: string[] = [];
+    for (const file of Array.from(files)) {
+        urls.push(await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        }));
+    }
+
+    return urls;
+}
 
 interface Extension { id: number; original_end_date: string; new_end_date: string; extended_periods: number; additional_amount: string; notes: string | null; }
 interface Damage { id: number; description: string; amount: string; photo_path: string | null; reported_at: string; }
@@ -47,9 +66,17 @@ interface PaymentInvoice {
     id: number;
     code: string;
     status: string;
+    issue_date: string | null;
+    due_date: string | null;
     total: number;
     amount_paid: number;
     balance: number;
+}
+interface HandoverEvidence {
+    checkout_photos: string[];
+    checkout_signature_url: string | null;
+    return_photos: string[];
+    return_signature_url: string | null;
 }
 interface PaymentSummary {
     status: string;
@@ -106,6 +133,7 @@ interface Props {
     invoicingEnabled: boolean;
     checklistItems: string[];
     fuelLevels: string[];
+    handoverEvidence?: HandoverEvidence;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -138,6 +166,12 @@ export default function Show({
     invoicingEnabled,
     checklistItems,
     fuelLevels,
+    handoverEvidence = {
+        checkout_photos: [],
+        checkout_signature_url: null,
+        return_photos: [],
+        return_signature_url: null,
+    },
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -149,6 +183,8 @@ export default function Show({
         start_fuel_level: 'full',
         checkout_checklist: emptyChecklist(checklistItems),
         checkout_notes: '',
+        checkout_photos: [] as string[],
+        checkout_signature: null as string | null,
     });
     const returnForm = useForm({
         actual_return_date: '',
@@ -157,6 +193,8 @@ export default function Show({
         return_checklist: emptyChecklist(checklistItems),
         return_notes: '',
         deposit_returned: false,
+        return_photos: [] as string[],
+        return_signature: null as string | null,
     });
     const extendForm = useForm({ new_end_date: '', notes: '' });
     const damageForm = useForm({ description: '', amount: '', photo_path: '' });
@@ -506,6 +544,11 @@ export default function Show({
                                                         {inv.code}
                                                     </Link>
                                                     <span className="ml-2 text-xs text-gray-400">{inv.status}</span>
+                                                    {inv.due_date && (
+                                                        <span className="ml-2 text-xs text-gray-500">
+                                                            {t('rental.fields.due_date')}: {inv.due_date}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(inv.total)}</span>
                                             </div>
@@ -563,6 +606,18 @@ export default function Show({
                                             ))}
                                         </ul>
                                         {rental.checkout_notes && <p className="mt-2 text-xs text-gray-500">{rental.checkout_notes}</p>}
+                                        {handoverEvidence.checkout_photos.length > 0 && (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {handoverEvidence.checkout_photos.map((url) => (
+                                                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                                                        <img src={url} alt="" className="h-16 w-16 rounded object-cover" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {handoverEvidence.checkout_signature_url && (
+                                            <img src={handoverEvidence.checkout_signature_url} alt="" className="mt-3 h-16 rounded border border-gray-200 bg-white dark:border-gray-600" />
+                                        )}
                                     </div>
                                 )}
                                 {rental.return_checklist && (
@@ -579,6 +634,18 @@ export default function Show({
                                             ))}
                                         </ul>
                                         {rental.return_notes && <p className="mt-2 text-xs text-gray-500">{rental.return_notes}</p>}
+                                        {handoverEvidence.return_photos.length > 0 && (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {handoverEvidence.return_photos.map((url) => (
+                                                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                                                        <img src={url} alt="" className="h-16 w-16 rounded object-cover" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {handoverEvidence.return_signature_url && (
+                                            <img src={handoverEvidence.return_signature_url} alt="" className="mt-3 h-16 rounded border border-gray-200 bg-white dark:border-gray-600" />
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -766,6 +833,29 @@ export default function Show({
                             <InputLabel htmlFor="checkout_notes" value={t('rental.fields.checkout_notes')} />
                             <textarea id="checkout_notes" rows={2} value={checkoutForm.data.checkout_notes} onChange={(e) => checkoutForm.setData('checkout_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                         </div>
+                        <div>
+                            <InputLabel htmlFor="checkout_photos" value={`${t('rental.fields.checkout_photos')} *`} />
+                            <input
+                                id="checkout_photos"
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="mt-1 block w-full text-sm text-gray-600 dark:text-gray-300"
+                                onChange={async (e: ChangeEvent<HTMLInputElement>) => {
+                                    checkoutForm.setData('checkout_photos', await filesToDataUrls(e.target.files));
+                                }}
+                            />
+                            <InputError message={checkoutForm.errors.checkout_photos} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel value={`${t('rental.fields.signature')} *`} />
+                            <SignaturePad
+                                className="mt-1"
+                                value={checkoutForm.data.checkout_signature}
+                                onChange={(value) => checkoutForm.setData('checkout_signature', value)}
+                            />
+                            <InputError message={checkoutForm.errors.checkout_signature} className="mt-1" />
+                        </div>
                     </div>
                     <div className="mt-4 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
@@ -823,6 +913,29 @@ export default function Show({
                         <div>
                             <InputLabel htmlFor="return_notes" value={t('rental.fields.return_notes')} />
                             <textarea id="return_notes" rows={2} value={returnForm.data.return_notes} onChange={(e) => returnForm.setData('return_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="return_photos" value={`${t('rental.fields.return_photos')} *`} />
+                            <input
+                                id="return_photos"
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="mt-1 block w-full text-sm text-gray-600 dark:text-gray-300"
+                                onChange={async (e: ChangeEvent<HTMLInputElement>) => {
+                                    returnForm.setData('return_photos', await filesToDataUrls(e.target.files));
+                                }}
+                            />
+                            <InputError message={returnForm.errors.return_photos} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel value={`${t('rental.fields.signature')} *`} />
+                            <SignaturePad
+                                className="mt-1"
+                                value={returnForm.data.return_signature}
+                                onChange={(value) => returnForm.setData('return_signature', value)}
+                            />
+                            <InputError message={returnForm.errors.return_signature} className="mt-1" />
                         </div>
                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                             <input type="checkbox" checked={returnForm.data.deposit_returned} onChange={(e) => returnForm.setData('deposit_returned', e.target.checked)} className="rounded" />

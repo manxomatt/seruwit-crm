@@ -45,6 +45,9 @@ interface PartnerData {
     job_title: string | null;
     website: string | null;
     tax_id: string | null;
+    id_number: string | null;
+    license_number: string | null;
+    license_expires_at: string | null;
     company_registry: string | null;
     reference: string | null;
     parent_id: number | null;
@@ -53,11 +56,14 @@ interface PartnerData {
     customer_rank: number;
     supplier_rank: number;
     credit_limit: string | null;
+    payment_term_days: number | null;
     price_list_id?: number | null;
     address: string | null;
     notes: string | null;
     comment: string | null;
     status: string;
+    is_blacklisted: boolean;
+    blacklist_reason: string | null;
     tags: Tag[];
 }
 
@@ -83,6 +89,9 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
         job_title: partner.job_title || '',
         website: partner.website || '',
         tax_id: partner.tax_id || '',
+        id_number: partner.id_number || '',
+        license_number: partner.license_number || '',
+        license_expires_at: partner.license_expires_at || '',
         company_registry: partner.company_registry || '',
         reference: partner.reference || '',
         parent_id: partner.parent_id ? String(partner.parent_id) : '',
@@ -91,11 +100,14 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
         is_customer: partner.customer_rank > 0,
         is_supplier: partner.supplier_rank > 0,
         credit_limit: partner.credit_limit || '',
+        payment_term_days: partner.payment_term_days != null ? String(partner.payment_term_days) : '',
         price_list_id: partner.price_list_id ? String(partner.price_list_id) : '',
         address: partner.address || '',
         notes: partner.notes || '',
         comment: partner.comment || '',
         status: partner.status,
+        is_blacklisted: !!partner.is_blacklisted,
+        blacklist_reason: partner.blacklist_reason || '',
         tag_ids: partner.tags.map((tag) => tag.id),
     });
 
@@ -269,9 +281,47 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
                                 <InputError message={errors.tax_id} className="mt-2" />
                             </div>
                             <div>
+                                <InputLabel htmlFor="id_number" value={t('partners.fields.id_number')} />
+                                <TextInput id="id_number" className="mt-1 block w-full" value={data.id_number} onChange={(e) => setData('id_number', e.target.value)} />
+                                <InputError message={errors.id_number} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="license_number" value={t('partners.fields.license_number')} />
+                                <TextInput id="license_number" className="mt-1 block w-full" value={data.license_number} onChange={(e) => setData('license_number', e.target.value)} />
+                                <InputError message={errors.license_number} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="license_expires_at" value={t('partners.fields.license_expires_at')} />
+                                <TextInput id="license_expires_at" type="date" className="mt-1 block w-full" value={data.license_expires_at} onChange={(e) => setData('license_expires_at', e.target.value)} />
+                                <InputError message={errors.license_expires_at} className="mt-2" />
+                            </div>
+                            <div>
                                 <InputLabel htmlFor="credit_limit" value={t('partners.fields.credit_limit')} />
                                 <TextInput id="credit_limit" type="number" className="mt-1 block w-full" value={data.credit_limit} onChange={(e) => setData('credit_limit', e.target.value)} min="0" step="0.01" />
                                 <InputError message={errors.credit_limit} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="payment_term_days" value={t('partners.fields.payment_term_days')} />
+                                <TextInput id="payment_term_days" type="number" className="mt-1 block w-full" value={data.payment_term_days} onChange={(e) => setData('payment_term_days', e.target.value)} min="0" max="365" />
+                                <InputError message={errors.payment_term_days} className="mt-2" />
+                            </div>
+                            <div className="sm:col-span-3 space-y-3 rounded-md border border-gray-200 p-4">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.is_blacklisted}
+                                        onChange={(e) => setData('is_blacklisted', e.target.checked)}
+                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700">{t('partners.fields.is_blacklisted')}</span>
+                                </label>
+                                {data.is_blacklisted && (
+                                    <div>
+                                        <InputLabel htmlFor="blacklist_reason" value={t('partners.fields.blacklist_reason')} />
+                                        <TextInput id="blacklist_reason" className="mt-1 block w-full" value={data.blacklist_reason} onChange={(e) => setData('blacklist_reason', e.target.value)} />
+                                        <InputError message={errors.blacklist_reason} className="mt-2" />
+                                    </div>
+                                )}
                             </div>
                             {priceLists.length > 0 && (
                                 <div>

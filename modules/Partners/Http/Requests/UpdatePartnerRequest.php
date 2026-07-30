@@ -26,6 +26,9 @@ class UpdatePartnerRequest extends FormRequest
             'job_title' => ['nullable', 'string', 'max:255'],
             'website' => ['nullable', 'string', 'max:255'],
             'tax_id' => ['nullable', 'string', 'max:50'],
+            'id_number' => ['nullable', 'string', 'max:50'],
+            'license_number' => ['nullable', 'string', 'max:50'],
+            'license_expires_at' => ['nullable', 'date'],
             'company_registry' => ['nullable', 'string', 'max:100'],
             'reference' => ['nullable', 'string', 'max:100'],
             'parent_id' => ['nullable', 'exists:partners,id'],
@@ -34,6 +37,7 @@ class UpdatePartnerRequest extends FormRequest
             'is_customer' => ['boolean'],
             'is_supplier' => ['boolean'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'payment_term_days' => ['nullable', 'integer', 'min:0', 'max:365'],
             'price_list_id' => array_values(array_filter([
                 'nullable',
                 'integer',
@@ -43,6 +47,8 @@ class UpdatePartnerRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:2000'],
             'comment' => ['nullable', 'string', 'max:5000'],
             'status' => ['sometimes', 'required', 'string', 'in:active,inactive'],
+            'is_blacklisted' => ['boolean'],
+            'blacklist_reason' => ['nullable', 'string', 'max:500'],
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => ['exists:partner_tags,id'],
         ];

@@ -117,21 +117,30 @@ class RentalAddonChargeTest extends TestCase
     {
         $rental = Rental::factory()->active()->create([
             'base_amount' => 1000000,
-            'total_amount' => 1000000,
+            'total_amount' => 1075000,
             'deposit_amount' => 0,
         ]);
 
-        $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.addons.store', $rental), [
-                'addon_code' => RentalAddonCatalog::DELIVERY,
-                'amount' => 75000,
-            ])
-            ->assertRedirect();
+        $charge = RentalCharge::query()->create([
+            'rental_id' => $rental->id,
+            'kind' => RentalCharge::KIND_ADDON,
+            'addon_code' => RentalAddonCatalog::DELIVERY,
+            'amount' => 75000,
+            'description' => 'Delivery',
+        ]);
 
-        $charge = RentalCharge::query()
-            ->where('rental_id', $rental->id)
-            ->where('kind', RentalCharge::KIND_ADDON)
-            ->firstOrFail();
+        $invoice = Invoice::factory()->create([
+            'partner_id' => $rental->partner_id,
+            'status' => Invoice::STATUS_DRAFT,
+        ]);
+
+        InvoiceLine::query()->create([
+            'invoice_id' => $invoice->id,
+            'description' => 'Delivery',
+            'amount' => 75000,
+            'source_type' => $charge->getMorphClass(),
+            'source_id' => $charge->id,
+        ]);
 
         $this->actingAs($this->createAdminUser())
             ->delete(route('module.rental.addons.destroy', [$rental, $charge]))

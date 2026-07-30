@@ -16,7 +16,9 @@ use Modules\Rental\Models\RentalDamage;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 use Modules\Rental\Support\RentalAccountingService;
 use Modules\Rental\Support\RentalAddonCatalog;
+use Modules\Rental\Support\RentalEligibility;
 use Modules\Rental\Support\RentalHandoverChecklist;
+use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalMailer;
 
@@ -26,6 +28,8 @@ class RentalActionController extends Controller
         private readonly RentalInvoiceService $invoices,
         private readonly RentalAccountingService $accounting,
         private readonly RentalMailer $mailer,
+        private readonly RentalEligibility $eligibility,
+        private readonly RentalHandoverMedia $handoverMedia,
     ) {}
 
     protected function getRoutePrefix(): string
@@ -39,6 +43,9 @@ class RentalActionController extends Controller
     public function confirm(Request $request, Rental $rental): RedirectResponse
     {
         abort_if($rental->status !== Rental::STATUS_DRAFT, 422, __('rental.errors.confirm_draft_only'));
+
+        $rental->loadMissing('partner');
+        $this->eligibility->assertCanConfirm($rental->partner);
 
         $request->validate([
             'payment_method' => ['nullable', 'string', Rule::in(['cash', 'transfer', 'giro', 'card', 'other'])],
@@ -64,6 +71,7 @@ class RentalActionController extends Controller
         }
 
         $this->invoices->invoiceBase($rental->fresh());
+        $this->accounting->issueDraftInvoices($rental->fresh());
 
         $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CONFIRMED);
 
@@ -83,7 +91,13 @@ class RentalActionController extends Controller
             'checkout_checklist' => ['nullable', 'array'],
             'checkout_checklist.*' => ['boolean'],
             'checkout_notes' => ['nullable', 'string', 'max:1000'],
+            'checkout_photos' => ['required', 'array', 'min:1'],
+            'checkout_photos.*' => ['string', 'starts_with:data:image/'],
+            'checkout_signature' => ['required', 'string', 'starts_with:data:image/'],
         ]);
+
+        $photos = $this->handoverMedia->storePhotos($request->input('checkout_photos', []));
+        $signaturePath = $this->handoverMedia->storeSignature($request->input('checkout_signature'));
 
         $rental->update([
             'status' => Rental::STATUS_ACTIVE,
@@ -92,6 +106,9 @@ class RentalActionController extends Controller
             'start_fuel_level' => $request->start_fuel_level,
             'checkout_checklist' => RentalHandoverChecklist::normalize($request->input('checkout_checklist')),
             'checkout_notes' => $request->checkout_notes,
+            'checkout_photos' => $photos,
+            'checkout_signature_path' => $signaturePath,
+            'checkout_signed_at' => now(),
         ]);
 
         $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CHECKED_OUT);
@@ -114,7 +131,13 @@ class RentalActionController extends Controller
             'return_checklist.*' => ['boolean'],
             'return_notes' => ['nullable', 'string', 'max:1000'],
             'deposit_returned' => ['boolean'],
+            'return_photos' => ['required', 'array', 'min:1'],
+            'return_photos.*' => ['string', 'starts_with:data:image/'],
+            'return_signature' => ['required', 'string', 'starts_with:data:image/'],
         ]);
+
+        $photos = $this->handoverMedia->storePhotos($request->input('return_photos', []));
+        $signaturePath = $this->handoverMedia->storeSignature($request->input('return_signature'));
 
         $excessKm = null;
         $excessAmount = 0;
@@ -139,6 +162,9 @@ class RentalActionController extends Controller
             'end_fuel_level' => $request->end_fuel_level,
             'return_checklist' => RentalHandoverChecklist::normalize($request->input('return_checklist')),
             'return_notes' => $request->return_notes,
+            'return_photos' => $photos,
+            'return_signature_path' => $signaturePath,
+            'return_signed_at' => now(),
             'excess_km' => $excessKm,
             'excess_amount' => $excessAmount,
             'overdue_days' => $overdueDays,
@@ -151,6 +177,7 @@ class RentalActionController extends Controller
 
         $this->invoices->invoiceExcessKm($rental);
         $this->invoices->invoiceLateFee($rental);
+        $this->accounting->issueDraftInvoices($rental->fresh());
 
         if ((float) $rental->deposit_amount <= 0) {
             $rental->settleDeposit([
@@ -294,6 +321,7 @@ class RentalActionController extends Controller
         ]);
 
         $this->invoices->invoiceExtension($rental->fresh(), $extension);
+        $this->accounting->issueDraftInvoices($rental->fresh());
 
         return back()->with('success', __('rental.messages.extended'));
     }
@@ -324,6 +352,7 @@ class RentalActionController extends Controller
 
         $rental->recalculateTotalAmount();
         $this->invoices->invoiceDamage($rental->fresh(), $damage);
+        $this->accounting->issueDraftInvoices($rental->fresh());
 
         return back()->with('success', __('rental.messages.damage_recorded'));
     }
@@ -395,6 +424,7 @@ class RentalActionController extends Controller
 
         $rental->recalculateTotalAmount();
         $this->invoices->invoiceAddon($rental->fresh(), $charge);
+        $this->accounting->issueDraftInvoices($rental->fresh());
 
         return back()->with('success', __('rental.messages.addon_recorded'));
     }

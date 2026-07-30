@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
+use Modules\Invoicing\Support\PaymentTerms;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalDamage;
@@ -156,7 +157,7 @@ class RentalInvoiceService
      *     total_invoiced: float,
      *     total_paid: float,
      *     balance_due: float,
-     *     invoices: list<array{id: int, code: string, status: string, total: float, amount_paid: float, balance: float}>
+     *     invoices: list<array{id: int, code: string, status: string, issue_date: string|null, due_date: string|null, total: float, amount_paid: float, balance: float}>
      * }
      */
     public function paymentSummary(Rental $rental): array
@@ -183,6 +184,8 @@ class RentalInvoiceService
             'id' => $invoice->id,
             'code' => $invoice->code,
             'status' => $invoice->status,
+            'issue_date' => $invoice->issue_date?->toDateString(),
+            'due_date' => $invoice->due_date?->toDateString(),
             'total' => (float) $invoice->total,
             'amount_paid' => (float) ($invoice->amount_paid ?? 0),
             'balance' => $invoice->balanceDue(),
@@ -310,12 +313,14 @@ class RentalInvoiceService
                 ];
             }
 
+            $issueDate = now()->toDateString();
+
             $invoice = Invoice::create([
                 'code' => Invoice::nextCode(),
                 'partner_id' => $rental->partner_id,
                 'status' => Invoice::STATUS_DRAFT,
-                'issue_date' => now()->toDateString(),
-                'due_date' => null,
+                'issue_date' => $issueDate,
+                'due_date' => PaymentTerms::dueDateFor($issueDate, $rental->partner),
                 ...$taxAttrs,
                 'subtotal' => 0,
                 'tax_amount' => 0,

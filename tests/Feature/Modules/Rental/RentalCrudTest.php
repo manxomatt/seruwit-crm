@@ -10,12 +10,14 @@ use Modules\Rental\Models\RentalDamage;
 use Modules\Rental\Models\RentalExtension;
 use Modules\Rental\Models\RentalRate;
 use Modules\Tracking\Models\GpsDevice;
+use Tests\Support\WithRentalHandoverEvidence;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
 class RentalCrudTest extends TestCase
 {
     use RefreshDatabase;
+    use WithRentalHandoverEvidence;
     use WithRoles;
 
     protected function setUp(): void
@@ -315,7 +317,7 @@ class RentalCrudTest extends TestCase
         $rental = Rental::factory()->confirmed()->create();
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.checkout', $rental), [
+            ->post(route('module.rental.checkout', $rental), $this->rentalCheckoutPayload([
                 'start_odometer' => 50000,
                 'start_fuel_level' => '3/4',
                 'checkout_checklist' => [
@@ -329,7 +331,7 @@ class RentalCrudTest extends TestCase
                     'keys' => true,
                 ],
                 'checkout_notes' => 'Left rear light dim',
-            ])
+            ]))
             ->assertRedirect();
 
         $rental->refresh();
@@ -339,6 +341,8 @@ class RentalCrudTest extends TestCase
         $this->assertSame('3/4', $rental->start_fuel_level);
         $this->assertFalse($rental->checkout_checklist['lights']);
         $this->assertSame('Left rear light dim', $rental->checkout_notes);
+        $this->assertNotEmpty($rental->checkout_photos);
+        $this->assertNotNull($rental->checkout_signature_path);
     }
 
     public function test_return_transitions_active_to_returned_with_excess_km(): void
@@ -351,11 +355,11 @@ class RentalCrudTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.return', $rental), [
+            ->post(route('module.rental.return', $rental), $this->rentalReturnPayload([
                 'actual_return_date' => '2027-01-15',
                 'end_odometer' => 50400, // 400 km driven, limit = 300 → 100 excess
                 'deposit_returned' => true,
-            ])
+            ]))
             ->assertRedirect();
 
         $rental->refresh();
@@ -363,6 +367,38 @@ class RentalCrudTest extends TestCase
         $this->assertEquals(100, $rental->excess_km);
         $this->assertEquals(500000, (float) $rental->excess_amount); // 100 * 5000
         $this->assertTrue($rental->deposit_returned);
+        $this->assertNotEmpty($rental->return_photos);
+        $this->assertNotNull($rental->return_signature_path);
+    }
+
+    public function test_cannot_confirm_blacklisted_partner(): void
+    {
+        $partner = Partner::factory()->create([
+            'status' => 'active',
+            'is_blacklisted' => true,
+            'blacklist_reason' => 'Unpaid damage',
+        ]);
+        $rental = Rental::factory()->create([
+            'partner_id' => $partner->id,
+            'status' => Rental::STATUS_DRAFT,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.confirm', $rental))
+            ->assertSessionHasErrors('partner_id');
+
+        $this->assertSame(Rental::STATUS_DRAFT, $rental->fresh()->status);
+    }
+
+    public function test_checkout_requires_photo_and_signature(): void
+    {
+        $rental = Rental::factory()->confirmed()->create();
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.checkout', $rental), [
+                'start_odometer' => 1000,
+            ])
+            ->assertSessionHasErrors(['checkout_photos', 'checkout_signature']);
     }
 
     public function test_complete_transitions_returned_to_completed(): void

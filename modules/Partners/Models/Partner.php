@@ -37,6 +37,9 @@ class Partner extends Model
         'job_title',
         'website',
         'tax_id',
+        'id_number',
+        'license_number',
+        'license_expires_at',
         'company_registry',
         'reference',
         'parent_id',
@@ -45,11 +48,15 @@ class Partner extends Model
         'customer_rank',
         'supplier_rank',
         'credit_limit',
+        'payment_term_days',
         'price_list_id',
         'address',
         'notes',
         'comment',
         'status',
+        'is_blacklisted',
+        'blacklist_reason',
+        'blacklisted_at',
     ];
 
     /** @return array<string, string> */
@@ -59,6 +66,10 @@ class Partner extends Model
             'customer_rank' => 'integer',
             'supplier_rank' => 'integer',
             'credit_limit' => 'decimal:2',
+            'payment_term_days' => 'integer',
+            'license_expires_at' => 'date:Y-m-d',
+            'is_blacklisted' => 'boolean',
+            'blacklisted_at' => 'datetime',
         ];
     }
 
