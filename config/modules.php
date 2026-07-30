@@ -43,6 +43,7 @@ return [
         Modules\Tracking\TrackingModule::class,
         Modules\TransportationManagement\TransportationManagementModule::class,
         Modules\Rental\RentalModule::class,
+        Modules\Shuttle\ShuttleModule::class,
         Modules\Canvassing\CanvassingModule::class,
     ],
 

@@ -58,6 +58,7 @@ return [
             'work_order' => 'Work Order',
             'pick_list' => 'Pick List',
             'rental' => 'Rental',
+            'shuttle' => 'Booking travel',
             'salesperson' => 'Sales',
             'canvassing_visit' => 'Kunjungan',
             'route_plan' => 'Rencana Rute',

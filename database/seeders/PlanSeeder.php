@@ -39,7 +39,7 @@ class PlanSeeder extends Seeder
             [
                 'key' => 'pro',
                 'name' => 'Pro',
-                'description' => 'Seluruh modul yang tersedia, termasuk rental dan canvassing.',
+                'description' => 'Seluruh modul yang tersedia, termasuk rental, canvassing, dan travel shuttle.',
                 // Invoicing is not optional alongside Billing: Billing requires it,
                 // and the auto-install chain enforces entitlement at every level,
                 // so a plan selling Billing without it could never install either.
@@ -70,6 +70,7 @@ class PlanSeeder extends Seeder
                     'routing',
                     'sales',
                     'scoring',
+                    'shuttle',
                     'tracking',
                     'transportation',
                 ],

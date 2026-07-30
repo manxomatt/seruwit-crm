@@ -29,6 +29,7 @@ return [
     'billing' => 'Penagihan',
     'invoicing' => 'Faktur',
     'rental' => 'Sewa',
+    'shuttle' => 'Travel',
     'canvassing' => 'Canvassing',
     'analytics' => 'Analitik',
     'settings' => 'Pengaturan',

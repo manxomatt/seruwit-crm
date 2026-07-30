@@ -58,6 +58,7 @@ return [
             'work_order' => 'Work Orders',
             'pick_list' => 'Pick Lists',
             'rental' => 'Rentals',
+            'shuttle' => 'Travel bookings',
             'salesperson' => 'Salespeople',
             'canvassing_visit' => 'Visits',
             'route_plan' => 'Route Plans',

@@ -40,6 +40,7 @@ class VerticalPackInstallTest extends TestCase
                 ->component('Module/Modules/Index')
                 ->has('packs')
                 ->where('packs.0.key', VerticalPacks::RENTAL_MOBIL)
+                ->where('packs.1.key', VerticalPacks::TRAVEL_SHUTTLE)
             );
     }
 

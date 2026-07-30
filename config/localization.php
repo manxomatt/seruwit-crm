@@ -81,6 +81,7 @@ return [
         'payables',
         'accounting',
         'rental',
+        'shuttle',
         'roles',
         'routing',
         'scoring',

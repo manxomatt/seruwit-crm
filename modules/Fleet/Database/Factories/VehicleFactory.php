@@ -33,6 +33,7 @@ class VehicleFactory extends Factory
             'model_year' => fake()->numberBetween(2015, 2026),
             'capacity' => fake()->randomElement(['1200 kg', '2000 kg', '5 seats', '12 seats']),
             'capacity_kg' => fake()->randomElement([500, 1000, 2000, 5000]),
+            'capacity_seats' => fake()->randomElement([4, 7, 8, 12, 14]),
             'cost_per_km' => fake()->randomFloat(2, 1500, 8000),
             'tank_capacity_liters' => fake()->randomElement([40, 60, 80, 120, 200]),
             'expected_km_per_liter' => fake()->randomFloat(1, 4, 12),

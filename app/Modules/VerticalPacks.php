@@ -9,6 +9,8 @@ class VerticalPacks
 {
     public const RENTAL_MOBIL = 'rental_mobil';
 
+    public const TRAVEL_SHUTTLE = 'travel_shuttle';
+
     /**
      * @return array<string, array{label: string, description: string, modules: list<string>, seeders: list<class-string>}>
      */
@@ -30,6 +32,22 @@ class VerticalPacks
                 ],
                 'seeders' => [
                     \Database\Seeders\TenantRentalDemoSeeder::class,
+                ],
+            ],
+            self::TRAVEL_SHUTTLE => [
+                'label' => 'Travel Shuttle',
+                'description' => 'Fleet, partners, invoicing, tracking, documents, maintenance, shuttle travel + demo data.',
+                'modules' => [
+                    'fleet',
+                    'document',
+                    'maintenance',
+                    'tracking',
+                    'partners',
+                    'invoicing',
+                    'shuttle',
+                ],
+                'seeders' => [
+                    \Database\Seeders\TenantShuttleDemoSeeder::class,
                 ],
             ],
         ];

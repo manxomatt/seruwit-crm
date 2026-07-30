@@ -30,6 +30,7 @@ class StoreVehicleRequest extends FormRequest
             'model_year' => ['nullable', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
             'capacity' => ['nullable', 'string', 'max:100'],
             'capacity_kg' => ['nullable', 'numeric', 'min:0'],
+            'capacity_seats' => ['nullable', 'integer', 'min:1', 'max:100'],
             'cost_per_km' => ['nullable', 'numeric', 'min:0'],
             'tank_capacity_liters' => ['nullable', 'numeric', 'min:0'],
             'expected_km_per_liter' => ['nullable', 'numeric', 'min:0'],

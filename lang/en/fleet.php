@@ -49,6 +49,7 @@ return [
         'model_year' => 'Model year',
         'capacity' => 'Capacity',
         'capacity_kg' => 'Capacity kg (for routing)',
+        'capacity_seats' => 'Seat capacity (for travel)',
         'fuel_type' => 'Fuel type',
         'odometer' => 'Odometer',
         'status' => 'Status',

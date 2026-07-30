@@ -29,6 +29,7 @@ return [
     'billing' => 'Billing',
     'invoicing' => 'Invoicing',
     'rental' => 'Rental',
+    'shuttle' => 'Travel',
     'canvassing' => 'Canvassing',
     'analytics' => 'Analytics',
     'settings' => 'Settings',

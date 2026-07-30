@@ -23,6 +23,7 @@ interface Vehicle {
     model_year: number | null;
     capacity: string | null;
     capacity_kg: string | number | null;
+    capacity_seats: number | null;
     cost_per_km: string | number | null;
     tank_capacity_liters: string | number | null;
     expected_km_per_liter: string | number | null;
@@ -53,6 +54,7 @@ export default function Edit({ vehicle }: Props): JSX.Element {
         model_year: vehicle.model_year ?? '',
         capacity: vehicle.capacity || '',
         capacity_kg: vehicle.capacity_kg ?? '',
+        capacity_seats: vehicle.capacity_seats ?? '',
         cost_per_km: vehicle.cost_per_km ?? '',
         tank_capacity_liters: vehicle.tank_capacity_liters ?? '',
         expected_km_per_liter: vehicle.expected_km_per_liter ?? '',
@@ -163,6 +165,11 @@ export default function Edit({ vehicle }: Props): JSX.Element {
                                 <InputLabel htmlFor="capacity_kg" value={t('fleet.vehicles.capacity_kg')} />
                                 <TextInput id="capacity_kg" type="number" step="0.01" min={0} className="mt-1 block w-full" value={data.capacity_kg} onChange={(e) => setData('capacity_kg', e.target.value)} />
                                 <InputError message={errors.capacity_kg} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="capacity_seats" value={t('fleet.vehicles.capacity_seats')} />
+                                <TextInput id="capacity_seats" type="number" min={1} max={100} className="mt-1 block w-full" value={data.capacity_seats} onChange={(e) => setData('capacity_seats', e.target.value)} />
+                                <InputError message={errors.capacity_seats} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="cost_per_km" value={t('fleet.vehicles.cost_per_km')} />

@@ -49,6 +49,7 @@ return [
         'model_year' => 'Tahun model',
         'capacity' => 'Kapasitas',
         'capacity_kg' => 'Kapasitas kg (untuk routing)',
+        'capacity_seats' => 'Kapasitas kursi (untuk travel)',
         'fuel_type' => 'Jenis BBM',
         'odometer' => 'Odometer',
         'status' => 'Status',
