@@ -64,6 +64,7 @@ interface Props {
     credit?: CreditSnapshot | null;
     can: { create: boolean; update: boolean; delete: boolean };
     canRecordPayment?: boolean;
+    gatewayEnabled?: boolean;
     taxCodes?: TaxCodeOption[];
 }
 
@@ -82,7 +83,7 @@ const getStatusBadgeColor = (status: string) => {
     }
 };
 
-export default function Show({ invoice, credit, can, canRecordPayment = false, taxCodes = [] }: Props): JSX.Element {
+export default function Show({ invoice, credit, can, canRecordPayment = false, gatewayEnabled = false, taxCodes = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [showLineModal, setShowLineModal] = useState(false);
@@ -168,6 +169,14 @@ export default function Show({ invoice, credit, can, canRecordPayment = false, t
                             >
                                 <SecondaryButton type="button">{t('invoicing.show.record_payment')}</SecondaryButton>
                             </Link>
+                        )}
+                        {gatewayEnabled && isOpen && (
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => router.post(prefixedRoute('receivables.gateway.invoices.pay', invoice.id))}
+                            >
+                                {t('receivables.gateway.pay_invoice')}
+                            </SecondaryButton>
                         )}
                         {printable && (
                             <a href={prefixedRoute('invoicing.invoices.pdf', invoice.id)} target="_blank" rel="noreferrer">

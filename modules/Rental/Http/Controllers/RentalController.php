@@ -10,16 +10,19 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Http\Requests\StoreRentalRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
+use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
+use Modules\Rental\Support\RentalLocationHydrator;
 
 class RentalController extends Controller
 {
@@ -76,12 +79,15 @@ class RentalController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(),
+            'locations' => $this->locationOptions(),
+            'insurancePackages' => $this->insurancePackageOptions(),
+            'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
         ]);
     }
 
-    public function store(StoreRentalRequest $request): RedirectResponse
+    public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator): RedirectResponse
     {
-        $validated = $request->validated();
+        $validated = $hydrator->hydrate($request->validated());
         $totalPeriods = Rental::computePeriods($validated['start_date'], $validated['end_date'], $validated['period_type']);
         $rate = (float) $validated['rate_per_period'];
 
@@ -108,6 +114,12 @@ class RentalController extends Controller
             'confirmedBy:id,name',
             'extensions',
             'damages',
+            'insurancePackage',
+            'pickupLocation:id,code,name,address,city',
+            'returnLocation:id,code,name,address,city',
+            'vehicleSwaps.fromVehicle:id,name,plate_number',
+            'vehicleSwaps.toVehicle:id,name,plate_number',
+            'vehicleSwaps.swappedByUser:id,name',
             'charges' => fn ($query) => $query
                 ->where('kind', RentalCharge::KIND_ADDON)
                 ->with('invoiceLine.invoice')
@@ -177,6 +189,24 @@ class RentalController extends Controller
                     'label' => RentalAddonCatalog::label($code),
                 ])
                 ->all(),
+            'swapVehicles' => Vehicle::query()
+                ->where('status', Vehicle::STATUS_ACTIVE)
+                ->where('id', '!=', $rental->vehicle_id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'plate_number', 'type']),
+            'vehicleSwaps' => $rental->vehicleSwaps->map(fn ($swap): array => [
+                'id' => $swap->id,
+                'from_vehicle' => $swap->fromVehicle
+                    ? $swap->fromVehicle->name.' — '.$swap->fromVehicle->plate_number
+                    : null,
+                'to_vehicle' => $swap->toVehicle
+                    ? $swap->toVehicle->name.' — '.$swap->toVehicle->plate_number
+                    : null,
+                'odometer_km' => $swap->odometer_km,
+                'notes' => $swap->notes,
+                'swapped_at' => $swap->swapped_at?->toDateTimeString(),
+                'swapped_by' => $swap->swappedByUser?->name,
+            ])->values()->all(),
             'trackingEnabled' => $trackingEnabled,
             'hasGpsDevice' => $hasGpsDevice,
             'livePosition' => $livePosition,
@@ -191,6 +221,17 @@ class RentalController extends Controller
                 'return_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->return_photos),
                 'return_signature_url' => app(RentalHandoverMedia::class)->publicUrl($rental->return_signature_path),
             ],
+            'gatewayEnabled' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
+                && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable(),
+            'canPayDepositOnline' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
+                && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable()
+                && (float) $rental->deposit_amount > 0
+                && $rental->deposit_received_at === null
+                && in_array($rental->status, [
+                    Rental::STATUS_DRAFT,
+                    Rental::STATUS_CONFIRMED,
+                    Rental::STATUS_ACTIVE,
+                ], true),
         ]);
     }
 
@@ -226,10 +267,13 @@ class RentalController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(),
+            'locations' => $this->locationOptions(),
+            'insurancePackages' => $this->insurancePackageOptions(),
+            'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
         ]);
     }
 
-    public function update(UpdateRentalRequest $request, Rental $rental): RedirectResponse
+    public function update(UpdateRentalRequest $request, Rental $rental, RentalLocationHydrator $hydrator): RedirectResponse
     {
         abort_if(
             ! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED]),
@@ -237,7 +281,7 @@ class RentalController extends Controller
             __('rental.errors.edit_draft_confirmed_only'),
         );
 
-        $validated = $request->validated();
+        $validated = $hydrator->hydrate($request->validated());
         $totalPeriods = Rental::computePeriods($validated['start_date'], $validated['end_date'], $validated['period_type']);
         $rate = (float) $validated['rate_per_period'];
 
@@ -245,8 +289,9 @@ class RentalController extends Controller
             'total_periods' => $totalPeriods,
             'base_amount' => $rate * $totalPeriods,
             'deposit_amount' => $validated['deposit_amount'] ?? 0,
-            'total_amount' => $rate * $totalPeriods,
         ]));
+
+        $rental->recalculateTotalAmount();
 
         return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
             ->with('success', __('rental.messages.updated'));
@@ -264,5 +309,35 @@ class RentalController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.rental.index')
             ->with('success', __('rental.messages.deleted'));
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, Location>
+     */
+    private function locationOptions()
+    {
+        if (! Schema::hasTable('locations')) {
+            return collect();
+        }
+
+        return Location::query()->active()->orderBy('name')->get([
+            'id', 'code', 'name', 'address', 'city',
+        ]);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, RentalInsurancePackage>
+     */
+    private function insurancePackageOptions()
+    {
+        if (! Schema::hasTable('rental_insurance_packages')) {
+            return collect();
+        }
+
+        return RentalInsurancePackage::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
     }
 }

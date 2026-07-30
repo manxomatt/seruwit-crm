@@ -127,6 +127,13 @@ class InvoiceController extends Controller
             'credit' => $credit,
             'can' => $this->abilitiesFor(),
             'canRecordPayment' => Schema::hasTable('payments'),
+            'gatewayEnabled' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
+                && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable()
+                && in_array($invoice->status, [
+                    \Modules\Invoicing\Models\Invoice::STATUS_ISSUED,
+                    \Modules\Invoicing\Models\Invoice::STATUS_PARTIALLY_PAID,
+                ], true)
+                && $invoice->balanceDue() > 0.009,
             'taxCodes' => class_exists(\Modules\Accounting\Support\TaxCodeService::class)
                 ? app(\Modules\Accounting\Support\TaxCodeService::class)->ppnOptions()
                 : [],

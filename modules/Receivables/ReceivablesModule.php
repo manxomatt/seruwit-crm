@@ -7,7 +7,9 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Receivables\Http\Controllers\AgingController;
 use Modules\Receivables\Http\Controllers\CreditLimitController;
+use Modules\Receivables\Http\Controllers\GatewayCheckoutController;
 use Modules\Receivables\Http\Controllers\PaymentController;
+use Modules\Receivables\Http\Controllers\PaymentGatewayConfigController;
 
 /**
  * Accounts receivable: customer payments, aging, and credit-limit checks.
@@ -91,6 +93,12 @@ class ReceivablesModule implements ModuleContract
 
                 Route::get('/aging', [AgingController::class, 'index'])->name('aging.index');
                 Route::get('/credit', [CreditLimitController::class, 'index'])->name('credit.index');
+
+                Route::get('/gateway', [PaymentGatewayConfigController::class, 'edit'])->name('gateway.edit');
+                Route::patch('/gateway', [PaymentGatewayConfigController::class, 'update'])->middleware('permission:receivables,update')->name('gateway.update');
+                Route::post('/gateway/invoices/{invoice}/pay', [GatewayCheckoutController::class, 'payInvoice'])
+                    ->middleware('permission:receivables,create')
+                    ->name('gateway.invoices.pay');
             });
         });
     }

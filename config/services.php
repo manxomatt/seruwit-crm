@@ -50,9 +50,14 @@ return [
      * OSRM host used to turn trip stop waypoints into a road-following polyline.
      * Default is the public demo; override with a self-hosted instance for production.
      */
-    'osrm' => [
-        'base_url' => env('OSRM_URL', 'https://router.project-osrm.org'),
-        'timeout' => env('OSRM_TIMEOUT', 12),
+    /*
+     * Midtrans Snap defaults for local/sandbox. Prefer empty in production —
+     * tenants store encrypted keys in payment_gateway_configs.
+     */
+    'midtrans' => [
+        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+        'server_key' => env('MIDTRANS_SERVER_KEY'),
+        'client_key' => env('MIDTRANS_CLIENT_KEY'),
     ],
 
 ];

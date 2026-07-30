@@ -6,16 +6,20 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Modules\Fleet\Models\Vehicle;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\ReceiveRentalDepositRequest;
 use Modules\Rental\Http\Requests\SettleRentalDepositRequest;
 use Modules\Rental\Http\Requests\StoreRentalAddonChargeRequest;
+use Modules\Rental\Http\Requests\SwapRentalVehicleRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalDamage;
+use Modules\Rental\Models\RentalVehicleSwap;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 use Modules\Rental\Support\RentalAccountingService;
 use Modules\Rental\Support\RentalAddonCatalog;
+use Modules\Rental\Support\RentalBookingExtrasService;
 use Modules\Rental\Support\RentalEligibility;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
@@ -30,6 +34,7 @@ class RentalActionController extends Controller
         private readonly RentalMailer $mailer,
         private readonly RentalEligibility $eligibility,
         private readonly RentalHandoverMedia $handoverMedia,
+        private readonly RentalBookingExtrasService $bookingExtras,
     ) {}
 
     protected function getRoutePrefix(): string
@@ -70,12 +75,30 @@ class RentalActionController extends Controller
             ]);
         }
 
+        $this->bookingExtras->applyOnConfirm($rental->fresh(['insurancePackage']));
         $this->invoices->invoiceBase($rental->fresh());
         $this->accounting->issueDraftInvoices($rental->fresh());
 
         $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CONFIRMED);
 
         return back()->with('success', __('rental.messages.confirmed'));
+    }
+
+    /**
+     * Redirect to Midtrans Snap to collect the rental deposit online.
+     */
+    public function payDepositOnline(Rental $rental): RedirectResponse
+    {
+        abort_unless(
+            class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class),
+            404,
+        );
+
+        $rental->loadMissing('partner');
+        $charge = app(\Modules\Receivables\Support\GatewayCheckoutService::class)
+            ->createRentalDepositCharge($rental);
+
+        return redirect()->away($charge->redirect_url);
     }
 
     /**
@@ -296,10 +319,22 @@ class RentalActionController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        $rental->loadMissing('vehicle');
+        $newEnd = $request->string('new_end_date')->toString();
+        $reasons = Rental::vehicleAvailabilityReasons(
+            $rental->vehicle,
+            $rental->start_date->toDateString(),
+            $newEnd,
+            $rental->id,
+        );
+
+        if ($reasons !== []) {
+            return back()->withErrors(['new_end_date' => $reasons[0]]);
+        }
+
         $originalEnd = $rental->end_date->toDateString();
-        $newEnd = $request->new_end_date;
         $extendedPeriods = Rental::computePeriods(
-            $rental->end_date->addDay()->toDateString(),
+            $rental->end_date->copy()->addDay()->toDateString(),
             $newEnd,
             $rental->period_type,
         );
@@ -324,6 +359,42 @@ class RentalActionController extends Controller
         $this->accounting->issueDraftInvoices($rental->fresh());
 
         return back()->with('success', __('rental.messages.extended'));
+    }
+
+    /**
+     * Mid-rental vehicle swap — keeps the booking window, switches the unit.
+     */
+    public function swapVehicle(SwapRentalVehicleRequest $request, Rental $rental): RedirectResponse
+    {
+        abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, __('rental.errors.swap_active_only'));
+
+        $toVehicle = Vehicle::query()->findOrFail($request->integer('to_vehicle_id'));
+        $reasons = Rental::vehicleAvailabilityReasons(
+            $toVehicle,
+            $rental->start_date->toDateString(),
+            $rental->end_date->toDateString(),
+            $rental->id,
+        );
+
+        if ($reasons !== []) {
+            return back()->withErrors(['to_vehicle_id' => $reasons[0]]);
+        }
+
+        $fromVehicleId = (int) $rental->vehicle_id;
+
+        RentalVehicleSwap::query()->create([
+            'rental_id' => $rental->id,
+            'from_vehicle_id' => $fromVehicleId,
+            'to_vehicle_id' => $toVehicle->id,
+            'odometer_km' => $request->input('odometer_km'),
+            'notes' => $request->input('notes'),
+            'swapped_by' => auth()->id(),
+            'swapped_at' => now(),
+        ]);
+
+        $rental->update(['vehicle_id' => $toVehicle->id]);
+
+        return back()->with('success', __('rental.messages.vehicle_swapped'));
     }
 
     /**

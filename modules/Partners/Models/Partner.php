@@ -57,6 +57,7 @@ class Partner extends Model
         'is_blacklisted',
         'blacklist_reason',
         'blacklisted_at',
+        'portal_user_id',
     ];
 
     /** @return array<string, string> */
@@ -138,5 +139,19 @@ class Partner extends Model
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(PartnerBankAccount::class);
+    }
+
+    /** @return BelongsTo<\App\Models\User, $this> */
+    public function portalUser(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'portal_user_id');
+    }
+
+    public static function forPortalUser(\App\Models\User $user): ?self
+    {
+        return static::query()
+            ->where('portal_user_id', $user->id)
+            ->where('status', 'active')
+            ->first();
     }
 }

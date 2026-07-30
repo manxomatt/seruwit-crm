@@ -35,6 +35,8 @@ class Payment extends Model
 
     public const METHOD_CARD = 'card';
 
+    public const METHOD_QRIS = 'qris';
+
     public const METHOD_OTHER = 'other';
 
     protected static function newFactory(): Factory
@@ -139,6 +141,7 @@ class Payment extends Model
             self::METHOD_TRANSFER,
             self::METHOD_GIRO,
             self::METHOD_CARD,
+            self::METHOD_QRIS,
             self::METHOD_OTHER,
         ];
     }

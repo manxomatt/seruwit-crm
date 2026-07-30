@@ -7,6 +7,7 @@ const TABS = [
     { labelKey: 'receivables.nav.payments', route: 'receivables.payments.index', pattern: 'receivables.payments.*' },
     { labelKey: 'receivables.nav.aging', route: 'receivables.aging.index', pattern: 'receivables.aging.*' },
     { labelKey: 'receivables.nav.credit_limits', route: 'receivables.credit.index', pattern: 'receivables.credit.*' },
+    { labelKey: 'receivables.nav.gateway', route: 'receivables.gateway.edit', pattern: 'receivables.gateway.*' },
 ] as const;
 
 export default function ReceivablesNav(): JSX.Element {

@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\EnsureCentralUserCanAccessModule::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/midtrans',
+        ]);
+
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
             // Named requires-module, not module, to stay clear of the unrelated

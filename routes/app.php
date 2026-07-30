@@ -40,6 +40,10 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 // controller 404s when the module is not installed, like the blog does.
 Route::get('/track/{token}', [PublicTrackingController::class, 'show'])->name('track.show');
 
+// Midtrans payment notifications — tenant domain, no auth, CSRF exempt.
+Route::post('/webhooks/midtrans', [\Modules\Receivables\Http\Controllers\GatewayCheckoutController::class, 'webhook'])
+    ->name('webhooks.midtrans');
+
 Route::patch('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::get('/dashboard', [ModuleDashboardController::class, 'index'])

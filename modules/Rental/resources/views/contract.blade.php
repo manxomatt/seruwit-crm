@@ -96,6 +96,23 @@
                 <td class="label">Lokasi kembali</td><td class="sep">:</td>
                 <td>{{ $rental->return_location ?: '—' }}</td>
             </tr>
+            @if ((float) ($rental->one_way_fee_amount ?? 0) > 0)
+                <tr>
+                    <td class="label">Biaya one-way</td><td class="sep">:</td>
+                    <td colspan="4" class="money">Rp {{ number_format((float) $rental->one_way_fee_amount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ($rental->insurancePackage)
+                <tr>
+                    <td class="label">Asuransi</td><td class="sep">:</td>
+                    <td colspan="4">
+                        {{ $rental->insurancePackage->name }}
+                        @if ((float) $rental->insurancePackage->deductible_amount > 0)
+                            (excess Rp {{ number_format((float) $rental->insurancePackage->deductible_amount, 0, ',', '.') }})
+                        @endif
+                    </td>
+                </tr>
+            @endif
             @if ($rental->fuel_policy_notes)
                 <tr>
                     <td class="label">Kebijakan BBM</td><td class="sep">:</td>

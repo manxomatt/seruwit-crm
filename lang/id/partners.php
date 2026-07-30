@@ -45,6 +45,7 @@ return [
         'payment_term_days' => 'Termin pembayaran (hari)',
         'is_blacklisted' => 'Blacklist rental',
         'blacklist_reason' => 'Alasan blacklist',
+        'portal_user' => 'User login portal',
         'credit_limit' => 'Batas Kredit',
         'price_list' => 'Daftar Harga',
         'tags' => 'Tag',
@@ -73,6 +74,7 @@ return [
         'select_industry' => 'Pilih industri',
         'address_label' => 'Misal: Kantor Pusat',
         'none' => 'Tidak ada',
+        'no_portal_user' => 'Tanpa login portal',
     ],
 
     'index' => [

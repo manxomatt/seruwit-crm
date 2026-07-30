@@ -45,6 +45,7 @@ return [
         'payment_term_days' => 'Payment Term (Days)',
         'is_blacklisted' => 'Blacklisted for rental',
         'blacklist_reason' => 'Blacklist reason',
+        'portal_user' => 'Portal login user',
         'credit_limit' => 'Credit Limit',
         'price_list' => 'Price List',
         'tags' => 'Tags',
@@ -73,6 +74,7 @@ return [
         'select_industry' => 'Select industry',
         'address_label' => 'e.g. Head Office',
         'none' => 'None',
+        'no_portal_user' => 'No portal login',
     ],
 
     'index' => [

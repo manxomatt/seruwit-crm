@@ -64,7 +64,14 @@ interface PartnerData {
     status: string;
     is_blacklisted: boolean;
     blacklist_reason: string | null;
+    portal_user_id: number | null;
     tags: Tag[];
+}
+
+interface PortalUser {
+    id: number;
+    name: string;
+    email: string;
 }
 
 interface Props {
@@ -74,9 +81,10 @@ interface Props {
     tags: Tag[];
     partners: ParentPartner[];
     priceLists?: Array<{ id: number; name: string; code: string | null }>;
+    portalUsers?: PortalUser[];
 }
 
-export default function Edit({ partner, industries, titles, tags, partners, priceLists = [] }: Props): JSX.Element {
+export default function Edit({ partner, industries, titles, tags, partners, priceLists = [], portalUsers = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
@@ -108,6 +116,7 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
         status: partner.status,
         is_blacklisted: !!partner.is_blacklisted,
         blacklist_reason: partner.blacklist_reason || '',
+        portal_user_id: partner.portal_user_id ? String(partner.portal_user_id) : '',
         tag_ids: partner.tags.map((tag) => tag.id),
     });
 
@@ -322,6 +331,24 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
                                         <InputError message={errors.blacklist_reason} className="mt-2" />
                                     </div>
                                 )}
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="portal_user_id" value={t('partners.fields.portal_user')} />
+                                <Select
+                                    id="portal_user_id"
+                                    className="mt-1"
+                                    value={data.portal_user_id}
+                                    onChange={(value) => setData('portal_user_id', value)}
+                                    placeholder={t('partners.placeholders.no_portal_user')}
+                                    options={[
+                                        { value: '', label: t('partners.placeholders.no_portal_user') },
+                                        ...portalUsers.map((user) => ({
+                                            value: String(user.id),
+                                            label: `${user.name} (${user.email})`,
+                                        })),
+                                    ]}
+                                />
+                                <InputError message={errors.portal_user_id} className="mt-2" />
                             </div>
                             {priceLists.length > 0 && (
                                 <div>

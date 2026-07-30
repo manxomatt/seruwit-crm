@@ -88,6 +88,10 @@ class Rental extends Model
         'notes',
         'pickup_location',
         'return_location',
+        'pickup_location_id',
+        'return_location_id',
+        'one_way_fee_amount',
+        'insurance_package_id',
         'fuel_policy_notes',
         'cancelled_reason',
         'confirmed_by',
@@ -114,6 +118,7 @@ class Rental extends Model
             'deposit_applied_amount' => 'decimal:2',
             'deposit_refunded_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
+            'one_way_fee_amount' => 'decimal:2',
             'km_limit_per_period' => 'integer',
             'total_periods' => 'integer',
             'start_odometer' => 'integer',
@@ -134,6 +139,9 @@ class Rental extends Model
             'deposit_settled_at' => 'datetime',
             'deposit_received_at' => 'datetime',
             'deposit_company_bank_account_id' => 'integer',
+            'pickup_location_id' => 'integer',
+            'return_location_id' => 'integer',
+            'insurance_package_id' => 'integer',
         ];
     }
 
@@ -141,6 +149,24 @@ class Rental extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    /** @return BelongsTo<\Modules\Partners\Models\Location, $this> */
+    public function pickupLocation(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Partners\Models\Location::class, 'pickup_location_id');
+    }
+
+    /** @return BelongsTo<\Modules\Partners\Models\Location, $this> */
+    public function returnLocation(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Partners\Models\Location::class, 'return_location_id');
+    }
+
+    /** @return BelongsTo<RentalInsurancePackage, $this> */
+    public function insurancePackage(): BelongsTo
+    {
+        return $this->belongsTo(RentalInsurancePackage::class, 'insurance_package_id');
     }
 
     /** @return BelongsTo<Driver, $this> */
@@ -177,6 +203,12 @@ class Rental extends Model
     public function charges(): HasMany
     {
         return $this->hasMany(RentalCharge::class)->orderBy('id');
+    }
+
+    /** @return HasMany<RentalVehicleSwap, $this> */
+    public function vehicleSwaps(): HasMany
+    {
+        return $this->hasMany(RentalVehicleSwap::class)->latest('swapped_at');
     }
 
     public function isDepositSettled(): bool

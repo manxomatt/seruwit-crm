@@ -25,6 +25,7 @@ class RentalPdfController extends Controller
             'vehicle:id,name,plate_number,type',
             'partner',
             'driver:id,name,phone',
+            'insurancePackage',
             'charges' => fn ($query) => $query->where('kind', \Modules\Rental\Models\RentalCharge::KIND_ADDON)->orderBy('id'),
         ]);
 

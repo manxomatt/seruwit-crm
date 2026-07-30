@@ -13,6 +13,13 @@ class UpdatePartnerRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('portal_user_id') === '' || $this->input('portal_user_id') === null) {
+            $this->merge(['portal_user_id' => null]);
+        }
+    }
+
     /** @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string> */
     public function rules(): array
     {
@@ -49,6 +56,7 @@ class UpdatePartnerRequest extends FormRequest
             'status' => ['sometimes', 'required', 'string', 'in:active,inactive'],
             'is_blacklisted' => ['boolean'],
             'blacklist_reason' => ['nullable', 'string', 'max:500'],
+            'portal_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => ['exists:partner_tags,id'],
         ];

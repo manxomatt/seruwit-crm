@@ -13,6 +13,7 @@ import InputError from '@/Components/InputError';
 import ImageUploader from '@/Components/ImageUploader';
 import SignaturePad from '@/Components/SignaturePad';
 import MoneyInput from '@/Components/MoneyInput';
+import Select from '@/Components/Select';
 import { formatMoney } from '@/utils/money';
 import { formatDateTimeDmYHi } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
@@ -102,6 +103,9 @@ interface Rental {
     late_fee_amount: string;
     pickup_location: string | null;
     return_location: string | null;
+    one_way_fee_amount: string | null;
+    insurance_package_id: number | null;
+    insurance_package?: { id: number; code: string; name: string; deductible_amount: string | number } | null;
     fuel_policy_notes: string | null;
     base_amount: string; excess_km: number | null; excess_amount: string; total_amount: string;
     start_odometer: number | null; end_odometer: number | null;
@@ -121,10 +125,29 @@ interface Rental {
     damages: Damage[];
 }
 
+interface VehicleSwapRow {
+    id: number;
+    from_vehicle: string | null;
+    to_vehicle: string | null;
+    odometer_km: number | null;
+    notes: string | null;
+    swapped_at: string | null;
+    swapped_by: string | null;
+}
+
+interface SwapVehicleOption {
+    id: number;
+    name: string;
+    plate_number: string;
+    type: string;
+}
+
 interface Props {
     rental: Rental;
     addonCharges: AddonCharge[];
     addonCodes: AddonCodeOption[];
+    swapVehicles?: SwapVehicleOption[];
+    vehicleSwaps?: VehicleSwapRow[];
     trackingEnabled: boolean;
     hasGpsDevice: boolean;
     livePosition: LivePosition | null;
@@ -134,6 +157,8 @@ interface Props {
     checklistItems: string[];
     fuelLevels: string[];
     handoverEvidence?: HandoverEvidence;
+    gatewayEnabled?: boolean;
+    canPayDepositOnline?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -158,6 +183,8 @@ export default function Show({
     rental,
     addonCharges = [],
     addonCodes = [],
+    swapVehicles = [],
+    vehicleSwaps = [],
     trackingEnabled,
     hasGpsDevice,
     livePosition,
@@ -172,10 +199,11 @@ export default function Show({
         return_photos: [],
         return_signature_url: null,
     },
+    canPayDepositOnline = false,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const [modal, setModal] = useState<'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | null>(null);
+    const [modal, setModal] = useState<'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
 
     const cancelForm = useForm({ cancelled_reason: '' });
     const checkoutForm = useForm({
@@ -197,6 +225,7 @@ export default function Show({
         return_signature: null as string | null,
     });
     const extendForm = useForm({ new_end_date: '', notes: '' });
+    const swapForm = useForm({ to_vehicle_id: '', odometer_km: '', notes: '' });
     const damageForm = useForm({ description: '', amount: '', photo_path: '' });
     const addonForm = useForm({
         addon_code: addonCodes[0]?.value ?? 'other',
@@ -215,6 +244,10 @@ export default function Show({
     const submitCheckout: FormEventHandler = (e) => { e.preventDefault(); checkoutForm.post(prefixedRoute('rental.checkout', rental.id), { onSuccess: () => setModal(null) }); };
     const submitReturn: FormEventHandler = (e) => { e.preventDefault(); returnForm.post(prefixedRoute('rental.return', rental.id), { onSuccess: () => setModal(null) }); };
     const submitExtend: FormEventHandler = (e) => { e.preventDefault(); extendForm.post(prefixedRoute('rental.extend', rental.id), { onSuccess: () => setModal(null) }); };
+    const submitSwap: FormEventHandler = (e) => {
+        e.preventDefault();
+        swapForm.post(prefixedRoute('rental.swap', rental.id), { onSuccess: () => setModal(null) });
+    };
     const submitDamage: FormEventHandler = (e) => { e.preventDefault(); damageForm.post(prefixedRoute('rental.damages.store', rental.id), { onSuccess: () => setModal(null) }); };
     const submitAddon: FormEventHandler = (e) => {
         e.preventDefault();
@@ -296,6 +329,9 @@ export default function Show({
                             </Link>
                         )}
                         {is('draft') && <PrimaryButton onClick={() => action('confirm')}>{t('rental.actions.confirm')}</PrimaryButton>}
+                        {canPayDepositOnline && (
+                            <SecondaryButton onClick={() => action('deposit.pay_online')}>{t('receivables.gateway.pay_deposit')}</SecondaryButton>
+                        )}
                         {is('confirmed') && (
                             <>
                                 {canReceiveDeposit && (
@@ -311,6 +347,7 @@ export default function Show({
                                     <SecondaryButton onClick={() => action('deposit.receive')}>{t('rental.actions.receive_deposit')}</SecondaryButton>
                                 )}
                                 <SecondaryButton onClick={() => setModal('extend')}>{t('rental.actions.extend')}</SecondaryButton>
+                                <SecondaryButton onClick={() => setModal('swap')}>{t('rental.actions.swap_vehicle')}</SecondaryButton>
                                 <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
                                 <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
                                 <PrimaryButton onClick={() => setModal('return')}>{t('rental.actions.return')}</PrimaryButton>
@@ -460,6 +497,18 @@ export default function Show({
                                 {rental.actual_return_date && <><dt className="text-gray-500">{t('rental.fields.actual_return')}</dt><dd className="text-gray-900 dark:text-white">{rental.actual_return_date}</dd></>}
                                 {rental.pickup_location && <><dt className="text-gray-500">{t('rental.fields.pickup_location')}</dt><dd className="text-gray-900 dark:text-white">{rental.pickup_location}</dd></>}
                                 {rental.return_location && <><dt className="text-gray-500">{t('rental.fields.return_location')}</dt><dd className="text-gray-900 dark:text-white">{rental.return_location}</dd></>}
+                                {Number(rental.one_way_fee_amount ?? 0) > 0 && (
+                                    <>
+                                        <dt className="text-gray-500">{t('rental.fields.one_way_fee')}</dt>
+                                        <dd className="text-gray-900 dark:text-white">Rp {Number(rental.one_way_fee_amount).toLocaleString('id-ID')}</dd>
+                                    </>
+                                )}
+                                {rental.insurance_package && (
+                                    <>
+                                        <dt className="text-gray-500">{t('rental.fields.insurance_package')}</dt>
+                                        <dd className="text-gray-900 dark:text-white">{rental.insurance_package.name}</dd>
+                                    </>
+                                )}
                                 {rental.fuel_policy_notes && <><dt className="text-gray-500">{t('rental.fields.fuel_policy_notes')}</dt><dd className="text-gray-900 dark:text-white">{rental.fuel_policy_notes}</dd></>}
                             </dl>
                         </div>
@@ -665,6 +714,30 @@ export default function Show({
                                                 <span className="ml-2 text-gray-400">(+{ext.extended_periods} {periodLabel})</span>
                                             </div>
                                             <span className="tabular-nums text-gray-700 dark:text-gray-300">{formatMoney(ext.additional_amount)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Vehicle swaps */}
+                        {vehicleSwaps.length > 0 && (
+                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.vehicle_swaps')}</h2>
+                                </div>
+                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {vehicleSwaps.map((swap) => (
+                                        <div key={swap.id} className="px-4 py-3 text-sm">
+                                            <p className="text-gray-900 dark:text-white">
+                                                {swap.from_vehicle} → {swap.to_vehicle}
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                                {swap.swapped_at}
+                                                {swap.swapped_by ? ` · ${swap.swapped_by}` : ''}
+                                                {swap.odometer_km != null ? ` · ${swap.odometer_km} km` : ''}
+                                            </p>
+                                            {swap.notes && <p className="mt-1 text-gray-500">{swap.notes}</p>}
                                         </div>
                                     ))}
                                 </div>
@@ -966,6 +1039,57 @@ export default function Show({
                     <div className="mt-4 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
                         <PrimaryButton disabled={extendForm.processing}>{t('rental.actions.extend')}</PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal show={modal === 'swap'} onClose={() => setModal(null)}>
+                <form onSubmit={submitSwap} className="p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.swap')}</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <InputLabel htmlFor="to_vehicle_id" value={`${t('rental.fields.swap_to_vehicle')} *`} />
+                            <Select
+                                id="to_vehicle_id"
+                                options={[
+                                    { value: '', label: t('rental.placeholders.select_vehicle') },
+                                    ...swapVehicles.map((v) => ({
+                                        value: String(v.id),
+                                        label: `${v.name} — ${v.plate_number}`,
+                                    })),
+                                ]}
+                                value={swapForm.data.to_vehicle_id}
+                                onChange={(e) => swapForm.setData('to_vehicle_id', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={swapForm.errors.to_vehicle_id} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="swap_odometer" value={t('rental.fields.swap_odometer')} />
+                            <TextInput
+                                id="swap_odometer"
+                                type="number"
+                                min={0}
+                                value={swapForm.data.odometer_km}
+                                onChange={(e) => swapForm.setData('odometer_km', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={swapForm.errors.odometer_km} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="swap_notes" value={t('rental.fields.notes')} />
+                            <textarea
+                                id="swap_notes"
+                                rows={2}
+                                value={swapForm.data.notes}
+                                onChange={(e) => swapForm.setData('notes', e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            />
+                        </div>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
+                        <PrimaryButton disabled={swapForm.processing}>{t('rental.actions.swap_vehicle')}</PrimaryButton>
                     </div>
                 </form>
             </Modal>

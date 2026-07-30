@@ -7,6 +7,7 @@ use App\Modules\ModuleTier;
 use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
 use Modules\Rental\Console\Commands\RentalScanEnding;
+use Modules\Rental\Http\Controllers\PartnerPortalController;
 use Modules\Rental\Http\Controllers\RentalActionController;
 use Modules\Rental\Http\Controllers\RentalAvailabilityController;
 use Modules\Rental\Http\Controllers\RentalController;
@@ -124,11 +125,21 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/complete', [RentalActionController::class, 'complete'])->middleware('permission:rental,approve')->name('rental.complete');
         Route::post('/rental/{rental}/cancel', [RentalActionController::class, 'cancel'])->middleware('permission:rental,update')->name('rental.cancel');
         Route::post('/rental/{rental}/extend', [RentalActionController::class, 'extend'])->middleware('permission:rental,update')->name('rental.extend');
+        Route::post('/rental/{rental}/swap-vehicle', [RentalActionController::class, 'swapVehicle'])->middleware('permission:rental,update')->name('rental.swap');
         Route::post('/rental/{rental}/deposit-receive', [RentalActionController::class, 'receiveDeposit'])->middleware('permission:rental,update')->name('rental.deposit.receive');
+        Route::post('/rental/{rental}/deposit-pay-online', [RentalActionController::class, 'payDepositOnline'])->middleware('permission:rental,update')->name('rental.deposit.pay_online');
         Route::post('/rental/{rental}/deposit-settle', [RentalActionController::class, 'settleDeposit'])->middleware('permission:rental,update')->name('rental.deposit.settle');
         Route::post('/rental/{rental}/damages', [RentalActionController::class, 'storeDamage'])->middleware('permission:rental,update')->name('rental.damages.store');
         Route::delete('/rental/{rental}/damages/{damage}', [RentalActionController::class, 'destroyDamage'])->middleware('permission:rental,update')->name('rental.damages.destroy');
         Route::post('/rental/{rental}/addons', [RentalActionController::class, 'storeAddon'])->middleware('permission:rental,update')->name('rental.addons.store');
         Route::delete('/rental/{rental}/addons/{charge}', [RentalActionController::class, 'destroyAddon'])->middleware('permission:rental,update')->name('rental.addons.destroy');
+
+        // B2B partner self-serve (linked via partners.portal_user_id)
+        Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (): void {
+            Route::get('/rentals', [PartnerPortalController::class, 'index'])->name('rentals.index');
+            Route::get('/rentals/{rental}', [PartnerPortalController::class, 'show'])->name('rentals.show');
+            Route::post('/rentals/{rental}/pay-deposit', [PartnerPortalController::class, 'payDeposit'])->name('rentals.pay_deposit');
+            Route::post('/invoices/{invoice}/pay', [PartnerPortalController::class, 'payInvoice'])->name('invoices.pay');
+        });
     }
 }

@@ -150,6 +150,7 @@ class PartnerController extends Controller
             'priceLists' => PriceListResolver::tablesReady()
                 ? PriceList::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code'])
                 : [],
+            'portalUsers' => \App\Models\User::query()->orderBy('name')->get(['id', 'name', 'email']),
         ]);
     }
 

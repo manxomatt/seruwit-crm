@@ -42,11 +42,31 @@ interface Rate {
     deposit_amount: string;
 }
 
+interface LocationOption {
+    id: number;
+    code: string;
+    name: string;
+    address: string | null;
+    city: string | null;
+}
+
+interface InsurancePackage {
+    id: number;
+    code: string;
+    name: string;
+    amount: string | number;
+    deductible_amount: string | number;
+    description: string | null;
+}
+
 interface Props {
     vehicles: Vehicle[];
     drivers: Driver[];
     partners: Partner[];
     rates: Rate[];
+    locations?: LocationOption[];
+    insurancePackages?: InsurancePackage[];
+    defaultOneWayFee?: number;
 }
 
 type FormData = {
@@ -61,15 +81,32 @@ type FormData = {
     excess_km_rate: string;
     late_fee_per_day: string;
     deposit_amount: string;
+    pickup_location_id: string;
+    return_location_id: string;
     pickup_location: string;
     return_location: string;
+    one_way_fee_amount: string;
+    insurance_package_id: string;
     fuel_policy_notes: string;
     notes: string;
 };
 
 const PERIOD_TYPES = ['daily', 'weekly', 'monthly'] as const;
 
-export default function Create({ vehicles, drivers, partners, rates }: Props): JSX.Element {
+function locationLabel(location: LocationOption): string {
+    const address = [location.address, location.city].filter(Boolean).join(', ');
+    return address ? `${location.name} — ${address}` : `${location.name} (${location.code})`;
+}
+
+export default function Create({
+    vehicles,
+    drivers,
+    partners,
+    rates,
+    locations = [],
+    insurancePackages = [],
+    defaultOneWayFee = 150000,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm<FormData>({
@@ -84,8 +121,12 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
         excess_km_rate: '',
         late_fee_per_day: '',
         deposit_amount: '',
+        pickup_location_id: '',
+        return_location_id: '',
         pickup_location: '',
         return_location: '',
+        one_way_fee_amount: '',
+        insurance_package_id: '',
         fuel_policy_notes: '',
         notes: '',
     });
@@ -116,6 +157,62 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
         () => PERIOD_TYPES.map((type) => ({ value: type, label: t(`rental.period_type.${type}`, undefined, type) })),
         [t],
     );
+    const locationOptions = useMemo(
+        () => [
+            { value: '', label: t('rental.placeholders.select_location') },
+            ...locations.map((location) => ({ value: String(location.id), label: locationLabel(location) })),
+        ],
+        [locations, t],
+    );
+    const insuranceOptions = useMemo(
+        () => [
+            { value: '', label: t('rental.placeholders.no_insurance') },
+            ...insurancePackages.map((pkg) => ({
+                value: String(pkg.id),
+                label: `${pkg.name} — Rp ${Number(pkg.amount).toLocaleString('id-ID')}/${t('rental.period_type.day')}`,
+            })),
+        ],
+        [insurancePackages, t],
+    );
+
+    const isOneWay =
+        data.pickup_location_id !== '' &&
+        data.return_location_id !== '' &&
+        data.pickup_location_id !== data.return_location_id;
+
+    const applyLocation = (field: 'pickup' | 'return', locationId: string): void => {
+        const location = locations.find((item) => String(item.id) === locationId);
+        const address = location
+            ? [location.address, location.city].filter(Boolean).join(', ') || location.name
+            : '';
+
+        if (field === 'pickup') {
+            setData((current) => ({
+                ...current,
+                pickup_location_id: locationId,
+                pickup_location: locationId ? address : current.pickup_location,
+                one_way_fee_amount:
+                    locationId && current.return_location_id && locationId !== current.return_location_id
+                        ? current.one_way_fee_amount || String(defaultOneWayFee)
+                        : locationId === current.return_location_id
+                          ? ''
+                          : current.one_way_fee_amount,
+            }));
+            return;
+        }
+
+        setData((current) => ({
+            ...current,
+            return_location_id: locationId,
+            return_location: locationId ? address : current.return_location,
+            one_way_fee_amount:
+                locationId && current.pickup_location_id && locationId !== current.pickup_location_id
+                    ? current.one_way_fee_amount || String(defaultOneWayFee)
+                    : locationId === current.pickup_location_id
+                      ? ''
+                      : current.one_way_fee_amount,
+        }));
+    };
 
     const applyRate = (rateId: string): void => {
         if (!rateId) {
@@ -303,6 +400,28 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
                     <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">{t('rental.sections.locations')}</h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
+                            <InputLabel htmlFor="pickup_location_id" value={t('rental.fields.pickup_branch')} />
+                            <Select
+                                id="pickup_location_id"
+                                options={locationOptions}
+                                value={data.pickup_location_id}
+                                onChange={(e) => applyLocation('pickup', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={errors.pickup_location_id} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="return_location_id" value={t('rental.fields.return_branch')} />
+                            <Select
+                                id="return_location_id"
+                                options={locationOptions}
+                                value={data.return_location_id}
+                                onChange={(e) => applyLocation('return', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={errors.return_location_id} className="mt-1" />
+                        </div>
+                        <div>
                             <InputLabel htmlFor="pickup_location" value={t('rental.fields.pickup_location')} />
                             <TextInput
                                 id="pickup_location"
@@ -321,6 +440,29 @@ export default function Create({ vehicles, drivers, partners, rates }: Props): J
                                 className="mt-1 w-full"
                             />
                             <InputError message={errors.return_location} className="mt-1" />
+                        </div>
+                        {isOneWay && (
+                            <div>
+                                <InputLabel htmlFor="one_way_fee_amount" value={t('rental.fields.one_way_fee')} />
+                                <MoneyInput
+                                    id="one_way_fee_amount"
+                                    value={data.one_way_fee_amount}
+                                    onChange={(value) => setData('one_way_fee_amount', value)}
+                                    className="mt-1 w-full"
+                                />
+                                <InputError message={errors.one_way_fee_amount} className="mt-1" />
+                            </div>
+                        )}
+                        <div className={isOneWay ? '' : 'sm:col-span-2'}>
+                            <InputLabel htmlFor="insurance_package_id" value={t('rental.fields.insurance_package')} />
+                            <Select
+                                id="insurance_package_id"
+                                options={insuranceOptions}
+                                value={data.insurance_package_id}
+                                onChange={(e) => setData('insurance_package_id', e.target.value)}
+                                className="mt-1 w-full"
+                            />
+                            <InputError message={errors.insurance_package_id} className="mt-1" />
                         </div>
                         <div className="sm:col-span-2">
                             <InputLabel htmlFor="fuel_policy_notes" value={t('rental.fields.fuel_policy_notes')} />

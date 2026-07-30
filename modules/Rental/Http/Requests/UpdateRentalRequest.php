@@ -22,8 +22,12 @@ class UpdateRentalRequest extends FormRequest
             'excess_km_rate' => ['nullable', 'numeric', 'min:0'],
             'late_fee_per_day' => ['nullable', 'numeric', 'min:0'],
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
+            'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'pickup_location' => ['nullable', 'string', 'max:255'],
             'return_location' => ['nullable', 'string', 'max:255'],
+            'one_way_fee_amount' => ['nullable', 'numeric', 'min:0'],
+            'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
             'fuel_policy_notes' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
         ];
