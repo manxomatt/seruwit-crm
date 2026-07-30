@@ -62,7 +62,7 @@ export default function Create({ departures, partners }: Props) {
 
     const { data, setData, post, processing, errors } = useForm({
         departure_id: first ? String(first.id) : '',
-        partner_id: partners[0] ? String(partners[0].id) : '',
+        partner_id: '',
         passenger_count: 1,
         pickup_mode: initialDoor ? 'door' : 'pool',
         dropoff_mode: initialDoor ? 'door' : 'pool',
@@ -202,8 +202,12 @@ export default function Create({ departures, partners }: Props) {
                         className="mt-1 w-full"
                         value={data.partner_id}
                         onChange={(v) => setData('partner_id', v)}
-                        options={partners.map((p) => ({ value: String(p.id), label: `${p.code} — ${p.name}` }))}
+                        options={[
+                            { value: '', label: t('shuttle.bookings.walk_in') },
+                            ...partners.map((p) => ({ value: String(p.id), label: `${p.code} — ${p.name}` })),
+                        ]}
                     />
+                    <p className="mt-1 text-xs text-gray-500">{t('shuttle.bookings.partner_hint')}</p>
                     <InputError message={errors.partner_id} className="mt-1" />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">

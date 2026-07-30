@@ -49,7 +49,9 @@ export default function Show({ booking, can }: Props) {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <div className="text-sm text-gray-500">{t(`shuttle.status.${booking.status}`)}</div>
-                                <div className="mt-1 text-lg font-semibold">{booking.partner?.name}</div>
+                                <div className="mt-1 text-lg font-semibold">
+                                    {booking.partner?.name ?? t('shuttle.bookings.walk_in')}
+                                </div>
                                 <div className="mt-2 text-sm text-gray-600">
                                     {booking.departure?.corridor?.name} · {booking.departure?.depart_date}{' '}
                                     {String(booking.departure?.depart_time ?? '').slice(0, 5)}

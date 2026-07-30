@@ -227,7 +227,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                                 {departure.bookings.map((b) => (
                                     <li key={b.id} className="px-4 py-3">
                                         <div className="font-medium">
-                                            {b.booking_number} · {b.partner?.name} · {b.passenger_count} pax
+                                            {b.booking_number} · {b.partner?.name ?? t('shuttle.bookings.walk_in')} · {b.passenger_count} pax
                                         </div>
                                         <div className="text-gray-500">
                                             {t(`shuttle.status.${b.status}`)} · pickup {b.pickup_mode} · drop {b.dropoff_mode}

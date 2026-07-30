@@ -148,7 +148,7 @@ Pola mirip `TripSchedule::generateTripsBetween()` — generate eksplisit oleh di
 | `id` | bigint PK | |
 | `booking_number` | varchar unique | `BK-2026-00101` |
 | `departure_id` | FK → shuttle_departures | |
-| `partner_id` | FK → partners | Booker (`customer_rank > 0`) |
+| `partner_id` | FK → partners (nullable) | Optional booker for corporate/portal; null = walk-in |
 | `booked_by` | FK → users nullable | CS / portal user |
 | `status` | string | lihat §3 |
 | `passenger_count` | unsigned tinyint | ≥ 1 |

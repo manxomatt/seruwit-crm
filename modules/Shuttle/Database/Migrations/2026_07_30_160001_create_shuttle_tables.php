@@ -79,7 +79,7 @@ return new class extends Migration
             $table->id();
             $table->string('booking_number')->unique();
             $table->foreignId('departure_id')->constrained('shuttle_departures')->cascadeOnDelete();
-            $table->foreignId('partner_id')->constrained('partners')->restrictOnDelete();
+            $table->foreignId('partner_id')->nullable()->constrained('partners')->nullOnDelete();
             $table->foreignId('booked_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('status')->default('draft')->index();
             $table->unsignedTinyInteger('passenger_count')->default(1);

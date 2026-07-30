@@ -34,6 +34,13 @@ class ShuttleBookingFactory extends Factory
         ];
     }
 
+    public function walkIn(): static
+    {
+        return $this->state(fn (): array => [
+            'partner_id' => null,
+        ]);
+    }
+
     public function confirmed(): static
     {
         return $this->state(fn (): array => [

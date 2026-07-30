@@ -22,7 +22,7 @@ class StoreBookingRequest extends FormRequest
     {
         return [
             'departure_id' => ['required', 'exists:shuttle_departures,id'],
-            'partner_id' => ['required', 'exists:partners,id'],
+            'partner_id' => ['nullable', 'exists:partners,id'],
             'passenger_count' => ['required', 'integer', 'min:1', 'max:20'],
             'pickup_mode' => ['required', 'in:pool,door'],
             'dropoff_mode' => ['required', 'in:pool,door'],
@@ -42,6 +42,10 @@ class StoreBookingRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->merge([
+            'partner_id' => $this->partner_id ?: null,
+        ]);
+
         $departure = ShuttleDeparture::query()->with('corridor')->find($this->integer('departure_id'));
 
         if ($departure && $departure->resolvedServiceType() === ShuttleCorridor::SERVICE_POOL) {

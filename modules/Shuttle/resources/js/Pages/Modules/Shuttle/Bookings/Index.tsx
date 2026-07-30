@@ -133,7 +133,7 @@ export default function Index({ bookings, filters, can }: Props) {
                             bookings.data.map((b) => (
                                 <tr key={b.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3 font-medium text-gray-900">{b.booking_number}</td>
-                                    <td className="px-4 py-3 text-gray-700">{b.partner?.name}</td>
+                                    <td className="px-4 py-3 text-gray-700">{b.partner?.name ?? t('shuttle.bookings.walk_in')}</td>
                                     <td className="px-4 py-3">
                                         <div className="text-gray-900">{b.departure?.departure_number}</div>
                                         <div className="text-xs text-gray-500">{b.departure?.corridor?.name}</div>

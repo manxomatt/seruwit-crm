@@ -454,6 +454,37 @@ class ShuttleCrudTest extends TestCase
             );
     }
 
+    public function test_can_create_walk_in_booking_without_partner(): void
+    {
+        $departure = ShuttleDeparture::factory()->create([
+            'seat_capacity' => 7,
+            'seats_booked' => 0,
+            'status' => ShuttleDeparture::STATUS_OPEN,
+            'depart_date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.shuttle.bookings.store'), [
+                'departure_id' => $departure->id,
+                'partner_id' => '',
+                'passenger_count' => 1,
+                'pickup_mode' => 'pool',
+                'dropoff_mode' => 'pool',
+                'passengers' => [
+                    ['name' => 'Budi Walkin', 'phone' => '08123456789', 'id_number' => null],
+                ],
+            ])
+            ->assertRedirect();
+
+        $booking = ShuttleBooking::query()->firstOrFail();
+        $this->assertNull($booking->partner_id);
+        $this->assertSame('Budi Walkin', $booking->passengers()->value('name'));
+
+        $confirmed = app(BookingConfirmationService::class)->confirm($booking->fresh());
+        $this->assertSame(ShuttleBooking::STATUS_CONFIRMED, $confirmed->status);
+        $this->assertNull($confirmed->invoice_id);
+    }
+
     public function test_http_confirm_booking(): void
     {
         $departure = ShuttleDeparture::factory()->create([

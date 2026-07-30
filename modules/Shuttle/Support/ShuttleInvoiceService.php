@@ -41,7 +41,8 @@ class ShuttleInvoiceService
 
     public function createFromBooking(ShuttleBooking $booking): ?Invoice
     {
-        if (! $this->isAvailable() || (float) $booking->total_fare <= 0) {
+        // Walk-in bookings have no AR partner; skip invoice until a customer is attached.
+        if (! $this->isAvailable() || (float) $booking->total_fare <= 0 || $booking->partner_id === null) {
             return null;
         }
 
@@ -140,7 +141,7 @@ class ShuttleInvoiceService
 
     public function createCreditNote(ShuttleBooking $booking, Invoice $original): ?Invoice
     {
-        if (! $this->isAvailable()) {
+        if (! $this->isAvailable() || $booking->partner_id === null) {
             return null;
         }
 
