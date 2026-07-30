@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import MoneyInput from '@/Components/MoneyInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 import RentalNav from '../../../RentalNav';
@@ -245,12 +246,10 @@ export default function Edit({ rental, vehicles, drivers, partners, rates }: Pro
                         </div>
                         <div>
                             <InputLabel htmlFor="rate_per_period" value={`${t('rental.fields.rate_per_period')} *`} />
-                            <TextInput
+                            <MoneyInput
                                 id="rate_per_period"
-                                type="number"
-                                min="0"
                                 value={data.rate_per_period}
-                                onChange={(e) => setData('rate_per_period', e.target.value)}
+                                onChange={(value) => setData('rate_per_period', value)}
                                 className="mt-1 w-full"
                             />
                             <InputError message={errors.rate_per_period} className="mt-1" />
@@ -268,35 +267,29 @@ export default function Edit({ rental, vehicles, drivers, partners, rates }: Pro
                         </div>
                         <div>
                             <InputLabel htmlFor="excess_km_rate" value={t('rental.fields.excess_km_rate')} />
-                            <TextInput
+                            <MoneyInput
                                 id="excess_km_rate"
-                                type="number"
-                                min="0"
                                 value={data.excess_km_rate}
-                                onChange={(e) => setData('excess_km_rate', e.target.value)}
+                                onChange={(value) => setData('excess_km_rate', value)}
                                 className="mt-1 w-full"
                             />
                         </div>
                         <div>
                             <InputLabel htmlFor="late_fee_per_day" value={t('rental.fields.late_fee_per_day')} />
-                            <TextInput
+                            <MoneyInput
                                 id="late_fee_per_day"
-                                type="number"
-                                min="0"
                                 placeholder={t('rental.placeholders.late_fee_fallback')}
                                 value={data.late_fee_per_day}
-                                onChange={(e) => setData('late_fee_per_day', e.target.value)}
+                                onChange={(value) => setData('late_fee_per_day', value)}
                                 className="mt-1 w-full"
                             />
                         </div>
                         <div>
                             <InputLabel htmlFor="deposit_amount" value={t('rental.fields.deposit')} />
-                            <TextInput
+                            <MoneyInput
                                 id="deposit_amount"
-                                type="number"
-                                min="0"
                                 value={data.deposit_amount}
-                                onChange={(e) => setData('deposit_amount', e.target.value)}
+                                onChange={(value) => setData('deposit_amount', value)}
                                 className="mt-1 w-full"
                             />
                         </div>

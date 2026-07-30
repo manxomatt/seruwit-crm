@@ -12,13 +12,13 @@ import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import ImageUploader from '@/Components/ImageUploader';
 import SignaturePad from '@/Components/SignaturePad';
+import MoneyInput from '@/Components/MoneyInput';
+import { formatMoney } from '@/utils/money';
 import { formatDateTimeDmYHi } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
 import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
 import { ChangeEvent, FormEventHandler, useState } from 'react';
 import RentalNav from '../../../RentalNav';
-
-const formatMoney = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
 async function filesToDataUrls(files: FileList | null): Promise<string[]> {
     if (! files || files.length === 0) {
@@ -981,7 +981,7 @@ export default function Show({
                         </div>
                         <div>
                             <InputLabel htmlFor="damage_amount" value={`${t('rental.fields.repair_cost')} *`} />
-                            <TextInput id="damage_amount" type="number" min="0" value={damageForm.data.amount} onChange={(e) => damageForm.setData('amount', e.target.value)} className="mt-1 w-full" />
+                            <MoneyInput id="damage_amount" value={damageForm.data.amount} onChange={(value) => damageForm.setData('amount', value)} className="mt-1 w-full" />
                             <InputError message={damageForm.errors.amount} className="mt-1" />
                         </div>
                         <div>
@@ -1020,7 +1020,7 @@ export default function Show({
                         </div>
                         <div>
                             <InputLabel htmlFor="addon_amount" value={`${t('rental.fields.addon_amount')} *`} />
-                            <TextInput id="addon_amount" type="number" min="0" step="0.01" value={addonForm.data.amount} onChange={(e) => addonForm.setData('amount', e.target.value)} className="mt-1 w-full" />
+                            <MoneyInput id="addon_amount" value={addonForm.data.amount} onChange={(value) => addonForm.setData('amount', value)} className="mt-1 w-full" />
                             <InputError message={addonForm.errors.amount} className="mt-1" />
                         </div>
                         <div>
@@ -1045,14 +1045,10 @@ export default function Show({
                     <div className="space-y-4">
                         <div>
                             <InputLabel htmlFor="deposit_applied" value={t('rental.fields.deposit_applied')} />
-                            <TextInput
+                            <MoneyInput
                                 id="deposit_applied"
-                                type="number"
-                                min="0"
-                                step="0.01"
                                 value={depositForm.data.deposit_applied_amount}
-                                onChange={(e) => {
-                                    const applied = e.target.value;
+                                onChange={(applied) => {
                                     const deposit = Number(rental.deposit_amount);
                                     const refunded = Math.max(0, deposit - Number(applied || 0));
                                     depositForm.setData({
@@ -1066,13 +1062,10 @@ export default function Show({
                         </div>
                         <div>
                             <InputLabel htmlFor="deposit_refunded" value={t('rental.fields.deposit_refunded')} />
-                            <TextInput
+                            <MoneyInput
                                 id="deposit_refunded"
-                                type="number"
-                                min="0"
-                                step="0.01"
                                 value={depositForm.data.deposit_refunded_amount}
-                                onChange={(e) => depositForm.setData('deposit_refunded_amount', e.target.value)}
+                                onChange={(value) => depositForm.setData('deposit_refunded_amount', value)}
                                 className="mt-1 w-full"
                             />
                             <InputError message={depositForm.errors.deposit_refunded_amount} className="mt-1" />

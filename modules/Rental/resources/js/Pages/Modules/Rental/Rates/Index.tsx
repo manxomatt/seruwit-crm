@@ -9,11 +9,11 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, router, useForm } from '@inertiajs/react';
+import MoneyInput from '@/Components/MoneyInput';
+import { formatMoney } from '@/utils/money';
+import { Head, router, useForm, type InertiaFormProps } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import RentalNav from '../../../../RentalNav';
-
-const formatMoney = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
 const PencilIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,6 +94,156 @@ const emptyForm: FormData = {
 
 const PERIOD_TYPES = ['daily', 'weekly', 'monthly'] as const;
 
+interface RateFormProps {
+    form: InertiaFormProps<FormData>;
+    onSubmit: FormEventHandler;
+    onCancel: () => void;
+    label: string;
+    periodOptions: Array<{ value: string; label: string }>;
+    vehicleOptions: Array<{ value: string; label: string }>;
+    labels: {
+        rateName: string;
+        periodType: string;
+        ratePerPeriod: string;
+        deposit: string;
+        specificVehicle: string;
+        anyVehicle: string;
+        vehicleType: string;
+        kmLimit: string;
+        excessKmRate: string;
+        lateFeePerDay: string;
+        rateActive: string;
+        cancel: string;
+    };
+}
+
+/**
+ * Stable form component — must live outside RatesIndex so setData re-renders
+ * do not remount inputs (which drops focus on every keystroke).
+ */
+function RateForm({
+    form,
+    onSubmit,
+    onCancel,
+    label,
+    periodOptions,
+    vehicleOptions,
+    labels,
+}: RateFormProps): JSX.Element {
+    return (
+        <form onSubmit={onSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <InputLabel htmlFor="name" value={`${labels.rateName} *`} />
+                    <TextInput
+                        id="name"
+                        value={form.data.name}
+                        onChange={(e) => form.setData('name', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                    <InputError message={form.errors.name} className="mt-1" />
+                </div>
+                <div>
+                    <InputLabel htmlFor="period_type" value={`${labels.periodType} *`} />
+                    <Select
+                        id="period_type"
+                        className="mt-1"
+                        value={form.data.period_type}
+                        onChange={(value) => form.setData('period_type', value)}
+                        options={periodOptions}
+                        searchable={false}
+                    />
+                </div>
+                <div>
+                    <InputLabel htmlFor="rate_per_period" value={`${labels.ratePerPeriod} *`} />
+                    <MoneyInput
+                        id="rate_per_period"
+                        value={form.data.rate_per_period}
+                        onChange={(value) => form.setData('rate_per_period', value)}
+                        className="mt-1 w-full"
+                    />
+                    <InputError message={form.errors.rate_per_period} className="mt-1" />
+                </div>
+                <div>
+                    <InputLabel htmlFor="deposit_amount" value={labels.deposit} />
+                    <MoneyInput
+                        id="deposit_amount"
+                        value={form.data.deposit_amount}
+                        onChange={(value) => form.setData('deposit_amount', value)}
+                        className="mt-1 w-full"
+                    />
+                </div>
+                <div>
+                    <InputLabel htmlFor="vehicle_id" value={labels.specificVehicle} />
+                    <Select
+                        id="vehicle_id"
+                        className="mt-1"
+                        value={form.data.vehicle_id}
+                        onChange={(value) => form.setData('vehicle_id', value)}
+                        placeholder={labels.anyVehicle}
+                        options={vehicleOptions}
+                    />
+                </div>
+                <div>
+                    <InputLabel htmlFor="vehicle_type" value={labels.vehicleType} />
+                    <TextInput
+                        id="vehicle_type"
+                        value={form.data.vehicle_type}
+                        onChange={(e) => form.setData('vehicle_type', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                </div>
+                <div>
+                    <InputLabel htmlFor="km_limit" value={labels.kmLimit} />
+                    <TextInput
+                        id="km_limit"
+                        type="number"
+                        min="0"
+                        value={form.data.km_limit_per_period}
+                        onChange={(e) => form.setData('km_limit_per_period', e.target.value)}
+                        className="mt-1 w-full"
+                    />
+                </div>
+                <div>
+                    <InputLabel htmlFor="excess_km_rate" value={labels.excessKmRate} />
+                    <MoneyInput
+                        id="excess_km_rate"
+                        value={form.data.excess_km_rate}
+                        onChange={(value) => form.setData('excess_km_rate', value)}
+                        className="mt-1 w-full"
+                    />
+                </div>
+                <div>
+                    <InputLabel htmlFor="late_fee_per_day" value={labels.lateFeePerDay} />
+                    <MoneyInput
+                        id="late_fee_per_day"
+                        value={form.data.late_fee_per_day}
+                        onChange={(value) => form.setData('late_fee_per_day', value)}
+                        className="mt-1 w-full"
+                    />
+                </div>
+                <div className="sm:col-span-2">
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                            type="checkbox"
+                            checked={form.data.is_active}
+                            onChange={(e) => form.setData('is_active', e.target.checked)}
+                            className="rounded"
+                        />
+                        {labels.rateActive}
+                    </label>
+                </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+                <SecondaryButton type="button" onClick={onCancel}>
+                    {labels.cancel}
+                </SecondaryButton>
+                <PrimaryButton disabled={form.processing}>{label}</PrimaryButton>
+            </div>
+        </form>
+    );
+}
+
 export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -115,6 +265,24 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
             ...vehicles.map((v) => ({ value: String(v.id), label: `${v.name} (${v.plate_number})` })),
         ],
         [vehicles, t],
+    );
+
+    const formLabels = useMemo(
+        () => ({
+            rateName: t('rental.fields.rate_name'),
+            periodType: t('rental.fields.period_type'),
+            ratePerPeriod: t('rental.fields.rate_per_period'),
+            deposit: t('rental.fields.deposit'),
+            specificVehicle: t('rental.fields.specific_vehicle'),
+            anyVehicle: t('rental.placeholders.any_vehicle'),
+            vehicleType: t('rental.fields.vehicle_type'),
+            kmLimit: t('rental.fields.km_limit'),
+            excessKmRate: t('rental.fields.excess_km_rate'),
+            lateFeePerDay: t('rental.fields.late_fee_per_day'),
+            rateActive: t('rental.fields.rate_active'),
+            cancel: t('common.cancel'),
+        }),
+        [t],
     );
 
     const openEdit = (rate: Rate): void => {
@@ -180,140 +348,10 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
         });
     };
 
-    const RateForm = ({
-        form,
-        onSubmit,
-        label,
-    }: {
-        form: ReturnType<typeof useForm<FormData>>;
-        onSubmit: FormEventHandler;
-        label: string;
-    }): JSX.Element => (
-        <form onSubmit={onSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                    <InputLabel htmlFor="name" value={`${t('rental.fields.rate_name')} *`} />
-                    <TextInput
-                        id="name"
-                        value={form.data.name}
-                        onChange={(e) => form.setData('name', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                    <InputError message={form.errors.name} className="mt-1" />
-                </div>
-                <div>
-                    <InputLabel htmlFor="period_type" value={`${t('rental.fields.period_type')} *`} />
-                    <Select
-                        id="period_type"
-                        className="mt-1"
-                        value={form.data.period_type}
-                        onChange={(value) => form.setData('period_type', value)}
-                        options={periodOptions}
-                        searchable={false}
-                    />
-                </div>
-                <div>
-                    <InputLabel htmlFor="rate_per_period" value={`${t('rental.fields.rate_per_period')} *`} />
-                    <TextInput
-                        id="rate_per_period"
-                        type="number"
-                        min="0"
-                        value={form.data.rate_per_period}
-                        onChange={(e) => form.setData('rate_per_period', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                    <InputError message={form.errors.rate_per_period} className="mt-1" />
-                </div>
-                <div>
-                    <InputLabel htmlFor="deposit_amount" value={t('rental.fields.deposit')} />
-                    <TextInput
-                        id="deposit_amount"
-                        type="number"
-                        min="0"
-                        value={form.data.deposit_amount}
-                        onChange={(e) => form.setData('deposit_amount', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                </div>
-                <div>
-                    <InputLabel htmlFor="vehicle_id" value={t('rental.fields.specific_vehicle')} />
-                    <Select
-                        id="vehicle_id"
-                        className="mt-1"
-                        value={form.data.vehicle_id}
-                        onChange={(value) => form.setData('vehicle_id', value)}
-                        placeholder={t('rental.placeholders.any_vehicle')}
-                        options={vehicleOptions}
-                    />
-                </div>
-                <div>
-                    <InputLabel htmlFor="vehicle_type" value={t('rental.fields.vehicle_type')} />
-                    <TextInput
-                        id="vehicle_type"
-                        value={form.data.vehicle_type}
-                        onChange={(e) => form.setData('vehicle_type', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                </div>
-                <div>
-                    <InputLabel htmlFor="km_limit" value={t('rental.fields.km_limit')} />
-                    <TextInput
-                        id="km_limit"
-                        type="number"
-                        min="0"
-                        value={form.data.km_limit_per_period}
-                        onChange={(e) => form.setData('km_limit_per_period', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                </div>
-                <div>
-                    <InputLabel htmlFor="excess_km_rate" value={t('rental.fields.excess_km_rate')} />
-                    <TextInput
-                        id="excess_km_rate"
-                        type="number"
-                        min="0"
-                        value={form.data.excess_km_rate}
-                        onChange={(e) => form.setData('excess_km_rate', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                </div>
-                <div>
-                    <InputLabel htmlFor="late_fee_per_day" value={t('rental.fields.late_fee_per_day')} />
-                    <TextInput
-                        id="late_fee_per_day"
-                        type="number"
-                        min="0"
-                        value={form.data.late_fee_per_day}
-                        onChange={(e) => form.setData('late_fee_per_day', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                </div>
-                <div className="sm:col-span-2">
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <input
-                            type="checkbox"
-                            checked={form.data.is_active}
-                            onChange={(e) => form.setData('is_active', e.target.checked)}
-                            className="rounded"
-                        />
-                        {t('rental.fields.rate_active')}
-                    </label>
-                </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-                <SecondaryButton
-                    type="button"
-                    onClick={() => {
-                        setShowCreate(false);
-                        setEditing(null);
-                    }}
-                >
-                    {t('common.cancel')}
-                </SecondaryButton>
-                <PrimaryButton disabled={form.processing}>{label}</PrimaryButton>
-            </div>
-        </form>
-    );
+    const cancelForm = (): void => {
+        setShowCreate(false);
+        setEditing(null);
+    };
 
     return (
         <DynamicLayout
@@ -331,7 +369,15 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
             {showCreate && (
                 <div className="mb-6 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                     <h2 className="mb-4 text-sm font-semibold text-gray-800">{t('rental.pages.rates.new')}</h2>
-                    <RateForm form={createForm} onSubmit={submitCreate} label={t('rental.actions.create_rate')} />
+                    <RateForm
+                        form={createForm}
+                        onSubmit={submitCreate}
+                        onCancel={cancelForm}
+                        label={t('rental.actions.create_rate')}
+                        periodOptions={periodOptions}
+                        vehicleOptions={vehicleOptions}
+                        labels={formLabels}
+                    />
                 </div>
             )}
 
@@ -419,7 +465,15 @@ export default function RatesIndex({ rates, vehicles }: Props): JSX.Element {
             <Modal show={!!editing} onClose={() => setEditing(null)}>
                 <div className="p-6">
                     <h2 className="mb-4 text-lg font-semibold text-gray-900">{t('rental.pages.rates.edit')}</h2>
-                    <RateForm form={editForm} onSubmit={submitEdit} label={t('common.save')} />
+                    <RateForm
+                        form={editForm}
+                        onSubmit={submitEdit}
+                        onCancel={cancelForm}
+                        label={t('common.save')}
+                        periodOptions={periodOptions}
+                        vehicleOptions={vehicleOptions}
+                        labels={formLabels}
+                    />
                 </div>
             </Modal>
 
