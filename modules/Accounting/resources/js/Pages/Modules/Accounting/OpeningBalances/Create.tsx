@@ -4,6 +4,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -192,24 +193,22 @@ export default function Create({
                                         <InputError message={(errors as Record<string, string>)[`lines.${index}.account_id`]} className="mt-1" />
                                     </td>
                                     <td className="px-3 py-2">
-                                        <TextInput
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                        <MoneyInput
                                             className="block w-full text-right"
                                             value={line.debit}
-                                            onChange={(e) => updateLine(index, { debit: e.target.value, credit: e.target.value ? '' : line.credit })}
+                                            onChange={(value) =>
+                                                updateLine(index, { debit: value, credit: value ? '' : line.credit })
+                                            }
                                             disabled={locked}
                                         />
                                     </td>
                                     <td className="px-3 py-2">
-                                        <TextInput
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                        <MoneyInput
                                             className="block w-full text-right"
                                             value={line.credit}
-                                            onChange={(e) => updateLine(index, { credit: e.target.value, debit: e.target.value ? '' : line.debit })}
+                                            onChange={(value) =>
+                                                updateLine(index, { credit: value, debit: value ? '' : line.debit })
+                                            }
                                             disabled={locked}
                                         />
                                     </td>

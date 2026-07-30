@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -119,23 +120,17 @@ export default function Edit({ journal, accounts }: Props): JSX.Element {
                                         />
                                     </td>
                                     <td className="px-2 py-2">
-                                        <TextInput
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                        <MoneyInput
                                             className="block w-full text-right"
-                                            value={line.debit}
-                                            onChange={(e) => updateLine(index, 'debit', e.target.value)}
+                                            value={String(line.debit ?? '')}
+                                            onChange={(value) => updateLine(index, 'debit', value)}
                                         />
                                     </td>
                                     <td className="px-2 py-2">
-                                        <TextInput
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                        <MoneyInput
                                             className="block w-full text-right"
-                                            value={line.credit}
-                                            onChange={(e) => updateLine(index, 'credit', e.target.value)}
+                                            value={String(line.credit ?? '')}
+                                            onChange={(value) => updateLine(index, 'credit', value)}
                                         />
                                     </td>
                                     <td className="px-2 py-2">

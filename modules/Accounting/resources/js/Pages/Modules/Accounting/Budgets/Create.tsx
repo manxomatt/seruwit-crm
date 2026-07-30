@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -78,11 +79,10 @@ export default function Create({ fiscal_year_id, year, periods, accounts }: Prop
                                 onChange={(value) => updateLine(index, 'fiscal_period_id', value)}
                                 options={periods.map((p) => ({ value: String(p.id), label: p.name }))}
                             />
-                            <TextInput
-                                type="number"
-                                step="0.01"
+                            <MoneyInput
+                                className="block w-full text-right"
                                 value={line.amount}
-                                onChange={(e) => updateLine(index, 'amount', e.target.value)}
+                                onChange={(value) => updateLine(index, 'amount', value)}
                             />
                         </div>
                     ))}

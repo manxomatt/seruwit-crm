@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -89,12 +90,20 @@ export default function Create({ accounts }: Props): JSX.Element {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <InputLabel value={t('accounting.fa.cost')} />
-                        <TextInput type="number" step="0.01" className="mt-1 block w-full" value={data.acquisition_cost} onChange={(e) => setData('acquisition_cost', e.target.value)} />
+                        <MoneyInput
+                            className="mt-1 block w-full"
+                            value={data.acquisition_cost}
+                            onChange={(value) => setData('acquisition_cost', value)}
+                        />
                         <InputError message={errors.acquisition_cost} className="mt-1" />
                     </div>
                     <div>
                         <InputLabel value={t('accounting.fa.salvage')} />
-                        <TextInput type="number" step="0.01" className="mt-1 block w-full" value={data.salvage_value} onChange={(e) => setData('salvage_value', e.target.value)} />
+                        <MoneyInput
+                            className="mt-1 block w-full"
+                            value={data.salvage_value}
+                            onChange={(value) => setData('salvage_value', value)}
+                        />
                     </div>
                 </div>
                 <div>

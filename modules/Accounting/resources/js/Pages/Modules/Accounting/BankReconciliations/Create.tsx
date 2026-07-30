@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -102,25 +103,21 @@ export default function Create({ accounts }: Props): JSX.Element {
                 <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                         <InputLabel htmlFor="opening_balance" value={t('accounting.recon.opening_balance')} />
-                        <TextInput
+                        <MoneyInput
                             id="opening_balance"
-                            type="number"
-                            step="0.01"
                             className="mt-1 block w-full"
                             value={data.opening_balance}
-                            onChange={(e) => setData('opening_balance', e.target.value)}
+                            onChange={(value) => setData('opening_balance', value)}
                         />
                         <InputError message={errors.opening_balance} className="mt-1" />
                     </div>
                     <div>
                         <InputLabel htmlFor="closing_balance" value={t('accounting.recon.closing_balance')} />
-                        <TextInput
+                        <MoneyInput
                             id="closing_balance"
-                            type="number"
-                            step="0.01"
                             className="mt-1 block w-full"
                             value={data.closing_balance}
-                            onChange={(e) => setData('closing_balance', e.target.value)}
+                            onChange={(value) => setData('closing_balance', value)}
                         />
                         <InputError message={errors.closing_balance} className="mt-1" />
                     </div>

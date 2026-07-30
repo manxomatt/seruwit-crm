@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -103,14 +104,11 @@ export default function Create({ accounts, types }: Props): JSX.Element {
 
                 <div>
                     <InputLabel htmlFor="amount" value={t('accounting.transactions.amount')} />
-                    <TextInput
+                    <MoneyInput
                         id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
                         className="mt-1 block w-full"
                         value={data.amount}
-                        onChange={(e) => setData('amount', e.target.value)}
+                        onChange={(value) => setData('amount', value)}
                         required
                     />
                     <InputError message={errors.amount} className="mt-1" />
