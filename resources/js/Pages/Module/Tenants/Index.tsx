@@ -28,6 +28,25 @@ const BuildingIcon = () => (
     </svg>
 );
 
+const EyeIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+);
+
+const SuspendIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+    </svg>
+);
+
+const ActivateIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
 export default function Index({ tenants }: Props): JSX.Element {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -175,21 +194,31 @@ export default function Index({ tenants }: Props): JSX.Element {
                                         </span>
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(tenant.created_at)}</td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-3">
+                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Link
+                                                href={route('module.tenants.show', tenant.id)}
+                                                className="text-gray-600 hover:text-gray-900"
+                                                title={t('tenants.actions.view_detail')}
+                                            >
+                                                <EyeIcon />
+                                            </Link>
                                             <button
                                                 type="button"
                                                 onClick={() => toggleStatus(tenant)}
-                                                className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                                                className={
+                                                    tenant.status === 'active'
+                                                        ? 'text-amber-600 hover:text-amber-800'
+                                                        : 'text-emerald-600 hover:text-emerald-800'
+                                                }
+                                                title={
+                                                    tenant.status === 'active'
+                                                        ? t('tenants.actions.suspend')
+                                                        : t('tenants.actions.activate')
+                                                }
                                             >
-                                                {tenant.status === 'active' ? t('tenants.actions.suspend') : t('tenants.actions.activate')}
+                                                {tenant.status === 'active' ? <SuspendIcon /> : <ActivateIcon />}
                                             </button>
-                                            <Link
-                                                href={route('module.tenants.show', tenant.id)}
-                                                className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                                            >
-                                                {t('tenants.actions.view_detail')}
-                                            </Link>
                                         </div>
                                     </td>
                                 </tr>
