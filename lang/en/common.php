@@ -27,4 +27,9 @@ return [
     'locale_updated' => 'Language updated.',
     'showing_results' => 'Showing :from to :to of :total results',
     'clear_filters' => 'Clear filters',
+    'filter' => 'Filter',
+    'all' => 'All',
+    'active' => 'Active',
+    'inactive' => 'Inactive',
+    'confirm_delete' => 'Are you sure you want to delete this?',
 ];

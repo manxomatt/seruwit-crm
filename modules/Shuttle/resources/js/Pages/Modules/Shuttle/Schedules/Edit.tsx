@@ -64,10 +64,8 @@ export default function Edit({ schedule, corridors, vehicles, drivers }: Props) 
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.schedules.edit')}</h2>}>
             <Head title={t('shuttle.schedules.edit')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-3xl space-y-4 px-4 sm:px-6 lg:px-8">
-                    <ShuttleNav active="schedules" />
-                    <form onSubmit={submit} className="space-y-4 rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <ShuttleNav active="schedules" />
+            <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <InputLabel value={t('shuttle.schedules.code')} />
@@ -130,14 +128,12 @@ export default function Edit({ schedule, corridors, vehicles, drivers }: Props) 
                             </div>
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Link href={prefixedRoute('shuttle.schedules.index')} className="rounded-md px-4 py-2 text-sm text-gray-600">
-                                Cancel
+                            <Link href={prefixedRoute('shuttle.schedules.index')} className="rounded-md px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                                {t('common.cancel')}
                             </Link>
-                            <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('common.save')}</PrimaryButton>
                         </div>
                     </form>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }

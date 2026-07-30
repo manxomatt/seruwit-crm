@@ -1,12 +1,10 @@
+import { Link } from '@inertiajs/react';
+import type { ReactNode } from 'react';
+
 export function EyeIcon() {
     return (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -75,7 +73,7 @@ type ActionButtonProps = {
     onClick?: () => void;
     href?: string;
     tone?: 'indigo' | 'red' | 'emerald' | 'sky';
-    children: React.ReactNode;
+    children: ReactNode;
 };
 
 const toneClass: Record<NonNullable<ActionButtonProps['tone']>, string> = {
@@ -90,9 +88,9 @@ export function ActionIconButton({ title, onClick, href, tone = 'indigo', childr
 
     if (href) {
         return (
-            <a href={href} className={className} title={title} aria-label={title}>
+            <Link href={href} className={className} title={title} aria-label={title}>
                 {children}
-            </a>
+            </Link>
         );
     }
 

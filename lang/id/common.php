@@ -27,4 +27,9 @@ return [
     'locale_updated' => 'Bahasa diperbarui.',
     'showing_results' => 'Menampilkan :from sampai :to dari total :total hasil',
     'clear_filters' => 'Bersihkan filter',
+    'filter' => 'Filter',
+    'all' => 'Semua',
+    'active' => 'Aktif',
+    'inactive' => 'Nonaktif',
+    'confirm_delete' => 'Apakah Anda yakin ingin menghapus data ini?',
 ];

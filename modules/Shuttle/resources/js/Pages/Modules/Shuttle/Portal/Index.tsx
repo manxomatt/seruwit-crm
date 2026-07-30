@@ -1,25 +1,27 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { ActionIconButton, EyeIcon } from '../components/ActionIcons';
+import ShuttlePagination, { type PaginatedMeta } from '../components/ShuttlePagination';
+
+interface BookingRow {
+    id: number;
+    booking_number: string;
+    status: string;
+    passenger_count: number;
+    total_fare: string | number;
+    departure?: {
+        departure_number: string;
+        depart_date: string;
+        depart_time: string;
+        corridor?: { name: string } | null;
+    } | null;
+}
 
 interface Props {
     partner: { id: number; code: string; name: string };
-    bookings: {
-        data: Array<{
-            id: number;
-            booking_number: string;
-            status: string;
-            passenger_count: number;
-            total_fare: string | number;
-            departure?: {
-                departure_number: string;
-                depart_date: string;
-                depart_time: string;
-                corridor?: { name: string } | null;
-            } | null;
-        }>;
-    };
+    bookings: PaginatedMeta & { data: BookingRow[] };
     openInvoices: Array<{
         id: number;
         code: string;
@@ -33,77 +35,133 @@ interface Props {
 
 const money = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
+function statusBadgeClass(status: string): string {
+    switch (status) {
+        case 'draft':
+            return 'bg-gray-100 text-gray-700';
+        case 'confirmed':
+            return 'bg-sky-100 text-sky-800';
+        case 'boarded':
+            return 'bg-amber-100 text-amber-800';
+        case 'completed':
+            return 'bg-emerald-100 text-emerald-800';
+        case 'cancelled':
+        case 'no_show':
+            return 'bg-red-100 text-red-800';
+        default:
+            return 'bg-gray-100 text-gray-700';
+    }
+}
+
 export default function Index({ partner, bookings, openInvoices, gatewayEnabled }: Props) {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.portal.title')}</h2>}>
-            <Head title={t('shuttle.portal.title')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <p className="text-sm text-gray-500">
+        <DynamicLayout
+            header={
+                <div>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.portal.title')}</h2>
+                    <p className="mt-1 text-sm text-gray-500">
                         {partner.name} <span className="text-gray-400">({partner.code})</span>
                     </p>
-
-                    <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
-                        <div className="border-b border-gray-200 px-4 py-3 font-medium">{t('shuttle.bookings.title')}</div>
-                        <ul className="divide-y divide-gray-100 text-sm">
-                            {bookings.data.map((b) => (
-                                <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                                    <div>
-                                        <Link
-                                            href={prefixedRoute('portal.shuttle.bookings.show', b.id)}
-                                            className="font-medium text-sky-700 hover:underline"
-                                        >
-                                            {b.booking_number}
-                                        </Link>
-                                        <div className="text-gray-500">
-                                            {b.departure?.corridor?.name} · {b.departure?.depart_date}{' '}
-                                            {String(b.departure?.depart_time ?? '').slice(0, 5)} · {b.passenger_count} pax
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div>{money(b.total_fare)}</div>
-                                        <div className="text-xs text-gray-500">{t(`shuttle.status.${b.status}`)}</div>
-                                    </div>
-                                </li>
-                            ))}
-                            {bookings.data.length === 0 && (
-                                <li className="px-4 py-6 text-center text-gray-500">{t('shuttle.portal.empty_bookings')}</li>
-                            )}
-                        </ul>
-                    </div>
-
-                    {openInvoices.length > 0 && (
-                        <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
-                            <div className="border-b border-gray-200 px-4 py-3 font-medium">{t('shuttle.portal.open_invoices')}</div>
-                            <ul className="divide-y divide-gray-100 text-sm">
-                                {openInvoices.map((inv) => (
-                                    <li key={inv.id} className="flex items-center justify-between px-4 py-3">
-                                        <div>
-                                            {inv.code} · {inv.status}
-                                            <div className="text-xs text-gray-500">{inv.due_date}</div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span>{money(inv.total)}</span>
-                                            {gatewayEnabled && (
-                                                <button
-                                                    type="button"
-                                                    className="text-sky-700 hover:underline"
-                                                    onClick={() => router.post(prefixedRoute('portal.shuttle.invoices.pay', inv.id))}
-                                                >
-                                                    Pay
-                                                </button>
-                                            )}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
                 </div>
+            }
+        >
+            <Head title={t('shuttle.portal.title')} />
+
+            <div className="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div className="border-b border-gray-200 px-4 py-3 font-medium text-gray-800">{t('shuttle.bookings.title')}</div>
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.bookings.number')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.bookings.departure')}</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('shuttle.bookings.fare')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.departures.status')}</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('common.actions')}</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {bookings.data.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                                    {t('shuttle.portal.empty_bookings')}
+                                </td>
+                            </tr>
+                        ) : (
+                            bookings.data.map((b) => (
+                                <tr key={b.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-gray-900">{b.booking_number}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="text-gray-900">{b.departure?.corridor?.name ?? '—'}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {b.departure?.depart_date} {String(b.departure?.depart_time ?? '').slice(0, 5)} · {b.passenger_count}{' '}
+                                            pax
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-right tabular-nums font-medium text-gray-900">{money(b.total_fare)}</td>
+                                    <td className="px-4 py-3">
+                                        <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${statusBadgeClass(b.status)}`}>
+                                            {t(`shuttle.status.${b.status}`)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <ActionIconButton
+                                                title={t('common.view')}
+                                                href={prefixedRoute('portal.shuttle.bookings.show', b.id)}
+                                            >
+                                                <EyeIcon />
+                                            </ActionIconButton>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+                <ShuttlePagination meta={bookings} />
             </div>
+
+            {openInvoices.length > 0 && (
+                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div className="border-b border-gray-200 px-4 py-3 font-medium text-gray-800">{t('shuttle.portal.open_invoices')}</div>
+                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Invoice</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.departures.status')}</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('shuttle.bookings.fare')}</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('common.actions')}</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {openInvoices.map((inv) => (
+                                <tr key={inv.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3">
+                                        <div className="font-medium text-gray-900">{inv.code}</div>
+                                        {inv.due_date && <div className="text-xs text-gray-500">{inv.due_date}</div>}
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-700">{inv.status}</td>
+                                    <td className="px-4 py-3 text-right tabular-nums text-gray-900">{money(inv.total)}</td>
+                                    <td className="px-4 py-3 text-right">
+                                        {gatewayEnabled && (
+                                            <button
+                                                type="button"
+                                                className="text-sm font-medium text-indigo-600 hover:text-indigo-900"
+                                                onClick={() => router.post(prefixedRoute('portal.shuttle.invoices.pay', inv.id))}
+                                            >
+                                                Pay
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </DynamicLayout>
     );
 }

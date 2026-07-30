@@ -44,10 +44,8 @@ export default function Show({ booking, can }: Props) {
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{booking.booking_number}</h2>}>
             <Head title={booking.booking_number} />
-            <div className="py-6">
-                <div className="mx-auto max-w-4xl space-y-4 px-4 sm:px-6 lg:px-8">
-                    <ShuttleNav active="bookings" />
-                    <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <ShuttleNav active="bookings" />
+            <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <div className="text-sm text-gray-500">{t(`shuttle.status.${booking.status}`)}</div>
@@ -126,15 +124,13 @@ export default function Show({ booking, can }: Props) {
                             <div className="mt-6">
                                 <Link
                                     href={prefixedRoute('shuttle.departures.show', booking.departure.id)}
-                                    className="text-sky-700 hover:underline"
+                                    className="text-indigo-600 hover:underline"
                                 >
-                                    View departure {booking.departure.departure_number}
+                                    {t('common.view')} {booking.departure.departure_number}
                                 </Link>
                             </div>
                         )}
                     </div>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }

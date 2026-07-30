@@ -79,12 +79,11 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{departure.departure_number}</h2>}>
             <Head title={departure.departure_number} />
-            <div className="py-6">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <ShuttleNav active="departures" />
+            <ShuttleNav active="departures" />
 
+            <div className="space-y-6">
                     <div className="grid gap-4 lg:grid-cols-3">
-                        <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200 lg:col-span-2">
+                        <div className="overflow-hidden bg-white p-4 shadow-sm sm:rounded-lg lg:col-span-2">
                             <div className="text-sm text-gray-500">{departure.corridor?.name}</div>
                             <div className="mt-1 text-lg font-semibold text-gray-900">
                                 {departure.depart_date} · {String(departure.depart_time).slice(0, 5)}
@@ -107,7 +106,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                             </div>
                         </div>
 
-                        <div className="space-y-2 rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200">
+                        <div className="space-y-2 overflow-hidden bg-white p-4 shadow-sm sm:rounded-lg">
                             {can.update && (
                                 <PrimaryButton
                                     type="button"
@@ -161,7 +160,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                     </div>
 
                     {depotLat != null && depotLng != null && departure.route_stops.length > 0 && (
-                        <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
+                        <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                             <div className="border-b border-gray-200 px-4 py-3 font-medium">{t('shuttle.departures.map')}</div>
                             <PlanRoutesMap
                                 height="420px"
@@ -189,7 +188,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                     )}
 
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
+                        <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
                                 <span className="font-medium">{t('shuttle.departures.route_stops')}</span>
                                 <span className="text-sm text-gray-500">
@@ -222,7 +221,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                             </ol>
                         </div>
 
-                        <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
+                        <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                             <div className="border-b border-gray-200 px-4 py-3 font-medium">{t('shuttle.departures.manifest')}</div>
                             <ul className="divide-y divide-gray-100 text-sm">
                                 {departure.bookings.map((b) => (
@@ -246,7 +245,6 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                             </ul>
                         </div>
                     </div>
-                </div>
             </div>
         </DynamicLayout>
     );

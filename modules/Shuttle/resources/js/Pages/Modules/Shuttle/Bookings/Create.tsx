@@ -63,10 +63,8 @@ export default function Create({ departures, partners }: Props) {
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.bookings.create')}</h2>}>
             <Head title={t('shuttle.bookings.create')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-3xl space-y-4 px-4 sm:px-6 lg:px-8">
-                    <ShuttleNav active="bookings" />
-                    <form onSubmit={submit} className="space-y-4 rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <ShuttleNav active="bookings" />
+            <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                         <div>
                             <InputLabel value={t('shuttle.bookings.departure')} />
                             <Select
@@ -197,14 +195,12 @@ export default function Create({ departures, partners }: Props) {
                         </div>
 
                         <div className="flex justify-end gap-2">
-                            <Link href={prefixedRoute('shuttle.bookings.index')} className="rounded-md px-4 py-2 text-sm text-gray-600">
-                                Cancel
+                            <Link href={prefixedRoute('shuttle.bookings.index')} className="rounded-md px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                                {t('common.cancel')}
                             </Link>
-                            <PrimaryButton disabled={processing}>Save draft</PrimaryButton>
+                            <PrimaryButton disabled={processing}>{t('common.save')}</PrimaryButton>
                         </div>
                     </form>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }

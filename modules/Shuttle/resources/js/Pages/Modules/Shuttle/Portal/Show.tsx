@@ -40,13 +40,11 @@ export default function Show({ partner, booking, canPayInvoice }: Props) {
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{booking.booking_number}</h2>}>
             <Head title={booking.booking_number} />
-            <div className="py-6">
-                <div className="mx-auto max-w-3xl space-y-4 px-4 sm:px-6 lg:px-8">
-                    <Link href={prefixedRoute('portal.shuttle.bookings.index')} className="text-sm text-sky-700 hover:underline">
-                        ← {t('shuttle.portal.back')}
-                    </Link>
+            <Link href={prefixedRoute('portal.shuttle.bookings.index')} className="mb-4 inline-block text-sm text-indigo-600 hover:underline">
+                ← {t('shuttle.portal.back')}
+            </Link>
 
-                    <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200">
+            <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                         <div className="text-sm text-gray-500">{partner.name}</div>
                         <div className="mt-1 text-lg font-semibold">{booking.departure?.corridor?.name}</div>
                         <div className="mt-1 text-sm text-gray-600">
@@ -101,8 +99,6 @@ export default function Show({ partner, booking, canPayInvoice }: Props) {
                             </div>
                         )}
                     </div>
-                </div>
-            </div>
         </DynamicLayout>
     );
 }
