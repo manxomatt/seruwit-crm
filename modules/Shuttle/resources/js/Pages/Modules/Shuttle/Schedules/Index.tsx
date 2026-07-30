@@ -1,3 +1,4 @@
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import DynamicLayout from '@/Layouts/DynamicLayout';
@@ -16,7 +17,7 @@ interface Schedule {
     departure_time: string;
     seat_capacity: number;
     is_active: boolean;
-    corridor?: { name: string; code: string } | null;
+    corridor?: { name: string; code: string; service_type?: string } | null;
     vehicle?: { name: string; plate_number: string } | null;
 }
 
@@ -29,6 +30,8 @@ export default function Index({ schedules, can }: Props) {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [generateId, setGenerateId] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState<Schedule | null>(null);
+    const [processingDelete, setProcessingDelete] = useState(false);
     const generateForm = useForm({ from: '', to: '' });
 
     const submitGenerate: FormEventHandler = (e) => {
@@ -36,6 +39,22 @@ export default function Index({ schedules, can }: Props) {
         if (!generateId) return;
         generateForm.post(prefixedRoute('shuttle.schedules.generate', generateId), {
             onSuccess: () => setGenerateId(null),
+        });
+    };
+
+    const closeDeleteDialog = () => {
+        setDeleting(null);
+    };
+
+    const confirmDelete = () => {
+        if (!deleting) {
+            return;
+        }
+
+        setProcessingDelete(true);
+        router.delete(prefixedRoute('shuttle.schedules.destroy', deleting.id), {
+            onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessingDelete(false),
         });
     };
 
@@ -78,7 +97,14 @@ export default function Index({ schedules, can }: Props) {
                             schedules.data.map((s) => (
                                 <tr key={s.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3 font-medium text-gray-900">{s.code}</td>
-                                    <td className="px-4 py-3 text-gray-700">{s.corridor?.name}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="text-gray-900">{s.corridor?.name}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {s.corridor?.service_type === 'door'
+                                                ? t('shuttle.service.door_short')
+                                                : t('shuttle.service.pool_short')}
+                                        </div>
+                                    </td>
                                     <td className="px-4 py-3 text-gray-600">
                                         {(s.days_of_week ?? []).map((d) => t(`shuttle.days.${d}`)).join(', ')}
                                     </td>
@@ -107,11 +133,7 @@ export default function Index({ schedules, can }: Props) {
                                                 <ActionIconButton
                                                     title={t('common.delete', undefined, 'Delete')}
                                                     tone="red"
-                                                    onClick={() => {
-                                                        if (confirm(t('common.confirm_delete', undefined, 'Delete this item?'))) {
-                                                            router.delete(prefixedRoute('shuttle.schedules.destroy', s.id));
-                                                        }
-                                                    }}
+                                                    onClick={() => setDeleting(s)}
                                                 >
                                                     <TrashIcon />
                                                 </ActionIconButton>
@@ -145,6 +167,18 @@ export default function Index({ schedules, can }: Props) {
                     </button>
                 </form>
             )}
+
+            <ConfirmDeleteDialog
+                show={deleting !== null}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processingDelete}
+                message={
+                    deleting
+                        ? t('shuttle.messages.delete_confirm', { name: deleting.code })
+                        : undefined
+                }
+            />
         </DynamicLayout>
     );
 }

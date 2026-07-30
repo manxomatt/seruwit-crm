@@ -4,6 +4,7 @@ namespace Modules\Shuttle\Support;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Modules\Shuttle\Models\ShuttleCorridor;
 use Modules\Shuttle\Models\ShuttleDeparture;
 use Modules\Shuttle\Models\ShuttleSchedule;
 
@@ -64,6 +65,7 @@ class ScheduleDepartureGenerator
             $created->push(ShuttleDeparture::query()->create([
                 'schedule_id' => $schedule->id,
                 'corridor_id' => $schedule->corridor_id,
+                'service_type' => $schedule->corridor?->service_type ?? ShuttleCorridor::SERVICE_POOL,
                 'departure_number' => ShuttleDeparture::nextNumber(),
                 'depart_date' => $cursor->toDateString(),
                 'depart_time' => $schedule->departure_time,

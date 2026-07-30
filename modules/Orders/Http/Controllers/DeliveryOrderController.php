@@ -3,7 +3,6 @@
 namespace Modules\Orders\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -93,7 +92,6 @@ class DeliveryOrderController extends Controller
             'locations' => Location::query()->active()->orderBy('name')->get([
                 'id', 'code', 'name', 'address', 'city', 'latitude', 'longitude',
             ]),
-            'canGeocode' => Modules::available('inventory'),
         ]);
     }
 
@@ -163,7 +161,6 @@ class DeliveryOrderController extends Controller
             'locations' => Location::query()->active()->orderBy('name')->get([
                 'id', 'code', 'name', 'address', 'city', 'latitude', 'longitude',
             ]),
-            'canGeocode' => Modules::available('inventory'),
         ]);
     }
 

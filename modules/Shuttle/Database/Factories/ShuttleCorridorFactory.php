@@ -25,10 +25,26 @@ class ShuttleCorridorFactory extends Factory
             'name' => "{$origin} – {$destination}",
             'origin_city' => $origin,
             'destination_city' => $destination,
+            'service_type' => ShuttleCorridor::SERVICE_POOL,
             'base_fare' => 200000,
             'estimated_duration_minutes' => 180,
             'distance_km' => 150,
             'is_active' => true,
         ];
+    }
+
+    public function pool(): static
+    {
+        return $this->state(fn (): array => [
+            'service_type' => ShuttleCorridor::SERVICE_POOL,
+        ]);
+    }
+
+    public function door(): static
+    {
+        return $this->state(fn (): array => [
+            'service_type' => ShuttleCorridor::SERVICE_DOOR,
+            'base_fare' => 250000,
+        ]);
     }
 }

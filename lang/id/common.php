@@ -32,4 +32,10 @@ return [
     'active' => 'Aktif',
     'inactive' => 'Nonaktif',
     'confirm_delete' => 'Apakah Anda yakin ingin menghapus data ini?',
+    'geocode' => [
+        'failed' => 'Tidak bisa mencari alamat untuk lokasi ini.',
+        'not_found' => 'Alamat tidak ditemukan untuk lokasi ini.',
+        'map_resolving' => 'Mencari alamat…',
+        'map_hint' => 'Klik peta atau geser pin untuk menentukan koordinat. Alamat diisi dari pin.',
+    ],
 ];

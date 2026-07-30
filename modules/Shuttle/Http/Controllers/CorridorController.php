@@ -6,17 +6,19 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Partners\Models\Location;
 use Modules\Shuttle\Http\Requests\StoreCorridorRequest;
 use Modules\Shuttle\Http\Requests\UpdateCorridorRequest;
+use Modules\Shuttle\Models\ShuttleCity;
 use Modules\Shuttle\Models\ShuttleCorridor;
+use Modules\Shuttle\Models\ShuttlePool;
+use Modules\Shuttle\Models\ShuttleSetting;
 
 class CorridorController extends Controller
 {
     public function index(): Response
     {
         $corridors = ShuttleCorridor::query()
-            ->with(['originLocation', 'destinationLocation'])
+            ->with(['originPool:id,code,name', 'destinationPool:id,code,name'])
             ->when(request('search'), function ($q, $search) {
                 $q->where(function ($inner) use ($search) {
                     $inner->where('code', 'like', "%{$search}%")
@@ -42,14 +44,12 @@ class CorridorController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Modules/Shuttle/Corridors/Create', [
-            'locations' => Location::query()->active()->orderBy('name')->get(['id', 'code', 'name', 'city']),
-        ]);
+        return Inertia::render('Modules/Shuttle/Corridors/Create', $this->formOptions());
     }
 
     public function store(StoreCorridorRequest $request): RedirectResponse
     {
-        ShuttleCorridor::query()->create($request->validated());
+        ShuttleCorridor::query()->create($request->corridorAttributes());
 
         return redirect()->route('module.shuttle.corridors.index')
             ->with('success', __('shuttle.messages.corridor_created'));
@@ -58,14 +58,14 @@ class CorridorController extends Controller
     public function edit(ShuttleCorridor $corridor): Response
     {
         return Inertia::render('Modules/Shuttle/Corridors/Edit', [
-            'corridor' => $corridor,
-            'locations' => Location::query()->active()->orderBy('name')->get(['id', 'code', 'name', 'city']),
+            'corridor' => $corridor->load(['originPool', 'destinationPool']),
+            ...$this->formOptions(),
         ]);
     }
 
     public function update(UpdateCorridorRequest $request, ShuttleCorridor $corridor): RedirectResponse
     {
-        $corridor->update($request->validated());
+        $corridor->update($request->corridorAttributes());
 
         return redirect()->route('module.shuttle.corridors.index')
             ->with('success', __('shuttle.messages.corridor_updated'));
@@ -81,5 +81,26 @@ class CorridorController extends Controller
 
         return redirect()->route('module.shuttle.corridors.index')
             ->with('success', __('shuttle.messages.corridor_deleted'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formOptions(): array
+    {
+        $settings = array_merge(ShuttleSetting::defaults(), ShuttleSetting::allMapped());
+
+        return [
+            'cities' => ShuttleCity::query()->where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']),
+            'pools' => ShuttlePool::query()
+                ->with('city:id,name')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'city_id', 'code', 'name', 'is_origin', 'is_destination']),
+            'defaults' => [
+                'pool_base_fare' => $settings[ShuttleSetting::KEY_DEFAULT_POOL_FARE] ?? '200000',
+                'door_base_fare' => $settings[ShuttleSetting::KEY_DEFAULT_DOOR_FARE] ?? '250000',
+            ],
+        ];
     }
 }

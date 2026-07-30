@@ -1,3 +1,4 @@
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import DynamicLayout from '@/Layouts/DynamicLayout';
@@ -13,8 +14,9 @@ interface Corridor {
     id: number;
     code: string;
     name: string;
-    origin_city: string;
-    destination_city: string;
+    origin_city: string | { name?: string } | null;
+    destination_city: string | { name?: string } | null;
+    service_type: string;
     base_fare: string | number;
     is_active: boolean;
 }
@@ -27,14 +29,42 @@ interface Props {
 
 const money = (v: string | number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
+function cityLabel(value: Corridor['origin_city']): string {
+    if (value == null) {
+        return '—';
+    }
+    if (typeof value === 'string') {
+        return value;
+    }
+    return value.name ?? '—';
+}
+
 export default function Index({ corridors, filters, can }: Props) {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [search, setSearch] = useState(filters.search ?? '');
+    const [deleting, setDeleting] = useState<Corridor | null>(null);
+    const [processingDelete, setProcessingDelete] = useState(false);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         router.get(prefixedRoute('shuttle.corridors.index'), { search: search || undefined }, { preserveState: true, replace: true });
+    };
+
+    const closeDeleteDialog = () => {
+        setDeleting(null);
+    };
+
+    const confirmDelete = () => {
+        if (!deleting) {
+            return;
+        }
+
+        setProcessingDelete(true);
+        router.delete(prefixedRoute('shuttle.corridors.destroy', deleting.id), {
+            onSuccess: () => closeDeleteDialog(),
+            onFinish: () => setProcessingDelete(false),
+        });
     };
 
     return (
@@ -71,6 +101,7 @@ export default function Index({ corridors, filters, can }: Props) {
                         <tr>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.code')}</th>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.name')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.service_type')}</th>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.base_fare')}</th>
                             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('shuttle.corridors.active')}</th>
                             <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('common.actions', undefined, 'Actions')}</th>
@@ -79,7 +110,7 @@ export default function Index({ corridors, filters, can }: Props) {
                     <tbody className="divide-y divide-gray-100">
                         {corridors.data.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                                <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
                                     —
                                 </td>
                             </tr>
@@ -90,8 +121,19 @@ export default function Index({ corridors, filters, can }: Props) {
                                     <td className="px-4 py-3">
                                         <div className="font-medium text-gray-900">{c.name}</div>
                                         <div className="text-xs text-gray-500">
-                                            {c.origin_city} → {c.destination_city}
+                                            {cityLabel(c.origin_city)} → {cityLabel(c.destination_city)}
                                         </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span
+                                            className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
+                                                c.service_type === 'door'
+                                                    ? 'bg-violet-100 text-violet-800'
+                                                    : 'bg-sky-100 text-sky-800'
+                                            }`}
+                                        >
+                                            {c.service_type === 'door' ? t('shuttle.service.door_short') : t('shuttle.service.pool_short')}
+                                        </span>
                                     </td>
                                     <td className="px-4 py-3 tabular-nums text-gray-900">{money(c.base_fare)}</td>
                                     <td className="px-4 py-3">
@@ -117,11 +159,7 @@ export default function Index({ corridors, filters, can }: Props) {
                                                 <ActionIconButton
                                                     title={t('common.delete', undefined, 'Delete')}
                                                     tone="red"
-                                                    onClick={() => {
-                                                        if (confirm(t('common.confirm_delete', undefined, 'Delete this item?'))) {
-                                                            router.delete(prefixedRoute('shuttle.corridors.destroy', c.id));
-                                                        }
-                                                    }}
+                                                    onClick={() => setDeleting(c)}
                                                 >
                                                     <TrashIcon />
                                                 </ActionIconButton>
@@ -135,6 +173,18 @@ export default function Index({ corridors, filters, can }: Props) {
                 </table>
                 <ShuttlePagination meta={corridors} />
             </div>
+
+            <ConfirmDeleteDialog
+                show={deleting !== null}
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processingDelete}
+                message={
+                    deleting
+                        ? t('shuttle.messages.delete_confirm', { name: deleting.name || deleting.code })
+                        : undefined
+                }
+            />
         </DynamicLayout>
     );
 }

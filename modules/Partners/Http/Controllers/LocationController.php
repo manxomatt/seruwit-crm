@@ -3,7 +3,6 @@
 namespace Modules\Partners\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Facades\Modules;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -46,7 +45,6 @@ class LocationController extends Controller
                 'search' => request('search'),
                 'active' => request('active'),
             ],
-            'canGeocode' => Modules::available('inventory'),
             'can' => [
                 'create' => $user->hasPermissionFor('partners', 'create'),
                 'update' => $user->hasPermissionFor('partners', 'update'),

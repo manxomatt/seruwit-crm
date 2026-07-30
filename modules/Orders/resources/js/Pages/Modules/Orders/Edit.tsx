@@ -46,10 +46,9 @@ interface Props {
     order: Order;
     partners: Partner[];
     locations: LocationOption[];
-    canGeocode?: boolean;
 }
 
-export default function Edit({ order, partners, locations, canGeocode = false }: Props): JSX.Element {
+export default function Edit({ order, partners, locations }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
@@ -181,7 +180,6 @@ export default function Edit({ order, partners, locations, canGeocode = false }:
                                 longitude={String(data.delivery_lng)}
                                 onChange={handleMapChange}
                                 height="300px"
-                                resolveAddress={canGeocode}
                             />
                         </div>
 

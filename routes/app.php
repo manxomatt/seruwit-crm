@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\GeocodeController;
 use App\Http\Controllers\LiveUpdateController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Module\AnalyticsController as ModuleAnalyticsController;
@@ -57,6 +58,9 @@ Route::middleware('auth')->group(function () {
 
         // Global Search
         Route::get('/search', [ModuleGlobalSearchController::class, 'search'])->name('search');
+
+        // Reverse geocode — shared map-pin helper (auth only, no module gate).
+        Route::get('/geocode/reverse', [GeocodeController::class, 'reverse'])->name('geocode.reverse');
 
         // Notifications — every authenticated user reads their own, no gate.
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

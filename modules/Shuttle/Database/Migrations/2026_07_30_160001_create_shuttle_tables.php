@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('origin_city');
             $table->string('destination_city');
+            $table->string('service_type', 20)->default('pool');
             $table->foreignId('origin_location_id')->nullable()->constrained('locations')->nullOnDelete();
             $table->foreignId('destination_location_id')->nullable()->constrained('locations')->nullOnDelete();
             $table->decimal('base_fare', 15, 2);
@@ -54,6 +55,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('schedule_id')->nullable()->constrained('shuttle_schedules')->nullOnDelete();
             $table->foreignId('corridor_id')->constrained('shuttle_corridors')->restrictOnDelete();
+            $table->string('service_type', 20)->default('pool');
             $table->string('departure_number')->unique();
             $table->date('depart_date');
             $table->time('depart_time');

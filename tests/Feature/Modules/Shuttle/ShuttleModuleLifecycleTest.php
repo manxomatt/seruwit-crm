@@ -29,6 +29,8 @@ class ShuttleModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('shuttle_passengers'));
             $this->assertTrue(Schema::hasTable('shuttle_route_stops'));
             $this->assertTrue(Schema::hasTable('shuttle_pools'));
+            $this->assertTrue(Schema::hasTable('shuttle_cities'));
+            $this->assertTrue(Schema::hasTable('shuttle_settings'));
             $this->assertDatabaseHas('permissions', ['module' => 'shuttle', 'action' => 'optimize']);
             $this->assertDatabaseHas('permissions', ['module' => 'shuttle', 'action' => 'dispatch']);
             $this->assertDatabaseHas('menus', ['slug' => 'shuttle']);

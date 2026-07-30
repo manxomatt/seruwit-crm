@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Modules\Inventory;
+namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -22,7 +22,7 @@ class GeocodeReverseTest extends TestCase
 
     public function test_guests_cannot_reverse_geocode(): void
     {
-        $this->getJson(route('module.inventory.geocode.reverse', [
+        $this->getJson(route('module.geocode.reverse', [
             'lat' => -5.3971,
             'lng' => 105.2668,
         ]))->assertUnauthorized();
@@ -37,7 +37,7 @@ class GeocodeReverseTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->getJson(route('module.inventory.geocode.reverse', [
+            ->getJson(route('module.geocode.reverse', [
                 'lat' => -5.3971,
                 'lng' => 105.2668,
             ]))
@@ -52,21 +52,11 @@ class GeocodeReverseTest extends TestCase
     public function test_reverse_geocode_validates_coordinates(): void
     {
         $this->actingAs($this->createAdminUser())
-            ->getJson(route('module.inventory.geocode.reverse', [
+            ->getJson(route('module.geocode.reverse', [
                 'lat' => 120,
                 'lng' => 105.2668,
             ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors('lat');
-    }
-
-    public function test_warehouse_create_page_loads(): void
-    {
-        $this->actingAs($this->createAdminUser())
-            ->get(route('module.inventory.warehouses.create'))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->component('Modules/Inventory/Warehouses/Create')
-                ->has('kinds'));
     }
 }

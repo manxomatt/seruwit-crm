@@ -32,7 +32,7 @@ function MapClickHandler({ onPick }: { onPick: (lat: number, lng: number) => voi
 
 /**
  * Click/drag a Leaflet pin to set coordinates. Optionally reverse-geocodes
- * the pin through the inventory Nominatim proxy and returns an address.
+ * the pin through the global Nominatim proxy and returns an address.
  */
 export default function LocationMapPicker({
     latitude,
@@ -64,7 +64,7 @@ export default function LocationMapPicker({
             onChange({ latitude: formatCoord(lat), longitude: formatCoord(lng) });
 
             try {
-                const url = `${prefixedRoute('inventory.geocode.reverse')}?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+                const url = `${prefixedRoute('geocode.reverse')}?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
                 const response = await fetch(url, {
                     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                     credentials: 'same-origin',
@@ -76,7 +76,7 @@ export default function LocationMapPicker({
                 }
 
                 if (!response.ok) {
-                    setError(payload.message || t('inventory.messages.geocode_failed'));
+                    setError(payload.message || t('common.geocode.failed'));
                     return;
                 }
 
@@ -87,7 +87,7 @@ export default function LocationMapPicker({
                 });
             } catch {
                 if (id === requestId.current) {
-                    setError(t('inventory.messages.geocode_failed'));
+                    setError(t('common.geocode.failed'));
                 }
             } finally {
                 if (id === requestId.current) {
@@ -141,7 +141,7 @@ export default function LocationMapPicker({
                 )}
             </LeafletMap>
             <p className="text-xs text-gray-500">
-                {resolving ? t('inventory.warehouses.map_resolving') : t('inventory.warehouses.map_hint')}
+                {resolving ? t('common.geocode.map_resolving') : t('common.geocode.map_hint')}
             </p>
             {error && <p className="text-xs text-amber-700">{error}</p>}
         </div>

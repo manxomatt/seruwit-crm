@@ -13,6 +13,7 @@ use Modules\Shuttle\Http\Controllers\DepartureController;
 use Modules\Shuttle\Http\Controllers\DirectionsController;
 use Modules\Shuttle\Http\Controllers\PartnerPortalController;
 use Modules\Shuttle\Http\Controllers\ScheduleController;
+use Modules\Shuttle\Http\Controllers\SettingsController;
 use Modules\Shuttle\Http\Controllers\ShuttleDashboardController;
 
 /**
@@ -93,6 +94,16 @@ class ShuttleModule implements ModuleContract
         Route::get('/shuttle/directions', DirectionsController::class)
             ->middleware('permission:shuttle,view')
             ->name('shuttle.directions');
+
+        // Settings (general + cities + pools)
+        Route::get('/shuttle/settings', [SettingsController::class, 'index'])->middleware('permission:shuttle,view')->name('shuttle.settings.index');
+        Route::patch('/shuttle/settings/general', [SettingsController::class, 'updateGeneral'])->middleware('permission:shuttle,update')->name('shuttle.settings.general');
+        Route::post('/shuttle/settings/cities', [SettingsController::class, 'storeCity'])->middleware('permission:shuttle,create')->name('shuttle.settings.cities.store');
+        Route::patch('/shuttle/settings/cities/{city}', [SettingsController::class, 'updateCity'])->middleware('permission:shuttle,update')->name('shuttle.settings.cities.update');
+        Route::delete('/shuttle/settings/cities/{city}', [SettingsController::class, 'destroyCity'])->middleware('permission:shuttle,delete')->name('shuttle.settings.cities.destroy');
+        Route::post('/shuttle/settings/pools', [SettingsController::class, 'storePool'])->middleware('permission:shuttle,create')->name('shuttle.settings.pools.store');
+        Route::patch('/shuttle/settings/pools/{pool}', [SettingsController::class, 'updatePool'])->middleware('permission:shuttle,update')->name('shuttle.settings.pools.update');
+        Route::delete('/shuttle/settings/pools/{pool}', [SettingsController::class, 'destroyPool'])->middleware('permission:shuttle,delete')->name('shuttle.settings.pools.destroy');
 
         // Corridors
         Route::get('/shuttle/corridors', [CorridorController::class, 'index'])->middleware('permission:shuttle,view')->name('shuttle.corridors.index');

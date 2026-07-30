@@ -84,20 +84,26 @@ pages/…          partners ──┐
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | `id` | bigint PK | |
-| `code` | varchar unique | `JKT-BDG` |
-| `name` | varchar | Jakarta – Bandung |
+| `code` | varchar unique | `JKT-BDG-POOL` / `JKT-BDG-DOOR` |
+| `name` | varchar | Jakarta – Bandung (Pool) |
 | `origin_city` | varchar | Label kota asal |
 | `destination_city` | varchar | Label kota tujuan |
+| `service_type` | string | `pool` · `door` — **dua produk terpisah** (harga & operasional beda) |
 | `origin_location_id` | FK → locations nullable | Pool default asal |
 | `destination_location_id` | FK → locations nullable | Pool default tujuan |
-| `base_fare` | decimal(15,2) | Tarif fix per kursi (MVP) |
+| `base_fare` | decimal(15,2) | Tarif fix per kursi untuk produk ini |
 | `estimated_duration_minutes` | unsigned int nullable | ETA koridor |
 | `distance_km` | decimal(10,2) nullable | |
 | `is_active` | bool | |
 | `notes` | text nullable | |
 | `timestamps` | | |
 
-> Reverse corridor (BDG–JKT) = baris terpisah agar tarif/jadwal mandiri.
+> Reverse corridor (BDG–JKT) = baris terpisah. **Pool vs Door** pada O–D yang sama juga = baris terpisah (SKU berbeda).
+>
+> - `pool`: penumpang wajib naik/turun di pool; rute `pool_origin → pool_destination`
+> - `door`: kendaraan berangkat pool asal → jemput → antar → pool tujuan; optimasi NN per departure
+
+`shuttle_departures.service_type` di-snapshot dari koridor saat generate.
 
 ### 2.2 `shuttle_schedules` — template berulang
 | Kolom | Tipe | Keterangan |
@@ -281,11 +287,9 @@ Dalam `DB::transaction`:
 1. Validasi status ∈ `{open, locked, optimized}` (bukan `dispatched+`)
 2. Hapus `shuttle_route_stops` lama
 3. Load booking `confirmed` + koordinat
-4. Bangun urutan:
-   - Pickups door: nearest-neighbour dari “anchor” (depot = pool origin, atau centroid jemput pertama)
-   - Sisipkan `pool_origin` di akhir leg jemput (jika ada pool)
-   - Sisipkan `pool_destination` di awal leg drop
-   - Dropoffs door: nearest-neighbour dari pool destination
+4. Bangun urutan menurut `service_type`:
+   - **pool:** `pool_origin` → `pool_destination` saja
+   - **door:** `pool_origin` → nearest-neighbour jemput door → nearest-neighbour antar door → `pool_destination`
 5. Persist stops + `distance_from_previous_km`; set `optimized_at`, status → `optimized`
 6. Return summary: total km, ETA kasar, unassigned (booking door tanpa lat/lng)
 
@@ -446,10 +450,10 @@ Jalankan minimal: `php artisan test --compact --filter=Shuttle`
 ## 13. Kriteria siap implement
 
 - [ ] Desain disetujui (key `shuttle`, hard deps, anti-pola Trip/DO)
-- [ ] Keputusan pool: `shuttle_pools` vs `locations.kind`
-- [ ] Keputusan extract Haversine sekarang vs copy MVP
-- [ ] Vertical pack & plan entitlement key disepakati
-- [ ] Sample koridor demo (JKT–BDG 200rb) untuk seeder
+- [x] Keputusan pool: `shuttle_pools` + master `shuttle_cities` di Settings
+- [x] Vertical pack & plan entitlement key disepakati
+- [x] Sample koridor demo (JKT–BDG 200rb) untuk seeder
+- [x] Master city/pool + `shuttle_settings` (config) di UI Settings
 
 ---
 

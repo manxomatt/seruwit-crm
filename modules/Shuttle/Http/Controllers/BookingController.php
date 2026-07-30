@@ -7,9 +7,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Shuttle\Http\Requests\StoreBookingRequest;
 use Modules\Shuttle\Models\ShuttleBooking;
+use Modules\Shuttle\Models\ShuttleCorridor;
 use Modules\Shuttle\Models\ShuttleDeparture;
 use Modules\Shuttle\Support\BookingConfirmationService;
 
@@ -45,31 +47,64 @@ class BookingController extends Controller
     {
         return Inertia::render('Modules/Shuttle/Bookings/Create', [
             'departures' => ShuttleDeparture::query()
-                ->with('corridor')
+                ->with([
+                    'corridor.originLocation:id,name,address,latitude,longitude',
+                    'corridor.destinationLocation:id,name,address,latitude,longitude',
+                    'originPool:id,name,address,latitude,longitude',
+                    'destinationPool:id,name,address,latitude,longitude',
+                ])
                 ->whereIn('status', [ShuttleDeparture::STATUS_OPEN, ShuttleDeparture::STATUS_OPTIMIZED])
                 ->whereDate('depart_date', '>=', today())
                 ->orderBy('depart_date')
                 ->orderBy('depart_time')
                 ->get()
-                ->map(fn (ShuttleDeparture $d) => [
-                    'id' => $d->id,
-                    'label' => sprintf(
-                        '%s · %s %s · %s (%d/%d)',
-                        $d->departure_number,
-                        $d->depart_date?->toDateString(),
-                        substr((string) $d->depart_time, 0, 5),
-                        $d->corridor?->name,
-                        $d->seats_booked,
-                        $d->seat_capacity,
-                    ),
-                    'unit_fare' => $d->corridor?->base_fare,
-                    'seats_remaining' => $d->seatsRemaining(),
-                ]),
+                ->map(function (ShuttleDeparture $d) {
+                    $origin = $d->originPool ?? $d->corridor?->originLocation;
+                    $destination = $d->destinationPool ?? $d->corridor?->destinationLocation;
+
+                    return [
+                        'id' => $d->id,
+                        'label' => sprintf(
+                            '%s · %s · %s %s · %s (%d/%d)',
+                            $d->departure_number,
+                            $d->resolvedServiceType() === ShuttleCorridor::SERVICE_DOOR
+                                ? __('shuttle.service.door')
+                                : __('shuttle.service.pool'),
+                            $d->depart_date?->toDateString(),
+                            substr((string) $d->depart_time, 0, 5),
+                            $d->corridor?->name,
+                            $d->seats_booked,
+                            $d->seat_capacity,
+                        ),
+                        'service_type' => $d->resolvedServiceType(),
+                        'unit_fare' => $d->corridor?->base_fare,
+                        'seats_remaining' => $d->seatsRemaining(),
+                        'origin_pool' => $this->poolPin($origin),
+                        'destination_pool' => $this->poolPin($destination),
+                    ];
+                }),
             'partners' => Partner::query()
                 ->where('customer_rank', '>', 0)
                 ->orderBy('name')
                 ->get(['id', 'name', 'code']),
         ]);
+    }
+
+    /**
+     * @return array{latitude: string, longitude: string, address: string, name: string}|null
+     */
+    private function poolPin(?Location $location): ?array
+    {
+        if ($location === null || $location->latitude === null || $location->longitude === null) {
+            return null;
+        }
+
+        return [
+            'latitude' => (string) $location->latitude,
+            'longitude' => (string) $location->longitude,
+            'address' => filled($location->address) ? (string) $location->address : (string) $location->name,
+            'name' => (string) $location->name,
+        ];
     }
 
     public function store(StoreBookingRequest $request, BookingConfirmationService $confirmation): RedirectResponse

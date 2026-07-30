@@ -10,6 +10,9 @@ class ShuttlePool extends Model
 {
     /** @var list<string> */
     protected $fillable = [
+        'city_id',
+        'code',
+        'name',
         'location_id',
         'corridor_id',
         'is_origin',
@@ -27,6 +30,23 @@ class ShuttlePool extends Model
             'is_destination' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function displayName(): string
+    {
+        if (filled($this->name)) {
+            return $this->name;
+        }
+
+        return $this->location?->name ?? ($this->code ?? 'Pool #'.$this->id);
+    }
+
+    /**
+     * @return BelongsTo<ShuttleCity, $this>
+     */
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(ShuttleCity::class, 'city_id');
     }
 
     /**

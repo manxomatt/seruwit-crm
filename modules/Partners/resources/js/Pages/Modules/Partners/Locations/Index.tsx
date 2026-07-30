@@ -38,11 +38,10 @@ interface PaginatedLocations {
 interface Props {
     locations: PaginatedLocations;
     filters: { search: string | null; active: string | null };
-    canGeocode?: boolean;
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-export default function Index({ locations, filters, canGeocode = false, can }: Props): JSX.Element {
+export default function Index({ locations, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [search, setSearch] = useState(filters.search || '');
@@ -297,7 +296,6 @@ export default function Index({ locations, filters, canGeocode = false, can }: P
                                 longitude={String(form.data.longitude)}
                                 onChange={handleMapChange}
                                 height="280px"
-                                resolveAddress={canGeocode}
                             />
                             <InputError message={form.errors.latitude || form.errors.longitude} className="mt-2" />
                         </div>

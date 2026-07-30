@@ -4,6 +4,8 @@ namespace Modules\Shuttle\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
+use Modules\Shuttle\Models\ShuttleBooking;
+use Modules\Shuttle\Models\ShuttleCorridor;
 use Modules\Shuttle\Models\ShuttleDeparture;
 
 class StoreBookingRequest extends FormRequest
@@ -38,6 +40,24 @@ class StoreBookingRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        $departure = ShuttleDeparture::query()->with('corridor')->find($this->integer('departure_id'));
+
+        if ($departure && $departure->resolvedServiceType() === ShuttleCorridor::SERVICE_POOL) {
+            $this->merge([
+                'pickup_mode' => ShuttleBooking::MODE_POOL,
+                'dropoff_mode' => ShuttleBooking::MODE_POOL,
+                'pickup_address' => null,
+                'pickup_lat' => null,
+                'pickup_lng' => null,
+                'dropoff_address' => null,
+                'dropoff_lat' => null,
+                'dropoff_lng' => null,
+            ]);
+        }
+    }
+
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
@@ -45,7 +65,7 @@ class StoreBookingRequest extends FormRequest
                 return;
             }
 
-            $departure = ShuttleDeparture::query()->find($this->integer('departure_id'));
+            $departure = ShuttleDeparture::query()->with('corridor')->find($this->integer('departure_id'));
             if (! $departure) {
                 return;
             }
@@ -60,6 +80,22 @@ class StoreBookingRequest extends FormRequest
 
             if (count($this->input('passengers', [])) !== $this->integer('passenger_count')) {
                 $validator->errors()->add('passengers', __('shuttle.validation.passenger_count_mismatch'));
+            }
+
+            $serviceType = $departure->resolvedServiceType();
+
+            if ($serviceType === ShuttleCorridor::SERVICE_POOL) {
+                if ($this->input('pickup_mode') !== ShuttleBooking::MODE_POOL
+                    || $this->input('dropoff_mode') !== ShuttleBooking::MODE_POOL) {
+                    $validator->errors()->add('pickup_mode', __('shuttle.validation.pool_product_modes'));
+                }
+            }
+
+            if ($serviceType === ShuttleCorridor::SERVICE_DOOR) {
+                if ($this->input('pickup_mode') === ShuttleBooking::MODE_POOL
+                    && $this->input('dropoff_mode') === ShuttleBooking::MODE_POOL) {
+                    $validator->errors()->add('pickup_mode', __('shuttle.validation.door_product_requires_door'));
+                }
             }
         });
     }

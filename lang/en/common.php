@@ -32,4 +32,10 @@ return [
     'active' => 'Active',
     'inactive' => 'Inactive',
     'confirm_delete' => 'Are you sure you want to delete this?',
+    'geocode' => [
+        'failed' => 'Could not look up the address for this location.',
+        'not_found' => 'No address found for this location.',
+        'map_resolving' => 'Looking up address…',
+        'map_hint' => 'Click the map or drag the pin to set coordinates. Address is filled from the pin.',
+    ],
 ];

@@ -1,11 +1,10 @@
 <?php
 
-namespace Modules\Inventory\Http\Controllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Support\NominatimGeocoder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Inventory\Support\NominatimGeocoder;
 use RuntimeException;
 use Throwable;
 
@@ -23,7 +22,7 @@ class GeocodeController extends Controller
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         } catch (Throwable) {
-            return response()->json(['message' => __('inventory.messages.geocode_failed')], 502);
+            return response()->json(['message' => __('common.geocode.failed')], 502);
         }
 
         return response()->json($result);

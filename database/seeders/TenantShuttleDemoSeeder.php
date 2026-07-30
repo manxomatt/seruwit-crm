@@ -10,16 +10,18 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Shuttle\Models\ShuttleBooking;
+use Modules\Shuttle\Models\ShuttleCity;
 use Modules\Shuttle\Models\ShuttleCorridor;
 use Modules\Shuttle\Models\ShuttleDeparture;
 use Modules\Shuttle\Models\ShuttlePassenger;
 use Modules\Shuttle\Models\ShuttlePool;
 use Modules\Shuttle\Models\ShuttleSchedule;
+use Modules\Shuttle\Models\ShuttleSetting;
 use Modules\Shuttle\Support\BookingConfirmationService;
 use Modules\Shuttle\Support\ScheduleDepartureGenerator;
 
 /**
- * Seeds Jakarta–Bandung shuttle demo data.
+ * Seeds Jakarta–Bandung shuttle demo data (pool + door products).
  *
  *   php artisan tenants:seed --class=TenantShuttleDemoSeeder --tenants={id}
  */
@@ -35,7 +37,18 @@ class TenantShuttleDemoSeeder extends Seeder
             return;
         }
 
-        $originPool = Location::query()->firstOrCreate(
+        ShuttleSetting::putMany(ShuttleSetting::defaults());
+
+        $jakarta = ShuttleCity::query()->updateOrCreate(
+            ['code' => 'JKT'],
+            ['name' => 'Jakarta', 'province' => 'DKI Jakarta', 'is_active' => true],
+        );
+        $bandung = ShuttleCity::query()->updateOrCreate(
+            ['code' => 'BDG'],
+            ['name' => 'Bandung', 'province' => 'Jawa Barat', 'is_active' => true],
+        );
+
+        $originLocation = Location::query()->firstOrCreate(
             ['code' => 'POOL-JKT'],
             [
                 'name' => 'Pool Jakarta Gambir',
@@ -48,7 +61,7 @@ class TenantShuttleDemoSeeder extends Seeder
             ],
         );
 
-        $destinationPool = Location::query()->firstOrCreate(
+        $destinationLocation = Location::query()->firstOrCreate(
             ['code' => 'POOL-BDG'],
             [
                 'name' => 'Pool Bandung Dipatiukur',
@@ -61,30 +74,77 @@ class TenantShuttleDemoSeeder extends Seeder
             ],
         );
 
-        $corridor = ShuttleCorridor::query()->updateOrCreate(
-            ['code' => 'JKT-BDG'],
+        $originPool = ShuttlePool::query()->updateOrCreate(
+            ['location_id' => $originLocation->id],
             [
-                'name' => 'Jakarta – Bandung',
-                'origin_city' => 'Jakarta',
-                'destination_city' => 'Bandung',
-                'origin_location_id' => $originPool->id,
-                'destination_location_id' => $destinationPool->id,
+                'city_id' => $jakarta->id,
+                'code' => 'POOL-JKT-GMB',
+                'name' => 'Pool Jakarta Gambir',
+                'is_origin' => true,
+                'is_destination' => true,
+                'is_active' => true,
+            ],
+        );
+
+        $destinationPool = ShuttlePool::query()->updateOrCreate(
+            ['location_id' => $destinationLocation->id],
+            [
+                'city_id' => $bandung->id,
+                'code' => 'POOL-BDG-DPU',
+                'name' => 'Pool Bandung Dipatiukur',
+                'is_origin' => true,
+                'is_destination' => true,
+                'is_active' => true,
+            ],
+        );
+
+        $poolCorridor = ShuttleCorridor::query()->updateOrCreate(
+            ['code' => 'JKT-BDG-POOL'],
+            [
+                'name' => 'Jakarta – Bandung (Pool)',
+                'origin_city' => $jakarta->name,
+                'destination_city' => $bandung->name,
+                'origin_city_id' => $jakarta->id,
+                'destination_city_id' => $bandung->id,
+                'service_type' => ShuttleCorridor::SERVICE_POOL,
+                'origin_location_id' => $originLocation->id,
+                'destination_location_id' => $destinationLocation->id,
+                'origin_pool_id' => $originPool->id,
+                'destination_pool_id' => $destinationPool->id,
                 'base_fare' => 200000,
                 'estimated_duration_minutes' => 180,
                 'distance_km' => 150,
                 'is_active' => true,
-                'notes' => self::TAG.' Fixed corridor fare',
+                'notes' => self::TAG.' Pool–pool product',
             ],
         );
 
-        ShuttlePool::query()->updateOrCreate(
-            ['location_id' => $originPool->id],
-            ['corridor_id' => $corridor->id, 'is_origin' => true, 'is_destination' => false, 'is_active' => true],
+        $doorCorridor = ShuttleCorridor::query()->updateOrCreate(
+            ['code' => 'JKT-BDG-DOOR'],
+            [
+                'name' => 'Jakarta – Bandung (Door)',
+                'origin_city' => $jakarta->name,
+                'destination_city' => $bandung->name,
+                'origin_city_id' => $jakarta->id,
+                'destination_city_id' => $bandung->id,
+                'service_type' => ShuttleCorridor::SERVICE_DOOR,
+                'origin_location_id' => $originLocation->id,
+                'destination_location_id' => $destinationLocation->id,
+                'origin_pool_id' => $originPool->id,
+                'destination_pool_id' => $destinationPool->id,
+                'base_fare' => 250000,
+                'estimated_duration_minutes' => 210,
+                'distance_km' => 150,
+                'is_active' => true,
+                'notes' => self::TAG.' Door pickup/dropoff product',
+            ],
         );
-        ShuttlePool::query()->updateOrCreate(
-            ['location_id' => $destinationPool->id],
-            ['corridor_id' => $corridor->id, 'is_origin' => false, 'is_destination' => true, 'is_active' => true],
-        );
+
+        ShuttleCorridor::query()->where('code', 'JKT-BDG')->update([
+            'service_type' => ShuttleCorridor::SERVICE_POOL,
+            'is_active' => false,
+            'notes' => self::TAG.' Legacy — superseded by JKT-BDG-POOL',
+        ]);
 
         $vehicle = Vehicle::query()->firstOrCreate(
             ['plate_number' => 'B 1234 SH'],
@@ -111,23 +171,39 @@ class TenantShuttleDemoSeeder extends Seeder
             ],
         );
 
-        $schedule = ShuttleSchedule::query()->updateOrCreate(
-            ['code' => 'JKT-BDG-PAGI'],
+        $poolSchedule = ShuttleSchedule::query()->updateOrCreate(
+            ['code' => 'JKT-BDG-POOL-PAGI'],
             [
-                'corridor_id' => $corridor->id,
+                'corridor_id' => $poolCorridor->id,
                 'days_of_week' => [1, 2, 3, 4, 5, 6, 7],
                 'departure_time' => '07:00',
                 'vehicle_id' => $vehicle->id,
                 'driver_id' => $driver->id,
+                'seat_capacity' => ShuttleSetting::getInt(ShuttleSetting::KEY_DEFAULT_SEAT_CAPACITY, 14),
+                'pickup_cutoff_minutes' => ShuttleSetting::getInt(ShuttleSetting::KEY_DEFAULT_PICKUP_CUTOFF, 90),
+                'is_active' => true,
+            ],
+        );
+
+        $doorSchedule = ShuttleSchedule::query()->updateOrCreate(
+            ['code' => 'JKT-BDG-DOOR-PAGI'],
+            [
+                'corridor_id' => $doorCorridor->id,
+                'days_of_week' => [1, 2, 3, 4, 5, 6, 7],
+                'departure_time' => '06:30',
+                'vehicle_id' => $vehicle->id,
+                'driver_id' => $driver->id,
                 'seat_capacity' => 14,
-                'pickup_cutoff_minutes' => 90,
+                'pickup_cutoff_minutes' => 120,
                 'is_active' => true,
             ],
         );
 
         $from = Carbon::today();
         $to = Carbon::today()->addDays(7);
-        app(ScheduleDepartureGenerator::class)->generate($schedule->load('vehicle', 'corridor'), $from, $to);
+        $generator = app(ScheduleDepartureGenerator::class);
+        $generator->generate($poolSchedule->load('vehicle', 'corridor'), $from, $to);
+        $generator->generate($doorSchedule->load('vehicle', 'corridor'), $from, $to);
 
         $partner = Partner::query()->firstOrCreate(
             ['code' => 'CUST-SHUTTLE-01'],
@@ -143,27 +219,30 @@ class TenantShuttleDemoSeeder extends Seeder
             ],
         );
 
-        $departure = ShuttleDeparture::query()
-            ->where('schedule_id', $schedule->id)
+        $doorDeparture = ShuttleDeparture::query()
+            ->where('schedule_id', $doorSchedule->id)
             ->whereDate('depart_date', '>=', today())
             ->orderBy('depart_date')
             ->first();
 
-        if ($departure) {
+        if ($doorDeparture) {
             $booking = ShuttleBooking::query()->firstOrCreate(
                 ['booking_number' => 'BK-DEMO-00001'],
                 [
-                    'departure_id' => $departure->id,
+                    'departure_id' => $doorDeparture->id,
                     'partner_id' => $partner->id,
                     'status' => ShuttleBooking::STATUS_DRAFT,
                     'passenger_count' => 2,
-                    'unit_fare' => $corridor->base_fare,
-                    'total_fare' => ((float) $corridor->base_fare) * 2,
+                    'unit_fare' => $doorCorridor->base_fare,
+                    'total_fare' => ((float) $doorCorridor->base_fare) * 2,
                     'pickup_mode' => ShuttleBooking::MODE_DOOR,
-                    'dropoff_mode' => ShuttleBooking::MODE_POOL,
+                    'dropoff_mode' => ShuttleBooking::MODE_DOOR,
                     'pickup_address' => 'Jl. Kemang Raya No. 10, Jakarta',
                     'pickup_lat' => -6.2607,
                     'pickup_lng' => 106.8163,
+                    'dropoff_address' => 'Jl. Dago No. 5, Bandung',
+                    'dropoff_lat' => -6.9175,
+                    'dropoff_lng' => 107.6191,
                     'notes' => self::TAG,
                 ],
             );
@@ -178,6 +257,6 @@ class TenantShuttleDemoSeeder extends Seeder
             }
         }
 
-        $this->command?->info('Shuttle demo seeded (JKT–BDG).');
+        $this->command?->info('Shuttle demo seeded (cities, pools, pool + door products).');
     }
 }

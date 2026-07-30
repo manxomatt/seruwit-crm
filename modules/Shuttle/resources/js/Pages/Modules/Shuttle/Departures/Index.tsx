@@ -15,9 +15,10 @@ interface Departure {
     depart_date: string;
     depart_time: string;
     status: string;
+    service_type?: string;
     seats_booked: number;
     seat_capacity: number;
-    corridor?: { name: string } | null;
+    corridor?: { name: string; service_type?: string } | null;
     vehicle?: { name: string; plate_number: string } | null;
 }
 
@@ -120,7 +121,14 @@ export default function Index({ departures, filters, can }: Props) {
                             departures.data.map((d) => (
                                 <tr key={d.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3 font-medium text-gray-900">{d.departure_number}</td>
-                                    <td className="px-4 py-3 text-gray-700">{d.corridor?.name}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="text-gray-900">{d.corridor?.name}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {(d.service_type ?? d.corridor?.service_type) === 'door'
+                                                ? t('shuttle.service.door_short')
+                                                : t('shuttle.service.pool_short')}
+                                        </div>
+                                    </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
                                         {d.depart_date} {String(d.depart_time).slice(0, 5)}
                                     </td>

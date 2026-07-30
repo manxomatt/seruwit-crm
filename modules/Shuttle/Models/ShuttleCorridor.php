@@ -15,6 +15,16 @@ class ShuttleCorridor extends Model
     /** @use HasFactory<ShuttleCorridorFactory> */
     use HasFactory;
 
+    public const SERVICE_POOL = 'pool';
+
+    public const SERVICE_DOOR = 'door';
+
+    /** @var list<string> */
+    public const SERVICE_TYPES = [
+        self::SERVICE_POOL,
+        self::SERVICE_DOOR,
+    ];
+
     protected static function newFactory(): Factory
     {
         return ShuttleCorridorFactory::new();
@@ -26,8 +36,13 @@ class ShuttleCorridor extends Model
         'name',
         'origin_city',
         'destination_city',
+        'origin_city_id',
+        'destination_city_id',
+        'service_type',
         'origin_location_id',
         'destination_location_id',
+        'origin_pool_id',
+        'destination_pool_id',
         'base_fare',
         'estimated_duration_minutes',
         'distance_km',
@@ -46,6 +61,51 @@ class ShuttleCorridor extends Model
             'distance_km' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function isPoolService(): bool
+    {
+        return $this->service_type === self::SERVICE_POOL;
+    }
+
+    public function isDoorService(): bool
+    {
+        return $this->service_type === self::SERVICE_DOOR;
+    }
+
+    /**
+     * Named without colliding with the denormalized `origin_city` string column
+     * (Eloquent would otherwise serialize both as `origin_city` and overwrite the label).
+     *
+     * @return BelongsTo<ShuttleCity, $this>
+     */
+    public function originCityRecord(): BelongsTo
+    {
+        return $this->belongsTo(ShuttleCity::class, 'origin_city_id');
+    }
+
+    /**
+     * @return BelongsTo<ShuttleCity, $this>
+     */
+    public function destinationCityRecord(): BelongsTo
+    {
+        return $this->belongsTo(ShuttleCity::class, 'destination_city_id');
+    }
+
+    /**
+     * @return BelongsTo<ShuttlePool, $this>
+     */
+    public function originPool(): BelongsTo
+    {
+        return $this->belongsTo(ShuttlePool::class, 'origin_pool_id');
+    }
+
+    /**
+     * @return BelongsTo<ShuttlePool, $this>
+     */
+    public function destinationPool(): BelongsTo
+    {
+        return $this->belongsTo(ShuttlePool::class, 'destination_pool_id');
     }
 
     /**

@@ -20,6 +20,7 @@ class ShuttleDepartureFactory extends Factory
     {
         return [
             'corridor_id' => ShuttleCorridor::factory(),
+            'service_type' => ShuttleCorridor::SERVICE_POOL,
             'departure_number' => sprintf('SH-%s-%05d', now()->format('Y'), fake()->unique()->numberBetween(1, 99999)),
             'depart_date' => now()->addDay()->toDateString(),
             'depart_time' => '07:00:00',
@@ -27,5 +28,13 @@ class ShuttleDepartureFactory extends Factory
             'seats_booked' => 0,
             'status' => ShuttleDeparture::STATUS_OPEN,
         ];
+    }
+
+    public function door(): static
+    {
+        return $this->state(fn (): array => [
+            'service_type' => ShuttleCorridor::SERVICE_DOOR,
+            'corridor_id' => ShuttleCorridor::factory()->door(),
+        ]);
     }
 }

@@ -40,6 +40,7 @@ class ShuttleDeparture extends Model
     protected $fillable = [
         'schedule_id',
         'corridor_id',
+        'service_type',
         'departure_number',
         'depart_date',
         'depart_time',
@@ -78,6 +79,27 @@ class ShuttleDeparture extends Model
     public function seatsRemaining(): int
     {
         return max(0, $this->seat_capacity - $this->seats_booked);
+    }
+
+    public function isPoolService(): bool
+    {
+        return ($this->service_type ?? ShuttleCorridor::SERVICE_POOL) === ShuttleCorridor::SERVICE_POOL;
+    }
+
+    public function isDoorService(): bool
+    {
+        return ($this->service_type ?? ShuttleCorridor::SERVICE_POOL) === ShuttleCorridor::SERVICE_DOOR;
+    }
+
+    public function resolvedServiceType(): string
+    {
+        if (filled($this->service_type)) {
+            return $this->service_type;
+        }
+
+        $this->loadMissing('corridor');
+
+        return $this->corridor?->service_type ?? ShuttleCorridor::SERVICE_POOL;
     }
 
     public static function nextNumber(): string

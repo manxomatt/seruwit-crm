@@ -33,6 +33,12 @@ const TABS = [
         route: 'shuttle.bookings.index',
         patterns: ['shuttle.bookings.*'],
     },
+    {
+        key: 'settings',
+        labelKey: 'shuttle.nav.settings',
+        route: 'shuttle.settings.index',
+        patterns: ['shuttle.settings.*'],
+    },
 ] as const;
 
 export default function ShuttleNav({ active }: { active?: (typeof TABS)[number]['key'] }) {

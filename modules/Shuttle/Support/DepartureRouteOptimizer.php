@@ -5,6 +5,7 @@ namespace Modules\Shuttle\Support;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Modules\Shuttle\Models\ShuttleBooking;
+use Modules\Shuttle\Models\ShuttleCorridor;
 use Modules\Shuttle\Models\ShuttleDeparture;
 use Modules\Shuttle\Models\ShuttleRouteStop;
 use RuntimeException;
@@ -37,6 +38,16 @@ class DepartureRouteOptimizer
                 'destinationPool',
                 'bookings' => fn ($q) => $q->where('status', ShuttleBooking::STATUS_CONFIRMED),
             ]);
+
+            $serviceType = $departure->resolvedServiceType();
+            $originPool = $departure->originPool ?? $departure->corridor?->originLocation;
+            $destinationPool = $departure->destinationPool ?? $departure->corridor?->destinationLocation;
+
+            if ($serviceType === ShuttleCorridor::SERVICE_POOL) {
+                $ordered = $this->poolOnlyStops($originPool, $destinationPool);
+
+                return $this->persistStops($departure, $ordered, unassigned: [], usedOsrm: false);
+            }
 
             $unassigned = [];
             $pickups = [];
@@ -74,21 +85,8 @@ class DepartureRouteOptimizer
                 }
             }
 
-            $originPool = $departure->originPool ?? $departure->corridor?->originLocation;
-            $destinationPool = $departure->destinationPool ?? $departure->corridor?->destinationLocation;
-
-            $anchorLat = $originPool?->latitude !== null
-                ? (float) $originPool->latitude
-                : ($pickups[0]['lat'] ?? ($destinationPool?->latitude !== null ? (float) $destinationPool->latitude : -6.2));
-            $anchorLng = $originPool?->longitude !== null
-                ? (float) $originPool->longitude
-                : ($pickups[0]['lng'] ?? ($destinationPool?->longitude !== null ? (float) $destinationPool->longitude : 106.8));
-
+            // Door product: pool_origin → door pickups → door dropoffs → pool_destination
             $ordered = [];
-
-            foreach ($this->sequencer->sequence($anchorLat, $anchorLng, $pickups) as $stop) {
-                $ordered[] = $stop;
-            }
 
             if ($originPool && $originPool->latitude !== null && $originPool->longitude !== null) {
                 $ordered[] = [
@@ -99,6 +97,28 @@ class DepartureRouteOptimizer
                     'booking_id' => null,
                     'stop_type' => ShuttleRouteStop::TYPE_POOL_ORIGIN,
                 ];
+            }
+
+            $pickupAnchorLat = $ordered !== []
+                ? $ordered[array_key_last($ordered)]['lat']
+                : ($pickups[0]['lat'] ?? -6.2);
+            $pickupAnchorLng = $ordered !== []
+                ? $ordered[array_key_last($ordered)]['lng']
+                : ($pickups[0]['lng'] ?? 106.8);
+
+            foreach ($this->sequencer->sequence($pickupAnchorLat, $pickupAnchorLng, $pickups) as $stop) {
+                $ordered[] = $stop;
+            }
+
+            $dropAnchorLat = $ordered !== []
+                ? $ordered[array_key_last($ordered)]['lat']
+                : ($destinationPool?->latitude !== null ? (float) $destinationPool->latitude : $pickupAnchorLat);
+            $dropAnchorLng = $ordered !== []
+                ? $ordered[array_key_last($ordered)]['lng']
+                : ($destinationPool?->longitude !== null ? (float) $destinationPool->longitude : $pickupAnchorLng);
+
+            foreach ($this->sequencer->sequence($dropAnchorLat, $dropAnchorLng, $dropoffs) as $stop) {
+                $ordered[] = $stop;
             }
 
             if ($destinationPool && $destinationPool->latitude !== null && $destinationPool->longitude !== null) {
@@ -112,78 +132,119 @@ class DepartureRouteOptimizer
                 ];
             }
 
-            $dropStartLat = $destinationPool?->latitude !== null
-                ? (float) $destinationPool->latitude
-                : ($ordered !== [] ? $ordered[array_key_last($ordered)]['lat'] : $anchorLat);
-            $dropStartLng = $destinationPool?->longitude !== null
-                ? (float) $destinationPool->longitude
-                : ($ordered !== [] ? $ordered[array_key_last($ordered)]['lng'] : $anchorLng);
+            $osrmLegs = $this->osrmLegsFor($ordered);
 
-            foreach ($this->sequencer->sequence($dropStartLat, $dropStartLng, $dropoffs) as $stop) {
-                $ordered[] = $stop;
-            }
+            return $this->persistStops($departure, $ordered, $unassigned, $osrmLegs !== null, $osrmLegs);
+        });
+    }
 
+    /**
+     * @return list<array{key: string, lat: float, lng: float, address: string, booking_id: null, stop_type: string}>
+     */
+    private function poolOnlyStops(mixed $originPool, mixed $destinationPool): array
+    {
+        $ordered = [];
+
+        if ($originPool && $originPool->latitude !== null && $originPool->longitude !== null) {
+            $ordered[] = [
+                'key' => 'pool-origin',
+                'lat' => (float) $originPool->latitude,
+                'lng' => (float) $originPool->longitude,
+                'address' => $originPool->displayAddress(),
+                'booking_id' => null,
+                'stop_type' => ShuttleRouteStop::TYPE_POOL_ORIGIN,
+            ];
+        }
+
+        if ($destinationPool && $destinationPool->latitude !== null && $destinationPool->longitude !== null) {
+            $ordered[] = [
+                'key' => 'pool-destination',
+                'lat' => (float) $destinationPool->latitude,
+                'lng' => (float) $destinationPool->longitude,
+                'address' => $destinationPool->displayAddress(),
+                'booking_id' => null,
+                'stop_type' => ShuttleRouteStop::TYPE_POOL_DESTINATION,
+            ];
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * @param  list<array{lat: float, lng: float, address: string, booking_id: int|null, stop_type: string}>  $ordered
+     * @param  list<string>  $unassigned
+     * @param  list<array{distance_m: float, duration_s: float}>|null  $osrmLegs
+     * @return array{total_distance_km: float, stop_count: int, unassigned: list<string>, estimated_duration_minutes: int|null, used_osrm: bool}
+     */
+    private function persistStops(
+        ShuttleDeparture $departure,
+        array $ordered,
+        array $unassigned,
+        bool $usedOsrm,
+        ?array $osrmLegs = null,
+    ): array {
+        if ($usedOsrm && $osrmLegs === null) {
             $osrmLegs = $this->osrmLegsFor($ordered);
             $usedOsrm = $osrmLegs !== null;
+        }
 
-            $totalDistance = 0.0;
-            $totalDuration = 0;
-            $prevLat = null;
-            $prevLng = null;
-            $sequence = 1;
-            $cursor = $this->departureStartAt($departure);
+        $totalDistance = 0.0;
+        $totalDuration = 0;
+        $prevLat = null;
+        $prevLng = null;
+        $sequence = 1;
+        $cursor = $this->departureStartAt($departure);
 
-            foreach ($ordered as $index => $stop) {
-                $legKm = 0.0;
-                $legSeconds = 0;
+        foreach ($ordered as $index => $stop) {
+            $legKm = 0.0;
+            $legSeconds = 0;
 
-                if ($prevLat !== null && $prevLng !== null) {
-                    if ($usedOsrm && isset($osrmLegs[$index - 1])) {
-                        $legKm = round($osrmLegs[$index - 1]['distance_m'] / 1000, 2);
-                        $legSeconds = (int) round($osrmLegs[$index - 1]['duration_s']);
-                    } else {
-                        $legKm = round(Haversine::distanceKm($prevLat, $prevLng, $stop['lat'], $stop['lng']), 2);
-                        $legSeconds = (int) round(($legKm / 40) * 3600);
-                    }
-                    $totalDistance += $legKm;
-                    $totalDuration += $legSeconds;
-                    $cursor = $cursor->copy()->addSeconds($legSeconds);
+            if ($prevLat !== null && $prevLng !== null) {
+                if ($usedOsrm && isset($osrmLegs[$index - 1])) {
+                    $legKm = round($osrmLegs[$index - 1]['distance_m'] / 1000, 2);
+                    $legSeconds = (int) round($osrmLegs[$index - 1]['duration_s']);
+                } else {
+                    $legKm = round(Haversine::distanceKm($prevLat, $prevLng, $stop['lat'], $stop['lng']), 2);
+                    $legSeconds = (int) round(($legKm / 40) * 3600);
                 }
-
-                $departure->routeStops()->create([
-                    'booking_id' => $stop['booking_id'],
-                    'stop_type' => $stop['stop_type'],
-                    'sequence' => $sequence++,
-                    'address' => $stop['address'],
-                    'lat' => $stop['lat'],
-                    'lng' => $stop['lng'],
-                    'eta_at' => $cursor,
-                    'distance_from_previous_km' => $legKm,
-                    'duration_from_previous_seconds' => $legSeconds,
-                    'status' => ShuttleRouteStop::STATUS_PENDING,
-                ]);
-
-                $prevLat = $stop['lat'];
-                $prevLng = $stop['lng'];
+                $totalDistance += $legKm;
+                $totalDuration += $legSeconds;
+                $cursor = $cursor->copy()->addSeconds($legSeconds);
             }
 
-            $estimatedMinutes = $ordered === [] ? null : (int) max(1, (int) ceil($totalDuration / 60));
-
-            $departure->update([
-                'status' => ShuttleDeparture::STATUS_OPTIMIZED,
-                'optimized_at' => now(),
-                'estimated_distance_km' => round($totalDistance, 2),
-                'estimated_duration_minutes' => $estimatedMinutes,
+            $departure->routeStops()->create([
+                'booking_id' => $stop['booking_id'],
+                'stop_type' => $stop['stop_type'],
+                'sequence' => $sequence++,
+                'address' => $stop['address'],
+                'lat' => $stop['lat'],
+                'lng' => $stop['lng'],
+                'eta_at' => $cursor,
+                'distance_from_previous_km' => $legKm,
+                'duration_from_previous_seconds' => $legSeconds,
+                'status' => ShuttleRouteStop::STATUS_PENDING,
             ]);
 
-            return [
-                'total_distance_km' => round($totalDistance, 2),
-                'stop_count' => count($ordered),
-                'unassigned' => $unassigned,
-                'estimated_duration_minutes' => $estimatedMinutes,
-                'used_osrm' => $usedOsrm,
-            ];
-        });
+            $prevLat = $stop['lat'];
+            $prevLng = $stop['lng'];
+        }
+
+        $estimatedMinutes = $ordered === [] ? null : (int) max(1, (int) ceil($totalDuration / 60));
+
+        $departure->update([
+            'status' => ShuttleDeparture::STATUS_OPTIMIZED,
+            'optimized_at' => now(),
+            'estimated_distance_km' => round($totalDistance, 2),
+            'estimated_duration_minutes' => $estimatedMinutes,
+        ]);
+
+        return [
+            'total_distance_km' => round($totalDistance, 2),
+            'stop_count' => count($ordered),
+            'unassigned' => $unassigned,
+            'estimated_duration_minutes' => $estimatedMinutes,
+            'used_osrm' => $usedOsrm,
+        ];
     }
 
     /**

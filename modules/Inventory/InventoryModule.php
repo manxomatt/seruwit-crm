@@ -7,7 +7,6 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Inventory\Http\Controllers\ExpiryReportController;
-use Modules\Inventory\Http\Controllers\GeocodeController;
 use Modules\Inventory\Http\Controllers\PutawayController;
 use Modules\Inventory\Http\Controllers\StockLevelController;
 use Modules\Inventory\Http\Controllers\StockMovementController;
@@ -88,7 +87,6 @@ class InventoryModule implements ModuleContract
                 Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
                 Route::get('/warehouses/create', [WarehouseController::class, 'create'])->middleware('permission:inventory,create')->name('warehouses.create');
                 Route::post('/warehouses', [WarehouseController::class, 'store'])->middleware('permission:inventory,create')->name('warehouses.store');
-                Route::get('/geocode/reverse', [GeocodeController::class, 'reverse'])->name('geocode.reverse');
                 Route::get('/warehouses/{warehouse}', [WarehouseController::class, 'show'])->name('warehouses.show');
                 Route::patch('/warehouses/{warehouse}', [WarehouseController::class, 'update'])->middleware('permission:inventory,update')->name('warehouses.update');
                 Route::delete('/warehouses/{warehouse}', [WarehouseController::class, 'destroy'])->middleware('permission:inventory,update')->name('warehouses.destroy');
