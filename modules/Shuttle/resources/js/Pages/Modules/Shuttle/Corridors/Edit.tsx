@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -46,7 +47,7 @@ export default function Edit({ corridor, locations }: Props) {
         destination_city: corridor.destination_city,
         origin_location_id: corridor.origin_location_id ? String(corridor.origin_location_id) : '',
         destination_location_id: corridor.destination_location_id ? String(corridor.destination_location_id) : '',
-        base_fare: String(corridor.base_fare),
+        base_fare: String(Math.trunc(Number(corridor.base_fare) || 0)),
         estimated_duration_minutes: corridor.estimated_duration_minutes ? String(corridor.estimated_duration_minutes) : '',
         distance_km: corridor.distance_km ? String(corridor.distance_km) : '',
         is_active: corridor.is_active,
@@ -96,8 +97,19 @@ export default function Edit({ corridor, locations }: Props) {
                                 <Select className="mt-1 w-full" value={data.destination_location_id} onChange={(v) => setData('destination_location_id', v)} options={locationOptions} />
                             </div>
                             <div>
-                                <InputLabel value={t('shuttle.corridors.base_fare')} />
-                                <TextInput type="number" min={0} className="mt-1 w-full" value={data.base_fare} onChange={(e) => setData('base_fare', e.target.value)} />
+                                <InputLabel htmlFor="base_fare" value={`${t('shuttle.corridors.base_fare')} (${t('shuttle.corridors.base_fare_currency')})`} />
+                                <div className="relative mt-1">
+                                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-medium text-gray-500">
+                                        {t('shuttle.corridors.base_fare_currency_symbol')}
+                                    </span>
+                                    <MoneyInput
+                                        id="base_fare"
+                                        value={data.base_fare}
+                                        onChange={(value) => setData('base_fare', value)}
+                                        className="w-full pl-10"
+                                    />
+                                </div>
+                                <p className="mt-1 text-xs text-gray-500">{t('shuttle.corridors.base_fare_hint')}</p>
                                 <InputError message={errors.base_fare} className="mt-1" />
                             </div>
                         </div>

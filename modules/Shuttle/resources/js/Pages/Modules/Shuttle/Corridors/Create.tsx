@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
@@ -83,8 +84,19 @@ export default function Create({ locations }: Props) {
                                 <Select className="mt-1 w-full" value={data.destination_location_id} onChange={(v) => setData('destination_location_id', v)} options={locationOptions} />
                             </div>
                             <div>
-                                <InputLabel value={t('shuttle.corridors.base_fare')} />
-                                <TextInput type="number" min={0} className="mt-1 w-full" value={data.base_fare} onChange={(e) => setData('base_fare', e.target.value)} />
+                                <InputLabel htmlFor="base_fare" value={`${t('shuttle.corridors.base_fare')} (${t('shuttle.corridors.base_fare_currency')})`} />
+                                <div className="relative mt-1">
+                                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-medium text-gray-500">
+                                        {t('shuttle.corridors.base_fare_currency_symbol')}
+                                    </span>
+                                    <MoneyInput
+                                        id="base_fare"
+                                        value={data.base_fare}
+                                        onChange={(value) => setData('base_fare', value)}
+                                        className="w-full pl-10"
+                                    />
+                                </div>
+                                <p className="mt-1 text-xs text-gray-500">{t('shuttle.corridors.base_fare_hint')}</p>
                                 <InputError message={errors.base_fare} className="mt-1" />
                             </div>
                             <div>
