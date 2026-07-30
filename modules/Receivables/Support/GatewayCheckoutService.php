@@ -2,8 +2,10 @@
 
 namespace Modules\Receivables\Support;
 
+use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Invoicing\Models\Invoice;
@@ -20,6 +22,14 @@ class GatewayCheckoutService
 
     public function isAvailable(): bool
     {
+        if (! Modules::available('receivables')) {
+            return false;
+        }
+
+        if (! Schema::hasTable('payment_gateway_configs')) {
+            return false;
+        }
+
         return $this->config()->isConfigured();
     }
 

@@ -4,11 +4,13 @@ namespace Tests\Feature\Modules\Receivables;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Partners\Models\Partner;
 use Modules\Receivables\Models\GatewayCharge;
 use Modules\Receivables\Models\Payment;
 use Modules\Receivables\Models\PaymentGatewayConfig;
+use Modules\Receivables\Support\GatewayCheckoutService;
 use Modules\Rental\Models\Rental;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -35,6 +37,14 @@ class MidtransGatewayTest extends TestCase
             'client_key' => 'SB-Mid-client-test',
             'merchant_id' => 'G123',
         ]);
+    }
+
+    public function test_is_available_is_false_when_gateway_table_missing(): void
+    {
+        Schema::dropIfExists('gateway_charges');
+        Schema::dropIfExists('payment_gateway_configs');
+
+        $this->assertFalse(app(GatewayCheckoutService::class)->isAvailable());
     }
 
     public function test_gateway_settings_page_hides_secret_keys(): void
