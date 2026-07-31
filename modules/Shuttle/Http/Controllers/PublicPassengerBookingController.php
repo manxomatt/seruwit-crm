@@ -7,6 +7,7 @@ use App\Modules\Facades\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -257,11 +258,19 @@ class PublicPassengerBookingController extends Controller
 
     private function ensureAvailable(): void
     {
-        abort_unless(Modules::available('shuttle'), 404);
-        abort_unless(
-            ShuttleSetting::getValue(ShuttleSetting::KEY_PASSENGER_BOOKING_ENABLED, '0') === '1',
-            404
-        );
+        // Public booking is tenant-scoped. Central domains have no shuttle
+        // schema; PHPUnit RefreshDatabase runs without tenancy but has tables.
+        if (! tenancy()->initialized && ! app()->runningUnitTests()) {
+            abort(404);
+        }
+
+        if (! Modules::available('shuttle') || ! Schema::hasTable('shuttle_settings')) {
+            abort(404);
+        }
+
+        if (ShuttleSetting::getValue(ShuttleSetting::KEY_PASSENGER_BOOKING_ENABLED, '0') !== '1') {
+            abort(404, __('shuttle.public.disabled'));
+        }
     }
 
     /**
