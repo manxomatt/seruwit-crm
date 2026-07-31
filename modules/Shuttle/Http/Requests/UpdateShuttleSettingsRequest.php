@@ -21,6 +21,10 @@ class UpdateShuttleSettingsRequest extends FormRequest
             'default_pickup_cutoff_minutes' => ['required', 'integer', 'min:0', 'max:1440'],
             'default_pool_base_fare' => ['required', 'numeric', 'min:0'],
             'default_door_base_fare' => ['required', 'numeric', 'min:0'],
+            'passenger_booking_enabled' => ['nullable'],
+            'hold_ttl_minutes' => ['required', 'integer', 'min:5', 'max:120'],
+            'public_brand_name' => ['required', 'string', 'max:120'],
+            'public_brand_color' => ['required', 'string', 'max:20'],
         ];
     }
 }

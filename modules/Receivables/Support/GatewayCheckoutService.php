@@ -105,10 +105,43 @@ class GatewayCheckoutService
     }
 
     /**
+     * @param  object{id: int, booking_number: string, total_fare: mixed, status: string, public_token: string|null, booker_phone?: string|null, hold_expires_at?: mixed, seats_held?: bool}  $booking
+     */
+    public function createShuttleBookingCharge(object $booking): GatewayCharge
+    {
+        $amount = round((float) $booking->total_fare, 2);
+
+        if ($amount < 0.01) {
+            throw ValidationException::withMessages([
+                'booking' => __('receivables.gateway.shuttle_nothing_due'),
+            ]);
+        }
+
+        if ($booking->status !== 'draft') {
+            throw ValidationException::withMessages([
+                'booking' => __('receivables.gateway.shuttle_not_open'),
+            ]);
+        }
+
+        return $this->createCharge([
+            'purpose' => GatewayCharge::PURPOSE_SHUTTLE_BOOKING,
+            'shuttle_booking_id' => $booking->id,
+            'partner_id' => null,
+            'amount' => $amount,
+            'item_name' => __('receivables.gateway.item_shuttle', ['code' => $booking->booking_number]),
+            'customer_name' => 'Passenger',
+            'customer_email' => null,
+            'customer_phone' => $booking->booker_phone ?? null,
+            'finish_path' => '/book/shuttle/ticket/'.($booking->public_token ?? ''),
+        ]);
+    }
+
+    /**
      * @param  array{
      *     purpose: string,
      *     rental_id?: int|null,
      *     invoice_id?: int|null,
+     *     shuttle_booking_id?: int|null,
      *     partner_id?: int|null,
      *     amount: float,
      *     item_name: string,
@@ -159,6 +192,7 @@ class GatewayCheckoutService
             'purpose' => $input['purpose'],
             'rental_id' => $input['rental_id'] ?? null,
             'invoice_id' => $input['invoice_id'] ?? null,
+            'shuttle_booking_id' => $input['shuttle_booking_id'] ?? null,
             'partner_id' => $input['partner_id'] ?? null,
             'order_id' => $orderId,
             'amount' => $input['amount'],
@@ -282,6 +316,23 @@ class GatewayCheckoutService
                 ]],
             ]);
         }
+
+        if ($charge->purpose === GatewayCharge::PURPOSE_SHUTTLE_BOOKING) {
+            if (! class_exists(\Modules\Shuttle\Models\ShuttleBooking::class)
+                || ! class_exists(\Modules\Shuttle\Support\PassengerBookingService::class)) {
+                return;
+            }
+
+            $booking = \Modules\Shuttle\Models\ShuttleBooking::query()
+                ->lockForUpdate()
+                ->findOrFail($charge->shuttle_booking_id);
+
+            if ($booking->status === \Modules\Shuttle\Models\ShuttleBooking::STATUS_DRAFT) {
+                app(\Modules\Shuttle\Support\PassengerBookingService::class)->markPaidAndConfirm($booking, [
+                    'payment_method' => $method,
+                ]);
+            }
+        }
     }
 
     private function mapPaymentType(string $paymentType): string
@@ -296,7 +347,11 @@ class GatewayCheckoutService
 
     private function nextOrderId(string $purpose): string
     {
-        $prefix = $purpose === GatewayCharge::PURPOSE_RENTAL_DEPOSIT ? 'RDEP' : 'RINV';
+        $prefix = match ($purpose) {
+            GatewayCharge::PURPOSE_RENTAL_DEPOSIT => 'RDEP',
+            GatewayCharge::PURPOSE_SHUTTLE_BOOKING => 'SBOOK',
+            default => 'RINV',
+        };
 
         return sprintf('%s-%s-%s', $prefix, now()->format('ymdHis'), Str::upper(Str::random(4)));
     }

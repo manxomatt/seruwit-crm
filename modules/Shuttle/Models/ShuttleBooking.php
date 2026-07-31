@@ -29,9 +29,25 @@ class ShuttleBooking extends Model
 
     public const STATUS_NO_SHOW = 'no_show';
 
+    public const STATUS_EXPIRED = 'expired';
+
     public const MODE_POOL = 'pool';
 
     public const MODE_DOOR = 'door';
+
+    public const CHANNEL_OPS = 'ops';
+
+    public const CHANNEL_PARTNER = 'partner';
+
+    public const CHANNEL_PASSENGER = 'passenger';
+
+    public const PAYMENT_UNPAID = 'unpaid';
+
+    public const PAYMENT_PENDING = 'pending';
+
+    public const PAYMENT_PAID = 'paid';
+
+    public const PAYMENT_REFUNDED = 'refunded';
 
     protected static function newFactory(): Factory
     {
@@ -43,6 +59,7 @@ class ShuttleBooking extends Model
         'booking_number',
         'departure_id',
         'partner_id',
+        'channel',
         'booked_by',
         'status',
         'passenger_count',
@@ -64,6 +81,12 @@ class ShuttleBooking extends Model
         'cancelled_at',
         'refund_status',
         'cancel_reason',
+        'booker_phone',
+        'booker_phone_verified_at',
+        'hold_expires_at',
+        'seats_held',
+        'payment_status',
+        'public_token',
     ];
 
     /**
@@ -80,7 +103,22 @@ class ShuttleBooking extends Model
             'dropoff_lat' => 'decimal:7',
             'dropoff_lng' => 'decimal:7',
             'cancelled_at' => 'datetime',
+            'booker_phone_verified_at' => 'datetime',
+            'hold_expires_at' => 'datetime',
+            'seats_held' => 'boolean',
         ];
+    }
+
+    public function isHoldExpired(): bool
+    {
+        return $this->seats_held
+            && $this->hold_expires_at !== null
+            && $this->hold_expires_at->isPast();
+    }
+
+    public function isPassengerChannel(): bool
+    {
+        return $this->channel === self::CHANNEL_PASSENGER;
     }
 
     public static function nextNumber(): string

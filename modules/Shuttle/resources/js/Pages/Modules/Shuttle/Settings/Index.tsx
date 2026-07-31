@@ -52,6 +52,10 @@ interface Props {
         default_pickup_cutoff_minutes: string;
         default_pool_base_fare: string;
         default_door_base_fare: string;
+        passenger_booking_enabled: string;
+        hold_ttl_minutes: string;
+        public_brand_name: string;
+        public_brand_color: string;
     };
     cities: City[];
     pools: Pool[];
@@ -112,6 +116,10 @@ function GeneralTab({
         default_pickup_cutoff_minutes: settings.default_pickup_cutoff_minutes,
         default_pool_base_fare: settings.default_pool_base_fare,
         default_door_base_fare: settings.default_door_base_fare,
+        passenger_booking_enabled: settings.passenger_booking_enabled === '1',
+        hold_ttl_minutes: settings.hold_ttl_minutes,
+        public_brand_name: settings.public_brand_name,
+        public_brand_color: settings.public_brand_color,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -172,6 +180,56 @@ function GeneralTab({
                     </div>
                     <InputError message={errors.default_door_base_fare} className="mt-1" />
                 </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
+                <h3 className="mb-3 text-sm font-semibold text-gray-800">{t('shuttle.settings.passenger_channel')}</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                            type="checkbox"
+                            checked={data.passenger_booking_enabled}
+                            onChange={(e) => setData('passenger_booking_enabled', e.target.checked)}
+                            disabled={!canUpdate}
+                        />
+                        {t('shuttle.settings.passenger_booking_enabled')}
+                    </label>
+                    <div>
+                        <InputLabel value={t('shuttle.settings.hold_ttl_minutes')} />
+                        <TextInput
+                            type="number"
+                            min={5}
+                            max={120}
+                            className="mt-1 w-full"
+                            value={data.hold_ttl_minutes}
+                            onChange={(e) => setData('hold_ttl_minutes', e.target.value)}
+                            disabled={!canUpdate}
+                        />
+                    </div>
+                    <div>
+                        <InputLabel value={t('shuttle.settings.public_brand_name')} />
+                        <TextInput
+                            className="mt-1 w-full"
+                            value={data.public_brand_name}
+                            onChange={(e) => setData('public_brand_name', e.target.value)}
+                            disabled={!canUpdate}
+                        />
+                    </div>
+                    <div>
+                        <InputLabel value={t('shuttle.settings.public_brand_color')} />
+                        <TextInput
+                            className="mt-1 w-full"
+                            value={data.public_brand_color}
+                            onChange={(e) => setData('public_brand_color', e.target.value)}
+                            disabled={!canUpdate}
+                        />
+                    </div>
+                </div>
+                {data.passenger_booking_enabled && (
+                    <p className="mt-2 text-xs text-gray-500">
+                        Public URL: <code className="rounded bg-gray-100 px-1">/book/shuttle</code>
+                    </p>
+                )}
             </div>
             {canUpdate && (
                 <div className="flex justify-end">

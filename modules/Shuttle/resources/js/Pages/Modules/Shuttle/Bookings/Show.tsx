@@ -9,6 +9,8 @@ interface Booking {
     id: number;
     booking_number: string;
     status: string;
+    channel?: string;
+    payment_status?: string;
     passenger_count: number;
     unit_fare: string | number;
     total_fare: string | number;
@@ -64,7 +66,12 @@ export default function Show({ booking, can }: Props) {
                                 )}
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {can.confirm && booking.status === 'draft' && (
+                                {can.confirm && booking.status === 'draft' && booking.channel === 'passenger' && (
+                                    <PrimaryButton type="button" onClick={() => router.post(prefixedRoute('shuttle.bookings.mark-paid', booking.id))}>
+                                        {t('shuttle.bookings.mark_paid')}
+                                    </PrimaryButton>
+                                )}
+                                {can.confirm && booking.status === 'draft' && booking.channel !== 'passenger' && (
                                     <PrimaryButton type="button" onClick={() => router.post(prefixedRoute('shuttle.bookings.confirm', booking.id))}>
                                         {t('shuttle.bookings.confirm')}
                                     </PrimaryButton>

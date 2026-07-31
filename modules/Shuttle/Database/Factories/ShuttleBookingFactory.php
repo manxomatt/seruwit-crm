@@ -25,6 +25,7 @@ class ShuttleBookingFactory extends Factory
             'booking_number' => sprintf('BK-%s-%05d', now()->format('Y'), fake()->unique()->numberBetween(1, 99999)),
             'departure_id' => ShuttleDeparture::factory(),
             'partner_id' => Partner::factory(),
+            'channel' => ShuttleBooking::CHANNEL_OPS,
             'status' => ShuttleBooking::STATUS_DRAFT,
             'passenger_count' => 1,
             'unit_fare' => $fare,

@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\Shuttle\Models\ShuttleBooking;
 use Modules\Shuttle\Support\BookingConfirmationService;
+use Modules\Shuttle\Support\PassengerBookingService;
 use Throwable;
 
 class BookingActionController extends Controller
@@ -20,6 +21,17 @@ class BookingActionController extends Controller
         }
 
         return back()->with('success', __('shuttle.messages.booking_confirmed'));
+    }
+
+    public function markPaid(ShuttleBooking $booking, PassengerBookingService $service): RedirectResponse
+    {
+        try {
+            $service->markPaidAndConfirm($booking);
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', __('shuttle.public.marked_paid'));
     }
 
     public function cancel(Request $request, ShuttleBooking $booking, BookingConfirmationService $service): RedirectResponse

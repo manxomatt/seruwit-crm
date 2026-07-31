@@ -15,12 +15,24 @@ class ShuttleSetting extends Model
 
     public const KEY_DEFAULT_DOOR_FARE = 'default_door_base_fare';
 
+    public const KEY_PASSENGER_BOOKING_ENABLED = 'passenger_booking_enabled';
+
+    public const KEY_HOLD_TTL_MINUTES = 'hold_ttl_minutes';
+
+    public const KEY_PUBLIC_BRAND_NAME = 'public_brand_name';
+
+    public const KEY_PUBLIC_BRAND_COLOR = 'public_brand_color';
+
     /** @var list<string> */
     public const KEYS = [
         self::KEY_DEFAULT_SEAT_CAPACITY,
         self::KEY_DEFAULT_PICKUP_CUTOFF,
         self::KEY_DEFAULT_POOL_FARE,
         self::KEY_DEFAULT_DOOR_FARE,
+        self::KEY_PASSENGER_BOOKING_ENABLED,
+        self::KEY_HOLD_TTL_MINUTES,
+        self::KEY_PUBLIC_BRAND_NAME,
+        self::KEY_PUBLIC_BRAND_COLOR,
     ];
 
     /** @var list<string> */
@@ -76,6 +88,10 @@ class ShuttleSetting extends Model
             self::KEY_DEFAULT_PICKUP_CUTOFF => '90',
             self::KEY_DEFAULT_POOL_FARE => '200000',
             self::KEY_DEFAULT_DOOR_FARE => '250000',
+            self::KEY_PASSENGER_BOOKING_ENABLED => '0',
+            self::KEY_HOLD_TTL_MINUTES => '15',
+            self::KEY_PUBLIC_BRAND_NAME => 'Travel',
+            self::KEY_PUBLIC_BRAND_COLOR => '#0f766e',
         ];
     }
 }

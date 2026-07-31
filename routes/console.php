@@ -43,3 +43,10 @@ Schedule::command('rental:scan-ending')
     ->dailyAt('06:30')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Releases expired passenger seat holds on shuttle public bookings.
+Schedule::command('shuttle:release-expired-holds')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->onOneServer()
+    ->runInBackground();

@@ -19,6 +19,7 @@ use App\Http\Controllers\TodoController;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Route;
 use Modules\Orders\Http\Controllers\PublicTrackingController;
+use Modules\Shuttle\Http\Controllers\PublicPassengerBookingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +41,17 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 // Public shipment tracking — no auth, tenant resolved by domain. The Orders
 // controller 404s when the module is not installed, like the blog does.
 Route::get('/track/{token}', [PublicTrackingController::class, 'show'])->name('track.show');
+
+// Public passenger shuttle booking (PWA) — gated inside controller.
+Route::middleware('throttle:30,1')->prefix('book/shuttle')->name('book.shuttle.')->group(function (): void {
+    Route::get('/', [PublicPassengerBookingController::class, 'search'])->name('search');
+    Route::post('/hold', [PublicPassengerBookingController::class, 'hold'])->name('hold');
+    Route::post('/otp', [PublicPassengerBookingController::class, 'sendOtp'])->name('otp');
+    Route::get('/ticket/{token}', [PublicPassengerBookingController::class, 'ticket'])->name('ticket');
+    Route::post('/ticket/{token}/cancel', [PublicPassengerBookingController::class, 'cancel'])->name('cancel');
+    Route::post('/ticket/{token}/pay', [PublicPassengerBookingController::class, 'pay'])->name('pay');
+    Route::get('/history', [PublicPassengerBookingController::class, 'history'])->name('history');
+});
 
 // Midtrans payment notifications — tenant domain, no auth, CSRF exempt.
 Route::post('/webhooks/midtrans', [\Modules\Receivables\Http\Controllers\GatewayCheckoutController::class, 'webhook'])

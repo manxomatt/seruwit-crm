@@ -38,8 +38,8 @@ Travel shuttle = perjalanan **terjadwal** antar kota dengan:
 - Soft conflict check armada vs Rental/Transportation bila modul terpasang
 
 ### Out of scope (fase berikutnya)
-- Aplikasi penumpang / driver mobile native
-- Pembayaran online gateway (QRIS/VA) — deposit online Rental bisa di-*soft-bridge* belakangan
+- Aplikasi penumpang / driver **native** (lihat §14 — mulai dari PWA publik, native belakangan)
+- Pembayaran online gateway (QRIS/VA) — Fase P2 di §14; deposit online Rental bisa di-*soft-bridge*
 - Multi-leg / transit hub chaining
 - Dynamic pricing / yield management
 - Paket tour / charter ad-hoc (bisa ikut Rental atau fase 2)
@@ -457,6 +457,128 @@ Jalankan minimal: `php artisan test --compact --filter=Shuttle`
 - [x] Vertical pack & plan entitlement key disepakati
 - [x] Sample koridor demo (JKT–BDG 200rb) untuk seeder
 - [x] Master city/pool + `shuttle_settings` (config) di UI Settings
+
+---
+
+## 14. Booking mandiri penumpang (public channel)
+
+Kanal B2C agar penumpang memesan kursi **tanpa CS** dan **tanpa jadi Partner**. Tidak memecah domain: tetap menulis ke `ShuttleBooking` + `shuttle_passengers`; yang baru adalah **channel**, **hold seat**, **auth OTP**, dan **surface publik per-tenant**.
+
+### 14.1 Keputusan arsitektur
+
+| Aspek | Keputusan | Alasan |
+|---|---|---|
+| Surface | **Public booking PWA** per tenant (`book.{tenant}` / path publik) | Mirror pola tracking publik; installable; tanpa Play Store di hari-1 |
+| Auth | **OTP nomor HP** (bukan akun Partner) | Friction rendah; cukup untuk tiket & self-cancel |
+| Domain | Reuse `ShuttleBooking` + `channel = passenger` | Satu spine ops/manifest/accounting |
+| Seat | Status `draft` + **TTL hold** (10–15 menit) | Cegah overbook sebelum bayar |
+| Payment MVP | Pay-at-counter / transfer manual (+ bukti) | Gateway masih out-of-scope MVP; jangan blokir go-live |
+| Accounting | Sama walk-in: `shuttle_sale.completed` setelah paid/confirmed | Sudah ada Fase B Accounting (§5); tanpa AR Partner |
+| Native AAB | Fase belakangan (wrapper Capacitor di atas PWA yang sama) | Satu codebase; tenant “no-code” = brand/theme/domain saja |
+
+### 14.2 Tiga channel booking (jangan dicampur)
+
+| Channel | Siapa | `partner_id` | Invoice AR | Accounting tipikal |
+|---|---|---|---|---|
+| `ops` | CS / desk internal | optional (walk-in null / corporate set) | jika partner | invoice issue **atau** walk-in sale |
+| `partner` | Portal B2B (`/module/portal/shuttle/...`) | wajib | draft → issue/pay | `invoice.issued` → `shuttle_revenue` |
+| `passenger` | Publik / PWA (§14) | **null** | tidak | hold → paid → `shuttle_sale.completed` |
+
+Jangan jadikan penumpang retail sebagai `Partner` kecuali korporat berulang.
+
+### 14.3 Alur
+
+```
+Cari jadwal (koridor + tanggal)
+  → Pilih departure + mode pool|door (+ pin map bila door)
+  → Isi penumpang + verifikasi OTP HP
+  → HOLD (draft, seats reserved, hold_expires_at)
+      → Bayar (loket / transfer / gateway P2)
+          → CONFIRM + tiket (QR = booking_number / public_token)
+              → Boarding ops (boarded → completed) seperti channel lain
+```
+
+Job terjadwal: expired hold → release seat (`seats_booked` rollback) + status `cancelled` / `expired`.
+
+### 14.4 Skema tambahan (minimal)
+
+Perluasan `shuttle_bookings` (atau side-car tipis bila kolom terlalu ramai):
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `channel` | string/enum | `ops` \| `partner` \| `passenger` (default `ops` untuk data lama) |
+| `booker_phone` | string nullable | HP booker (OTP subject) |
+| `booker_phone_verified_at` | timestamp nullable | |
+| `hold_expires_at` | timestamp nullable | Hanya saat hold aktif |
+| `payment_status` | string | `unpaid` \| `pending` \| `paid` \| `refunded` |
+| `public_token` | string unique nullable | Lihat tiket tanpa session penuh |
+
+Index: `(departure_id, channel, status)`, `public_token`, `booker_phone`.
+
+### 14.5 Surface & multi-tenant
+
+- Route publik (tanpa auth staff), contoh prefix: `/book/shuttle/...` atau subdomain booking tenant.
+- Branding dari settings tenant (logo, warna, nama travel) — **bukan** satu app store multi-tenant.
+- Halaman inti PWA:
+  1. Cari jadwal
+  2. Ringkasan + pax + OTP
+  3. Hold / pending payment
+  4. Tiket (QR + detail jemput/antar)
+  5. Riwayat by OTP / magic link HP
+- Soft: notifikasi WA/SMS pada confirm / reminder (listener belakangan).
+
+### 14.6 Permissions & routes (sketsa)
+
+**Publik (throttle + OTP):**  
+`public.shuttle.search` · `public.shuttle.hold` · `public.shuttle.otp.send` · `public.shuttle.otp.verify` · `public.shuttle.ticket` · `public.shuttle.cancel`
+
+**Ops (tambahan):**  
+`module.shuttle.bookings.release-hold` · setting `passenger_booking_enabled`, `hold_ttl_minutes`, branding PWA
+
+Permission staff baru opsional: `manage_passenger_channel` (toggle kanal + refund policy).
+
+### 14.7 Integrasi Accounting & pembayaran
+
+| Fase bayar | Trigger GL |
+|---|---|
+| Pay later / loket | CS tandai paid **atau** confirm di desk → `shuttle_sale.completed` (sama walk-in) |
+| Transfer + bukti | Ops approve → paid + confirm → journal |
+| Gateway (P2) | Webhook paid → auto-confirm → journal; map settlement ke kas/bank company |
+
+Cancel sebelum dispatch: void journal bila sudah `shuttle_sale.completed` (mirror walk-in cancel).
+
+### 14.8 Urutan implementasi kanal publik
+
+| Fase | Isi | Dependency |
+|---|---|---|
+| **P0** | Public search + hold TTL + pay-later; CS bisa confirm/paid; branding tenant dasar | Seat lock existing |
+| **P1** | OTP HP + tiket QR + self-cancel policy + riwayat by phone | P0 |
+| **P2** | Payment gateway (QRIS/VA) + auto-confirm + accounting map | P1 + soft receivables/bank |
+| **P3** | Wrapper AAB / driver companion di atas PWA yang sama | Occupancy channel terbukti |
+
+### 14.9 Anti-pola
+
+- App native terpisah sebelum public web/PWA stabil
+- Membuat entity booking kedua atau `Partner` per tiket retail
+- Hold tanpa TTL / tanpa job release
+- Satu binary Play Store untuk semua tenant (branding & review rumit)
+- Memaksa invoice AR untuk channel `passenger`
+
+### 14.10 Kriteria siap P0
+
+- [x] `channel` + `hold_expires_at` + job release
+- [x] Toggle `passenger_booking_enabled` per tenant
+- [x] Halaman publik search → hold → ticket (pay-later)
+- [x] Tes: concurrent hold tidak overbook; expired hold melepas kursi; accounting walk-in tetap jalan setelah paid/confirm
+
+### 14.11 Status implementasi
+
+| Fase | Status |
+|---|---|
+| **P0** | Implemented — `/book/shuttle`, hold TTL, CS mark-paid, branding settings |
+| **P1** | Implemented — OTP HP, tiket QR, self-cancel, history by phone |
+| **P2** | Implemented — Midtrans Snap soft (`PURPOSE_SHUTTLE_BOOKING`) + webhook → confirm |
+| **P3** | Pending — Capacitor shell |
 
 ---
 

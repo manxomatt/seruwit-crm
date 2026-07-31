@@ -15,6 +15,8 @@ class GatewayCharge extends Model
 
     public const PURPOSE_INVOICE = 'invoice';
 
+    public const PURPOSE_SHUTTLE_BOOKING = 'shuttle_booking';
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_PAID = 'paid';
@@ -30,6 +32,7 @@ class GatewayCharge extends Model
         'purpose',
         'rental_id',
         'invoice_id',
+        'shuttle_booking_id',
         'partner_id',
         'order_id',
         'amount',

@@ -34,6 +34,10 @@ class SettingsController extends Controller
                 'default_pickup_cutoff_minutes' => $settings[ShuttleSetting::KEY_DEFAULT_PICKUP_CUTOFF] ?? '90',
                 'default_pool_base_fare' => $settings[ShuttleSetting::KEY_DEFAULT_POOL_FARE] ?? '200000',
                 'default_door_base_fare' => $settings[ShuttleSetting::KEY_DEFAULT_DOOR_FARE] ?? '250000',
+                'passenger_booking_enabled' => $settings[ShuttleSetting::KEY_PASSENGER_BOOKING_ENABLED] ?? '0',
+                'hold_ttl_minutes' => $settings[ShuttleSetting::KEY_HOLD_TTL_MINUTES] ?? '15',
+                'public_brand_name' => $settings[ShuttleSetting::KEY_PUBLIC_BRAND_NAME] ?? 'Travel',
+                'public_brand_color' => $settings[ShuttleSetting::KEY_PUBLIC_BRAND_COLOR] ?? '#0f766e',
             ],
             'cities' => ShuttleCity::query()->orderBy('name')->get(),
             'pools' => ShuttlePool::query()->with(['city', 'location'])->orderBy('name')->get(),
@@ -49,11 +53,17 @@ class SettingsController extends Controller
     {
         $data = $request->validated();
 
+        $enabled = filter_var($data['passenger_booking_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
         ShuttleSetting::putMany([
             ShuttleSetting::KEY_DEFAULT_SEAT_CAPACITY => $data['default_seat_capacity'],
             ShuttleSetting::KEY_DEFAULT_PICKUP_CUTOFF => $data['default_pickup_cutoff_minutes'],
             ShuttleSetting::KEY_DEFAULT_POOL_FARE => $data['default_pool_base_fare'],
             ShuttleSetting::KEY_DEFAULT_DOOR_FARE => $data['default_door_base_fare'],
+            ShuttleSetting::KEY_PASSENGER_BOOKING_ENABLED => $enabled ? '1' : '0',
+            ShuttleSetting::KEY_HOLD_TTL_MINUTES => $data['hold_ttl_minutes'],
+            ShuttleSetting::KEY_PUBLIC_BRAND_NAME => $data['public_brand_name'],
+            ShuttleSetting::KEY_PUBLIC_BRAND_COLOR => $data['public_brand_color'],
         ]);
 
         return redirect()

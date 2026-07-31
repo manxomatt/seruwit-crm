@@ -16,13 +16,20 @@ class BookingConfirmationService
         private readonly ShuttleAccountingService $accounting = new ShuttleAccountingService,
     ) {}
 
-    public function confirm(ShuttleBooking $booking): ShuttleBooking
+    /**
+     * @param  array{payment_method?: string|null, already_held?: bool}  $options
+     */
+    public function confirm(ShuttleBooking $booking, array $options = []): ShuttleBooking
     {
         if ($booking->status !== ShuttleBooking::STATUS_DRAFT) {
             throw new RuntimeException(__('shuttle.messages.confirm_draft_only'));
         }
 
-        return DB::transaction(function () use ($booking): ShuttleBooking {
+        if ($booking->isHoldExpired()) {
+            throw new RuntimeException(__('shuttle.public.hold_expired'));
+        }
+
+        return DB::transaction(function () use ($booking, $options): ShuttleBooking {
             /** @var ShuttleDeparture $departure */
             $departure = ShuttleDeparture::query()
                 ->whereKey($booking->departure_id)
@@ -33,14 +40,27 @@ class BookingConfirmationService
                 throw new RuntimeException(__('shuttle.messages.departure_not_open'));
             }
 
-            if ($departure->seatsRemaining() < $booking->passenger_count) {
-                throw new RuntimeException(__('shuttle.messages.insufficient_seats'));
+            $alreadyHeld = ($options['already_held'] ?? false) || $booking->seats_held;
+
+            if (! $alreadyHeld) {
+                if ($departure->seatsRemaining() < $booking->passenger_count) {
+                    throw new RuntimeException(__('shuttle.messages.insufficient_seats'));
+                }
             }
 
-            $seatOffset = (int) $departure->seats_booked;
-            $departure->increment('seats_booked', $booking->passenger_count);
+            $seatOffset = $alreadyHeld
+                ? max(0, (int) $departure->seats_booked - (int) $booking->passenger_count)
+                : (int) $departure->seats_booked;
 
-            $booking->update(['status' => ShuttleBooking::STATUS_CONFIRMED]);
+            if (! $alreadyHeld) {
+                $departure->increment('seats_booked', $booking->passenger_count);
+            }
+
+            $booking->update([
+                'status' => ShuttleBooking::STATUS_CONFIRMED,
+                'seats_held' => false,
+                'hold_expires_at' => null,
+            ]);
 
             $this->seats->assign($booking->fresh(['passengers']), $seatOffset);
 
@@ -48,8 +68,9 @@ class BookingConfirmationService
             if ($invoice) {
                 $booking->update(['invoice_id' => $invoice->id]);
             } else {
-                // Walk-in: no AR invoice — post cash travel revenue when Accounting is ready.
-                $this->accounting->postWalkInSale($booking->fresh());
+                $this->accounting->postWalkInSale($booking->fresh(), [
+                    'payment_method' => $options['payment_method'] ?? 'cash',
+                ]);
             }
 
             return $booking->fresh(['passengers', 'departure', 'partner', 'invoice']);
@@ -65,6 +86,30 @@ class BookingConfirmationService
         return DB::transaction(function () use ($booking, $reason): ShuttleBooking {
             $refundStatus = ShuttleInvoiceService::REFUND_NONE;
             $creditInvoiceId = null;
+
+            if ($booking->status === ShuttleBooking::STATUS_DRAFT && $booking->seats_held) {
+                /** @var ShuttleDeparture $departure */
+                $departure = ShuttleDeparture::query()
+                    ->whereKey($booking->departure_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $departure->update([
+                    'seats_booked' => max(0, $departure->seats_booked - $booking->passenger_count),
+                ]);
+
+                $booking->update([
+                    'status' => ShuttleBooking::STATUS_CANCELLED,
+                    'seats_held' => false,
+                    'hold_expires_at' => null,
+                    'cancelled_at' => now(),
+                    'cancel_reason' => $reason,
+                    'refund_status' => $refundStatus,
+                    'credit_invoice_id' => $creditInvoiceId,
+                ]);
+
+                return $booking->fresh(['invoice', 'passengers']);
+            }
 
             if ($booking->status === ShuttleBooking::STATUS_CONFIRMED) {
                 /** @var ShuttleDeparture $departure */
@@ -100,6 +145,8 @@ class BookingConfirmationService
                 'cancel_reason' => $reason,
                 'refund_status' => $refundStatus,
                 'credit_invoice_id' => $creditInvoiceId,
+                'seats_held' => false,
+                'hold_expires_at' => null,
             ]);
 
             return $booking->fresh(['invoice', 'passengers']);

@@ -4,7 +4,9 @@ namespace Modules\Shuttle;
 
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
+use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
+use Modules\Shuttle\Console\ReleaseExpiredHoldsCommand;
 use Modules\Shuttle\Http\Controllers\BookingActionController;
 use Modules\Shuttle\Http\Controllers\BookingController;
 use Modules\Shuttle\Http\Controllers\CorridorController;
@@ -80,7 +82,9 @@ class ShuttleModule implements ModuleContract
 
     public function boot(): void
     {
-        //
+        Artisan::starting(fn (Artisan $artisan) => $artisan->resolveCommands([
+            ReleaseExpiredHoldsCommand::class,
+        ]));
     }
 
     public function routes(): void
@@ -136,6 +140,7 @@ class ShuttleModule implements ModuleContract
         Route::post('/shuttle/bookings', [BookingController::class, 'store'])->middleware('permission:shuttle,create')->name('shuttle.bookings.store');
         Route::get('/shuttle/bookings/{booking}', [BookingController::class, 'show'])->middleware('permission:shuttle,view')->name('shuttle.bookings.show');
         Route::post('/shuttle/bookings/{booking}/confirm', [BookingActionController::class, 'confirm'])->middleware('permission:shuttle,confirm')->name('shuttle.bookings.confirm');
+        Route::post('/shuttle/bookings/{booking}/mark-paid', [BookingActionController::class, 'markPaid'])->middleware('permission:shuttle,confirm')->name('shuttle.bookings.mark-paid');
         Route::post('/shuttle/bookings/{booking}/cancel', [BookingActionController::class, 'cancel'])->middleware('permission:shuttle,update')->name('shuttle.bookings.cancel');
         Route::post('/shuttle/bookings/{booking}/board', [BookingActionController::class, 'board'])->middleware('permission:shuttle,update')->name('shuttle.bookings.board');
 
