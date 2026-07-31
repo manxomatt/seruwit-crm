@@ -3,6 +3,8 @@
 namespace Modules\Fleet\Support;
 
 use App\Modules\Facades\Modules;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\FuelLog;
@@ -17,7 +19,7 @@ class FleetStatusBoard
     /**
      * @return array<string, mixed>
      */
-    public function build(): array
+    public function build(?Request $request = null, int $perPage = 15): array
     {
         $byStatus = Vehicle::query()
             ->selectRaw('status, count(*) as total')
@@ -31,15 +33,23 @@ class FleetStatusBoard
 
         $vehicles = Vehicle::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'plate_number', 'type', 'status', 'odometer_km', 'stnk_expires_at', 'kir_expires_at', 'updated_at']);
+            ->paginate(
+                $perPage,
+                ['id', 'name', 'plate_number', 'type', 'status', 'odometer_km', 'stnk_expires_at', 'kir_expires_at', 'updated_at'],
+                'page',
+                $request?->integer('page') ?: null,
+            )
+            ->withQueryString();
 
         $lastFuelByVehicle = FuelLog::query()
             ->selectRaw('vehicle_id, max(filled_at) as last_filled_at, max(odometer_km) as last_fuel_odometer')
+            ->whereIn('vehicle_id', $vehicles->getCollection()->pluck('id'))
             ->groupBy('vehicle_id')
             ->get()
             ->keyBy('vehicle_id');
 
-        $rows = $vehicles->map(function (Vehicle $vehicle) use ($lastFuelByVehicle): array {
+        /** @var LengthAwarePaginator<int, array<string, mixed>> $rows */
+        $rows = $vehicles->through(function (Vehicle $vehicle) use ($lastFuelByVehicle): array {
             $fuel = $lastFuelByVehicle->get($vehicle->id);
 
             return [
@@ -59,14 +69,14 @@ class FleetStatusBoard
                 'kir_status' => $this->expiryStatus($vehicle->kir_expires_at?->toDateString()),
                 'updated_at' => $vehicle->updated_at?->toIso8601String(),
             ];
-        })->all();
+        });
 
         return [
             'counts' => [
                 'active' => (int) ($byStatus[Vehicle::STATUS_ACTIVE] ?? 0),
                 'maintenance' => (int) ($byStatus[Vehicle::STATUS_MAINTENANCE] ?? 0),
                 'inactive' => (int) ($byStatus[Vehicle::STATUS_INACTIVE] ?? 0),
-                'total' => $vehicles->count(),
+                'total' => (int) ($byStatus->sum()),
             ],
             'drivers' => [
                 'available' => (int) ($driversByStatus[Driver::STATUS_AVAILABLE] ?? 0),

@@ -116,6 +116,48 @@ class RentalAccountingTest extends TestCase
         $this->assertTrue(Account::query()->where('system_role', 'rental_revenue')->exists());
     }
 
+    public function test_complete_creates_base_invoice_when_missing_and_posts_rental_revenue(): void
+    {
+        $rental = Rental::factory()->returned()->create([
+            'deposit_amount' => 0,
+            'deposit_status' => Rental::DEPOSIT_SETTLED,
+            'base_amount' => 750000,
+            'total_amount' => 750000,
+        ]);
+
+        $this->assertSame(0, $rental->charges()->count());
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.complete', $rental))
+            ->assertRedirect();
+
+        $rental->refresh();
+        $this->assertSame(Rental::STATUS_COMPLETED, $rental->status);
+        $this->assertGreaterThan(0, $rental->charges()->count());
+
+        $invoice = app(\Modules\Rental\Support\RentalInvoiceService::class)
+            ->invoicesFor($rental)
+            ->first();
+
+        $this->assertNotNull($invoice);
+        $this->assertSame(Invoice::STATUS_ISSUED, $invoice->status);
+
+        $journal = JournalEntry::query()
+            ->where('source_type', $invoice->getMorphClass())
+            ->where('source_id', $invoice->id)
+            ->where('event', 'invoice.issued')
+            ->with('lines.account')
+            ->first();
+
+        $this->assertNotNull($journal);
+
+        $revenue = $journal->lines->first(
+            fn ($line) => $line->account->system_role === 'rental_revenue'
+        );
+        $this->assertNotNull($revenue);
+        $this->assertSame(750000.0, (float) $revenue->credit);
+    }
+
     public function test_settle_deposit_applies_to_ar_and_refunds_remainder(): void
     {
         $rental = Rental::factory()->create([

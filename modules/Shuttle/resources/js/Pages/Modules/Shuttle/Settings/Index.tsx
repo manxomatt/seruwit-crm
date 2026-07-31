@@ -217,17 +217,37 @@ function GeneralTab({
                     </div>
                     <div>
                         <InputLabel value={t('shuttle.settings.public_brand_color')} />
-                        <TextInput
-                            className="mt-1 w-full"
-                            value={data.public_brand_color}
-                            onChange={(e) => setData('public_brand_color', e.target.value)}
-                            disabled={!canUpdate}
-                        />
+                        <div className="mt-1 flex items-center gap-3">
+                            <input
+                                type="color"
+                                className="h-10 w-14 cursor-pointer rounded-md border border-gray-300 bg-white p-1 shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                                value={/^#[0-9A-Fa-f]{6}$/.test(data.public_brand_color) ? data.public_brand_color : '#0f766e'}
+                                onChange={(e) => setData('public_brand_color', e.target.value)}
+                                disabled={!canUpdate}
+                                aria-label={t('shuttle.settings.public_brand_color')}
+                            />
+                            <TextInput
+                                className="w-32 font-mono uppercase"
+                                value={data.public_brand_color}
+                                placeholder="#0F766E"
+                                onChange={(e) => setData('public_brand_color', e.target.value)}
+                                disabled={!canUpdate}
+                            />
+                            <span
+                                className="h-10 flex-1 rounded-md border border-gray-200"
+                                style={{ backgroundColor: /^#[0-9A-Fa-f]{6}$/.test(data.public_brand_color) ? data.public_brand_color : '#0f766e' }}
+                                title={data.public_brand_color}
+                            />
+                        </div>
+                        <InputError message={errors.public_brand_color} className="mt-1" />
                     </div>
                 </div>
-                {data.passenger_booking_enabled && (
+                {data.passenger_booking_enabled && typeof window !== 'undefined' && (
                     <p className="mt-2 text-xs text-gray-500">
-                        Public URL: <code className="rounded bg-gray-100 px-1">/book/shuttle</code>
+                        Public URL:{' '}
+                        <a className="font-medium text-indigo-600 underline" href={`${window.location.origin}/book/shuttle`} target="_blank" rel="noreferrer">
+                            {`${window.location.origin}/book/shuttle`}
+                        </a>
                     </p>
                 )}
             </div>

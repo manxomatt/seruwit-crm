@@ -1,7 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
 
 interface VehicleRow {
@@ -19,11 +19,20 @@ interface VehicleRow {
     kir_status: string;
 }
 
+interface PaginatedVehicles {
+    data: VehicleRow[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+}
+
 interface Board {
     counts: { active: number; maintenance: number; inactive: number; total: number };
     drivers: { available: number; on_leave: number; inactive: number; total: number };
     expiring_docs: { expired: number; expiring_30: number; available: boolean };
-    vehicles: VehicleRow[];
+    vehicles: PaginatedVehicles;
 }
 
 interface Props {
@@ -112,14 +121,14 @@ export default function Index({ board }: Props): JSX.Element {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
-                            {vehicles.length === 0 ? (
+                            {vehicles.data.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
                                         {t('fleet.dashboard.empty')}
                                     </td>
                                 </tr>
                             ) : (
-                                vehicles.map((vehicle) => (
+                                vehicles.data.map((vehicle) => (
                                     <tr key={vehicle.id} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
                                             <Link
@@ -164,6 +173,36 @@ export default function Index({ board }: Props): JSX.Element {
                         </tbody>
                     </table>
                 </div>
+
+                {vehicles.last_page > 1 && (
+                    <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm text-gray-700">
+                            {t('common.showing_results', {
+                                from: (vehicles.current_page - 1) * vehicles.per_page + 1,
+                                to: Math.min(vehicles.current_page * vehicles.per_page, vehicles.total),
+                                total: vehicles.total,
+                            })}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                            {vehicles.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded px-3 py-1 text-sm ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white'
+                                            : link.url
+                                              ? 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mt-6 text-sm">

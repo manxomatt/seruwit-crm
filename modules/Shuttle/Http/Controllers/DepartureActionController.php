@@ -31,28 +31,30 @@ class DepartureActionController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        $message = __('shuttle.messages.departure_optimized', [
-            'stops' => $result['stop_count'],
-            'km' => $result['total_distance_km'],
-        ]);
+        $parts = [
+            __('shuttle.messages.departure_optimized', [
+                'stops' => $result['stop_count'],
+                'km' => $result['total_distance_km'],
+            ]),
+        ];
 
         if (($result['estimated_duration_minutes'] ?? null) !== null) {
-            $message .= ' '.__('shuttle.messages.optimize_eta', [
+            $parts[] = __('shuttle.messages.optimize_eta', [
                 'minutes' => $result['estimated_duration_minutes'],
             ]);
         }
 
         if (! empty($result['used_osrm'])) {
-            $message .= ' '.__('shuttle.messages.optimize_osrm');
+            $parts[] = __('shuttle.messages.optimize_osrm');
         }
 
         if ($result['unassigned'] !== []) {
-            $message .= ' '.__('shuttle.messages.optimize_unassigned', [
+            $parts[] = __('shuttle.messages.optimize_unassigned', [
                 'items' => implode(', ', $result['unassigned']),
             ]);
         }
 
-        return back()->with('success', $message);
+        return back()->with('success', implode("\n", $parts));
     }
 
     public function dispatch(Request $request, ShuttleDeparture $departure, DepartureDispatchService $dispatch): RedirectResponse

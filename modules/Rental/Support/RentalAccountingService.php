@@ -38,6 +38,7 @@ class RentalAccountingService
 
     /**
      * Issue every draft invoice linked to this rental's charges and post revenue journals.
+     * Ensures the base charge/invoice exists first (demo-seeded or legacy rentals may skip confirm).
      *
      * @return list<Invoice>
      */
@@ -47,10 +48,12 @@ class RentalAccountingService
             return [];
         }
 
+        $this->invoices->invoiceBase($rental->fresh());
+
         $issued = [];
         $rental->loadMissing('partner');
 
-        foreach ($this->draftInvoicesFor($rental) as $invoice) {
+        foreach ($this->draftInvoicesFor($rental->fresh()) as $invoice) {
             if (! $invoice->lines()->exists()) {
                 continue;
             }

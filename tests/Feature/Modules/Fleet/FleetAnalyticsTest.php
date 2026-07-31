@@ -41,7 +41,25 @@ class FleetAnalyticsTest extends TestCase
                 ->where('board.counts.maintenance', 1)
                 ->where('board.counts.inactive', 1)
                 ->where('board.counts.total', 3)
-                ->has('board.vehicles', 3)
+                ->has('board.vehicles.data', 3)
+            );
+    }
+
+    public function test_fleet_dashboard_paginates_vehicles(): void
+    {
+        Vehicle::factory()->count(16)->create(['status' => Vehicle::STATUS_ACTIVE]);
+
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)
+            ->get(route('module.fleet.dashboard', ['page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Dashboard/Index')
+                ->where('board.counts.total', 16)
+                ->where('board.vehicles.current_page', 2)
+                ->where('board.vehicles.last_page', 2)
+                ->has('board.vehicles.data', 1)
             );
     }
 
@@ -61,7 +79,7 @@ class FleetAnalyticsTest extends TestCase
         ]);
 
         $board = app(FleetStatusBoard::class)->build();
-        $row = collect($board['vehicles'])->firstWhere('id', $vehicle->id);
+        $row = collect($board['vehicles']->items())->firstWhere('id', $vehicle->id);
 
         $this->assertNotNull($row);
         $this->assertSame(12000, $row['odometer_km']);

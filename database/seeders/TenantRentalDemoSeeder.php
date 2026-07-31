@@ -9,6 +9,8 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Support\RentalAccountingService;
+use Modules\Rental\Support\RentalInvoiceService;
 
 /**
  * Seeds 30 demo rentals (+ rates/vehicles/partners as needed) for the Rental module.
@@ -320,5 +322,52 @@ class TenantRentalDemoSeeder extends Seeder
 
             Rental::query()->create($payload);
         }
+
+        $this->backfillInvoicesForPastConfirm();
+    }
+
+    /**
+     * Demo rows skip the confirm action, so create base invoices (and issue when
+     * the seeded status is returned/completed) so Accounting has revenue to post.
+     */
+    protected function backfillInvoicesForPastConfirm(): void
+    {
+        if (! class_exists(RentalInvoiceService::class)) {
+            return;
+        }
+
+        $invoices = app(RentalInvoiceService::class);
+
+        if (! $invoices->isAvailable()) {
+            return;
+        }
+
+        $accounting = class_exists(RentalAccountingService::class)
+            ? app(RentalAccountingService::class)
+            : null;
+
+        Rental::query()
+            ->where('notes', 'like', self::TAG.'%')
+            ->whereIn('status', [
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+                Rental::STATUS_RETURNED,
+                Rental::STATUS_COMPLETED,
+            ])
+            ->orderBy('id')
+            ->each(function (Rental $rental) use ($invoices, $accounting): void {
+                if ($rental->charges()->exists()) {
+                    return;
+                }
+
+                $invoices->invoiceBase($rental);
+
+                if ($accounting !== null && in_array($rental->status, [
+                    Rental::STATUS_RETURNED,
+                    Rental::STATUS_COMPLETED,
+                ], true)) {
+                    $accounting->issueDraftInvoices($rental->fresh());
+                }
+            });
     }
 }

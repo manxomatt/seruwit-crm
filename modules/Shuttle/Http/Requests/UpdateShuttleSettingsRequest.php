@@ -24,7 +24,7 @@ class UpdateShuttleSettingsRequest extends FormRequest
             'passenger_booking_enabled' => ['nullable'],
             'hold_ttl_minutes' => ['required', 'integer', 'min:5', 'max:120'],
             'public_brand_name' => ['required', 'string', 'max:120'],
-            'public_brand_color' => ['required', 'string', 'max:20'],
+            'public_brand_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ];
     }
 }
