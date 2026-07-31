@@ -12,10 +12,11 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $modules = Permission::getModules();
-        $actions = Permission::getActions();
+        foreach (Permission::getModules() as $moduleSlug => $moduleName) {
+            $actions = $moduleSlug === 'accounting'
+                ? Permission::ACCOUNTING_ACTIONS
+                : Permission::getActions();
 
-        foreach ($modules as $moduleSlug => $moduleName) {
             foreach ($actions as $actionSlug => $actionName) {
                 Permission::query()->firstOrCreate(
                     [

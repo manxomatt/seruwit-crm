@@ -61,12 +61,15 @@ class OrdersModuleLifecycleTest extends TestCase
         $this->installer()->install($tenant, $this->orders());
 
         $tenant->run(function () {
-            foreach (['orders', 'transportation', 'fleet', 'partners', 'products'] as $key) {
+            foreach (['orders', 'transportation', 'fleet', 'products'] as $key) {
                 $this->assertTrue(
                     InstalledModule::query()->where('key', $key)->installed()->exists(),
                     "Expected module [{$key}] to be installed.",
                 );
             }
+
+            $this->assertFalse(InstalledModule::query()->where('key', 'partners')->exists());
+            $this->assertTrue(Schema::hasTable('partners'));
         });
     }
 

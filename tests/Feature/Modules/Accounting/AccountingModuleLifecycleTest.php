@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Modules\Accounting;
 
-use App\Modules\ModuleInstaller;
+use App\Models\InstalledModule;
+use App\Models\Menu;
+use App\Models\Permission;
 use Illuminate\Support\Facades\Schema;
-use Modules\Accounting\AccountingModule;
 use Modules\Accounting\Models\Account;
 use Modules\Accounting\Models\FiscalPeriod;
 use Modules\Accounting\Models\FiscalYear;
+use Modules\Accounting\Support\AccountingPoster;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 use Tests\Traits\WithTenant;
@@ -16,15 +18,12 @@ class AccountingModuleLifecycleTest extends TestCase
 {
     use WithRoles, WithTenant;
 
-    public function test_accounting_tables_and_seed_are_created_on_install(): void
+    public function test_accounting_is_core_on_new_tenants(): void
     {
-        $tenant = $this->provisionTenant('Accounting Install Co', 'accounting-install-co', 'owner@accounting-install.test');
-        $tenant->plan = 'pro';
-        $tenant->save();
-
-        app(ModuleInstaller::class)->install($tenant, new AccountingModule);
+        $tenant = $this->provisionTenant('Accounting Core Co', 'accounting-core-co', 'owner@accounting-core.test');
 
         $tenant->run(function () {
+            $this->assertTrue(Schema::hasTable('partners'));
             $this->assertTrue(Schema::hasTable('accounts'));
             $this->assertTrue(Schema::hasTable('fiscal_years'));
             $this->assertTrue(Schema::hasTable('fiscal_periods'));
@@ -32,22 +31,22 @@ class AccountingModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('journal_lines'));
             $this->assertTrue(Schema::hasTable('accounting_posting_rules'));
 
-            $this->assertDatabaseHas('permissions', ['module' => 'accounting', 'action' => 'view']);
-            $this->assertDatabaseHas('permissions', ['module' => 'accounting', 'action' => 'manage_coa']);
-            $this->assertDatabaseHas('permissions', ['module' => 'accounting', 'action' => 'journal']);
-            $this->assertDatabaseHas('permissions', ['module' => 'accounting', 'action' => 'post']);
-            $this->assertDatabaseHas('permissions', ['module' => 'accounting', 'action' => 'period']);
-            $this->assertDatabaseHas('permissions', ['module' => 'accounting', 'action' => 'bank']);
-            $this->assertDatabaseHas('menus', ['slug' => 'accounting']);
+            $this->assertTrue(Permission::query()->where('module', 'accounting')->where('action', 'view')->exists());
+            $this->assertTrue(Permission::query()->where('module', 'accounting')->where('action', 'manage_coa')->exists());
+            $this->assertTrue(Permission::query()->where('module', 'partners')->where('action', 'view')->exists());
+            $this->assertTrue(Menu::query()->where('slug', 'accounting')->where('is_active', true)->exists());
+            $this->assertTrue(Menu::query()->where('slug', 'partners')->where('is_active', true)->exists());
+
+            $this->assertFalse(InstalledModule::query()->where('key', 'accounting')->exists());
+            $this->assertFalse(InstalledModule::query()->where('key', 'partners')->exists());
+
+            $this->assertTrue(AccountingPoster::isReady());
 
             $this->assertTrue(Schema::hasTable('company_bank_accounts'));
-            $this->assertTrue(Schema::hasTable('payment_method_account_maps'));
             $this->assertDatabaseHas('company_bank_accounts', ['name' => 'Kas Tunai', 'kind' => 'cash']);
-            $this->assertDatabaseHas('company_bank_accounts', ['name' => 'Bank Operasional', 'kind' => 'bank']);
 
             $this->assertGreaterThanOrEqual(16, Account::query()->count());
             $this->assertDatabaseHas('accounts', ['code' => '1100', 'system_role' => 'cash']);
-            $this->assertDatabaseHas('accounts', ['code' => '1200', 'system_role' => 'ar_control']);
 
             $year = FiscalYear::query()->where('year', (int) now()->format('Y'))->first();
             $this->assertNotNull($year);

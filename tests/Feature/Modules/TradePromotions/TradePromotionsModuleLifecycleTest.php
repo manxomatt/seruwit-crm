@@ -29,8 +29,9 @@ class TradePromotionsModuleLifecycleTest extends TestCase
             $this->assertTrue(Schema::hasTable('trade_promo_awards'));
             $this->assertDatabaseHas('permissions', ['module' => 'promotions', 'action' => 'settle']);
             $this->assertDatabaseHas('menus', ['slug' => 'promotions']);
-            $this->assertDatabaseHas('installed_modules', ['key' => 'partners']);
             $this->assertDatabaseHas('installed_modules', ['key' => 'products']);
+            $this->assertDatabaseMissing('installed_modules', ['key' => 'partners']);
+            $this->assertTrue(Schema::hasTable('partners'));
         });
     }
 }

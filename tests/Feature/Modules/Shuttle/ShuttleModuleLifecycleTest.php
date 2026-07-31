@@ -36,8 +36,9 @@ class ShuttleModuleLifecycleTest extends TestCase
             $this->assertDatabaseHas('menus', ['slug' => 'shuttle']);
             $this->assertDatabaseHas('installed_modules', ['key' => 'shuttle']);
             $this->assertDatabaseHas('installed_modules', ['key' => 'fleet']);
-            $this->assertDatabaseHas('installed_modules', ['key' => 'partners']);
             $this->assertDatabaseHas('installed_modules', ['key' => 'invoicing']);
+            $this->assertDatabaseMissing('installed_modules', ['key' => 'partners']);
+            $this->assertTrue(Schema::hasTable('partners'));
         });
     }
 }

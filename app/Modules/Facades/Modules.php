@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static array<string, ModuleContract> all()
+ * @method static array<string, ModuleContract> core()
  * @method static ModuleContract|null find(string $key)
  * @method static bool has(string $key)
  * @method static bool entitled(string $key)

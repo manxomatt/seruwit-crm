@@ -2,7 +2,6 @@
 
 namespace Modules\Accounting\Support;
 
-use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -20,8 +19,7 @@ class AccountingPoster
     {
         return Schema::hasTable('journal_entries')
             && Schema::hasTable('accounts')
-            && Schema::hasTable('accounting_posting_rules')
-            && Modules::available('accounting');
+            && Schema::hasTable('accounting_posting_rules');
     }
 
     public function post(SourceEvent $event): ?JournalEntry

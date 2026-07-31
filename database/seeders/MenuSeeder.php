@@ -35,6 +35,24 @@ class MenuSeeder extends Seeder
                 'sort_order' => 5,
             ],
             [
+                'name' => 'Partners',
+                'slug' => 'partners',
+                'icon' => 'customers',
+                'route_name' => 'partners.index',
+                'permission_module' => 'partners',
+                'permission_action' => 'view',
+                'sort_order' => 7,
+            ],
+            [
+                'name' => 'Accounting',
+                'slug' => 'accounting',
+                'icon' => 'accounting',
+                'route_name' => 'accounting.dashboard',
+                'permission_module' => 'accounting',
+                'permission_action' => 'view',
+                'sort_order' => 12,
+            ],
+            [
                 'name' => 'Users',
                 'slug' => 'users',
                 'icon' => 'users',
@@ -50,7 +68,7 @@ class MenuSeeder extends Seeder
                 'route_name' => 'roles.index',
                 'permission_module' => 'roles',
                 'permission_action' => 'view',
-                'sort_order' => 7,
+                'sort_order' => 8,
             ],
             [
                 'name' => 'Analytics',
@@ -59,7 +77,7 @@ class MenuSeeder extends Seeder
                 'route_name' => 'analytics.index',
                 'permission_module' => 'analytics',
                 'permission_action' => 'view',
-                'sort_order' => 8,
+                'sort_order' => 9,
             ],
             [
                 'name' => 'Settings',
@@ -68,7 +86,7 @@ class MenuSeeder extends Seeder
                 'route_name' => 'settings.index',
                 'permission_module' => 'settings',
                 'permission_action' => 'view',
-                'sort_order' => 9,
+                'sort_order' => 10,
             ],
         ];
 

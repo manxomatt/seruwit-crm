@@ -21,7 +21,7 @@ class PlanSeeder extends Seeder
             [
                 'key' => Plan::KEY_TRIAL,
                 'name' => 'Trial',
-                'description' => 'Self-serve onboarding trial: content, accounting, and rental/travel packs.',
+                'description' => 'Self-serve onboarding trial: content CMS plus rental/travel packs (accounting & partners are core).',
                 // Union of onboarding defaults (pages + accounting) and both
                 // vertical packs — entitlement only; install still chooses packs.
                 'modules' => Plan::trialModuleKeys(),
@@ -54,7 +54,6 @@ class PlanSeeder extends Seeder
                 // and the auto-install chain enforces entitlement at every level,
                 // so a plan selling Billing without it could never install either.
                 'modules' => [
-                    'accounting',
                     'approvals',
                     'billing',
                     'bi',
@@ -68,7 +67,6 @@ class PlanSeeder extends Seeder
                     'orders',
                     'outbound',
                     'pages',
-                    'partners',
                     'payables',
                     'pos',
                     'posts',

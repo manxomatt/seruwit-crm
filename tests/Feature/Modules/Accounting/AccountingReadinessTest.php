@@ -2,8 +2,6 @@
 
 namespace Tests\Feature\Modules\Accounting;
 
-use App\Modules\ModuleInstaller;
-use Modules\Accounting\AccountingModule;
 use Modules\Accounting\Models\Account;
 use Modules\Accounting\Support\AccountingReadinessService;
 use Tests\TestCase;
@@ -14,13 +12,9 @@ class AccountingReadinessTest extends TestCase
 {
     use WithRoles, WithTenant;
 
-    public function test_fresh_install_is_core_ready_with_opening_warning(): void
+    public function test_fresh_tenant_is_core_ready_with_opening_warning(): void
     {
         $tenant = $this->provisionTenant('Ready Co', 'ready-co', 'owner@ready-co.test');
-        $tenant->plan = 'pro';
-        $tenant->save();
-
-        app(ModuleInstaller::class)->install($tenant, new AccountingModule);
 
         $tenant->run(function (): void {
             $assessment = app(AccountingReadinessService::class)->assess();
@@ -35,10 +29,6 @@ class AccountingReadinessTest extends TestCase
     public function test_dashboard_includes_readiness_payload(): void
     {
         $tenant = $this->provisionTenant('Dash Ready Co', 'dash-ready-co', 'owner@dash-ready.test');
-        $tenant->plan = 'pro';
-        $tenant->save();
-
-        app(ModuleInstaller::class)->install($tenant, new AccountingModule);
 
         $tenant->run(function (): void {
             $this->withoutVite();
@@ -60,10 +50,6 @@ class AccountingReadinessTest extends TestCase
     public function test_missing_system_role_blocks_readiness(): void
     {
         $tenant = $this->provisionTenant('Blocked Co', 'blocked-co', 'owner@blocked-co.test');
-        $tenant->plan = 'pro';
-        $tenant->save();
-
-        app(ModuleInstaller::class)->install($tenant, new AccountingModule);
 
         $tenant->run(function (): void {
             Account::query()->where('system_role', 'ar_control')->update(['system_role' => null]);
@@ -80,10 +66,6 @@ class AccountingReadinessTest extends TestCase
     public function test_preflight_command_reports_tenant_status(): void
     {
         $tenant = $this->provisionTenant('Preflight Co', 'preflight-co', 'owner@preflight.test');
-        $tenant->plan = 'pro';
-        $tenant->save();
-
-        app(ModuleInstaller::class)->install($tenant, new AccountingModule);
 
         $this->artisan('accounting:preflight', ['--tenant' => $tenant->id])
             ->assertFailed();

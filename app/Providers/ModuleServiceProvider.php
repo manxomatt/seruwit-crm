@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Modules\Facades\Modules;
+use App\Modules\ModuleContract;
 use App\Modules\ModuleRegistry;
 use App\Modules\PlanRepository;
 use Illuminate\Support\ServiceProvider;
@@ -23,19 +24,32 @@ class ModuleServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        foreach (Modules::core() as $module) {
+            $this->bootModule($module, loadMigrations: false);
+        }
+
         foreach (Modules::all() as $module) {
             /**
-             * Central runs every module, so its tables come from plain
+             * Central runs every optional module, so its tables come from plain
              * `php artisan migrate`. Tenants get them only via an explicit
              * --path at install time, which suppresses these paths entirely.
+             *
+             * Core finance migrations live under database/migrations(+ /tenant).
              */
-            $this->loadMigrationsFrom($module->migrationsPath());
-
-            if ($viewsPath = $module->viewsPath()) {
-                $this->loadViewsFrom($viewsPath, $module->key());
-            }
-
-            $module->boot();
+            $this->bootModule($module, loadMigrations: true);
         }
+    }
+
+    private function bootModule(ModuleContract $module, bool $loadMigrations): void
+    {
+        if ($loadMigrations) {
+            $this->loadMigrationsFrom($module->migrationsPath());
+        }
+
+        if ($viewsPath = $module->viewsPath()) {
+            $this->loadViewsFrom($viewsPath, $module->key());
+        }
+
+        $module->boot();
     }
 }

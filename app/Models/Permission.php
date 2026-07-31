@@ -40,6 +40,25 @@ class Permission extends Model
         'roles' => 'Roles',
         'live-updates' => 'Live Updates',
         'analytics' => 'Analytics',
+        'partners' => 'Partners',
+        'accounting' => 'Accounting',
+    ];
+
+    /**
+     * Accounting uses a custom action set (not CRUD). Seeded for every tenant.
+     *
+     * @var array<string, string>
+     */
+    public const ACCOUNTING_ACTIONS = [
+        'view' => 'View',
+        'manage_coa' => 'Manage COA',
+        'journal' => 'Journal',
+        'post' => 'Post',
+        'period' => 'Period',
+        'bank' => 'Bank',
+        'manage_tax' => 'Manage Tax',
+        'manage_assets' => 'Manage Assets',
+        'manage_budget' => 'Manage Budget',
     ];
 
     /**
@@ -78,7 +97,9 @@ class Permission extends Model
     public static function generateName(string $module, string $action): string
     {
         $moduleName = self::MODULES[$module] ?? ucfirst($module);
-        $actionName = self::ACTIONS[$action] ?? ucfirst($action);
+        $actionName = self::ACTIONS[$action]
+            ?? self::ACCOUNTING_ACTIONS[$action]
+            ?? ucfirst($action);
 
         return "{$actionName} {$moduleName}";
     }

@@ -32,14 +32,12 @@ class Plan extends Model
     public static function trialModuleKeys(): array
     {
         return [
-            'accounting',
             'carousels',
             'document',
             'fleet',
             'invoicing',
             'maintenance',
             'pages',
-            'partners',
             'posts',
             'products',
             'rental',

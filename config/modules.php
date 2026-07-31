@@ -10,20 +10,25 @@ return [
     | Optional features a tenant can install or uninstall. Order is irrelevant;
     | dependencies are declared by each module's requires() method.
     |
-    | Core features (users, roles, settings, analytics, media) are deliberately
-    | absent — they ship with every tenant and cannot be uninstalled.
+    | Core features (users, roles, settings, analytics, media, partners,
+    | accounting) are deliberately absent — they ship with every tenant and
+    | cannot be uninstalled. Partners and Accounting still live under
+    | modules/ for code organization; they are wired via the `core` list below.
     |
     */
+
+    'core' => [
+        Modules\Partners\PartnersModule::class,
+        Modules\Accounting\AccountingModule::class,
+    ],
 
     'registered' => [
         Modules\Billing\BillingModule::class,
         Modules\Carousels\CarouselsModule::class,
         Modules\Document\DocumentModule::class,
-        Modules\Partners\PartnersModule::class,
         Modules\Fleet\FleetModule::class,
         Modules\Inventory\InventoryModule::class,
         Modules\Invoicing\InvoicingModule::class,
-        Modules\Accounting\AccountingModule::class,
         Modules\Purchasing\PurchasingModule::class,
         Modules\Sales\SalesModule::class,
         Modules\Receivables\ReceivablesModule::class,

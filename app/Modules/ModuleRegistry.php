@@ -50,9 +50,27 @@ class ModuleRegistry
         return $this->modules = $modules;
     }
 
+    /**
+     * Core feature modules that still ship as ModuleContract classes (routes/boot)
+     * but are not installable — migrations live under database/migrations/tenant.
+     *
+     * @return array<string, ModuleContract>
+     */
+    public function core(): array
+    {
+        $modules = [];
+
+        foreach (config('modules.core', []) as $class) {
+            $module = app($class);
+            $modules[$module->key()] = $module;
+        }
+
+        return $modules;
+    }
+
     public function find(string $key): ?ModuleContract
     {
-        return $this->all()[$key] ?? null;
+        return $this->all()[$key] ?? $this->core()[$key] ?? null;
     }
 
     /**
@@ -209,11 +227,15 @@ class ModuleRegistry
     }
 
     /**
-     * Register every module's routes inside the caller's route group, each behind
-     * its own requires-module gate so an individual module never has to remember.
+     * Register core feature module routes (no requires-module gate), then every
+     * optional module behind its own requires-module middleware.
      */
     public function registerRoutes(): void
     {
+        foreach ($this->core() as $module) {
+            $module->routes();
+        }
+
         foreach ($this->all() as $module) {
             Route::middleware('requires-module:'.$module->key())
                 ->group(fn () => $module->routes());

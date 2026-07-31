@@ -66,13 +66,16 @@ class BillingModuleLifecycleTest extends TestCase
         $tenant->run(function () {
             // Invoicing among them: Billing prices work but no longer owns the
             // document it is billed on, so the chain has to reach one tier down
-            // and pull it in.
-            foreach (['billing', 'invoicing', 'orders', 'transportation', 'fleet', 'partners', 'products'] as $key) {
+            // and pull it in. Partners is core and is never an installed_modules row.
+            foreach (['billing', 'invoicing', 'orders', 'transportation', 'fleet', 'products'] as $key) {
                 $this->assertTrue(
                     InstalledModule::query()->where('key', $key)->installed()->exists(),
                     "Expected module [{$key}] to be installed.",
                 );
             }
+
+            $this->assertFalse(InstalledModule::query()->where('key', 'partners')->exists());
+            $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('partners'));
         });
     }
 

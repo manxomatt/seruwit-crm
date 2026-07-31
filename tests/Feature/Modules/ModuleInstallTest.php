@@ -37,6 +37,12 @@ class ModuleInstallTest extends TestCase
 
             // Core still arrives untouched.
             $this->assertTrue(Schema::hasTable('media'));
+            $this->assertTrue(Schema::hasTable('partners'));
+            $this->assertTrue(Schema::hasTable('accounts'));
+            $this->assertTrue(Permission::query()->where('module', 'partners')->exists());
+            $this->assertTrue(Permission::query()->where('module', 'accounting')->exists());
+            $this->assertTrue(Menu::query()->where('slug', 'partners')->exists());
+            $this->assertTrue(Menu::query()->where('slug', 'accounting')->exists());
             $this->assertFalse(Permission::query()->where('module', 'carousels')->exists());
             $this->assertFalse(Menu::query()->where('slug', 'carousels')->exists());
         });

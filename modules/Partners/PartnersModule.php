@@ -57,6 +57,7 @@ class PartnersModule implements ModuleContract
 
     public function migrationsPath(): string
     {
+        // Core: migrations live under database/migrations(+ /tenant).
         return __DIR__.'/Database/Migrations';
     }
 

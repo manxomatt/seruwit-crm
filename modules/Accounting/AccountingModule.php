@@ -62,6 +62,8 @@ class AccountingModule implements ModuleContract
 
     public function requires(): array
     {
+        // Partners is a core feature; listed for documentation of the soft domain
+        // dependency only. ModuleInstaller skips unregistered (core) requires.
         return ['partners'];
     }
 
@@ -80,6 +82,8 @@ class AccountingModule implements ModuleContract
 
     public function migrationsPath(): string
     {
+        // Core: migrations live under database/migrations(+ /tenant). Kept so
+        // ModuleContract remains satisfied; ModuleServiceProvider does not load this path.
         return __DIR__.'/Database/Migrations';
     }
 

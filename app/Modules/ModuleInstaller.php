@@ -42,6 +42,12 @@ class ModuleInstaller
      */
     private function installWithinTenant(Tenant $tenant, ModuleContract $module): void
     {
+        if (! Modules::has($module->key())) {
+            throw new RuntimeException(
+                "Module [{$module->key()}] is a core feature and cannot be installed.",
+            );
+        }
+
         if (! Modules::platformEnabled($module->key())) {
             throw new RuntimeException(
                 "Module [{$module->key()}] is currently disabled.",
@@ -94,6 +100,12 @@ class ModuleInstaller
      */
     public function uninstall(Tenant $tenant, ModuleContract $module): void
     {
+        if (! Modules::has($module->key())) {
+            throw new RuntimeException(
+                "Module [{$module->key()}] is a core feature and cannot be uninstalled.",
+            );
+        }
+
         $tenant->run(function () use ($module): void {
             $this->guardDependents($module);
 
