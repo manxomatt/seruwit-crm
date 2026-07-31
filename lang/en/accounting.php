@@ -18,6 +18,7 @@ return [
         'partner_statement' => 'Partner statement',
         'tax_register' => 'PPN tax register',
         'wht_payable' => 'WHT payable',
+        'travel_revenue' => 'Travel revenue',
         'bank' => 'Bank & Cash',
         'aria' => 'Accounting sections',
         'groups' => [
@@ -415,6 +416,27 @@ return [
         ],
     ],
 
+    'travel_revenue' => [
+        'title' => 'Travel revenue',
+        'hint' => 'Activity on the shuttle travel revenue account (invoice issues and walk-in cash sales).',
+        'from' => 'From',
+        'to' => 'To',
+        'account' => 'Revenue account',
+        'missing_account' => 'No active COA account with system role shuttle_revenue. Run Accounting migrations or map the role.',
+        'empty' => 'No travel revenue postings in this period.',
+        'totals' => 'Totals',
+        'entries' => ':count entries',
+        'columns' => [
+            'date' => 'Date',
+            'journal' => 'Journal',
+            'event' => 'Event',
+            'memo' => 'Memo',
+            'debit' => 'Debit',
+            'credit' => 'Credit',
+            'net' => 'Net',
+        ],
+    ],
+
     'fa' => [
         'title' => 'Fixed assets',
         'create' => 'New fixed asset',
@@ -494,6 +516,8 @@ return [
         'source_rental_deposit_received' => 'Rental deposit received :code',
         'source_rental_deposit_applied' => 'Rental deposit applied :code',
         'source_rental_deposit_refunded' => 'Rental deposit refunded :code',
+        'source_shuttle_sale' => 'Travel sale :code',
+        'source_shuttle_sale_void' => 'Void travel sale :code',
         'bank_account_created' => 'Company bank account created.',
         'bank_account_updated' => 'Company bank account updated.',
         'payment_maps_updated' => 'Payment method mapping updated.',

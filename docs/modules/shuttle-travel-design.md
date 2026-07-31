@@ -315,12 +315,15 @@ Dalam `DB::transaction`:
 
 ### Invoice (soft)
 Jika `Modules::available('invoicing')`:
-- Confirm booking → draft invoice partner = booker
-- Line: `"Travel {corridor} {date} — {n} pax"`, amount = `total_fare`, `source` morph `ShuttleBooking`
-- Issue/pay di Invoicing; AccountingBridge tetap tidak mengenal Shuttle
+- Confirm booking **partner** → draft invoice; line morph `ShuttleBooking`
+- Confirm booking **walk-in** (`partner_id` null) → tanpa invoice AR
+- Issue/pay di Invoicing untuk partner bookings
 
 ### Accounting (soft)
-Optional `revenue_role = shuttle_revenue` di context posting (mirror rental) — fase 1.1.
+- **Fase A:** `invoice.issued` dengan line morph Shuttle → `revenue_role = shuttle_revenue` (akun `4130`)
+- **Fase B:** walk-in confirm → `shuttle_sale.completed` (Dr kas, Cr shuttle_revenue [+ tax]); cancel → void
+- **Fase C:** laporan Accounting *Travel revenue* (`accounting.reports.travel-revenue`)
+- Bridge soft: `class_exists(AccountingBridge)` + `ShuttleAccountingService` (tanpa hard require Accounting)
 
 ---
 

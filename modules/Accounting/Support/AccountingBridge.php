@@ -42,8 +42,10 @@ class AccountingBridge
             'tax_code_id' => $invoice->tax_code_id ?? null,
         ];
 
-        if (! $invoice->isCreditNote() && self::invoiceHasRentalCharges($invoice)) {
+        if (self::invoiceHasRentalCharges($invoice)) {
             $context['revenue_role'] = 'rental_revenue';
+        } elseif (self::invoiceHasShuttleBookings($invoice)) {
+            $context['revenue_role'] = 'shuttle_revenue';
         }
 
         return app(AccountingPoster::class)->post(new SourceEvent(
@@ -747,6 +749,74 @@ class AccountingBridge
         return $entry;
     }
 
+    /**
+     * Walk-in / cash travel sale (no AR partner). Dr cash/bank, Cr shuttle_revenue (+ tax).
+     *
+     * @param  Model  $booking  ShuttleBooking (typed loosely to avoid Foundation→Vertical hard dep)
+     * @param  array{
+     *     payment_method?: string|null,
+     *     company_bank_account_id?: int|null,
+     *     net?: float,
+     *     tax?: float,
+     *     paid?: float,
+     *     tax_code_id?: int|null
+     * }  $amounts
+     */
+    public static function shuttleSaleCompleted(Model $booking, array $amounts = []): ?JournalEntry
+    {
+        if (! self::available()) {
+            return null;
+        }
+
+        $net = round((float) ($amounts['net'] ?? $booking->getAttribute('total_fare')), 2);
+        $tax = round((float) ($amounts['tax'] ?? 0), 2);
+        $paid = round((float) ($amounts['paid'] ?? ($net + $tax)), 2);
+
+        if ($paid < 0.005) {
+            return null;
+        }
+
+        $partnerId = $booking->getAttribute('partner_id');
+        $code = (string) ($booking->getAttribute('booking_number') ?? $booking->getKey());
+
+        return app(AccountingPoster::class)->post(new SourceEvent(
+            key: 'shuttle_sale.completed',
+            sourceType: $booking->getMorphClass(),
+            sourceId: (int) $booking->getKey(),
+            occurredAt: now()->toDateString(),
+            amounts: [
+                'paid' => $paid,
+                'net' => $net,
+                'tax' => $tax,
+            ],
+            partnerId: $partnerId ? (int) $partnerId : null,
+            memo: __('accounting.messages.source_shuttle_sale', ['code' => $code]),
+            context: [
+                'payment_method' => $amounts['payment_method'] ?? 'cash',
+                'company_bank_account_id' => $amounts['company_bank_account_id'] ?? null,
+                'tax_code_id' => $amounts['tax_code_id'] ?? null,
+            ],
+        ));
+    }
+
+    public static function shuttleSaleVoided(Model $booking): ?JournalEntry
+    {
+        if (! self::available()) {
+            return null;
+        }
+
+        $code = (string) ($booking->getAttribute('booking_number') ?? $booking->getKey());
+
+        return app(AccountingPoster::class)->reverse(
+            sourceType: $booking->getMorphClass(),
+            sourceId: (int) $booking->getKey(),
+            originalEvent: 'shuttle_sale.completed',
+            voidEvent: 'shuttle_sale.voided',
+            occurredAt: now()->toDateString(),
+            memo: __('accounting.messages.source_shuttle_sale_void', ['code' => $code]),
+        );
+    }
+
     private static function invoiceHasRentalCharges(Invoice $invoice): bool
     {
         if (! class_exists(\Modules\Rental\Models\RentalCharge::class)) {
@@ -754,6 +824,21 @@ class AccountingBridge
         }
 
         $morph = (new \Modules\Rental\Models\RentalCharge)->getMorphClass();
+
+        $invoice->loadMissing('lines');
+
+        return $invoice->lines->contains(
+            fn ($line): bool => (string) $line->source_type === $morph
+        );
+    }
+
+    private static function invoiceHasShuttleBookings(Invoice $invoice): bool
+    {
+        if (! class_exists(\Modules\Shuttle\Models\ShuttleBooking::class)) {
+            return false;
+        }
+
+        $morph = (new \Modules\Shuttle\Models\ShuttleBooking)->getMorphClass();
 
         $invoice->loadMissing('lines');
 

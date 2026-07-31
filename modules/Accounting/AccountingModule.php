@@ -24,6 +24,7 @@ use Modules\Accounting\Http\Controllers\PartnerStatementController;
 use Modules\Accounting\Http\Controllers\ProfitAndLossController;
 use Modules\Accounting\Http\Controllers\TaxCodeController;
 use Modules\Accounting\Http\Controllers\TaxRegisterController;
+use Modules\Accounting\Http\Controllers\TravelRevenueReportController;
 use Modules\Accounting\Http\Controllers\TrialBalanceController;
 use Modules\Accounting\Http\Controllers\WhtPayableReportController;
 
@@ -194,6 +195,8 @@ class AccountingModule implements ModuleContract
                     ->name('reports.tax-register.export');
                 Route::get('/reports/wht-payable', [WhtPayableReportController::class, 'show'])
                     ->name('reports.wht-payable');
+                Route::get('/reports/travel-revenue', [TravelRevenueReportController::class, 'show'])
+                    ->name('reports.travel-revenue');
 
                 Route::get('/fixed-assets', [FixedAssetController::class, 'index'])->name('fixed-assets.index');
                 Route::get('/fixed-assets/create', [FixedAssetController::class, 'create'])

@@ -13,6 +13,7 @@ class BookingConfirmationService
     public function __construct(
         private readonly ShuttleInvoiceService $invoices = new ShuttleInvoiceService,
         private readonly SeatLabelAssigner $seats = new SeatLabelAssigner,
+        private readonly ShuttleAccountingService $accounting = new ShuttleAccountingService,
     ) {}
 
     public function confirm(ShuttleBooking $booking): ShuttleBooking
@@ -46,6 +47,9 @@ class BookingConfirmationService
             $invoice = $this->invoices->createFromBooking($booking->fresh(['partner', 'departure.corridor', 'passengers']));
             if ($invoice) {
                 $booking->update(['invoice_id' => $invoice->id]);
+            } else {
+                // Walk-in: no AR invoice — post cash travel revenue when Accounting is ready.
+                $this->accounting->postWalkInSale($booking->fresh());
             }
 
             return $booking->fresh(['passengers', 'departure', 'partner', 'invoice']);
@@ -81,9 +85,13 @@ class BookingConfirmationService
                     'seats_booked' => max(0, $departure->seats_booked - $booking->passenger_count),
                 ]);
 
-                $settlement = $this->invoices->settleCancellation($booking);
-                $refundStatus = $settlement['status'];
-                $creditInvoiceId = $settlement['credit_invoice_id'];
+                if ($booking->invoice_id) {
+                    $settlement = $this->invoices->settleCancellation($booking);
+                    $refundStatus = $settlement['status'];
+                    $creditInvoiceId = $settlement['credit_invoice_id'];
+                } else {
+                    $this->accounting->reverseWalkInSale($booking);
+                }
             }
 
             $booking->update([

@@ -18,6 +18,7 @@ return [
         'partner_statement' => 'Rekening koran mitra',
         'tax_register' => 'Register PPN',
         'wht_payable' => 'Hutang PPh',
+        'travel_revenue' => 'Pendapatan travel',
         'bank' => 'Kas & Bank',
         'aria' => 'Bagian akuntansi',
         'groups' => [
@@ -415,6 +416,27 @@ return [
         ],
     ],
 
+    'travel_revenue' => [
+        'title' => 'Pendapatan travel',
+        'hint' => 'Aktivitas pada akun pendapatan shuttle travel (penerbitan invoice dan penjualan walk-in tunai).',
+        'from' => 'Dari',
+        'to' => 'Sampai',
+        'account' => 'Akun pendapatan',
+        'missing_account' => 'Tidak ada akun COA aktif dengan peran sistem shuttle_revenue. Jalankan migrasi Accounting atau petakan peran.',
+        'empty' => 'Tidak ada posting pendapatan travel pada periode ini.',
+        'totals' => 'Total',
+        'entries' => ':count entri',
+        'columns' => [
+            'date' => 'Tanggal',
+            'journal' => 'Jurnal',
+            'event' => 'Peristiwa',
+            'memo' => 'Memo',
+            'debit' => 'Debit',
+            'credit' => 'Kredit',
+            'net' => 'Netto',
+        ],
+    ],
+
     'fa' => [
         'title' => 'Aset tetap',
         'create' => 'Aset tetap baru',
@@ -494,6 +516,8 @@ return [
         'source_rental_deposit_received' => 'Deposit rental diterima :code',
         'source_rental_deposit_applied' => 'Deposit rental dipakai :code',
         'source_rental_deposit_refunded' => 'Deposit rental dikembalikan :code',
+        'source_shuttle_sale' => 'Penjualan travel :code',
+        'source_shuttle_sale_void' => 'Void penjualan travel :code',
         'bank_account_created' => 'Rekening kas/bank perusahaan dibuat.',
         'bank_account_updated' => 'Rekening kas/bank perusahaan diperbarui.',
         'payment_maps_updated' => 'Pemetaan metode pembayaran diperbarui.',
