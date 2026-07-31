@@ -535,4 +535,52 @@ class ShuttleCrudTest extends TestCase
         $this->assertSame(0, $second['created']->count());
         $this->assertNotEmpty($second['skipped']);
     }
+
+    public function test_cancel_departure_cancels_bookings_and_releases_seats(): void
+    {
+        $departure = ShuttleDeparture::factory()->create([
+            'seat_capacity' => 7,
+            'seats_booked' => 0,
+            'status' => ShuttleDeparture::STATUS_OPEN,
+        ]);
+
+        $partner = Partner::factory()->create();
+        $booking = ShuttleBooking::factory()->create([
+            'departure_id' => $departure->id,
+            'partner_id' => $partner->id,
+            'passenger_count' => 2,
+            'unit_fare' => 150000,
+            'total_fare' => 300000,
+            'status' => ShuttleBooking::STATUS_DRAFT,
+        ]);
+        ShuttlePassenger::query()->create(['booking_id' => $booking->id, 'name' => 'A']);
+        ShuttlePassenger::query()->create(['booking_id' => $booking->id, 'name' => 'B']);
+
+        app(BookingConfirmationService::class)->confirm($booking);
+        $this->assertSame(2, $departure->fresh()->seats_booked);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.shuttle.departures.cancel', $departure))
+            ->assertRedirect();
+
+        $this->assertSame(ShuttleDeparture::STATUS_CANCELLED, $departure->fresh()->status);
+        $this->assertSame(0, $departure->fresh()->seats_booked);
+        $this->assertSame(ShuttleBooking::STATUS_CANCELLED, $booking->fresh()->status);
+    }
+
+    public function test_cannot_cancel_dispatched_departure(): void
+    {
+        $departure = ShuttleDeparture::factory()->create([
+            'status' => ShuttleDeparture::STATUS_DISPATCHED,
+            'seats_booked' => 1,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->from(route('module.shuttle.departures.show', $departure))
+            ->post(route('module.shuttle.departures.cancel', $departure))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSame(ShuttleDeparture::STATUS_DISPATCHED, $departure->fresh()->status);
+    }
 }

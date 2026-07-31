@@ -819,17 +819,30 @@ class AccountingBridge
 
     private static function invoiceHasRentalCharges(Invoice $invoice): bool
     {
-        if (! class_exists(\Modules\Rental\Models\RentalCharge::class)) {
-            return false;
-        }
-
-        $morph = (new \Modules\Rental\Models\RentalCharge)->getMorphClass();
-
         $invoice->loadMissing('lines');
 
-        return $invoice->lines->contains(
-            fn ($line): bool => (string) $line->source_type === $morph
-        );
+        if (class_exists(\Modules\Rental\Models\RentalCharge::class)) {
+            $chargeMorph = (new \Modules\Rental\Models\RentalCharge)->getMorphClass();
+
+            if ($invoice->lines->contains(
+                fn ($line): bool => (string) $line->source_type === $chargeMorph
+            )) {
+                return true;
+            }
+        }
+
+        // Credit notes morph the Rental itself (charge morph stays on the original invoice).
+        if (class_exists(\Modules\Rental\Models\Rental::class)) {
+            $rentalMorph = (new \Modules\Rental\Models\Rental)->getMorphClass();
+
+            if ($invoice->lines->contains(
+                fn ($line): bool => (string) $line->source_type === $rentalMorph
+            )) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function invoiceHasShuttleBookings(Invoice $invoice): bool
@@ -842,8 +855,15 @@ class AccountingBridge
 
         $invoice->loadMissing('lines');
 
-        return $invoice->lines->contains(
+        if ($invoice->lines->contains(
             fn ($line): bool => (string) $line->source_type === $morph
-        );
+        )) {
+            return true;
+        }
+
+        // Credit notes leave source null (unique morph on original line); detect via booking FK.
+        return \Modules\Shuttle\Models\ShuttleBooking::query()
+            ->where('credit_invoice_id', $invoice->id)
+            ->exists();
     }
 }

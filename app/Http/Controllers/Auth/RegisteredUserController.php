@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Actions\Tenancy\CreateTenantAction;
+use App\Actions\Auth\ResolvePostAuthDestination;
 use App\Http\Controllers\Controller;
-use App\Models\CentralUser;
 use App\Models\User;
-use App\Rules\ValidSubdomain;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,12 +16,15 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    public function __construct(private readonly CreateTenantAction $createTenant) {}
+    public function __construct(
+        private readonly ResolvePostAuthDestination $postAuthDestination,
+    ) {}
 
     /**
      * Display the registration view.
      *
-     * Registration is a central-only flow: it signs up a company (tenant).
+     * Registration is a central-only flow: it creates a platform identity.
+     * Workspace (tenant) provisioning happens after email verification + onboarding.
      * Users join existing workspaces through invitations instead.
      */
     public function create(): Response
@@ -34,8 +35,7 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Register a new company: central account + tenant + workspace admin,
-     * then send the user straight into their new workspace via SSO.
+     * Register a platform account (no tenant yet), then require email verification.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -45,8 +45,6 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'company_name' => 'required|string|max:255',
-            'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain],
         ]);
 
         $user = User::create([
@@ -57,14 +55,8 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        $tenant = $this->createTenant->execute(
-            companyName: $request->string('company_name')->value(),
-            subdomain: $request->string('subdomain')->value(),
-            owner: CentralUser::query()->firstWhere('global_id', $user->global_id),
-        );
-
         Auth::login($user);
 
-        return redirect()->route('central.workspaces.enter', $tenant);
+        return redirect()->to($this->postAuthDestination->url($user));
     }
 }

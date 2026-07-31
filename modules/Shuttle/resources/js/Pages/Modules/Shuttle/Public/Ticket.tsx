@@ -7,6 +7,7 @@ interface Booking {
     payment_status: string;
     passenger_count: number;
     total_fare: number;
+    amount_due?: number;
     hold_expires_at: string | null;
     booker_phone: string | null;
     pickup_mode: string;
@@ -64,8 +65,11 @@ export default function Ticket({ brand, booking, gateway_available, qr_url }: Pr
                         <div>
                             <div className="text-xs uppercase text-slate-400">Fare</div>
                             <div className="font-medium">
-                                {booking.passenger_count} pax · {money(booking.total_fare)}
+                                {booking.passenger_count} pax · {money(booking.amount_due ?? booking.total_fare)}
                             </div>
+                            {booking.amount_due != null && booking.amount_due !== booking.total_fare && (
+                                <div className="text-xs text-slate-500">Base {money(booking.total_fare)} + tax</div>
+                            )}
                         </div>
                         <div>
                             <div className="text-xs uppercase text-slate-400">Passengers</div>
@@ -87,7 +91,7 @@ export default function Ticket({ brand, booking, gateway_available, qr_url }: Pr
                                 style={{ background: brand.color }}
                                 onClick={() => router.post(route('book.shuttle.pay', booking.public_token))}
                             >
-                                Pay online
+                                Pay online · {money(booking.amount_due ?? booking.total_fare)}
                             </button>
                         )}
                         {canPay && !gateway_available && (

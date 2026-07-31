@@ -130,6 +130,7 @@ return [
         'search' => 'Cari',
         'view' => 'Lihat',
         'confirm' => 'Konfirmasi',
+        'confirm_deposit_collected' => 'Konfirmasi deposit sudah diterima (kas/transfer)? Batalkan jika pelanggan bayar nanti (checkout diblokir sampai deposit diterima).',
         'checkout' => 'Check Out',
         'return' => 'Kembalikan',
         'record_return' => 'Catat Pengembalian',
@@ -240,6 +241,8 @@ return [
         'notes_damage' => 'Invoice otomatis rental :code (damage)',
         'notes_addon' => 'Invoice otomatis rental :code (add-on)',
         'notes_deposit_applied' => 'Deposit dipakai untuk rental :code',
+        'credit_notes' => 'Kredit pembatalan rental :code (dari :invoice)',
+        'credit_line' => 'Refund rental :code',
     ],
 
     'tracking' => [
@@ -437,6 +440,8 @@ return [
         'delete_draft_only' => 'Hanya rental draft yang dapat dihapus.',
         'confirm_draft_only' => 'Hanya rental draft yang dapat dikonfirmasi.',
         'checkout_confirmed_only' => 'Hanya rental dikonfirmasi yang dapat di-check out.',
+        'checkout_deposit_required' => 'Terima deposit pelanggan sebelum check-out.',
+        'deposit_pending_gateway' => 'Pembayaran deposit Midtrans masih pending. Tunggu settlement atau batalkan charge sebelum konfirmasi.',
         'return_active_only' => 'Hanya rental aktif yang dapat dikembalikan.',
         'complete_returned_only' => 'Hanya rental yang sudah dikembalikan yang dapat diselesaikan.',
         'complete_deposit_unsettled' => 'Settle deposit terlebih dahulu sebelum menyelesaikan rental.',

@@ -35,7 +35,7 @@ class RentalAccountingTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.confirm', $rental), ['payment_method' => 'cash'])
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertRedirect();
 
         $rental->refresh();
@@ -245,5 +245,82 @@ class RentalAccountingTest extends TestCase
             ])
             ->assertRedirect()
             ->assertSessionHasErrors('deposit_applied_amount');
+    }
+
+    public function test_cancel_confirmed_voids_issued_invoice_and_refunds_deposit(): void
+    {
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_DRAFT,
+            'deposit_amount' => 500000,
+            'base_amount' => 1000000,
+            'total_amount' => 1000000,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
+            ->assertRedirect();
+
+        $rental->refresh();
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
+
+        $invoice = app(\Modules\Rental\Support\RentalInvoiceService::class)
+            ->invoicesFor($rental)
+            ->first();
+        $this->assertNotNull($invoice);
+        $this->assertSame(Invoice::STATUS_ISSUED, $invoice->status);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.cancel', $rental), [
+                'cancelled_reason' => 'Customer cancelled',
+            ])
+            ->assertRedirect();
+
+        $rental->refresh();
+        $this->assertSame(Rental::STATUS_CANCELLED, $rental->status);
+        $this->assertSame(Rental::DEPOSIT_SETTLED, $rental->deposit_status);
+        $this->assertSame(Invoice::STATUS_VOID, $invoice->fresh()->status);
+
+        $this->assertNotNull(
+            JournalEntry::query()
+                ->where('source_id', $invoice->id)
+                ->where('event', 'invoice.voided')
+                ->first()
+        );
+
+        $this->assertNotNull(
+            JournalEntry::query()
+                ->where('source_id', $rental->id)
+                ->where('event', 'rental_deposit.refunded')
+                ->first()
+        );
+    }
+
+    public function test_cancel_draft_refunds_received_deposit(): void
+    {
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_DRAFT,
+            'deposit_amount' => 400000,
+            'deposit_status' => Rental::DEPOSIT_HELD,
+            'deposit_received_at' => now(),
+            'deposit_payment_method' => 'transfer',
+        ]);
+
+        \Modules\Accounting\Support\AccountingBridge::rentalDepositReceived($rental);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.cancel', $rental), [
+                'cancelled_reason' => 'Changed mind before confirm',
+            ])
+            ->assertRedirect();
+
+        $rental->refresh();
+        $this->assertSame(Rental::STATUS_CANCELLED, $rental->status);
+        $this->assertSame(Rental::DEPOSIT_SETTLED, $rental->deposit_status);
+        $this->assertNotNull(
+            JournalEntry::query()
+                ->where('source_id', $rental->id)
+                ->where('event', 'rental_deposit.refunded')
+                ->first()
+        );
     }
 }

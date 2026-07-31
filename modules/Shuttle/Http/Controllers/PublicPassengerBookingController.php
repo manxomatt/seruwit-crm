@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Partners\Models\Location;
 use Modules\Shuttle\Models\ShuttleBooking;
 use Modules\Shuttle\Models\ShuttleCorridor;
 use Modules\Shuttle\Models\ShuttleDeparture;
@@ -40,26 +41,40 @@ class PublicPassengerBookingController extends Controller
         $departures = collect();
         if ($corridorId) {
             $departures = ShuttleDeparture::query()
-                ->with('corridor:id,name,base_fare,service_type')
+                ->with([
+                    'corridor:id,name,base_fare,service_type,origin_location_id,destination_location_id',
+                    'corridor.originLocation:id,name,address,latitude,longitude',
+                    'corridor.destinationLocation:id,name,address,latitude,longitude',
+                    'originPool:id,name,address,latitude,longitude',
+                    'destinationPool:id,name,address,latitude,longitude',
+                ])
                 ->where('corridor_id', $corridorId)
                 ->whereDate('depart_date', $date)
                 ->whereIn('status', [ShuttleDeparture::STATUS_OPEN, ShuttleDeparture::STATUS_OPTIMIZED])
                 ->orderBy('depart_time')
                 ->get()
-                ->map(fn (ShuttleDeparture $d) => [
-                    'id' => $d->id,
-                    'departure_number' => $d->departure_number,
-                    'depart_date' => $d->depart_date?->toDateString(),
-                    'depart_time' => substr((string) $d->depart_time, 0, 5),
-                    'seats_remaining' => $d->seatsRemaining(),
-                    'seat_capacity' => $d->seat_capacity,
-                    'unit_fare' => (float) ($d->corridor?->base_fare ?? 0),
-                    'service_type' => $d->resolvedServiceType(),
-                    'corridor' => $d->corridor ? [
-                        'id' => $d->corridor->id,
-                        'name' => $d->corridor->name,
-                    ] : null,
-                ]);
+                ->map(function (ShuttleDeparture $d) {
+                    $origin = $d->originPool ?? $d->corridor?->originLocation;
+                    $destination = $d->destinationPool ?? $d->corridor?->destinationLocation;
+
+                    return [
+                        'id' => $d->id,
+                        'departure_number' => $d->departure_number,
+                        'depart_date' => $d->depart_date?->toDateString(),
+                        'depart_time' => substr((string) $d->depart_time, 0, 5),
+                        'seats_remaining' => $d->seatsRemaining(),
+                        'seats_booked' => (int) $d->seats_booked,
+                        'seat_capacity' => $d->seat_capacity,
+                        'unit_fare' => (float) ($d->corridor?->base_fare ?? 0),
+                        'service_type' => $d->resolvedServiceType(),
+                        'corridor' => $d->corridor ? [
+                            'id' => $d->corridor->id,
+                            'name' => $d->corridor->name,
+                        ] : null,
+                        'origin_pool' => $this->poolPin($origin),
+                        'destination_pool' => $this->poolPin($destination),
+                    ];
+                });
         }
 
         return Inertia::render('Modules/Shuttle/Public/Search', [
@@ -86,12 +101,12 @@ class PublicPassengerBookingController extends Controller
             'dropoff_mode' => ['required', Rule::in([ShuttleBooking::MODE_POOL, ShuttleBooking::MODE_DOOR])],
             'booker_phone' => ['required', 'string', 'max:32'],
             'otp_code' => ['required', 'string', 'size:6'],
-            'pickup_address' => ['nullable', 'string', 'max:500'],
-            'pickup_lat' => ['nullable', 'numeric'],
-            'pickup_lng' => ['nullable', 'numeric'],
-            'dropoff_address' => ['nullable', 'string', 'max:500'],
-            'dropoff_lat' => ['nullable', 'numeric'],
-            'dropoff_lng' => ['nullable', 'numeric'],
+            'pickup_address' => ['nullable', 'required_if:pickup_mode,door', 'string', 'max:500'],
+            'pickup_lat' => ['nullable', 'required_if:pickup_mode,door', 'numeric', 'between:-90,90'],
+            'pickup_lng' => ['nullable', 'required_if:pickup_mode,door', 'numeric', 'between:-180,180'],
+            'dropoff_address' => ['nullable', 'required_if:dropoff_mode,door', 'string', 'max:500'],
+            'dropoff_lat' => ['nullable', 'required_if:dropoff_mode,door', 'numeric', 'between:-90,90'],
+            'dropoff_lng' => ['nullable', 'required_if:dropoff_mode,door', 'numeric', 'between:-180,180'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'passengers' => ['required', 'array', 'min:1'],
             'passengers.*.name' => ['required', 'string', 'max:120'],
@@ -100,6 +115,22 @@ class PublicPassengerBookingController extends Controller
         ]);
 
         $departure = ShuttleDeparture::query()->with('corridor')->findOrFail($data['departure_id']);
+
+        if ($departure->resolvedServiceType() === ShuttleCorridor::SERVICE_POOL) {
+            $data['pickup_mode'] = ShuttleBooking::MODE_POOL;
+            $data['dropoff_mode'] = ShuttleBooking::MODE_POOL;
+            $data['pickup_address'] = null;
+            $data['pickup_lat'] = null;
+            $data['pickup_lng'] = null;
+            $data['dropoff_address'] = null;
+            $data['dropoff_lat'] = null;
+            $data['dropoff_lng'] = null;
+        } elseif ($data['pickup_mode'] === ShuttleBooking::MODE_POOL
+            && $data['dropoff_mode'] === ShuttleBooking::MODE_POOL) {
+            return back()->withErrors([
+                'pickup_mode' => __('shuttle.validation.door_product_requires_door'),
+            ])->withInput();
+        }
 
         try {
             if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
@@ -314,6 +345,10 @@ class PublicPassengerBookingController extends Controller
             'payment_status' => $booking->payment_status,
             'passenger_count' => $booking->passenger_count,
             'total_fare' => (float) $booking->total_fare,
+            'amount_due' => class_exists(\Modules\Shuttle\Support\ShuttleAccountingService::class)
+                ? (float) app(\Modules\Shuttle\Support\ShuttleAccountingService::class)
+                    ->splitFare((float) $booking->total_fare)['paid']
+                : (float) $booking->total_fare,
             'hold_expires_at' => $booking->hold_expires_at?->toIso8601String(),
             'booker_phone' => $booking->booker_phone,
             'pickup_mode' => $booking->pickup_mode,
@@ -330,6 +365,23 @@ class PublicPassengerBookingController extends Controller
                 'phone' => $p->phone,
                 'seat_label' => $p->seat_label,
             ])->all(),
+        ];
+    }
+
+    /**
+     * @return array{latitude: string, longitude: string, address: string, name: string}|null
+     */
+    private function poolPin(?Location $location): ?array
+    {
+        if ($location === null || $location->latitude === null || $location->longitude === null) {
+            return null;
+        }
+
+        return [
+            'latitude' => (string) $location->latitude,
+            'longitude' => (string) $location->longitude,
+            'address' => filled($location->address) ? (string) $location->address : (string) $location->name,
+            'name' => (string) $location->name,
         ];
     }
 }

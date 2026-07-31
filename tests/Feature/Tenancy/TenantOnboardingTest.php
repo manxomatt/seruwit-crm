@@ -44,19 +44,13 @@ class TenantOnboardingTest extends TestCase
     {
         $this->provisionTenant('First Co', 'taken-sub', 'first@example.com');
 
-        $payload = [
-            'name' => 'Second User',
-            'email' => 'second@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-            'company_name' => 'Second Co',
-        ];
+        $rule = new \App\Rules\ValidSubdomain;
 
-        $this->post('/register', [...$payload, 'subdomain' => 'taken-sub'])
-            ->assertSessionHasErrors('subdomain');
+        $taken = validator(['subdomain' => 'taken-sub'], ['subdomain' => [$rule]]);
+        $this->assertTrue($taken->fails());
 
-        $this->post('/register', [...$payload, 'subdomain' => 'admin'])
-            ->assertSessionHasErrors('subdomain');
+        $reserved = validator(['subdomain' => 'admin'], ['subdomain' => [new \App\Rules\ValidSubdomain]]);
+        $this->assertTrue($reserved->fails());
     }
 
     public function test_registration_is_not_available_on_tenant_domains(): void

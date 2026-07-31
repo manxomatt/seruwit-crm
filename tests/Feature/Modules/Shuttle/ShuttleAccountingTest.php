@@ -198,4 +198,60 @@ class ShuttleAccountingTest extends TestCase
         );
         $this->assertTrue(AccountingBridge::available());
     }
+
+    public function test_partner_credit_note_on_cancel_uses_shuttle_revenue(): void
+    {
+        $departure = ShuttleDeparture::factory()->create([
+            'seat_capacity' => 7,
+            'seats_booked' => 0,
+            'status' => ShuttleDeparture::STATUS_OPEN,
+        ]);
+        $partner = Partner::factory()->create();
+
+        $booking = ShuttleBooking::factory()->create([
+            'departure_id' => $departure->id,
+            'partner_id' => $partner->id,
+            'passenger_count' => 1,
+            'unit_fare' => 200000,
+            'total_fare' => 200000,
+            'status' => ShuttleBooking::STATUS_DRAFT,
+        ]);
+        ShuttlePassenger::query()->create(['booking_id' => $booking->id, 'name' => 'Partner']);
+
+        $service = app(BookingConfirmationService::class);
+        $service->confirm($booking);
+        $booking = $booking->fresh(['invoice']);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.invoicing.invoices.issue', $booking->invoice))
+            ->assertSessionHas('success');
+
+        $booking->invoice->fresh()->update([
+            'status' => Invoice::STATUS_PAID,
+            'amount_paid' => $booking->invoice->fresh()->total,
+            'paid_at' => now(),
+        ]);
+
+        $service->cancel($booking->fresh(), 'Paid cancel');
+        $booking = $booking->fresh(['creditInvoice']);
+
+        $this->assertNotNull($booking->credit_invoice_id);
+
+        $journal = JournalEntry::query()
+            ->where('source_type', $booking->creditInvoice->getMorphClass())
+            ->where('source_id', $booking->credit_invoice_id)
+            ->where('event', 'credit_note.issued')
+            ->with('lines.account')
+            ->first();
+
+        $this->assertNotNull($journal);
+
+        $revenue = $journal->lines->first(
+            fn ($line) => $line->account->system_role === 'shuttle_revenue'
+        );
+        $this->assertNotNull($revenue);
+        $this->assertNull(
+            $journal->lines->first(fn ($line) => $line->account->system_role === 'sales_revenue')
+        );
+    }
 }

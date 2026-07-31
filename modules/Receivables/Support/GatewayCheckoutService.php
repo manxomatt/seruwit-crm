@@ -109,7 +109,13 @@ class GatewayCheckoutService
      */
     public function createShuttleBookingCharge(object $booking): GatewayCharge
     {
-        $amount = round((float) $booking->total_fare, 2);
+        $fare = round((float) $booking->total_fare, 2);
+        $amount = $fare;
+
+        if (class_exists(\Modules\Shuttle\Support\ShuttleAccountingService::class)) {
+            $split = app(\Modules\Shuttle\Support\ShuttleAccountingService::class)->splitFare($fare);
+            $amount = round((float) $split['paid'], 2);
+        }
 
         if ($amount < 0.01) {
             throw ValidationException::withMessages([
@@ -287,6 +293,13 @@ class GatewayCheckoutService
             }
 
             $rental = \Modules\Rental\Models\Rental::query()->lockForUpdate()->findOrFail($charge->rental_id);
+
+            if ($rental->status === \Modules\Rental\Models\Rental::STATUS_CANCELLED) {
+                throw ValidationException::withMessages([
+                    'rental' => __('receivables.gateway.rental_cancelled'),
+                ]);
+            }
+
             app(\Modules\Rental\Support\RentalAccountingService::class)->receiveDeposit($rental, [
                 'payment_method' => $method,
             ]);
@@ -327,11 +340,9 @@ class GatewayCheckoutService
                 ->lockForUpdate()
                 ->findOrFail($charge->shuttle_booking_id);
 
-            if ($booking->status === \Modules\Shuttle\Models\ShuttleBooking::STATUS_DRAFT) {
-                app(\Modules\Shuttle\Support\PassengerBookingService::class)->markPaidAndConfirm($booking, [
-                    'payment_method' => $method,
-                ]);
-            }
+            app(\Modules\Shuttle\Support\PassengerBookingService::class)->fulfillGatewayPayment($booking, [
+                'payment_method' => $method,
+            ]);
         }
     }
 

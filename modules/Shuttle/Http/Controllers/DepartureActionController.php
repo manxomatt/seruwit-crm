@@ -83,4 +83,19 @@ class DepartureActionController extends Controller
 
         return back()->with('success', __('shuttle.messages.departure_completed'));
     }
+
+    public function cancel(Request $request, ShuttleDeparture $departure, DepartureDispatchService $dispatch): RedirectResponse
+    {
+        $data = $request->validate([
+            'cancel_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $dispatch->cancel($departure, $data['cancel_reason'] ?? null);
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', __('shuttle.messages.departure_cancelled'));
+    }
 }

@@ -119,7 +119,7 @@ export default function Dashboard({ stats, upcomingDepartures, can }: Props) {
                                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
                                         {d.depart_date} {String(d.depart_time).slice(0, 5)}
                                     </td>
-                                    <td className="px-4 py-3 tabular-nums text-gray-700">
+                                    <td className="px-4 py-3 tabular-nums text-gray-700" title={t('shuttle.departures.seats_booked_hint', undefined, 'Booked / capacity')}>
                                         {d.seats_booked}/{d.seat_capacity}
                                     </td>
                                     <td className="px-4 py-3">

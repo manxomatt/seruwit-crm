@@ -133,6 +133,7 @@ class ShuttleModule implements ModuleContract
         Route::post('/shuttle/departures/{departure}/optimize', [DepartureActionController::class, 'optimize'])->middleware('permission:shuttle,optimize')->name('shuttle.departures.optimize');
         Route::post('/shuttle/departures/{departure}/dispatch', [DepartureActionController::class, 'dispatch'])->middleware('permission:shuttle,dispatch')->name('shuttle.departures.dispatch');
         Route::post('/shuttle/departures/{departure}/complete', [DepartureActionController::class, 'complete'])->middleware('permission:shuttle,dispatch')->name('shuttle.departures.complete');
+        Route::post('/shuttle/departures/{departure}/cancel', [DepartureActionController::class, 'cancel'])->middleware('permission:shuttle,update')->name('shuttle.departures.cancel');
 
         // Bookings
         Route::get('/shuttle/bookings', [BookingController::class, 'index'])->middleware('permission:shuttle,view')->name('shuttle.bookings.index');

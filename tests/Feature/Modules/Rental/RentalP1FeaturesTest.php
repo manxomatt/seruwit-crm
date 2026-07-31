@@ -108,7 +108,7 @@ class RentalP1FeaturesTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.confirm', $rental))
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertRedirect();
 
         $this->assertDatabaseHas('rental_charges', [

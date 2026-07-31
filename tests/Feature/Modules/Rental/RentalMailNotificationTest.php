@@ -38,7 +38,7 @@ class RentalMailNotificationTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('module.rental.confirm', $rental))
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertRedirect();
 
         Notification::assertSentTo(

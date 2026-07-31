@@ -294,7 +294,7 @@ class RentalCrudTest extends TestCase
         $rental = Rental::factory()->create(['status' => Rental::STATUS_DRAFT]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.confirm', $rental))
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertRedirect();
 
         $rental->refresh();
@@ -308,7 +308,7 @@ class RentalCrudTest extends TestCase
         $rental = Rental::factory()->confirmed()->create();
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.confirm', $rental))
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertStatus(422);
     }
 
@@ -384,7 +384,7 @@ class RentalCrudTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.confirm', $rental))
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertSessionHasErrors('partner_id');
 
         $this->assertSame(Rental::STATUS_DRAFT, $rental->fresh()->status);

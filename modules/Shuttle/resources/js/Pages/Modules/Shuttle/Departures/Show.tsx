@@ -1,10 +1,12 @@
 import PrimaryButton from '@/Components/PrimaryButton';
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import Select from '@/Components/Select';
 import PlanRoutesMap from '@/Components/Map/PlanRoutesMap';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, router, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
 
 interface RouteStop {
@@ -62,6 +64,8 @@ interface Props {
 export default function Show({ departure, vehicles, drivers, can }: Props) {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+    const [processingCancel, setProcessingCancel] = useState(false);
     const dispatchForm = useForm({
         vehicle_id: departure.vehicle_id ? String(departure.vehicle_id) : '',
         driver_id: departure.driver_id ? String(departure.driver_id) : '',
@@ -75,6 +79,14 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
     const firstStop = departure.route_stops[0];
     const depotLat = departure.origin_pool?.latitude ?? firstStop?.lat;
     const depotLng = departure.origin_pool?.longitude ?? firstStop?.lng;
+
+    const confirmCancel = () => {
+        setProcessingCancel(true);
+        router.post(prefixedRoute('shuttle.departures.cancel', departure.id), {}, {
+            onSuccess: () => setConfirmCancelOpen(false),
+            onFinish: () => setProcessingCancel(false),
+        });
+    };
 
     return (
         <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{departure.departure_number}</h2>}>
@@ -107,7 +119,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                         </div>
 
                         <div className="space-y-2 overflow-hidden bg-white p-4 shadow-sm sm:rounded-lg">
-                            {can.update && (
+                            {can.update && ['open', 'optimized'].includes(departure.status) && (
                                 <PrimaryButton
                                     type="button"
                                     className="w-full justify-center"
@@ -116,7 +128,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                                     {t('shuttle.departures.lock')}
                                 </PrimaryButton>
                             )}
-                            {can.optimize && (
+                            {can.optimize && ['open', 'locked', 'optimized'].includes(departure.status) && (
                                 <PrimaryButton
                                     type="button"
                                     className="w-full justify-center"
@@ -125,7 +137,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                                     {t('shuttle.departures.optimize')}
                                 </PrimaryButton>
                             )}
-                            {can.dispatch && (
+                            {can.dispatch && ['open', 'locked', 'optimized'].includes(departure.status) && (
                                 <>
                                     <Select
                                         value={dispatchForm.data.vehicle_id}
@@ -147,14 +159,25 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                                     >
                                         {t('shuttle.departures.dispatch')}
                                     </PrimaryButton>
-                                    <button
-                                        type="button"
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                                        onClick={() => router.post(prefixedRoute('shuttle.departures.complete', departure.id))}
-                                    >
-                                        {t('shuttle.departures.complete')}
-                                    </button>
                                 </>
+                            )}
+                            {can.dispatch && ['dispatched', 'in_transit'].includes(departure.status) && (
+                                <button
+                                    type="button"
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                    onClick={() => router.post(prefixedRoute('shuttle.departures.complete', departure.id))}
+                                >
+                                    {t('shuttle.departures.complete')}
+                                </button>
+                            )}
+                            {can.update && ['open', 'locked', 'optimized'].includes(departure.status) && (
+                                <button
+                                    type="button"
+                                    className="w-full rounded-md border border-red-200 px-3 py-2 text-sm text-red-700"
+                                    onClick={() => setConfirmCancelOpen(true)}
+                                >
+                                    {t('shuttle.departures.cancel')}
+                                </button>
                             )}
                         </div>
                     </div>
@@ -246,6 +269,17 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
                         </div>
                     </div>
             </div>
+
+            <ConfirmDeleteDialog
+                show={confirmCancelOpen}
+                onClose={() => setConfirmCancelOpen(false)}
+                onConfirm={confirmCancel}
+                processing={processingCancel}
+                title={t('shuttle.departures.cancel_confirm_title')}
+                message={t('shuttle.departures.cancel_confirm', { name: departure.departure_number })}
+                confirmText={t('shuttle.departures.cancel')}
+                processingText={t('shuttle.departures.cancelling')}
+            />
         </DynamicLayout>
     );
 }

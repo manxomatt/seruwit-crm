@@ -19,6 +19,35 @@ class Plan extends Model
 {
     use HasFactory;
 
+    public const KEY_TRIAL = 'trial';
+
+    /**
+     * Modules a self-serve trial tenant is entitled to install.
+     *
+     * Defaults (pages + accounting) plus both vertical packs' transitive deps.
+     * Install still picks packs at onboarding — this only unlocks entitlement.
+     *
+     * @return list<string>
+     */
+    public static function trialModuleKeys(): array
+    {
+        return [
+            'accounting',
+            'carousels',
+            'document',
+            'fleet',
+            'invoicing',
+            'maintenance',
+            'pages',
+            'partners',
+            'posts',
+            'products',
+            'rental',
+            'shuttle',
+            'tracking',
+        ];
+    }
+
     /**
      * Pinned to the central connection.
      *

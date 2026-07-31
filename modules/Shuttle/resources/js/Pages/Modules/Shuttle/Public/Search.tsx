@@ -1,7 +1,15 @@
+import LocationMapPicker from '@/Components/Map/LocationMapPicker';
 import Select from '@/Components/Select';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
 import axios from 'axios';
+
+interface PoolPin {
+    latitude: string;
+    longitude: string;
+    address: string;
+    name: string;
+}
 
 interface Corridor {
     id: number;
@@ -19,10 +27,13 @@ interface Departure {
     depart_date: string;
     depart_time: string;
     seats_remaining: number;
+    seats_booked: number;
     seat_capacity: number;
     unit_fare: number;
     service_type: string;
     corridor: { id: number; name: string } | null;
+    origin_pool: PoolPin | null;
+    destination_pool: PoolPin | null;
 }
 
 interface Props {
@@ -39,9 +50,28 @@ const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 const fieldClassName =
     'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
+function doorDefaults(departure: Departure | null): {
+    pickup_address: string;
+    pickup_lat: string;
+    pickup_lng: string;
+    dropoff_address: string;
+    dropoff_lat: string;
+    dropoff_lng: string;
+} {
+    return {
+        pickup_address: departure?.origin_pool?.address ?? '',
+        pickup_lat: departure?.origin_pool?.latitude ?? '',
+        pickup_lng: departure?.origin_pool?.longitude ?? '',
+        dropoff_address: departure?.destination_pool?.address ?? '',
+        dropoff_lat: departure?.destination_pool?.latitude ?? '',
+        dropoff_lng: departure?.destination_pool?.longitude ?? '',
+    };
+}
+
 export default function Search({ brand, filters, corridors, departures, hold_ttl_minutes, gateway_available }: Props) {
     const [selected, setSelected] = useState<Departure | null>(null);
     const [otpHint, setOtpHint] = useState<string | null>(null);
+    const geocodeUrl = route('book.shuttle.geocode.reverse');
 
     const searchForm = useForm({
         date: filters.date,
@@ -55,6 +85,12 @@ export default function Search({ brand, filters, corridors, departures, hold_ttl
         dropoff_mode: 'pool',
         booker_phone: '',
         otp_code: '',
+        pickup_address: '',
+        pickup_lat: '',
+        pickup_lng: '',
+        dropoff_address: '',
+        dropoff_lat: '',
+        dropoff_lng: '',
         passengers: [{ name: '', phone: '', id_number: '' }],
     });
 
@@ -66,6 +102,8 @@ export default function Search({ brand, filters, corridors, departures, hold_ttl
             })),
         [corridors],
     );
+
+    const isDoor = selected?.service_type === 'door';
 
     const runSearch = (next?: { date?: string; corridor_id?: string }) => {
         const data = {
@@ -82,11 +120,14 @@ export default function Search({ brand, filters, corridors, departures, hold_ttl
 
     const selectDeparture = (d: Departure) => {
         setSelected(d);
+        const door = d.service_type === 'door';
+        const pins = door ? doorDefaults(d) : doorDefaults(null);
         holdForm.setData({
             ...holdForm.data,
             departure_id: d.id,
-            pickup_mode: d.service_type === 'door' ? 'door' : 'pool',
-            dropoff_mode: d.service_type === 'door' ? 'door' : 'pool',
+            pickup_mode: door ? 'door' : 'pool',
+            dropoff_mode: door ? 'door' : 'pool',
+            ...pins,
         });
     };
 
@@ -190,7 +231,8 @@ export default function Search({ brand, filters, corridors, departures, hold_ttl
                                         {d.depart_time} · {d.corridor?.name}
                                     </div>
                                     <div className="text-xs text-slate-500">
-                                        {d.departure_number} · {d.seats_remaining}/{d.seat_capacity} seats · {money(d.unit_fare)}
+                                        {d.departure_number} · {d.service_type === 'door' ? 'Door-to-door' : 'Pool'} · {d.seats_booked}/
+                                        {d.seat_capacity} booked · {d.seats_remaining} left · {money(d.unit_fare)}
                                     </div>
                                 </div>
                             </button>
@@ -276,6 +318,90 @@ export default function Search({ brand, filters, corridors, departures, hold_ttl
                                 />
                             </div>
                         ))}
+
+                        {isDoor && (
+                            <div className="space-y-5 border-t border-slate-100 pt-4">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-slate-900">Pickup location</h3>
+                                    <p className="mt-1 text-xs text-slate-500">Tap the map or drag the pin. Address is filled from the pin.</p>
+                                    <input
+                                        className={fieldClassName}
+                                        placeholder="Pickup address"
+                                        value={holdForm.data.pickup_address}
+                                        onChange={(e) => holdForm.setData('pickup_address', e.target.value)}
+                                        required
+                                    />
+                                    {holdForm.errors.pickup_address && (
+                                        <p className="mt-1 text-xs text-red-600">{holdForm.errors.pickup_address}</p>
+                                    )}
+                                    <div className="mt-3">
+                                        <LocationMapPicker
+                                            latitude={holdForm.data.pickup_lat}
+                                            longitude={holdForm.data.pickup_lng}
+                                            height="260px"
+                                            reverseGeocodeUrl={geocodeUrl}
+                                            onChange={({ latitude, longitude, address }) => {
+                                                holdForm.setData((current) => ({
+                                                    ...current,
+                                                    pickup_lat: latitude,
+                                                    pickup_lng: longitude,
+                                                    pickup_address: address ?? current.pickup_address,
+                                                }));
+                                            }}
+                                        />
+                                        <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500">
+                                            <div>Lat: {holdForm.data.pickup_lat || '—'}</div>
+                                            <div>Lng: {holdForm.data.pickup_lng || '—'}</div>
+                                        </div>
+                                        {(holdForm.errors.pickup_lat || holdForm.errors.pickup_lng) && (
+                                            <p className="mt-1 text-xs text-red-600">
+                                                {holdForm.errors.pickup_lat || holdForm.errors.pickup_lng}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-sm font-semibold text-slate-900">Drop-off location</h3>
+                                    <p className="mt-1 text-xs text-slate-500">Tap the map or drag the pin. Address is filled from the pin.</p>
+                                    <input
+                                        className={fieldClassName}
+                                        placeholder="Drop-off address"
+                                        value={holdForm.data.dropoff_address}
+                                        onChange={(e) => holdForm.setData('dropoff_address', e.target.value)}
+                                        required
+                                    />
+                                    {holdForm.errors.dropoff_address && (
+                                        <p className="mt-1 text-xs text-red-600">{holdForm.errors.dropoff_address}</p>
+                                    )}
+                                    <div className="mt-3">
+                                        <LocationMapPicker
+                                            latitude={holdForm.data.dropoff_lat}
+                                            longitude={holdForm.data.dropoff_lng}
+                                            height="260px"
+                                            reverseGeocodeUrl={geocodeUrl}
+                                            onChange={({ latitude, longitude, address }) => {
+                                                holdForm.setData((current) => ({
+                                                    ...current,
+                                                    dropoff_lat: latitude,
+                                                    dropoff_lng: longitude,
+                                                    dropoff_address: address ?? current.dropoff_address,
+                                                }));
+                                            }}
+                                        />
+                                        <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500">
+                                            <div>Lat: {holdForm.data.dropoff_lat || '—'}</div>
+                                            <div>Lng: {holdForm.data.dropoff_lng || '—'}</div>
+                                        </div>
+                                        {(holdForm.errors.dropoff_lat || holdForm.errors.dropoff_lng) && (
+                                            <p className="mt-1 text-xs text-red-600">
+                                                {holdForm.errors.dropoff_lat || holdForm.errors.dropoff_lng}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             type="submit"

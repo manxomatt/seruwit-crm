@@ -14,6 +14,8 @@ interface Props {
     height?: string;
     /** When true, reverse-geocode fills the address field after each pick. */
     resolveAddress?: boolean;
+    /** Override reverse-geocode endpoint (defaults to module.geocode.reverse). */
+    reverseGeocodeUrl?: string;
 }
 
 function formatCoord(value: number): string {
@@ -40,6 +42,7 @@ export default function LocationMapPicker({
     onChange,
     height = '320px',
     resolveAddress = true,
+    reverseGeocodeUrl,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -64,7 +67,8 @@ export default function LocationMapPicker({
             onChange({ latitude: formatCoord(lat), longitude: formatCoord(lng) });
 
             try {
-                const url = `${prefixedRoute('geocode.reverse')}?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+                const endpoint = reverseGeocodeUrl ?? prefixedRoute('geocode.reverse');
+                const url = `${endpoint}?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
                 const response = await fetch(url, {
                     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                     credentials: 'same-origin',
@@ -95,7 +99,7 @@ export default function LocationMapPicker({
                 }
             }
         },
-        [onChange, prefixedRoute, resolveAddress, t],
+        [onChange, prefixedRoute, resolveAddress, reverseGeocodeUrl, t],
     );
 
     const pick = useCallback(

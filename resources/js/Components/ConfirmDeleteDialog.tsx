@@ -13,6 +13,7 @@ interface Props {
     confirmText?: string;
     cancelText?: string;
     processing?: boolean;
+    processingText?: string;
 }
 
 export default function ConfirmDeleteDialog({
@@ -24,6 +25,7 @@ export default function ConfirmDeleteDialog({
     confirmText,
     cancelText,
     processing = false,
+    processingText,
 }: Props) {
     const { t } = useTrans();
 
@@ -31,6 +33,7 @@ export default function ConfirmDeleteDialog({
     const resolvedMessage = message ?? t('common.confirm_delete_message');
     const resolvedConfirm = confirmText ?? t('common.confirm_delete_confirm');
     const resolvedCancel = cancelText ?? t('common.confirm_delete_cancel');
+    const resolvedProcessing = processingText ?? t('common.deleting');
     return (
         <Modal show={show} onClose={onClose} maxWidth="md">
             <div className="p-6">
@@ -67,7 +70,7 @@ export default function ConfirmDeleteDialog({
                         {resolvedCancel}
                     </SecondaryButton>
                     <DangerButton onClick={onConfirm} disabled={processing}>
-                        {processing ? t('common.deleting') : resolvedConfirm}
+                        {processing ? resolvedProcessing : resolvedConfirm}
                     </DangerButton>
                 </div>
             </div>

@@ -40,7 +40,7 @@ class RentalInvoiceTest extends TestCase
         ]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.confirm', $rental))
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertRedirect();
 
         $charge = RentalCharge::query()
@@ -77,7 +77,7 @@ class RentalInvoiceTest extends TestCase
         ]);
 
         $user = $this->createAdminUser();
-        $this->actingAs($user)->post(route('module.rental.confirm', $rental))->assertRedirect();
+        $this->actingAs($user)->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])->assertRedirect();
 
         $this->assertSame(1, Invoice::query()->count());
         $this->assertSame(1, RentalCharge::query()->where('rental_id', $rental->id)->count());
@@ -361,7 +361,7 @@ class RentalInvoiceTest extends TestCase
         $rental = Rental::factory()->create(['status' => Rental::STATUS_DRAFT]);
 
         $this->actingAs($this->createAdminUser())
-            ->post(route('module.rental.confirm', $rental))
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
             ->assertRedirect();
 
         $this->actingAs($this->createAdminUser())

@@ -19,6 +19,16 @@ class PlanSeeder extends Seeder
     {
         $plans = [
             [
+                'key' => Plan::KEY_TRIAL,
+                'name' => 'Trial',
+                'description' => 'Self-serve onboarding trial: content, accounting, and rental/travel packs.',
+                // Union of onboarding defaults (pages + accounting) and both
+                // vertical packs — entitlement only; install still chooses packs.
+                'modules' => Plan::trialModuleKeys(),
+                'sort_order' => 0,
+                'is_default' => false,
+            ],
+            [
                 'key' => 'free',
                 'name' => 'Free',
                 'description' => 'CMS inti saja, tanpa modul tambahan.',

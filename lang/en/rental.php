@@ -130,6 +130,7 @@ return [
         'search' => 'Search',
         'view' => 'View',
         'confirm' => 'Confirm',
+        'confirm_deposit_collected' => 'Confirm that the deposit cash/transfer has been collected? Cancel if the customer will pay later (checkout will be blocked until deposit is received).',
         'checkout' => 'Check Out',
         'return' => 'Return',
         'record_return' => 'Record Return',
@@ -240,6 +241,8 @@ return [
         'notes_damage' => 'Auto-invoice for rental :code (damage)',
         'notes_addon' => 'Auto-invoice for rental :code (add-on)',
         'notes_deposit_applied' => 'Deposit applied for rental :code',
+        'credit_notes' => 'Credit for cancelled rental :code (was :invoice)',
+        'credit_line' => 'Refund rental :code',
     ],
 
     'tracking' => [
@@ -437,6 +440,8 @@ return [
         'delete_draft_only' => 'Only draft rentals can be deleted.',
         'confirm_draft_only' => 'Only draft rentals can be confirmed.',
         'checkout_confirmed_only' => 'Only confirmed rentals can be checked out.',
+        'checkout_deposit_required' => 'Receive the customer deposit before checkout.',
+        'deposit_pending_gateway' => 'A Midtrans deposit payment is still pending. Wait for settlement or cancel that charge before confirming.',
         'return_active_only' => 'Only active rentals can be returned.',
         'complete_returned_only' => 'Only returned rentals can be completed.',
         'complete_deposit_unsettled' => 'Settle the deposit before completing this rental.',

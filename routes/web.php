@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Central\InvitationController;
+use App\Http\Controllers\Central\OnboardingController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PlanController;
@@ -56,6 +57,10 @@ Route::domain($centralDomain)
         Route::middleware('auth')->group(function () {
             Route::get('/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
             Route::get('/workspaces/{tenant}/enter', [WorkspaceController::class, 'enter'])->name('workspaces.enter');
+
+            Route::middleware('verified')->group(function () {
+                Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+            });
         });
 
         // Invitation acceptance (guest-accessible; account may not exist yet)

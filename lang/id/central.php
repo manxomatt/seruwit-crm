@@ -9,6 +9,12 @@ return [
         'empty_hint' => 'Anda belum menjadi anggota workspace mana pun.',
     ],
 
+    'onboarding' => [
+        'title' => 'Siapkan workspace Anda',
+        'verified_as' => 'Masuk sebagai :email',
+        'pending_message' => 'Email Anda sudah diverifikasi. Pengaturan workspace (perusahaan, subdomain, dan modul) akan menyusul.',
+    ],
+
     'invitation' => [
         'title' => 'Terima Undangan',
         'invited_to' => 'Undangan ke :tenant',

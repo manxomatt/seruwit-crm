@@ -26,6 +26,7 @@ class DepartureController extends Controller
             'departures' => $departures,
             'filters' => request()->only(['status', 'date']),
             'can' => [
+                'update' => auth()->user()?->hasPermissionFor('shuttle', 'update') ?? false,
                 'optimize' => auth()->user()?->hasPermissionFor('shuttle', 'optimize') ?? false,
                 'dispatch' => auth()->user()?->hasPermissionFor('shuttle', 'dispatch') ?? false,
             ],

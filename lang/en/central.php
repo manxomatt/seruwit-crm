@@ -9,6 +9,12 @@ return [
         'empty_hint' => 'You are not a member of any workspace yet.',
     ],
 
+    'onboarding' => [
+        'title' => 'Set up your workspace',
+        'verified_as' => 'Signed in as :email',
+        'pending_message' => 'Your email is verified. Workspace setup (company, subdomain, and modules) comes next.',
+    ],
+
     'invitation' => [
         'title' => 'Accept Invitation',
         'invited_to' => 'Invitation to :tenant',

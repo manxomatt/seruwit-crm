@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\Auth\LoginAction;
+use App\Actions\Auth\ResolvePostAuthDestination;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Setting;
@@ -15,7 +16,10 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function __construct(private readonly LoginAction $loginAction) {}
+    public function __construct(
+        private readonly LoginAction $loginAction,
+        private readonly ResolvePostAuthDestination $postAuthDestination,
+    ) {}
 
     /**
      * Display the login view.
@@ -49,9 +53,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $dashboardPath = $request->user()->getDashboardPath();
-
-        return redirect()->intended($dashboardPath);
+        return redirect()->intended($this->postAuthDestination->url($request->user()));
     }
 
     /**

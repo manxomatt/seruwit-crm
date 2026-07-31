@@ -328,7 +328,24 @@ export default function Show({
                                 <SecondaryButton>{t('common.edit')}</SecondaryButton>
                             </Link>
                         )}
-                        {is('draft') && <PrimaryButton onClick={() => action('confirm')}>{t('rental.actions.confirm')}</PrimaryButton>}
+                        {is('draft') && (
+                            <PrimaryButton
+                                onClick={() => {
+                                    const needsDeposit =
+                                        Number(rental.deposit_amount) > 0 && !rental.deposit_received_at;
+                                    if (needsDeposit) {
+                                        if (!window.confirm(t('rental.actions.confirm_deposit_collected'))) {
+                                            return;
+                                        }
+                                        action('confirm', { deposit_collected: true, payment_method: 'cash' });
+                                        return;
+                                    }
+                                    action('confirm');
+                                }}
+                            >
+                                {t('rental.actions.confirm')}
+                            </PrimaryButton>
+                        )}
                         {canPayDepositOnline && (
                             <SecondaryButton onClick={() => action('deposit.pay_online')}>{t('receivables.gateway.pay_deposit')}</SecondaryButton>
                         )}

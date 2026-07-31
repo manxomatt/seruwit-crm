@@ -194,6 +194,7 @@ class RentalAccountingService
 
     /**
      * On cancel after deposit was received: refund full liability via GL.
+     * Works for draft (online deposit before confirm) and confirmed.
      */
     public function refundDepositOnCancel(Rental $rental): void
     {
@@ -214,9 +215,155 @@ class RentalAccountingService
     }
 
     /**
+     * Void unpaid rental invoices (reverse GL) or issue one credit note covering paid invoices.
+     */
+    public function settleInvoicesOnCancel(Rental $rental): void
+    {
+        if (! $this->invoices->isAvailable()) {
+            return;
+        }
+
+        $rental->loadMissing('partner');
+        $invoices = $this->allInvoicesFor($rental);
+        $paid = [];
+
+        foreach ($invoices as $invoice) {
+            if ($invoice->status === Invoice::STATUS_VOID) {
+                continue;
+            }
+
+            if ((float) ($invoice->amount_paid ?? 0) > 0 || $invoice->status === Invoice::STATUS_PAID) {
+                $paid[] = $invoice;
+
+                continue;
+            }
+
+            if (in_array($invoice->status, [Invoice::STATUS_DRAFT, Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID], true)) {
+                DB::transaction(function () use ($invoice): void {
+                    $invoice->lines()->delete();
+                    $invoice->update(['status' => Invoice::STATUS_VOID]);
+
+                    if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                        \Modules\Accounting\Support\AccountingBridge::invoiceVoided($invoice->fresh());
+                    }
+                });
+            }
+        }
+
+        if ($paid !== []) {
+            $this->createCreditNoteForPaidInvoices($rental, $paid);
+        }
+    }
+
+    /**
+     * @param  list<Invoice>  $paidInvoices
+     */
+    private function createCreditNoteForPaidInvoices(Rental $rental, array $paidInvoices): ?Invoice
+    {
+        if ($rental->partner_id === null || $paidInvoices === []) {
+            return null;
+        }
+
+        $net = round(array_sum(array_map(
+            function (Invoice $invoice): float {
+                $paid = round((float) ($invoice->amount_paid ?? 0), 2);
+                $total = round((float) $invoice->total, 2);
+
+                // Credit only what was collected (partial-paid must not reverse unpaid AR).
+                if ($paid > 0.005 && $total > 0.005 && $paid + 0.005 < $total) {
+                    return $paid;
+                }
+
+                return abs((float) $invoice->subtotal);
+            },
+            $paidInvoices,
+        )), 2);
+
+        if (abs($net) < 0.005) {
+            return null;
+        }
+
+        $amount = -1 * abs($net);
+        $first = $paidInvoices[0];
+        $codes = implode(', ', array_map(fn (Invoice $i): string => $i->code, $paidInvoices));
+
+        $hasPartial = collect($paidInvoices)->contains(function (Invoice $invoice): bool {
+            $paid = round((float) ($invoice->amount_paid ?? 0), 2);
+            $total = round((float) $invoice->total, 2);
+
+            return $paid > 0.005 && $total > 0.005 && $paid + 0.005 < $total;
+        });
+
+        $taxAttrs = $hasPartial
+            ? [
+                'tax_enabled' => false,
+                'tax_rate' => 0,
+                'tax_code_id' => null,
+                'tax_code' => null,
+                'tax_calculation' => 'exclusive',
+            ]
+            : (class_exists(\Modules\Accounting\Support\TaxSettings::class)
+                ? \Modules\Accounting\Support\TaxSettings::documentAttributes()
+                : [
+                    'tax_enabled' => (bool) $first->tax_enabled,
+                    'tax_rate' => (float) $first->tax_rate,
+                    'tax_code_id' => $first->tax_code_id,
+                    'tax_code' => $first->tax_code,
+                    'tax_calculation' => $first->tax_calculation ?? 'exclusive',
+                ]);
+
+        return DB::transaction(function () use ($rental, $taxAttrs, $amount, $codes): Invoice {
+            $invoice = Invoice::create([
+                'code' => Invoice::nextCode(),
+                'partner_id' => $rental->partner_id,
+                'status' => Invoice::STATUS_DRAFT,
+                'issue_date' => now()->toDateString(),
+                'due_date' => now()->toDateString(),
+                ...$taxAttrs,
+                'subtotal' => 0,
+                'tax_amount' => 0,
+                'total' => 0,
+                'amount_paid' => 0,
+                'notes' => __('rental.invoice.credit_notes', [
+                    'code' => $rental->code,
+                    'invoice' => $codes,
+                ]),
+            ]);
+
+            \Modules\Invoicing\Models\InvoiceLine::create([
+                'invoice_id' => $invoice->id,
+                'description' => __('rental.invoice.credit_line', ['code' => $rental->code]),
+                'amount' => $amount,
+                'source_type' => $rental->getMorphClass(),
+                'source_id' => $rental->id,
+            ]);
+
+            $invoice->recalculate();
+            $invoice->update(['status' => Invoice::STATUS_ISSUED]);
+
+            if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
+                \Modules\Accounting\Support\AccountingBridge::invoiceIssued($invoice->fresh(['lines', 'partner']));
+            }
+
+            return $invoice->fresh(['lines']);
+        });
+    }
+
+    /**
      * @return list<Invoice>
      */
     private function draftInvoicesFor(Rental $rental): array
+    {
+        return array_values(array_filter(
+            $this->allInvoicesFor($rental),
+            fn (Invoice $invoice): bool => $invoice->status === Invoice::STATUS_DRAFT,
+        ));
+    }
+
+    /**
+     * @return list<Invoice>
+     */
+    private function allInvoicesFor(Rental $rental): array
     {
         $chargeIds = $rental->charges()->pluck('id');
 
@@ -227,7 +374,6 @@ class RentalAccountingService
         $morph = (new RentalCharge)->getMorphClass();
 
         return Invoice::query()
-            ->where('status', Invoice::STATUS_DRAFT)
             ->whereHas('lines', fn ($q) => $q
                 ->where('source_type', $morph)
                 ->whereIn('source_id', $chargeIds))
@@ -294,22 +440,9 @@ class RentalAccountingService
      */
     private function openInvoicesFor(Rental $rental): array
     {
-        $chargeIds = $rental->charges()->pluck('id');
-
-        if ($chargeIds->isEmpty()) {
-            return [];
-        }
-
-        $morph = (new RentalCharge)->getMorphClass();
-
-        return Invoice::query()
-            ->where('partner_id', $rental->partner_id)
-            ->whereIn('status', [Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID])
-            ->whereHas('lines', fn ($q) => $q
-                ->where('source_type', $morph)
-                ->whereIn('source_id', $chargeIds))
-            ->orderBy('id')
-            ->get()
-            ->all();
+        return array_values(array_filter(
+            $this->allInvoicesFor($rental),
+            fn (Invoice $invoice): bool => in_array($invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_PARTIALLY_PAID], true),
+        ));
     }
 }

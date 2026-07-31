@@ -1,3 +1,4 @@
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import DynamicLayout from '@/Layouts/DynamicLayout';
@@ -6,7 +7,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
-import { ActionIconButton, EyeIcon, RouteIcon } from '../components/ActionIcons';
+import { ActionIconButton, EyeIcon, RouteIcon, TrashIcon } from '../components/ActionIcons';
 import ShuttlePagination, { type PaginatedMeta } from '../components/ShuttlePagination';
 
 interface Departure {
@@ -25,7 +26,7 @@ interface Departure {
 interface Props {
     departures: PaginatedMeta & { data: Departure[] };
     filters: { status: string | null; date: string | null };
-    can: { optimize: boolean; dispatch: boolean };
+    can: { update: boolean; optimize: boolean; dispatch: boolean };
 }
 
 const STATUSES = ['open', 'locked', 'optimized', 'dispatched', 'in_transit', 'completed', 'cancelled'] as const;
@@ -55,6 +56,8 @@ export default function Index({ departures, filters, can }: Props) {
     const { t } = useTrans();
     const [status, setStatus] = useState(filters.status ?? '');
     const [date, setDate] = useState(filters.date ?? '');
+    const [cancelling, setCancelling] = useState<Departure | null>(null);
+    const [processingCancel, setProcessingCancel] = useState(false);
 
     const applyFilters = (overrides: { status?: string; date?: string } = {}): void => {
         router.get(
@@ -70,6 +73,22 @@ export default function Index({ departures, filters, can }: Props) {
     const filter: FormEventHandler = (e) => {
         e.preventDefault();
         applyFilters();
+    };
+
+    const closeCancelDialog = () => {
+        setCancelling(null);
+    };
+
+    const confirmCancel = () => {
+        if (!cancelling) {
+            return;
+        }
+
+        setProcessingCancel(true);
+        router.post(prefixedRoute('shuttle.departures.cancel', cancelling.id), {}, {
+            onSuccess: () => closeCancelDialog(),
+            onFinish: () => setProcessingCancel(false),
+        });
     };
 
     return (
@@ -157,6 +176,15 @@ export default function Index({ departures, filters, can }: Props) {
                                                     <RouteIcon />
                                                 </ActionIconButton>
                                             )}
+                                            {can.update && ['open', 'locked', 'optimized'].includes(d.status) && (
+                                                <ActionIconButton
+                                                    title={t('shuttle.departures.cancel')}
+                                                    tone="red"
+                                                    onClick={() => setCancelling(d)}
+                                                >
+                                                    <TrashIcon />
+                                                </ActionIconButton>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -166,6 +194,21 @@ export default function Index({ departures, filters, can }: Props) {
                 </table>
                 <ShuttlePagination meta={departures} />
             </div>
+
+            <ConfirmDeleteDialog
+                show={cancelling !== null}
+                onClose={closeCancelDialog}
+                onConfirm={confirmCancel}
+                processing={processingCancel}
+                title={t('shuttle.departures.cancel_confirm_title')}
+                message={
+                    cancelling
+                        ? t('shuttle.departures.cancel_confirm', { name: cancelling.departure_number })
+                        : undefined
+                }
+                confirmText={t('shuttle.departures.cancel')}
+                processingText={t('shuttle.departures.cancelling')}
+            />
         </DynamicLayout>
     );
 }

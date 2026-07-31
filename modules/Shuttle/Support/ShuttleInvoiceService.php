@@ -182,8 +182,12 @@ class ShuttleInvoiceService
             $invoice->recalculate();
             $invoice->update(['status' => Invoice::STATUS_ISSUED]);
 
+            // Link before posting so AccountingBridge remaps revenue_role → shuttle_revenue
+            // (credit lines leave source null because the original invoice already morphs the booking).
+            $booking->update(['credit_invoice_id' => $invoice->id]);
+
             if (class_exists(\Modules\Accounting\Support\AccountingBridge::class)) {
-                \Modules\Accounting\Support\AccountingBridge::invoiceIssued($invoice->fresh());
+                \Modules\Accounting\Support\AccountingBridge::invoiceIssued($invoice->fresh(['lines', 'partner']));
             }
 
             return $invoice->fresh(['lines']);

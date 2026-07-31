@@ -166,7 +166,7 @@ class PassengerBookingService
     /**
      * CS / gateway: mark paid and confirm (posts walk-in accounting).
      *
-     * @param  array{payment_method?: string|null}  $options
+     * @param  array{payment_method?: string|null, ignore_hold_expiry?: bool}  $options
      */
     public function markPaidAndConfirm(ShuttleBooking $booking, array $options = []): ShuttleBooking
     {
@@ -178,7 +178,7 @@ class PassengerBookingService
             throw new RuntimeException(__('shuttle.public.hold_expired'));
         }
 
-        if ($booking->isHoldExpired()) {
+        if ($booking->isHoldExpired() && ! ($options['ignore_hold_expiry'] ?? false)) {
             $this->releaseHold($booking);
 
             throw new RuntimeException(__('shuttle.public.hold_expired'));
@@ -193,9 +193,98 @@ class PassengerBookingService
             // Confirm will skip seat increment when seats_held — then clear flag.
             return $this->confirmation->confirm($booking->fresh(), [
                 'payment_method' => $options['payment_method'] ?? 'cash',
-                'already_held' => true,
+                'already_held' => (bool) $booking->seats_held,
             ]);
         });
+    }
+
+    /**
+     * Midtrans settlement after Snap pay. Recovers late payments when the hold
+     * TTL lapsed but seats can still be re-acquired (or were never released).
+     *
+     * @param  array{payment_method?: string|null}  $options
+     */
+    public function fulfillGatewayPayment(ShuttleBooking $booking, array $options = []): ShuttleBooking
+    {
+        if ($booking->channel !== ShuttleBooking::CHANNEL_PASSENGER) {
+            throw new RuntimeException(__('shuttle.public.not_passenger_channel'));
+        }
+
+        if (in_array($booking->status, [ShuttleBooking::STATUS_CONFIRMED, ShuttleBooking::STATUS_BOARDED, ShuttleBooking::STATUS_COMPLETED], true)) {
+            $booking->update(['payment_status' => ShuttleBooking::PAYMENT_PAID]);
+
+            return $booking->fresh();
+        }
+
+        return DB::transaction(function () use ($booking, $options): ShuttleBooking {
+            /** @var ShuttleBooking $locked */
+            $locked = ShuttleBooking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
+
+            if (in_array($locked->status, [ShuttleBooking::STATUS_CONFIRMED, ShuttleBooking::STATUS_BOARDED, ShuttleBooking::STATUS_COMPLETED], true)) {
+                $locked->update(['payment_status' => ShuttleBooking::PAYMENT_PAID]);
+
+                return $locked->fresh();
+            }
+
+            if ($locked->status === ShuttleBooking::STATUS_DRAFT && $locked->seats_held) {
+                // Seats still reserved — confirm even if TTL clock expired (job not run yet).
+                return $this->markPaidAndConfirm($locked, [
+                    'payment_method' => $options['payment_method'] ?? 'cash',
+                    'ignore_hold_expiry' => true,
+                ]);
+            }
+
+            // Intentional cancel must not be resurrected by a late Snap settlement.
+            if ($locked->status === ShuttleBooking::STATUS_CANCELLED) {
+                throw new RuntimeException(__('shuttle.public.gateway_cancelled_booking'));
+            }
+
+            if (in_array($locked->status, [ShuttleBooking::STATUS_DRAFT, ShuttleBooking::STATUS_EXPIRED], true)) {
+                $this->reacquireSeatsForPaidHold($locked);
+
+                return $this->markPaidAndConfirm($locked->fresh(), [
+                    'payment_method' => $options['payment_method'] ?? 'cash',
+                    'ignore_hold_expiry' => true,
+                ]);
+            }
+
+            throw new RuntimeException(__('shuttle.public.gateway_cannot_fulfill'));
+        });
+    }
+
+    /**
+     * Re-hold seats after expiry/cancel when gateway payment arrives late.
+     */
+    private function reacquireSeatsForPaidHold(ShuttleBooking $booking): void
+    {
+        /** @var ShuttleDeparture $departure */
+        $departure = ShuttleDeparture::query()
+            ->whereKey($booking->departure_id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        if (! in_array($departure->status, [ShuttleDeparture::STATUS_OPEN, ShuttleDeparture::STATUS_OPTIMIZED], true)) {
+            throw new RuntimeException(__('shuttle.messages.departure_not_open'));
+        }
+
+        $need = (int) $booking->passenger_count;
+        $alreadyHeld = $booking->seats_held && $booking->status === ShuttleBooking::STATUS_DRAFT;
+
+        if (! $alreadyHeld && $departure->seatsRemaining() < $need) {
+            throw new RuntimeException(__('shuttle.public.gateway_no_seats_after_pay'));
+        }
+
+        if (! $alreadyHeld) {
+            $departure->increment('seats_booked', $need);
+        }
+
+        $booking->update([
+            'status' => ShuttleBooking::STATUS_DRAFT,
+            'seats_held' => true,
+            'hold_expires_at' => null,
+            'cancelled_at' => null,
+            'cancel_reason' => null,
+        ]);
     }
 
     public function cancelPassenger(ShuttleBooking $booking, ?string $reason = null): ShuttleBooking

@@ -4,24 +4,15 @@ namespace Tests\Feature\Auth;
 
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
-    /**
-     * DatabaseMigrations (not RefreshDatabase): registration provisions a
-     * tenant schema (DDL), which cannot run inside a wrapping transaction.
-     */
-    use DatabaseMigrations;
-
-    protected function tearDown(): void
-    {
-        tenancy()->end();
-        Tenant::query()->get()->each->delete();
-
-        parent::tearDown();
-    }
+    use RefreshDatabase;
 
     public function test_registration_screen_can_be_rendered(): void
     {
@@ -30,26 +21,38 @@ class RegistrationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_new_users_can_register_and_get_a_workspace(): void
+    public function test_new_users_can_register_without_creating_a_tenant(): void
     {
+        Notification::fake();
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'company_name' => 'Test Company',
-            'subdomain' => 'test-company',
         ]);
 
         $this->assertAuthenticated();
+        $this->assertTrue(User::query()->where('email', 'test@example.com')->exists());
+        $this->assertSame(0, Tenant::query()->count());
+        $this->assertNull(User::query()->firstWhere('email', 'test@example.com')->email_verified_at);
 
-        $tenant = Tenant::query()->firstWhere('name', 'Test Company');
-        $this->assertNotNull($tenant);
-        $response->assertRedirect(route('central.workspaces.enter', $tenant, absolute: false));
+        Notification::assertSentTo(
+            User::query()->firstWhere('email', 'test@example.com'),
+            VerifyEmail::class,
+        );
+
+        $notice = Route::has('central.verification.notice')
+            ? 'central.verification.notice'
+            : 'verification.notice';
+
+        $response->assertRedirect(route($notice, absolute: false));
     }
 
-    public function test_registration_requires_company_fields(): void
+    public function test_registration_does_not_require_company_fields(): void
     {
+        Notification::fake();
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -57,8 +60,7 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $response->assertSessionHasErrors(['company_name', 'subdomain']);
-        $this->assertGuest();
-        $this->assertFalse(User::query()->where('email', 'test@example.com')->exists());
+        $response->assertSessionHasNoErrors();
+        $this->assertAuthenticated();
     }
 }

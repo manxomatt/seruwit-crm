@@ -163,6 +163,7 @@ return [
         'item_shuttle' => 'Travel booking :code',
         'shuttle_nothing_due' => 'This booking has no amount to charge.',
         'shuttle_not_open' => 'This booking is not open for online payment.',
+        'rental_cancelled' => 'This rental was cancelled — do not settle the deposit charge; refund in Midtrans.',
         'payment_note' => 'Midtrans :order',
         'enabled' => 'Enable Midtrans Snap',
         'production' => 'Production mode',

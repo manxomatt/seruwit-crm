@@ -49,13 +49,31 @@ class RentalActionController extends Controller
     {
         abort_if($rental->status !== Rental::STATUS_DRAFT, 422, __('rental.errors.confirm_draft_only'));
 
-        $rental->loadMissing('partner');
+        $rental->loadMissing(['partner', 'vehicle']);
         $this->eligibility->assertCanConfirm($rental->partner);
 
         $request->validate([
             'payment_method' => ['nullable', 'string', Rule::in(['cash', 'transfer', 'giro', 'card', 'other'])],
             'company_bank_account_id' => ['nullable', 'integer', 'min:1'],
+            // When true, staff confirms cash/transfer deposit was collected at the counter.
+            'deposit_collected' => ['sometimes', 'boolean'],
         ]);
+
+        $availability = Rental::vehicleAvailabilityReasons(
+            $rental->vehicle,
+            $rental->start_date->toDateString(),
+            $rental->end_date->toDateString(),
+            $rental->id,
+        );
+        if ($availability !== []) {
+            return back()->withErrors(['vehicle_id' => $availability[0]]);
+        }
+
+        if ($this->hasPendingDepositCharge($rental)) {
+            return back()->withErrors([
+                'deposit' => __('rental.errors.deposit_pending_gateway'),
+            ]);
+        }
 
         $rental->update([
             'status' => Rental::STATUS_CONFIRMED,
@@ -68,12 +86,15 @@ class RentalActionController extends Controller
                 'deposit_applied_amount' => 0,
                 'deposit_refunded_amount' => 0,
             ]);
-        } else {
+        } elseif ($rental->deposit_received_at !== null) {
+            // Already collected (e.g. Midtrans before confirm).
+        } elseif ($request->boolean('deposit_collected')) {
             $this->accounting->receiveDeposit($rental->fresh(), [
                 'payment_method' => $request->input('payment_method', 'cash'),
                 'company_bank_account_id' => $request->input('company_bank_account_id'),
             ]);
         }
+        // else: leave deposit unpaid — must be received before checkout
 
         $this->bookingExtras->applyOnConfirm($rental->fresh(['insurancePackage']));
         $this->invoices->invoiceBase($rental->fresh());
@@ -107,6 +128,12 @@ class RentalActionController extends Controller
     public function checkout(Request $request, Rental $rental): RedirectResponse
     {
         abort_if($rental->status !== Rental::STATUS_CONFIRMED, 422, __('rental.errors.checkout_confirmed_only'));
+
+        if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
+            return back()->withErrors([
+                'deposit' => __('rental.errors.checkout_deposit_required'),
+            ]);
+        }
 
         $request->validate([
             'start_odometer' => ['nullable', 'integer', 'min:0'],
@@ -295,9 +322,10 @@ class RentalActionController extends Controller
             'cancelled_reason' => ['required', 'string', 'max:500'],
         ]);
 
-        if ($rental->status === Rental::STATUS_CONFIRMED) {
-            $this->accounting->refundDepositOnCancel($rental->fresh());
-        }
+        // Always clear deposit liability if cash was received (incl. draft + Midtrans).
+        $this->accounting->refundDepositOnCancel($rental->fresh());
+        $this->accounting->settleInvoicesOnCancel($rental->fresh());
+        $this->expirePendingDepositCharges($rental);
 
         $rental->update([
             'status' => Rental::STATUS_CANCELLED,
@@ -532,5 +560,31 @@ class RentalActionController extends Controller
         $rental->recalculateTotalAmount();
 
         return back()->with('success', __('rental.messages.addon_removed'));
+    }
+
+    private function hasPendingDepositCharge(Rental $rental): bool
+    {
+        if (! class_exists(\Modules\Receivables\Models\GatewayCharge::class)) {
+            return false;
+        }
+
+        return \Modules\Receivables\Models\GatewayCharge::query()
+            ->where('rental_id', $rental->id)
+            ->where('purpose', \Modules\Receivables\Models\GatewayCharge::PURPOSE_RENTAL_DEPOSIT)
+            ->where('status', \Modules\Receivables\Models\GatewayCharge::STATUS_PENDING)
+            ->exists();
+    }
+
+    private function expirePendingDepositCharges(Rental $rental): void
+    {
+        if (! class_exists(\Modules\Receivables\Models\GatewayCharge::class)) {
+            return;
+        }
+
+        \Modules\Receivables\Models\GatewayCharge::query()
+            ->where('rental_id', $rental->id)
+            ->where('purpose', \Modules\Receivables\Models\GatewayCharge::PURPOSE_RENTAL_DEPOSIT)
+            ->where('status', \Modules\Receivables\Models\GatewayCharge::STATUS_PENDING)
+            ->update(['status' => \Modules\Receivables\Models\GatewayCharge::STATUS_CANCELLED]);
     }
 }
