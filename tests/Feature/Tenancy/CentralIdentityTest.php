@@ -142,6 +142,7 @@ class CentralIdentityTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('Central/Workspaces')
             ->has('workspaces', 1)
+            ->has('settings')
             ->where('workspaces.0.name', 'Company A')
             ->where('workspaces.0.domain', 'company-a.localhost'));
     }

@@ -16,9 +16,13 @@ class RegistrationTest extends TestCase
 
     public function test_registration_screen_can_be_rendered(): void
     {
-        $response = $this->get('/register');
+        $this->withoutVite();
 
-        $response->assertStatus(200);
+        $this->get('/register')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Auth/Register')
+                ->has('settings'));
     }
 
     public function test_new_users_can_register_without_creating_a_tenant(): void

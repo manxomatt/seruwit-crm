@@ -5,7 +5,11 @@ namespace App\Providers;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\UserRepository;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        $this->configureEmailVerificationUrls();
+
         Gate::define('manage-tenants', fn (User $user): bool => $user->isAdmin() || $user->hasRole('reseller'));
 
         // Installing a module reshapes the whole workspace, so it stays with the
@@ -43,5 +49,33 @@ class AppServiceProvider extends ServiceProvider
         // Settings are a platform-wide definition, edited by platform staff only —
         // a tenant may still view them, but not add or change them.
         Gate::define('manage-settings', fn (User $user): bool => $user->isAdmin());
+    }
+
+    /**
+     * Prefer the central verification route and log a copy-pasteable URL when
+     * mail is written to laravel.log (HTML sources encode "&" as "&amp;").
+     */
+    private function configureEmailVerificationUrls(): void
+    {
+        VerifyEmail::createUrlUsing(function (object $notifiable): string {
+            $route = Route::has('central.verification.verify')
+                ? 'central.verification.verify'
+                : 'verification.verify';
+
+            $url = URL::temporarySignedRoute(
+                $route,
+                now()->addMinutes((int) config('auth.verification.expire', 60)),
+                [
+                    'id' => $notifiable->getKey(),
+                    'hash' => sha1($notifiable->getEmailForVerification()),
+                ],
+            );
+
+            if (config('mail.default') === 'log') {
+                Log::info('Email verification URL (copy-paste as-is): '.$url);
+            }
+
+            return $url;
+        });
     }
 }

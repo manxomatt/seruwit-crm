@@ -9,12 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('work_order_items', function (Blueprint $table) {
-            // Link a "part" line to an inventory product so completing the work
-            // order can draw the quantity down from stock. Nullable: off-catalog
-            // parts stay free-text and never touch inventory.
-            $table->foreignId('product_id')->nullable()->after('item_type')->constrained()->nullOnDelete();
-            // No cross-module FK constraint (inventory may be uninstalled); the
-            // recorder resolves and validates the warehouse at deduction time.
+            // Soft links only: products/warehouses may be uninstalled. The
+            // recorder resolves and validates at deduction time. Nullable so
+            // off-catalog parts stay free-text and never touch inventory.
+            $table->unsignedBigInteger('product_id')->nullable()->after('item_type');
             $table->unsignedBigInteger('warehouse_id')->nullable()->after('product_id');
         });
 
@@ -29,8 +27,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('work_order_items', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('product_id');
-            $table->dropColumn('warehouse_id');
+            $table->dropColumn(['product_id', 'warehouse_id']);
         });
 
         Schema::table('work_orders', function (Blueprint $table) {

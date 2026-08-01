@@ -39,6 +39,7 @@ class VerticalPacks
                 'modules' => [
                     'fleet',
                     'document',
+                    'products',
                     'maintenance',
                     'tracking',
                     'invoicing',

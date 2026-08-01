@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Actions\Auth\ResolvePostAuthDestination;
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +32,13 @@ class RegisteredUserController extends Controller
     {
         abort_if(tenancy()->initialized, 404);
 
-        return Inertia::render('Auth/Register');
+        $settings = Setting::getPublic()
+            ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
+            ->toArray();
+
+        return Inertia::render('Auth/Register', [
+            'settings' => $settings,
+        ]);
     }
 
     /**

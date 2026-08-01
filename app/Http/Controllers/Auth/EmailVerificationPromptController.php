@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Actions\Auth\ResolvePostAuthDestination;
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,8 +21,17 @@ class EmailVerificationPromptController extends Controller
      */
     public function __invoke(Request $request): RedirectResponse|Response
     {
-        return $request->user()->hasVerifiedEmail()
-                    ? redirect()->intended($this->postAuthDestination->url($request->user()))
-                    : Inertia::render('Auth/VerifyEmail', ['status' => session('status')]);
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->intended($this->postAuthDestination->url($request->user()));
+        }
+
+        $settings = Setting::getPublic()
+            ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
+            ->toArray();
+
+        return Inertia::render('Auth/VerifyEmail', [
+            'status' => session('status'),
+            'settings' => $settings,
+        ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Central;
 
 use App\Http\Controllers\Controller;
 use App\Models\CentralUser;
+use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,9 @@ class WorkspaceController extends Controller
 
         return Inertia::render('Central/Workspaces', [
             'workspaces' => $workspaces,
+            'settings' => Setting::getPublic()
+                ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
+                ->toArray(),
         ]);
     }
 

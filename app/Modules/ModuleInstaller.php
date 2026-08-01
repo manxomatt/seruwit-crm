@@ -238,12 +238,14 @@ class ModuleInstaller
     }
 
     /**
-     * Install every module in a vertical pack (respecting plan entitlement), then
-     * run the pack's demo seeders inside the tenant schema.
+     * Install every module in a vertical pack (respecting plan entitlement).
+     *
+     * Demo seeders run only when $withDemoSeeders is true (admin/sandbox packs).
+     * Self-serve onboarding always passes false.
      *
      * @throws RuntimeException when the pack key is unknown or a module install fails
      */
-    public function installPack(Tenant $tenant, string $packKey): void
+    public function installPack(Tenant $tenant, string $packKey, bool $withDemoSeeders = true): void
     {
         $pack = VerticalPacks::find($packKey);
 
@@ -251,7 +253,7 @@ class ModuleInstaller
             throw new RuntimeException("Unknown vertical pack [{$packKey}].");
         }
 
-        $tenant->run(function () use ($tenant, $pack): void {
+        $tenant->run(function () use ($tenant, $pack, $withDemoSeeders): void {
             foreach ($pack['modules'] as $moduleKey) {
                 $module = Modules::find($moduleKey);
 
@@ -260,6 +262,10 @@ class ModuleInstaller
                 }
 
                 $this->installWithinTenant($tenant, $module);
+            }
+
+            if (! $withDemoSeeders) {
+                return;
             }
 
             foreach ($pack['seeders'] as $seederClass) {

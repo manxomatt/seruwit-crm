@@ -20,19 +20,33 @@ class CreateTenantAction
      */
     public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null): Tenant
     {
+        $fullDomain = self::fullDomain($subdomain);
+
         $tenant = Tenant::create([
             'name' => $companyName,
             'reseller_global_id' => $resellerGlobalId,
         ]);
 
-        $tenant->domains()->create(['domain' => self::fullDomain($subdomain)]);
+        // Domain first: Tenant::create can leave an orphan row if a later step
+        // fails, and admin update previously could not create a missing domain.
+        $tenant->domains()->firstOrCreate(['domain' => $fullDomain]);
 
-        $owner->tenants()->attach($tenant->getTenantKey());
+        $owner->tenants()->syncWithoutDetaching([$tenant->getTenantKey()]);
 
-        $tenant->run(function () use ($owner): void {
-            User::query()
-                ->firstWhere('global_id', $owner->global_id)
-                ->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
+        $tenant->run(function () use ($owner, $tenant): void {
+            $user = User::query()->firstWhere('global_id', $owner->global_id);
+
+            if ($user === null) {
+                throw new \RuntimeException(
+                    "Owner [{$owner->email}] was not synced into tenant [{$tenant->getTenantKey()}].",
+                );
+            }
+
+            if ($user->email_verified_at === null) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+
+            $user->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
         });
 
         return $tenant;

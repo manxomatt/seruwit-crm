@@ -131,6 +131,27 @@ class TenantOnboardingTest extends TestCase
         $this->assertSame('Pelanggan enterprise, kontak via WhatsApp.', $tenant->notes);
     }
 
+    public function test_updating_tenant_creates_domain_when_missing(): void
+    {
+        $admin = $this->makeCentralAdmin();
+        $tenant = $this->provisionTenant('Orphan Domain Co', 'orphan-domain-co', 'owner@orphan-domain.test');
+
+        $tenant->domains()->delete();
+        $this->assertNull($tenant->domains()->first());
+
+        $this->actingAs($admin)->patch('/module/tenants/'.$tenant->id, [
+            'name' => 'Orphan Domain Co',
+            'subdomain' => 'orphan-domain-co',
+            'status' => 'active',
+            'plan' => 'basic',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            'orphan-domain-co.localhost',
+            $tenant->fresh()->domains()->first()?->domain,
+        );
+    }
+
     public function test_super_admin_can_delete_a_tenant(): void
     {
         $admin = $this->makeCentralAdmin();

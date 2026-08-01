@@ -3,6 +3,7 @@
 namespace App\Actions\Auth;
 
 use App\Models\CentralUser;
+use App\Models\OnboardingSession;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,10 @@ class ResolvePostAuthDestination
     {
         if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
             return route($this->routeName('verification.notice'), absolute: false);
+        }
+
+        if ($this->hasActiveOnboardingSession($user)) {
+            return route('central.onboarding.status', absolute: false);
         }
 
         if ($this->needsWorkspaceOnboarding($user)) {
@@ -46,6 +51,10 @@ class ResolvePostAuthDestination
             return false;
         }
 
+        if ($this->hasActiveOnboardingSession($user)) {
+            return true;
+        }
+
         return ! $this->belongsToAnyTenant($user);
     }
 
@@ -56,6 +65,17 @@ class ResolvePostAuthDestination
             ->first()
             ?->tenants()
             ->exists() ?? false;
+    }
+
+    private function hasActiveOnboardingSession(User $user): bool
+    {
+        return OnboardingSession::query()
+            ->where('global_user_id', $user->global_id)
+            ->whereIn('status', [
+                OnboardingSession::STATUS_PENDING,
+                OnboardingSession::STATUS_PROVISIONING,
+            ])
+            ->exists();
     }
 
     private function routeName(string $name): string

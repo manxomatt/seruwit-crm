@@ -73,13 +73,20 @@ class TenantController extends Controller
         $owner = CentralUser::query()->firstWhere('email', $request->string('owner_email')->value());
 
         if ($owner === null) {
-            User::create([
+            $user = User::create([
                 'name' => $request->owner_name,
                 'email' => $request->owner_email,
                 'password' => Hash::make($request->string('owner_password')->value() ?: str()->random(32)),
             ]);
+            $user->forceFill(['email_verified_at' => now()])->save();
 
             $owner = CentralUser::query()->firstWhere('email', $request->string('owner_email')->value());
+        } else {
+            // Admin-provisioned owners should be able to sign in without a
+            // self-serve verification loop.
+            if ($owner->email_verified_at === null) {
+                $owner->forceFill(['email_verified_at' => now()])->save();
+            }
         }
 
         $user = $request->user();
@@ -175,7 +182,9 @@ class TenantController extends Controller
 
         $newDomain = CreateTenantAction::fullDomain($request->string('subdomain')->value());
 
-        if ($currentDomain !== null && $currentDomain->domain !== $newDomain) {
+        if ($currentDomain === null) {
+            $tenant->domains()->create(['domain' => $newDomain]);
+        } elseif ($currentDomain->domain !== $newDomain) {
             $currentDomain->update(['domain' => $newDomain]);
         }
 
