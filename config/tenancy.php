@@ -14,12 +14,25 @@ return [
      * The list of domains hosting your central app.
      *
      * Only relevant if you're using the domain or subdomain identification middleware.
+     * Production apex (e.g. seruwit.com) comes from CENTRAL_DOMAIN / APP_URL.
      */
-    'central_domains' => [
+    'central_domains' => array_values(array_unique(array_filter([
         '127.0.0.1',
         'localhost',
         'localhost.test',
-    ],
+        env('CENTRAL_DOMAIN'),
+        parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: null,
+    ]))),
+
+    /**
+     * Apex host appended to workspace subdomains.
+     *
+     * Example: subdomain "acme" + tenant_base_domain "seruwit.com" → "acme.seruwit.com".
+     * Defaults to the APP_URL host so production must set APP_URL correctly
+     * (or override with TENANT_BASE_DOMAIN).
+     */
+    'tenant_base_domain' => env('TENANT_BASE_DOMAIN')
+        ?: (parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: 'localhost'),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.

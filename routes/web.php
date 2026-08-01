@@ -26,7 +26,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-$centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost';
+$centralDomain = config('tenancy.tenant_base_domain')
+    ?: (parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
 
 /*
 | Settings *structure* (defining, renaming, or deleting a setting) is a

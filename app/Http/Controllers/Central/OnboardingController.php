@@ -43,7 +43,7 @@ class OnboardingController extends Controller
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
             ],
-            'centralHost' => parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost',
+            'centralHost' => (string) (config('tenancy.tenant_base_domain') ?: 'localhost'),
             'settings' => Setting::getPublic()
                 ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
                 ->toArray(),
@@ -131,7 +131,7 @@ class OnboardingController extends Controller
             'enterUrl' => $session->status === OnboardingSession::STATUS_READY && $session->tenant_id
                 ? route('central.workspaces.enter', $session->tenant_id)
                 : null,
-            'centralHost' => parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost',
+            'centralHost' => (string) (config('tenancy.tenant_base_domain') ?: 'localhost'),
             'queueConnection' => config('queue.default'),
             'settings' => Setting::getPublic()
                 ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])

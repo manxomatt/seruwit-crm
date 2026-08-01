@@ -53,11 +53,13 @@ class CreateTenantAction
     }
 
     /**
-     * Build the full domain for a subdomain, e.g. "acme" => "acme.localhost".
+     * Build the full domain for a subdomain, e.g. "acme" => "acme.seruwit.com".
+     *
+     * Uses tenancy.tenant_base_domain (TENANT_BASE_DOMAIN or APP_URL host).
      */
     public static function fullDomain(string $subdomain): string
     {
-        $centralHost = parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost';
+        $centralHost = (string) (config('tenancy.tenant_base_domain') ?: 'localhost');
 
         return $subdomain.'.'.$centralHost;
     }
