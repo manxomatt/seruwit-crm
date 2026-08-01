@@ -112,10 +112,9 @@ class OnboardingController extends Controller
             return redirect()->route('central.onboarding.show');
         }
 
-        if ($session->status === OnboardingSession::STATUS_READY && $session->tenant_id) {
-            return redirect()->route('central.workspaces.enter', $session->tenant_id);
-        }
-
+        // Always render when ready (do not HTTP-redirect). Inertia XHR polls cannot
+        // reliably follow workspaces.enter → redirect()->away() to the tenant domain;
+        // the page hard-navigates via window.location using enterUrl instead.
         $preview = SelfServeProvisioningPlan::previewModules($session->verticals ?? []);
 
         return Inertia::render('Central/OnboardingStatus', [
@@ -129,7 +128,7 @@ class OnboardingController extends Controller
                 'preview_modules' => $preview,
                 'updated_at' => optional($session->updated_at)?->toIso8601String(),
             ],
-            'enterUrl' => $session->tenant_id
+            'enterUrl' => $session->status === OnboardingSession::STATUS_READY && $session->tenant_id
                 ? route('central.workspaces.enter', $session->tenant_id)
                 : null,
             'centralHost' => parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost',

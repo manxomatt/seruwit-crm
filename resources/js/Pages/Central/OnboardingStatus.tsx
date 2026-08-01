@@ -41,7 +41,7 @@ export default function OnboardingStatus({
 
     useEffect(() => {
         if (ready && enterUrl) {
-            window.location.href = enterUrl;
+            window.location.assign(enterUrl);
             return;
         }
 
@@ -50,7 +50,18 @@ export default function OnboardingStatus({
         }
 
         const id = window.setInterval(() => {
-            router.reload({ only: ['session', 'enterUrl', 'queueConnection'] });
+            router.reload({
+                only: ['session', 'enterUrl', 'queueConnection'],
+                onSuccess: (page) => {
+                    const props = page.props as {
+                        session?: SessionPayload;
+                        enterUrl?: string | null;
+                    };
+                    if (props.session?.status === 'ready' && props.enterUrl) {
+                        window.location.assign(props.enterUrl);
+                    }
+                },
+            });
         }, 2500);
 
         return () => window.clearInterval(id);

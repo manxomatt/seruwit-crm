@@ -99,7 +99,7 @@ class SelfServeOnboardingProvisionTest extends TestCase
                 ->has('settings'));
     }
 
-    public function test_ready_status_redirects_into_workspace(): void
+    public function test_ready_status_exposes_enter_url_for_hard_navigation(): void
     {
         $user = User::factory()->create();
 
@@ -114,9 +114,16 @@ class SelfServeOnboardingProvisionTest extends TestCase
             'tenant_id' => $tenantId,
         ]);
 
+        $this->withoutVite();
+
         $this->actingAs($user)
             ->get(route('central.onboarding.status'))
-            ->assertRedirect(route('central.workspaces.enter', $tenantId, absolute: false));
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Central/OnboardingStatus')
+                ->where('session.status', OnboardingSession::STATUS_READY)
+                ->where('session.tenant_id', $tenantId)
+                ->where('enterUrl', route('central.workspaces.enter', $tenantId)));
     }
 
     public function test_provisioning_plan_maps_verticals_to_packs_and_content(): void
