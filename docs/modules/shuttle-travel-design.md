@@ -474,7 +474,7 @@ Kanal B2C agar penumpang memesan kursi **tanpa CS** dan **tanpa jadi Partner**. 
 | Seat | Status `draft` + **TTL hold** (10–15 menit) | Cegah overbook sebelum bayar |
 | Payment MVP | Pay-at-counter / transfer manual (+ bukti) | Gateway masih out-of-scope MVP; jangan blokir go-live |
 | Accounting | Sama walk-in: `shuttle_sale.completed` setelah paid/confirmed | Sudah ada Fase B Accounting (§5); tanpa AR Partner |
-| Native AAB | Fase belakangan (wrapper Capacitor di atas PWA yang sama) | Satu codebase; tenant “no-code” = brand/theme/domain saja |
+| Native AAB | Fase belakangan — **bundled** React di Capacitor (bukan remote WebView); orkestrasi build dari CRM via GitHub Actions | Lihat `docs/modules/mobile-app-builder-design.md`; API runtime = kanal publik yang sama |
 
 ### 14.2 Tiga channel booking (jangan dicampur)
 
@@ -554,7 +554,7 @@ Cancel sebelum dispatch: void journal bila sudah `shuttle_sale.completed` (mirro
 | **P0** | Public search + hold TTL + pay-later; CS bisa confirm/paid; branding tenant dasar | Seat lock existing |
 | **P1** | OTP HP + tiket QR + self-cancel policy + riwayat by phone | P0 |
 | **P2** | Payment gateway (QRIS/VA) + auto-confirm + accounting map | P1 + soft receivables/bank |
-| **P3** | Wrapper AAB / driver companion di atas PWA yang sama | Occupancy channel terbukti |
+| **P3** | Bundled Capacitor shell + Mobile App Builder (AAB per tenant via Actions) | Channel publik + API mobile stabil; lihat `mobile-app-builder-design.md` |
 
 ### 14.9 Anti-pola
 
@@ -578,7 +578,7 @@ Cancel sebelum dispatch: void journal bila sudah `shuttle_sale.completed` (mirro
 | **P0** | Implemented — `/book/shuttle`, hold TTL, CS mark-paid, branding settings |
 | **P1** | Implemented — OTP HP, tiket QR, self-cancel, history by phone |
 | **P2** | Implemented — Midtrans Snap soft (`PURPOSE_SHUTTLE_BOOKING`) + webhook → confirm |
-| **P3** | Pending — Capacitor shell |
+| **P3** | Pending — bundled Capacitor + App Builder (`mobile-app-builder-design.md`) |
 
 ---
 

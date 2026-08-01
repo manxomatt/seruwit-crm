@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'webhooks/midtrans',
+            'api/mobile/*',
         ]);
 
         $middleware->alias([
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Named requires-module, not module, to stay clear of the unrelated
             // `module.` route-name prefix and `permissions.module` column.
             'requires-module' => \App\Http\Middleware\RequiresModule::class,
+            'auth.mobile_passenger' => \Modules\Shuttle\Http\Middleware\AuthenticateMobilePassenger::class,
         ]);
 
         // Route model binding would otherwise resolve /module/carousels/{carousel}

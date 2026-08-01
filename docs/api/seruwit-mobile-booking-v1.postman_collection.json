@@ -1,0 +1,361 @@
+{
+  "info": {
+    "name": "Seruwit Mobile Booking API v1",
+    "description": "JSON API for Capacitor passenger apps.\n\nBase path: `/api/mobile/v1` on the **tenant domain**.\n\nFlow: health → bootstrap → OTP send/verify → corridors/departures → hold → ticket → pay/cancel → history.\n\nSet collection variables `baseUrl` and (after login) `token`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://acme.seruwit-crm.test"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "phone",
+      "value": "08123456789"
+    },
+    {
+      "key": "otpCode",
+      "value": ""
+    },
+    {
+      "key": "corridorId",
+      "value": "1"
+    },
+    {
+      "key": "departureId",
+      "value": "1"
+    },
+    {
+      "key": "departDate",
+      "value": "2026-08-05"
+    },
+    {
+      "key": "publicToken",
+      "value": ""
+    },
+    {
+      "key": "idempotencyKey",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "0. Platform",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/health"
+          }
+        },
+        {
+          "name": "Bootstrap",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-App-Version", "value": "1.0.0" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/bootstrap"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Send OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.debug_code) { pm.collectionVariables.set('otpCode', j.debug_code); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/auth/otp/send"
+          }
+        },
+        {
+          "name": "Verify OTP (issue Bearer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('token', j.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otpCode}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/auth/otp/verify"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Shuttle catalog",
+      "item": [
+        {
+          "name": "List corridors",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.data && j.data[0]) { pm.collectionVariables.set('corridorId', String(j.data[0].id)); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/corridors"
+          }
+        },
+        {
+          "name": "List departures",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.data && j.data[0]) { pm.collectionVariables.set('departureId', String(j.data[0].id)); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile/v1/shuttle/departures?date={{departDate}}&corridor_id={{corridorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile", "v1", "shuttle", "departures"],
+              "query": [
+                { "key": "date", "value": "{{departDate}}" },
+                { "key": "corridor_id", "value": "{{corridorId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Geocode reverse",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile/v1/shuttle/geocode/reverse?lat=-6.2&lng=106.8",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile", "v1", "shuttle", "geocode", "reverse"],
+              "query": [
+                { "key": "lat", "value": "-6.2" },
+                { "key": "lng", "value": "106.8" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Booking lifecycle",
+      "item": [
+        {
+          "name": "Create hold (Bearer)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('publicToken', j.booking.public_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotencyKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departure_id\": {{departureId}},\n  \"passenger_count\": 1,\n  \"pickup_mode\": \"pool\",\n  \"dropoff_mode\": \"pool\",\n  \"notes\": null,\n  \"passengers\": [\n    { \"name\": \"Budi Santoso\", \"phone\": \"{{phone}}\", \"id_number\": null }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/holds"
+          }
+        },
+        {
+          "name": "Create hold (OTP dual-mode, no Bearer)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departure_id\": {{departureId}},\n  \"passenger_count\": 1,\n  \"pickup_mode\": \"pool\",\n  \"dropoff_mode\": \"pool\",\n  \"booker_phone\": \"{{phone}}\",\n  \"otp_code\": \"{{otpCode}}\",\n  \"passengers\": [\n    { \"name\": \"Budi Santoso\" }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/holds"
+          }
+        },
+        {
+          "name": "Get ticket",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{publicToken}}"
+          }
+        },
+        {
+          "name": "Pay (gateway)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{publicToken}}/pay"
+          }
+        },
+        {
+          "name": "Cancel ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancel_reason\": \"Berubah pikiran\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{publicToken}}/cancel"
+          }
+        },
+        {
+          "name": "My bookings (history)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile/v1/shuttle/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile", "v1", "shuttle", "bookings"],
+              "query": [
+                { "key": "status", "value": "draft", "disabled": true }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

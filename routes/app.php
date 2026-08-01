@@ -56,6 +56,9 @@ Route::middleware('throttle:30,1')->prefix('book/shuttle')->name('book.shuttle.'
     Route::get('/history', [PublicPassengerBookingController::class, 'history'])->name('history');
 });
 
+// Capacitor / native passenger API (JSON). CSRF exempt — see bootstrap/app.php.
+require __DIR__.'/mobile_api.php';
+
 // Midtrans payment notifications — tenant domain, no auth, CSRF exempt.
 Route::post('/webhooks/midtrans', [\Modules\Receivables\Http\Controllers\GatewayCheckoutController::class, 'webhook'])
     ->name('webhooks.midtrans');
