@@ -167,29 +167,32 @@ Callback boleh di **central routes** (`routes/web.php` / `routes/api.php` centra
 
 ### 3.2 Repo shell `seruwit-mobile-booking-shell` (eksternal)
 
+Lokasi lokal (sibling monorepo folder, git terpisah):
+
+`/Users/meyga/DEV/LARAVEL/seruwit-mobile-booking-shell`
+
 ```
 seruwit-mobile-booking-shell/
-├─ package.json                 # React 18 + Vite + Capacitor 6/7
+├─ package.json                 # React + Vite + Capacitor 8
 ├─ capacitor.config.ts          # appId/appName di-overwrite CI
 ├─ index.html
 ├─ public/
-│  └─ tenant-config.json        # diganti CI sebelum build (fallback kosong di git)
+│  └─ tenant-config.json        # diganti CI sebelum build
 ├─ src/
 │  ├─ main.tsx
 │  ├─ App.tsx
 │  ├─ config/loadTenantConfig.ts
-│  ├─ api/client.ts             # baseURL dari config; Bearer token
-│  ├─ features/
-│  │  ├─ shuttle/…              # screen booking travel (feature-flagged)
-│  │  └─ rental/…               # screen booking rental (feature-flagged)
-│  └─ theme/applyTheme.ts
+│  ├─ api/client.ts
+│  ├─ features/shuttle/…        # Home, Login OTP, Search/Hold, Ticket, History
+│  └─ …
 ├─ android/                     # committed Cap project
-├─ resources/                   # icon-only placeholders; diganti CI
 ├─ scripts/
-│  └─ apply-tenant-config.mjs   # tulis config, unduh icon, patch capacitor + strings.xml
+│  └─ apply-tenant-config.mjs
 └─ .github/workflows/
    └─ build-aab.yml
 ```
+
+**Status M0:** scaffold + MVP screens + Android platform + workflow stub **sudah ada** di repo sibling.
 
 Prinsip shell:
 
