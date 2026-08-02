@@ -13,6 +13,7 @@ use Modules\Tracking\Console\Commands\TrackingPrune;
 use Modules\Tracking\Events\VehiclePositionsRecorded;
 use Modules\Tracking\Http\Controllers\GpsDeviceController;
 use Modules\Tracking\Http\Controllers\TrackingConfigController;
+use Modules\Tracking\Http\Controllers\TrackingDashboardController;
 use Modules\Tracking\Http\Controllers\TrackingGeofenceController;
 use Modules\Tracking\Http\Controllers\TrackingHistoryController;
 use Modules\Tracking\Http\Controllers\TrackingMapController;
@@ -70,7 +71,7 @@ class TrackingModule implements ModuleContract
             'name' => 'Tracking',
             'slug' => 'tracking',
             'icon' => 'tracking',
-            'route_name' => 'tracking.map',
+            'route_name' => 'tracking.dashboard',
             'permission_module' => 'tracking',
             'permission_action' => 'view',
             'sort_order' => 9,
@@ -111,7 +112,7 @@ class TrackingModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/tracking', '/tracking/map');
+        Route::get('/tracking', [TrackingDashboardController::class, 'index'])->middleware('permission:tracking,view')->name('tracking.dashboard');
 
         Route::get('/tracking/map', [TrackingMapController::class, 'index'])->middleware('permission:tracking,view')->name('tracking.map');
 

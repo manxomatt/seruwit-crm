@@ -2,13 +2,14 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
-const TABS = [
+const TABS: Array<{ labelKey: string; route: string; pattern: string }> = [
+    { labelKey: 'tracking.nav.dashboard', route: 'tracking.dashboard', pattern: 'tracking.dashboard' },
     { labelKey: 'tracking.nav.map', route: 'tracking.map', pattern: 'tracking.map' },
     { labelKey: 'tracking.nav.history', route: 'tracking.history', pattern: 'tracking.history' },
     { labelKey: 'tracking.nav.geofences', route: 'tracking.geofences.index', pattern: 'tracking.geofences.*' },
     { labelKey: 'tracking.nav.devices', route: 'tracking.devices.index', pattern: 'tracking.devices.*' },
     { labelKey: 'tracking.nav.settings', route: 'tracking.settings.edit', pattern: 'tracking.settings.*' },
-] as const;
+];
 
 export default function TrackingNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
