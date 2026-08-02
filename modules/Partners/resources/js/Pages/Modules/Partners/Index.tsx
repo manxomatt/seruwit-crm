@@ -1,4 +1,8 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import ColumnVisibilityMenu, {
+    buildColumnVisibility,
+    type ColumnDef,
+} from '@/Components/ColumnVisibilityMenu';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
@@ -7,7 +11,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, FormEventHandler } from 'react';
+import { useEffect, useMemo, useState, FormEventHandler } from 'react';
 import PartnersNav from '../../../PartnersNav';
 
 interface Tag {
@@ -58,6 +62,20 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
+type PartnerColumn = 'code' | 'name' | 'role' | 'phone' | 'email' | 'industry' | 'status';
+
+const STORAGE_KEY = 'partners.list.visibleColumns';
+
+const PARTNER_COLUMN_KEYS: Array<{ key: PartnerColumn; required?: boolean; defaultVisible?: boolean }> = [
+    { key: 'code', required: true },
+    { key: 'name', required: true },
+    { key: 'role', required: true },
+    { key: 'phone', defaultVisible: true },
+    { key: 'email', defaultVisible: false },
+    { key: 'industry', defaultVisible: true },
+    { key: 'status', defaultVisible: true },
+];
+
 const getStatusBadgeColor = (status: string) => {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 };
@@ -81,6 +99,20 @@ const TrashIcon = () => (
     </svg>
 );
 
+function readStoredColumns(): Partial<Record<PartnerColumn, boolean>> | null {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+            return null;
+        }
+
+        const parsed = JSON.parse(raw) as Partial<Record<PartnerColumn, boolean>>;
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
 export default function Index({ partners, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -88,6 +120,25 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [partnerToDelete, setPartnerToDelete] = useState<Partner | null>(null);
     const [processing, setProcessing] = useState(false);
+
+    const columnDefs = useMemo<Array<ColumnDef<PartnerColumn>>>(
+        () =>
+            PARTNER_COLUMN_KEYS.map((column) => ({
+                ...column,
+                label: t(`partners.index.columns.${column.key}`),
+            })),
+        [t],
+    );
+
+    const [visibleColumns, setVisibleColumns] = useState<Record<PartnerColumn, boolean>>(() =>
+        buildColumnVisibility(PARTNER_COLUMN_KEYS, typeof window !== 'undefined' ? readStoredColumns() : null),
+    );
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(visibleColumns));
+    }, [visibleColumns]);
+
+    const visibleDataColumnCount = columnDefs.filter((column) => visibleColumns[column.key]).length;
 
     const getRoleBadges = (partner: Partner) => {
         const badges: Array<{ key: string; label: string; className: string }> = [];
@@ -159,7 +210,7 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
-                    <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
+                    <form onSubmit={handleSearch} className="mb-6 flex flex-wrap items-end gap-4">
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
@@ -203,6 +254,13 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                             ]}
                         />
                         <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
+                        <ColumnVisibilityMenu
+                            columns={columnDefs}
+                            visible={visibleColumns}
+                            onChange={setVisibleColumns}
+                            label={t('partners.index.columns_menu')}
+                            requiredHint={t('partners.index.columns_required_hint')}
+                        />
                     </form>
 
                     {partners.data.length === 0 ? (
@@ -216,45 +274,98 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.code')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.name')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.role')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.phone')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.industry')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.index.columns.status')}</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
+                                            {visibleColumns.code && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('partners.index.columns.code')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.name && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('partners.index.columns.name')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.role && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('partners.index.columns.role')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.phone && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('partners.index.columns.phone')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.email && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('partners.index.columns.email')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.industry && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('partners.index.columns.industry')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.status && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('partners.index.columns.status')}
+                                                </th>
+                                            )}
+                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                {t('common.actions')}
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {partners.data.map((partner) => (
                                             <tr key={partner.id} className="hover:bg-gray-50">
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{partner.code}</td>
-                                                <td className="whitespace-nowrap px-6 py-4">
-                                                    <div className="text-sm font-medium text-gray-900">{partner.name}</div>
-                                                    <div className="text-xs text-gray-500">
-                                                        {t(`partners.account_type.${partner.account_type}`)}
-                                                    </div>
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4">
-                                                    <div className="flex gap-1">
-                                                        {getRoleBadges(partner).map((badge) => (
-                                                            <span key={badge.key} className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
-                                                                {badge.label}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                    {partner.phone || partner.mobile || '—'}
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                    {partner.industry?.name || '—'}
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4">
-                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(partner.status)}`}>
-                                                        {t(`partners.status.${partner.status}`, undefined, partner.status)}
-                                                    </span>
-                                                </td>
+                                                {visibleColumns.code && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{partner.code}</td>
+                                                )}
+                                                {visibleColumns.name && (
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        <div className="text-sm font-medium text-gray-900">{partner.name}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {t(`partners.account_type.${partner.account_type}`)}
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                {visibleColumns.role && (
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        <div className="flex gap-1">
+                                                            {getRoleBadges(partner).map((badge) => (
+                                                                <span
+                                                                    key={badge.key}
+                                                                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
+                                                                >
+                                                                    {badge.label}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                {visibleColumns.phone && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                        {partner.phone || partner.mobile || '—'}
+                                                    </td>
+                                                )}
+                                                {visibleColumns.email && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                        {partner.email || '—'}
+                                                    </td>
+                                                )}
+                                                {visibleColumns.industry && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                        {partner.industry?.name || '—'}
+                                                    </td>
+                                                )}
+                                                {visibleColumns.status && (
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        <span
+                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(partner.status)}`}
+                                                        >
+                                                            {t(`partners.status.${partner.status}`, undefined, partner.status)}
+                                                        </span>
+                                                    </td>
+                                                )}
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Link
@@ -288,6 +399,10 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                     </tbody>
                                 </table>
                             </div>
+
+                            <p className="mt-2 text-xs text-gray-400">
+                                {t('partners.index.columns_showing', { count: visibleDataColumnCount })}
+                            </p>
 
                             {partners.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">
