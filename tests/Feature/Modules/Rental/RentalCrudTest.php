@@ -362,6 +362,21 @@ class RentalCrudTest extends TestCase
         $this->assertNotNull($rental->checkout_signature_path);
     }
 
+    public function test_checkout_requires_deposit_to_be_received(): void
+    {
+        $rental = Rental::factory()->confirmed()->create([
+            'deposit_amount' => 1_000_000,
+            'deposit_received_at' => null,
+            'deposit_payment_method' => null,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.checkout', $rental), $this->rentalCheckoutPayload())
+            ->assertSessionHasErrors('deposit');
+
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->fresh()->status);
+    }
+
     public function test_return_transitions_active_to_returned_with_excess_km(): void
     {
         $rental = Rental::factory()->active()->create([

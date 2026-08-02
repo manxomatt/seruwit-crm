@@ -287,6 +287,7 @@ export default function Show({
     const depositHeld = rental.deposit_status !== 'settled' && Number(rental.deposit_amount) > 0;
     const canReceiveDeposit = depositHeld && !rental.deposit_received_at && (is('confirmed') || is('active') || is('returned'));
     const canSettleDeposit = depositHeld && !!rental.deposit_received_at && (is('returned') || is('completed'));
+    const depositBlocksCheckout = is('confirmed') && depositHeld && !rental.deposit_received_at;
     const canPrintContract = !is('draft') && !is('cancelled');
     const canPrintHandover = is('active') || is('returned') || is('completed');
 
@@ -331,6 +332,18 @@ export default function Show({
 
             <RentalNav />
 
+            {depositBlocksCheckout && (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-medium">{t('rental.errors.checkout_deposit_required')}</p>
+                    <p className="mt-1 text-amber-800/90">
+                        {t('rental.modals.confirm_deposit_body', {
+                            code: rental.code,
+                            amount: formatMoney(rental.deposit_amount),
+                        })}
+                    </p>
+                </div>
+            )}
+
             <div className="mb-6 flex flex-wrap justify-end gap-2">
                         {canPrintContract && (
                             <a href={prefixedRoute('rental.pdf.contract', rental.id)} target="_blank" rel="noreferrer">
@@ -358,10 +371,19 @@ export default function Show({
                         {is('confirmed') && (
                             <>
                                 {canReceiveDeposit && (
-                                    <SecondaryButton onClick={() => action('deposit.receive')}>{t('rental.actions.receive_deposit')}</SecondaryButton>
+                                    <PrimaryButton onClick={() => action('deposit.receive')}>
+                                        {t('rental.actions.receive_deposit')}
+                                    </PrimaryButton>
                                 )}
                                 <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
-                                <PrimaryButton onClick={() => setModal('checkout')}>{t('rental.actions.checkout')}</PrimaryButton>
+                                <PrimaryButton
+                                    onClick={() => setModal('checkout')}
+                                    disabled={depositBlocksCheckout}
+                                    title={depositBlocksCheckout ? t('rental.errors.checkout_deposit_required') : undefined}
+                                    className={depositBlocksCheckout ? 'opacity-50' : undefined}
+                                >
+                                    {t('rental.actions.checkout')}
+                                </PrimaryButton>
                             </>
                         )}
                         {is('active') && (
@@ -953,6 +975,16 @@ export default function Show({
             <Modal show={modal === 'checkout'} onClose={() => setModal(null)}>
                 <form onSubmit={submitCheckout} className="p-6">
                     <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.checkout')}</h2>
+                    {checkoutForm.errors.deposit && (
+                        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                            {checkoutForm.errors.deposit}
+                        </div>
+                    )}
+                    {depositBlocksCheckout && (
+                        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                            {t('rental.errors.checkout_deposit_required')}
+                        </div>
+                    )}
                     <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
                         <div>
                             <InputLabel htmlFor="start_odometer" value={t('rental.fields.start_odometer')} />
@@ -1021,7 +1053,19 @@ export default function Show({
                     </div>
                     <div className="mt-4 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        <PrimaryButton disabled={checkoutForm.processing}>{t('rental.actions.checkout')}</PrimaryButton>
+                        {depositBlocksCheckout ? (
+                            <PrimaryButton
+                                type="button"
+                                onClick={() => {
+                                    setModal(null);
+                                    action('deposit.receive');
+                                }}
+                            >
+                                {t('rental.actions.receive_deposit')}
+                            </PrimaryButton>
+                        ) : (
+                            <PrimaryButton disabled={checkoutForm.processing}>{t('rental.actions.checkout')}</PrimaryButton>
+                        )}
                     </div>
                 </form>
             </Modal>

@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\ReceiveRentalDepositRequest;
@@ -131,7 +132,7 @@ class RentalActionController extends Controller
         abort_if($rental->status !== Rental::STATUS_CONFIRMED, 422, __('rental.errors.checkout_confirmed_only'));
 
         if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
-            return back()->withErrors([
+            throw ValidationException::withMessages([
                 'deposit' => __('rental.errors.checkout_deposit_required'),
             ]);
         }
