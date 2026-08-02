@@ -4,6 +4,11 @@ import { Link } from '@inertiajs/react';
 
 const TABS = [
     {
+        labelKey: 'purchasing.nav.dashboard',
+        route: 'purchasing.dashboard',
+        patterns: ['purchasing.dashboard'],
+    },
+    {
         labelKey: 'purchasing.nav.purchase_orders',
         route: 'purchasing.purchase-orders.index',
         patterns: ['purchasing.purchase-orders.*', 'purchasing.grn.*', 'purchasing.returns.*'],

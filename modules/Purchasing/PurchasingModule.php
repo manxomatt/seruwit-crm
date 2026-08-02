@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Purchasing\Http\Controllers\GoodReceiptNoteController;
 use Modules\Purchasing\Http\Controllers\PurchaseOrderController;
 use Modules\Purchasing\Http\Controllers\PurchaseReturnController;
+use Modules\Purchasing\Http\Controllers\PurchasingDashboardController;
 use Modules\Purchasing\Http\Controllers\PurchasingPdfController;
 
 /**
@@ -55,7 +56,7 @@ class PurchasingModule implements ModuleContract
             'name' => 'Purchasing',
             'slug' => 'purchasing',
             'icon' => 'purchasing',
-            'route_name' => 'purchasing.purchase-orders.index',
+            'route_name' => 'purchasing.dashboard',
             'permission_module' => 'purchasing',
             'permission_action' => 'view',
             'sort_order' => 91,
@@ -85,9 +86,7 @@ class PurchasingModule implements ModuleContract
     public function routes(): void
     {
         Route::middleware(['auth', 'permission:purchasing,view'])->group(function (): void {
-            Route::get('/purchasing', function () {
-                return redirect('/module/purchasing/purchase-orders');
-            });
+            Route::get('/purchasing', [PurchasingDashboardController::class, 'index'])->name('purchasing.dashboard');
 
             Route::prefix('purchasing')->name('purchasing.')->group(function (): void {
                 Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
