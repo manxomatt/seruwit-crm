@@ -1,4 +1,5 @@
-import ModuleLayout from '@/Layouts/ModuleLayout';
+import DynamicLayout from '@/Layouts/DynamicLayout';
+import PageHeader from '@/Components/PageHeader';
 import InventoryNav from '../../../../InventoryNav';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
@@ -6,7 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { router, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 interface Level {
@@ -51,8 +52,11 @@ export default function ExpiryReportIndex({ levels, warehouses, filters }: Props
     };
 
     return (
-        <ModuleLayout title={t('inventory.expiry_report.title')}>
+        <DynamicLayout header={<PageHeader title={t('inventory.title')} />}>
+            <Head title={t('inventory.expiry_report.title')} />
+
             <InventoryNav />
+
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">{t('inventory.expiry_report.title')}</h1>
@@ -142,6 +146,6 @@ export default function ExpiryReportIndex({ levels, warehouses, filters }: Props
                     </table>
                 </div>
             </div>
-        </ModuleLayout>
+        </DynamicLayout>
     );
 }
