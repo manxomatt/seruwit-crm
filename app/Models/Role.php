@@ -122,7 +122,7 @@ class Role extends Model
     }
 
     /**
-     * Check if this is a system role (cannot be deleted).
+     * Check if this is a system role (identity locked; cannot be deleted).
      */
     public function isSystemRole(): bool
     {

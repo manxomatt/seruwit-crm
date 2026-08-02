@@ -53,7 +53,7 @@ return [
             'submit' => 'Save Changes',
             'submitting' => 'Saving…',
             'system_notice_title' => 'System Role',
-            'system_notice_body' => 'This is a system role and cannot be modified. You can only view its permissions.',
+            'system_notice_body' => 'Name and description are locked for system roles. You can still add or adjust permissions beyond the defaults.',
         ],
         'show' => [
             'title' => 'Role: :name',
@@ -100,7 +100,7 @@ return [
         'created' => 'Role created successfully.',
         'updated' => 'Role updated successfully.',
         'deleted' => 'Role deleted successfully.',
-        'system_cannot_modify' => 'System roles cannot be modified.',
+        'system_cannot_modify' => 'System role identity cannot be modified.',
         'system_cannot_delete' => 'System roles cannot be deleted.',
         'cannot_delete_assigned' => 'Cannot delete role with assigned users.',
     ],

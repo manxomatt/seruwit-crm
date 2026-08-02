@@ -168,6 +168,56 @@ class RbacTest extends TestCase
         $this->assertDatabaseHas('roles', ['id' => $userRole->id]);
     }
 
+    public function test_admin_can_add_permissions_to_system_role(): void
+    {
+        $user = User::factory()->create();
+        $adminRole = Role::where('slug', 'admin')->first();
+        $user->roles()->attach($adminRole);
+
+        $driverRole = Role::where('slug', 'driver')->firstOrFail();
+        $originalName = $driverRole->name;
+        $existingPermissionIds = $driverRole->permissions()->pluck('id')->all();
+
+        $extraPermission = Permission::query()
+            ->where('module', 'partners')
+            ->where('action', 'view')
+            ->firstOrFail();
+
+        $this->assertFalse(in_array($extraPermission->id, $existingPermissionIds, true));
+
+        $response = $this->actingAs($user)->patch(route('module.roles.update', $driverRole), [
+            'name' => 'Should Stay Locked',
+            'description' => 'Should stay locked',
+            'permissions' => array_values(array_unique([...$existingPermissionIds, $extraPermission->id])),
+        ]);
+
+        $response->assertRedirect(route('module.roles.index'));
+
+        $driverRole->refresh();
+
+        $this->assertSame($originalName, $driverRole->name);
+        $this->assertNotSame('Should Stay Locked', $driverRole->name);
+        $this->assertTrue($driverRole->permissions()->whereKey($extraPermission->id)->exists());
+    }
+
+    public function test_role_seeder_preserves_extra_permissions_on_system_roles(): void
+    {
+        $driverRole = Role::where('slug', 'driver')->firstOrFail();
+
+        $extraPermission = Permission::query()
+            ->where('module', 'partners')
+            ->where('action', 'view')
+            ->firstOrFail();
+
+        $driverRole->givePermission($extraPermission);
+
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+
+        $this->assertTrue(
+            $driverRole->fresh()->permissions()->whereKey($extraPermission->id)->exists()
+        );
+    }
+
     public function test_custom_roles_can_be_deleted(): void
     {
         $user = User::factory()->create();

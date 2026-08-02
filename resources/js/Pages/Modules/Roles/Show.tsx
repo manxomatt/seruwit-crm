@@ -61,11 +61,9 @@ export default function Show({ role, permissionsByModule, modules, actions }: Pr
                         {t('roles.pages.show.head', { name: role.name })}
                     </h2>
                     <div className="flex gap-2">
-                        {!role.is_system && (
-                            <Link href={prefixedRoute('roles.edit', role.id)}>
-                                <PrimaryButton>{t('roles.actions.edit_role')}</PrimaryButton>
-                            </Link>
-                        )}
+                        <Link href={prefixedRoute('roles.edit', role.id)}>
+                            <PrimaryButton>{t('roles.actions.edit_role')}</PrimaryButton>
+                        </Link>
                         <Link href={prefixedRoute('roles.index')}>
                             <SecondaryButton>{t('roles.actions.back_to_roles')}</SecondaryButton>
                         </Link>

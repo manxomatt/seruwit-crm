@@ -166,25 +166,23 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                         <div>
                             <div className="flex items-center justify-between mb-4">
                                 <InputLabel value={t('roles.fields.permissions')} />
-                                {!role.is_system && (
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={selectAllPermissions}
-                                            className="text-sm text-indigo-600 hover:text-indigo-800"
-                                        >
-                                            {t('roles.actions.select_all')}
-                                        </button>
-                                        <span className="text-gray-300">|</span>
-                                        <button
-                                            type="button"
-                                            onClick={clearAllPermissions}
-                                            className="text-sm text-gray-600 hover:text-gray-800"
-                                        >
-                                            {t('roles.actions.clear_all')}
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={selectAllPermissions}
+                                        className="text-sm text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        {t('roles.actions.select_all')}
+                                    </button>
+                                    <span className="text-gray-300">|</span>
+                                    <button
+                                        type="button"
+                                        onClick={clearAllPermissions}
+                                        className="text-sm text-gray-600 hover:text-gray-800"
+                                    >
+                                        {t('roles.actions.clear_all')}
+                                    </button>
+                                </div>
                             </div>
                             
                             <div className="border rounded-lg divide-y max-h-[500px] overflow-y-auto">
@@ -206,8 +204,7 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                                             }
                                                         }}
                                                         onChange={() => toggleModulePermissions(modulePermissions)}
-                                                        disabled={role.is_system}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50"
+                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                                     />
                                                     <span className="ml-2 font-medium text-gray-900">
                                                         {modules[module] || module}
@@ -224,8 +221,7 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                                             type="checkbox"
                                                             checked={data.permissions.includes(permission.id)}
                                                             onChange={() => togglePermission(permission.id)}
-                                                            disabled={role.is_system}
-                                                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50"
+                                                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
                                                             {actions[permission.action] || permission.action}
@@ -249,11 +245,9 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                         <Link href={prefixedRoute('roles.index')}>
                             <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                         </Link>
-                        {!role.is_system && (
-                            <PrimaryButton disabled={processing}>
-                                {processing ? t('roles.pages.edit.submitting') : t('roles.pages.edit.submit')}
-                            </PrimaryButton>
-                        )}
+                        <PrimaryButton disabled={processing}>
+                            {processing ? t('roles.pages.edit.submitting') : t('roles.pages.edit.submit')}
+                        </PrimaryButton>
                     </div>
                 </form>
             </div>

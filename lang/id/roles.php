@@ -53,7 +53,7 @@ return [
             'submit' => 'Simpan Perubahan',
             'submitting' => 'Menyimpan…',
             'system_notice_title' => 'Peran Sistem',
-            'system_notice_body' => 'Ini adalah peran sistem dan tidak dapat diubah. Anda hanya dapat melihat hak aksesnya.',
+            'system_notice_body' => 'Nama dan deskripsi terkunci untuk peran sistem. Anda tetap dapat menambah atau menyesuaikan hak akses di luar default.',
         ],
         'show' => [
             'title' => 'Peran: :name',
@@ -100,7 +100,7 @@ return [
         'created' => 'Peran berhasil dibuat.',
         'updated' => 'Peran berhasil diperbarui.',
         'deleted' => 'Peran berhasil dihapus.',
-        'system_cannot_modify' => 'Peran sistem tidak dapat diubah.',
+        'system_cannot_modify' => 'Identitas peran sistem tidak dapat diubah.',
         'system_cannot_delete' => 'Peran sistem tidak dapat dihapus.',
         'cannot_delete_assigned' => 'Tidak dapat menghapus peran yang masih memiliki pengguna.',
     ],

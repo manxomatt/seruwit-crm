@@ -129,25 +129,23 @@ class RoleController extends Controller
 
     /**
      * Update the specified role in storage.
+     *
+     * System roles keep their name/description/slug locked, but admins may
+     * add or adjust permissions beyond the seeded defaults.
      */
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
-        if ($role->isSystemRole()) {
-            return redirect()->back()
-                ->with('error', __('roles.messages.system_cannot_modify'));
-        }
-
         $validated = $request->validated();
 
-        $role->update([
-            'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']),
-            'description' => $validated['description'] ?? null,
-        ]);
-
-        if (isset($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
+        if (! $role->isSystemRole()) {
+            $role->update([
+                'name' => $validated['name'],
+                'slug' => Str::slug($validated['name']),
+                'description' => $validated['description'] ?? null,
+            ]);
         }
+
+        $role->syncPermissions($validated['permissions'] ?? []);
 
         return redirect()->route($this->getRoutePrefix().'.roles.index')
             ->with('success', __('roles.messages.updated'));
