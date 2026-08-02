@@ -130,6 +130,10 @@ return [
         'search' => 'Cari',
         'view' => 'Lihat',
         'confirm' => 'Konfirmasi',
+        'confirm_rental' => 'Konfirmasi rental',
+        'confirming' => 'Mengonfirmasi…',
+        'deposit_collected' => 'Deposit diterima',
+        'pay_deposit_later' => 'Bayar nanti',
         'confirm_deposit_collected' => 'Konfirmasi deposit sudah diterima (kas/transfer)? Batalkan jika pelanggan bayar nanti (checkout diblokir sampai deposit diterima).',
         'checkout' => 'Check Out',
         'return' => 'Kembalikan',
@@ -403,6 +407,10 @@ return [
     ],
 
     'modals' => [
+        'confirm' => 'Konfirmasi Rental',
+        'confirm_body' => 'Konfirmasi rental :code dan siapkan untuk checkout?',
+        'confirm_deposit_body' => 'Konfirmasi rental :code? Deposit yang harus diterima: :amount.',
+        'confirm_deposit_hint' => 'Pilih “Deposit diterima” jika kas/transfer sudah masuk. Pilih “Bayar nanti” untuk konfirmasi tanpa deposit — checkout tetap diblokir sampai deposit diterima.',
         'cancel' => 'Batalkan Rental',
         'checkout' => 'Check Out Kendaraan',
         'return' => 'Catat Pengembalian',

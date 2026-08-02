@@ -203,7 +203,8 @@ export default function Show({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const [modal, setModal] = useState<'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
+    const [modal, setModal] = useState<'confirm' | 'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
+    const [confirming, setConfirming] = useState(false);
 
     const cancelForm = useForm({ cancelled_reason: '' });
     const checkoutForm = useForm({
@@ -239,6 +240,24 @@ export default function Show({
 
     const action = (name: string, extra: Record<string, unknown> = {}) =>
         router.post(prefixedRoute(`rental.${name}`, rental.id), extra as any, { preserveScroll: true });
+
+    const needsDepositOnConfirm =
+        Number(rental.deposit_amount) > 0 && !rental.deposit_received_at;
+
+    const submitConfirm = (depositCollected: boolean) => {
+        setConfirming(true);
+        router.post(
+            prefixedRoute('rental.confirm', rental.id),
+            depositCollected
+                ? { deposit_collected: true, payment_method: 'cash' }
+                : {},
+            {
+                preserveScroll: true,
+                onFinish: () => setConfirming(false),
+                onSuccess: () => setModal(null),
+            },
+        );
+    };
 
     const submitCancel: FormEventHandler = (e) => { e.preventDefault(); cancelForm.post(prefixedRoute('rental.cancel', rental.id), { onSuccess: () => setModal(null) }); };
     const submitCheckout: FormEventHandler = (e) => { e.preventDefault(); checkoutForm.post(prefixedRoute('rental.checkout', rental.id), { onSuccess: () => setModal(null) }); };
@@ -329,20 +348,7 @@ export default function Show({
                             </Link>
                         )}
                         {is('draft') && (
-                            <PrimaryButton
-                                onClick={() => {
-                                    const needsDeposit =
-                                        Number(rental.deposit_amount) > 0 && !rental.deposit_received_at;
-                                    if (needsDeposit) {
-                                        if (!window.confirm(t('rental.actions.confirm_deposit_collected'))) {
-                                            return;
-                                        }
-                                        action('confirm', { deposit_collected: true, payment_method: 'cash' });
-                                        return;
-                                    }
-                                    action('confirm');
-                                }}
-                            >
+                            <PrimaryButton onClick={() => setModal('confirm')}>
                                 {t('rental.actions.confirm')}
                             </PrimaryButton>
                         )}
@@ -865,6 +871,72 @@ export default function Show({
                 </div>
 
             {/* Modals */}
+            <Modal show={modal === 'confirm'} onClose={() => !confirming && setModal(null)} maxWidth="md">
+                <div className="p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {t('rental.modals.confirm')}
+                    </h2>
+
+                    {needsDepositOnConfirm ? (
+                        <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                            <p>
+                                {t('rental.modals.confirm_deposit_body', {
+                                    code: rental.code,
+                                    amount: formatMoney(rental.deposit_amount),
+                                })}
+                            </p>
+                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                                {t('rental.modals.confirm_deposit_hint')}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                            {t('rental.modals.confirm_body', { code: rental.code })}
+                        </p>
+                    )}
+
+                    <div className="mt-6 flex flex-wrap justify-end gap-3">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => setModal(null)}
+                            disabled={confirming}
+                        >
+                            {t('rental.nav.back')}
+                        </SecondaryButton>
+                        {needsDepositOnConfirm ? (
+                            <>
+                                <SecondaryButton
+                                    type="button"
+                                    onClick={() => submitConfirm(false)}
+                                    disabled={confirming}
+                                >
+                                    {t('rental.actions.pay_deposit_later')}
+                                </SecondaryButton>
+                                <PrimaryButton
+                                    type="button"
+                                    onClick={() => submitConfirm(true)}
+                                    disabled={confirming}
+                                >
+                                    {confirming
+                                        ? t('rental.actions.confirming')
+                                        : t('rental.actions.deposit_collected')}
+                                </PrimaryButton>
+                            </>
+                        ) : (
+                            <PrimaryButton
+                                type="button"
+                                onClick={() => submitConfirm(false)}
+                                disabled={confirming}
+                            >
+                                {confirming
+                                    ? t('rental.actions.confirming')
+                                    : t('rental.actions.confirm_rental')}
+                            </PrimaryButton>
+                        )}
+                    </div>
+                </div>
+            </Modal>
+
             <Modal show={modal === 'cancel'} onClose={() => setModal(null)}>
                 <form onSubmit={submitCancel} className="p-6">
                     <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.cancel')}</h2>

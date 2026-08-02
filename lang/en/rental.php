@@ -130,6 +130,10 @@ return [
         'search' => 'Search',
         'view' => 'View',
         'confirm' => 'Confirm',
+        'confirm_rental' => 'Confirm rental',
+        'confirming' => 'Confirming…',
+        'deposit_collected' => 'Deposit collected',
+        'pay_deposit_later' => 'Pay later',
         'confirm_deposit_collected' => 'Confirm that the deposit cash/transfer has been collected? Cancel if the customer will pay later (checkout will be blocked until deposit is received).',
         'checkout' => 'Check Out',
         'return' => 'Return',
@@ -403,6 +407,10 @@ return [
     ],
 
     'modals' => [
+        'confirm' => 'Confirm Rental',
+        'confirm_body' => 'Confirm rental :code and mark it ready for checkout?',
+        'confirm_deposit_body' => 'Confirm rental :code? Deposit due: :amount.',
+        'confirm_deposit_hint' => 'Choose “Deposit collected” if cash/transfer was received. Choose “Pay later” to confirm without deposit — checkout stays blocked until it is received.',
         'cancel' => 'Cancel Rental',
         'checkout' => 'Check Out Vehicle',
         'return' => 'Record Return',
