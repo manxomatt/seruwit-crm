@@ -30,6 +30,10 @@ class GatewayCheckoutService
             return false;
         }
 
+        if (! Schema::hasTable('gateway_charges')) {
+            return false;
+        }
+
         return $this->config()->isConfigured();
     }
 

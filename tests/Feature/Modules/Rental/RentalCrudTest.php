@@ -3,6 +3,7 @@
 namespace Tests\Feature\Modules\Rental;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
@@ -301,6 +302,22 @@ class RentalCrudTest extends TestCase
         $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
         $this->assertNotNull($rental->confirmed_at);
         $this->assertNotNull($rental->confirmed_by);
+    }
+
+    public function test_confirm_succeeds_when_gateway_charges_table_is_missing(): void
+    {
+        Schema::dropIfExists('gateway_charges');
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_DRAFT,
+            'deposit_amount' => 500_000,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
+            ->assertRedirect();
+
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->fresh()->status);
     }
 
     public function test_cannot_confirm_non_draft_rental(): void

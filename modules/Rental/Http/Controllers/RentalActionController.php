@@ -5,6 +5,7 @@ namespace Modules\Rental\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Invoicing\Models\Invoice;
@@ -568,6 +569,10 @@ class RentalActionController extends Controller
             return false;
         }
 
+        if (! \App\Modules\Facades\Modules::available('receivables') || ! Schema::hasTable('gateway_charges')) {
+            return false;
+        }
+
         return \Modules\Receivables\Models\GatewayCharge::query()
             ->where('rental_id', $rental->id)
             ->where('purpose', \Modules\Receivables\Models\GatewayCharge::PURPOSE_RENTAL_DEPOSIT)
@@ -578,6 +583,10 @@ class RentalActionController extends Controller
     private function expirePendingDepositCharges(Rental $rental): void
     {
         if (! class_exists(\Modules\Receivables\Models\GatewayCharge::class)) {
+            return;
+        }
+
+        if (! \App\Modules\Facades\Modules::available('receivables') || ! Schema::hasTable('gateway_charges')) {
             return;
         }
 
