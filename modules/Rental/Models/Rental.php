@@ -31,6 +31,10 @@ class Rental extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const CHANNEL_STAFF = 'staff';
+
+    public const CHANNEL_MOBILE = 'mobile';
+
     public const DEPOSIT_HELD = 'held';
 
     public const DEPOSIT_SETTLED = 'settled';
@@ -43,9 +47,12 @@ class Rental extends Model
     /** @var list<string> */
     protected $fillable = [
         'code',
+        'channel',
         'vehicle_id',
         'driver_id',
         'partner_id',
+        'booker_phone',
+        'public_token',
         'status',
         'start_date',
         'end_date',

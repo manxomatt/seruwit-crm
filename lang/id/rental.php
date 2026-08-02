@@ -489,6 +489,15 @@ return [
         'back' => 'Kembali ke daftar',
     ],
 
+    'public' => [
+        'disabled' => 'Pemesanan rental mobile tidak tersedia.',
+        'quote_unavailable' => 'Tidak ada tarif atau kendaraan tersedia untuk periode ini.',
+        'not_mobile_channel' => 'Pemesanan ini tidak dapat dikelola dari aplikasi mobile.',
+        'deposit_already_received' => 'Deposit sudah diterima.',
+        'pay_status_invalid' => 'Deposit hanya dapat dibayar untuk pemesanan yang dikonfirmasi.',
+        'gateway_unavailable' => 'Pembayaran online sementara tidak tersedia.',
+    ],
+
     'validation' => [
         'vehicle_not_active' => 'Kendaraan :name berstatus :status, bukan aktif.',
         'vehicle_rental_overlap' => 'Kendaraan :name sudah memiliki rental pada periode ini.',

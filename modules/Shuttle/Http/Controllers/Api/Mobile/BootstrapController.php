@@ -14,6 +14,7 @@ class BootstrapController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $shuttleEnabled = $this->passengerChannelEnabled();
+        $rentalEnabled = $this->rentalChannelEnabled();
 
         return response()->json([
             'tenant' => [
@@ -28,7 +29,9 @@ class BootstrapController extends Controller
                     'gateway_available' => $shuttleEnabled && $this->gatewayAvailable(),
                 ],
                 'rental' => [
-                    'enabled' => false,
+                    'enabled' => $rentalEnabled,
+                    'gateway_available' => $rentalEnabled && $this->gatewayAvailable(),
+                    'period_types' => ['daily', 'weekly', 'monthly'],
                 ],
             ],
             'min_app_version' => null,

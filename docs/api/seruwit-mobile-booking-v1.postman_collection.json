@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Seruwit Mobile Booking API v1",
-    "description": "JSON API for Capacitor passenger apps.\n\nBase path: `/api/mobile/v1` on the **tenant domain**.\n\nFlow: health → bootstrap → OTP send/verify → corridors/departures → hold → ticket → pay/cancel → history.\n\nSet collection variables `baseUrl` and (after login) `token`.",
+    "description": "JSON API for Capacitor passenger apps.\n\nBase path: `/api/mobile/v1` on the **tenant domain**.\n\nFlow (shuttle): health → bootstrap → OTP → corridors/departures → hold → ticket → pay/cancel → history.\nFlow (rental): health → bootstrap → OTP → vehicles/quote → booking → pay-deposit/cancel → history.\n\nEnable rental with setting `rental.passenger_booking_enabled=1`.\n\nSet collection variables `baseUrl` and (after login) `token`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -36,6 +36,22 @@
     {
       "key": "publicToken",
       "value": ""
+    },
+    {
+      "key": "rentalPublicToken",
+      "value": ""
+    },
+    {
+      "key": "vehicleId",
+      "value": "1"
+    },
+    {
+      "key": "startDate",
+      "value": "2026-08-10"
+    },
+    {
+      "key": "endDate",
+      "value": "2026-08-12"
     },
     {
       "key": "idempotencyKey",
@@ -351,6 +367,173 @@
               "path": ["api", "mobile", "v1", "shuttle", "bookings"],
               "query": [
                 { "key": "status", "value": "draft", "disabled": true }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Rental catalog",
+      "item": [
+        {
+          "name": "Classes",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/classes"
+          }
+        },
+        {
+          "name": "Vehicles",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile/v1/rental/vehicles?start_date={{startDate}}&end_date={{endDate}}&available_only=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile", "v1", "rental", "vehicles"],
+              "query": [
+                { "key": "start_date", "value": "{{startDate}}" },
+                { "key": "end_date", "value": "{{endDate}}" },
+                { "key": "available_only", "value": "1" },
+                { "key": "rental_class", "value": "mpv", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vehicle detail",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/vehicles/{{vehicleId}}"
+          }
+        },
+        {
+          "name": "Locations",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/locations"
+          }
+        },
+        {
+          "name": "Insurance packages",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile/v1/rental/insurance-packages?period_type=daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile", "v1", "rental", "insurance-packages"],
+              "query": [{ "key": "period_type", "value": "daily" }]
+            }
+          }
+        },
+        {
+          "name": "Quote",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_id\": {{vehicleId}},\n  \"start_date\": \"{{startDate}}\",\n  \"end_date\": \"{{endDate}}\",\n  \"period_type\": \"daily\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/rental/quotes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Rental booking",
+      "item": [
+        {
+          "name": "Create booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.booking && j.booking.public_token) {",
+                  "    pm.collectionVariables.set('rentalPublicToken', j.booking.public_token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_id\": {{vehicleId}},\n  \"start_date\": \"{{startDate}}\",\n  \"end_date\": \"{{endDate}}\",\n  \"period_type\": \"daily\",\n  \"customer_name\": \"Budi Santoso\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings"
+          }
+        },
+        {
+          "name": "Get booking",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}"
+          }
+        },
+        {
+          "name": "Pay deposit",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/pay-deposit"
+          }
+        },
+        {
+          "name": "Cancel booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancelled_reason\": \"Berubah pikiran\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mobile/v1/rental/bookings/{{rentalPublicToken}}/cancel"
+          }
+        },
+        {
+          "name": "My rental bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/mobile/v1/rental/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mobile", "v1", "rental", "bookings"],
+              "query": [
+                { "key": "status", "value": "confirmed", "disabled": true }
               ]
             }
           }

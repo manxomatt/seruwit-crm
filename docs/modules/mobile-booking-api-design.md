@@ -465,13 +465,29 @@ Limit default 20; query opsional `?status=draft`.
 
 ---
 
-### 3.5 Rental (placeholder v1)
+### 3.5 Rental (mobile passenger channel)
 
-| Method | Path | Auth | Status |
+Enable with tenant setting `rental.passenger_booking_enabled=1`. Bootstrap then reports `surfaces.rental.enabled: true`.
+
+Shared auth (`/auth/otp/*`) works when **either** shuttle or rental surface is enabled.
+
+| Method | Path | Auth | Keterangan |
 |---|---|---|---|
-| `GET` | `/rental/bootstrap` | publik | `404` atau `{ "enabled": false }` sampai channel publik rental siap |
+| `GET` | `/rental/classes` | publik | Kelas rental (`economy`, `mpv`, …) |
+| `GET` | `/rental/vehicles` | publik | Katalog; query `start_date`, `end_date`, `rental_class`, `available_only` |
+| `GET` | `/rental/vehicles/{id}` | publik | Detail kendaraan |
+| `GET` | `/rental/locations` | publik | Cabang pickup/return |
+| `GET` | `/rental/insurance-packages` | publik | Paket asuransi aktif |
+| `POST` | `/rental/quotes` | publik | Quote harga + ketersediaan |
+| `POST` | `/rental/bookings` | 🔒 | Buat + auto-confirm (reserve unit); `Idempotency-Key` |
+| `GET` | `/rental/bookings` | 🔒 | Riwayat booking mobile milik phone |
+| `GET` | `/rental/bookings/{token}` | publik† | Detail by `public_token` |
+| `POST` | `/rental/bookings/{token}/pay-deposit` | 🔒 | Midtrans Snap deposit |
+| `POST` | `/rental/bookings/{token}/cancel` | 🔒 | Batal draft/confirmed |
 
-Jangan blokir ship shuttle API menunggu rental.
+† Optional Bearer asserts ownership when present.
+
+Mobile create finds-or-creates a Partner from the OTP phone, confirms immediately (so the vehicle is reserved), and leaves deposit unpaid until `pay-deposit` or counter collection.
 
 ---
 

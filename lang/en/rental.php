@@ -489,6 +489,15 @@ return [
         'back' => 'Back to list',
     ],
 
+    'public' => [
+        'disabled' => 'Mobile rental booking is not available.',
+        'quote_unavailable' => 'No rate or vehicle is available for this period.',
+        'not_mobile_channel' => 'This booking cannot be managed from the mobile app.',
+        'deposit_already_received' => 'Deposit has already been received.',
+        'pay_status_invalid' => 'Deposit can only be paid for confirmed bookings.',
+        'gateway_unavailable' => 'Online payment is temporarily unavailable.',
+    ],
+
     'validation' => [
         'vehicle_not_active' => 'Vehicle :name is :status, not active.',
         'vehicle_rental_overlap' => 'Vehicle :name already has a rental in this period.',

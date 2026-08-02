@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Rental\Http\Controllers\Api\Mobile\BookingController as RentalBookingController;
+use Modules\Rental\Http\Controllers\Api\Mobile\CatalogController as RentalCatalogController;
+use Modules\Rental\Http\Controllers\Api\Mobile\QuoteController as RentalQuoteController;
 use Modules\Shuttle\Http\Controllers\Api\Mobile\AuthController;
 use Modules\Shuttle\Http\Controllers\Api\Mobile\BookingHistoryController;
 use Modules\Shuttle\Http\Controllers\Api\Mobile\BootstrapController;
@@ -42,6 +45,17 @@ Route::prefix('api/mobile/v1')
             Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
             Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
             Route::get('/shuttle/bookings', BookingHistoryController::class)->name('shuttle.bookings');
+
+            Route::get('/rental/bookings', [RentalBookingController::class, 'index'])->name('rental.bookings.index');
+            Route::post('/rental/bookings', [RentalBookingController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('rental.bookings.store');
+            Route::post('/rental/bookings/{token}/cancel', [RentalBookingController::class, 'cancel'])
+                ->middleware('throttle:20,1')
+                ->name('rental.bookings.cancel');
+            Route::post('/rental/bookings/{token}/pay-deposit', [RentalBookingController::class, 'payDeposit'])
+                ->middleware('throttle:20,1')
+                ->name('rental.bookings.pay_deposit');
         });
 
         Route::get('/shuttle/corridors', [ShuttleCatalogController::class, 'corridors'])
@@ -64,4 +78,14 @@ Route::prefix('api/mobile/v1')
         Route::post('/shuttle/tickets/{token}/pay', [TicketController::class, 'pay'])
             ->middleware('throttle:20,1')
             ->name('shuttle.tickets.pay');
+
+        Route::get('/rental/classes', [RentalCatalogController::class, 'classes'])->name('rental.classes');
+        Route::get('/rental/vehicles', [RentalCatalogController::class, 'vehicles'])->name('rental.vehicles.index');
+        Route::get('/rental/vehicles/{vehicle}', [RentalCatalogController::class, 'showVehicle'])->name('rental.vehicles.show');
+        Route::get('/rental/locations', [RentalCatalogController::class, 'locations'])->name('rental.locations');
+        Route::get('/rental/insurance-packages', [RentalCatalogController::class, 'insurancePackages'])->name('rental.insurance_packages');
+        Route::post('/rental/quotes', RentalQuoteController::class)
+            ->middleware('throttle:30,1')
+            ->name('rental.quotes');
+        Route::get('/rental/bookings/{token}', [RentalBookingController::class, 'show'])->name('rental.bookings.show');
     });

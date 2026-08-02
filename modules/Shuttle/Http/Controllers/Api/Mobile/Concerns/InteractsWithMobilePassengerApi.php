@@ -26,9 +26,37 @@ trait InteractsWithMobilePassengerApi
         return ShuttleSetting::getValue(ShuttleSetting::KEY_PASSENGER_BOOKING_ENABLED, '0') === '1';
     }
 
+    protected function rentalChannelEnabled(): bool
+    {
+        if (! tenancy()->initialized && ! app()->runningUnitTests()) {
+            return false;
+        }
+
+        if (! Modules::available('rental') || ! Schema::hasTable('rentals')) {
+            return false;
+        }
+
+        return \App\Models\Setting::getValue('rental.passenger_booking_enabled', '0') === '1';
+    }
+
+    protected function anyMobileSurfaceEnabled(): bool
+    {
+        return $this->passengerChannelEnabled() || $this->rentalChannelEnabled();
+    }
+
     protected function ensurePassengerChannelEnabled(): void
     {
         if (! $this->passengerChannelEnabled()) {
+            abort(response()->json([
+                'message' => __('shuttle.public.disabled'),
+                'code' => 'passenger_booking_disabled',
+            ], Response::HTTP_NOT_FOUND));
+        }
+    }
+
+    protected function ensureAnyMobileSurfaceEnabled(): void
+    {
+        if (! $this->anyMobileSurfaceEnabled()) {
             abort(response()->json([
                 'message' => __('shuttle.public.disabled'),
                 'code' => 'passenger_booking_disabled',

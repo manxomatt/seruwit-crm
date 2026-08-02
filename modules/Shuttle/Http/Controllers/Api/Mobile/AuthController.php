@@ -17,7 +17,7 @@ class AuthController extends Controller
 
     public function sendOtp(SendOtpRequest $request, PassengerOtpService $otp): JsonResponse
     {
-        $this->ensurePassengerChannelEnabled();
+        $this->ensureAnyMobileSurfaceEnabled();
 
         $code = $otp->send($request->string('phone')->toString());
 
@@ -39,7 +39,7 @@ class AuthController extends Controller
         PassengerOtpService $otp,
         MobilePassengerTokenService $tokens,
     ): JsonResponse {
-        $this->ensurePassengerChannelEnabled();
+        $this->ensureAnyMobileSurfaceEnabled();
 
         $phone = $request->string('phone')->toString();
         $code = $request->string('code')->toString();
