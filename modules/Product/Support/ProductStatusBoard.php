@@ -2,6 +2,7 @@
 
 namespace Modules\Product\Support;
 
+use Illuminate\Support\Facades\Schema;
 use Modules\Product\Models\Brand;
 use Modules\Product\Models\Principal;
 use Modules\Product\Models\Product;
@@ -11,6 +12,9 @@ use Modules\Product\Models\ProductType;
 
 /**
  * Product catalog overview: status mix, category split, and master-data readiness.
+ *
+ * Optional columns (category from Inventory, favorites/variants from later Product
+ * migrations) are detected at runtime so tenants with a lean products table still load.
  */
 class ProductStatusBoard
 {
@@ -19,66 +23,109 @@ class ProductStatusBoard
      */
     public function build(int $recentLimit = 10): array
     {
+        $hasCategory = Schema::hasColumn('products', 'category');
+        $hasFavorite = Schema::hasColumn('products', 'is_favorite');
+        $hasParent = Schema::hasColumn('products', 'parent_id');
+        $hasBrand = Schema::hasColumn('products', 'brand_id');
+        $hasSku = Schema::hasColumn('products', 'sku');
+        $hasProductType = Schema::hasColumn('products', 'product_type_id');
+        $hasBrandsTable = Schema::hasTable('brands');
+        $hasPrincipalsTable = Schema::hasTable('principals');
+        $hasProductTypesTable = Schema::hasTable('product_types');
+        $hasTagsTable = Schema::hasTable('product_tags');
+        $hasAttributesTable = Schema::hasTable('product_attributes');
+
         $byStatus = Product::query()
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        $byCategory = Product::query()
-            ->selectRaw("coalesce(category, 'merchandise') as category, count(*) as total")
-            ->groupByRaw("coalesce(category, 'merchandise')")
-            ->pluck('total', 'category');
+        $byCategory = collect();
+        if ($hasCategory) {
+            $byCategory = Product::query()
+                ->selectRaw("coalesce(category, 'merchandise') as category, count(*) as total")
+                ->groupByRaw("coalesce(category, 'merchandise')")
+                ->pluck('total', 'category');
+        }
 
         $total = (int) $byStatus->sum();
-        $favorites = (int) Product::query()->where('is_favorite', true)->count();
-        $variants = (int) Product::query()->whereNotNull('parent_id')->count();
-        $withoutBrand = (int) Product::query()->whereNull('brand_id')->count();
+        $favorites = $hasFavorite
+            ? (int) Product::query()->where('is_favorite', true)->count()
+            : 0;
+        $variants = $hasParent
+            ? (int) Product::query()->whereNotNull('parent_id')->count()
+            : 0;
+        $withoutBrand = $hasBrand
+            ? (int) Product::query()->whereNull('brand_id')->count()
+            : 0;
         $withoutPrice = (int) Product::query()
             ->where(function ($query): void {
                 $query->whereNull('price')->orWhere('price', 0);
             })
             ->count();
 
-        $brandsTotal = (int) Brand::query()->count();
-        $brandsActive = (int) Brand::query()->where('status', 'active')->count();
-        $principalsTotal = (int) Principal::query()->count();
-        $principalsActive = (int) Principal::query()->where('status', 'active')->count();
-        $productTypes = (int) ProductType::query()->count();
-        $tags = (int) ProductTag::query()->count();
-        $attributes = (int) ProductAttribute::query()->count();
+        $brandsTotal = $hasBrandsTable ? (int) Brand::query()->count() : 0;
+        $brandsActive = $hasBrandsTable ? (int) Brand::query()->where('status', 'active')->count() : 0;
+        $principalsTotal = $hasPrincipalsTable ? (int) Principal::query()->count() : 0;
+        $principalsActive = $hasPrincipalsTable ? (int) Principal::query()->where('status', 'active')->count() : 0;
+        $productTypes = $hasProductTypesTable ? (int) ProductType::query()->count() : 0;
+        $tags = $hasTagsTable ? (int) ProductTag::query()->count() : 0;
+        $attributes = $hasAttributesTable ? (int) ProductAttribute::query()->count() : 0;
 
-        $recent = Product::query()
-            ->with(['brand:id,name', 'productType:id,name'])
-            ->latest()
-            ->limit($recentLimit)
-            ->get(['id', 'code', 'sku', 'name', 'status', 'category', 'price', 'brand_id', 'product_type_id', 'created_at'])
+        $recentColumns = ['id', 'code', 'name', 'status', 'price', 'created_at'];
+        if ($hasSku) {
+            $recentColumns[] = 'sku';
+        }
+        if ($hasCategory) {
+            $recentColumns[] = 'category';
+        }
+        if ($hasBrand) {
+            $recentColumns[] = 'brand_id';
+        }
+        if ($hasProductType) {
+            $recentColumns[] = 'product_type_id';
+        }
+
+        $recentQuery = Product::query()->latest()->limit($recentLimit);
+        if ($hasBrand && $hasBrandsTable) {
+            $recentQuery->with('brand:id,name');
+        }
+        if ($hasProductType && $hasProductTypesTable) {
+            $recentQuery->with('productType:id,name');
+        }
+
+        $recent = $recentQuery
+            ->get($recentColumns)
             ->map(fn (Product $product): array => [
                 'id' => $product->id,
                 'code' => $product->code,
-                'sku' => $product->sku,
+                'sku' => $hasSku ? $product->sku : null,
                 'name' => $product->name,
                 'status' => $product->status,
-                'category' => $product->category ?? 'merchandise',
+                'category' => $hasCategory ? ($product->category ?? 'merchandise') : null,
                 'price' => $product->price !== null ? (float) $product->price : null,
-                'brand' => $product->brand?->name,
-                'product_type' => $product->productType?->name,
+                'brand' => ($hasBrand && $hasBrandsTable) ? $product->brand?->name : null,
+                'product_type' => ($hasProductType && $hasProductTypesTable) ? $product->productType?->name : null,
                 'created_at' => $product->created_at?->toDateString(),
             ])
             ->all();
 
-        $topBrands = Product::query()
-            ->join('brands', 'products.brand_id', '=', 'brands.id')
-            ->selectRaw('brands.id, brands.name, count(*) as total')
-            ->groupBy('brands.id', 'brands.name')
-            ->orderByDesc('total')
-            ->limit(5)
-            ->get()
-            ->map(fn ($row): array => [
-                'id' => (int) $row->id,
-                'name' => (string) $row->name,
-                'total' => (int) $row->total,
-            ])
-            ->all();
+        $topBrands = [];
+        if ($hasBrand && $hasBrandsTable) {
+            $topBrands = Product::query()
+                ->join('brands', 'products.brand_id', '=', 'brands.id')
+                ->selectRaw('brands.id, brands.name, count(*) as total')
+                ->groupBy('brands.id', 'brands.name')
+                ->orderByDesc('total')
+                ->limit(5)
+                ->get()
+                ->map(fn ($row): array => [
+                    'id' => (int) $row->id,
+                    'name' => (string) $row->name,
+                    'total' => (int) $row->total,
+                ])
+                ->all();
+        }
 
         return [
             'counts' => [
@@ -91,6 +138,7 @@ class ProductStatusBoard
                 'without_price' => $withoutPrice,
             ],
             'categories' => [
+                'available' => $hasCategory,
                 'merchandise' => (int) ($byCategory['merchandise'] ?? 0),
                 'fleet_sparepart' => (int) ($byCategory['fleet_sparepart'] ?? 0),
                 'service' => (int) ($byCategory['service'] ?? 0),

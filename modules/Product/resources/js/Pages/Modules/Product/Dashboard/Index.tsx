@@ -13,7 +13,7 @@ interface RecentProduct {
     sku: string | null;
     name: string;
     status: string;
-    category: string;
+    category: string | null;
     price: number | null;
     brand: string | null;
     product_type: string | null;
@@ -37,6 +37,7 @@ interface Board {
         without_price: number;
     };
     categories: {
+        available: boolean;
         merchandise: number;
         fleet_sparepart: number;
         service: number;
@@ -325,18 +326,19 @@ export default function Index({ board, can }: Props): JSX.Element {
                 />
             </div>
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {(['merchandise', 'fleet_sparepart', 'service'] as const).map((key) => (
-                    <div key={key} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            {t(`products.categories.${key}`)}
-                        </p>
-                        <p className="mt-2 text-2xl font-bold tabular-nums text-gray-900">{categories[key]}</p>
-                        <p className="mt-1 text-xs text-gray-500">
-                            {sharePercent(categories[key], counts.total)}% {t('products.dashboard.share_label')}
-                        </p>
-                    </div>
-                ))}
+            <div className={`mb-6 grid gap-4 sm:grid-cols-2 ${categories.available ? 'xl:grid-cols-4' : 'xl:grid-cols-1'}`}>
+                {categories.available &&
+                    (['merchandise', 'fleet_sparepart', 'service'] as const).map((key) => (
+                        <div key={key} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                {t(`products.categories.${key}`)}
+                            </p>
+                            <p className="mt-2 text-2xl font-bold tabular-nums text-gray-900">{categories[key]}</p>
+                            <p className="mt-1 text-xs text-gray-500">
+                                {sharePercent(categories[key], counts.total)}% {t('products.dashboard.share_label')}
+                            </p>
+                        </div>
+                    ))}
                 <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('products.dashboard.catalog_masters')}</p>
                     <div className="flex flex-wrap gap-2">
@@ -424,7 +426,9 @@ export default function Index({ board, can }: Props): JSX.Element {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-gray-600">
-                                                {t(`products.categories.${product.category}`, undefined, product.category)}
+                                                {product.category
+                                                    ? t(`products.categories.${product.category}`, undefined, product.category)
+                                                    : '—'}
                                             </td>
                                             <td className="px-4 py-3 text-right tabular-nums text-gray-700">
                                                 {product.price !== null ? formatMoney(product.price) : '—'}

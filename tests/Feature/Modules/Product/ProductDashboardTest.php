@@ -70,6 +70,7 @@ class ProductDashboardTest extends TestCase
                 ->where('board.counts.favorites', 1)
                 ->where('board.counts.without_brand', 1)
                 ->where('board.counts.without_price', 1)
+                ->where('board.categories.available', true)
                 ->where('board.categories.merchandise', 1)
                 ->where('board.categories.service', 1)
                 ->where('board.categories.fleet_sparepart', 1)
