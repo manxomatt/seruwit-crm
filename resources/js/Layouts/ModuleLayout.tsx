@@ -305,7 +305,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'maintenance': { route: 'module.maintenance.index', routePattern: 'module.maintenance.*' },
     'tracking': { route: 'module.tracking.dashboard', routePattern: 'module.tracking.*' },
     'transportation': { route: 'module.transportation.trips.index', routePattern: 'module.transportation.*' },
-    'inventory': { route: 'module.inventory.warehouses.index', routePattern: 'module.inventory.*' },
+    'inventory': { route: 'module.inventory.dashboard', routePattern: 'module.inventory.*' },
     'purchasing': { route: 'module.purchasing.purchase-orders.index', routePattern: 'module.purchasing.*' },
     'sales': { route: 'module.sales.sales-orders.index', routePattern: 'module.sales.*' },
     'accounting': { route: 'module.accounting.dashboard', routePattern: 'module.accounting.*' },
@@ -373,14 +373,22 @@ const moduleIconMap: Record<string, ReactNode> = {
 // Module display names fall back to the module key; prefer t('modules.*') in the layout.
 const moduleDisplayNames: Record<string, string> = {};
 
-// Helper function to check if a route exists
+// Helper function to check if a route exists (tenant name or central.* twin)
 const routeExists = (routeName: string): boolean => {
-    try {
-        route(routeName);
-        return true;
-    } catch {
-        return false;
+    return route().has(routeName) || route().has(`central.${routeName}`);
+};
+
+const resolveNamedRoute = (routeName: string): string => {
+    if (route().has(routeName)) {
+        return routeName;
     }
+
+    const centralRouteName = `central.${routeName}`;
+    if (route().has(centralRouteName)) {
+        return centralRouteName;
+    }
+
+    return routeName;
 };
 
 const BuildingIcon = () => (
@@ -408,7 +416,7 @@ const getDashboardRoute = (user: User | null): string => {
     }
 
     if (routeExists('module.dashboard')) {
-        return route('module.dashboard');
+        return route(resolveNamedRoute('module.dashboard'));
     }
 
     return route('dashboard');
@@ -466,7 +474,11 @@ export default function ModuleLayout({ header, children }: Props) {
                 name: t('shell.dashboard'),
                 href: dashboardRoute,
                 icon: <DashboardIcon />,
-                current: route().current('module.dashboard') || route().current('dashboard'),
+                current:
+                    route().current('module.dashboard') ||
+                    route().current('central.module.dashboard') ||
+                    route().current('dashboard') ||
+                    false,
                 module: 'dashboard',
             },
         ];
@@ -485,9 +497,12 @@ export default function ModuleLayout({ header, children }: Props) {
                 const routeInfo = moduleRouteMap[module];
                 items.push({
                     name: moduleLabel(module),
-                    href: route(routeInfo.route),
+                    href: route(resolveNamedRoute(routeInfo.route)),
                     icon: moduleIconMap[module] || <PagesIcon />,
-                    current: route().current(routeInfo.routePattern),
+                    current:
+                        route().current(routeInfo.routePattern) ||
+                        route().current(`central.${routeInfo.routePattern}`) ||
+                        false,
                     module: module,
                 });
             }
@@ -497,9 +512,12 @@ export default function ModuleLayout({ header, children }: Props) {
         if (isCentral && (isAdmin || isReseller) && routeExists('module.tenants.index')) {
             items.push({
                 name: t('shell.manage_tenants'),
-                href: route('module.tenants.index'),
+                href: route(resolveNamedRoute('module.tenants.index')),
                 icon: <BuildingIcon />,
-                current: route().current('module.tenants.*'),
+                current:
+                    route().current('module.tenants.*') ||
+                    route().current('central.module.tenants.*') ||
+                    false,
                 module: 'tenants',
             });
         }
@@ -509,9 +527,12 @@ export default function ModuleLayout({ header, children }: Props) {
         if (isCentral && isAdmin && routeExists('module.plans.index')) {
             items.push({
                 name: t('shell.plans'),
-                href: route('module.plans.index'),
+                href: route(resolveNamedRoute('module.plans.index')),
                 icon: <PlansIcon />,
-                current: route().current('module.plans.*'),
+                current:
+                    route().current('module.plans.*') ||
+                    route().current('central.module.plans.*') ||
+                    false,
                 module: 'plans',
             });
         }
@@ -522,9 +543,12 @@ export default function ModuleLayout({ header, children }: Props) {
         if (isCentral && isAdmin && routeExists('module.registry.index')) {
             items.push({
                 name: t('shell.platform_modules'),
-                href: route('module.registry.index'),
+                href: route(resolveNamedRoute('module.registry.index')),
                 icon: <ModulesIcon />,
-                current: route().current('module.registry.*'),
+                current:
+                    route().current('module.registry.*') ||
+                    route().current('central.module.registry.*') ||
+                    false,
                 module: 'module-registry',
             });
         }
@@ -535,9 +559,12 @@ export default function ModuleLayout({ header, children }: Props) {
         if (!isCentral && isAdmin && routeExists('module.modules.index')) {
             items.push({
                 name: t('shell.modules'),
-                href: route('module.modules.index'),
+                href: route(resolveNamedRoute('module.modules.index')),
                 icon: <ModulesIcon />,
-                current: route().current('module.modules.*'),
+                current:
+                    route().current('module.modules.*') ||
+                    route().current('central.module.modules.*') ||
+                    false,
                 module: 'modules',
             });
         }

@@ -3,6 +3,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
+    { labelKey: 'inventory.nav.dashboard', route: 'inventory.dashboard', pattern: 'inventory.dashboard' },
     { labelKey: 'inventory.nav.warehouses', route: 'inventory.warehouses.index', pattern: 'inventory.warehouses.*' },
     { labelKey: 'inventory.nav.stock_levels', route: 'inventory.stock-levels.index', pattern: 'inventory.stock-levels.*' },
     { labelKey: 'inventory.nav.stock_movements', route: 'inventory.stock-movements.index', pattern: 'inventory.stock-movements.*' },

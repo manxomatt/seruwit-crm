@@ -12,13 +12,19 @@ const TABS: Array<{ labelKey: string; route: string; pattern: string }> = [
 ];
 
 export default function TrackingNav(): JSX.Element {
-    const { prefixedRoute, isCurrentRoute } = useRoutePrefix();
+    const { routePrefix, prefixedRoute, isCurrentRoute } = useRoutePrefix();
     const { t } = useTrans();
+
+    const tabs = TABS.filter((tab) => {
+        const name = `${routePrefix}.${tab.route}`;
+
+        return route().has(name) || route().has(`central.${name}`);
+    });
 
     return (
         <div className="mb-6 border-b border-gray-200">
             <nav className="-mb-px flex gap-6">
-                {TABS.map((tab) => {
+                {tabs.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
                     return (
                         <Link

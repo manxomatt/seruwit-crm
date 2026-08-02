@@ -7,6 +7,7 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Inventory\Http\Controllers\ExpiryReportController;
+use Modules\Inventory\Http\Controllers\InventoryDashboardController;
 use Modules\Inventory\Http\Controllers\PutawayController;
 use Modules\Inventory\Http\Controllers\StockLevelController;
 use Modules\Inventory\Http\Controllers\StockMovementController;
@@ -53,7 +54,9 @@ class InventoryModule implements ModuleContract
             'name' => 'Inventory',
             'slug' => 'inventory',
             'icon' => 'archive',
-            'route_name' => 'inventory.warehouses.index',
+            'route_name' => 'inventory.dashboard',
+            'permission_module' => 'inventory',
+            'permission_action' => 'view',
             'sort_order' => 90,
         ];
     }
@@ -71,9 +74,7 @@ class InventoryModule implements ModuleContract
     public function routes(): void
     {
         Route::middleware(['auth', 'permission:inventory,view'])->group(function (): void {
-            Route::get('/inventory', function () {
-                return redirect('/module/inventory/warehouses');
-            });
+            Route::get('/inventory', [InventoryDashboardController::class, 'index'])->name('inventory.dashboard');
 
             Route::prefix('inventory')->name('inventory.')->group(function (): void {
                 // Warehouse Locations (before wildcard)

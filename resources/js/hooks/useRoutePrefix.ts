@@ -28,10 +28,30 @@ export function useRoutePrefix(): UseRoutePrefixReturn {
     const routePrefix: RoutePrefix = props.route_prefix || 'admin';
 
     /**
+     * Resolve a prefixed route name, preferring the tenant name and falling
+     * back to the central-domain duplicate (routes/web.php wraps app routes
+     * in a "central." name prefix when CENTRAL_SERVES_APP is on).
+     */
+    const resolveRouteName = (routeName: string): string => {
+        const fullRouteName = `${routePrefix}.${routeName}`;
+
+        if (route().has(fullRouteName)) {
+            return fullRouteName;
+        }
+
+        const centralRouteName = `central.${fullRouteName}`;
+        if (route().has(centralRouteName)) {
+            return centralRouteName;
+        }
+
+        return fullRouteName;
+    };
+
+    /**
      * Generate a route URL with the current prefix
      */
     const prefixedRoute = (routeName: string, params?: any): string => {
-        const fullRouteName = `${routePrefix}.${routeName}`;
+        const fullRouteName = resolveRouteName(routeName);
         return params !== undefined ? route(fullRouteName, params) : route(fullRouteName);
     };
 
@@ -39,7 +59,11 @@ export function useRoutePrefix(): UseRoutePrefixReturn {
      * Check if the current route matches a pattern with the current prefix
      */
     const isCurrentRoute = (routePattern: string): boolean => {
-        return route().current(`${routePrefix}.${routePattern}`) ?? false;
+        return (
+            route().current(`${routePrefix}.${routePattern}`) ||
+            route().current(`central.${routePrefix}.${routePattern}`) ||
+            false
+        );
     };
 
     return {
