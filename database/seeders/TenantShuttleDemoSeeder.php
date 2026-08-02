@@ -259,4 +259,34 @@ class TenantShuttleDemoSeeder extends Seeder
 
         $this->command?->info('Shuttle demo seeded (cities, pools, pool + door products).');
     }
+
+    /**
+     * Remove tagged shuttle demo bookings/passengers. Cities, pools, and corridors
+     * are shared catalog rows and are left in place for reinstall idempotency.
+     */
+    public function uninstall(): void
+    {
+        if (! Schema::hasTable('shuttle_bookings')) {
+            return;
+        }
+
+        $bookingIds = ShuttleBooking::query()
+            ->where('notes', 'like', '%'.self::TAG.'%')
+            ->pluck('id');
+
+        if ($bookingIds->isNotEmpty() && Schema::hasTable('shuttle_passengers')) {
+            ShuttlePassenger::query()->whereIn('booking_id', $bookingIds)->delete();
+        }
+
+        ShuttleBooking::query()->whereIn('id', $bookingIds)->delete();
+
+        if (Schema::hasTable('partners')) {
+            Partner::query()
+                ->where('notes', 'like', '%'.self::TAG.'%')
+                ->where('code', 'CUST-SHUTTLE-01')
+                ->delete();
+        }
+
+        $this->command?->info('Shuttle demo data removed.');
+    }
 }

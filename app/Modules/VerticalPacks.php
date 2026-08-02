@@ -11,6 +11,8 @@ class VerticalPacks
 
     public const TRAVEL_SHUTTLE = 'travel_shuttle';
 
+    public const FINANCE = 'finance';
+
     /**
      * @return array<string, array{label: string, description: string, modules: list<string>, seeders: list<class-string>}>
      */
@@ -47,6 +49,21 @@ class VerticalPacks
                 ],
                 'seeders' => [
                     \Database\Seeders\TenantShuttleDemoSeeder::class,
+                ],
+            ],
+            self::FINANCE => [
+                'label' => 'Finance Suite',
+                'description' => 'Accounting (core), invoicing, receivables, purchasing, payables, billing + demo data. Billing also brings orders/transportation/fleet.',
+                'modules' => [
+                    'invoicing',
+                    'receivables',
+                    'purchasing',
+                    'payables',
+                    'billing',
+                ],
+                'seeders' => [
+                    \Database\Seeders\TenantFinanceDemoSeeder::class,
+                    \Database\Seeders\TenantPayablesDemoSeeder::class,
                 ],
             ],
         ];

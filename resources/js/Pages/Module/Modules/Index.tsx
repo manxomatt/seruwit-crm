@@ -36,6 +36,7 @@ interface Props {
         label: string;
         description: string;
         modules: string[];
+        installed?: boolean;
     }>;
 }
 
@@ -73,6 +74,14 @@ export default function Index({ modules, plan, graceDays, packs = [] }: Props): 
             {},
             { preserveScroll: true, onFinish: () => setBusyKey(null) },
         );
+    };
+
+    const uninstallPack = (packKey: string): void => {
+        setBusyKey(`pack-uninstall:${packKey}`);
+        router.delete(route('module.modules.packs.uninstall', packKey), {
+            preserveScroll: true,
+            onFinish: () => setBusyKey(null),
+        });
     };
 
     const uninstall = (module: ModuleEntry): void => {
@@ -124,7 +133,7 @@ export default function Index({ modules, plan, graceDays, packs = [] }: Props): 
                             </div>
                             <ul className="divide-y divide-gray-100">
                                 {packs.map((pack) => {
-                                    const busy = busyKey === `pack:${pack.key}`;
+                                    const busy = busyKey === `pack:${pack.key}` || busyKey === `pack-uninstall:${pack.key}`;
 
                                     return (
                                         <li key={pack.key} className="flex flex-wrap items-center gap-4 p-6">
@@ -135,12 +144,22 @@ export default function Index({ modules, plan, graceDays, packs = [] }: Props): 
                                                     {t('platform.modules_catalog.packs_modules_prefix')} {pack.modules.join(', ')}
                                                 </p>
                                             </div>
-                                            <div className="shrink-0">
+                                            <div className="flex shrink-0 flex-wrap gap-2">
                                                 <PrimaryButton disabled={busy} onClick={() => installPack(pack.key)}>
-                                                    {busy
+                                                    {busyKey === `pack:${pack.key}`
                                                         ? t('platform.modules_catalog.actions.installing')
                                                         : t('platform.modules_catalog.actions.install_pack')}
                                                 </PrimaryButton>
+                                                {pack.installed && (
+                                                    <SecondaryButton
+                                                        disabled={busy}
+                                                        onClick={() => uninstallPack(pack.key)}
+                                                    >
+                                                        {busyKey === `pack-uninstall:${pack.key}`
+                                                            ? t('platform.modules_catalog.actions.uninstalling')
+                                                            : t('platform.modules_catalog.actions.uninstall_pack')}
+                                                    </SecondaryButton>
+                                                )}
                                             </div>
                                         </li>
                                     );

@@ -55,6 +55,50 @@ class TenantPayablesDemoSeeder extends Seeder
         $this->command?->info('Open /module/payables/bills and /module/payables/payments');
     }
 
+    public function uninstall(): void
+    {
+        if (! Schema::hasTable('supplier_bills')) {
+            return;
+        }
+
+        if (Schema::hasTable('bill_payments')) {
+            $paymentIds = \Modules\Payables\Models\BillPayment::query()
+                ->where('notes', 'like', '%'.self::TAG.'%')
+                ->pluck('id');
+
+            if ($paymentIds->isNotEmpty()) {
+                if (Schema::hasTable('bill_payment_allocations')) {
+                    \Modules\Payables\Models\BillPaymentAllocation::query()
+                        ->whereIn('bill_payment_id', $paymentIds)
+                        ->delete();
+                }
+
+                \Modules\Payables\Models\BillPayment::query()->whereIn('id', $paymentIds)->delete();
+            }
+        }
+
+        $billIds = SupplierBill::query()
+            ->where('notes', 'like', '%'.self::TAG.'%')
+            ->pluck('id');
+
+        if ($billIds->isNotEmpty()) {
+            if (Schema::hasTable('supplier_bill_lines')) {
+                SupplierBillLine::query()->whereIn('supplier_bill_id', $billIds)->delete();
+            }
+
+            SupplierBill::query()->whereIn('id', $billIds)->delete();
+        }
+
+        if (Schema::hasTable('partners')) {
+            Partner::query()
+                ->where('notes', 'like', '%'.self::TAG.'%')
+                ->where('code', 'like', 'SUP-PAY-%')
+                ->delete();
+        }
+
+        $this->command?->info('Payables demo data removed.');
+    }
+
     /**
      * @return \Illuminate\Support\Collection<int, Partner>
      */

@@ -40,12 +40,14 @@ return [
         'actions' => [
             'install' => 'Install',
             'install_pack' => 'Install pack',
+            'uninstall_pack' => 'Uninstall pack',
             'installing' => 'Installing…',
+            'uninstalling' => 'Uninstalling…',
             'uninstall' => 'Uninstall',
             'needs_upgrade' => 'Needs upgrade',
         ],
         'packs_heading' => 'Vertical packs',
-        'packs_hint' => 'One-click install of modules for a business vertical, plus demo data when available.',
+        'packs_hint' => 'One-click install or uninstall of modules for a business vertical, plus demo data when available.',
         'packs_modules_prefix' => 'Includes:',
         'uninstall_confirm' => [
             'title' => 'Uninstall module :module?',
@@ -59,6 +61,7 @@ return [
         'module_disabled' => 'Module :module disabled for all tenants.',
         'module_installed' => 'Module :module installed successfully.',
         'pack_installed' => 'Pack :pack installed successfully.',
+        'pack_uninstalled' => 'Pack :pack uninstalled. Demo data was removed; module data is retained for :days days.',
         'module_uninstalled' => 'Module :module uninstalled. Its data is retained for :days days — install it again before then to recover it.',
     ],
 ];

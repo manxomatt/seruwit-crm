@@ -7,8 +7,13 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\ModuleInstaller;
 use App\Modules\VerticalPacks;
+use Database\Seeders\TenantFinanceDemoSeeder;
+use Database\Seeders\TenantPayablesDemoSeeder;
 use Database\Seeders\TenantRentalDemoSeeder;
 use Illuminate\Support\Facades\Schema;
+use Modules\Billing\Models\Tariff;
+use Modules\Invoicing\Models\Invoice;
+use Modules\Payables\Models\SupplierBill;
 use Modules\Rental\Models\Rental;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
@@ -41,6 +46,7 @@ class VerticalPackInstallTest extends TestCase
                 ->has('packs')
                 ->where('packs.0.key', VerticalPacks::RENTAL_MOBIL)
                 ->where('packs.1.key', VerticalPacks::TRAVEL_SHUTTLE)
+                ->where('packs.2.key', VerticalPacks::FINANCE)
             );
     }
 
@@ -97,5 +103,56 @@ class VerticalPackInstallTest extends TestCase
         $this->actingAs($member)
             ->post('http://member-pack-co.localhost/module/modules/packs/'.VerticalPacks::RENTAL_MOBIL.'/install')
             ->assertForbidden();
+    }
+
+    public function test_workspace_admin_can_install_and_uninstall_finance_pack(): void
+    {
+        $tenant = $this->provisionTenant('Finance Pack Co', 'finance-pack-co', 'owner@finance-pack.test');
+        $owner = $this->ownerOf($tenant, 'owner@finance-pack.test');
+        $tenant->update(['plan' => 'pro']);
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://finance-pack-co.localhost/module/modules/packs/'.VerticalPacks::FINANCE.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertTrue(Schema::hasTable('invoices'));
+            $this->assertTrue(Schema::hasTable('supplier_bills'));
+            $this->assertTrue(Schema::hasTable('tariffs'));
+            $this->assertGreaterThan(
+                0,
+                Invoice::query()->where('notes', 'like', '%'.TenantFinanceDemoSeeder::TAG.'%')->count(),
+            );
+            $this->assertGreaterThan(
+                0,
+                SupplierBill::query()->where('notes', 'like', '%'.TenantPayablesDemoSeeder::TAG.'%')->count(),
+            );
+            $this->assertGreaterThan(
+                0,
+                Tariff::query()->where('origin', 'like', 'FIN-DEMO %')->count(),
+            );
+        });
+
+        $this->actingAs($owner)
+            ->delete('http://finance-pack-co.localhost/module/modules/packs/'.VerticalPacks::FINANCE)
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertSame(
+                0,
+                Invoice::query()->where('notes', 'like', '%'.TenantFinanceDemoSeeder::TAG.'%')->count(),
+            );
+            $this->assertSame(
+                0,
+                SupplierBill::query()->where('notes', 'like', '%'.TenantPayablesDemoSeeder::TAG.'%')->count(),
+            );
+            $this->assertSame(
+                0,
+                Tariff::query()->where('origin', 'like', 'FIN-DEMO %')->count(),
+            );
+        });
     }
 }

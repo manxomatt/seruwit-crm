@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
@@ -369,5 +370,32 @@ class TenantRentalDemoSeeder extends Seeder
                     $accounting->issueDraftInvoices($rental->fresh());
                 }
             });
+    }
+
+    /**
+     * Remove tagged rental demo rows (rates + rentals). Related invoices from
+     * backfill are left for Invoicing to manage when that module is uninstalled.
+     */
+    public function uninstall(): void
+    {
+        if (! Schema::hasTable('rentals')) {
+            return;
+        }
+
+        $rentalIds = Rental::query()
+            ->where('notes', 'like', '%'.self::TAG.'%')
+            ->pluck('id');
+
+        if ($rentalIds->isNotEmpty() && Schema::hasTable('rental_charges')) {
+            DB::table('rental_charges')->whereIn('rental_id', $rentalIds)->delete();
+        }
+
+        Rental::query()->whereIn('id', $rentalIds)->delete();
+
+        if (Schema::hasTable('rental_rates')) {
+            RentalRate::query()->where('notes', 'like', '%'.self::TAG.'%')->delete();
+        }
+
+        $this->command?->info('Rental demo data removed.');
     }
 }

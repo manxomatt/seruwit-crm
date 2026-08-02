@@ -38,6 +38,9 @@ class ModuleController extends Controller
                     'label' => $pack['label'],
                     'description' => $pack['description'],
                     'modules' => $pack['modules'],
+                    'installed' => collect($pack['modules'])->contains(
+                        fn (string $moduleKey): bool => Modules::installed($moduleKey)
+                    ),
                 ])
                 ->values()
                 ->all(),
@@ -80,6 +83,29 @@ class ModuleController extends Controller
         $label = VerticalPacks::find($pack)['label'];
 
         return back()->with('success', __('platform.messages.pack_installed', ['pack' => $label]));
+    }
+
+    public function uninstallPack(string $pack, ModuleInstaller $installer): RedirectResponse
+    {
+        $this->ensureWorkspaceContext();
+
+        if (! VerticalPacks::find($pack)) {
+            abort(404);
+        }
+
+        try {
+            $installer->uninstallPack(tenant(), $pack);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $label = VerticalPacks::find($pack)['label'];
+        $days = config('modules.purge_after_days');
+
+        return back()->with('success', __('platform.messages.pack_uninstalled', [
+            'pack' => $label,
+            'days' => $days,
+        ]));
     }
 
     public function uninstall(string $key, ModuleInstaller $installer): RedirectResponse

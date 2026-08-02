@@ -107,18 +107,7 @@ class ModuleInstaller
         }
 
         $tenant->run(function () use ($module): void {
-            $this->guardDependents($module);
-
-            if ($menu = $module->menu()) {
-                Menu::query()->where('slug', $menu['slug'])->update(['is_active' => false]);
-            }
-
-            InstalledModule::query()->updateOrCreate(
-                ['key' => $module->key()],
-                ['installed_at' => now(), 'uninstalled_at' => now()],
-            );
-
-            Modules::flushInstalledState();
+            $this->uninstallWithinTenant($module);
         });
     }
 
@@ -276,6 +265,83 @@ class ModuleInstaller
                 app($seederClass)->run();
             }
         });
+    }
+
+    /**
+     * Remove pack demo data, then soft-uninstall listed pack modules (reverse order).
+     * Modules that still have installed dependents are skipped.
+     *
+     * @throws RuntimeException when the pack key is unknown
+     */
+    public function uninstallPack(Tenant $tenant, string $packKey): void
+    {
+        $pack = VerticalPacks::find($packKey);
+
+        if (! $pack) {
+            throw new RuntimeException("Unknown vertical pack [{$packKey}].");
+        }
+
+        $tenant->run(function () use ($pack): void {
+            foreach (array_reverse($pack['seeders']) as $seederClass) {
+                if (! class_exists($seederClass)) {
+                    continue;
+                }
+
+                $seeder = app($seederClass);
+
+                if (method_exists($seeder, 'uninstall')) {
+                    $seeder->uninstall();
+                }
+            }
+
+            foreach (array_reverse($pack['modules']) as $moduleKey) {
+                $module = Modules::find($moduleKey);
+
+                if (! $module) {
+                    continue;
+                }
+
+                $isInstalled = InstalledModule::query()
+                    ->where('key', $module->key())
+                    ->installed()
+                    ->exists();
+
+                if (! $isInstalled) {
+                    continue;
+                }
+
+                try {
+                    $this->uninstallWithinTenant($module);
+                } catch (RuntimeException) {
+                    // Leave modules that still have dependents installed.
+                }
+            }
+        });
+    }
+
+    /**
+     * Soft-uninstall a module assuming tenant context is already active.
+     */
+    private function uninstallWithinTenant(ModuleContract $module): void
+    {
+        if (! Modules::has($module->key())) {
+            throw new RuntimeException(
+                "Module [{$module->key()}] is a core feature and cannot be uninstalled.",
+            );
+        }
+
+        $this->guardDependents($module);
+
+        if ($menu = $module->menu()) {
+            Menu::query()->where('slug', $menu['slug'])->update(['is_active' => false]);
+        }
+
+        InstalledModule::query()->updateOrCreate(
+            ['key' => $module->key()],
+            ['installed_at' => now(), 'uninstalled_at' => now()],
+        );
+
+        Modules::flushInstalledState();
     }
 
     private function guardDependents(ModuleContract $module): void
