@@ -6,6 +6,7 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Payables\Http\Controllers\BillPaymentController;
+use Modules\Payables\Http\Controllers\PayablesDashboardController;
 use Modules\Payables\Http\Controllers\SupplierBillController;
 
 class PayablesModule implements ModuleContract
@@ -46,7 +47,7 @@ class PayablesModule implements ModuleContract
             'name' => 'Payables',
             'slug' => 'payables',
             'icon' => 'payables',
-            'route_name' => 'payables.bills.index',
+            'route_name' => 'payables.dashboard',
             'permission_module' => 'payables',
             'permission_action' => 'view',
             'sort_order' => 93,
@@ -71,9 +72,7 @@ class PayablesModule implements ModuleContract
     public function routes(): void
     {
         Route::middleware(['auth', 'permission:payables,view'])->group(function (): void {
-            Route::get('/payables', function () {
-                return redirect('/module/payables/bills');
-            });
+            Route::get('/payables', [PayablesDashboardController::class, 'index'])->name('payables.dashboard');
 
             Route::prefix('payables')->name('payables.')->group(function (): void {
                 Route::get('/bills', [SupplierBillController::class, 'index'])->name('bills.index');

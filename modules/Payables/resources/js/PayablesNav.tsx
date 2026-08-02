@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
+    { labelKey: 'payables.nav.dashboard', route: 'payables.dashboard', pattern: 'payables.dashboard' },
     { labelKey: 'payables.nav.bills', route: 'payables.bills.index', pattern: 'payables.bills.*' },
     { labelKey: 'payables.nav.payments', route: 'payables.payments.index', pattern: 'payables.payments.*' },
 ] as const;

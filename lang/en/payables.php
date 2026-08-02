@@ -4,8 +4,45 @@ return [
     'title' => 'Payables',
 
     'nav' => [
+        'dashboard' => 'Dashboard',
         'bills' => 'Supplier Bills',
         'payments' => 'Payments',
+    ],
+
+    'dashboard' => [
+        'title' => 'Payables Dashboard',
+        'subtitle' => 'AP health — open supplier balances, aging buckets, overdue bills, and recent payments.',
+        'open_ap' => 'Open AP',
+        'open_bills' => ':count open bills',
+        'overdue' => 'Overdue',
+        'overdue_hint' => ':count bills past due',
+        'of_open_ap' => 'of open AP',
+        'paid_this_month' => 'Paid this month',
+        'posted_payments' => ':count posted payments on record',
+        'needs_attention' => 'Needs attention',
+        'needs_attention_hint' => 'Overdue bills and drafts waiting to be issued',
+        'overdue_short' => 'overdue',
+        'draft_short' => 'draft',
+        'top_suppliers' => 'Top outstanding suppliers',
+        'top_suppliers_help' => 'Suppliers with the largest open balances',
+        'view_bills' => 'View bills',
+        'empty_ap' => 'No open payables.',
+        'partner_overdue' => ':amount overdue',
+        'recent' => 'Recent payments',
+        'recent_help' => 'Latest posted and voided bill payments',
+        'view_payments' => 'View payments',
+        'quick_actions' => 'Quick actions',
+        'quick_bills' => 'Browse supplier bills and drafts',
+        'quick_payments' => 'Browse bill payment history',
+        'quick_record' => 'Allocate cash to open bills',
+    ],
+
+    'buckets' => [
+        'current' => 'Current',
+        '1_30' => '1–30',
+        '31_60' => '31–60',
+        '61_90' => '61–90',
+        '90_plus' => '90+',
     ],
 
     'status' => [
@@ -84,6 +121,8 @@ return [
         'wht_amount' => 'WHT amount',
         'reference' => 'Reference',
         'notes' => 'Notes',
+        'code' => 'Code',
+        'status' => 'Status',
     ],
 
     'placeholders' => [

@@ -4,8 +4,45 @@ return [
     'title' => 'Hutang Usaha',
 
     'nav' => [
+        'dashboard' => 'Dasbor',
         'bills' => 'Tagihan Supplier',
         'payments' => 'Pembayaran',
+    ],
+
+    'dashboard' => [
+        'title' => 'Dasbor Hutang Usaha',
+        'subtitle' => 'Kesehatan AP — saldo supplier terbuka, bucket aging, tagihan jatuh tempo, dan pembayaran terbaru.',
+        'open_ap' => 'AP terbuka',
+        'open_bills' => ':count tagihan terbuka',
+        'overdue' => 'Jatuh tempo',
+        'overdue_hint' => ':count tagihan lewat jatuh tempo',
+        'of_open_ap' => 'dari AP terbuka',
+        'paid_this_month' => 'Dibayar bulan ini',
+        'posted_payments' => ':count pembayaran posted tercatat',
+        'needs_attention' => 'Perlu perhatian',
+        'needs_attention_hint' => 'Tagihan jatuh tempo dan draft menunggu diterbitkan',
+        'overdue_short' => 'jatuh tempo',
+        'draft_short' => 'draft',
+        'top_suppliers' => 'Supplier outstanding tertinggi',
+        'top_suppliers_help' => 'Supplier dengan saldo terbuka terbesar',
+        'view_bills' => 'Lihat tagihan',
+        'empty_ap' => 'Tidak ada hutang terbuka.',
+        'partner_overdue' => ':amount jatuh tempo',
+        'recent' => 'Pembayaran terbaru',
+        'recent_help' => 'Pembayaran tagihan posted dan voided terkini',
+        'view_payments' => 'Lihat pembayaran',
+        'quick_actions' => 'Aksi cepat',
+        'quick_bills' => 'Jelajahi tagihan supplier dan draft',
+        'quick_payments' => 'Riwayat pembayaran tagihan',
+        'quick_record' => 'Alokasikan pembayaran ke tagihan terbuka',
+    ],
+
+    'buckets' => [
+        'current' => 'Current',
+        '1_30' => '1–30',
+        '31_60' => '31–60',
+        '61_90' => '61–90',
+        '90_plus' => '90+',
     ],
 
     'status' => [
@@ -84,6 +121,8 @@ return [
         'wht_amount' => 'Jumlah PPh',
         'reference' => 'Referensi',
         'notes' => 'Catatan',
+        'code' => 'Kode',
+        'status' => 'Status',
     ],
 
     'placeholders' => [
