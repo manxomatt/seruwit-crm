@@ -15,6 +15,28 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useCallback, useState } from 'react';
 import PartnersNav from '../../../../PartnersNav';
 
+const PencilIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+        />
+    </svg>
+);
+
+const TrashIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+        />
+    </svg>
+);
+
 interface Location {
     id: number;
     code: string;
@@ -199,12 +221,14 @@ export default function Index({ locations, filters, can }: Props): JSX.Element {
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.fields.address')}</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.locations.coords')}</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.fields.status')}</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
+                                        <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            <span className="sr-only">{t('common.actions')}</span>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white">
                                     {locations.data.map((location) => (
-                                        <tr key={location.id} className="hover:bg-gray-50">
+                                        <tr key={location.id} className="group hover:bg-gray-50">
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{location.code}</td>
                                             <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{location.name}</td>
                                             <td className="max-w-sm truncate px-6 py-4 text-sm text-gray-500">
@@ -225,15 +249,25 @@ export default function Index({ locations, filters, can }: Props): JSX.Element {
                                                 </span>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end gap-3">
+                                                <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                                     {can.update && (
-                                                        <button onClick={() => openEdit(location)} className="text-indigo-600 hover:text-indigo-900">
-                                                            {t('common.edit')}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openEdit(location)}
+                                                            className="text-indigo-600 hover:text-indigo-900"
+                                                            title={t('common.edit')}
+                                                        >
+                                                            <PencilIcon />
                                                         </button>
                                                     )}
                                                     {can.delete && (
-                                                        <button onClick={() => setDeleting(location)} className="text-red-600 hover:text-red-900">
-                                                            {t('common.delete')}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setDeleting(location)}
+                                                            className="text-red-600 hover:text-red-900"
+                                                            title={t('common.delete')}
+                                                        >
+                                                            <TrashIcon />
                                                         </button>
                                                     )}
                                                 </div>
