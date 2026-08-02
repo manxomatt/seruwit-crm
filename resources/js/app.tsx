@@ -1,6 +1,8 @@
 import '../css/app.css';
 import './bootstrap';
 
+import AppearanceProvider from './Components/AppearanceProvider';
+import { applyAppearance } from './utils/appearance';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
@@ -32,11 +34,18 @@ createInertiaApp({
         return resolvePageComponent(candidates, pages as any);
     },
     setup({ el, App, props }) {
+        const initialSettings = (props.initialPage.props as { settings?: Record<string, string> }).settings;
+        applyAppearance(initialSettings);
+
         const root = createRoot(el as Element);
 
-        root.render(<App {...props} />);
+        root.render(
+            <AppearanceProvider>
+                <App {...props} />
+            </AppearanceProvider>,
+        );
     },
     progress: {
-        color: '#4B5563',
+        color: 'var(--color-primary, #3B82F6)',
     },
 });

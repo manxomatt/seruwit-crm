@@ -186,14 +186,14 @@ export default function AuthenticatedLayout({ header, children }: Props) {
             </nav>
 
             {header && (
-                <header className="bg-white shadow">
+                <header className="bg-white shadow dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-gray-800">
                     <div className="mx-auto flex min-h-[4.5rem] max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8">
-                        <div className="w-full">{header}</div>
+                        <div className="w-full dark:text-gray-100">{header}</div>
                     </div>
                 </header>
             )}
 
-            <main>{children}</main>
+            <main className="dark:bg-gray-950 dark:text-gray-100">{children}</main>
         </div>
     );
 }

@@ -2,7 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    :root {
+        --color-primary: #3b82f6;
+        --color-primary-rgb: 59 130 246;
+        --color-secondary: #10b981;
+        --color-secondary-rgb: 16 185 129;
+        --color-primary-dark: #1e3a5f;
+        --color-primary-darker: #0f172a;
+        --font-sans: Figtree, ui-sans-serif, system-ui, sans-serif;
+        --brand-sidebar-from: #0f172a;
+        --brand-sidebar-via: #1e3a5f;
+        --brand-sidebar-to: #0f172a;
+        --brand-sidebar-accent: #10b981;
+    }
+
+    body {
+        font-family: var(--font-sans);
+    }
+}
+
 @layer components {
+    .brand-sidebar {
+        background-image: linear-gradient(
+            to bottom,
+            var(--brand-sidebar-from),
+            var(--brand-sidebar-via),
+            var(--brand-sidebar-to)
+        );
+    }
+
     .landing-reveal {
         animation: landing-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
@@ -59,7 +88,7 @@
     /* Thin, themed scrollbar for the module sidebar nav */
     .sidebar-nav-scroll {
         scrollbar-width: thin;
-        scrollbar-color: rgb(34 211 238 / 0.35) transparent;
+        scrollbar-color: color-mix(in srgb, var(--brand-sidebar-accent) 45%, transparent) transparent;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
     }
@@ -75,7 +104,7 @@
 
     .sidebar-nav-scroll::-webkit-scrollbar-thumb {
         border-radius: 9999px;
-        background-color: rgb(34 211 238 / 0.25);
+        background-color: color-mix(in srgb, var(--brand-sidebar-accent) 35%, transparent);
         border: 1px solid transparent;
         background-clip: content-box;
         transition: background-color 0.15s ease;
@@ -83,11 +112,11 @@
 
     .sidebar-nav-scroll:hover::-webkit-scrollbar-thumb,
     .sidebar-nav-scroll:focus-within::-webkit-scrollbar-thumb {
-        background-color: rgb(34 211 238 / 0.55);
+        background-color: color-mix(in srgb, var(--brand-sidebar-accent) 65%, transparent);
     }
 
     .sidebar-nav-scroll::-webkit-scrollbar-thumb:active {
-        background-color: rgb(34 211 238 / 0.75);
+        background-color: color-mix(in srgb, var(--brand-sidebar-accent) 85%, transparent);
     }
 }
 
@@ -141,4 +170,3 @@
         animation: none !important;
     }
 }
-

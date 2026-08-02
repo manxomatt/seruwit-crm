@@ -21,17 +21,24 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-                display: ['Plus Jakarta Sans', 'Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['var(--font-sans)', 'Figtree', ...defaultTheme.fontFamily.sans],
+                display: ['Plus Jakarta Sans', 'var(--font-sans)', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                primary: defaultTheme.colors.teal?.[700] || '#0f766e',
+                primary: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
+                secondary: 'rgb(var(--color-secondary-rgb) / <alpha-value>)',
+                brand: {
+                    DEFAULT: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
+                    secondary: 'rgb(var(--color-secondary-rgb) / <alpha-value>)',
+                },
                 accent: '#ff6b6b',
                 'background-soft': '#f8fafc',
                 'background-light': '#f1f5f9',
             },
         },
     },
+
+    darkMode: 'class',
 
     plugins: [forms],
 };

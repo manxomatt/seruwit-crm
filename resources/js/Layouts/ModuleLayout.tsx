@@ -414,17 +414,12 @@ const getDashboardRoute = (user: User | null): string => {
     return route('dashboard');
 };
 
-// Get theme colors based on user role - using Sky Track theme (dark blue gradient)
-const getThemeColors = (isAdmin: boolean) => {
-    // Both admin and module users use the same Sky Track theme
+// Sidebar chrome follows Appearance primary/secondary CSS variables.
+const getThemeColors = () => {
     return {
-        gradient: 'from-slate-900 via-blue-900 to-slate-900',
-        border: 'border-blue-700/50',
-        text: 'text-blue-100',
-        textHover: 'text-cyan-300',
-        bg: 'bg-blue-600',
-        activeItem: 'bg-cyan-500/20 text-white border-l-4 border-cyan-400',
-        hoverItem: 'hover:bg-white/5 hover:text-white',
+        border: 'border-white/15',
+        text: 'text-white/75',
+        textHover: 'text-[color:var(--brand-sidebar-accent)]',
     };
 };
 
@@ -454,7 +449,7 @@ export default function ModuleLayout({ header, children }: Props) {
     const isCentral = !pageProps.currentTenant;
     const isAdmin = user?.is_admin || false;
     const isReseller = user?.is_reseller || false;
-    const theme = getThemeColors(isAdmin);
+    const theme = getThemeColors();
     const panelName = isAdmin ? 'Admin' : 'Module';
 
     // Get logo and site name from settings
@@ -638,7 +633,7 @@ export default function ModuleLayout({ header, children }: Props) {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
                 <div className="fixed inset-0 z-40 lg:hidden">
@@ -646,7 +641,7 @@ export default function ModuleLayout({ header, children }: Props) {
                         className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity"
                         onClick={() => setSidebarOpen(false)}
                     />
-                    <div className={`fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b ${theme.gradient}`}>
+                    <div className="brand-sidebar fixed inset-y-0 left-0 flex w-64 flex-col">
                         <div className="flex h-16 shrink-0 items-center justify-between px-4">
                             <Link href={getDashboardRoute(user)} className="flex items-center">
                                 {siteLogo ? (
@@ -683,7 +678,7 @@ export default function ModuleLayout({ header, children }: Props) {
 
             {/* Desktop sidebar */}
             <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-                <div className={`flex min-h-0 flex-1 flex-col bg-gradient-to-b ${theme.gradient}`}>
+                <div className="brand-sidebar flex min-h-0 flex-1 flex-col">
                     <div className={`flex h-16 shrink-0 items-center px-4 border-b ${theme.border}`}>
                         <Link href={getDashboardRoute(user)} className="flex items-center">
                             {siteLogo ? (
@@ -713,10 +708,10 @@ export default function ModuleLayout({ header, children }: Props) {
             {/* Main content */}
             <div className="lg:pl-64">
                 {/* Top navigation */}
-                <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+                <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:gap-x-6 sm:px-6 lg:px-8">
                     <button
                         type="button"
-                        className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
+                        className="-m-2.5 p-2.5 text-gray-700 dark:text-gray-200 lg:hidden"
                         onClick={() => setSidebarOpen(true)}
                     >
                         <MenuIcon />
@@ -820,15 +815,15 @@ export default function ModuleLayout({ header, children }: Props) {
 
                 {/* Page header — min-h keeps height stable with/without action buttons */}
                 {header && (
-                    <header className="bg-white shadow-sm">
+                    <header className="bg-white shadow-sm dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-gray-800">
                         <div className="flex min-h-[4.5rem] items-center px-4 py-4 sm:px-6 lg:px-8">
-                            <div className="w-full">{header}</div>
+                            <div className="w-full dark:text-gray-100">{header}</div>
                         </div>
                     </header>
                 )}
 
                 {/* Main content area */}
-                <main className="py-6">
+                <main className="py-6 dark:text-gray-100">
                     <div className="px-4 sm:px-6 lg:px-8">
                         {children}
                     </div>
