@@ -40,7 +40,8 @@ class VehicleController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('plate_number', 'like', "%{$search}%")
-                        ->orWhere('brand', 'like', "%{$search}%");
+                        ->orWhere('brand', 'like', "%{$search}%")
+                        ->orWhere('color', 'like', "%{$search}%");
                 });
             })
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))

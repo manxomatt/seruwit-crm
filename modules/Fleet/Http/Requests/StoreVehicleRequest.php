@@ -28,6 +28,7 @@ class StoreVehicleRequest extends FormRequest
             'rental_class' => ['nullable', 'string', 'in:economy,mpv,suv,premium,other'],
             'brand' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
+            'color' => ['nullable', 'string', 'max:100'],
             'capacity' => ['nullable', 'string', 'max:100'],
             'capacity_kg' => ['nullable', 'numeric', 'min:0'],
             'capacity_seats' => ['nullable', 'integer', 'min:1', 'max:100'],

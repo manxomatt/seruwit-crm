@@ -63,6 +63,7 @@ interface Vehicle {
     type: string;
     brand: string | null;
     model_year: number | null;
+    color: string | null;
     capacity: string | null;
     tank_capacity_liters: string | number | null;
     expected_km_per_liter: string | number | null;
@@ -292,6 +293,10 @@ export default function Show({
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.model_year')}</dt>
                                 <dd className="mt-1 text-sm text-gray-900">{vehicle.model_year || '—'}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.color')}</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{vehicle.color || '—'}</dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.capacity')}</dt>

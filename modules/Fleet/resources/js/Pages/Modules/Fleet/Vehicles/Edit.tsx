@@ -22,6 +22,7 @@ interface Vehicle {
     rental_class: string | null;
     brand: string | null;
     model_year: number | null;
+    color: string | null;
     capacity: string | null;
     capacity_kg: string | number | null;
     capacity_seats: number | null;
@@ -53,6 +54,7 @@ export default function Edit({ vehicle }: Props): JSX.Element {
         rental_class: vehicle.rental_class || '',
         brand: vehicle.brand || '',
         model_year: vehicle.model_year ?? '',
+        color: vehicle.color || '',
         capacity: vehicle.capacity || '',
         capacity_kg: vehicle.capacity_kg ?? '',
         capacity_seats: vehicle.capacity_seats ?? '',
@@ -156,6 +158,11 @@ export default function Edit({ vehicle }: Props): JSX.Element {
                                 <InputLabel htmlFor="model_year" value={t('fleet.vehicles.model_year')} />
                                 <TextInput id="model_year" type="number" className="mt-1 block w-full" value={data.model_year} onChange={(e) => setData('model_year', e.target.value)} />
                                 <InputError message={errors.model_year} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="color" value={t('fleet.vehicles.color')} />
+                                <TextInput id="color" className="mt-1 block w-full" value={data.color} onChange={(e) => setData('color', e.target.value)} />
+                                <InputError message={errors.color} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="capacity" value={t('fleet.vehicles.capacity')} />

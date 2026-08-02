@@ -110,11 +110,37 @@ class VehicleTest extends TestCase
             'fuel_type' => 'diesel',
             'status' => 'active',
             'odometer_km' => 0,
+            'model_year' => 2024,
+            'color' => 'White',
         ]);
 
         $vehicle = Vehicle::firstWhere('plate_number', 'B 1234 XYZ');
         $response->assertRedirect(route('module.fleet.vehicles.show', $vehicle));
-        $this->assertDatabaseHas('vehicles', ['plate_number' => 'B 1234 XYZ', 'name' => 'Delivery Truck']);
+        $this->assertDatabaseHas('vehicles', [
+            'plate_number' => 'B 1234 XYZ',
+            'name' => 'Delivery Truck',
+            'model_year' => 2024,
+            'color' => 'White',
+        ]);
+    }
+
+    public function test_index_includes_model_year_and_color(): void
+    {
+        $user = $this->createAdminUser();
+        Vehicle::factory()->create([
+            'name' => 'Silver Van',
+            'model_year' => 2022,
+            'color' => 'Silver',
+        ]);
+
+        $this->actingAs($user)->get(route('module.fleet.vehicles.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Index')
+                ->where('vehicles.data.0.name', 'Silver Van')
+                ->where('vehicles.data.0.model_year', 2022)
+                ->where('vehicles.data.0.color', 'Silver')
+            );
     }
 
     public function test_creating_a_vehicle_validates_required_fields_and_unique_plate(): void

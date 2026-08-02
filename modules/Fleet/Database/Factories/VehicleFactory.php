@@ -31,6 +31,7 @@ class VehicleFactory extends Factory
             'type' => fake()->randomElement(['car', 'truck', 'van', 'motorcycle', 'bus']),
             'brand' => fake()->randomElement(['Toyota', 'Mitsubishi', 'Isuzu', 'Hino', 'Daihatsu']),
             'model_year' => fake()->numberBetween(2015, 2026),
+            'color' => fake()->optional()->randomElement(['White', 'Black', 'Silver', 'Red', 'Blue', 'Grey']),
             'capacity' => fake()->randomElement(['1200 kg', '2000 kg', '5 seats', '12 seats']),
             'capacity_kg' => fake()->randomElement([500, 1000, 2000, 5000]),
             'capacity_seats' => fake()->randomElement([4, 7, 8, 12, 14]),

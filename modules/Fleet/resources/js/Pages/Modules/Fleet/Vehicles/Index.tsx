@@ -1,4 +1,8 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
+import ColumnVisibilityMenu, {
+    buildColumnVisibility,
+    type ColumnDef,
+} from '@/Components/ColumnVisibilityMenu';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
@@ -6,7 +10,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, FormEventHandler } from 'react';
+import { useEffect, useMemo, useState, FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
 import PageHeader from '@/Components/PageHeader';
 
@@ -16,6 +20,8 @@ interface Vehicle {
     plate_number: string;
     type: string;
     brand: string | null;
+    model_year: number | null;
+    color: string | null;
     status: string;
     odometer_km: number;
 }
@@ -40,6 +46,20 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
+type VehicleColumn = 'name' | 'plate_number' | 'model_year' | 'color' | 'type' | 'odometer' | 'status';
+
+const STORAGE_KEY = 'fleet.vehicles.list.visibleColumns';
+
+const VEHICLE_COLUMN_KEYS: Array<{ key: VehicleColumn; required?: boolean; defaultVisible?: boolean }> = [
+    { key: 'name', required: true },
+    { key: 'plate_number', required: true },
+    { key: 'model_year', defaultVisible: false },
+    { key: 'color', defaultVisible: false },
+    { key: 'type', defaultVisible: true },
+    { key: 'odometer', defaultVisible: true },
+    { key: 'status', defaultVisible: true },
+];
+
 const STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'];
 
 const getStatusBadgeColor = (status: string) => {
@@ -56,23 +76,37 @@ const getStatusBadgeColor = (status: string) => {
 };
 
 const EyeIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
     </svg>
 );
 
 const PencilIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
 );
 
 const TrashIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
 );
+
+function readStoredColumns(): Partial<Record<VehicleColumn, boolean>> | null {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+            return null;
+        }
+
+        const parsed = JSON.parse(raw) as Partial<Record<VehicleColumn, boolean>>;
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
 
 export default function Index({ vehicles, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -81,6 +115,25 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
     const [processing, setProcessing] = useState(false);
+
+    const columnDefs = useMemo<Array<ColumnDef<VehicleColumn>>>(
+        () =>
+            VEHICLE_COLUMN_KEYS.map((column) => ({
+                ...column,
+                label: t(`fleet.vehicles.columns.${column.key}`),
+            })),
+        [t],
+    );
+
+    const [visibleColumns, setVisibleColumns] = useState<Record<VehicleColumn, boolean>>(() =>
+        buildColumnVisibility(VEHICLE_COLUMN_KEYS, typeof window !== 'undefined' ? readStoredColumns() : null),
+    );
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(visibleColumns));
+    }, [visibleColumns]);
+
+    const visibleDataColumnCount = columnDefs.filter((column) => visibleColumns[column.key]).length;
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -135,7 +188,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
-                    <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
+                    <form onSubmit={handleSearch} className="mb-6 flex flex-wrap items-end gap-4">
                         <div className="min-w-[220px] flex-1">
                             <TextInput
                                 type="text"
@@ -159,6 +212,13 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                             ]}
                         />
                         <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
+                        <ColumnVisibilityMenu
+                            columns={columnDefs}
+                            visible={visibleColumns}
+                            onChange={setVisibleColumns}
+                            label={t('fleet.vehicles.columns_menu')}
+                            requiredHint={t('fleet.vehicles.columns_required_hint')}
+                        />
                     </form>
 
                     {vehicles.data.length === 0 ? (
@@ -171,35 +231,87 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.name')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.plate')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.type')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.odometer')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('fleet.vehicles.status')}</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
+                                            {visibleColumns.name && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.name')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.plate_number && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.plate_number')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.model_year && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.model_year')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.color && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.color')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.type && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.type')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.odometer && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.odometer')}
+                                                </th>
+                                            )}
+                                            {visibleColumns.status && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.status')}
+                                                </th>
+                                            )}
+                                            <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                <span className="sr-only">{t('common.actions')}</span>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {vehicles.data.map((vehicle) => (
-                                            <tr key={vehicle.id} className="hover:bg-gray-50">
-                                                <td className="whitespace-nowrap px-6 py-4">
-                                                    <div className="text-sm font-medium text-gray-900">{vehicle.name}</div>
-                                                    {vehicle.brand && <div className="text-xs text-gray-500">{vehicle.brand}</div>}
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{vehicle.plate_number}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm capitalize text-gray-500">{vehicle.type}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{vehicle.odometer_km.toLocaleString()} km</td>
-                                                <td className="whitespace-nowrap px-6 py-4">
-                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
-                                                        {t(`fleet.status.${vehicle.status}`)}
-                                                    </span>
-                                                </td>
+                                            <tr key={vehicle.id} className="group hover:bg-gray-50">
+                                                {visibleColumns.name && (
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        <div className="text-sm font-medium text-gray-900">{vehicle.name}</div>
+                                                        {vehicle.brand && <div className="text-xs text-gray-500">{vehicle.brand}</div>}
+                                                    </td>
+                                                )}
+                                                {visibleColumns.plate_number && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{vehicle.plate_number}</td>
+                                                )}
+                                                {visibleColumns.model_year && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                        {vehicle.model_year ?? '—'}
+                                                    </td>
+                                                )}
+                                                {visibleColumns.color && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                        {vehicle.color || '—'}
+                                                    </td>
+                                                )}
+                                                {visibleColumns.type && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm capitalize text-gray-500">{vehicle.type}</td>
+                                                )}
+                                                {visibleColumns.odometer && (
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{vehicle.odometer_km.toLocaleString()} km</td>
+                                                )}
+                                                {visibleColumns.status && (
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
+                                                            {t(`fleet.status.${vehicle.status}`)}
+                                                        </span>
+                                                    </td>
+                                                )}
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                    <div className="flex items-center justify-end gap-2">
+                                                    <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                                         <Link
                                                             href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
                                                             className="text-gray-600 hover:text-gray-900"
-                                                            title={t('fleet.vehicles.show')}
+                                                            title={t('common.view', undefined, 'View')}
                                                         >
                                                             <EyeIcon />
                                                         </Link>
@@ -214,6 +326,7 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                                         )}
                                                         {can.delete && (
                                                             <button
+                                                                type="button"
                                                                 onClick={() => openDeleteDialog(vehicle)}
                                                                 className="text-red-600 hover:text-red-900"
                                                                 title={t('common.delete')}
@@ -228,6 +341,10 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                     </tbody>
                                 </table>
                             </div>
+
+                            <p className="mt-2 text-xs text-gray-400">
+                                {t('fleet.vehicles.columns_showing', { count: visibleDataColumnCount })}
+                            </p>
 
                             {vehicles.last_page > 1 && (
                                 <div className="mt-6 flex items-center justify-between">

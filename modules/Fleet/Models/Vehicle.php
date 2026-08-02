@@ -44,6 +44,7 @@ class Vehicle extends Model
         'rental_class',
         'brand',
         'model_year',
+        'color',
         'capacity',
         'capacity_kg',
         'capacity_seats',
