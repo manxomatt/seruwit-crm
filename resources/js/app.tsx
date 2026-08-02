@@ -1,13 +1,25 @@
 import '../css/app.css';
 import './bootstrap';
 
-import AppearanceProvider from './Components/AppearanceProvider';
 import { applyAppearance } from './utils/appearance';
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+function settingsFromPageProps(pageProps: unknown): Record<string, string> | undefined {
+    if (!pageProps || typeof pageProps !== 'object') {
+        return undefined;
+    }
+
+    const settings = (pageProps as { settings?: unknown }).settings;
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+        return undefined;
+    }
+
+    return settings as Record<string, string>;
+}
 
 createInertiaApp({
     title: (title: string) => `${title} - ${appName}`,
@@ -34,16 +46,15 @@ createInertiaApp({
         return resolvePageComponent(candidates, pages as any);
     },
     setup({ el, App, props }) {
-        const initialSettings = (props.initialPage.props as { settings?: Record<string, string> }).settings;
-        applyAppearance(initialSettings);
+        applyAppearance(settingsFromPageProps(props.initialPage.props));
+
+        // Keep theme in sync after Inertia navigations / partial reloads.
+        router.on('success', (event) => {
+            applyAppearance(settingsFromPageProps(event.detail.page.props));
+        });
 
         const root = createRoot(el as Element);
-
-        root.render(
-            <AppearanceProvider>
-                <App {...props} />
-            </AppearanceProvider>,
-        );
+        root.render(<App {...props} />);
     },
     progress: {
         color: 'var(--color-primary, #3B82F6)',
