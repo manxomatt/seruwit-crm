@@ -1,71 +1,28 @@
 {
   "info": {
-    "name": "Seruwit Mobile Booking API v1",
-    "description": "JSON API for Capacitor passenger apps.\n\nBase path: `/api/mobile/v1` on the **tenant domain**.\n\nFlow (shuttle): health → bootstrap → OTP → corridors/departures → hold → ticket → pay/cancel → history.\nFlow (rental): health → bootstrap → OTP → vehicles/quote → booking → pay-deposit/cancel → history.\n\nEnable rental with setting `rental.passenger_booking_enabled=1`.\n\nSet collection variables `baseUrl` and (after login) `token`.",
+    "name": "Seruwit Mobile Booking API v1 (Travel + Rental)",
+    "description": "JSON API untuk aplikasi mobile Capacitor (Travel shuttle + Rental).\n\n**Base path:** `/api/mobile/v1` di **domain tenant**.\n\n**Auth bersama:** OTP HP → Bearer `{{token}}` (aktif jika Travel dan/atau Rental surface enabled).\n\n**Alur Travel:** Health → Bootstrap → OTP → Corridors/Departures → Hold → Ticket → Pay/Cancel → History\n\n**Alur Rental:** Health → Bootstrap → OTP → Vehicles/Quote → Booking → Pay deposit/Cancel → History\n\n**Enable surfaces:**\n- Travel: `shuttle_settings.passenger_booking_enabled=1`\n- Rental: setting `rental.passenger_booking_enabled=1`\n\nSet `baseUrl` ke domain tenant (contoh `https://andito.seruwit-crm.test`). Setelah Verify OTP, `token` terisi otomatis.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "https://acme.seruwit-crm.test"
-    },
-    {
-      "key": "token",
-      "value": ""
-    },
-    {
-      "key": "phone",
-      "value": "08123456789"
-    },
-    {
-      "key": "otpCode",
-      "value": ""
-    },
-    {
-      "key": "corridorId",
-      "value": "1"
-    },
-    {
-      "key": "departureId",
-      "value": "1"
-    },
-    {
-      "key": "departDate",
-      "value": "2026-08-05"
-    },
-    {
-      "key": "publicToken",
-      "value": ""
-    },
-    {
-      "key": "rentalPublicToken",
-      "value": ""
-    },
-    {
-      "key": "vehicleId",
-      "value": "1"
-    },
-    {
-      "key": "startDate",
-      "value": "2026-08-10"
-    },
-    {
-      "key": "endDate",
-      "value": "2026-08-12"
-    },
-    {
-      "key": "idempotencyKey",
-      "value": ""
-    }
+    { "key": "baseUrl", "value": "https://andito.seruwit-crm.test" },
+    { "key": "token", "value": "" },
+    { "key": "phone", "value": "08123456789" },
+    { "key": "otpCode", "value": "" },
+    { "key": "corridorId", "value": "1" },
+    { "key": "departureId", "value": "1" },
+    { "key": "departDate", "value": "2026-08-05" },
+    { "key": "publicToken", "value": "" },
+    { "key": "vehicleId", "value": "1" },
+    { "key": "startDate", "value": "2026-08-10" },
+    { "key": "endDate", "value": "2026-08-12" },
+    { "key": "rentalPublicToken", "value": "" },
+    { "key": "idempotencyKey", "value": "" }
   ],
   "auth": {
     "type": "bearer",
     "bearer": [
-      {
-        "key": "token",
-        "value": "{{token}}",
-        "type": "string"
-      }
+      { "key": "token", "value": "{{token}}", "type": "string" }
     ]
   },
   "item": [
@@ -77,9 +34,7 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": "{{baseUrl}}/api/mobile/v1/health"
           }
         },
@@ -92,13 +47,14 @@
               { "key": "Accept", "value": "application/json" },
               { "key": "X-App-Version", "value": "1.0.0" }
             ],
-            "url": "{{baseUrl}}/api/mobile/v1/bootstrap"
+            "url": "{{baseUrl}}/api/mobile/v1/bootstrap",
+            "description": "Cek `surfaces.shuttle.enabled` (Travel) dan `surfaces.rental.enabled`."
           }
         }
       ]
     },
     {
-      "name": "1. Auth",
+      "name": "1. Auth (shared)",
       "item": [
         {
           "name": "Send OTP",
@@ -138,7 +94,7 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "  const j = pm.response.json();",
-                  "  pm.collectionVariables.set('token', j.token);",
+                  "  if (j.token) { pm.collectionVariables.set('token', j.token); }",
                   "}"
                 ]
               }
@@ -162,9 +118,7 @@
           "name": "Me",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": "{{baseUrl}}/api/mobile/v1/auth/me"
           }
         },
@@ -172,16 +126,14 @@
           "name": "Logout",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": "{{baseUrl}}/api/mobile/v1/auth/logout"
           }
         }
       ]
     },
     {
-      "name": "2. Shuttle catalog",
+      "name": "2. Travel — Catalog",
       "item": [
         {
           "name": "List corridors",
@@ -201,9 +153,7 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": "{{baseUrl}}/api/mobile/v1/shuttle/corridors"
           }
         },
@@ -225,9 +175,7 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": {
               "raw": "{{baseUrl}}/api/mobile/v1/shuttle/departures?date={{departDate}}&corridor_id={{corridorId}}",
               "host": ["{{baseUrl}}"],
@@ -244,9 +192,7 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": {
               "raw": "{{baseUrl}}/api/mobile/v1/shuttle/geocode/reverse?lat=-6.2&lng=106.8",
               "host": ["{{baseUrl}}"],
@@ -261,7 +207,7 @@
       ]
     },
     {
-      "name": "3. Booking lifecycle",
+      "name": "3. Travel — Booking",
       "item": [
         {
           "name": "Create hold (Bearer)",
@@ -280,7 +226,9 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "  const j = pm.response.json();",
-                  "  pm.collectionVariables.set('publicToken', j.booking.public_token);",
+                  "  if (j.booking && j.booking.public_token) {",
+                  "    pm.collectionVariables.set('publicToken', j.booking.public_token);",
+                  "  }",
                   "}"
                 ]
               }
@@ -307,7 +255,8 @@
             "method": "POST",
             "header": [
               { "key": "Accept", "value": "application/json" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
             ],
             "body": {
               "mode": "raw",
@@ -321,9 +270,7 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": "{{baseUrl}}/api/mobile/v1/shuttle/tickets/{{publicToken}}"
           }
         },
@@ -355,12 +302,10 @@
           }
         },
         {
-          "name": "My bookings (history)",
+          "name": "My travel bookings",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }],
             "url": {
               "raw": "{{baseUrl}}/api/mobile/v1/shuttle/bookings",
               "host": ["{{baseUrl}}"],
@@ -374,7 +319,7 @@
       ]
     },
     {
-      "name": "4. Rental catalog",
+      "name": "4. Rental — Catalog",
       "item": [
         {
           "name": "Classes",
@@ -387,6 +332,19 @@
         },
         {
           "name": "Vehicles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.data && j.data[0]) { pm.collectionVariables.set('vehicleId', String(j.data[0].id)); }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -455,11 +413,19 @@
       ]
     },
     {
-      "name": "5. Rental booking",
+      "name": "5. Rental — Booking",
       "item": [
         {
           "name": "Create booking",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('idempotencyKey', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -479,7 +445,7 @@
             "header": [
               { "key": "Accept", "value": "application/json" },
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+              { "key": "Idempotency-Key", "value": "{{idempotencyKey}}" }
             ],
             "body": {
               "mode": "raw",
