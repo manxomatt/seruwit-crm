@@ -117,4 +117,90 @@ class AppearanceSettingsTest extends TestCase
         $response->assertSee('window.__appearanceTest = true;', false);
         $response->assertSee('name="theme-color" content="#112233"', false);
     }
+
+    public function test_appearance_can_be_reset_to_defaults(): void
+    {
+        $user = $this->createAdminUser();
+
+        Setting::factory()->create([
+            'key' => 'appearance.primary_color',
+            'group' => 'appearance',
+            'value' => '#112233',
+            'type' => 'color',
+            'is_public' => true,
+        ]);
+        Setting::factory()->create([
+            'key' => 'appearance.secondary_color',
+            'group' => 'appearance',
+            'value' => '#445566',
+            'type' => 'color',
+            'is_public' => true,
+        ]);
+        Setting::factory()->create([
+            'key' => 'appearance.dark_mode',
+            'group' => 'appearance',
+            'value' => '1',
+            'type' => 'boolean',
+            'is_public' => true,
+        ]);
+        Setting::factory()->create([
+            'key' => 'appearance.font_family',
+            'group' => 'appearance',
+            'value' => 'Comic Sans MS',
+            'type' => 'text',
+            'is_public' => true,
+        ]);
+        Setting::factory()->create([
+            'key' => 'appearance.custom_css',
+            'group' => 'appearance',
+            'value' => '.x{color:red}',
+            'type' => 'textarea',
+            'is_public' => false,
+        ]);
+        Setting::factory()->create([
+            'key' => 'appearance.custom_js',
+            'group' => 'appearance',
+            'value' => 'alert(1)',
+            'type' => 'textarea',
+            'is_public' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('module.settings.appearance.reset'))
+            ->assertRedirect(route('module.settings.group', 'appearance'));
+
+        $this->assertDatabaseHas('settings', [
+            'key' => 'appearance.primary_color',
+            'value' => '#3B82F6',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'appearance.secondary_color',
+            'value' => '#10B981',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'appearance.dark_mode',
+            'value' => '0',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'appearance.font_family',
+            'value' => 'Inter, sans-serif',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'appearance.custom_css',
+            'value' => '',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'appearance.custom_js',
+            'value' => '',
+        ]);
+    }
+
+    public function test_appearance_reset_requires_update_permission(): void
+    {
+        $user = $this->createUserWithRole();
+
+        $this->actingAs($user)
+            ->post(route('module.settings.appearance.reset'))
+            ->assertForbidden();
+    }
 }

@@ -11,7 +11,43 @@ class Appearance
 
     public const DEFAULT_SECONDARY = '#10B981';
 
-    public const DEFAULT_FONT = 'Figtree, ui-sans-serif, system-ui, sans-serif';
+    public const DEFAULT_FONT = 'Inter, sans-serif';
+
+    public const DEFAULT_DARK_MODE = '0';
+
+    /**
+     * Seed/system defaults keyed by setting key (used by reset-to-default).
+     *
+     * @return array<string, string>
+     */
+    public static function defaultSettingValues(): array
+    {
+        return [
+            'appearance.primary_color' => self::DEFAULT_PRIMARY,
+            'appearance.secondary_color' => self::DEFAULT_SECONDARY,
+            'appearance.dark_mode' => self::DEFAULT_DARK_MODE,
+            'appearance.font_family' => self::DEFAULT_FONT,
+            'appearance.custom_css' => '',
+            'appearance.custom_js' => '',
+        ];
+    }
+
+    /**
+     * Apply Appearance defaults to existing setting rows. Missing keys are skipped.
+     *
+     * @return int Number of settings updated
+     */
+    public static function resetToDefaults(): int
+    {
+        $updated = 0;
+
+        foreach (self::defaultSettingValues() as $key => $value) {
+            $count = \App\Models\Setting::query()->where('key', $key)->update(['value' => $value]);
+            $updated += $count;
+        }
+
+        return $updated;
+    }
 
     /**
      * @return array{

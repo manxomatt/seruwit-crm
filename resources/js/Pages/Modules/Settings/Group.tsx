@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -48,6 +49,9 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
     const { t } = useTrans();
     const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
+    const [showResetAppearance, setShowResetAppearance] = useState(false);
+    const [resetProcessing, setResetProcessing] = useState(false);
+    const isAppearanceGroup = currentGroup === 'appearance';
 
     const formatDisplayValue = (setting: Setting): string => {
         if (setting.type === 'boolean') {
@@ -80,6 +84,19 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
             onSuccess: () => setSettingToDelete(null),
             onFinish: () => setDeleteProcessing(false),
         });
+    };
+
+    const confirmResetAppearance = () => {
+        setResetProcessing(true);
+        router.post(
+            prefixedRoute('settings.appearance.reset'),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => setShowResetAppearance(false),
+                onFinish: () => setResetProcessing(false),
+            },
+        );
     };
 
     return (
@@ -233,8 +250,17 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
                                 </div>
                             ))}
 
-                            <div className="flex items-center gap-4 pt-2">
+                            <div className="flex flex-wrap items-center gap-3 pt-2">
                                 <PrimaryButton disabled={processing}>{t('settings.pages.group.save')}</PrimaryButton>
+                                {isAppearanceGroup && (
+                                    <SecondaryButton
+                                        type="button"
+                                        disabled={processing || resetProcessing}
+                                        onClick={() => setShowResetAppearance(true)}
+                                    >
+                                        {t('settings.pages.group.reset_appearance')}
+                                    </SecondaryButton>
+                                )}
                             </div>
                         </form>
                     )}
@@ -252,6 +278,16 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
                         ? t('settings.delete_confirm.message', { label: settingToDelete.label, key: settingToDelete.key })
                         : t('settings.delete_confirm.message_generic')
                 }
+            />
+
+            <ConfirmDeleteDialog
+                show={showResetAppearance}
+                onClose={() => setShowResetAppearance(false)}
+                onConfirm={confirmResetAppearance}
+                processing={resetProcessing}
+                title={t('settings.reset_appearance_confirm.title')}
+                message={t('settings.reset_appearance_confirm.message')}
+                confirmText={t('settings.pages.group.reset_appearance')}
             />
         </DynamicLayout>
     );

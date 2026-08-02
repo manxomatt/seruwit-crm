@@ -61,6 +61,7 @@ return [
             'empty_title' => 'No settings in this group yet',
             'empty_hint' => 'Add one to get started.',
             'save' => 'Save Changes',
+            'reset_appearance' => 'Reset to Default',
             'enabled_label' => 'Enabled',
         ],
         'create' => [
@@ -89,6 +90,11 @@ return [
         'message_generic' => 'Are you sure you want to delete this setting?',
     ],
 
+    'reset_appearance_confirm' => [
+        'title' => 'Reset Appearance',
+        'message' => 'Reset all Appearance settings to their system defaults? Custom colors, font, dark mode, CSS, and JavaScript will be cleared.',
+    ],
+
     'validation' => [
         'key_required' => 'The setting key is required.',
         'key_unique' => 'This setting key already exists.',
@@ -105,5 +111,6 @@ return [
         'updated' => 'Setting updated successfully.',
         'deleted' => 'Setting deleted successfully.',
         'bulk_updated' => 'Settings updated successfully.',
+        'appearance_reset' => 'Appearance settings restored to defaults.',
     ],
 ];

@@ -61,6 +61,7 @@ return [
             'empty_title' => 'Belum ada pengaturan di grup ini',
             'empty_hint' => 'Tambahkan satu untuk memulai.',
             'save' => 'Simpan Perubahan',
+            'reset_appearance' => 'Kembalikan ke Default',
             'enabled_label' => 'Aktif',
         ],
         'create' => [
@@ -89,6 +90,11 @@ return [
         'message_generic' => 'Apakah Anda yakin ingin menghapus pengaturan ini?',
     ],
 
+    'reset_appearance_confirm' => [
+        'title' => 'Reset Tampilan',
+        'message' => 'Kembalikan semua pengaturan Appearance ke default sistem? Warna kustom, font, dark mode, CSS, dan JavaScript akan dihapus.',
+    ],
+
     'validation' => [
         'key_required' => 'Kunci pengaturan wajib diisi.',
         'key_unique' => 'Kunci pengaturan ini sudah ada.',
@@ -105,5 +111,6 @@ return [
         'updated' => 'Pengaturan berhasil diperbarui.',
         'deleted' => 'Pengaturan berhasil dihapus.',
         'bulk_updated' => 'Pengaturan berhasil diperbarui.',
+        'appearance_reset' => 'Pengaturan Appearance dikembalikan ke default.',
     ],
 ];

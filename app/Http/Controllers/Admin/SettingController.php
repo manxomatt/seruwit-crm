@@ -164,4 +164,15 @@ class SettingController extends Controller
         return redirect()->route($this->getRoutePrefix().'.settings.group', $data['group'])
             ->with('success', __('settings.messages.bulk_updated'));
     }
+
+    /**
+     * Restore Appearance settings to their seeded system defaults.
+     */
+    public function resetAppearance(): RedirectResponse
+    {
+        \App\Support\Appearance::resetToDefaults();
+
+        return redirect()->route($this->getRoutePrefix().'.settings.group', 'appearance')
+            ->with('success', __('settings.messages.appearance_reset'));
+    }
 }

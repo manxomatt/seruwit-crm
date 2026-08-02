@@ -108,8 +108,9 @@ Route::middleware('auth')->group(function () {
         // renaming, or deleting a setting is a central-only capability (see
         // routes/web.php).
         Route::get('/settings', [ModuleSettingController::class, 'index'])->middleware('permission:settings,view')->name('settings.index');
-        Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
         Route::post('/settings/bulk-update', [ModuleSettingController::class, 'bulkUpdate'])->middleware('permission:settings,update')->name('settings.bulk-update');
+        Route::post('/settings/appearance/reset', [ModuleSettingController::class, 'resetAppearance'])->middleware('permission:settings,update')->name('settings.appearance.reset');
+        Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
 
         // Module User Management Routes
         Route::post('/users/invite', [\App\Http\Controllers\Module\UserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');
