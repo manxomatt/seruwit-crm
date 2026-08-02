@@ -299,7 +299,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'carousels': { route: 'module.carousels.index', routePattern: 'module.carousels.*' },
     'media': { route: 'module.media.index', routePattern: 'module.media.*' },
     'partners': { route: 'module.partners.dashboard', routePattern: 'module.partners.*' },
-    'products': { route: 'module.products.index', routePattern: 'module.products.*' },
+    'products': { route: 'module.products.dashboard', routePattern: 'module.products.*' },
     'fleet': { route: 'module.fleet.dashboard', routePattern: 'module.fleet.*' },
     'document': { route: 'module.documents.index', routePattern: 'module.documents.*' },
     'maintenance': { route: 'module.maintenance.index', routePattern: 'module.maintenance.*' },

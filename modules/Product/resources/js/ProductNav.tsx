@@ -2,14 +2,15 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
-const TABS = [
+const TABS: Array<{ labelKey: string; route: string; patterns: string[] }> = [
+    { labelKey: 'products.nav.dashboard', route: 'products.dashboard', patterns: ['products.dashboard'] },
     { labelKey: 'products.nav.products', route: 'products.index', patterns: ['products.index', 'products.show', 'products.create', 'products.edit'] },
     { labelKey: 'products.nav.principals', route: 'products.principals.index', patterns: ['products.principals.*'] },
     { labelKey: 'products.nav.brands', route: 'products.brands.index', patterns: ['products.brands.*'] },
     { labelKey: 'products.nav.product_types', route: 'products.product-types.index', patterns: ['products.product-types.*'] },
     { labelKey: 'products.nav.attributes', route: 'products.attributes.index', patterns: ['products.attributes.*'] },
     { labelKey: 'products.nav.tags', route: 'products.tags.index', patterns: ['products.tags.*'] },
-] as const;
+];
 
 export default function ProductNav(): JSX.Element {
     const { prefixedRoute, isCurrentRoute } = useRoutePrefix();

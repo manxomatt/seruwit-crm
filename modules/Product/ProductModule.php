@@ -9,6 +9,7 @@ use Modules\Product\Http\Controllers\BrandController;
 use Modules\Product\Http\Controllers\PrincipalController;
 use Modules\Product\Http\Controllers\ProductAttributeController;
 use Modules\Product\Http\Controllers\ProductController;
+use Modules\Product\Http\Controllers\ProductDashboardController;
 use Modules\Product\Http\Controllers\ProductTagController;
 use Modules\Product\Http\Controllers\ProductTypeController;
 
@@ -59,7 +60,7 @@ class ProductModule implements ModuleContract
             'name' => 'Products',
             'slug' => 'products',
             'icon' => 'products',
-            'route_name' => 'products.index',
+            'route_name' => 'products.dashboard',
             'permission_module' => 'products',
             'permission_action' => 'view',
             'sort_order' => 8,
@@ -127,7 +128,8 @@ class ProductModule implements ModuleContract
         Route::delete('/products/tags/{tag}', [ProductTagController::class, 'destroy'])->middleware('permission:products,delete')->name('products.tags.destroy');
 
         // Products
-        Route::get('/products', [ProductController::class, 'index'])->middleware('permission:products,view')->name('products.index');
+        Route::get('/products', [ProductDashboardController::class, 'index'])->middleware('permission:products,view')->name('products.dashboard');
+        Route::get('/products/list', [ProductController::class, 'index'])->middleware('permission:products,view')->name('products.index');
         Route::get('/products/create', [ProductController::class, 'create'])->middleware('permission:products,create')->name('products.create');
         Route::post('/products', [ProductController::class, 'store'])->middleware('permission:products,create')->name('products.store');
         Route::get('/products/{product}', [ProductController::class, 'show'])->middleware('permission:products,view')->name('products.show');
