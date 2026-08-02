@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
@@ -11,6 +12,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import PageHeader from '@/Components/PageHeader';
 import PartnersNav from '../../../PartnersNav';
+import { formatMoneyInput, parseMoneyInput } from '@/utils/money';
 
 interface Industry {
     id: number;
@@ -109,7 +111,7 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
         title_id: partner.title_id ? String(partner.title_id) : '',
         is_customer: partner.customer_rank > 0,
         is_supplier: partner.supplier_rank > 0,
-        credit_limit: partner.credit_limit || '',
+        credit_limit: partner.credit_limit ? parseMoneyInput(formatMoneyInput(partner.credit_limit)) : '',
         payment_term_days: partner.payment_term_days != null ? String(partner.payment_term_days) : '',
         price_list_id: partner.price_list_id ? String(partner.price_list_id) : '',
         address: partner.address || '',
@@ -310,7 +312,12 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
                             </div>
                             <div>
                                 <InputLabel htmlFor="credit_limit" value={t('partners.fields.credit_limit')} />
-                                <TextInput id="credit_limit" type="number" className="mt-1 block w-full" value={data.credit_limit} onChange={(e) => setData('credit_limit', e.target.value)} min="0" step="0.01" />
+                                <MoneyInput
+                                    id="credit_limit"
+                                    className="mt-1 block w-full"
+                                    value={data.credit_limit}
+                                    onChange={(value) => setData('credit_limit', value)}
+                                />
                                 <InputError message={errors.credit_limit} className="mt-2" />
                             </div>
                             <div>

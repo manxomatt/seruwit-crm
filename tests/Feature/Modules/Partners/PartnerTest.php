@@ -116,15 +116,32 @@ class PartnerTest extends TestCase
         $partner = Partner::factory()->create(['name' => 'Old Name']);
 
         $this->actingAs($user)->patch(route('module.partners.update', $partner), [
+            'account_type' => 'company',
             'name' => 'New Name',
             'is_customer' => true,
             'is_supplier' => true,
+            'credit_limit' => '1500000',
             'status' => 'active',
         ])->assertRedirect();
 
         $partner->refresh();
         $this->assertEquals('New Name', $partner->name);
         $this->assertTrue($partner->isSupplier());
+        $this->assertEquals(1500000, (float) $partner->credit_limit);
+    }
+
+    public function test_partner_edit_page_includes_credit_limit(): void
+    {
+        $user = $this->createAdminUser();
+        $partner = Partner::factory()->create(['credit_limit' => 2500000]);
+
+        $this->actingAs($user)
+            ->get(route('module.partners.edit', $partner))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Partners/Edit')
+                ->where('partner.credit_limit', fn ($value) => (float) $value === 2500000.0)
+            );
     }
 
     public function test_admin_can_view_partner_show(): void
