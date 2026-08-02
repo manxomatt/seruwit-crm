@@ -19,6 +19,7 @@ import {
     statusOptions,
     priorityOptions,
 } from '../../../../maintenanceUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface PaginatedWorkOrders {
     data: WorkOrder[];
@@ -95,14 +96,14 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('maintenance.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('maintenance.work-orders.create')}>
                             <PrimaryButton>{t('maintenance.work_orders.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('maintenance.work_orders.head')} />

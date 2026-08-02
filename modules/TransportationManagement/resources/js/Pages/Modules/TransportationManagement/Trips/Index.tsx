@@ -8,6 +8,7 @@ import { formatDateTime } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import TransportationNav from '../../../../TransportationNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Trip {
     id: number;
@@ -87,14 +88,14 @@ export default function Index({ trips, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('transportation.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('transportation.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('transportation.trips.create')}>
                             <PrimaryButton>{t('transportation.actions.dispatch')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('transportation.pages.trips.title')} />

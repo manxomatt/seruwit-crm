@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import OutboundNav from '../../../../OutboundNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Line {
     id: number;
@@ -58,11 +59,7 @@ export default function Create({ pickList, deliveryOrder, lines }: Props): JSX.E
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('outbound.packs.create.title', { code: pickList.code })}
-                </h2>
-            }
+            header={<PageHeader title={t('outbound.packs.create.title', { code: pickList.code })} />}
         >
             <Head title={t('outbound.packs.create.head')} />
 

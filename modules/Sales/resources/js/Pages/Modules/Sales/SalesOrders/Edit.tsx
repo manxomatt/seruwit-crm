@@ -11,6 +11,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import SalesNav from '../../../../SalesNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface Packaging {
     id: number;
@@ -181,7 +182,7 @@ export default function Edit({ order, customers, warehouses, products, priceMaps
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('sales.sales_orders.edit.title')}</h2>}
+            header={<PageHeader title={t('sales.sales_orders.edit.title')} />}
         >
             <Head title={t('sales.sales_orders.edit.title')} />
             <SalesNav />

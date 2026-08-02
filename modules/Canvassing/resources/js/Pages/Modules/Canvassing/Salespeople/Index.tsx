@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import CanvassingNav from '../../../../CanvassingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Salesperson {
     id: number;
@@ -116,12 +117,12 @@ export default function SalespeopleIndex({ salespeople, filters }: Props): JSX.E
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('canvassing.salespeople.title')}</h2>
-                    <Link href={prefixedRoute('canvassing.salespeople.create')}>
+                <PageHeader
+                    title={t('canvassing.salespeople.title')}
+                    actions={<Link href={prefixedRoute('canvassing.salespeople.create')}>
                         <PrimaryButton>{t('canvassing.salespeople.add')}</PrimaryButton>
-                    </Link>
-                </div>
+                    </Link>}
+                />
             }
         >
             <Head title={t('canvassing.salespeople.head')} />

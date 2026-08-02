@@ -6,6 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Role {
     id: number;
@@ -121,14 +122,12 @@ export default function Index({ users, filters }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('users.pages.index.head')}
-                    </h2>
-                    <Link href={prefixedRoute('users.create')}>
+                <PageHeader
+                    title={t('users.pages.index.head')}
+                    actions={<Link href={prefixedRoute('users.create')}>
                         <PrimaryButton>{t('users.pages.index.new')}</PrimaryButton>
-                    </Link>
-                </div>
+                    </Link>}
+                />
             }
         >
             <Head title={t('users.pages.index.head')} />

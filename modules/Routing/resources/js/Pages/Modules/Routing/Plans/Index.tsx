@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import { formatDateDmY } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
+import PageHeader from '@/Components/PageHeader';
 
 interface PlanRow {
     id: number;
@@ -78,14 +79,14 @@ export default function Index({ plans, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('routing.pages.index.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('routing.pages.index.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('routing.plans.create')}>
                             <PrimaryButton>{t('routing.actions.new_plan')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('routing.pages.index.head')} />

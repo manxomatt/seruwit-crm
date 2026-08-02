@@ -7,6 +7,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import TransportationNav from '../../../../TransportationNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface VehicleRef {
     id: number;
@@ -84,7 +85,7 @@ export default function Index({ filters, tripsByStatus, vehicleUtilization, driv
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('transportation.pages.reports.title')}</h2>}
+            header={<PageHeader title={t('transportation.pages.reports.title')} />}
         >
             <Head title={t('transportation.pages.reports.title')} />
 

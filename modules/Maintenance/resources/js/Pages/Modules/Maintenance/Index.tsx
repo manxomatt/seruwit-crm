@@ -11,6 +11,7 @@ import {
     formatDate,
     formatCurrency,
 } from '../../../maintenanceUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface Summary {
     draft: number;
@@ -110,14 +111,14 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.dashboard.head')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('maintenance.dashboard.head')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('maintenance.work-orders.create')}>
                             <PrimaryButton>{t('maintenance.dashboard.new_wo')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('maintenance.title')} />

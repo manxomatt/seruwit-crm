@@ -9,6 +9,7 @@ import Select from '@/Components/Select';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 import OutboundNav from '../../../../OutboundNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Order {
     id: number;
@@ -64,7 +65,7 @@ export default function Create({ orders, warehouses, selectedOrderId }: Props): 
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('outbound.pick_lists.create.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('outbound.pick_lists.create.title')} />}>
             <Head title={t('outbound.pick_lists.create.title')} />
 
             <OutboundNav />

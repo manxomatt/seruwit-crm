@@ -8,6 +8,7 @@ import { formatDateDmY } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import RentalNav from '../../../RentalNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Vehicle {
     id: number;
@@ -106,12 +107,12 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('rental.pages.index.title')}</h2>
-                    <Link href={prefixedRoute('rental.create')}>
+                <PageHeader
+                    title={t('rental.pages.index.title')}
+                    actions={<Link href={prefixedRoute('rental.create')}>
                         <PrimaryButton>{t('rental.actions.new_rental')}</PrimaryButton>
-                    </Link>
-                </div>
+                    </Link>}
+                />
             }
         >
             <Head title={t('rental.pages.index.head')} />

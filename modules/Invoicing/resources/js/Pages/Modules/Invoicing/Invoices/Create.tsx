@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import InvoicingNav from '../../../../InvoicingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Partner {
     id: number;
@@ -44,7 +45,7 @@ export default function Create({ partners, selectedPartnerId }: Props): JSX.Elem
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('invoicing.create.head')}</h2>}
+            header={<PageHeader title={t('invoicing.create.head')} />}
         >
             <Head title={t('invoicing.create.title')} />
 

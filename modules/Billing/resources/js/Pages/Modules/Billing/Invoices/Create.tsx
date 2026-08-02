@@ -10,6 +10,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface Partner {
     id: number;
@@ -69,7 +70,7 @@ export default function Create({ partners, selectedPartnerId, invoiceableOrders 
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.invoices.head')}</h2>}
+            header={<PageHeader title={t('billing.invoices.head')} />}
         >
             <Head title={t('billing.invoices.title')} />
 

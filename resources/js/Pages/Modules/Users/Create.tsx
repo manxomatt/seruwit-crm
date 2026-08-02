@@ -8,6 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Role {
     id: number;
@@ -80,13 +81,7 @@ export default function Create({
 
     return (
         <DynamicLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('users.pages.create.head')}
-                    </h2>
-                </div>
-            }
+            header={<PageHeader title={t('users.pages.create.head')} />}
         >
             <Head title={t('users.pages.create.title')} />
 

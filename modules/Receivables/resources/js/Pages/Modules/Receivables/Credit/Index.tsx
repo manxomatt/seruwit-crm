@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
 import { Head, Link } from '@inertiajs/react';
 import ReceivablesNav from '../../../../ReceivablesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface PartnerCredit {
     id: number;
@@ -50,11 +51,7 @@ export default function Index({ partners, alerts }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('receivables.credit.index.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('receivables.credit.index.title')} />}
         >
             <Head title={t('receivables.credit.index.title')} />
 

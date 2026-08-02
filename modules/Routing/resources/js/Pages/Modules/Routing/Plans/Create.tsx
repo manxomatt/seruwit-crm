@@ -9,6 +9,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface WarehouseOption {
     id: number;
@@ -154,7 +155,7 @@ export default function Create({ warehouses, defaults, orders, eligible_counts }
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('routing.pages.create.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('routing.pages.create.title')} />}>
             <Head title={t('routing.pages.create.title')} />
 
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

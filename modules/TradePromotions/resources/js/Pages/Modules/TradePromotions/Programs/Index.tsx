@@ -6,6 +6,7 @@ import Select from '@/Components/Select';
 import { formatDateDmY } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import PromotionsNav from '../../../../PromotionsNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface ProgramRow {
     id: number;
@@ -70,16 +71,14 @@ export default function Index({ programs, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('promotions.programs.index.title')}
-                    </h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('promotions.programs.index.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('promotions.programs.create')}>
                             <PrimaryButton>{t('promotions.programs.index.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('promotions.programs.index.title')} />

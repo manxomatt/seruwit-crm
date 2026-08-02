@@ -13,6 +13,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface Partner {
     id: number;
@@ -140,10 +141,10 @@ export default function Index({ tariffs, partners, locations, filters, can }: Pr
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.title')}</h2>
-                    {can.create && <PrimaryButton onClick={openCreate}>{t('billing.tariffs.new')}</PrimaryButton>}
-                </div>
+                <PageHeader
+                    title={t('billing.title')}
+                    actions={can.create && <PrimaryButton onClick={openCreate}>{t('billing.tariffs.new')}</PrimaryButton>}
+                />
             }
         >
             <Head title={t('billing.tariffs.head')} />

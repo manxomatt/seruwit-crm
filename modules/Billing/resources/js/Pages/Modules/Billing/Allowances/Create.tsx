@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Trip {
     id: number;
@@ -40,7 +41,7 @@ export default function Create({ trips }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.allowances.issue_title')}</h2>}
+            header={<PageHeader title={t('billing.allowances.issue_title')} />}
         >
             <Head title={t('billing.allowances.issue_title')} />
 

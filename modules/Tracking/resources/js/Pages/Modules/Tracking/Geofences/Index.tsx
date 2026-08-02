@@ -15,6 +15,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import { Circle, Marker } from 'react-leaflet';
 import TrackingNav from '../../../../TrackingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Geofence {
     id: number;
@@ -114,7 +115,7 @@ export default function Index({ geofences }: Props): JSX.Element {
     );
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('tracking.title')} />}>
             <Head title={t('tracking.pages.geofences.title')} />
 
             <TrackingNav />

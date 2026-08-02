@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import ScoringNav from '../../../../ScoringNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Row {
     driver_id: number;
@@ -36,11 +37,7 @@ export default function Index({ leaderboard, filters }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('scoring.pages.leaderboard.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('scoring.pages.leaderboard.title')} />}
         >
             <Head title={t('scoring.pages.leaderboard.head')} />
 

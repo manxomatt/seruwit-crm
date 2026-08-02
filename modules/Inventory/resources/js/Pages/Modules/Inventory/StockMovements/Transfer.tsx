@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import InventoryNav from '../../../../InventoryNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Product {
     id: number;
@@ -64,7 +65,7 @@ export default function Transfer({ products, warehouses, locations }: Props): JS
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('inventory.movements.transfer_title')}</h2>}
+            header={<PageHeader title={t('inventory.movements.transfer_title')} />}
         >
             <Head title={t('inventory.movements.transfer_head')} />
             <InventoryNav />

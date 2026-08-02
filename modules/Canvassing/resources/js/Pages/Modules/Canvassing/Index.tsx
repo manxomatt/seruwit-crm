@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import CanvassingNav from '../../../CanvassingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Stats {
     total_salespeople: number;
@@ -48,9 +49,7 @@ export default function CanvassingIndex({ stats, recentVisits, activeSalespeople
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('canvassing.dashboard.title')}</h2>
-            }
+            header={<PageHeader title={t('canvassing.dashboard.title')} />}
         >
             <Head title={t('canvassing.dashboard.head')} />
 

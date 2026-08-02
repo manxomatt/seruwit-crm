@@ -5,6 +5,7 @@ import Select from '@/Components/Select';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Summary {
     total_cost: number;
@@ -137,7 +138,7 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>}
+            header={<PageHeader title={t('fleet.title')} />}
         >
             <Head title={t('fleet.analytics.title')} />
 

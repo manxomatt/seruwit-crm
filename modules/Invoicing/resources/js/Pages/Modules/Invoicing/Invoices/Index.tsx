@@ -8,6 +8,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import InvoicingNav from '../../../../InvoicingNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface Invoice {
     id: number;
@@ -75,14 +76,14 @@ export default function Index({ invoices, summary, filters, can }: Props): JSX.E
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('invoicing.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('invoicing.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('invoicing.invoices.create')}>
                             <PrimaryButton>{t('invoicing.index.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('invoicing.index.head')} />

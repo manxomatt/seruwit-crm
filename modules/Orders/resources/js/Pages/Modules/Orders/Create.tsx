@@ -10,6 +10,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useCallback } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Partner {
     id: number;
@@ -96,7 +97,7 @@ export default function Create({ partners, locations }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('orders.create.title')}</h2>}
+            header={<PageHeader title={t('orders.create.title')} />}
         >
             <Head title={t('orders.create.title')} />
 

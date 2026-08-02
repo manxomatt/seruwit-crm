@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Props {
     partner: { id: number; code: string; name: string };
@@ -31,7 +32,7 @@ export default function Show({ partner, rental, canPayDeposit }: Props): JSX.Ele
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{rental.code}</h2>}
+            header={<PageHeader title={rental.code} />}
         >
             <Head title={rental.code} />
 

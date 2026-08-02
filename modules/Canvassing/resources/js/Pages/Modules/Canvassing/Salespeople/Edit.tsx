@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import CanvassingNav from '../../../../CanvassingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Salesperson {
     id: number;
@@ -45,11 +46,7 @@ export default function EditSalesperson({ salesperson }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('canvassing.salespeople.edit_head', { name: salesperson.name })}
-                </h2>
-            }
+            header={<PageHeader title={t('canvassing.salespeople.edit_head', { name: salesperson.name })} />}
         >
             <Head title={t('canvassing.salespeople.edit', { name: salesperson.name })} />
 

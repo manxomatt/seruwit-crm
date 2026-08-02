@@ -7,6 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import RentalNav from '../../../../RentalNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Booking {
     id: number;
@@ -67,7 +68,7 @@ export default function Index({ board, filters }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('rental.pages.availability.head')}</h2>}
+            header={<PageHeader title={t('rental.pages.availability.head')} />}
         >
             <Head title={t('rental.pages.availability.title')} />
             <RentalNav />

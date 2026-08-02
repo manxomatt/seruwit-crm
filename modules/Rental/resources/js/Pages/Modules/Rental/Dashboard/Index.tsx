@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import RentalNav from '../../../../RentalNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface RentalRow {
     id: number;
@@ -140,7 +141,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
     const exportHref = (type: string) => `${exportUrl}?type=${encodeURIComponent(type)}`;
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('rental.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('rental.title')} />}>
             <Head title={t('rental.dashboard.title')} />
 
             <RentalNav />

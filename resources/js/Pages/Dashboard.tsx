@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, usePage } from '@inertiajs/react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Props {
     user: {
@@ -23,11 +24,7 @@ export default function Dashboard({ user, primaryRole }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {title}
-                </h2>
-            }
+            header={<PageHeader title={title} />}
         >
             <Head title={title} />
 

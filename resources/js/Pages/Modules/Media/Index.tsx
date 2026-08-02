@@ -8,6 +8,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler, useEffect } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface MediaItem {
     id: number;
@@ -177,16 +178,14 @@ export default function Index({ media, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('media.pages.index.head')}
-                    </h2>
-                    {canCreate && (
+                <PageHeader
+                    title={t('media.pages.index.head')}
+                    actions={canCreate && (
                         <Link href={prefixedRoute('media.create')}>
                             <PrimaryButton>{t('media.pages.index.upload')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('media.pages.index.head')} />

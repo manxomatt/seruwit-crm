@@ -19,6 +19,7 @@ import {
     formatDate,
     formatOdometer,
 } from '../../../../maintenanceUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface PaginatedSchedules {
     data: MaintenanceSchedule[];
@@ -148,12 +149,12 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('maintenance.title')}
+                    actions={can.create && (
                         <PrimaryButton onClick={openCreate}>{t('maintenance.schedules.new')}</PrimaryButton>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('maintenance.schedules.head')} />

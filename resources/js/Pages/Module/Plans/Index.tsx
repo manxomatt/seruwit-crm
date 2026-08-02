@@ -6,6 +6,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 type ModuleTier = 'vertical' | 'foundation' | 'content';
 
@@ -170,7 +171,7 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('plans.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('plans.title')} />}>
             <Head title={t('plans.title')} />
 
             <div className="space-y-6">

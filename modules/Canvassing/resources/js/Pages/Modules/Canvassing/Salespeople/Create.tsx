@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import CanvassingNav from '../../../../CanvassingNav';
+import PageHeader from '@/Components/PageHeader';
 
 export default function CreateSalesperson(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -30,9 +31,7 @@ export default function CreateSalesperson(): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('canvassing.salespeople.add')}</h2>
-            }
+            header={<PageHeader title={t('canvassing.salespeople.add')} />}
         >
             <Head title={t('canvassing.salespeople.create_title')} />
 

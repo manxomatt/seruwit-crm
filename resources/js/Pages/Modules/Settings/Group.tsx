@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Setting {
     id: number;
@@ -83,7 +84,7 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('settings.pages.index.head')}</h2>}
+            header={<PageHeader title={t('settings.pages.index.head')} />}
         >
             <Head title={t('settings.pages.group.title', { group: formatGroupLabel(currentGroup) })} />
 

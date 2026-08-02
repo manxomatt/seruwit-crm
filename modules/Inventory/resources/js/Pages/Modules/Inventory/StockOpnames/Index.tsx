@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout'
 import { useRoutePrefix } from '@/hooks/useRoutePrefix'
 import { useLocaleTag, useTrans } from '@/hooks/useTrans'
+import PageHeader from '@/Components/PageHeader'
 import PrimaryButton from '@/Components/PrimaryButton'
 import { Head, Link } from '@inertiajs/react'
 import InventoryNav from '../../../../InventoryNav'
@@ -44,12 +45,12 @@ export default function StockOpnamesIndex({ opnames }: Props) {
   return (
     <DynamicLayout
       header={
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('inventory.title')}</h2>
-          <Link href={prefixedRoute('inventory.stock-opnames.create')}>
+          <PageHeader
+              title={t('inventory.title')}
+              actions={<Link href={prefixedRoute('inventory.stock-opnames.create')}>
             <PrimaryButton>{t('inventory.opnames.new')}</PrimaryButton>
-          </Link>
-        </div>
+          </Link>}
+          />
       }
     >
       <Head title={t('inventory.opnames.head')} />

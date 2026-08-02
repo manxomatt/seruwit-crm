@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link } from '@inertiajs/react';
 import SalesNav from '../../../../SalesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Props {
     priceLists: {
@@ -25,14 +26,14 @@ export default function Index({ priceLists, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-xl font-semibold text-gray-800">{t('sales.price_lists.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('sales.price_lists.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('sales.price-lists.create')}>
                             <PrimaryButton>{t('sales.price_lists.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('sales.price_lists.title')} />

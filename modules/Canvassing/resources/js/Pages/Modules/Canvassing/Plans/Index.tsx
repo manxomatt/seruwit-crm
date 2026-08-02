@@ -10,6 +10,7 @@ import { formatDateDmY } from '@/utils/date';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import CanvassingNav from '../../../../CanvassingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface SalespersonOption {
     id: number;
@@ -123,9 +124,7 @@ export default function PlansIndex({ plans, salespeople, filters }: Props): JSX.
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('canvassing.plans.title')}</h2>
-            }
+            header={<PageHeader title={t('canvassing.plans.title')} />}
         >
             <Head title={t('canvassing.plans.head')} />
 

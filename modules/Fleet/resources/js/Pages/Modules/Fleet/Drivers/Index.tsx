@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Driver {
     id: number;
@@ -116,14 +117,14 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('fleet.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('fleet.drivers.create')}>
                             <PrimaryButton>{t('fleet.drivers.add')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('fleet.drivers.title')} />

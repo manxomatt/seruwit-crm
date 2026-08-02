@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import PromotionsNav from '../../../../PromotionsNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Option {
     id: number;
@@ -110,7 +111,7 @@ export default function Edit({
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.programs.edit.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('promotions.programs.edit.title')} />}>
             <Head title={t('promotions.programs.edit.title')} />
 
             <PromotionsNav />

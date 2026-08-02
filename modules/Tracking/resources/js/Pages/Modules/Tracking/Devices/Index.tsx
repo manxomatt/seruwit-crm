@@ -12,6 +12,7 @@ import { formatCoordinate, formatSpeedKph } from '@/utils/geo';
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import TrackingNav from '../../../../TrackingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Device {
     id: number;
@@ -117,10 +118,10 @@ export default function Index({ devices, pairableVehicles, filters, can }: Props
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>
-                    {can.create && <PrimaryButton onClick={sync}>{t('tracking.actions.sync')}</PrimaryButton>}
-                </div>
+                <PageHeader
+                    title={t('tracking.title')}
+                    actions={can.create && <PrimaryButton onClick={sync}>{t('tracking.actions.sync')}</PrimaryButton>}
+                />
             }
         >
             <Head title={t('tracking.pages.devices.title')} />

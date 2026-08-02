@@ -12,6 +12,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import DocumentNav from '../../../../DocumentNav';
 import { DocumentType } from '../../../../documentUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface Props {
     types: DocumentType[];
@@ -215,14 +216,12 @@ export default function Index({ types, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('document.types.title')}
-                    </h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('document.types.title')}
+                    actions={can.create && (
                         <PrimaryButton onClick={openCreate}>{t('document.types.add')}</PrimaryButton>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('document.types.head')} />

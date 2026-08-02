@@ -9,6 +9,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Setting {
     id: number;
@@ -62,13 +63,7 @@ export default function Edit({ setting, groups }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('settings.pages.edit.head')}
-                    </h2>
-                </div>
-            }
+            header={<PageHeader title={t('settings.pages.edit.head')} />}
         >
             <Head title={t('settings.pages.edit.title', { label: setting.label })} />
 

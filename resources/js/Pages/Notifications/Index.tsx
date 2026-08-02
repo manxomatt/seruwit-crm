@@ -2,6 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Notification {
     id: string;
@@ -47,10 +48,10 @@ export default function Index({ notifications }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('notifications.title')}</h2>
-                    {hasUnread && <PrimaryButton onClick={markAllRead}>{t('notifications.mark_all_read')}</PrimaryButton>}
-                </div>
+                <PageHeader
+                    title={t('notifications.title')}
+                    actions={hasUnread && <PrimaryButton onClick={markAllRead}>{t('notifications.mark_all_read')}</PrimaryButton>}
+                />
             }
         >
             <Head title={t('notifications.title')} />

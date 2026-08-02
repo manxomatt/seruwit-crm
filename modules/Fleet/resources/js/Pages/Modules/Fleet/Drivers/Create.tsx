@@ -11,6 +11,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
+import PageHeader from '@/Components/PageHeader';
 
 const DRIVER_STATUSES = ['available', 'on_trip', 'off_duty', 'inactive'] as const;
 
@@ -36,7 +37,7 @@ export default function Create(): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>}
+            header={<PageHeader title={t('fleet.title')} />}
         >
             <Head title={t('fleet.drivers.add')} />
 

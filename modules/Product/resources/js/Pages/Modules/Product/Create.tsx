@@ -11,6 +11,7 @@ import TextInput from '@/Components/TextInput';
 import ImageUploader from '@/Components/ImageUploader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface UnitOption {
     value: string;
@@ -179,7 +180,7 @@ export default function Create({ units, brands, productTypes, tags, attributes }
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.products.create.title')}</h2>}
+            header={<PageHeader title={t('products.products.create.title')} />}
         >
             <Head title={t('products.products.create.title')} />
             <ProductNav />

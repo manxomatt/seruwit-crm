@@ -5,6 +5,7 @@ import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
 import { useMemo } from 'react';
 import CanvassingNav from '../../../../CanvassingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Visit {
     id: number;
@@ -86,9 +87,7 @@ export default function VisitsIndex({ visits, filters, salespeople = [] }: Props
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('canvassing.visits.title')}</h2>
-            }
+            header={<PageHeader title={t('canvassing.visits.title')} />}
         >
             <Head title={t('canvassing.visits.head')} />
 

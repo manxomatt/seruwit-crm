@@ -7,6 +7,7 @@ import { Head, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import PromotionsNav from '../../../../PromotionsNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface Summary {
     checkout_by_channel: Array<{ channel: string; applications: number; discount_total: number }>;
@@ -48,7 +49,7 @@ export default function Index({ summary, filters, programs, warehouses }: Props)
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.reports.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('promotions.reports.title')} />}>
             <Head title={t('promotions.reports.title')} />
             <PromotionsNav />
 

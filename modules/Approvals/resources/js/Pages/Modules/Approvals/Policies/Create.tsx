@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import ApprovalsNav from '../../../../ApprovalsNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface TriggerMeta {
     label: string;
@@ -94,7 +95,7 @@ export default function PolicyForm({ triggers, roles, users, policy }: Props): J
     const title = editing ? t('approvals.form.edit_title') : t('approvals.form.new_title');
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{title}</h2>}>
+        <DynamicLayout header={<PageHeader title={title} />}>
             <Head title={title} />
 
             <ApprovalsNav />

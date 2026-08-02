@@ -10,6 +10,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface ParentOption {
     id: number;
@@ -35,7 +36,7 @@ export default function Create({ parentOptions }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.product_types.create.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('products.product_types.create.title')} />}>
             <Head title={t('products.product_types.create.title')} />
             <ProductNav />
 

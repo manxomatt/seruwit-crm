@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 const PencilIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,14 +71,14 @@ export default function Index({ productTypes, filters, can }: Props): JSX.Elemen
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.product_types.index.head')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('products.product_types.index.head')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('products.product-types.create')}>
                             <PrimaryButton>{t('products.product_types.index.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('products.product_types.index.head')} />

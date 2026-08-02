@@ -4,6 +4,7 @@ import { useTrans } from '@/hooks/useTrans';
 import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
 import PromotionsNav from '../../../../PromotionsNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Row {
     id: number;
@@ -49,7 +50,7 @@ export default function Index({ realizations, programs, filters }: Props): JSX.E
     const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('promotions.realizations.index.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('promotions.realizations.index.title')} />}>
             <Head title={t('promotions.realizations.index.title')} />
 
             <PromotionsNav />

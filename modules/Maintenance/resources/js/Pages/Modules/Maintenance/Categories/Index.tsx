@@ -12,6 +12,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import { MaintenanceCategory } from '../../../../maintenanceUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface CategoryWithCount extends MaintenanceCategory {
     work_orders_count: number;
@@ -113,10 +114,10 @@ export default function Index({ categories }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('maintenance.title')}</h2>
-                    <PrimaryButton onClick={openCreate}>{t('maintenance.categories.new')}</PrimaryButton>
-                </div>
+                <PageHeader
+                    title={t('maintenance.title')}
+                    actions={<PrimaryButton onClick={openCreate}>{t('maintenance.categories.new')}</PrimaryButton>}
+                />
             }
         >
             <Head title={t('maintenance.categories.head')} />

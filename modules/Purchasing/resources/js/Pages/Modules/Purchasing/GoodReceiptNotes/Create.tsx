@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 import PurchasingNav from '../../../../PurchasingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface ReceivableItem {
     id: number;
@@ -125,7 +126,7 @@ export default function Create({ order, receivableItems, warehouses, defaultStoc
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('purchasing.grn.create.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('purchasing.grn.create.title')} />}>
             <Head title={t('purchasing.grn.create.head', { po_number: order.po_number })} />
             <PurchasingNav />
 

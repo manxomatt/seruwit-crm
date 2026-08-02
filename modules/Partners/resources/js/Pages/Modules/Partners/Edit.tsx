@@ -9,6 +9,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Industry {
     id: number;
@@ -135,7 +136,7 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('partners.edit.head')}</h2>}
+            header={<PageHeader title={t('partners.edit.head')} />}
         >
             <Head title={t('partners.edit.title', { name: partner.name })} />
 

@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import PurchasingNav from '../../../../PurchasingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface ReturnableItem {
     grn_item_id: number;
@@ -90,7 +91,7 @@ export default function Create({ grn, returnableItems, can }: Props): JSX.Elemen
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('purchasing.returns.create.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('purchasing.returns.create.title')} />}>
             <Head title={t('purchasing.returns.create.head', { grn_number: grn.grn_number })} />
             <PurchasingNav />
             <Link href={prefixedRoute('purchasing.grn.show', grn.id)} className="mb-4 inline-block text-sm text-indigo-600">

@@ -12,6 +12,7 @@ import TextInput from '@/Components/TextInput';
 import CarouselImageUploader from '../../../CarouselImageUploader';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface CarouselImage {
     id: number;
@@ -165,13 +166,7 @@ export default function Edit({ carousel }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('carousels.edit_title', { name: carousel.name })}
-                    </h2>
-                </div>
-            }
+            header={<PageHeader title={t('carousels.edit_title', { name: carousel.name })} />}
         >
             <Head title={t('carousels.edit_title', { name: carousel.name })} />
 

@@ -11,6 +11,7 @@ import MoneyInput from '@/Components/MoneyInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useRef } from 'react';
 import RentalNav from '../../../RentalNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Vehicle {
     id: number;
@@ -290,7 +291,7 @@ export default function Create({
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('rental.pages.create.title')}</h2>}
+            header={<PageHeader title={t('rental.pages.create.title')} />}
         >
             <Head title={t('rental.pages.create.title')} />
 

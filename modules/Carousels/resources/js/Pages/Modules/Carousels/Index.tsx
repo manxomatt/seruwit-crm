@@ -5,6 +5,7 @@ import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Carousel {
     id: number;
@@ -66,16 +67,14 @@ export default function Index({ carousels, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('carousels.title')}
-                    </h2>
-                    {canCreate && (
+                <PageHeader
+                    title={t('carousels.title')}
+                    actions={canCreate && (
                         <Link href={prefixedRoute('carousels.create')}>
                             <PrimaryButton>{t('carousels.create')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('carousels.title')} />

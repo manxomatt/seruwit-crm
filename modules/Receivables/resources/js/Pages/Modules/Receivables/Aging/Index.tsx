@@ -4,6 +4,7 @@ import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
 import { Head, Link } from '@inertiajs/react';
 import ReceivablesNav from '../../../../ReceivablesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface AgingRow {
     invoice_id: number;
@@ -56,11 +57,7 @@ export default function Index({ buckets, overdue_count, overdue_amount, rows }: 
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('receivables.aging.index.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('receivables.aging.index.title')} />}
         >
             <Head title={t('receivables.aging.index.title')} />
 

@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 import SalesNav from '../../../../SalesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface DeliverableItem {
     id: number;
@@ -123,7 +124,7 @@ export default function Create({ order, deliverableItems, warehouses, defaultSto
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('sales.gin.create.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('sales.gin.create.title')} />}>
             <Head title={t('sales.gin.create.head', { so_number: order.so_number })} />
             <SalesNav />
 

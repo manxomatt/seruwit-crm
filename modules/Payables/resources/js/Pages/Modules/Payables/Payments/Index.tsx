@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
 import PayablesNav from '../../../../PayablesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Payment {
     id: number;
@@ -37,14 +38,14 @@ export default function Index({ payments, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-800">{t('payables.payments.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('payables.payments.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('payables.payments.create')}>
                             <PrimaryButton>{t('payables.payments.create')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('payables.payments.title')} />

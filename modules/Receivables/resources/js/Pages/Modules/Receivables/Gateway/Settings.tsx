@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import ReceivablesNav from '../../../../ReceivablesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface GatewayConfig {
     provider: string;
@@ -45,7 +46,7 @@ export default function Settings({ config }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('receivables.gateway.title')}</h2>}
+            header={<PageHeader title={t('receivables.gateway.title')} />}
         >
             <Head title={t('receivables.gateway.title')} />
             <ReceivablesNav />

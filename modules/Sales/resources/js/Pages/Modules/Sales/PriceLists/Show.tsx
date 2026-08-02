@@ -11,6 +11,7 @@ import { formatMoney } from '@/utils/money';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import SalesNav from '../../../../SalesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Props {
     priceList: {
@@ -59,7 +60,7 @@ export default function Show({ priceList, products, can }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{priceList.name}</h2>}>
+        <DynamicLayout header={<PageHeader title={priceList.name} />}>
             <Head title={priceList.name} />
             <SalesNav />
 

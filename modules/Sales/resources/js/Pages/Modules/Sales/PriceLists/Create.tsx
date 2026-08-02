@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import SalesNav from '../../../../SalesNav';
+import PageHeader from '@/Components/PageHeader';
 
 export default function Create(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -26,7 +27,7 @@ export default function Create(): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('sales.price_lists.create')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('sales.price_lists.create')} />}>
             <Head title={t('sales.price_lists.create')} />
             <SalesNav />
             <form onSubmit={submit} className="max-w-xl space-y-4 rounded-lg bg-white p-6 shadow-sm">

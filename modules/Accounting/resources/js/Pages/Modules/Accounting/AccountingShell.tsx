@@ -1,5 +1,6 @@
-import DynamicLayout from '@/Layouts/DynamicLayout';
 import FinanceNav from '@/Components/FinanceNav';
+import PageHeader from '@/Components/PageHeader';
+import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
@@ -131,19 +132,19 @@ export default function AccountingShell({ active, title, headerActions, children
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                        <h2 className="truncate text-xl font-semibold text-gray-800">{title}</h2>
-                        {activeGroup && activeLeaf && (
-                            <p className="mt-0.5 truncate text-xs text-gray-500">
+                <PageHeader
+                    title={title}
+                    description={
+                        activeGroup && activeLeaf ? (
+                            <>
                                 {activeGroup.label}
                                 <span className="mx-1.5 text-gray-300">/</span>
                                 {activeLeaf.label}
-                            </p>
-                        )}
-                    </div>
-                    {headerActions}
-                </div>
+                            </>
+                        ) : undefined
+                    }
+                    actions={headerActions}
+                />
             }
         >
             <Head title={title} />

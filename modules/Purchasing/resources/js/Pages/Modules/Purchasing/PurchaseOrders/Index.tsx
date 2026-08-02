@@ -7,6 +7,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import PurchasingNav from '../../../../PurchasingNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface PurchaseOrder {
     id: number;
@@ -109,14 +110,14 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('purchasing.purchase_orders.index.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('purchasing.purchase_orders.index.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('purchasing.purchase-orders.create')}>
                             <PrimaryButton>{t('purchasing.purchase_orders.index.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('purchasing.purchase_orders.index.title')} />

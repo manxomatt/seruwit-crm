@@ -12,6 +12,7 @@ import { toDateInputValue } from '@/utils/date';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Driver {
     id: number;
@@ -54,7 +55,7 @@ export default function Edit({ driver }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>}
+            header={<PageHeader title={t('fleet.title')} />}
         >
             <Head title={t('fleet.drivers.edit')} />
 

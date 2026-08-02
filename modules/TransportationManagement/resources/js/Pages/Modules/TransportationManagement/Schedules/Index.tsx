@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import TransportationNav from '../../../../TransportationNav';
+import PageHeader from '@/Components/PageHeader';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
@@ -111,14 +112,14 @@ export default function Index({ schedules, filters, activeScheduleCount = 0, can
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('transportation.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('transportation.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('transportation.schedules.create')}>
                             <PrimaryButton>{t('transportation.actions.add_schedule')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('transportation.pages.schedules.title')} />

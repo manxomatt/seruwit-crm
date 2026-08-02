@@ -187,8 +187,8 @@ export default function AuthenticatedLayout({ header, children }: Props) {
 
             {header && (
                 <header className="bg-white shadow">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        {header}
+                    <div className="mx-auto flex min-h-[4.5rem] max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8">
+                        <div className="w-full">{header}</div>
                     </div>
                 </header>
             )}

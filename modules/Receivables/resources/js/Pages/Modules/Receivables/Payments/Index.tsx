@@ -8,6 +8,7 @@ import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import ReceivablesNav from '../../../../ReceivablesNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Payment {
     id: number;
@@ -73,16 +74,14 @@ export default function Index({ payments, alerts, summary, filters, can }: Props
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('receivables.payments.index.title')}
-                    </h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('receivables.payments.index.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('receivables.payments.create')}>
                             <PrimaryButton>{t('receivables.payments.index.record')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('receivables.payments.index.head')} />

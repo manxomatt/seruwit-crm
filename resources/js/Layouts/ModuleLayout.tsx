@@ -818,11 +818,11 @@ export default function ModuleLayout({ header, children }: Props) {
                     </div>
                 </div>
 
-                {/* Page header */}
+                {/* Page header — min-h keeps height stable with/without action buttons */}
                 {header && (
                     <header className="bg-white shadow-sm">
-                        <div className="px-4 py-6 sm:px-6 lg:px-8">
-                            {header}
+                        <div className="flex min-h-[4.5rem] items-center px-4 py-4 sm:px-6 lg:px-8">
+                            <div className="w-full">{header}</div>
                         </div>
                     </header>
                 )}

@@ -9,6 +9,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Props {
     groups: string[];
@@ -50,13 +51,7 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
 
     return (
         <DynamicLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('settings.pages.create.head')}
-                    </h2>
-                </div>
-            }
+            header={<PageHeader title={t('settings.pages.create.head')} />}
         >
             <Head title={t('settings.pages.create.title')} />
 

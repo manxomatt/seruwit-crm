@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router } from '@inertiajs/react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Partner {
     id: number;
@@ -44,7 +45,7 @@ export default function Index({ partner, rentals, openInvoices, gatewayEnabled }
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('rental.portal.title')}</h2>}
+            header={<PageHeader title={t('rental.portal.title')} />}
         >
             <Head title={t('rental.portal.title')} />
 

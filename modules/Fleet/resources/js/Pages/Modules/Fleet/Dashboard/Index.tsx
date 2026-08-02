@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface VehicleRow {
     id: number;
@@ -69,7 +70,7 @@ export default function Index({ board }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>}
+            header={<PageHeader title={t('fleet.title')} />}
         >
             <Head title={t('fleet.dashboard.title')} />
 

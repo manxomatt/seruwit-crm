@@ -4,6 +4,7 @@ import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import DocumentNav from '../../../DocumentNav';
 import { DocumentItem, formatDate, formatDaysUntil, getStatusBadge } from '../../../documentUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface Props {
     summary: {
@@ -29,11 +30,7 @@ export default function Index({ summary, documents }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('document.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('document.title')} />}
         >
             <Head title={t('document.head')} />
 

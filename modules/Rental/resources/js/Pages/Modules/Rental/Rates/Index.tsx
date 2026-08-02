@@ -14,6 +14,7 @@ import { formatMoney } from '@/utils/money';
 import { Head, router, useForm, type InertiaFormProps } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import RentalNav from '../../../../RentalNav';
+import PageHeader from '@/Components/PageHeader';
 
 const PencilIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -453,10 +454,10 @@ export default function RatesIndex({ rates, vehicles, rentalClasses }: Props): J
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('rental.pages.rates.title')}</h2>
-                    <PrimaryButton onClick={() => setShowCreate(true)}>{t('rental.actions.new_rate')}</PrimaryButton>
-                </div>
+                <PageHeader
+                    title={t('rental.pages.rates.title')}
+                    actions={<PrimaryButton onClick={() => setShowCreate(true)}>{t('rental.actions.new_rate')}</PrimaryButton>}
+                />
             }
         >
             <Head title={t('rental.pages.rates.head')} />

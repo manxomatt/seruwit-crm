@@ -1,4 +1,5 @@
 import DynamicLayout from '@/Layouts/DynamicLayout'
+import PageHeader from '@/Components/PageHeader'
 import { useLocaleTag, useTrans } from '@/hooks/useTrans'
 import { Head, router } from '@inertiajs/react'
 import { Fragment, useState } from 'react'
@@ -63,7 +64,7 @@ export default function StockLevelsIndex({ warehouses, matrix }: Props) {
 
   return (
     <DynamicLayout
-      header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('inventory.title')}</h2>}
+      header={<PageHeader title={t('inventory.title')} />}
     >
       <Head title={t('inventory.stock_levels.head')} />
 

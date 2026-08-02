@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import TrackingNav from '../../../TrackingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Config {
     provider: string;
@@ -93,7 +94,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('tracking.title')} />}>
             <Head title={t('tracking.pages.settings.title')} />
 
             <TrackingNav />

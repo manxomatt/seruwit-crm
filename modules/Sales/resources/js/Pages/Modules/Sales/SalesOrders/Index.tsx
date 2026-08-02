@@ -7,6 +7,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import SalesNav from '../../../../SalesNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface SalesOrder {
     id: number;
@@ -108,14 +109,14 @@ export default function Index({ orders, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('sales.sales_orders.index.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('sales.sales_orders.index.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('sales.sales-orders.create')}>
                             <PrimaryButton>{t('sales.sales_orders.index.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('sales.sales_orders.index.title')} />

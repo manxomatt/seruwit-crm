@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMemo, useState, FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Order {
     id: number;
@@ -159,14 +160,14 @@ export default function Index({ orders, filters, can, assignableTrips = [] }: Pr
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('orders.index.head')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('orders.index.head')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('orders.create')}>
                             <PrimaryButton>{t('orders.index.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('orders.title')} />

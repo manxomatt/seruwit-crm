@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import ScoringNav from '../../../../ScoringNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Settings {
     harsh_brake_kph_per_s: string | number;
@@ -71,11 +72,7 @@ export default function Edit({ settings }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('scoring.pages.settings.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('scoring.pages.settings.title')} />}
         >
             <Head title={t('scoring.pages.settings.title')} />
 

@@ -8,6 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useRef, DragEvent, ChangeEvent } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface UploadingFile {
     id: string;
@@ -187,13 +188,7 @@ export default function Create(): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('media.pages.create.head')}
-                    </h2>
-                </div>
-            }
+            header={<PageHeader title={t('media.pages.create.head')} />}
         >
             <Head title={t('media.pages.create.title')} />
 

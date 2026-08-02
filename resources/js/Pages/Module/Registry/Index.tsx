@@ -3,6 +3,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface ModuleRow {
     key: string;
@@ -30,7 +31,7 @@ export default function Index({ modules }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('platform.registry.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('platform.registry.title')} />}>
             <Head title={t('platform.registry.title')} />
 
             <div className="space-y-6">

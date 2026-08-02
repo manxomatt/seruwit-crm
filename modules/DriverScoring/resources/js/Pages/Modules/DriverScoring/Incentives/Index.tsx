@@ -11,6 +11,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import ScoringNav from '../../../../ScoringNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Rule {
     id: number;
@@ -133,11 +134,7 @@ export default function Index({ rules, awards, can }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('scoring.pages.incentives.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('scoring.pages.incentives.title')} />}
         >
             <Head title={t('scoring.pages.incentives.title')} />
 

@@ -6,6 +6,7 @@ import Select from '@/Components/Select';
 import { formatDateDmY } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import ApprovalsNav from '../../../../ApprovalsNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface ApprovalRequestRow {
     id: number;
@@ -83,14 +84,14 @@ export default function Index({ requests, triggers, filters, pending_count, can 
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('approvals.inbox.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('approvals.inbox.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('approvals.policies.create')}>
                             <PrimaryButton>{t('approvals.inbox.new_policy')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('approvals.inbox.head')} />

@@ -8,6 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 export default function Create(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -45,13 +46,7 @@ export default function Create(): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('carousels.create_title')}
-                    </h2>
-                </div>
-            }
+            header={<PageHeader title={t('carousels.create_title')} />}
         >
             <Head title={t('carousels.create_title')} />
 

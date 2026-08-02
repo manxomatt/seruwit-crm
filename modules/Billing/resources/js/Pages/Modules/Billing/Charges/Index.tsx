@@ -12,6 +12,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import BillingNav from '../../../../BillingNav';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 
 interface Tariff {
     id: number;
@@ -126,7 +127,7 @@ export default function Index({ orders, tariffs, filters, can }: Props): JSX.Ele
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('billing.title')}</h2>}
+            header={<PageHeader title={t('billing.title')} />}
         >
             <Head title={t('billing.charges.head')} />
 

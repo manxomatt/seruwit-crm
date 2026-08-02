@@ -8,6 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface MediaItem {
     id: number;
@@ -41,13 +42,7 @@ export default function Edit({ media }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('media.pages.edit.head')}
-                    </h2>
-                </div>
-            }
+            header={<PageHeader title={t('media.pages.edit.head')} />}
         >
             <Head title={t('media.pages.edit.title', { name: media.original_name })} />
 

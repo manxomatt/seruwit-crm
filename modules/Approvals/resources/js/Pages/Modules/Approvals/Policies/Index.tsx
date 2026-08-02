@@ -6,6 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import ApprovalsNav from '../../../../ApprovalsNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Policy {
     id: number;
@@ -88,14 +89,14 @@ export default function Index({ policies, triggers, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('approvals.policies.title')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('approvals.policies.title')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('approvals.policies.create')}>
                             <PrimaryButton>{t('approvals.policies.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('approvals.policies.head')} />

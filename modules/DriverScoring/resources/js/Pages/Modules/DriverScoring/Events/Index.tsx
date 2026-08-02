@@ -5,6 +5,7 @@ import Select from '@/Components/Select';
 import { formatDateTimeDmYHi } from '@/utils/date';
 import { Head, router } from '@inertiajs/react';
 import ScoringNav from '../../../../ScoringNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface EventRow {
     id: number;
@@ -53,11 +54,7 @@ export default function Index({ events, drivers, vehicles, filters }: Props): JS
 
     return (
         <DynamicLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('scoring.pages.events.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('scoring.pages.events.title')} />}
         >
             <Head title={t('scoring.pages.events.title')} />
 

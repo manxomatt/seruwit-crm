@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout'
 import { useRoutePrefix } from '@/hooks/useRoutePrefix'
 import { useTrans } from '@/hooks/useTrans'
+import PageHeader from '@/Components/PageHeader'
 import PrimaryButton from '@/Components/PrimaryButton'
 import Select from '@/Components/Select'
 import { Head, Link, router } from '@inertiajs/react'
@@ -52,12 +53,12 @@ export default function WarehousesIndex({ warehouses, filters, kinds }: Props) {
   return (
     <DynamicLayout
       header={
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('inventory.title')}</h2>
-          <Link href={prefixedRoute('inventory.warehouses.create')}>
+          <PageHeader
+              title={t('inventory.title')}
+              actions={<Link href={prefixedRoute('inventory.warehouses.create')}>
             <PrimaryButton>{t('inventory.warehouses.add')}</PrimaryButton>
-          </Link>
-        </div>
+          </Link>}
+          />
       }
     >
       <Head title={t('inventory.warehouses.head')} />

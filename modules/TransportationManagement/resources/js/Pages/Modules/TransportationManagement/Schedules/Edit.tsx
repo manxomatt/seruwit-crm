@@ -11,6 +11,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import TransportationNav from '../../../../TransportationNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface Vehicle {
     id: number;
@@ -98,7 +99,7 @@ export default function Edit({ schedule, vehicles, drivers, partners }: Props): 
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('transportation.pages.schedules.edit')}</h2>}
+            header={<PageHeader title={t('transportation.pages.schedules.edit')} />}
         >
             <Head title={t('transportation.pages.schedules.edit')} />
 

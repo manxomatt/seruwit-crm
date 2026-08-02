@@ -14,6 +14,7 @@ import { Head, router } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import { Polyline } from 'react-leaflet';
 import TrackingNav from '../../../TrackingNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface VehicleOption {
     id: number;
@@ -107,7 +108,7 @@ export default function History({ vehicles, filters, trail, stats }: Props): JSX
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('tracking.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('tracking.title')} />}>
             <Head title={t('tracking.pages.history.title')} />
 
             <TrackingNav />

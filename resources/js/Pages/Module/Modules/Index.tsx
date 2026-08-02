@@ -5,6 +5,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 type ModuleState = 'installed' | 'available' | 'uninstalled' | 'locked' | 'locked_with_data' | 'disabled' | 'disabled_with_data';
 
@@ -86,7 +87,7 @@ export default function Index({ modules, plan, graceDays, packs = [] }: Props): 
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('platform.modules_catalog.title')}</h2>}>
+        <DynamicLayout header={<PageHeader title={t('platform.modules_catalog.title')} />}>
             <Head title={t('platform.modules_catalog.title')} />
 
             <div className="py-6">

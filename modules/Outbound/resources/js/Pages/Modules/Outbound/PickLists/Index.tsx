@@ -7,6 +7,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import OutboundNav from '../../../../OutboundNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface PickList {
     id: number;
@@ -92,14 +93,14 @@ export default function Index({ pickLists, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('outbound.pick_lists.index.head')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('outbound.pick_lists.index.head')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('outbound.pick-lists.create')}>
                             <PrimaryButton>{t('outbound.pick_lists.index.generate')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('outbound.pick_lists.index.title')} />

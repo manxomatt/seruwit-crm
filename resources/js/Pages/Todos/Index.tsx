@@ -5,6 +5,7 @@ import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm, router } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Todo {
     id: number;
@@ -47,11 +48,7 @@ export default function Index({ todos }: Props): JSX.Element {
 
     return (
         <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    {t('todos.title')}
-                </h2>
-            }
+            header={<PageHeader title={t('todos.title')} />}
         >
             <Head title={t('todos.title')} />
 

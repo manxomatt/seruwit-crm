@@ -8,6 +8,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Brand {
     id: number;
@@ -114,14 +115,14 @@ export default function Index({ products, brands, productTypes, filters, can }: 
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('products.products.index.head')}</h2>
-                    {can.create && (
+                <PageHeader
+                    title={t('products.products.index.head')}
+                    actions={can.create && (
                         <Link href={prefixedRoute('products.create')}>
                             <PrimaryButton>{t('products.products.index.new')}</PrimaryButton>
                         </Link>
                     )}
-                </div>
+                />
             }
         >
             <Head title={t('products.products.index.head')} />

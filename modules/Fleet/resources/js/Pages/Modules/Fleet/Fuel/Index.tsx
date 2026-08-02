@@ -5,6 +5,7 @@ import Select from '@/Components/Select';
 import { formatDate } from '@/utils/date';
 import { Head, Link, router } from '@inertiajs/react';
 import FleetNav from '../../../../FleetNav';
+import PageHeader from '@/Components/PageHeader';
 
 interface LogRow {
     id: number;
@@ -43,7 +44,7 @@ export default function Index({ logs, vehicles, filters }: Props): JSX.Element {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>}
+            header={<PageHeader title={t('fleet.title')} />}
         >
             <Head title={t('fleet.fuel.title')} />
 
