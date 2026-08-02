@@ -10,6 +10,7 @@ use Modules\Receivables\Http\Controllers\CreditLimitController;
 use Modules\Receivables\Http\Controllers\GatewayCheckoutController;
 use Modules\Receivables\Http\Controllers\PaymentController;
 use Modules\Receivables\Http\Controllers\PaymentGatewayConfigController;
+use Modules\Receivables\Http\Controllers\ReceivablesDashboardController;
 
 /**
  * Accounts receivable: customer payments, aging, and credit-limit checks.
@@ -55,7 +56,7 @@ class ReceivablesModule implements ModuleContract
             'name' => 'Receivables',
             'slug' => 'receivables',
             'icon' => 'receivables',
-            'route_name' => 'receivables.payments.index',
+            'route_name' => 'receivables.dashboard',
             'permission_module' => 'receivables',
             'permission_action' => 'view',
             'sort_order' => 12,
@@ -80,9 +81,7 @@ class ReceivablesModule implements ModuleContract
     public function routes(): void
     {
         Route::middleware(['auth', 'permission:receivables,view'])->group(function (): void {
-            Route::get('/receivables', function () {
-                return redirect('/module/receivables/payments');
-            });
+            Route::get('/receivables', [ReceivablesDashboardController::class, 'index'])->name('receivables.dashboard');
 
             Route::prefix('receivables')->name('receivables.')->group(function (): void {
                 Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');

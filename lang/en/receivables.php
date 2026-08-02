@@ -4,10 +4,38 @@ return [
     'title' => 'Receivables',
 
     'nav' => [
+        'dashboard' => 'Dashboard',
         'payments' => 'Payments',
         'aging' => 'Aging',
         'credit_limits' => 'Credit Limits',
         'gateway' => 'Payment gateway',
+    ],
+
+    'dashboard' => [
+        'title' => 'Receivables Dashboard',
+        'subtitle' => 'Collections health — open AR, aging buckets, overdue invoices, and recent payments.',
+        'open_invoices' => ':count open invoices',
+        'overdue' => 'Overdue',
+        'overdue_hint' => ':count invoices past due',
+        'of_open_ar' => 'of open AR',
+        'posted_payments' => ':count posted payments on record',
+        'needs_attention' => 'Needs attention',
+        'needs_attention_hint' => 'Overdue invoices, over-limit customers, pending gateway charges',
+        'overdue_short' => 'overdue',
+        'over_limit' => 'over limit',
+        'gateway_pending' => 'gateway pending',
+        'top_partners' => 'Top outstanding partners',
+        'top_partners_help' => 'Customers with the largest open balances',
+        'view_credit' => 'Credit limits',
+        'partner_overdue' => ':amount overdue',
+        'recent' => 'Recent payments',
+        'recent_help' => 'Latest posted and voided collections',
+        'view_payments' => 'View payments',
+        'quick_actions' => 'Quick actions',
+        'quick_payments' => 'Browse and record customer payments',
+        'quick_aging' => 'Open AR by days past due',
+        'quick_credit' => 'Utilization and over-limit customers',
+        'quick_gateway' => 'Midtrans / Snap gateway settings',
     ],
 
     'status' => [

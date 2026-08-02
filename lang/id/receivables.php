@@ -4,10 +4,38 @@ return [
     'title' => 'Piutang',
 
     'nav' => [
+        'dashboard' => 'Dasbor',
         'payments' => 'Pembayaran',
         'aging' => 'Aging',
         'credit_limits' => 'Credit Limit',
         'gateway' => 'Payment gateway',
+    ],
+
+    'dashboard' => [
+        'title' => 'Dasbor Piutang',
+        'subtitle' => 'Kesehatan penagihan — AR terbuka, bucket aging, invoice jatuh tempo, dan pembayaran terbaru.',
+        'open_invoices' => ':count invoice terbuka',
+        'overdue' => 'Jatuh tempo',
+        'overdue_hint' => ':count invoice lewat jatuh tempo',
+        'of_open_ar' => 'dari AR terbuka',
+        'posted_payments' => ':count pembayaran posted tercatat',
+        'needs_attention' => 'Perlu perhatian',
+        'needs_attention_hint' => 'Invoice jatuh tempo, pelanggan over limit, charge gateway pending',
+        'overdue_short' => 'jatuh tempo',
+        'over_limit' => 'over limit',
+        'gateway_pending' => 'gateway pending',
+        'top_partners' => 'Partner outstanding tertinggi',
+        'top_partners_help' => 'Pelanggan dengan saldo terbuka terbesar',
+        'view_credit' => 'Credit limit',
+        'partner_overdue' => ':amount jatuh tempo',
+        'recent' => 'Pembayaran terbaru',
+        'recent_help' => 'Koleksi posted dan voided terkini',
+        'view_payments' => 'Lihat pembayaran',
+        'quick_actions' => 'Aksi cepat',
+        'quick_payments' => 'Lihat dan catat pembayaran pelanggan',
+        'quick_aging' => 'AR terbuka per hari lewat jatuh tempo',
+        'quick_credit' => 'Utilisasi dan pelanggan over limit',
+        'quick_gateway' => 'Pengaturan gateway Midtrans / Snap',
     ],
 
     'status' => [
