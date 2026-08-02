@@ -3,6 +3,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
+    { labelKey: 'transportation.nav.dashboard', route: 'transportation.dashboard', pattern: 'transportation.dashboard' },
     { labelKey: 'transportation.nav.trips', route: 'transportation.trips.index', pattern: 'transportation.trips.*' },
     { labelKey: 'transportation.nav.schedules', route: 'transportation.schedules.index', pattern: 'transportation.schedules.*' },
     { labelKey: 'transportation.nav.calendar', route: 'transportation.calendar.index', pattern: 'transportation.calendar.*' },

@@ -10,6 +10,7 @@ use Modules\Tracking\Events\VehiclePositionsRecorded;
 use Modules\TransportationManagement\Http\Controllers\CalendarController;
 use Modules\TransportationManagement\Http\Controllers\DirectionsController;
 use Modules\TransportationManagement\Http\Controllers\ReportController;
+use Modules\TransportationManagement\Http\Controllers\TransportationDashboardController;
 use Modules\TransportationManagement\Http\Controllers\TripCheckpointController;
 use Modules\TransportationManagement\Http\Controllers\TripController;
 use Modules\TransportationManagement\Http\Controllers\TripItemController;
@@ -60,7 +61,7 @@ class TransportationManagementModule implements ModuleContract
             'name' => 'Transportation',
             'slug' => 'transportation',
             'icon' => 'transportation',
-            'route_name' => 'transportation.trips.index',
+            'route_name' => 'transportation.dashboard',
             'permission_module' => 'transportation',
             'permission_action' => 'view',
             'sort_order' => 6,
@@ -92,7 +93,7 @@ class TransportationManagementModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/transportation', '/transportation/trips');
+        Route::get('/transportation', [TransportationDashboardController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.dashboard');
 
         Route::get('/transportation/trips', [TripController::class, 'index'])->middleware('permission:transportation,view')->name('transportation.trips.index');
         Route::get('/transportation/trips/create', [TripController::class, 'create'])->middleware('permission:transportation,create')->name('transportation.trips.create');
