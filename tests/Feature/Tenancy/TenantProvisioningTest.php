@@ -61,7 +61,11 @@ class TenantProvisioningTest extends TestCase
         $response = $this->get('http://demo.localhost/');
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) => $page->component('Welcome'));
+        $response->assertInertia(fn ($page) => $page
+            ->component('Welcome')
+            ->where('canLogin', true)
+            ->where('canRegister', false)
+        );
     }
 
     public function test_tenant_routes_are_not_accessible_from_central_domains(): void

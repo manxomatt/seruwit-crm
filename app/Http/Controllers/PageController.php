@@ -52,7 +52,8 @@ class PageController extends Controller
 
             return Inertia::render('Welcome', [
                 'canLogin' => Route::has('login'),
-                'canRegister' => Route::has('register'),
+                // Tenant workspaces invite users; public self-registration belongs on central only.
+                'canRegister' => Route::has('register') && ! tenancy()->initialized,
                 'laravelVersion' => Application::VERSION,
                 'phpVersion' => PHP_VERSION,
                 'settings' => $settings,
