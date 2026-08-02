@@ -141,7 +141,9 @@ export default function Index({ modules, plan, graceDays, packs = [] }: Props): 
                                                 <h4 className="font-medium text-gray-900">{pack.label}</h4>
                                                 <p className="mt-1 text-sm text-gray-500">{pack.description}</p>
                                                 <p className="mt-2 text-xs text-gray-400">
-                                                    {t('platform.modules_catalog.packs_modules_prefix')} {pack.modules.join(', ')}
+                                                    {pack.modules.length > 0
+                                                        ? `${t('platform.modules_catalog.packs_modules_prefix')} ${pack.modules.join(', ')}`
+                                                        : t('platform.modules_catalog.packs_seed_only', undefined, 'Master data only')}
                                                 </p>
                                             </div>
                                             <div className="flex shrink-0 flex-wrap gap-2">

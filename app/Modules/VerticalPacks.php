@@ -70,10 +70,9 @@ class VerticalPacks
             ],
             self::PARTNER_INDUSTRIES => [
                 'label' => 'Partner Industries',
-                'description' => 'Common ERP/CRM industry masters (ID/EN) for classifying partners. Requires Partners.',
-                'modules' => [
-                    'partners',
-                ],
+                'description' => 'Seeds common ERP/CRM industry masters (ID/EN) for classifying partners. Partners is a core feature — this pack only installs master data.',
+                // Partners is core (not installable). This pack is seed-only.
+                'modules' => [],
                 'seeders' => [
                     \Database\Seeders\TenantPartnerIndustriesSeeder::class,
                 ],
@@ -87,5 +86,39 @@ class VerticalPacks
     public static function find(string $key): ?array
     {
         return self::all()[$key] ?? null;
+    }
+
+    /**
+     * Whether a pack appears installed for the current tenant.
+     * Module packs: any listed optional module is installed.
+     * Seed-only packs: first seeder with isInstalled() reports true.
+     */
+    public static function isInstalled(string $key): bool
+    {
+        $pack = self::find($key);
+
+        if ($pack === null) {
+            return false;
+        }
+
+        if ($pack['modules'] !== []) {
+            return collect($pack['modules'])->contains(
+                fn (string $moduleKey): bool => \App\Modules\Facades\Modules::installed($moduleKey)
+            );
+        }
+
+        foreach ($pack['seeders'] as $seederClass) {
+            if (! class_exists($seederClass)) {
+                continue;
+            }
+
+            $seeder = app($seederClass);
+
+            if (method_exists($seeder, 'isInstalled')) {
+                return (bool) $seeder->isInstalled();
+            }
+        }
+
+        return false;
     }
 }

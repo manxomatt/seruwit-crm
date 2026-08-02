@@ -49,6 +49,7 @@ return [
         'packs_heading' => 'Vertical packs',
         'packs_hint' => 'One-click install or uninstall of modules for a business vertical, plus demo data when available.',
         'packs_modules_prefix' => 'Includes:',
+        'packs_seed_only' => 'Master data only (no optional modules)',
         'uninstall_confirm' => [
             'title' => 'Uninstall module :module?',
             'message' => 'Its menu and access are revoked now, but the data is kept for :days days. Install it again before then and everything comes back intact.',

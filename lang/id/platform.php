@@ -49,6 +49,7 @@ return [
         'packs_heading' => 'Pack vertikal',
         'packs_hint' => 'Pasang atau copot sekumpulan modul untuk satu jenis bisnis sekaligus, plus data demo jika tersedia.',
         'packs_modules_prefix' => 'Termasuk:',
+        'packs_seed_only' => 'Hanya master data (tanpa modul opsional)',
         'uninstall_confirm' => [
             'title' => 'Copot modul :module?',
             'message' => 'Menu dan aksesnya dicabut sekarang, tapi datanya disimpan :days hari. Pasang lagi sebelum itu dan semuanya kembali utuh.',

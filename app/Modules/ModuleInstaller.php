@@ -246,7 +246,8 @@ class ModuleInstaller
             foreach ($pack['modules'] as $moduleKey) {
                 $module = Modules::find($moduleKey);
 
-                if (! $module) {
+                // Skip unknown keys and core features (not installable via packs).
+                if (! $module || ! Modules::has($module->key())) {
                     continue;
                 }
 

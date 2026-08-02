@@ -66,6 +66,15 @@ class TenantPartnerIndustriesSeeder extends Seeder
         ));
     }
 
+    public function isInstalled(): bool
+    {
+        if (! Schema::hasTable('partner_industries')) {
+            return false;
+        }
+
+        return PartnerIndustry::query()->whereIn('code', self::CODES)->exists();
+    }
+
     /**
      * Remove pack industries that are not assigned to partners.
      * Industries still in use are deactivated instead of deleted.

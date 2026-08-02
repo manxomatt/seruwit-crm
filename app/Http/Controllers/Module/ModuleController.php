@@ -38,9 +38,7 @@ class ModuleController extends Controller
                     'label' => $pack['label'],
                     'description' => $pack['description'],
                     'modules' => $pack['modules'],
-                    'installed' => collect($pack['modules'])->contains(
-                        fn (string $moduleKey): bool => Modules::installed($moduleKey)
-                    ),
+                    'installed' => VerticalPacks::isInstalled($key),
                 ])
                 ->values()
                 ->all(),
