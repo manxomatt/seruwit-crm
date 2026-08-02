@@ -10,6 +10,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 import ShuttleNav from '../ShuttleNav';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 interface PoolPin {
     latitude: string;
@@ -174,7 +175,7 @@ export default function Create({ departures, partners }: Props) {
     ];
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.bookings.create')}</h2>}>
+        <DynamicLayout header={<ShuttlePageHeader title={t('shuttle.bookings.create')} />}>
             <Head title={t('shuttle.bookings.create')} />
             <ShuttleNav active="bookings" />
             <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">

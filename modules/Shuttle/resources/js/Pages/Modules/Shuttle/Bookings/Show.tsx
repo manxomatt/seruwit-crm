@@ -4,6 +4,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
 import ShuttleNav from '../ShuttleNav';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 interface Booking {
     id: number;
@@ -44,7 +45,7 @@ export default function Show({ booking, can }: Props) {
     const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{booking.booking_number}</h2>}>
+        <DynamicLayout header={<ShuttlePageHeader title={booking.booking_number} />}>
             <Head title={booking.booking_number} />
             <ShuttleNav active="bookings" />
             <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">

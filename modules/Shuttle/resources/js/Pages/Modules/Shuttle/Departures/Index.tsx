@@ -8,6 +8,7 @@ import { Head, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
 import { ActionIconButton, EyeIcon, RouteIcon, TrashIcon } from '../components/ActionIcons';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 import ShuttlePagination, { type PaginatedMeta } from '../components/ShuttlePagination';
 
 interface Departure {
@@ -93,7 +94,7 @@ export default function Index({ departures, filters, can }: Props) {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.departures.title')}</h2>}
+            header={<ShuttlePageHeader title={t('shuttle.departures.title')} />}
         >
             <Head title={t('shuttle.departures.title')} />
             <ShuttleNav active="departures" />

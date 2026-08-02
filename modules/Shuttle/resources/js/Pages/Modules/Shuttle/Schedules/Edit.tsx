@@ -9,6 +9,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import ShuttleNav from '../ShuttleNav';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 interface Props {
     schedule: {
@@ -62,7 +63,7 @@ export default function Edit({ schedule, corridors, vehicles, drivers }: Props) 
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.schedules.edit')}</h2>}>
+        <DynamicLayout header={<ShuttlePageHeader title={t('shuttle.schedules.edit')} />}>
             <Head title={t('shuttle.schedules.edit')} />
             <ShuttleNav active="schedules" />
             <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">

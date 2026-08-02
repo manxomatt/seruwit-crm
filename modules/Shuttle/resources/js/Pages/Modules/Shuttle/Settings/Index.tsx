@@ -13,6 +13,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
 import { ActionIconButton, PencilIcon, TrashIcon } from '../components/ActionIcons';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 type Tab = 'general' | 'cities' | 'pools';
 
@@ -74,7 +75,7 @@ export default function Index({ tab, settings, cities, pools, can }: Props) {
 
     return (
         <DynamicLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.settings.title')}</h2>}
+            header={<ShuttlePageHeader title={t('shuttle.settings.title')} />}
         >
             <Head title={t('shuttle.settings.title')} />
             <ShuttleNav active="settings" />

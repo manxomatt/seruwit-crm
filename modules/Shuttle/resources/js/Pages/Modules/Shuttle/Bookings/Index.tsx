@@ -8,6 +8,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
 import { ActionIconButton, EyeIcon } from '../components/ActionIcons';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 import ShuttlePagination, { type PaginatedMeta } from '../components/ShuttlePagination';
 
 interface Booking {
@@ -73,14 +74,16 @@ export default function Index({ bookings, filters, can }: Props) {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.bookings.title')}</h2>
-                    {can.create && (
-                        <Link href={prefixedRoute('shuttle.bookings.create')}>
-                            <PrimaryButton type="button">{t('shuttle.bookings.create')}</PrimaryButton>
-                        </Link>
-                    )}
-                </div>
+                <ShuttlePageHeader
+                    title={t('shuttle.bookings.title')}
+                    actions={
+                        can.create ? (
+                            <Link href={prefixedRoute('shuttle.bookings.create')}>
+                                <PrimaryButton type="button">{t('shuttle.bookings.create')}</PrimaryButton>
+                            </Link>
+                        ) : undefined
+                    }
+                />
             }
         >
             <Head title={t('shuttle.bookings.title')} />

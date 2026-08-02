@@ -10,6 +10,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
 import ShuttleNav from '../ShuttleNav';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 interface City {
     id: number;
@@ -75,7 +76,7 @@ export default function Create({ cities, pools, defaults }: Props) {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.corridors.create')}</h2>}>
+        <DynamicLayout header={<ShuttlePageHeader title={t('shuttle.corridors.create')} />}>
             <Head title={t('shuttle.corridors.create')} />
             <ShuttleNav active="corridors" />
             <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">

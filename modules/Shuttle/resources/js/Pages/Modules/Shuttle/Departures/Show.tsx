@@ -8,6 +8,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 interface RouteStop {
     id: number;
@@ -89,7 +90,7 @@ export default function Show({ departure, vehicles, drivers, can }: Props) {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{departure.departure_number}</h2>}>
+        <DynamicLayout header={<ShuttlePageHeader title={departure.departure_number} />}>
             <Head title={departure.departure_number} />
             <ShuttleNav active="departures" />
 

@@ -3,6 +3,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 interface Props {
     partner: { id: number; code: string; name: string };
@@ -38,7 +39,7 @@ export default function Show({ partner, booking, canPayInvoice }: Props) {
     const { t } = useTrans();
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{booking.booking_number}</h2>}>
+        <DynamicLayout header={<ShuttlePageHeader title={booking.booking_number} />}>
             <Head title={booking.booking_number} />
             <Link href={prefixedRoute('portal.shuttle.bookings.index')} className="mb-4 inline-block text-sm text-indigo-600 hover:underline">
                 ← {t('shuttle.portal.back')}

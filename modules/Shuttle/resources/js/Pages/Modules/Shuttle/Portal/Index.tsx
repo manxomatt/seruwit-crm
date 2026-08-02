@@ -3,6 +3,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, router } from '@inertiajs/react';
 import { ActionIconButton, EyeIcon } from '../components/ActionIcons';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 import ShuttlePagination, { type PaginatedMeta } from '../components/ShuttlePagination';
 
 interface BookingRow {
@@ -60,12 +61,14 @@ export default function Index({ partner, bookings, openInvoices, gatewayEnabled 
     return (
         <DynamicLayout
             header={
-                <div>
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.portal.title')}</h2>
-                    <p className="mt-1 text-sm text-gray-500">
-                        {partner.name} <span className="text-gray-400">({partner.code})</span>
-                    </p>
-                </div>
+                <ShuttlePageHeader
+                    title={t('shuttle.portal.title')}
+                    description={
+                        <>
+                            {partner.name} <span className="text-gray-400">({partner.code})</span>
+                        </>
+                    }
+                />
             }
         >
             <Head title={t('shuttle.portal.title')} />

@@ -8,6 +8,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import ShuttleNav from '../ShuttleNav';
 import { ActionIconButton, CalendarPlusIcon, PencilIcon, TrashIcon } from '../components/ActionIcons';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 import ShuttlePagination, { type PaginatedMeta } from '../components/ShuttlePagination';
 
 interface Schedule {
@@ -61,14 +62,16 @@ export default function Index({ schedules, can }: Props) {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.schedules.title')}</h2>
-                    {can.create && (
-                        <Link href={prefixedRoute('shuttle.schedules.create')}>
-                            <PrimaryButton type="button">{t('shuttle.schedules.create')}</PrimaryButton>
-                        </Link>
-                    )}
-                </div>
+                <ShuttlePageHeader
+                    title={t('shuttle.schedules.title')}
+                    actions={
+                        can.create ? (
+                            <Link href={prefixedRoute('shuttle.schedules.create')}>
+                                <PrimaryButton type="button">{t('shuttle.schedules.create')}</PrimaryButton>
+                            </Link>
+                        ) : undefined
+                    }
+                />
             }
         >
             <Head title={t('shuttle.schedules.title')} />

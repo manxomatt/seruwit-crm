@@ -5,6 +5,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link } from '@inertiajs/react';
 import ShuttleNav from './ShuttleNav';
 import { ActionIconButton, EyeIcon } from './components/ActionIcons';
+import ShuttlePageHeader from './components/ShuttlePageHeader';
 
 interface Departure {
     id: number;
@@ -56,22 +57,24 @@ export default function Dashboard({ stats, upcomingDepartures, can }: Props) {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('shuttle.dashboard.title')}</h2>
-                    {can.create && (
-                        <div className="flex flex-wrap gap-2">
-                            <Link href={prefixedRoute('shuttle.bookings.create')}>
-                                <PrimaryButton type="button">{t('shuttle.bookings.create')}</PrimaryButton>
-                            </Link>
-                            <Link
-                                href={prefixedRoute('shuttle.corridors.create')}
-                                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gray-700 shadow-sm transition hover:bg-gray-50"
-                            >
-                                {t('shuttle.corridors.create')}
-                            </Link>
-                        </div>
-                    )}
-                </div>
+                <ShuttlePageHeader
+                    title={t('shuttle.dashboard.title')}
+                    actions={
+                        can.create ? (
+                            <>
+                                <Link href={prefixedRoute('shuttle.bookings.create')}>
+                                    <PrimaryButton type="button">{t('shuttle.bookings.create')}</PrimaryButton>
+                                </Link>
+                                <Link
+                                    href={prefixedRoute('shuttle.corridors.create')}
+                                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gray-700 shadow-sm transition hover:bg-gray-50"
+                                >
+                                    {t('shuttle.corridors.create')}
+                                </Link>
+                            </>
+                        ) : undefined
+                    }
+                />
             }
         >
             <Head title={t('shuttle.dashboard.title')} />

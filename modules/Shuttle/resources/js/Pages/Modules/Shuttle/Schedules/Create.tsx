@@ -9,6 +9,7 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import ShuttleNav from '../ShuttleNav';
+import ShuttlePageHeader from '../components/ShuttlePageHeader';
 
 interface Props {
     corridors: Array<{ id: number; code: string; name: string }>;
@@ -48,7 +49,7 @@ export default function Create({ corridors, vehicles, drivers }: Props) {
     };
 
     return (
-        <DynamicLayout header={<h2 className="text-xl font-semibold text-gray-800">{t('shuttle.schedules.create')}</h2>}>
+        <DynamicLayout header={<ShuttlePageHeader title={t('shuttle.schedules.create')} />}>
             <Head title={t('shuttle.schedules.create')} />
             <ShuttleNav active="schedules" />
             <form onSubmit={submit} className="space-y-4 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
