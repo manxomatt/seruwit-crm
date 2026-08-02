@@ -319,7 +319,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'bi': { route: 'module.bi.dashboard', routePattern: 'module.bi.*' },
     'outbound': { route: 'module.outbound.pick-lists.index', routePattern: 'module.outbound.*' },
     'pos': { route: 'module.pos.terminal', routePattern: 'module.pos.*' },
-    'billing': { route: 'module.billing.charges.index', routePattern: 'module.billing.*' },
+    'billing': { route: 'module.billing.dashboard', routePattern: 'module.billing.*' },
     'invoicing': { route: 'module.invoicing.invoices.index', routePattern: 'module.invoicing.*' },
     'rental': { route: 'module.rental.index', routePattern: 'module.rental.*' },
     'shuttle': { route: 'module.shuttle.dashboard', routePattern: 'module.shuttle.*' },

@@ -5,6 +5,7 @@ namespace Modules\Billing;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Billing\Http\Controllers\BillingDashboardController;
 use Modules\Billing\Http\Controllers\OrderChargeController;
 use Modules\Billing\Http\Controllers\OrderInvoiceController;
 use Modules\Billing\Http\Controllers\TariffController;
@@ -71,7 +72,7 @@ class BillingModule implements ModuleContract
             'name' => 'Billing',
             'slug' => 'billing',
             'icon' => 'billing',
-            'route_name' => 'billing.charges.index',
+            'route_name' => 'billing.dashboard',
             'permission_module' => 'billing',
             'permission_action' => 'view',
             'sort_order' => 8,
@@ -109,7 +110,7 @@ class BillingModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/billing', '/billing/charges');
+        Route::get('/billing', [BillingDashboardController::class, 'index'])->middleware('permission:billing,view')->name('billing.dashboard');
 
         // Raising an invoice from delivered orders. The document that comes out
         // belongs to Invoicing, so these hand off to its pages once written —
