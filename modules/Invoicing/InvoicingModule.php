@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Invoicing\Http\Controllers\InvoiceController;
 use Modules\Invoicing\Http\Controllers\InvoiceLineController;
 use Modules\Invoicing\Http\Controllers\InvoicePdfController;
+use Modules\Invoicing\Http\Controllers\InvoicingDashboardController;
 
 /**
  * Customer invoices as a plain financial document: a header, a set of lines,
@@ -64,7 +65,7 @@ class InvoicingModule implements ModuleContract
             'name' => 'Invoicing',
             'slug' => 'invoicing',
             'icon' => 'invoicing',
-            'route_name' => 'invoicing.invoices.index',
+            'route_name' => 'invoicing.dashboard',
             'permission_module' => 'invoicing',
             'permission_action' => 'view',
             'sort_order' => 11,
@@ -98,7 +99,7 @@ class InvoicingModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/invoicing', '/invoicing/invoices');
+        Route::get('/invoicing', [InvoicingDashboardController::class, 'index'])->middleware('permission:invoicing,view')->name('invoicing.dashboard');
 
         Route::get('/invoicing/invoices', [InvoiceController::class, 'index'])->middleware('permission:invoicing,view')->name('invoicing.invoices.index');
         Route::get('/invoicing/invoices/create', [InvoiceController::class, 'create'])->middleware('permission:invoicing,create')->name('invoicing.invoices.create');

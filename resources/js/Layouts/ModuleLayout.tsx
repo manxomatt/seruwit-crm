@@ -320,7 +320,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'outbound': { route: 'module.outbound.pick-lists.index', routePattern: 'module.outbound.*' },
     'pos': { route: 'module.pos.terminal', routePattern: 'module.pos.*' },
     'billing': { route: 'module.billing.dashboard', routePattern: 'module.billing.*' },
-    'invoicing': { route: 'module.invoicing.invoices.index', routePattern: 'module.invoicing.*' },
+    'invoicing': { route: 'module.invoicing.dashboard', routePattern: 'module.invoicing.*' },
     'rental': { route: 'module.rental.index', routePattern: 'module.rental.*' },
     'shuttle': { route: 'module.shuttle.dashboard', routePattern: 'module.shuttle.*' },
     'canvassing': { route: 'module.canvassing.index', routePattern: 'module.canvassing.*' },

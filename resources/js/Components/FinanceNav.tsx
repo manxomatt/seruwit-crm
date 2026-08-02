@@ -13,7 +13,7 @@ interface FinanceLink {
 
 const FINANCE_LINKS: FinanceLink[] = [
     { module: 'accounting', route: 'accounting.dashboard', pattern: 'accounting.*' },
-    { module: 'invoicing', route: 'invoicing.invoices.index', pattern: 'invoicing.*' },
+    { module: 'invoicing', route: 'invoicing.dashboard', pattern: 'invoicing.*' },
     { module: 'receivables', route: 'receivables.payments.index', pattern: 'receivables.*' },
     { module: 'payables', route: 'payables.bills.index', pattern: 'payables.*' },
     { module: 'billing', route: 'billing.charges.index', pattern: 'billing.*' },
