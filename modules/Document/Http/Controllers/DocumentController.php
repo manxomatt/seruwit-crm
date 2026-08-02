@@ -22,7 +22,7 @@ class DocumentController extends Controller
         $documents = Document::query()
             ->with(['documentType', 'documentable', 'uploader'])
             ->where(function ($q): void {
-                $q->expired()->orWhere(fn($q2) => $q2->expiringSoon(30));
+                $q->expired()->orWhere(fn ($q2) => $q2->expiringSoon(30));
             })
             ->orderByRaw('expires_at ASC NULLS LAST')
             ->paginate(25);
@@ -32,6 +32,10 @@ class DocumentController extends Controller
                 'expired' => $expiredCount,
                 'expiring_week' => $expiringSoonWeekCount,
                 'expiring_month' => $expiringSoonMonthCount,
+                'total' => Document::query()->count(),
+                'unverified' => Document::query()->whereNull('verified_at')->count(),
+                'vehicles' => Document::query()->where('documentable_type', 'vehicle')->count(),
+                'drivers' => Document::query()->where('documentable_type', 'driver')->count(),
             ],
             'documents' => $documents,
         ]);
