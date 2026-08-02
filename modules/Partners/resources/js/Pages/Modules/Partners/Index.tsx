@@ -309,14 +309,14 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                     {t('partners.index.columns.status')}
                                                 </th>
                                             )}
-                                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                {t('common.actions')}
+                                            <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                <span className="sr-only">{t('common.actions')}</span>
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {partners.data.map((partner) => (
-                                            <tr key={partner.id} className="hover:bg-gray-50">
+                                            <tr key={partner.id} className="group hover:bg-gray-50">
                                                 {visibleColumns.code && (
                                                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{partner.code}</td>
                                                 )}
@@ -367,10 +367,11 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                     </td>
                                                 )}
                                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                    <div className="flex items-center justify-end gap-2">
+                                                    <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                                         <Link
                                                             href={prefixedRoute('partners.show', partner.id)}
                                                             className="text-gray-600 hover:text-gray-900"
+                                                            title={t('common.view', undefined, 'View')}
                                                         >
                                                             <EyeIcon />
                                                         </Link>
@@ -385,6 +386,7 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                                                         )}
                                                         {can.delete && (
                                                             <button
+                                                                type="button"
                                                                 onClick={() => openDeleteDialog(partner)}
                                                                 className="text-red-600 hover:text-red-900"
                                                                 title={t('common.delete')}
