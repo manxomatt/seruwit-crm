@@ -60,21 +60,28 @@ class PartnerStatusBoard
                 'customer_rank' => (int) $partner->customer_rank,
                 'supplier_rank' => (int) $partner->supplier_rank,
                 'status' => $partner->status,
-                'industry' => $partner->industry?->name,
+                'industry' => $partner->industry?->label,
                 'created_at' => $partner->created_at?->toDateString(),
             ])
             ->all();
 
-        $byIndustry = Partner::query()
+        $industryTotals = Partner::query()
             ->join('partner_industries', 'partners.industry_id', '=', 'partner_industries.id')
-            ->selectRaw('partner_industries.id, partner_industries.name, count(*) as total')
-            ->groupBy('partner_industries.id', 'partner_industries.name')
+            ->selectRaw('partner_industries.id as id, count(*) as total')
+            ->groupBy('partner_industries.id')
             ->orderByDesc('total')
             ->limit(5)
+            ->get();
+
+        $industryModels = \Modules\Partners\Models\PartnerIndustry::query()
+            ->whereIn('id', $industryTotals->pluck('id'))
             ->get()
+            ->keyBy('id');
+
+        $byIndustry = $industryTotals
             ->map(fn ($row): array => [
                 'id' => (int) $row->id,
-                'name' => (string) $row->name,
+                'name' => $industryModels->get((int) $row->id)?->label ?? '',
                 'total' => (int) $row->total,
             ])
             ->all();

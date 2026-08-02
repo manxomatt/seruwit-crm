@@ -25,7 +25,8 @@ interface Tag {
 
 interface Industry {
     id: number;
-    name: string;
+    name: string | Record<string, string>;
+    label?: string;
 }
 
 interface Partner {
@@ -381,7 +382,7 @@ export default function Index({ partners, filters, exportColumns, can }: Props):
                                                 )}
                                                 {visibleColumns.industry && (
                                                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {partner.industry?.name || '—'}
+                                                        {partner.industry?.label || partner.industry?.name || '—'}
                                                     </td>
                                                 )}
                                                 {visibleColumns.status && (

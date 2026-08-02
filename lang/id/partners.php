@@ -252,6 +252,8 @@ return [
         'account_type_in' => 'Tipe akun harus perusahaan atau individu.',
         'status_in' => 'Pilih status yang valid.',
         'industry_name_unique' => 'Industri dengan nama ini sudah ada.',
+        'industry_name_id_required' => 'Nama industri (Indonesia) wajib diisi.',
+        'industry_name_en_required' => 'Nama industri (English) wajib diisi.',
     ],
 
     'messages' => [
@@ -275,15 +277,19 @@ return [
 
     'industries' => [
         'head' => 'Industri',
-        'hint' => 'Master industri untuk mengklasifikasikan partner.',
+        'hint' => 'Master industri untuk mengklasifikasikan partner. Nama mendukung Bahasa Indonesia dan English.',
         'new' => 'Industri baru',
         'edit' => 'Edit industri',
         'description' => 'Deskripsi',
+        'name_id' => 'Nama (Indonesia)',
+        'name_en' => 'Nama (English)',
+        'description_id' => 'Deskripsi (Indonesia)',
+        'description_en' => 'Deskripsi (English)',
         'partners_count' => 'Partner',
         'search_placeholder' => 'Cari nama atau deskripsi…',
         'all_status' => 'Semua status',
         'empty_title' => 'Belum ada industri',
-        'empty_hint' => 'Tambahkan industri seperti Logistik atau Manufaktur sebelum menetapkannya ke partner.',
+        'empty_hint' => 'Tambahkan industri seperti Logistik atau Manufaktur, atau pasang pack Partner Industries.',
         'delete_title' => 'Hapus industri',
         'delete_confirm' => 'Hapus industri ":name"? Tindakan ini tidak dapat dibatalkan.',
     ],

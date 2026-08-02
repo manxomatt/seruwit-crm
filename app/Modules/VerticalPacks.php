@@ -13,6 +13,8 @@ class VerticalPacks
 
     public const FINANCE = 'finance';
 
+    public const PARTNER_INDUSTRIES = 'partner_industries';
+
     /**
      * @return array<string, array{label: string, description: string, modules: list<string>, seeders: list<class-string>}>
      */
@@ -64,6 +66,16 @@ class VerticalPacks
                 'seeders' => [
                     \Database\Seeders\TenantFinanceDemoSeeder::class,
                     \Database\Seeders\TenantPayablesDemoSeeder::class,
+                ],
+            ],
+            self::PARTNER_INDUSTRIES => [
+                'label' => 'Partner Industries',
+                'description' => 'Common ERP/CRM industry masters (ID/EN) for classifying partners. Requires Partners.',
+                'modules' => [
+                    'partners',
+                ],
+                'seeders' => [
+                    \Database\Seeders\TenantPartnerIndustriesSeeder::class,
                 ],
             ],
         ];

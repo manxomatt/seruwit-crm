@@ -49,62 +49,69 @@ class IndustryMasterTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('module.partners.industries.store'), [
-                'name' => 'Logistik',
-                'description' => 'Freight and warehousing',
+                'name' => [
+                    'id' => 'Logistik',
+                    'en' => 'Logistics',
+                ],
+                'description' => [
+                    'id' => 'Pengiriman barang',
+                    'en' => 'Freight shipping',
+                ],
                 'is_active' => true,
             ])
             ->assertRedirect(route('module.partners.industries.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('partner_industries', [
-            'name' => 'Logistik',
-            'description' => 'Freight and warehousing',
-            'is_active' => true,
-        ]);
+        $industry = PartnerIndustry::query()->where('name->id', 'Logistik')->first();
+        $this->assertNotNull($industry);
+        $this->assertSame('Logistics', $industry->name['en']);
+        $this->assertTrue($industry->is_active);
     }
 
-    public function test_industry_name_must_be_unique(): void
+    public function test_industry_name_must_be_unique_per_locale(): void
     {
-        PartnerIndustry::factory()->create(['name' => 'Retail']);
+        PartnerIndustry::factory()->create([
+            'name' => ['id' => 'Ritel', 'en' => 'Retail'],
+        ]);
         $user = $this->createAdminUser();
 
         $this->actingAs($user)
             ->from(route('module.partners.industries.index'))
             ->post(route('module.partners.industries.store'), [
-                'name' => 'Retail',
+                'name' => ['id' => 'Ritel', 'en' => 'Retail Store'],
                 'is_active' => true,
             ])
             ->assertRedirect(route('module.partners.industries.index'))
-            ->assertSessionHasErrors('name');
+            ->assertSessionHasErrors('name.id');
     }
 
     public function test_admin_can_update_industry(): void
     {
         $industry = PartnerIndustry::factory()->create([
-            'name' => 'Old Industry',
+            'name' => ['id' => 'Lama', 'en' => 'Old'],
             'is_active' => true,
         ]);
         $user = $this->createAdminUser();
 
         $this->actingAs($user)
             ->patch(route('module.partners.industries.update', $industry), [
-                'name' => 'New Industry',
-                'description' => 'Updated',
+                'name' => ['id' => 'Baru', 'en' => 'New'],
+                'description' => ['id' => 'Diperbarui', 'en' => 'Updated'],
                 'is_active' => false,
             ])
             ->assertRedirect(route('module.partners.industries.index'));
 
-        $this->assertDatabaseHas('partner_industries', [
-            'id' => $industry->id,
-            'name' => 'New Industry',
-            'description' => 'Updated',
-            'is_active' => false,
-        ]);
+        $industry->refresh();
+        $this->assertSame('Baru', $industry->name['id']);
+        $this->assertSame('New', $industry->name['en']);
+        $this->assertFalse($industry->is_active);
     }
 
     public function test_admin_can_delete_unused_industry(): void
     {
-        $industry = PartnerIndustry::factory()->create(['name' => 'Unused']);
+        $industry = PartnerIndustry::factory()->create([
+            'name' => ['id' => 'Tidak Dipakai', 'en' => 'Unused'],
+        ]);
         $user = $this->createAdminUser();
 
         $this->actingAs($user)
@@ -117,7 +124,9 @@ class IndustryMasterTest extends TestCase
 
     public function test_cannot_delete_industry_assigned_to_partners(): void
     {
-        $industry = PartnerIndustry::factory()->create(['name' => 'In Use']);
+        $industry = PartnerIndustry::factory()->create([
+            'name' => ['id' => 'Dipakai', 'en' => 'In Use'],
+        ]);
         Partner::factory()->create(['industry_id' => $industry->id]);
         $user = $this->createAdminUser();
 

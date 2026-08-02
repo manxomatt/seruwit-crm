@@ -193,7 +193,16 @@ class PartnerController extends Controller
     public function create(): Response
     {
         return Inertia::render('Modules/Partners/Create', [
-            'industries' => PartnerIndustry::query()->where('is_active', true)->orderBy('name')->get(),
+            'industries' => PartnerIndustry::query()
+                ->where('is_active', true)
+                ->orderByRaw("coalesce(nullif(name->>'id', ''), nullif(name->>'en', ''))")
+                ->get()
+                ->map(fn (PartnerIndustry $industry): array => [
+                    'id' => $industry->id,
+                    'name' => $industry->label,
+                ])
+                ->values()
+                ->all(),
             'titles' => PartnerTitle::query()->orderBy('name')->get(),
             'tags' => PartnerTag::query()->orderBy('name')->get(),
             'partners' => Partner::query()->where('account_type', 'company')->orderBy('name')->get(['id', 'name', 'code']),
@@ -259,7 +268,16 @@ class PartnerController extends Controller
 
         return Inertia::render('Modules/Partners/Edit', [
             'partner' => $partner,
-            'industries' => PartnerIndustry::query()->where('is_active', true)->orderBy('name')->get(),
+            'industries' => PartnerIndustry::query()
+                ->where('is_active', true)
+                ->orderByRaw("coalesce(nullif(name->>'id', ''), nullif(name->>'en', ''))")
+                ->get()
+                ->map(fn (PartnerIndustry $industry): array => [
+                    'id' => $industry->id,
+                    'name' => $industry->label,
+                ])
+                ->values()
+                ->all(),
             'titles' => PartnerTitle::query()->orderBy('name')->get(),
             'tags' => PartnerTag::query()->orderBy('name')->get(),
             'partners' => Partner::query()

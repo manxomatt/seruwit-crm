@@ -47,6 +47,7 @@ class VerticalPackInstallTest extends TestCase
                 ->where('packs.0.key', VerticalPacks::RENTAL_MOBIL)
                 ->where('packs.1.key', VerticalPacks::TRAVEL_SHUTTLE)
                 ->where('packs.2.key', VerticalPacks::FINANCE)
+                ->where('packs.3.key', VerticalPacks::PARTNER_INDUSTRIES)
             );
     }
 

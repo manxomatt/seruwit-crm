@@ -14,10 +14,15 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import PartnersNav from '../../../../PartnersNav';
 
+type LocaleMap = { id?: string; en?: string };
+
 interface Industry {
     id: number;
-    name: string;
-    description: string | null;
+    code: string | null;
+    name: LocaleMap | string;
+    description: LocaleMap | string | null;
+    label?: string;
+    description_label?: string | null;
     is_active: boolean;
     partners_count: number;
 }
@@ -34,7 +39,20 @@ interface PaginatedIndustries {
 interface Props {
     industries: PaginatedIndustries;
     filters: { search: string | null; active: string | null };
+    locales?: string[];
     can: { create: boolean; update: boolean; delete: boolean };
+}
+
+function localeValue(value: LocaleMap | string | null | undefined, locale: 'id' | 'en'): string {
+    if (value == null) {
+        return '';
+    }
+
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    return value[locale] ?? '';
 }
 
 export default function Index({ industries, filters, can }: Props): JSX.Element {
@@ -47,8 +65,9 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
     const [deleting, setDeleting] = useState<Industry | null>(null);
 
     const form = useForm({
-        name: '',
-        description: '',
+        code: '',
+        name: { id: '', en: '' },
+        description: { id: '', en: '' },
         is_active: true,
     });
 
@@ -63,8 +82,15 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
         setEditing(industry);
         form.clearErrors();
         form.setData({
-            name: industry.name,
-            description: industry.description || '',
+            code: industry.code || '',
+            name: {
+                id: localeValue(industry.name, 'id'),
+                en: localeValue(industry.name, 'en'),
+            },
+            description: {
+                id: localeValue(industry.description, 'id'),
+                en: localeValue(industry.description, 'en'),
+            },
             is_active: industry.is_active,
         });
         setShowModal(true);
@@ -201,11 +227,19 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {industries.data.map((industry) => (
                                             <tr key={industry.id} className="hover:bg-gray-50">
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                                    {industry.name}
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {industry.label || localeValue(industry.name, 'id')}
+                                                    </div>
+                                                    <div className="mt-0.5 text-xs text-gray-500">
+                                                        ID: {localeValue(industry.name, 'id') || '—'} · EN:{' '}
+                                                        {localeValue(industry.name, 'en') || '—'}
+                                                    </div>
                                                 </td>
                                                 <td className="max-w-md truncate px-6 py-4 text-sm text-gray-500">
-                                                    {industry.description || '—'}
+                                                    {industry.description_label ||
+                                                        localeValue(industry.description, 'id') ||
+                                                        '—'}
                                                 </td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-700">
                                                     {industry.partners_count}
@@ -256,7 +290,10 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
                                     <p className="text-sm text-gray-700">
                                         {t('common.showing_results', {
                                             from: (industries.current_page - 1) * industries.per_page + 1,
-                                            to: Math.min(industries.current_page * industries.per_page, industries.total),
+                                            to: Math.min(
+                                                industries.current_page * industries.per_page,
+                                                industries.total,
+                                            ),
                                             total: industries.total,
                                         })}
                                     </p>
@@ -285,33 +322,75 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
                 </div>
             </div>
 
-            <Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="lg">
+            <Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="2xl">
                 <form onSubmit={submit} className="p-6">
                     <h3 className="mb-4 text-lg font-medium text-gray-900">
                         {editing ? t('partners.industries.edit') : t('partners.industries.new')}
                     </h3>
                     <div className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="industry_name" value={t('partners.fields.industry')} />
-                            <TextInput
-                                id="industry_name"
-                                className="mt-1 block w-full"
-                                value={form.data.name}
-                                onChange={(e) => form.setData('name', e.target.value)}
-                                required
-                            />
-                            <InputError message={form.errors.name} className="mt-2" />
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <InputLabel htmlFor="industry_name_id" value={t('partners.industries.name_id')} />
+                                <TextInput
+                                    id="industry_name_id"
+                                    className="mt-1 block w-full"
+                                    value={form.data.name.id}
+                                    onChange={(e) => form.setData('name', { ...form.data.name, id: e.target.value })}
+                                    required
+                                />
+                                <InputError message={form.errors['name.id'] || form.errors.name} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="industry_name_en" value={t('partners.industries.name_en')} />
+                                <TextInput
+                                    id="industry_name_en"
+                                    className="mt-1 block w-full"
+                                    value={form.data.name.en}
+                                    onChange={(e) => form.setData('name', { ...form.data.name, en: e.target.value })}
+                                    required
+                                />
+                                <InputError message={form.errors['name.en']} className="mt-2" />
+                            </div>
                         </div>
-                        <div>
-                            <InputLabel htmlFor="industry_description" value={t('partners.industries.description')} />
-                            <textarea
-                                id="industry_description"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                rows={3}
-                                value={form.data.description}
-                                onChange={(e) => form.setData('description', e.target.value)}
-                            />
-                            <InputError message={form.errors.description} className="mt-2" />
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <InputLabel
+                                    htmlFor="industry_description_id"
+                                    value={t('partners.industries.description_id')}
+                                />
+                                <textarea
+                                    id="industry_description_id"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    rows={3}
+                                    value={form.data.description.id}
+                                    onChange={(e) =>
+                                        form.setData('description', {
+                                            ...form.data.description,
+                                            id: e.target.value,
+                                        })
+                                    }
+                                />
+                                <InputError message={form.errors['description.id']} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel
+                                    htmlFor="industry_description_en"
+                                    value={t('partners.industries.description_en')}
+                                />
+                                <textarea
+                                    id="industry_description_en"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    rows={3}
+                                    value={form.data.description.en}
+                                    onChange={(e) =>
+                                        form.setData('description', {
+                                            ...form.data.description,
+                                            en: e.target.value,
+                                        })
+                                    }
+                                />
+                                <InputError message={form.errors['description.en']} className="mt-2" />
+                            </div>
                         </div>
                         <label className="flex items-center gap-2 text-sm text-gray-700">
                             <input
@@ -336,7 +415,11 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
                 <div className="p-6">
                     <h3 className="mb-2 text-lg font-medium text-gray-900">{t('partners.industries.delete_title')}</h3>
                     <p className="text-sm text-gray-500">
-                        {deleting ? t('partners.industries.delete_confirm', { name: deleting.name }) : ''}
+                        {deleting
+                            ? t('partners.industries.delete_confirm', {
+                                  name: deleting.label || localeValue(deleting.name, 'id'),
+                              })
+                            : ''}
                     </p>
                     <div className="mt-6 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setDeleting(null)}>

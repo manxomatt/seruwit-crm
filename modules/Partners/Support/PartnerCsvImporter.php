@@ -231,10 +231,13 @@ class PartnerCsvImporter
         $industryName = $get('industry');
         $industryId = null;
         if ($industryName !== null) {
-            $industry = PartnerIndustry::query()->firstOrCreate(
-                ['name' => $industryName],
-                ['is_active' => true],
-            );
+            $industry = PartnerIndustry::findByLocalizedName($industryName);
+            if ($industry === null) {
+                $industry = PartnerIndustry::query()->create([
+                    'name' => PartnerIndustry::normalizeTranslations($industryName),
+                    'is_active' => true,
+                ]);
+            }
             $industryId = $industry->id;
         }
 

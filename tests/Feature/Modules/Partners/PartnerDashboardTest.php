@@ -37,7 +37,9 @@ class PartnerDashboardTest extends TestCase
 
     public function test_partners_dashboard_shows_status_board(): void
     {
-        $industry = PartnerIndustry::factory()->create(['name' => 'Logistics']);
+        $industry = PartnerIndustry::factory()->create([
+            'name' => ['id' => 'Logistik', 'en' => 'Logistics'],
+        ]);
 
         Partner::factory()->create([
             'status' => 'active',

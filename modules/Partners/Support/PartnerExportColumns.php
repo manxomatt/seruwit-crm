@@ -135,7 +135,7 @@ class PartnerExportColumns
                 'license_expires_at' => $partner->license_expires_at?->format('Y-m-d'),
                 'company_registry' => $partner->company_registry,
                 'reference' => $partner->reference,
-                'industry' => $partner->industry?->name,
+                'industry' => $partner->industry?->localized('name'),
                 'title' => $partner->title?->name,
                 'parent_code' => $partner->parent?->code,
                 'is_customer' => $partner->customer_rank > 0 ? '1' : '0',

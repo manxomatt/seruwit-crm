@@ -26,7 +26,8 @@ interface Tag {
 
 interface Industry {
     id: number;
-    name: string;
+    name: string | Record<string, string>;
+    label?: string;
 }
 
 interface Title {
@@ -371,7 +372,7 @@ export default function Show({ partner, can }: Props): JSX.Element {
                             {partner.industry && (
                                 <div>
                                     <dt className="text-sm font-medium text-gray-500">{t('partners.fields.industry')}</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{partner.industry.name}</dd>
+                                    <dd className="mt-1 text-sm text-gray-900">{partner.industry.label || partner.industry.name}</dd>
                                 </div>
                             )}
                             {partner.tax_id && (

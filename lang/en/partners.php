@@ -252,6 +252,8 @@ return [
         'account_type_in' => 'Account type must be company or individual.',
         'status_in' => 'Please select a valid status.',
         'industry_name_unique' => 'An industry with this name already exists.',
+        'industry_name_id_required' => 'Indonesian industry name is required.',
+        'industry_name_en_required' => 'English industry name is required.',
     ],
 
     'messages' => [
@@ -275,15 +277,19 @@ return [
 
     'industries' => [
         'head' => 'Industries',
-        'hint' => 'Master industries used when classifying partners.',
+        'hint' => 'Master industries used when classifying partners. Names support Indonesian and English.',
         'new' => 'New industry',
         'edit' => 'Edit industry',
         'description' => 'Description',
+        'name_id' => 'Name (Indonesian)',
+        'name_en' => 'Name (English)',
+        'description_id' => 'Description (Indonesian)',
+        'description_en' => 'Description (English)',
         'partners_count' => 'Partners',
         'search_placeholder' => 'Search name or description…',
         'all_status' => 'All statuses',
         'empty_title' => 'No industries yet',
-        'empty_hint' => 'Add industries such as Logistics or Manufacturing before assigning them to partners.',
+        'empty_hint' => 'Add industries such as Logistics or Manufacturing, or install the Partner Industries pack.',
         'delete_title' => 'Delete industry',
         'delete_confirm' => 'Delete industry ":name"? This cannot be undone.',
     ],
