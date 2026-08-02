@@ -9,6 +9,7 @@ use Modules\Partners\Http\Controllers\LocationController;
 use Modules\Partners\Http\Controllers\PartnerAddressController;
 use Modules\Partners\Http\Controllers\PartnerBankAccountController;
 use Modules\Partners\Http\Controllers\PartnerController;
+use Modules\Partners\Http\Controllers\PartnerDashboardController;
 
 class PartnersModule implements ModuleContract
 {
@@ -48,7 +49,7 @@ class PartnersModule implements ModuleContract
             'name' => 'Partners',
             'slug' => 'partners',
             'icon' => 'customers',
-            'route_name' => 'partners.index',
+            'route_name' => 'partners.dashboard',
             'permission_module' => 'partners',
             'permission_action' => 'view',
             'sort_order' => 7,
@@ -73,8 +74,7 @@ class PartnersModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/partners', '/partners/list');
-
+        Route::get('/partners', [PartnerDashboardController::class, 'index'])->middleware('permission:partners,view')->name('partners.dashboard');
         Route::get('/partners/list', [PartnerController::class, 'index'])->middleware('permission:partners,view')->name('partners.index');
         Route::get('/partners/create', [PartnerController::class, 'create'])->middleware('permission:partners,create')->name('partners.create');
         Route::post('/partners', [PartnerController::class, 'store'])->middleware('permission:partners,create')->name('partners.store');

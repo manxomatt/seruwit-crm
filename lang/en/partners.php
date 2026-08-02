@@ -3,6 +3,40 @@
 return [
     'title' => 'Partners',
 
+    'nav' => [
+        'dashboard' => 'Dashboard',
+        'list' => 'Partners',
+        'locations' => 'Locations',
+    ],
+
+    'dashboard' => [
+        'title' => 'Partners Dashboard',
+        'subtitle' => 'Overview of customers, suppliers, locations, and records that need attention.',
+        'active' => 'Active partners',
+        'of_partners' => 'of :total partners',
+        'share_label' => 'of directory',
+        'customers' => 'Customers',
+        'suppliers' => 'Suppliers',
+        'both_hint' => ':count also act as suppliers',
+        'suppliers_hint' => 'Vendors and supply partners',
+        'locations' => 'Active locations',
+        'of_locations' => 'of :total locations',
+        'locations_ready' => 'ready for routing',
+        'inactive_short' => 'inactive',
+        'needs_attention' => 'Needs attention',
+        'needs_attention_hint' => 'Blacklist, missing contact, or inactive',
+        'blacklisted' => 'blacklisted',
+        'missing_contact' => 'no contact',
+        'companies' => 'Companies',
+        'individuals' => 'Individuals',
+        'account_mix' => 'Account type mix',
+        'top_industries' => 'Top industries',
+        'no_industries' => 'No industry tags yet.',
+        'recent' => 'Recently added',
+        'view_all' => 'View all partners',
+        'added' => 'Added',
+    ],
+
     'status' => [
         'active' => 'Active',
         'inactive' => 'Inactive',

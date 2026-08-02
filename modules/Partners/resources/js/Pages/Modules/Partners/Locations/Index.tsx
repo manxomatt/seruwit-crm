@@ -6,12 +6,14 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import LocationMapPicker from '@/Components/Map/LocationMapPicker';
 import Modal from '@/Components/Modal';
+import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useCallback, useState } from 'react';
+import PartnersNav from '../../../../PartnersNav';
 
 interface Location {
     id: number;
@@ -136,21 +138,16 @@ export default function Index({ locations, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('partners.locations.head')}</h2>
-                        <p className="mt-1 text-sm text-gray-500">{t('partners.locations.hint')}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Link href={prefixedRoute('partners.index')} className="text-sm text-indigo-600 hover:text-indigo-900">
-                            {t('partners.locations.back_to_partners')}
-                        </Link>
-                        {can.create && <PrimaryButton onClick={openCreate}>{t('partners.locations.new')}</PrimaryButton>}
-                    </div>
-                </div>
+                <PageHeader
+                    title={t('partners.locations.head')}
+                    description={t('partners.locations.hint')}
+                    actions={can.create ? <PrimaryButton onClick={openCreate}>{t('partners.locations.new')}</PrimaryButton> : undefined}
+                />
             }
         >
             <Head title={t('partners.locations.head')} />
+
+            <PartnersNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">

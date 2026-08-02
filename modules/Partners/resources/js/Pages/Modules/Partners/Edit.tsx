@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import PageHeader from '@/Components/PageHeader';
+import PartnersNav from '../../../PartnersNav';
 
 interface Industry {
     id: number;
@@ -139,6 +140,8 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
             header={<PageHeader title={t('partners.edit.head')} />}
         >
             <Head title={t('partners.edit.title', { name: partner.name })} />
+
+            <PartnersNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">

@@ -38,7 +38,7 @@ class MenuSeeder extends Seeder
                 'name' => 'Partners',
                 'slug' => 'partners',
                 'icon' => 'customers',
-                'route_name' => 'partners.index',
+                'route_name' => 'partners.dashboard',
                 'permission_module' => 'partners',
                 'permission_action' => 'view',
                 'sort_order' => 7,

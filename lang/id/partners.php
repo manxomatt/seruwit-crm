@@ -3,6 +3,40 @@
 return [
     'title' => 'Mitra',
 
+    'nav' => [
+        'dashboard' => 'Dashboard',
+        'list' => 'Mitra',
+        'locations' => 'Lokasi',
+    ],
+
+    'dashboard' => [
+        'title' => 'Dashboard Mitra',
+        'subtitle' => 'Ringkasan customer, supplier, lokasi, dan data yang perlu perhatian.',
+        'active' => 'Mitra aktif',
+        'of_partners' => 'dari :total mitra',
+        'share_label' => 'dari direktori',
+        'customers' => 'Customer',
+        'suppliers' => 'Supplier',
+        'both_hint' => ':count juga berperan sebagai supplier',
+        'suppliers_hint' => 'Vendor dan mitra pasokan',
+        'locations' => 'Lokasi aktif',
+        'of_locations' => 'dari :total lokasi',
+        'locations_ready' => 'siap untuk routing',
+        'inactive_short' => 'nonaktif',
+        'needs_attention' => 'Perlu perhatian',
+        'needs_attention_hint' => 'Blacklist, tanpa kontak, atau nonaktif',
+        'blacklisted' => 'blacklist',
+        'missing_contact' => 'tanpa kontak',
+        'companies' => 'Perusahaan',
+        'individuals' => 'Individu',
+        'account_mix' => 'Campuran tipe akun',
+        'top_industries' => 'Industri teratas',
+        'no_industries' => 'Belum ada tag industri.',
+        'recent' => 'Baru ditambahkan',
+        'view_all' => 'Lihat semua mitra',
+        'added' => 'Ditambahkan',
+    ],
+
     'status' => [
         'active' => 'Aktif',
         'inactive' => 'Nonaktif',

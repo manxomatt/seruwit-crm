@@ -2,11 +2,13 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
+import PartnersNav from '../../../PartnersNav';
 
 interface Tag {
     id: number;
@@ -139,22 +141,21 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('partners.index.head')}</h2>
-                    <div className="flex items-center gap-3">
-                        <Link href={prefixedRoute('partners.locations.index')} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                            {t('partners.locations.nav')}
-                        </Link>
-                        {can.create && (
+                <PageHeader
+                    title={t('partners.index.head')}
+                    actions={
+                        can.create ? (
                             <Link href={prefixedRoute('partners.create')}>
                                 <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
                             </Link>
-                        )}
-                    </div>
-                </div>
+                        ) : undefined
+                    }
+                />
             }
         >
             <Head title={t('partners.title')} />
+
+            <PartnersNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">

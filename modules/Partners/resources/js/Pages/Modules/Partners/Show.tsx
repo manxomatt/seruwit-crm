@@ -10,6 +10,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
+import PartnersNav from '../../../PartnersNav';
 
 interface Tag {
     id: number;
@@ -306,6 +307,8 @@ export default function Show({ partner, can }: Props): JSX.Element {
             }
         >
             <Head title={partner.name} />
+
+            <PartnersNav />
 
             <div className="space-y-6">
                 {/* Informasi Utama */}

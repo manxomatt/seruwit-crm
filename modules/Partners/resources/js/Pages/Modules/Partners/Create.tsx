@@ -10,6 +10,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import PageHeader from '@/Components/PageHeader';
+import PartnersNav from '../../../PartnersNav';
 
 interface Industry {
     id: number;
@@ -89,6 +90,8 @@ export default function Create({ industries, titles, tags, partners, priceLists 
             header={<PageHeader title={t('partners.create.head')} />}
         >
             <Head title={t('partners.create.title')} />
+
+            <PartnersNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
