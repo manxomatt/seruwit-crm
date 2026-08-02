@@ -8,11 +8,14 @@ import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState, FormEventHandler } from 'react';
 import PartnersNav from '../../../PartnersNav';
+import PartnerExportModal, { type ExportColumnOption } from './Partials/PartnerExportModal';
+import PartnerImportModal from './Partials/PartnerImportModal';
 
 interface Tag {
     id: number;
@@ -59,7 +62,8 @@ interface Filters {
 interface Props {
     partners: PaginatedPartners;
     filters: Filters;
-    can: { create: boolean; update: boolean; delete: boolean };
+    exportColumns: ExportColumnOption[];
+    can: { create: boolean; update: boolean; delete: boolean; export: boolean; import: boolean };
 }
 
 type PartnerColumn = 'code' | 'name' | 'role' | 'phone' | 'email' | 'industry' | 'status';
@@ -113,11 +117,15 @@ function readStoredColumns(): Partial<Record<PartnerColumn, boolean>> | null {
     }
 }
 
-export default function Index({ partners, filters, can }: Props): JSX.Element {
+export default function Index({ partners, filters, exportColumns, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const page = usePage();
+    const flash = page.props.flash as { success?: string; error?: string } | undefined;
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [partnerToDelete, setPartnerToDelete] = useState<Partner | null>(null);
     const [processing, setProcessing] = useState(false);
 
@@ -195,11 +203,23 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                 <PageHeader
                     title={t('partners.index.head')}
                     actions={
-                        can.create ? (
-                            <Link href={prefixedRoute('partners.create')}>
-                                <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
-                            </Link>
-                        ) : undefined
+                        <div className="flex flex-wrap items-center gap-2">
+                            {can.export && (
+                                <SecondaryButton onClick={() => setShowExportModal(true)}>
+                                    {t('partners.export.action')}
+                                </SecondaryButton>
+                            )}
+                            {can.import && (
+                                <SecondaryButton onClick={() => setShowImportModal(true)}>
+                                    {t('partners.import.action')}
+                                </SecondaryButton>
+                            )}
+                            {can.create && (
+                                <Link href={prefixedRoute('partners.create')}>
+                                    <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
+                                </Link>
+                            )}
+                        </div>
                     }
                 />
             }
@@ -207,6 +227,13 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
             <Head title={t('partners.title')} />
 
             <PartnersNav />
+
+            {flash?.success && (
+                <div className="mb-4 rounded-md bg-green-100 px-4 py-3 text-sm text-green-800">{flash.success}</div>
+            )}
+            {flash?.error && (
+                <div className="mb-4 rounded-md bg-red-100 px-4 py-3 text-sm text-red-800">{flash.error}</div>
+            )}
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
@@ -451,6 +478,22 @@ export default function Index({ partners, filters, can }: Props): JSX.Element {
                         : t('partners.index.delete_confirm_generic')
                 }
             />
+
+            {can.export && (
+                <PartnerExportModal
+                    show={showExportModal}
+                    onClose={() => setShowExportModal(false)}
+                    columns={exportColumns}
+                    filters={filters}
+                />
+            )}
+
+            {can.import && (
+                <PartnerImportModal
+                    show={showImportModal}
+                    onClose={() => setShowImportModal(false)}
+                />
+            )}
         </DynamicLayout>
     );
 }

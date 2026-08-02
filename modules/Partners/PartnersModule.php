@@ -76,6 +76,9 @@ class PartnersModule implements ModuleContract
     {
         Route::get('/partners', [PartnerDashboardController::class, 'index'])->middleware('permission:partners,view')->name('partners.dashboard');
         Route::get('/partners/list', [PartnerController::class, 'index'])->middleware('permission:partners,view')->name('partners.index');
+        Route::get('/partners/export', [PartnerController::class, 'export'])->middleware('permission:partners,view')->name('partners.export');
+        Route::get('/partners/import/template', [PartnerController::class, 'importTemplate'])->middleware('permission:partners,create')->name('partners.import.template');
+        Route::post('/partners/import', [PartnerController::class, 'import'])->middleware('permission:partners,create')->name('partners.import');
         Route::get('/partners/create', [PartnerController::class, 'create'])->middleware('permission:partners,create')->name('partners.create');
         Route::post('/partners', [PartnerController::class, 'store'])->middleware('permission:partners,create')->name('partners.store');
 
