@@ -89,8 +89,9 @@ class ShuttleModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/shuttle', '/shuttle/dashboard');
-
+        // GET /shuttle serves the dashboard; avoid absolute redirects that drop /module.
+        Route::get('/shuttle', [ShuttleDashboardController::class, 'index'])
+            ->middleware('permission:shuttle,view');
         Route::get('/shuttle/dashboard', [ShuttleDashboardController::class, 'index'])
             ->middleware('permission:shuttle,view')
             ->name('shuttle.dashboard');

@@ -137,7 +137,7 @@ class RentalCrudTest extends TestCase
                 'rate_per_period' => 400000,
                 'deposit_amount' => 800000,
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('module.rental.show', Rental::query()->first()));
 
         $rental = Rental::first();
         $this->assertNotNull($rental);

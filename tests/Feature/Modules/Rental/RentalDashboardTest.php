@@ -26,6 +26,21 @@ class RentalDashboardTest extends TestCase
         $this->get(route('module.rental.dashboard'))->assertRedirect(route('login'));
     }
 
+    public function test_rental_root_serves_dashboard(): void
+    {
+        $this->actingAs($this->createAdminUser())
+            ->get('/module/rental')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Modules/Rental/Dashboard/Index'));
+    }
+
+    public function test_legacy_rental_dashboard_path_redirects_into_module_prefix(): void
+    {
+        $this->actingAs($this->createAdminUser())
+            ->get('/rental/dashboard')
+            ->assertRedirect('/module/rental/dashboard');
+    }
+
     public function test_user_without_permission_cannot_view_dashboard(): void
     {
         $this->actingAs($this->createUserWithoutRole())

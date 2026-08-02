@@ -34,6 +34,11 @@ use Modules\Shuttle\Http\Controllers\PublicPassengerBookingController;
 
 Route::get('/', [PageController::class, 'homepage'])->name('home');
 
+// Legacy absolute redirects from module Route::redirect() dropped the /module
+// prefix (e.g. /rental/dashboard). Keep these bookmarks working.
+Route::redirect('/rental/dashboard', '/module/rental/dashboard');
+Route::redirect('/shuttle/dashboard', '/module/shuttle/dashboard');
+
 // Public Blog Routes
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');

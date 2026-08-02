@@ -91,10 +91,16 @@ class RentalModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::redirect('/rental', '/rental/dashboard');
-
-        Route::get('/rental/dashboard', [RentalDashboardController::class, 'index'])->middleware('permission:rental,view')->name('rental.dashboard');
-        Route::get('/rental/dashboard/export', [RentalDashboardController::class, 'export'])->middleware('permission:rental,view')->name('rental.dashboard.export');
+        // GET /rental serves the dashboard (same URI as POST store — Orders pattern).
+        // Avoid Route::redirect() here: absolute destinations drop the /module prefix.
+        Route::get('/rental', [RentalDashboardController::class, 'index'])
+            ->middleware('permission:rental,view');
+        Route::get('/rental/dashboard', [RentalDashboardController::class, 'index'])
+            ->middleware('permission:rental,view')
+            ->name('rental.dashboard');
+        Route::get('/rental/dashboard/export', [RentalDashboardController::class, 'export'])
+            ->middleware('permission:rental,view')
+            ->name('rental.dashboard.export');
 
         // Tariff rates
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');
