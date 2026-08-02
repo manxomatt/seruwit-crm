@@ -65,6 +65,9 @@ class SettingController extends Controller
             // central-only route (see routes/web.php).
             'canEditValues' => $user->hasPermissionFor('settings', 'update'),
             'canManageStructure' => ! tenancy()->initialized && $user->can('manage-settings'),
+            'appearanceResetUrl' => $group === 'appearance' && $user->hasPermissionFor('settings', 'update')
+                ? route($this->getRoutePrefix().'.settings.appearance.reset')
+                : null,
         ]);
     }
 

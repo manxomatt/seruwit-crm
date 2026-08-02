@@ -28,6 +28,7 @@ interface Props {
     currentGroup: string;
     canEditValues: boolean;
     canManageStructure: boolean;
+    appearanceResetUrl?: string | null;
 }
 
 const formatGroupLabel = (group: string): string => group.charAt(0).toUpperCase() + group.slice(1);
@@ -44,7 +45,14 @@ const TrashIcon = () => (
     </svg>
 );
 
-export default function Group({ groupSettings, groups, currentGroup, canEditValues, canManageStructure }: Props): JSX.Element {
+export default function Group({
+    groupSettings,
+    groups,
+    currentGroup,
+    canEditValues,
+    canManageStructure,
+    appearanceResetUrl = null,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
@@ -87,9 +95,13 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
     };
 
     const confirmResetAppearance = () => {
+        if (!appearanceResetUrl) {
+            return;
+        }
+
         setResetProcessing(true);
         router.post(
-            prefixedRoute('settings.appearance.reset'),
+            appearanceResetUrl,
             {},
             {
                 preserveScroll: true,
@@ -252,7 +264,7 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
 
                             <div className="flex flex-wrap items-center gap-3 pt-2">
                                 <PrimaryButton disabled={processing}>{t('settings.pages.group.save')}</PrimaryButton>
-                                {isAppearanceGroup && (
+                                {isAppearanceGroup && appearanceResetUrl && (
                                     <SecondaryButton
                                         type="button"
                                         disabled={processing || resetProcessing}
@@ -281,7 +293,7 @@ export default function Group({ groupSettings, groups, currentGroup, canEditValu
             />
 
             <ConfirmDeleteDialog
-                show={showResetAppearance}
+                show={showResetAppearance && Boolean(appearanceResetUrl)}
                 onClose={() => setShowResetAppearance(false)}
                 onConfirm={confirmResetAppearance}
                 processing={resetProcessing}
