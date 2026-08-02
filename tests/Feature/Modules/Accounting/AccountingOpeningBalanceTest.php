@@ -124,4 +124,21 @@ class AccountingOpeningBalanceTest extends TestCase
             ->get(route('module.accounting.opening-balances.create', ['year' => 2030]))
             ->assertOk();
     }
+
+    public function test_ensure_zero_default_posts_rp_zero_opening(): void
+    {
+        $user = $this->createAdminUser();
+        $year = app(FiscalCalendarService::class)->ensureYear(2035);
+
+        $entry = app(OpeningBalanceService::class)->ensureZeroDefault($year, $user->id);
+
+        $this->assertNotNull($entry);
+        $this->assertSame(JournalEntry::TYPE_OPENING, $entry->type);
+        $this->assertSame(JournalEntry::STATUS_POSTED, $entry->status);
+        $this->assertEqualsWithDelta(0.0, $entry->totalDebit(), 0.001);
+        $this->assertEqualsWithDelta(0.0, $entry->totalCredit(), 0.001);
+
+        $again = app(OpeningBalanceService::class)->ensureZeroDefault($year->fresh(), $user->id);
+        $this->assertSame($entry->id, $again?->id);
+    }
 }

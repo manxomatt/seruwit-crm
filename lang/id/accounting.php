@@ -540,6 +540,7 @@ return [
         'bank_recon_adjustment_memo' => 'Penyesuaian rekonsiliasi #:id baris #:line',
         'opening_balance_posted' => 'Saldo awal diposting.',
         'opening_balance_memo' => 'Saldo awal :year',
+        'opening_balance_zero_memo' => 'Saldo awal :year (Rp 0)',
         'year_closed' => 'Tahun buku ditutup.',
         'year_reopened' => 'Tahun buku dibuka kembali.',
         'year_close_memo' => 'Tutup buku :year',

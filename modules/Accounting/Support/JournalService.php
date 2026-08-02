@@ -17,12 +17,17 @@ class JournalService
      *     entry_date: string,
      *     memo?: string|null,
      *     type?: string,
+     *     allow_zero_amounts?: bool,
      *     lines: list<array{account_id: int, debit?: float|int|string, credit?: float|int|string, partner_id?: int|null, warehouse_id?: int|null, memo?: string|null}>
      * }  $data
      */
     public function createDraft(array $data, ?int $userId = null): JournalEntry
     {
-        $this->assertLinesValid($data['lines'], requireBalance: false);
+        $this->assertLinesValid(
+            $data['lines'],
+            requireBalance: false,
+            allowZeroAmounts: (bool) ($data['allow_zero_amounts'] ?? false),
+        );
 
         $period = $this->calendar->periodForDate($data['entry_date']);
 
@@ -58,7 +63,11 @@ class JournalService
             ]);
         }
 
-        $this->assertLinesValid($data['lines'], requireBalance: false);
+        $this->assertLinesValid(
+            $data['lines'],
+            requireBalance: false,
+            allowZeroAmounts: (bool) ($data['allow_zero_amounts'] ?? false),
+        );
         $period = $this->calendar->periodForDate($data['entry_date']);
 
         return DB::transaction(function () use ($entry, $data, $period): JournalEntry {
@@ -159,7 +168,7 @@ class JournalService
     /**
      * @param  list<array{account_id: int, debit?: float|int|string, credit?: float|int|string}>  $lines
      */
-    private function assertLinesValid(array $lines, bool $requireBalance = true): void
+    private function assertLinesValid(array $lines, bool $requireBalance = true, bool $allowZeroAmounts = false): void
     {
         if (count($lines) < 2) {
             throw ValidationException::withMessages([
@@ -199,7 +208,7 @@ class JournalService
                 ]);
             }
 
-            if ($debit <= 0 && $credit <= 0) {
+            if (! $allowZeroAmounts && $debit <= 0 && $credit <= 0) {
                 throw ValidationException::withMessages([
                     "lines.{$index}" => __('accounting.validation.line_empty'),
                 ]);

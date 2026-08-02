@@ -163,5 +163,67 @@ return new class extends Migration
                 'updated_at' => $now,
             ]);
         }
+
+        $this->seedZeroOpeningBalance($fiscalYearId, $year, $now);
+    }
+
+    private function seedZeroOpeningBalance(int $fiscalYearId, int $year, $now): void
+    {
+        $cashId = DB::table('accounts')->where('code', '1100')->value('id');
+        $equityId = DB::table('accounts')->where('code', '3100')->value('id');
+        $periodId = DB::table('fiscal_periods')
+            ->where('fiscal_year_id', $fiscalYearId)
+            ->where('period_index', 1)
+            ->value('id');
+
+        if ($cashId === null || $equityId === null || $periodId === null) {
+            return;
+        }
+
+        $entryDate = sprintf('%d-01-01', $year);
+        $entryId = DB::table('journal_entries')->insertGetId([
+            'number' => sprintf('JE-%d-0001', $year),
+            'fiscal_period_id' => $periodId,
+            'entry_date' => $entryDate,
+            'type' => 'opening',
+            'status' => 'posted',
+            'source_type' => 'Modules\\Accounting\\Models\\FiscalYear',
+            'source_id' => $fiscalYearId,
+            'event' => 'year.opening',
+            'memo' => "Saldo awal {$year} (Rp 0)",
+            'posted_at' => $now,
+            'posted_by' => null,
+            'created_by' => null,
+            'voided_at' => null,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'journal_entry_id' => $entryId,
+                'account_id' => $cashId,
+                'debit' => 0,
+                'credit' => 0,
+                'partner_id' => null,
+                'warehouse_id' => null,
+                'memo' => null,
+                'sort_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'journal_entry_id' => $entryId,
+                'account_id' => $equityId,
+                'debit' => 0,
+                'credit' => 0,
+                'partner_id' => null,
+                'warehouse_id' => null,
+                'memo' => null,
+                'sort_order' => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
     }
 };

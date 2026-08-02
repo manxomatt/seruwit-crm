@@ -60,8 +60,8 @@ export default function Create({
         entry_date,
         memo: '',
         lines: [
-            { account_id: '', debit: '', credit: '' },
-            { account_id: '', debit: '', credit: '' },
+            { account_id: '', debit: '0', credit: '0' },
+            { account_id: '', debit: '0', credit: '0' },
         ] as Line[],
     });
 
@@ -76,7 +76,7 @@ export default function Create({
     };
 
     const addLine = () => {
-        setData('lines', [...data.lines, { account_id: '', debit: '', credit: '' }]);
+        setData('lines', [...data.lines, { account_id: '', debit: '0', credit: '0' }]);
     };
 
     const removeLine = (index: number) => {

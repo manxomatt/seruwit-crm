@@ -51,11 +51,14 @@ class OpeningBalanceService
             ]);
         }
 
-        return DB::transaction(function () use ($year, $lines, $date, $memo, $userId): JournalEntry {
+        $allowZeroAmounts = $this->linesAreAllZero($lines);
+
+        return DB::transaction(function () use ($year, $lines, $date, $memo, $userId, $allowZeroAmounts): JournalEntry {
             $entry = $this->journals->createDraft([
                 'entry_date' => $date,
                 'type' => JournalEntry::TYPE_OPENING,
                 'memo' => $memo ?: __('accounting.messages.opening_balance_memo', ['year' => (string) $year->year]),
+                'allow_zero_amounts' => $allowZeroAmounts,
                 'lines' => $lines,
             ], $userId ?? Auth::id());
 
@@ -67,6 +70,56 @@ class OpeningBalanceService
 
             return $this->journals->post($entry, $userId ?? Auth::id());
         });
+    }
+
+    /**
+     * Post a greenfield opening journal (Kas / Modal at Rp 0) when the year has
+     * no opening and no posted activity yet. Safe to call repeatedly.
+     */
+    public function ensureZeroDefault(FiscalYear $year, ?int $userId = null): ?JournalEntry
+    {
+        $existing = $this->findOpening($year);
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        if ($year->is_closed || $this->yearHasPostedActivity($year)) {
+            return null;
+        }
+
+        $cash = Account::query()
+            ->where('system_role', 'cash')
+            ->where('is_active', true)
+            ->where('is_postable', true)
+            ->orderBy('code')
+            ->first();
+
+        $equity = Account::query()
+            ->where('code', '3100')
+            ->where('is_active', true)
+            ->where('is_postable', true)
+            ->first()
+            ?? Account::query()
+                ->where('type', Account::TYPE_EQUITY)
+                ->where('is_active', true)
+                ->where('is_postable', true)
+                ->orderBy('code')
+                ->first();
+
+        if ($cash === null || $equity === null || (int) $cash->id === (int) $equity->id) {
+            return null;
+        }
+
+        return $this->post(
+            $year,
+            [
+                ['account_id' => (int) $cash->id, 'debit' => 0, 'credit' => 0],
+                ['account_id' => (int) $equity->id, 'debit' => 0, 'credit' => 0],
+            ],
+            $year->starts_on->toDateString(),
+            __('accounting.messages.opening_balance_zero_memo', ['year' => (string) $year->year]),
+            $userId,
+        );
     }
 
     public function findOpening(FiscalYear $year): ?JournalEntry
@@ -107,5 +160,19 @@ class OpeningBalanceService
                 'lines' => __('accounting.validation.opening_bs_accounts_only'),
             ]);
         }
+    }
+
+    /**
+     * @param  list<array{debit?: float|int|string, credit?: float|int|string}>  $lines
+     */
+    private function linesAreAllZero(array $lines): bool
+    {
+        foreach ($lines as $line) {
+            if (round((float) ($line['debit'] ?? 0), 2) > 0 || round((float) ($line['credit'] ?? 0), 2) > 0) {
+                return false;
+            }
+        }
+
+        return count($lines) > 0;
     }
 }

@@ -12,7 +12,7 @@ class AccountingReadinessTest extends TestCase
 {
     use WithRoles, WithTenant;
 
-    public function test_fresh_tenant_is_core_ready_with_opening_warning(): void
+    public function test_fresh_tenant_is_core_ready_with_zero_opening(): void
     {
         $tenant = $this->provisionTenant('Ready Co', 'ready-co', 'owner@ready-co.test');
 
@@ -20,9 +20,9 @@ class AccountingReadinessTest extends TestCase
             $assessment = app(AccountingReadinessService::class)->assess();
 
             $this->assertTrue($assessment['ready']);
-            $this->assertSame('pending', $assessment['summary']['opening_status']);
+            $this->assertSame('posted', $assessment['summary']['opening_status']);
             $this->assertTrue(collect($assessment['blocking'])->every(fn (array $c): bool => $c['ok']));
-            $this->assertFalse(collect($assessment['warnings'])->firstWhere('key', 'opening_balance')['ok']);
+            $this->assertTrue(collect($assessment['warnings'])->firstWhere('key', 'opening_balance')['ok']);
         });
     }
 
@@ -43,7 +43,7 @@ class AccountingReadinessTest extends TestCase
                     ->has('readiness.blocking')
                     ->has('readiness.warnings')
                     ->where('readiness.ready', true)
-                    ->where('readiness.opening_status', 'pending'));
+                    ->where('readiness.opening_status', 'posted'));
         });
     }
 
@@ -68,6 +68,6 @@ class AccountingReadinessTest extends TestCase
         $tenant = $this->provisionTenant('Preflight Co', 'preflight-co', 'owner@preflight.test');
 
         $this->artisan('accounting:preflight', ['--tenant' => $tenant->id])
-            ->assertFailed();
+            ->assertSuccessful();
     }
 }

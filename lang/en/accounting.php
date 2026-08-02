@@ -540,6 +540,7 @@ return [
         'bank_recon_adjustment_memo' => 'Reconciliation #:id adjustment line #:line',
         'opening_balance_posted' => 'Opening balances posted.',
         'opening_balance_memo' => 'Opening balances :year',
+        'opening_balance_zero_memo' => 'Opening balances :year (Rp 0)',
         'year_closed' => 'Fiscal year closed.',
         'year_reopened' => 'Fiscal year reopened.',
         'year_close_memo' => 'Year-end close :year',

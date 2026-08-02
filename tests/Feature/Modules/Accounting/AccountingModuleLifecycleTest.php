@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Modules\Accounting\Models\Account;
 use Modules\Accounting\Models\FiscalPeriod;
 use Modules\Accounting\Models\FiscalYear;
+use Modules\Accounting\Models\JournalEntry;
 use Modules\Accounting\Support\AccountingPoster;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -51,6 +52,16 @@ class AccountingModuleLifecycleTest extends TestCase
             $year = FiscalYear::query()->where('year', (int) now()->format('Y'))->first();
             $this->assertNotNull($year);
             $this->assertSame(12, FiscalPeriod::query()->where('fiscal_year_id', $year->id)->count());
+
+            $opening = JournalEntry::query()
+                ->where('type', JournalEntry::TYPE_OPENING)
+                ->where('event', 'year.opening')
+                ->where('source_id', $year->id)
+                ->where('status', JournalEntry::STATUS_POSTED)
+                ->first();
+            $this->assertNotNull($opening);
+            $this->assertEqualsWithDelta(0.0, $opening->totalDebit(), 0.001);
+            $this->assertEqualsWithDelta(0.0, $opening->totalCredit(), 0.001);
         });
     }
 }
