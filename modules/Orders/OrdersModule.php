@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Orders\Http\Controllers\DeliveryOrderController;
 use Modules\Orders\Http\Controllers\DriverPortalController;
 use Modules\Orders\Http\Controllers\OrderItemController;
+use Modules\Orders\Http\Controllers\OrdersDashboardController;
 use Modules\Orders\Http\Controllers\PodController;
 use Modules\Orders\Http\Controllers\SuratJalanController;
 use Modules\Orders\Models\DeliveryOrder;
@@ -64,7 +65,7 @@ class OrdersModule implements ModuleContract
             'name' => 'Orders',
             'slug' => 'orders',
             'icon' => 'orders',
-            'route_name' => 'orders.index',
+            'route_name' => 'orders.dashboard',
             'permission_module' => 'orders',
             'permission_action' => 'view',
             'sort_order' => 7,
@@ -107,7 +108,8 @@ class OrdersModule implements ModuleContract
 
     public function routes(): void
     {
-        Route::get('/orders', [DeliveryOrderController::class, 'index'])->middleware('permission:orders,view')->name('orders.index');
+        Route::get('/orders', [OrdersDashboardController::class, 'index'])->middleware('permission:orders,view')->name('orders.dashboard');
+        Route::get('/orders/list', [DeliveryOrderController::class, 'index'])->middleware('permission:orders,view')->name('orders.index');
         Route::get('/orders/create', [DeliveryOrderController::class, 'create'])->middleware('permission:orders,create')->name('orders.create');
         Route::post('/orders', [DeliveryOrderController::class, 'store'])->middleware('permission:orders,create')->name('orders.store');
         Route::get('/orders/{order}', [DeliveryOrderController::class, 'show'])->middleware('permission:orders,view')->name('orders.show');

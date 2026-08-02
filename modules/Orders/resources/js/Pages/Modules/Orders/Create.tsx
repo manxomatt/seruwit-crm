@@ -11,6 +11,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useCallback } from 'react';
 import PageHeader from '@/Components/PageHeader';
+import OrdersNav from '../../../OrdersNav';
 
 interface Partner {
     id: number;
@@ -100,6 +101,8 @@ export default function Create({ partners, locations }: Props): JSX.Element {
             header={<PageHeader title={t('orders.create.title')} />}
         >
             <Head title={t('orders.create.title')} />
+
+            <OrdersNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">

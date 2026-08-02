@@ -10,6 +10,7 @@ import InputLabel from '@/Components/InputLabel';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMemo, useState, FormEventHandler } from 'react';
 import PageHeader from '@/Components/PageHeader';
+import OrdersNav from '../../../OrdersNav';
 
 interface Order {
     id: number;
@@ -171,6 +172,8 @@ export default function Index({ orders, filters, can, assignableTrips = [] }: Pr
             }
         >
             <Head title={t('orders.title')} />
+
+            <OrdersNav />
 
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">

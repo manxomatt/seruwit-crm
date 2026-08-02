@@ -11,6 +11,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import OrdersNav from '../../../OrdersNav';
 
 interface Product {
     id: number;
@@ -234,6 +235,8 @@ export default function Show({ order, products, assignableTrips, can }: Props): 
             }
         >
             <Head title={order.code} />
+
+            <OrdersNav />
 
             <div className="space-y-6">
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
