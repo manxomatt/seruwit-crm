@@ -12,6 +12,12 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import PartnersNav from '../../../PartnersNav';
 
+const TrashIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+);
+
 interface Tag {
     id: number;
     name: string;
@@ -474,9 +480,11 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                             <button
                                                 type="button"
                                                 onClick={() => setAddressToDelete(addr)}
-                                                className="text-sm text-red-600 hover:text-red-900"
+                                                className="shrink-0 rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-900"
+                                                title={t('common.delete')}
+                                                aria-label={t('common.delete')}
                                             >
-                                                {t('common.delete')}
+                                                <TrashIcon />
                                             </button>
                                         )}
                                     </div>
@@ -530,9 +538,11 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                                         <button
                                                             type="button"
                                                             onClick={() => setBankAccountToDelete(ba)}
-                                                            className="text-sm text-red-600 hover:text-red-900"
+                                                            className="inline-flex rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-900"
+                                                            title={t('common.delete')}
+                                                            aria-label={t('common.delete')}
                                                         >
-                                                            {t('common.delete')}
+                                                            <TrashIcon />
                                                         </button>
                                                     </td>
                                                 )}
