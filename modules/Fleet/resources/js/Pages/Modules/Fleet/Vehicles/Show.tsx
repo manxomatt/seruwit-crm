@@ -262,8 +262,12 @@ export default function Show({
             <div className="space-y-6">
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
-                        {vehicle.photo_url && (
+                        {vehicle.photo_url ? (
                             <img src={vehicle.photo_url} alt={vehicle.name} className="mb-6 h-48 w-full rounded-lg object-cover sm:w-64" />
+                        ) : (
+                            <div className="mb-6 flex h-48 w-full items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-400 sm:w-64">
+                                {t('fleet.vehicles.photo_empty')}
+                            </div>
                         )}
                         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>

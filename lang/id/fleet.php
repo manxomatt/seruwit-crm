@@ -65,6 +65,7 @@ return [
         'columns_required_hint' => 'Nama dan nomor polisi selalu ditampilkan.',
         'columns_showing' => 'Menampilkan :count kolom',
         'columns' => [
+            'photo' => 'Foto',
             'name' => 'Nama',
             'plate_number' => 'Nomor polisi',
             'model_year' => 'Tahun model',
@@ -73,6 +74,7 @@ return [
             'odometer' => 'Odometer',
             'status' => 'Status',
         ],
+        'photo_empty' => 'Belum ada foto',
         'capacity' => 'Kapasitas',
         'capacity_kg' => 'Kapasitas kg (untuk routing)',
         'capacity_seats' => 'Kapasitas kursi (untuk travel)',

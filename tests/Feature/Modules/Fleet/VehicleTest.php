@@ -143,6 +143,33 @@ class VehicleTest extends TestCase
             );
     }
 
+    public function test_vehicle_photo_url_is_persisted_and_returned_on_index(): void
+    {
+        $user = $this->createAdminUser();
+        $photoUrl = 'https://cdn.example.com/vehicles/avanza.jpg';
+
+        $this->actingAs($user)->post(route('module.fleet.vehicles.store'), [
+            'name' => 'Avanza Photo',
+            'plate_number' => 'B 5555 PHT',
+            'type' => 'car',
+            'fuel_type' => 'petrol',
+            'status' => 'active',
+            'odometer_km' => 1000,
+            'photo_url' => $photoUrl,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('vehicles', [
+            'plate_number' => 'B 5555 PHT',
+            'photo_url' => $photoUrl,
+        ]);
+
+        $this->actingAs($user)->get(route('module.fleet.vehicles.index', ['search' => 'Avanza Photo']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('vehicles.data.0.photo_url', $photoUrl)
+            );
+    }
+
     public function test_creating_a_vehicle_validates_required_fields_and_unique_plate(): void
     {
         $user = $this->createAdminUser();

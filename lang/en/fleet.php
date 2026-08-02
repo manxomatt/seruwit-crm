@@ -65,6 +65,7 @@ return [
         'columns_required_hint' => 'Name and plate number are always shown.',
         'columns_showing' => 'Showing :count columns',
         'columns' => [
+            'photo' => 'Photo',
             'name' => 'Name',
             'plate_number' => 'Plate number',
             'model_year' => 'Model year',
@@ -73,6 +74,7 @@ return [
             'odometer' => 'Odometer',
             'status' => 'Status',
         ],
+        'photo_empty' => 'No photo',
         'capacity' => 'Capacity',
         'capacity_kg' => 'Capacity kg (for routing)',
         'capacity_seats' => 'Seat capacity (for travel)',

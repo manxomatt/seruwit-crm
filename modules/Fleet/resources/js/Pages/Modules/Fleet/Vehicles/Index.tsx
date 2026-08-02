@@ -22,6 +22,7 @@ interface Vehicle {
     brand: string | null;
     model_year: number | null;
     color: string | null;
+    photo_url: string | null;
     status: string;
     odometer_km: number;
 }
@@ -46,11 +47,12 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
-type VehicleColumn = 'name' | 'plate_number' | 'model_year' | 'color' | 'type' | 'odometer' | 'status';
+type VehicleColumn = 'photo' | 'name' | 'plate_number' | 'model_year' | 'color' | 'type' | 'odometer' | 'status';
 
 const STORAGE_KEY = 'fleet.vehicles.list.visibleColumns';
 
 const VEHICLE_COLUMN_KEYS: Array<{ key: VehicleColumn; required?: boolean; defaultVisible?: boolean }> = [
+    { key: 'photo', defaultVisible: true },
     { key: 'name', required: true },
     { key: 'plate_number', required: true },
     { key: 'model_year', defaultVisible: false },
@@ -231,6 +233,11 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
+                                            {visibleColumns.photo && (
+                                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    {t('fleet.vehicles.columns.photo')}
+                                                </th>
+                                            )}
                                             {visibleColumns.name && (
                                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                                     {t('fleet.vehicles.columns.name')}
@@ -274,6 +281,21 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {vehicles.data.map((vehicle) => (
                                             <tr key={vehicle.id} className="group hover:bg-gray-50">
+                                                {visibleColumns.photo && (
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        {vehicle.photo_url ? (
+                                                            <img
+                                                                src={vehicle.photo_url}
+                                                                alt={vehicle.name}
+                                                                className="h-10 w-14 rounded object-cover"
+                                                            />
+                                                        ) : (
+                                                            <span className="inline-flex h-10 w-14 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">
+                                                                —
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                )}
                                                 {visibleColumns.name && (
                                                     <td className="whitespace-nowrap px-6 py-4">
                                                         <div className="text-sm font-medium text-gray-900">{vehicle.name}</div>
