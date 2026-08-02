@@ -6,6 +6,7 @@ return [
     'nav' => [
         'dashboard' => 'Dashboard',
         'list' => 'Mitra',
+        'industries' => 'Industri',
         'locations' => 'Lokasi',
     ],
 
@@ -250,6 +251,7 @@ return [
     'validation' => [
         'account_type_in' => 'Tipe akun harus perusahaan atau individu.',
         'status_in' => 'Pilih status yang valid.',
+        'industry_name_unique' => 'Industri dengan nama ini sudah ada.',
     ],
 
     'messages' => [
@@ -265,6 +267,25 @@ return [
         'location_updated' => 'Lokasi berhasil diperbarui.',
         'location_deleted' => 'Lokasi berhasil dihapus.',
         'location_delete_referenced' => 'Lokasi ini masih dipakai tarif atau order dan tidak dapat dihapus.',
+        'industry_created' => 'Industri berhasil dibuat.',
+        'industry_updated' => 'Industri berhasil diperbarui.',
+        'industry_deleted' => 'Industri berhasil dihapus.',
+        'industry_delete_referenced' => 'Industri ini masih dipakai partner dan tidak dapat dihapus.',
+    ],
+
+    'industries' => [
+        'head' => 'Industri',
+        'hint' => 'Master industri untuk mengklasifikasikan partner.',
+        'new' => 'Industri baru',
+        'edit' => 'Edit industri',
+        'description' => 'Deskripsi',
+        'partners_count' => 'Partner',
+        'search_placeholder' => 'Cari nama atau deskripsi…',
+        'all_status' => 'Semua status',
+        'empty_title' => 'Belum ada industri',
+        'empty_hint' => 'Tambahkan industri seperti Logistik atau Manufaktur sebelum menetapkannya ke partner.',
+        'delete_title' => 'Hapus industri',
+        'delete_confirm' => 'Hapus industri ":name"? Tindakan ini tidak dapat dibatalkan.',
     ],
 
     'locations' => [

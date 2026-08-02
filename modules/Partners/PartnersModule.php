@@ -10,6 +10,7 @@ use Modules\Partners\Http\Controllers\PartnerAddressController;
 use Modules\Partners\Http\Controllers\PartnerBankAccountController;
 use Modules\Partners\Http\Controllers\PartnerController;
 use Modules\Partners\Http\Controllers\PartnerDashboardController;
+use Modules\Partners\Http\Controllers\PartnerIndustryController;
 
 class PartnersModule implements ModuleContract
 {
@@ -86,6 +87,11 @@ class PartnersModule implements ModuleContract
         Route::post('/partners/locations', [LocationController::class, 'store'])->middleware('permission:partners,create')->name('partners.locations.store');
         Route::patch('/partners/locations/{location}', [LocationController::class, 'update'])->middleware('permission:partners,update')->name('partners.locations.update');
         Route::delete('/partners/locations/{location}', [LocationController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.locations.destroy');
+
+        Route::get('/partners/industries', [PartnerIndustryController::class, 'index'])->middleware('permission:partners,view')->name('partners.industries.index');
+        Route::post('/partners/industries', [PartnerIndustryController::class, 'store'])->middleware('permission:partners,create')->name('partners.industries.store');
+        Route::patch('/partners/industries/{industry}', [PartnerIndustryController::class, 'update'])->middleware('permission:partners,update')->name('partners.industries.update');
+        Route::delete('/partners/industries/{industry}', [PartnerIndustryController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.industries.destroy');
 
         Route::get('/partners/{partner}', [PartnerController::class, 'show'])->middleware('permission:partners,view')->name('partners.show');
         Route::get('/partners/{partner}/edit', [PartnerController::class, 'edit'])->middleware('permission:partners,update')->name('partners.edit');

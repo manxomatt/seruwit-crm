@@ -6,6 +6,7 @@ return [
     'nav' => [
         'dashboard' => 'Dashboard',
         'list' => 'Partners',
+        'industries' => 'Industries',
         'locations' => 'Locations',
     ],
 
@@ -250,6 +251,7 @@ return [
     'validation' => [
         'account_type_in' => 'Account type must be company or individual.',
         'status_in' => 'Please select a valid status.',
+        'industry_name_unique' => 'An industry with this name already exists.',
     ],
 
     'messages' => [
@@ -265,6 +267,25 @@ return [
         'location_updated' => 'Location updated successfully.',
         'location_deleted' => 'Location deleted successfully.',
         'location_delete_referenced' => 'This location is still used by tariffs or orders and cannot be deleted.',
+        'industry_created' => 'Industry created successfully.',
+        'industry_updated' => 'Industry updated successfully.',
+        'industry_deleted' => 'Industry deleted successfully.',
+        'industry_delete_referenced' => 'This industry is still assigned to partners and cannot be deleted.',
+    ],
+
+    'industries' => [
+        'head' => 'Industries',
+        'hint' => 'Master industries used when classifying partners.',
+        'new' => 'New industry',
+        'edit' => 'Edit industry',
+        'description' => 'Description',
+        'partners_count' => 'Partners',
+        'search_placeholder' => 'Search name or description…',
+        'all_status' => 'All statuses',
+        'empty_title' => 'No industries yet',
+        'empty_hint' => 'Add industries such as Logistics or Manufacturing before assigning them to partners.',
+        'delete_title' => 'Delete industry',
+        'delete_confirm' => 'Delete industry ":name"? This cannot be undone.',
     ],
 
     'locations' => [
