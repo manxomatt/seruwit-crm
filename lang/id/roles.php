@@ -53,7 +53,9 @@ return [
             'submit' => 'Simpan Perubahan',
             'submitting' => 'Menyimpan…',
             'system_notice_title' => 'Peran Sistem',
-            'system_notice_body' => 'Nama dan deskripsi terkunci untuk peran sistem. Anda tetap dapat menambah atau menyesuaikan hak akses di luar default.',
+            'system_notice_body' => 'Nama, deskripsi, dan hak akses default terkunci. Anda hanya dapat menambah atau menghapus hak akses tambahan.',
+            'default_badge' => 'Default',
+            'default_permission_locked' => 'Hak akses default tidak dapat diubah',
         ],
         'show' => [
             'title' => 'Peran: :name',
@@ -77,6 +79,7 @@ return [
         'view' => 'Lihat',
         'select_all' => 'Pilih Semua',
         'clear_all' => 'Hapus Semua',
+        'clear_extras' => 'Hapus Tambahan',
         'edit_role' => 'Ubah Peran',
         'back_to_roles' => 'Kembali ke Peran',
     ],

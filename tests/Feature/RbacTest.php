@@ -200,6 +200,60 @@ class RbacTest extends TestCase
         $this->assertTrue($driverRole->permissions()->whereKey($extraPermission->id)->exists());
     }
 
+    public function test_system_role_default_permissions_cannot_be_removed(): void
+    {
+        $user = User::factory()->create();
+        $adminRole = Role::where('slug', 'admin')->first();
+        $user->roles()->attach($adminRole);
+
+        $driverRole = Role::where('slug', 'driver')->firstOrFail();
+        $defaultPermissionIds = $driverRole->permissions()->pluck('id')->all();
+
+        $this->assertNotEmpty($defaultPermissionIds);
+
+        $extraPermission = Permission::query()
+            ->where('module', 'partners')
+            ->where('action', 'view')
+            ->firstOrFail();
+
+        $response = $this->actingAs($user)->patch(route('module.roles.update', $driverRole), [
+            'name' => $driverRole->name,
+            'description' => $driverRole->description,
+            'permissions' => [$extraPermission->id],
+        ]);
+
+        $response->assertRedirect(route('module.roles.index'));
+
+        $driverRole->refresh();
+
+        foreach ($defaultPermissionIds as $permissionId) {
+            $this->assertTrue(
+                $driverRole->permissions()->whereKey($permissionId)->exists(),
+                "Default permission [{$permissionId}] should remain assigned."
+            );
+        }
+
+        $this->assertTrue($driverRole->permissions()->whereKey($extraPermission->id)->exists());
+    }
+
+    public function test_system_role_edit_page_marks_default_permissions_as_locked(): void
+    {
+        $user = User::factory()->create();
+        $adminRole = Role::where('slug', 'admin')->first();
+        $user->roles()->attach($adminRole);
+
+        $driverRole = Role::where('slug', 'driver')->firstOrFail();
+        $defaultPermissionIds = $driverRole->permissions()->pluck('id')->sort()->values()->all();
+
+        $this->actingAs($user)
+            ->get(route('module.roles.edit', $driverRole))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Roles/Edit')
+                ->where('lockedPermissionIds', $defaultPermissionIds)
+            );
+    }
+
     public function test_role_seeder_preserves_extra_permissions_on_system_roles(): void
     {
         $driverRole = Role::where('slug', 'driver')->firstOrFail();

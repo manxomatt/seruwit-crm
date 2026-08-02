@@ -53,7 +53,9 @@ return [
             'submit' => 'Save Changes',
             'submitting' => 'Saving…',
             'system_notice_title' => 'System Role',
-            'system_notice_body' => 'Name and description are locked for system roles. You can still add or adjust permissions beyond the defaults.',
+            'system_notice_body' => 'Name, description, and default permissions are locked. You can only add or remove extra permissions.',
+            'default_badge' => 'Default',
+            'default_permission_locked' => 'Default permission cannot be changed',
         ],
         'show' => [
             'title' => 'Role: :name',
@@ -77,6 +79,7 @@ return [
         'view' => 'View',
         'select_all' => 'Select All',
         'clear_all' => 'Clear All',
+        'clear_extras' => 'Clear Extras',
         'edit_role' => 'Edit Role',
         'back_to_roles' => 'Back to Roles',
     ],

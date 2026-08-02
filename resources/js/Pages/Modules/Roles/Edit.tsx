@@ -7,7 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useMemo } from 'react';
 
 interface Permission {
     id: number;
@@ -29,19 +29,30 @@ interface Role {
 interface Props {
     role: Role;
     rolePermissions: number[];
+    lockedPermissionIds?: number[];
     permissions: Record<string, Permission[]>;
     modules: Record<string, string>;
     actions: Record<string, string>;
 }
 
-export default function Edit({ role, rolePermissions, permissions, modules, actions }: Props): JSX.Element {
+export default function Edit({
+    role,
+    rolePermissions,
+    lockedPermissionIds = [],
+    permissions,
+    modules,
+    actions,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const lockedIds = useMemo(() => new Set(lockedPermissionIds), [lockedPermissionIds]);
     const { data, setData, patch, processing, errors } = useForm({
         name: role.name,
         description: role.description || '',
         permissions: rolePermissions,
     });
+
+    const isLocked = (permissionId: number): boolean => lockedIds.has(permissionId);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -49,37 +60,57 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
     };
 
     const togglePermission = (permissionId: number) => {
+        if (isLocked(permissionId)) {
+            return;
+        }
+
         if (data.permissions.includes(permissionId)) {
-            setData('permissions', data.permissions.filter(id => id !== permissionId));
+            setData(
+                'permissions',
+                data.permissions.filter((id) => id !== permissionId),
+            );
         } else {
             setData('permissions', [...data.permissions, permissionId]);
         }
     };
 
     const toggleModulePermissions = (modulePermissions: Permission[]) => {
-        const modulePermissionIds = modulePermissions.map(p => p.id);
-        const allSelected = modulePermissionIds.every(id => data.permissions.includes(id));
-        
-        if (allSelected) {
-            setData('permissions', data.permissions.filter(id => !modulePermissionIds.includes(id)));
+        const unlockedIds = modulePermissions.map((p) => p.id).filter((id) => !isLocked(id));
+
+        if (unlockedIds.length === 0) {
+            return;
+        }
+
+        const allUnlockedSelected = unlockedIds.every((id) => data.permissions.includes(id));
+
+        if (allUnlockedSelected) {
+            setData(
+                'permissions',
+                data.permissions.filter((id) => !unlockedIds.includes(id)),
+            );
         } else {
-            const newPermissions = [...data.permissions];
-            modulePermissionIds.forEach(id => {
-                if (!newPermissions.includes(id)) {
-                    newPermissions.push(id);
+            const next = [...data.permissions];
+            unlockedIds.forEach((id) => {
+                if (!next.includes(id)) {
+                    next.push(id);
                 }
             });
-            setData('permissions', newPermissions);
+            setData('permissions', next);
         }
     };
 
     const selectAllPermissions = () => {
-        const allPermissionIds = Object.values(permissions).flat().map(p => p.id);
+        const allPermissionIds = Object.values(permissions)
+            .flat()
+            .map((p) => p.id);
         setData('permissions', allPermissionIds);
     };
 
     const clearAllPermissions = () => {
-        setData('permissions', []);
+        setData(
+            'permissions',
+            data.permissions.filter((id) => isLocked(id)),
+        );
     };
 
     return (
@@ -116,7 +147,6 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                     )}
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        {/* Left Column - Role Details */}
                         <div className="space-y-6">
                             <div>
                                 <InputLabel htmlFor="name" value={t('roles.fields.name')} />
@@ -162,7 +192,6 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                             </div>
                         </div>
 
-                        {/* Right Column - Permissions */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
                                 <InputLabel value={t('roles.fields.permissions')} />
@@ -180,21 +209,23 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                         onClick={clearAllPermissions}
                                         className="text-sm text-gray-600 hover:text-gray-800"
                                     >
-                                        {t('roles.actions.clear_all')}
+                                        {t('roles.actions.clear_extras')}
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="border rounded-lg divide-y max-h-[500px] overflow-y-auto">
                                 {Object.entries(permissions).map(([module, modulePermissions]) => {
-                                    const modulePermissionIds = modulePermissions.map(p => p.id);
-                                    const allSelected = modulePermissionIds.every(id => data.permissions.includes(id));
-                                    const someSelected = modulePermissionIds.some(id => data.permissions.includes(id));
-                                    
+                                    const modulePermissionIds = modulePermissions.map((p) => p.id);
+                                    const unlockedIds = modulePermissionIds.filter((id) => !isLocked(id));
+                                    const allSelected = modulePermissionIds.every((id) => data.permissions.includes(id));
+                                    const someSelected = modulePermissionIds.some((id) => data.permissions.includes(id));
+                                    const moduleToggleDisabled = unlockedIds.length === 0;
+
                                     return (
                                         <div key={module} className="p-4">
                                             <div className="flex items-center justify-between mb-3">
-                                                <label className="flex items-center cursor-pointer">
+                                                <label className={`flex items-center ${moduleToggleDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                                                     <input
                                                         type="checkbox"
                                                         checked={allSelected}
@@ -204,7 +235,8 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                                             }
                                                         }}
                                                         onChange={() => toggleModulePermissions(modulePermissions)}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                        disabled={moduleToggleDisabled}
+                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50"
                                                     />
                                                     <span className="ml-2 font-medium text-gray-900">
                                                         {modules[module] || module}
@@ -212,29 +244,40 @@ export default function Edit({ role, rolePermissions, permissions, modules, acti
                                                 </label>
                                             </div>
                                             <div className="ml-6 grid grid-cols-2 gap-2">
-                                                {modulePermissions.map((permission) => (
-                                                    <label
-                                                        key={permission.id}
-                                                        className="flex items-center cursor-pointer"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={data.permissions.includes(permission.id)}
-                                                            onChange={() => togglePermission(permission.id)}
-                                                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                        />
-                                                        <span className="ml-2 text-sm text-gray-700">
-                                                            {actions[permission.action] || permission.action}
-                                                        </span>
-                                                    </label>
-                                                ))}
+                                                {modulePermissions.map((permission) => {
+                                                    const locked = isLocked(permission.id);
+
+                                                    return (
+                                                        <label
+                                                            key={permission.id}
+                                                            className={`flex items-center ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                                            title={locked ? t('roles.pages.edit.default_permission_locked') : undefined}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={data.permissions.includes(permission.id)}
+                                                                onChange={() => togglePermission(permission.id)}
+                                                                disabled={locked}
+                                                                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50"
+                                                            />
+                                                            <span className={`ml-2 text-sm ${locked ? 'text-gray-500' : 'text-gray-700'}`}>
+                                                                {actions[permission.action] || permission.action}
+                                                                {locked && (
+                                                                    <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-700">
+                                                                        {t('roles.pages.edit.default_badge')}
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
                             <InputError message={errors.permissions} className="mt-2" />
-                            
+
                             <p className="mt-2 text-sm text-gray-500">
                                 {t('roles.permissions_selected', { count: data.permissions.length })}
                             </p>

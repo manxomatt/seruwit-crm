@@ -7,6 +7,7 @@ use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Support\SystemRolePermissions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -118,9 +119,14 @@ class RoleController extends Controller
             ->get()
             ->groupBy('module');
 
+        $lockedPermissionIds = $role->isSystemRole()
+            ? collect(SystemRolePermissions::defaultIdsFor($role))->sort()->values()->all()
+            : [];
+
         return Inertia::render('Modules/Roles/Edit', [
             'role' => $role,
             'rolePermissions' => $role->permissions->pluck('id')->toArray(),
+            'lockedPermissionIds' => $lockedPermissionIds,
             'permissions' => $permissions,
             'modules' => Permission::getModules(),
             'actions' => Permission::getActions(),
@@ -130,8 +136,8 @@ class RoleController extends Controller
     /**
      * Update the specified role in storage.
      *
-     * System roles keep their name/description/slug locked, but admins may
-     * add or adjust permissions beyond the seeded defaults.
+     * System roles keep their name/description/slug and default permissions locked.
+     * Admins may only add or remove permissions beyond those defaults.
      */
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
@@ -143,9 +149,12 @@ class RoleController extends Controller
                 'slug' => Str::slug($validated['name']),
                 'description' => $validated['description'] ?? null,
             ]);
+            $role->syncPermissions($validated['permissions'] ?? []);
+        } else {
+            $role->syncPermissions(
+                SystemRolePermissions::mergeWithDefaults($role, $validated['permissions'] ?? [])
+            );
         }
-
-        $role->syncPermissions($validated['permissions'] ?? []);
 
         return redirect()->route($this->getRoutePrefix().'.roles.index')
             ->with('success', __('roles.messages.updated'));

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Permission;
 use App\Models\Role;
+use App\Support\SystemRolePermissions;
 use Illuminate\Database\Seeder;
 
 class RoleSeeder extends Seeder
@@ -23,9 +23,7 @@ class RoleSeeder extends Seeder
                 'dashboard_path' => '/module/dashboard',
             ]
         );
-
-        // Assign all permissions to admin role (preserve any extras on reseed)
-        $this->ensureDefaultPermissions($adminRole, Permission::query()->pluck('id')->all());
+        $this->ensureDefaultPermissions($adminRole);
 
         // Create User role (read-only access)
         $userRole = Role::query()->firstOrCreate(
@@ -37,13 +35,7 @@ class RoleSeeder extends Seeder
                 'dashboard_path' => '/module/dashboard',
             ]
         );
-
-        // Assign only view permissions to user role (preserve any extras on reseed)
-        $viewPermissions = Permission::query()
-            ->where('action', 'view')
-            ->pluck('id')
-            ->all();
-        $this->ensureDefaultPermissions($userRole, $viewPermissions);
+        $this->ensureDefaultPermissions($userRole);
 
         // Driver: the mobile delivery portal only. Narrow set — see their trips
         // and orders, and deliver (POD). No dispatch, no admin.
@@ -56,16 +48,7 @@ class RoleSeeder extends Seeder
                 'dashboard_path' => '/module/driver/today',
             ]
         );
-
-        $driverPermissions = Permission::query()
-            ->where(function ($query) {
-                $query
-                    ->where(fn ($q) => $q->where('module', 'orders')->whereIn('action', ['view', 'deliver']))
-                    ->orWhere(fn ($q) => $q->where('module', 'transportation')->where('action', 'view'));
-            })
-            ->pluck('id')
-            ->all();
-        $this->ensureDefaultPermissions($driverRole, $driverPermissions);
+        $this->ensureDefaultPermissions($driverRole);
 
         // Salesperson: field canvassing portal only — check in/out and view canvassing data.
         $salespersonRole = Role::query()->firstOrCreate(
@@ -77,14 +60,7 @@ class RoleSeeder extends Seeder
                 'dashboard_path' => '/module/canvassing/portal/today',
             ]
         );
-
-        $salespersonPermissions = Permission::query()
-            ->where(function ($query): void {
-                $query->where(fn ($q) => $q->where('module', 'canvassing')->whereIn('action', ['view', 'checkin']));
-            })
-            ->pluck('id')
-            ->all();
-        $this->ensureDefaultPermissions($salespersonRole, $salespersonPermissions);
+        $this->ensureDefaultPermissions($salespersonRole);
 
         // Reseller: can manage their own tenant portfolio from the central domain.
         // No module-level permissions — access is gated by the manage-tenants gate.
@@ -108,20 +84,7 @@ class RoleSeeder extends Seeder
                 'dashboard_path' => '/module/inventory/warehouses',
             ]
         );
-
-        $siteOpsPermissions = Permission::query()
-            ->where(function ($query): void {
-                $query
-                    ->where(fn ($q) => $q->where('module', 'inventory')->whereIn('action', ['view', 'create', 'update', 'adjust']))
-                    ->orWhere(fn ($q) => $q->where('module', 'products')->where('action', 'view'))
-                    ->orWhere(fn ($q) => $q->where('module', 'partners')->where('action', 'view'))
-                    ->orWhere(fn ($q) => $q->where('module', 'purchasing')->whereIn('action', ['view', 'create', 'update', 'receive']))
-                    ->orWhere(fn ($q) => $q->where('module', 'sales')->whereIn('action', ['view', 'create', 'update', 'issue']))
-                    ->orWhere(fn ($q) => $q->where('module', 'orders')->whereIn('action', ['view', 'create']));
-            })
-            ->pluck('id')
-            ->all();
-        $this->ensureDefaultPermissions($warehouseHead, $siteOpsPermissions);
+        $this->ensureDefaultPermissions($warehouseHead);
 
         // Warehouse manager: same ops verbs, can be assigned to one or more sites.
         $warehouseManager = Role::query()->firstOrCreate(
@@ -133,23 +96,19 @@ class RoleSeeder extends Seeder
                 'dashboard_path' => '/module/inventory/warehouses',
             ]
         );
-        $this->ensureDefaultPermissions($warehouseManager, $siteOpsPermissions);
+        $this->ensureDefaultPermissions($warehouseManager);
     }
 
     /**
-     * Ensure the seeded default permissions exist without wiping extras an admin added.
-     *
-     * @param  array<int>  $defaultPermissionIds
+     * Ensure seeded defaults exist without wiping extras an admin added.
      */
-    private function ensureDefaultPermissions(Role $role, array $defaultPermissionIds): void
+    private function ensureDefaultPermissions(Role $role): void
     {
-        $merged = $role->permissions()
-            ->pluck('id')
-            ->merge($defaultPermissionIds)
-            ->unique()
-            ->values()
-            ->all();
-
-        $role->permissions()->sync($merged);
+        $role->permissions()->sync(
+            SystemRolePermissions::mergeWithDefaults(
+                $role,
+                $role->permissions()->pluck('id')->all()
+            )
+        );
     }
 }
