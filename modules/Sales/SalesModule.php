@@ -7,6 +7,7 @@ use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
 use Modules\Sales\Http\Controllers\GoodsIssueNoteController;
 use Modules\Sales\Http\Controllers\PriceListController;
+use Modules\Sales\Http\Controllers\SalesDashboardController;
 use Modules\Sales\Http\Controllers\SalesOrderController;
 use Modules\Sales\Http\Controllers\SalesPdfController;
 use Modules\Sales\Http\Controllers\SalesReturnController;
@@ -56,7 +57,7 @@ class SalesModule implements ModuleContract
             'name' => 'Sales',
             'slug' => 'sales',
             'icon' => 'sales',
-            'route_name' => 'sales.sales-orders.index',
+            'route_name' => 'sales.dashboard',
             'permission_module' => 'sales',
             'permission_action' => 'view',
             'sort_order' => 92,
@@ -81,9 +82,7 @@ class SalesModule implements ModuleContract
     public function routes(): void
     {
         Route::middleware(['auth', 'permission:sales,view'])->group(function (): void {
-            Route::get('/sales', function () {
-                return redirect('/module/sales/sales-orders');
-            });
+            Route::get('/sales', [SalesDashboardController::class, 'index'])->name('sales.dashboard');
 
             Route::prefix('sales')->name('sales.')->group(function (): void {
                 Route::get('/sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');

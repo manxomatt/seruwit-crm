@@ -307,7 +307,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'transportation': { route: 'module.transportation.trips.index', routePattern: 'module.transportation.*' },
     'inventory': { route: 'module.inventory.dashboard', routePattern: 'module.inventory.*' },
     'purchasing': { route: 'module.purchasing.dashboard', routePattern: 'module.purchasing.*' },
-    'sales': { route: 'module.sales.sales-orders.index', routePattern: 'module.sales.*' },
+    'sales': { route: 'module.sales.dashboard', routePattern: 'module.sales.*' },
     'accounting': { route: 'module.accounting.dashboard', routePattern: 'module.accounting.*' },
     'receivables': { route: 'module.receivables.dashboard', routePattern: 'module.receivables.*' },
     'payables': { route: 'module.payables.dashboard', routePattern: 'module.payables.*' },
