@@ -70,4 +70,28 @@ class SystemRolePermissions
             ...array_map('intval', $permissionIds),
         ]));
     }
+
+    /**
+     * Re-apply locked defaults onto every system role without wiping extras.
+     *
+     * Called after module install seeds new permission rows, and by RoleSeeder.
+     */
+    public static function syncAllSystemRoles(): void
+    {
+        if (! Schema::hasTable('roles') || ! Schema::hasTable('permissions')) {
+            return;
+        }
+
+        Role::query()
+            ->where('is_system', true)
+            ->get()
+            ->each(function (Role $role): void {
+                $role->permissions()->sync(
+                    self::mergeWithDefaults(
+                        $role,
+                        $role->permissions()->pluck('id')->all()
+                    )
+                );
+            });
+    }
 }

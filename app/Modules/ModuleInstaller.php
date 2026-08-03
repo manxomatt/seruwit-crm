@@ -7,6 +7,7 @@ use App\Models\Menu;
 use App\Models\Permission;
 use App\Models\Tenant;
 use App\Modules\Facades\Modules;
+use App\Support\SystemRolePermissions;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
@@ -80,6 +81,7 @@ class ModuleInstaller
         $this->migrate($module);
 
         $this->seedPermissions($module);
+        SystemRolePermissions::syncAllSystemRoles();
         $this->seedMenu($module);
 
         InstalledModule::query()->updateOrCreate(
@@ -93,8 +95,8 @@ class ModuleInstaller
     /**
      * Withdraw the module from $tenant without touching its tables or data, so a
      * reinstall restores everything. Permissions are left alone on purpose:
-     * RoleSeeder syncs them back wholesale on any re-seed, so revoking here would
-     * be a second source of truth that silently heals itself.
+     * system-role defaults are re-synced on install (and by RoleSeeder), so
+     * revoking here would be a second source of truth that silently heals itself.
      *
      * @throws RuntimeException when another installed module depends on this one
      */
