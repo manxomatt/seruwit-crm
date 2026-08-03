@@ -74,8 +74,22 @@ interface Vehicle {
     kir_expires_at: string | null;
     photo_url: string | null;
     notes: string | null;
-    maintenance_logs: MaintenanceLog[];
+    maintenance_logs?: MaintenanceLog[];
     fuel_logs: FuelLog[];
+}
+
+interface ServiceHistoryItem {
+    id: number;
+    reference_number: string;
+    title: string;
+    status: string;
+    type: string;
+    category: string | null;
+    scheduled_date: string | null;
+    completed_at: string | null;
+    total_cost: number | null;
+    vendor_name: string | null;
+    mechanic_name: string | null;
 }
 
 interface Props {
@@ -83,6 +97,8 @@ interface Props {
     trackingEnabled?: boolean;
     documentsEnabled?: boolean;
     documentSummary?: DocumentSummary | null;
+    maintenanceEnabled?: boolean;
+    serviceHistory?: ServiceHistoryItem[] | null;
     fuelSummary: FuelSummary;
     drivers: { id: number; name: string }[];
     can: { create: boolean; update: boolean; delete: boolean };
@@ -117,6 +133,8 @@ export default function Show({
     trackingEnabled = false,
     documentsEnabled = false,
     documentSummary = null,
+    maintenanceEnabled = false,
+    serviceHistory = null,
     fuelSummary,
     drivers,
     can,
@@ -375,14 +393,68 @@ export default function Show({
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div className="p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">{t('fleet.vehicles.maintenance')}</h3>
-                            {can.create && (
-                                <PrimaryButton onClick={() => setShowMaintenanceModal(true)}>
-                                    {t('fleet.vehicles.log_maintenance')}
-                                </PrimaryButton>
+                            <h3 className="text-lg font-medium text-gray-900">
+                                {maintenanceEnabled
+                                    ? t('fleet.vehicles.service_history')
+                                    : t('fleet.vehicles.maintenance')}
+                            </h3>
+                            {maintenanceEnabled ? (
+                                <Link
+                                    href={prefixedRoute('maintenance.work-orders.create') + `?vehicle_id=${vehicle.id}`}
+                                    className="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-gray-700"
+                                >
+                                    {t('maintenance.work_orders.new')}
+                                </Link>
+                            ) : (
+                                can.create && (
+                                    <PrimaryButton onClick={() => setShowMaintenanceModal(true)}>
+                                        {t('fleet.vehicles.log_maintenance')}
+                                    </PrimaryButton>
+                                )
                             )}
                         </div>
-                        {vehicle.maintenance_logs.length === 0 ? (
+                        {maintenanceEnabled ? (
+                            !serviceHistory || serviceHistory.length === 0 ? (
+                                <p className="text-sm text-gray-500">{t('fleet.vehicles.no_service_history')}</p>
+                            ) : (
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_ref')}</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_title')}</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.status')}</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_completed')}</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_total')}</th>
+                                            <th className="px-3 py-2" />
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {serviceHistory.map((wo) => (
+                                            <tr key={wo.id}>
+                                                <td className="whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-900">{wo.reference_number}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-700">
+                                                    <div>{wo.title}</div>
+                                                    {wo.category && <div className="text-xs text-gray-500">{wo.category}</div>}
+                                                </td>
+                                                <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-500">{wo.status.replace('_', ' ')}</td>
+                                                <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{formatDate(wo.completed_at ?? wo.scheduled_date, localeTag)}</td>
+                                                <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                                    {wo.total_cost != null ? `Rp ${Number(wo.total_cost).toLocaleString()}` : '—'}
+                                                </td>
+                                                <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
+                                                    <Link
+                                                        href={prefixedRoute('maintenance.work-orders.show', wo.id)}
+                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        {t('fleet.vehicles.open_work_order')}
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )
+                        ) : (vehicle.maintenance_logs?.length ?? 0) === 0 ? (
                             <p className="text-sm text-gray-500">{t('fleet.vehicles.no_maintenance')}</p>
                         ) : (
                             <table className="min-w-full divide-y divide-gray-200">
@@ -397,7 +469,7 @@ export default function Show({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {vehicle.maintenance_logs.map((log) => (
+                                    {(vehicle.maintenance_logs ?? []).map((log) => (
                                         <tr key={log.id}>
                                             <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-900">{log.type.replace('_', ' ')}</td>
                                             <td className="px-3 py-2 text-sm text-gray-500">{log.description}</td>

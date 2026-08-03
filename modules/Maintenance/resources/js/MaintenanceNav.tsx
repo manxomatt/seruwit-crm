@@ -4,7 +4,10 @@ import { Link } from '@inertiajs/react';
 
 const TABS = [
     { labelKey: 'maintenance.nav.dashboard', route: 'maintenance.index', pattern: 'maintenance.index' },
+    { labelKey: 'maintenance.nav.wip', route: 'maintenance.wip.index', pattern: 'maintenance.wip.*' },
+    { labelKey: 'maintenance.nav.calendar', route: 'maintenance.calendar.index', pattern: 'maintenance.calendar.*' },
     { labelKey: 'maintenance.nav.work_orders', route: 'maintenance.work-orders.index', pattern: 'maintenance.work-orders.*' },
+    { labelKey: 'maintenance.nav.bays', route: 'maintenance.bays.index', pattern: 'maintenance.bays.*' },
     { labelKey: 'maintenance.nav.schedules', route: 'maintenance.schedules.index', pattern: 'maintenance.schedules.*' },
     { labelKey: 'maintenance.nav.categories', route: 'maintenance.categories.index', pattern: 'maintenance.categories.*' },
 ] as const;

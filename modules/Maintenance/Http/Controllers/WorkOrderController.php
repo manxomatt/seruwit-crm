@@ -3,7 +3,10 @@
 namespace Modules\Maintenance\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Modules\Facades\Modules;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -12,10 +15,13 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Maintenance\Http\Requests\StoreWorkOrderRequest;
 use Modules\Maintenance\Http\Requests\UpdateWorkOrderRequest;
 use Modules\Maintenance\Http\Requests\UpdateWorkOrderStatusRequest;
+use Modules\Maintenance\Models\MaintenanceBay;
 use Modules\Maintenance\Models\MaintenanceCategory;
 use Modules\Maintenance\Models\WorkOrder;
 use Modules\Maintenance\Models\WorkOrderItem;
 use Modules\Maintenance\Support\MaintenanceStockRecorder;
+use Modules\Maintenance\Support\WorkOrderVehicleStatusSyncer;
+use Modules\Partners\Models\Partner;
 
 class WorkOrderController extends Controller
 {
@@ -29,7 +35,7 @@ class WorkOrderController extends Controller
         $user = Auth::user();
 
         $workOrders = WorkOrder::query()
-            ->with(['vehicle', 'category'])
+            ->with(['vehicle', 'category', 'mechanic', 'vendorPartner'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
@@ -75,18 +81,18 @@ class WorkOrderController extends Controller
             'vehicles' => $vehicles,
             'categories' => $categories,
             'spareParts' => $this->sparePartOptions(),
+            'vendors' => $this->vendorOptions(),
+            'mechanics' => $this->mechanicOptions(),
+            'bays' => $this->bayOptions(),
         ]);
     }
 
     /**
-     * Fleet-sparepart products that a work order part line can draw from,
-     * empty when the inventory module is not installed for this tenant.
-     *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    private function sparePartOptions(): \Illuminate\Support\Collection
+    private function sparePartOptions(): Collection
     {
-        if (! \App\Modules\Facades\Modules::available('inventory')) {
+        if (! Modules::available('inventory')) {
             return collect();
         }
 
@@ -104,9 +110,59 @@ class WorkOrderController extends Controller
             ]);
     }
 
+    /**
+     * @return Collection<int, array{id: int, name: string, code: string|null}>
+     */
+    private function vendorOptions(): Collection
+    {
+        return Partner::query()
+            ->where('status', 'active')
+            ->where(function ($query): void {
+                $query->where('supplier_rank', '>', 0)
+                    ->orWhere('sub_type', 'supplier');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'code'])
+            ->map(fn (Partner $partner): array => [
+                'id' => $partner->id,
+                'name' => $partner->name,
+                'code' => $partner->code,
+            ]);
+    }
+
+    /**
+     * @return Collection<int, array{id: int, name: string}>
+     */
+    private function mechanicOptions(): Collection
+    {
+        return User::query()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+            ]);
+    }
+
+    /**
+     * @return Collection<int, array{id: int, code: string, name: string}>
+     */
+    private function bayOptions(): Collection
+    {
+        return MaintenanceBay::query()
+            ->active()
+            ->ordered()
+            ->get(['id', 'code', 'name'])
+            ->map(fn (MaintenanceBay $bay): array => [
+                'id' => $bay->id,
+                'code' => $bay->code,
+                'name' => $bay->name,
+            ]);
+    }
+
     public function store(StoreWorkOrderRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
+        $validated = $this->withRelationLabels($request->validated());
         $items = $validated['items'] ?? [];
         unset($validated['items']);
 
@@ -121,6 +177,12 @@ class WorkOrderController extends Controller
                 $wo->items()->create($item);
             }
 
+            $originalStatus = WorkOrder::STATUS_DRAFT;
+            if ($wo->status !== $originalStatus) {
+                WorkOrderVehicleStatusSyncer::sync($wo, $originalStatus);
+                $this->syncStockForStatusChange($wo, $originalStatus);
+            }
+
             return $wo;
         });
 
@@ -132,16 +194,28 @@ class WorkOrderController extends Controller
     {
         $user = Auth::user();
 
-        $workOrder->load(['vehicle', 'category', 'items', 'creator', 'approver']);
+        $workOrder->load([
+            'vehicle',
+            'category',
+            'items',
+            'checklistItems',
+            'creator',
+            'approver',
+            'mechanic',
+            'vendorPartner',
+            'bay',
+        ]);
 
         return Inertia::render('Modules/Maintenance/WorkOrders/Show', [
             'workOrder' => array_merge($workOrder->toArray(), [
-                'actual_total_cost' => $workOrder->actual_total_cost_attribute,
+                'actual_total_cost' => $workOrder->actual_total_cost,
             ]),
             'can' => [
                 'update' => $user->hasPermissionFor('maintenance', 'update'),
                 'delete' => $user->hasPermissionFor('maintenance', 'delete'),
                 'approve' => $user->hasPermissionFor('maintenance', 'approve'),
+                'assign' => $user->hasPermissionFor('maintenance', 'assign')
+                    || $user->hasPermissionFor('maintenance', 'update'),
             ],
         ]);
     }
@@ -157,14 +231,33 @@ class WorkOrderController extends Controller
             'vehicles' => $vehicles,
             'categories' => $categories,
             'spareParts' => $this->sparePartOptions(),
+            'vendors' => $this->vendorOptions(),
+            'mechanics' => $this->mechanicOptions(),
+            'bays' => $this->bayOptions(),
         ]);
     }
 
     public function update(UpdateWorkOrderRequest $request, WorkOrder $workOrder): RedirectResponse
     {
-        $validated = $request->validated();
+        $validated = $this->withRelationLabels($request->validated());
         $items = $validated['items'] ?? null;
         unset($validated['items']);
+
+        if (($validated['status'] ?? null) === WorkOrder::STATUS_IN_PROGRESS
+            && $workOrder->status !== WorkOrder::STATUS_IN_PROGRESS
+            && WorkOrderVehicleStatusSyncer::vehicleHasOtherInProgress($workOrder)) {
+            return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
+                ->with('error', __('maintenance.messages.vehicle_already_in_workshop'));
+        }
+
+        $bayId = $validated['bay_id'] ?? $workOrder->bay_id;
+        if (($validated['status'] ?? null) === WorkOrder::STATUS_IN_PROGRESS
+            && $workOrder->status !== WorkOrder::STATUS_IN_PROGRESS
+            && $bayId
+            && WorkOrderVehicleStatusSyncer::bayHasOtherInProgress((int) $bayId, $workOrder)) {
+            return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
+                ->with('error', __('maintenance.messages.bay_already_busy'));
+        }
 
         DB::transaction(function () use ($workOrder, $validated, $items): void {
             $originalStatus = $workOrder->status;
@@ -172,7 +265,6 @@ class WorkOrderController extends Controller
 
             $workOrder->update($validated);
 
-            // Sync items when provided
             if ($items !== null) {
                 $existingIds = collect($items)->pluck('id')->filter()->all();
                 $workOrder->items()->whereNotIn('id', $existingIds)->delete();
@@ -188,7 +280,8 @@ class WorkOrderController extends Controller
                 }
             }
 
-            $this->syncStockForStatusChange($workOrder, $originalStatus);
+            WorkOrderVehicleStatusSyncer::sync($workOrder->fresh(), $originalStatus);
+            $this->syncStockForStatusChange($workOrder->fresh(), $originalStatus);
         });
 
         return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
@@ -204,17 +297,70 @@ class WorkOrderController extends Controller
                 ->with('error', __('maintenance.messages.status_transition_invalid'));
         }
 
+        if ($newStatus === WorkOrder::STATUS_IN_PROGRESS
+            && WorkOrderVehicleStatusSyncer::vehicleHasOtherInProgress($workOrder)) {
+            return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
+                ->with('error', __('maintenance.messages.vehicle_already_in_workshop'));
+        }
+
+        if ($newStatus === WorkOrder::STATUS_IN_PROGRESS
+            && $workOrder->bay_id
+            && WorkOrderVehicleStatusSyncer::bayHasOtherInProgress((int) $workOrder->bay_id, $workOrder)) {
+            return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
+                ->with('error', __('maintenance.messages.bay_already_busy'));
+        }
+
         DB::transaction(function () use ($workOrder, $newStatus): void {
             $originalStatus = $workOrder->status;
             $payload = $this->withStatusSideEffects($workOrder, ['status' => $newStatus]);
             $workOrder->update($payload);
-            $this->syncStockForStatusChange($workOrder, $originalStatus);
+            WorkOrderVehicleStatusSyncer::sync($workOrder->fresh(), $originalStatus);
+            $this->syncStockForStatusChange($workOrder->fresh(), $originalStatus);
         });
 
         return redirect()->route($this->getRoutePrefix().'.maintenance.work-orders.show', $workOrder)
             ->with('success', __('maintenance.messages.wo_status_updated', [
                 'status' => __('maintenance.status.'.$newStatus),
             ]));
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function withRelationLabels(array $validated): array
+    {
+        if (! empty($validated['vendor_partner_id'])) {
+            $partner = Partner::query()->find($validated['vendor_partner_id']);
+            if ($partner !== null) {
+                $validated['vendor_name'] = $partner->name;
+            }
+        } else {
+            $validated['vendor_partner_id'] = null;
+        }
+
+        if (! empty($validated['mechanic_user_id'])) {
+            $mechanic = User::query()->find($validated['mechanic_user_id']);
+            if ($mechanic !== null) {
+                $validated['mechanic_name'] = $mechanic->name;
+            }
+        } else {
+            $validated['mechanic_user_id'] = null;
+        }
+
+        $validated['service_location'] = $validated['service_location'] ?? WorkOrder::LOCATION_IN_HOUSE;
+
+        if ($validated['service_location'] === WorkOrder::LOCATION_OUTSOURCE) {
+            $validated['bay_id'] = null;
+        } elseif (array_key_exists('bay_id', $validated) && blank($validated['bay_id'])) {
+            $validated['bay_id'] = null;
+        }
+
+        if (array_key_exists('waiting_parts', $validated)) {
+            $validated['waiting_parts'] = (bool) $validated['waiting_parts'];
+        }
+
+        return $validated;
     }
 
     /**
@@ -234,6 +380,11 @@ class WorkOrderController extends Controller
 
         if (($validated['status'] ?? null) === WorkOrder::STATUS_COMPLETED && ! $workOrder->completed_at) {
             $validated['completed_at'] = $validated['completed_at'] ?? now();
+            $validated['waiting_parts'] = false;
+        }
+
+        if (($validated['status'] ?? null) === WorkOrder::STATUS_CANCELLED) {
+            $validated['waiting_parts'] = false;
         }
 
         return $validated;

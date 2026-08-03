@@ -71,6 +71,9 @@ class Permission extends Model
         'create' => 'Create',
         'update' => 'Update',
         'delete' => 'Delete',
+        'approve' => 'Approve',
+        'assign' => 'Assign',
+        'manage_bays' => 'Manage bays',
     ];
 
     /**

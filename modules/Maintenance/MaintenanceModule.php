@@ -5,10 +5,15 @@ namespace Modules\Maintenance;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Maintenance\Http\Controllers\BayCalendarController;
+use Modules\Maintenance\Http\Controllers\MaintenanceBayController;
 use Modules\Maintenance\Http\Controllers\MaintenanceCategoryController;
 use Modules\Maintenance\Http\Controllers\MaintenanceController;
 use Modules\Maintenance\Http\Controllers\MaintenanceScheduleController;
+use Modules\Maintenance\Http\Controllers\WipBoardController;
+use Modules\Maintenance\Http\Controllers\WorkOrderChecklistController;
 use Modules\Maintenance\Http\Controllers\WorkOrderController;
+use Modules\Maintenance\Http\Controllers\WorkOrderPdfController;
 
 class MaintenanceModule implements ModuleContract
 {
@@ -34,7 +39,7 @@ class MaintenanceModule implements ModuleContract
 
     public function permissions(): array
     {
-        return ['view', 'create', 'update', 'delete', 'approve'];
+        return ['view', 'create', 'update', 'delete', 'approve', 'assign', 'manage_bays'];
     }
 
     /**
@@ -65,7 +70,7 @@ class MaintenanceModule implements ModuleContract
 
     public function viewsPath(): ?string
     {
-        return null;
+        return __DIR__.'/resources/views';
     }
 
     public function boot(): void
@@ -79,6 +84,18 @@ class MaintenanceModule implements ModuleContract
         Route::get('/maintenance', [MaintenanceController::class, 'index'])
             ->middleware('permission:maintenance,view')
             ->name('maintenance.index');
+
+        // WIP Board
+        Route::get('/maintenance/wip', [WipBoardController::class, 'index'])
+            ->middleware('permission:maintenance,view')
+            ->name('maintenance.wip.index');
+
+        Route::patch('/maintenance/wip/{workOrder}', [WipBoardController::class, 'updateCard'])
+            ->name('maintenance.wip.update');
+
+        Route::get('/maintenance/calendar', [BayCalendarController::class, 'index'])
+            ->middleware('permission:maintenance,view')
+            ->name('maintenance.calendar.index');
 
         // Work Orders
         Route::get('/maintenance/work-orders', [WorkOrderController::class, 'index'])
@@ -97,6 +114,10 @@ class MaintenanceModule implements ModuleContract
             ->middleware('permission:maintenance,view')
             ->name('maintenance.work-orders.show');
 
+        Route::get('/maintenance/work-orders/{workOrder}/job-card', [WorkOrderPdfController::class, 'jobCard'])
+            ->middleware('permission:maintenance,view')
+            ->name('maintenance.work-orders.job-card');
+
         Route::get('/maintenance/work-orders/{workOrder}/edit', [WorkOrderController::class, 'edit'])
             ->middleware('permission:maintenance,update')
             ->name('maintenance.work-orders.edit');
@@ -111,6 +132,29 @@ class MaintenanceModule implements ModuleContract
         Route::delete('/maintenance/work-orders/{workOrder}', [WorkOrderController::class, 'destroy'])
             ->middleware('permission:maintenance,delete')
             ->name('maintenance.work-orders.destroy');
+
+        Route::post('/maintenance/work-orders/{workOrder}/checklist', [WorkOrderChecklistController::class, 'store'])
+            ->name('maintenance.work-orders.checklist.store');
+
+        Route::patch('/maintenance/work-orders/{workOrder}/checklist/{checklistItem}', [WorkOrderChecklistController::class, 'update'])
+            ->name('maintenance.work-orders.checklist.update');
+
+        Route::delete('/maintenance/work-orders/{workOrder}/checklist/{checklistItem}', [WorkOrderChecklistController::class, 'destroy'])
+            ->name('maintenance.work-orders.checklist.destroy');
+
+        // Bays
+        Route::get('/maintenance/bays', [MaintenanceBayController::class, 'index'])
+            ->middleware('permission:maintenance,view')
+            ->name('maintenance.bays.index');
+
+        Route::post('/maintenance/bays', [MaintenanceBayController::class, 'store'])
+            ->name('maintenance.bays.store');
+
+        Route::patch('/maintenance/bays/{bay}', [MaintenanceBayController::class, 'update'])
+            ->name('maintenance.bays.update');
+
+        Route::delete('/maintenance/bays/{bay}', [MaintenanceBayController::class, 'destroy'])
+            ->name('maintenance.bays.destroy');
 
         // Categories
         Route::get('/maintenance/categories', [MaintenanceCategoryController::class, 'index'])

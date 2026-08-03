@@ -45,6 +45,15 @@ export interface WorkOrderVehicle {
     odometer_km: number;
 }
 
+export interface WorkOrderChecklistItem {
+    id: number;
+    work_order_id: number;
+    label: string;
+    is_done: boolean;
+    done_at: string | null;
+    sort_order: number;
+}
+
 export interface WorkOrder {
     id: number;
     vehicle_id: number;
@@ -57,12 +66,19 @@ export interface WorkOrder {
     status: WorkOrderStatus;
     priority: WorkOrderPriority;
     type: WorkOrderType;
+    service_location: 'in_house' | 'outsource' | null;
     odometer_at_service: number | null;
     scheduled_date: string | null;
     started_at: string | null;
     completed_at: string | null;
     vendor_name: string | null;
+    vendor_partner_id: number | null;
     mechanic_name: string | null;
+    mechanic_user_id: number | null;
+    bay_id: number | null;
+    estimated_hours: string | number | null;
+    actual_hours: string | number | null;
+    waiting_parts: boolean;
     invoice_number: string | null;
     estimated_cost: string | null;
     actual_labor_cost: string | null;
@@ -75,9 +91,30 @@ export interface WorkOrder {
     approved_at: string | null;
     creator: { id: number; name: string } | null;
     approver: { id: number; name: string } | null;
+    mechanic: { id: number; name: string } | null;
+    vendor_partner: { id: number; name: string; code?: string | null } | null;
+    bay: { id: number; code: string; name: string } | null;
     items: WorkOrderItem[];
+    checklist_items?: WorkOrderChecklistItem[];
     created_at: string;
     updated_at: string;
+}
+
+export interface VendorOption {
+    id: number;
+    name: string;
+    code: string | null;
+}
+
+export interface MechanicOption {
+    id: number;
+    name: string;
+}
+
+export interface BayOption {
+    id: number;
+    code: string;
+    name: string;
 }
 
 export interface MaintenanceSchedule {
@@ -161,6 +198,13 @@ export function typeOptions(t: Translate): { value: WorkOrderType; label: string
 
 export function itemTypeOptions(t: Translate): { value: ItemType; label: string }[] {
     return ITEM_TYPE_VALUES.map((value) => ({ value, label: t(`maintenance.item_type.${value}`) }));
+}
+
+export function locationOptions(t: Translate): { value: string; label: string }[] {
+    return [
+        { value: 'in_house', label: t('maintenance.work_orders.location_in_house') },
+        { value: 'outsource', label: t('maintenance.work_orders.location_outsource') },
+    ];
 }
 
 // ── Date / currency helpers ─────────────────────────────────────────────────

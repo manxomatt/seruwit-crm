@@ -2,14 +2,16 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import TextInput from '@/Components/TextInput';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import {
     WorkOrder,
     WorkOrderItem,
+    WorkOrderChecklistItem,
     ItemType,
     getStatusBadge,
     getPriorityBadge,
@@ -21,7 +23,7 @@ import {
 
 interface Props {
     workOrder: WorkOrder & { actual_total_cost: number | null };
-    can: { update: boolean; delete: boolean; approve: boolean };
+    can: { update: boolean; delete: boolean; approve: boolean; assign?: boolean };
 }
 
 type ProgressAction = {
@@ -54,6 +56,8 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
     const [deleting, setDeleting] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState(false);
 
+    const checklistForm = useForm({ label: '' });
+
     const statusBadge = getStatusBadge(wo.status, t);
     const priorityBadge = getPriorityBadge(wo.priority, t);
     const typeBadge = getTypeBadge(wo.type, t);
@@ -83,6 +87,31 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                 onFinish: () => setUpdatingStatus(false),
             },
         );
+    };
+
+    const checklistItems = wo.checklist_items ?? [];
+    const checklistDone = checklistItems.filter((item) => item.is_done).length;
+
+    const addChecklistItem: FormEventHandler = (e) => {
+        e.preventDefault();
+        checklistForm.post(prefixedRoute('maintenance.work-orders.checklist.store', wo.id), {
+            preserveScroll: true,
+            onSuccess: () => checklistForm.reset('label'),
+        });
+    };
+
+    const toggleChecklistItem = (item: WorkOrderChecklistItem) => {
+        router.patch(
+            prefixedRoute('maintenance.work-orders.checklist.update', [wo.id, item.id]),
+            { is_done: !item.is_done },
+            { preserveScroll: true },
+        );
+    };
+
+    const deleteChecklistItem = (item: WorkOrderChecklistItem) => {
+        router.delete(prefixedRoute('maintenance.work-orders.checklist.destroy', [wo.id, item.id]), {
+            preserveScroll: true,
+        });
     };
 
     const partItems = wo.items?.filter((i: WorkOrderItem) => i.item_type === 'part') ?? [];
@@ -132,6 +161,13 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                         <Link href={prefixedRoute('maintenance.work-orders.index')}>
                             <SecondaryButton>{t('maintenance.actions.back')}</SecondaryButton>
                         </Link>
+                        <a
+                            href={prefixedRoute('maintenance.work-orders.job-card', wo.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <SecondaryButton type="button">{t('maintenance.job_card.print')}</SecondaryButton>
+                        </a>
                         {can.update && (
                             <Link href={prefixedRoute('maintenance.work-orders.edit', wo.id)}>
                                 <SecondaryButton>{t('common.edit')}</SecondaryButton>
@@ -173,6 +209,63 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
 
                         {wo.description && (
                             <p className="mt-2 text-sm text-gray-600 whitespace-pre-line">{wo.description}</p>
+                        )}
+                    </div>
+
+                    {/* Checklist */}
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <h3 className="font-semibold text-gray-900">{t('maintenance.checklist.head')}</h3>
+                            <span className="text-xs tabular-nums text-gray-500">
+                                {t('maintenance.checklist.progress', {
+                                    done: checklistDone,
+                                    total: checklistItems.length,
+                                })}
+                            </span>
+                        </div>
+
+                        {checklistItems.length === 0 ? (
+                            <p className="mb-4 text-sm text-gray-500">{t('maintenance.checklist.empty')}</p>
+                        ) : (
+                            <ul className="mb-4 divide-y divide-gray-100">
+                                {checklistItems.map((item) => (
+                                    <li key={item.id} className="flex items-center gap-3 py-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={item.is_done}
+                                            disabled={!can.update}
+                                            onChange={() => toggleChecklistItem(item)}
+                                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50"
+                                        />
+                                        <span className={`flex-1 text-sm ${item.is_done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                            {item.label}
+                                        </span>
+                                        {can.update && (
+                                            <button
+                                                type="button"
+                                                onClick={() => deleteChecklistItem(item)}
+                                                className="text-xs text-red-600 hover:text-red-800"
+                                            >
+                                                {t('common.delete')}
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        {can.update && (
+                            <form onSubmit={addChecklistItem} className="flex flex-col gap-2 sm:flex-row">
+                                <TextInput
+                                    className="block w-full"
+                                    value={checklistForm.data.label}
+                                    placeholder={t('maintenance.checklist.placeholder')}
+                                    onChange={(e) => checklistForm.setData('label', e.target.value)}
+                                />
+                                <PrimaryButton disabled={checklistForm.processing || !checklistForm.data.label.trim()}>
+                                    {t('maintenance.checklist.add')}
+                                </PrimaryButton>
+                            </form>
                         )}
                     </div>
 
@@ -287,12 +380,29 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                     </div>
 
                     {/* Vendor */}
-                    {(wo.vendor_name || wo.mechanic_name) && (
+                    {(wo.vendor_name || wo.mechanic_name || wo.service_location) && (
                         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                             <h3 className="mb-3 font-semibold text-gray-900">{t('maintenance.work_orders.workshop')}</h3>
                             <dl>
-                                <InfoRow label={t('maintenance.work_orders.vendor_label')} value={wo.vendor_name} />
-                                <InfoRow label={t('maintenance.work_orders.mechanic')} value={wo.mechanic_name} />
+                                <InfoRow
+                                    label={t('maintenance.work_orders.service_location_label')}
+                                    value={
+                                        wo.service_location === 'outsource'
+                                            ? t('maintenance.work_orders.location_outsource')
+                                            : t('maintenance.work_orders.location_in_house')
+                                    }
+                                />
+                                <InfoRow label={t('maintenance.work_orders.vendor_label')} value={wo.vendor_partner?.name ?? wo.vendor_name} />
+                                <InfoRow label={t('maintenance.work_orders.mechanic')} value={wo.mechanic?.name ?? wo.mechanic_name} />
+                                <InfoRow
+                                    label={t('maintenance.work_orders.bay')}
+                                    value={wo.bay ? `${wo.bay.code} — ${wo.bay.name}` : null}
+                                />
+                                <InfoRow label={t('maintenance.work_orders.estimated_hours')} value={wo.estimated_hours} />
+                                <InfoRow label={t('maintenance.work_orders.actual_hours')} value={wo.actual_hours} />
+                                {wo.waiting_parts && (
+                                    <InfoRow label={t('maintenance.work_orders.waiting_parts')} value={t('common.yes')} />
+                                )}
                             </dl>
                         </div>
                     )}

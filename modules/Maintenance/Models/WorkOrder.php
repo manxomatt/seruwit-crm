@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Partner;
 
 class WorkOrder extends Model
 {
@@ -55,6 +56,10 @@ class WorkOrder extends Model
 
     public const TYPE_EMERGENCY = 'emergency';
 
+    public const LOCATION_IN_HOUSE = 'in_house';
+
+    public const LOCATION_OUTSOURCE = 'outsource';
+
     /**
      * @var list<string>
      */
@@ -67,13 +72,21 @@ class WorkOrder extends Model
         'status',
         'priority',
         'type',
+        'service_location',
         'odometer_at_service',
         'scheduled_date',
         'started_at',
         'completed_at',
         'stock_deducted_at',
         'vendor_name',
+        'vendor_partner_id',
         'mechanic_name',
+        'mechanic_user_id',
+        'bay_id',
+        'estimated_hours',
+        'actual_hours',
+        'waiting_parts',
+        'vehicle_status_before',
         'invoice_number',
         'estimated_cost',
         'actual_labor_cost',
@@ -99,6 +112,9 @@ class WorkOrder extends Model
             'estimated_cost' => 'decimal:2',
             'actual_labor_cost' => 'decimal:2',
             'actual_parts_cost' => 'decimal:2',
+            'estimated_hours' => 'decimal:2',
+            'actual_hours' => 'decimal:2',
+            'waiting_parts' => 'boolean',
             'odometer_at_service' => 'integer',
         ];
     }
@@ -138,11 +154,43 @@ class WorkOrder extends Model
     }
 
     /**
+     * @return BelongsTo<Partner, $this>
+     */
+    public function vendorPartner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class, 'vendor_partner_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function mechanic(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'mechanic_user_id');
+    }
+
+    /**
+     * @return BelongsTo<MaintenanceBay, $this>
+     */
+    public function bay(): BelongsTo
+    {
+        return $this->belongsTo(MaintenanceBay::class, 'bay_id');
+    }
+
+    /**
      * @return HasMany<WorkOrderItem, $this>
      */
     public function items(): HasMany
     {
         return $this->hasMany(WorkOrderItem::class);
+    }
+
+    /**
+     * @return HasMany<WorkOrderChecklistItem, $this>
+     */
+    public function checklistItems(): HasMany
+    {
+        return $this->hasMany(WorkOrderChecklistItem::class)->orderBy('sort_order')->orderBy('id');
     }
 
     // ── Computed attributes ─────────────────────────────────────────────────

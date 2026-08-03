@@ -15,10 +15,14 @@ import {
     WorkOrderVehicle,
     WorkOrderItem,
     SparePartOption,
+    VendorOption,
+    MechanicOption,
+    BayOption,
     statusOptions,
     priorityOptions,
     typeOptions,
     itemTypeOptions,
+    locationOptions,
     formatCurrency,
 } from '../../../../maintenanceUtils';
 
@@ -26,6 +30,9 @@ interface Props {
     vehicles: WorkOrderVehicle[];
     categories: MaintenanceCategory[];
     spareParts: SparePartOption[];
+    vendors: VendorOption[];
+    mechanics: MechanicOption[];
+    bays: BayOption[];
 }
 
 type FormData = {
@@ -36,10 +43,15 @@ type FormData = {
     status: string;
     priority: string;
     type: string;
+    service_location: string;
     odometer_at_service: string;
     scheduled_date: string;
     vendor_name: string;
+    vendor_partner_id: string;
     mechanic_name: string;
+    mechanic_user_id: string;
+    bay_id: string;
+    estimated_hours: string;
     estimated_cost: string;
     notes: string;
     items: WorkOrderItem[];
@@ -57,7 +69,7 @@ const TrashIcon = () => (
     </svg>
 );
 
-export default function Create({ vehicles, categories, spareParts }: Props): JSX.Element {
+export default function Create({ vehicles, categories, spareParts, vendors, mechanics, bays }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -70,10 +82,15 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
         status: 'draft',
         priority: 'normal',
         type: 'corrective',
+        service_location: 'in_house',
         odometer_at_service: '',
         scheduled_date: '',
         vendor_name: '',
+        vendor_partner_id: '',
         mechanic_name: '',
+        mechanic_user_id: '',
+        bay_id: '',
+        estimated_hours: '',
         estimated_cost: '',
         notes: '',
         items: [],
@@ -270,27 +287,124 @@ export default function Create({ vehicles, categories, spareParts }: Props): JSX
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="vendor_name" value={t('maintenance.work_orders.vendor')} />
-                            <TextInput
-                                id="vendor_name"
-                                className="mt-1 block w-full"
-                                value={data.vendor_name}
-                                onChange={(e) => setData('vendor_name', e.target.value)}
-                                placeholder={t('maintenance.work_orders.vendor_placeholder')}
+                            <InputLabel htmlFor="service_location" value={t('maintenance.work_orders.service_location')} />
+                            <Select
+                                id="service_location"
+                                className="mt-1 w-full"
+                                value={data.service_location}
+                                onChange={(val) => setData('service_location', val)}
+                                options={locationOptions(t)}
                             />
-                            <InputError message={errors.vendor_name} className="mt-2" />
+                            <InputError message={errors.service_location} className="mt-2" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="mechanic_name" value={t('maintenance.work_orders.mechanic')} />
+                            <InputLabel htmlFor="vendor_partner_id" value={t('maintenance.work_orders.vendor')} />
+                            {vendors.length > 0 ? (
+                                <Select
+                                    id="vendor_partner_id"
+                                    className="mt-1 w-full"
+                                    value={data.vendor_partner_id}
+                                    onChange={(val) => {
+                                        const vendor = vendors.find((v) => String(v.id) === val);
+                                        setData({
+                                            ...data,
+                                            vendor_partner_id: val,
+                                            vendor_name: vendor?.name ?? data.vendor_name,
+                                        });
+                                    }}
+                                    options={[
+                                        { value: '', label: t('maintenance.work_orders.vendor_select') },
+                                        ...vendors.map((v) => ({
+                                            value: String(v.id),
+                                            label: v.code ? `${v.name} (${v.code})` : v.name,
+                                        })),
+                                    ]}
+                                />
+                            ) : (
+                                <TextInput
+                                    id="vendor_name"
+                                    className="mt-1 block w-full"
+                                    value={data.vendor_name}
+                                    onChange={(e) => setData('vendor_name', e.target.value)}
+                                    placeholder={t('maintenance.work_orders.vendor_placeholder')}
+                                />
+                            )}
+                            {vendors.length > 0 && data.service_location === 'outsource' && !data.vendor_partner_id && (
+                                <TextInput
+                                    id="vendor_name"
+                                    className="mt-2 block w-full"
+                                    value={data.vendor_name}
+                                    onChange={(e) => setData('vendor_name', e.target.value)}
+                                    placeholder={t('maintenance.work_orders.vendor_placeholder')}
+                                />
+                            )}
+                            <InputError message={errors.vendor_partner_id || errors.vendor_name} className="mt-2" />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="mechanic_user_id" value={t('maintenance.work_orders.mechanic')} />
+                            {mechanics.length > 0 && data.service_location === 'in_house' ? (
+                                <Select
+                                    id="mechanic_user_id"
+                                    className="mt-1 w-full"
+                                    value={data.mechanic_user_id}
+                                    onChange={(val) => {
+                                        const mechanic = mechanics.find((m) => String(m.id) === val);
+                                        setData({
+                                            ...data,
+                                            mechanic_user_id: val,
+                                            mechanic_name: mechanic?.name ?? '',
+                                        });
+                                    }}
+                                    options={[
+                                        { value: '', label: t('maintenance.work_orders.mechanic_select') },
+                                        ...mechanics.map((m) => ({ value: String(m.id), label: m.name })),
+                                    ]}
+                                />
+                            ) : (
+                                <TextInput
+                                    id="mechanic_name"
+                                    className="mt-1 block w-full"
+                                    value={data.mechanic_name}
+                                    onChange={(e) => setData('mechanic_name', e.target.value)}
+                                    placeholder={t('maintenance.work_orders.mechanic_placeholder')}
+                                />
+                            )}
+                            <InputError message={errors.mechanic_user_id || errors.mechanic_name} className="mt-2" />
+                        </div>
+
+                        {data.service_location === 'in_house' && (
+                            <div>
+                                <InputLabel htmlFor="bay_id" value={t('maintenance.work_orders.bay')} />
+                                <Select
+                                    id="bay_id"
+                                    className="mt-1 w-full"
+                                    value={data.bay_id}
+                                    onChange={(val) => setData('bay_id', val)}
+                                    options={[
+                                        { value: '', label: t('maintenance.work_orders.bay_select') },
+                                        ...bays.map((bay) => ({
+                                            value: String(bay.id),
+                                            label: `${bay.code} — ${bay.name}`,
+                                        })),
+                                    ]}
+                                />
+                                <InputError message={errors.bay_id} className="mt-2" />
+                            </div>
+                        )}
+
+                        <div>
+                            <InputLabel htmlFor="estimated_hours" value={t('maintenance.work_orders.estimated_hours')} />
                             <TextInput
-                                id="mechanic_name"
+                                id="estimated_hours"
+                                type="number"
+                                step="0.25"
                                 className="mt-1 block w-full"
-                                value={data.mechanic_name}
-                                onChange={(e) => setData('mechanic_name', e.target.value)}
-                                placeholder={t('maintenance.work_orders.mechanic_placeholder')}
+                                value={data.estimated_hours}
+                                onChange={(e) => setData('estimated_hours', e.target.value)}
                             />
-                            <InputError message={errors.mechanic_name} className="mt-2" />
+                            <InputError message={errors.estimated_hours} className="mt-2" />
                         </div>
 
                         <div>

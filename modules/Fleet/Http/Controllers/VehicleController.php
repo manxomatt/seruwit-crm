@@ -17,6 +17,7 @@ use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\FuelConsumptionCalculator;
 use Modules\Fleet\Support\FuelLogRecorder;
+use Modules\Maintenance\Models\WorkOrder;
 
 class VehicleController extends Controller
 {
@@ -89,7 +90,13 @@ class VehicleController extends Controller
     {
         $user = Auth::user();
 
-        $vehicle->load(['maintenanceLogs', 'fuelLogs.driver']);
+        $maintenanceEnabled = Modules::available('maintenance');
+
+        $vehicle->load(['fuelLogs.driver']);
+
+        if (! $maintenanceEnabled) {
+            $vehicle->load(['maintenanceLogs']);
+        }
 
         $trackingEnabled = Modules::available('tracking');
 
@@ -102,6 +109,42 @@ class VehicleController extends Controller
             'trackingEnabled' => $trackingEnabled,
             'documentsEnabled' => Modules::available('document'),
             'documentSummary' => $this->vehicleDocumentSummary($vehicle),
+            'maintenanceEnabled' => $maintenanceEnabled,
+            'serviceHistory' => $maintenanceEnabled
+                ? WorkOrder::query()
+                    ->where('vehicle_id', $vehicle->id)
+                    ->with('category:id,name')
+                    ->latest('completed_at')
+                    ->latest('id')
+                    ->limit(50)
+                    ->get([
+                        'id',
+                        'reference_number',
+                        'title',
+                        'status',
+                        'type',
+                        'category_id',
+                        'scheduled_date',
+                        'completed_at',
+                        'actual_labor_cost',
+                        'actual_parts_cost',
+                        'vendor_name',
+                        'mechanic_name',
+                    ])
+                    ->map(fn (WorkOrder $wo): array => [
+                        'id' => $wo->id,
+                        'reference_number' => $wo->reference_number,
+                        'title' => $wo->title,
+                        'status' => $wo->status,
+                        'type' => $wo->type,
+                        'category' => $wo->category?->name,
+                        'scheduled_date' => $wo->scheduled_date?->toDateString(),
+                        'completed_at' => $wo->completed_at?->toDateString(),
+                        'total_cost' => $wo->actual_total_cost,
+                        'vendor_name' => $wo->vendor_name,
+                        'mechanic_name' => $wo->mechanic_name,
+                    ])
+                : null,
             'fuelSummary' => [
                 'average_km_per_liter' => $calculator->recentAverageKmPerLiter($vehicle),
                 'expected_km_per_liter' => $vehicle->expected_km_per_liter !== null
