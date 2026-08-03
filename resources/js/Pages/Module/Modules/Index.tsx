@@ -32,6 +32,7 @@ interface DemoEntry {
     label: string;
     description: string;
     installed?: boolean;
+    includes?: string[];
 }
 
 interface Props {
@@ -155,6 +156,11 @@ export default function Index({
                                                     )}
                                                 </div>
                                                 <p className="mt-1 text-sm text-gray-500">{demo.description}</p>
+                                                {demo.includes && demo.includes.length > 0 && (
+                                                    <p className="mt-2 text-xs text-gray-400">
+                                                        {t('platform.modules_catalog.demos_includes_prefix')} {demo.includes.join(', ')}
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="flex shrink-0 flex-wrap gap-2">
                                                 <PrimaryButton disabled={busy} onClick={() => installDemo(demo.key)}>

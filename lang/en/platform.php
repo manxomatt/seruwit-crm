@@ -54,6 +54,7 @@ return [
         'packs_seed_only' => 'Master data only (no optional modules)',
         'demos_heading' => 'Demo data',
         'demos_hint' => 'Sample records for training and demos. Enabled by the platform administrator for this workspace.',
+        'demos_includes_prefix' => 'Also installs:',
         'uninstall_confirm' => [
             'title' => 'Uninstall module :module?',
             'message' => 'Its menu and access are revoked now, but the data is kept for :days days. Install it again before then and everything comes back intact.',

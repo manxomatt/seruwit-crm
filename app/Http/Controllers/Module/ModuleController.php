@@ -43,6 +43,7 @@ class ModuleController extends Controller
                         'label' => $demo['label'],
                         'description' => $demo['description'],
                         'installed' => DemoDatasets::isInstalled($key),
+                        'includes' => $demo['includes'] ?? [],
                     ])
                     ->values()
                     ->all()

@@ -324,6 +324,7 @@ class ModuleInstaller
 
     /**
      * Run a demo dataset seeder inside $tenant. Requires can_install_demo_data.
+     * Included demos (dependencies) are installed first.
      *
      * @throws RuntimeException when the dataset is unknown or the tenant is not allowed
      */
@@ -339,17 +340,28 @@ class ModuleInstaller
             throw new RuntimeException("Unknown demo dataset [{$demoKey}].");
         }
 
-        if (! class_exists($dataset['seeder'])) {
-            throw new RuntimeException("Demo seeder for [{$demoKey}] is missing.");
-        }
+        $tenant->run(function () use ($demoKey, $dataset): void {
+            foreach (DemoDatasets::includes($demoKey) as $includedKey) {
+                $included = DemoDatasets::find($includedKey);
 
-        $tenant->run(function () use ($dataset): void {
+                if ($included === null || ! class_exists($included['seeder'])) {
+                    continue;
+                }
+
+                app($included['seeder'])->run();
+            }
+
+            if (! class_exists($dataset['seeder'])) {
+                throw new RuntimeException("Demo seeder for [{$demoKey}] is missing.");
+            }
+
             app($dataset['seeder'])->run();
         });
     }
 
     /**
      * Remove a demo dataset's tagged rows from $tenant.
+     * The dataset itself is removed first, then included demos (reverse of install).
      *
      * @throws RuntimeException when the dataset is unknown or the tenant is not allowed
      */
@@ -365,15 +377,27 @@ class ModuleInstaller
             throw new RuntimeException("Unknown demo dataset [{$demoKey}].");
         }
 
-        if (! class_exists($dataset['seeder'])) {
-            throw new RuntimeException("Demo seeder for [{$demoKey}] is missing.");
-        }
+        $tenant->run(function () use ($demoKey, $dataset): void {
+            if (class_exists($dataset['seeder'])) {
+                $seeder = app($dataset['seeder']);
 
-        $tenant->run(function () use ($dataset): void {
-            $seeder = app($dataset['seeder']);
+                if (method_exists($seeder, 'uninstall')) {
+                    $seeder->uninstall();
+                }
+            }
 
-            if (method_exists($seeder, 'uninstall')) {
-                $seeder->uninstall();
+            foreach (array_reverse(DemoDatasets::includes($demoKey)) as $includedKey) {
+                $included = DemoDatasets::find($includedKey);
+
+                if ($included === null || ! class_exists($included['seeder'])) {
+                    continue;
+                }
+
+                $seeder = app($included['seeder']);
+
+                if (method_exists($seeder, 'uninstall')) {
+                    $seeder->uninstall();
+                }
             }
         });
     }

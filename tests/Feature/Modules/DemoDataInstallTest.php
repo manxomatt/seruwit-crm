@@ -8,7 +8,9 @@ use App\Models\User;
 use App\Modules\DemoDatasets;
 use App\Modules\ModuleInstaller;
 use Database\Seeders\TenantPartnerDemoSeeder;
+use Database\Seeders\TenantPartnerIndustriesSeeder;
 use Modules\Partners\Models\Partner;
+use Modules\Partners\Models\PartnerIndustry;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
 
@@ -51,7 +53,12 @@ class DemoDataInstallTest extends TestCase
 
         $tenant->run(function (): void {
             $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::PARTNERS));
+            $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::PARTNER_INDUSTRIES));
             $this->assertSame(20, Partner::query()->where('notes', 'like', '%'.TenantPartnerDemoSeeder::TAG.'%')->count());
+            $this->assertSame(
+                count(TenantPartnerIndustriesSeeder::CODES),
+                PartnerIndustry::query()->whereIn('code', TenantPartnerIndustriesSeeder::CODES)->count(),
+            );
         });
 
         $this->actingAs($owner)
@@ -61,7 +68,34 @@ class DemoDataInstallTest extends TestCase
 
         $tenant->run(function (): void {
             $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::PARTNERS));
+            $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::PARTNER_INDUSTRIES));
             $this->assertSame(0, Partner::query()->where('notes', 'like', '%'.TenantPartnerDemoSeeder::TAG.'%')->count());
+            $this->assertSame(
+                0,
+                PartnerIndustry::query()->whereIn('code', TenantPartnerIndustriesSeeder::CODES)->count(),
+            );
+        });
+    }
+
+    public function test_workspace_admin_can_install_partner_industries_alone(): void
+    {
+        $tenant = $this->provisionTenant('Industries Demo Co', 'industries-demo-co', 'owner@industries-demo.test');
+        $owner = $this->ownerOf($tenant, 'owner@industries-demo.test');
+        $tenant->update(['can_install_demo_data' => true]);
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://industries-demo-co.localhost/module/modules/demos/'.DemoDatasets::PARTNER_INDUSTRIES.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::PARTNER_INDUSTRIES));
+            $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::PARTNERS));
+            $this->assertSame(
+                count(TenantPartnerIndustriesSeeder::CODES),
+                PartnerIndustry::query()->whereIn('code', TenantPartnerIndustriesSeeder::CODES)->count(),
+            );
         });
     }
 
