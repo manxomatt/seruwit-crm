@@ -163,12 +163,7 @@ export default function Index({
                                                 )}
                                             </div>
                                             <div className="flex shrink-0 flex-wrap gap-2">
-                                                <PrimaryButton disabled={busy} onClick={() => installDemo(demo.key)}>
-                                                    {busyKey === `demo:${demo.key}`
-                                                        ? t('platform.modules_catalog.actions.installing')
-                                                        : t('platform.modules_catalog.actions.install_demo')}
-                                                </PrimaryButton>
-                                                {demo.installed && (
+                                                {demo.installed ? (
                                                     <SecondaryButton
                                                         disabled={busy}
                                                         onClick={() => uninstallDemo(demo.key)}
@@ -177,6 +172,12 @@ export default function Index({
                                                             ? t('platform.modules_catalog.actions.uninstalling')
                                                             : t('platform.modules_catalog.actions.uninstall_demo')}
                                                     </SecondaryButton>
+                                                ) : (
+                                                    <PrimaryButton disabled={busy} onClick={() => installDemo(demo.key)}>
+                                                        {busyKey === `demo:${demo.key}`
+                                                            ? t('platform.modules_catalog.actions.installing')
+                                                            : t('platform.modules_catalog.actions.install_demo')}
+                                                    </PrimaryButton>
                                                 )}
                                             </div>
                                         </li>
