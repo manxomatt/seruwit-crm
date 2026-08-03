@@ -137,14 +137,14 @@ export default function Index({ types, can }: Props): JSX.Element {
                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                             {t('document.types.columns.reminder')}
                         </th>
-                        <th className="relative px-6 py-3">
+                        <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                             <span className="sr-only">{t('common.actions')}</span>
                         </th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
                     {list.map((type) => (
-                        <tr key={type.id} className="hover:bg-gray-50">
+                        <tr key={type.id} className="group hover:bg-gray-50">
                             <td className="px-6 py-4 font-medium text-gray-900">{type.name}</td>
                             <td className="px-6 py-4 font-mono text-xs text-gray-500">{type.key}</td>
                             <td className="px-6 py-4">
@@ -176,7 +176,7 @@ export default function Index({ types, can }: Props): JSX.Element {
                                 </div>
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                <div className="flex items-center justify-end gap-2">
+                                <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                     {can.update && (
                                         <button
                                             type="button"
