@@ -55,6 +55,7 @@ class SelfServeOnboardingGateTest extends TestCase
         $this->assertNotContains('partners', $trial->modules);
         $this->assertContains('rental', $trial->modules);
         $this->assertContains('shuttle', $trial->modules);
+        $this->assertContains('receivables', $trial->modules);
         $this->assertSame(Plan::trialModuleKeys(), $trial->modules);
     }
 }

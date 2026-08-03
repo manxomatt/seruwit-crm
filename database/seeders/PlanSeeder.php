@@ -88,6 +88,16 @@ class PlanSeeder extends Seeder
         ];
 
         foreach ($plans as $plan) {
+            // Trial is a code contract for self-serve pack installs — always
+            // refresh its modules so stale firstOrCreate rows cannot block
+            // ProvisionSelfServeTenantJob after packs gain new dependencies.
+            if ($plan['key'] === Plan::KEY_TRIAL) {
+                Plan::query()->updateOrCreate(['key' => Plan::KEY_TRIAL], $plan);
+
+                continue;
+            }
+
+            // Other plans are edited from the super admin UI; never overwrite.
             Plan::query()->firstOrCreate(['key' => $plan['key']], $plan);
         }
     }

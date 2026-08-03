@@ -80,15 +80,24 @@ class OnboardingController extends Controller
         }
 
         $verticals = array_values(array_unique($request->validated('verticals')));
+        $subdomain = $request->validated('subdomain');
+
+        // Reuse a half-provisioned tenant when retrying the same subdomain so
+        // pack installs can finish without orphaning the previous attempt.
+        $reuseTenantId = $existing?->status === OnboardingSession::STATUS_FAILED
+            && $existing->tenant_id
+            && $existing->subdomain === $subdomain
+            ? $existing->tenant_id
+            : null;
 
         $session = OnboardingSession::query()->updateOrCreate(
             ['global_user_id' => $request->user()->global_id],
             [
                 'company_name' => $request->validated('company_name'),
-                'subdomain' => $request->validated('subdomain'),
+                'subdomain' => $subdomain,
                 'verticals' => $verticals,
                 'status' => OnboardingSession::STATUS_PENDING,
-                'tenant_id' => null,
+                'tenant_id' => $reuseTenantId,
                 'error_message' => null,
             ],
         );
