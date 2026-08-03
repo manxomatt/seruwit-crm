@@ -22,6 +22,8 @@ class DemoDatasets
 
     public const DRIVERS = 'drivers';
 
+    public const FUEL = 'fuel';
+
     /**
      * @return array<string, array{label: string, description: string, seeder: class-string, includes?: list<string>, requires_module?: string}>
      */
@@ -49,6 +51,12 @@ class DemoDatasets
                 'label' => 'Drivers demo',
                 'description' => '30 sample fleet drivers with licenses, contacts, and availability statuses. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantDriverDemoSeeder::class,
+                'requires_module' => 'fleet',
+            ],
+            self::FUEL => [
+                'label' => 'Fuel (BBM) demo',
+                'description' => '10 sample fuel fills across vehicles with stations, costs, and km/L. Uses Vehicles demo plates when present. Requires Fleet.',
+                'seeder' => \Database\Seeders\TenantFuelDemoSeeder::class,
                 'requires_module' => 'fleet',
             ],
         ];

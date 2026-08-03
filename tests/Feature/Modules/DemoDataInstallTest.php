@@ -8,11 +8,13 @@ use App\Models\User;
 use App\Modules\DemoDatasets;
 use App\Modules\ModuleInstaller;
 use Database\Seeders\TenantDriverDemoSeeder;
+use Database\Seeders\TenantFuelDemoSeeder;
 use Database\Seeders\TenantPartnerDemoSeeder;
 use Database\Seeders\TenantPartnerIndustriesSeeder;
 use Database\Seeders\TenantVehicleDemoSeeder;
 use Modules\Fleet\FleetModule;
 use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\FuelLog;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerIndustry;
@@ -154,6 +156,51 @@ class DemoDataInstallTest extends TestCase
             $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::DRIVERS));
             $this->assertSame(0, Vehicle::query()->where('notes', 'like', '%'.TenantVehicleDemoSeeder::TAG.'%')->count());
             $this->assertSame(0, Driver::query()->where('notes', 'like', '%'.TenantDriverDemoSeeder::TAG.'%')->count());
+        });
+    }
+
+    public function test_fuel_demo_requires_fleet_then_install_and_uninstall(): void
+    {
+        $tenant = $this->provisionTenant('Fuel Demo Co', 'fuel-demo-co', 'owner@fuel-demo.test');
+        $owner = $this->ownerOf($tenant, 'owner@fuel-demo.test');
+        $tenant->update([
+            'plan' => 'pro',
+            'can_install_demo_data' => true,
+        ]);
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://fuel-demo-co.localhost/module/modules/demos/'.DemoDatasets::FUEL.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        app(ModuleInstaller::class)->install($tenant, app(FleetModule::class));
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://fuel-demo-co.localhost/module/modules/demos/'.DemoDatasets::FUEL.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::FUEL));
+            $this->assertSame(
+                10,
+                FuelLog::query()->where('receipt_number', 'like', TenantFuelDemoSeeder::RECEIPT_PREFIX.'%')->count(),
+            );
+        });
+
+        $this->actingAs($owner)
+            ->delete('http://fuel-demo-co.localhost/module/modules/demos/'.DemoDatasets::FUEL)
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::FUEL));
+            $this->assertSame(
+                0,
+                FuelLog::query()->where('receipt_number', 'like', TenantFuelDemoSeeder::RECEIPT_PREFIX.'%')->count(),
+            );
         });
     }
 

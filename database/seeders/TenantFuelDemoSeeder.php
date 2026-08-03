@@ -10,13 +10,18 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\FuelLogRecorder;
 
 /**
- * Seeds 10 demo fuel fills with computed km/L via FuelLogRecorder.
+ * Seeds 10 demo fuel (BBM) fills with computed km/L via FuelLogRecorder.
+ *
+ * Prefers Vehicles demo plates (BE VD 01–03) when present; otherwise uses any
+ * fleet vehicles or creates two tagged fallback units.
  *
  *   php artisan tenants:seed --class=TenantFuelDemoSeeder --tenants={id}
  */
 class TenantFuelDemoSeeder extends Seeder
 {
     public const RECEIPT_PREFIX = 'FUEL-DEMO-';
+
+    public const TAG = 'fuel-demo';
 
     public function run(): void
     {
@@ -55,12 +60,44 @@ class TenantFuelDemoSeeder extends Seeder
         ));
     }
 
+    public function isInstalled(): bool
+    {
+        if (! class_exists(FuelLog::class) || ! Schema::hasTable('fuel_logs')) {
+            return false;
+        }
+
+        return FuelLog::query()->where('receipt_number', 'like', self::RECEIPT_PREFIX.'%')->exists();
+    }
+
+    public function uninstall(): void
+    {
+        if (! class_exists(FuelLog::class) || ! Schema::hasTable('fuel_logs')) {
+            return;
+        }
+
+        $deleted = FuelLog::query()
+            ->where('receipt_number', 'like', self::RECEIPT_PREFIX.'%')
+            ->delete();
+
+        if (class_exists(Vehicle::class) && Schema::hasTable('vehicles')) {
+            Vehicle::query()
+                ->where('notes', 'like', '%'.self::TAG.'%')
+                ->delete();
+        }
+
+        $this->command?->info("Fuel demo data removed ({$deleted} fills).");
+    }
+
     /**
      * @return list<Vehicle>
      */
     protected function resolveVehicles(): array
     {
-        $preferredPlates = ['BE 1001 MM', 'BE 1002 MM', 'BE 1003 MM'];
+        $preferredPlates = [
+            sprintf('%s %02d', TenantVehicleDemoSeeder::PLATE_PREFIX, 1),
+            sprintf('%s %02d', TenantVehicleDemoSeeder::PLATE_PREFIX, 2),
+            sprintf('%s %02d', TenantVehicleDemoSeeder::PLATE_PREFIX, 3),
+        ];
         $vehicles = Vehicle::query()
             ->whereIn('plate_number', $preferredPlates)
             ->orderBy('plate_number')
@@ -84,6 +121,7 @@ class TenantFuelDemoSeeder extends Seeder
                     'fuel_type' => 'diesel',
                     'status' => Vehicle::STATUS_ACTIVE,
                     'odometer_km' => 45000,
+                    'notes' => 'Demo fuel seed ['.self::TAG.']',
                 ]),
                 Vehicle::query()->create([
                     'name' => 'Demo Fuel Van',
@@ -97,6 +135,7 @@ class TenantFuelDemoSeeder extends Seeder
                     'fuel_type' => 'petrol',
                     'status' => Vehicle::STATUS_ACTIVE,
                     'odometer_km' => 28000,
+                    'notes' => 'Demo fuel seed ['.self::TAG.']',
                 ]),
             ]);
         }
