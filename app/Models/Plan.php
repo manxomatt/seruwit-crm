@@ -24,7 +24,7 @@ class Plan extends Model
     /**
      * Modules a self-serve trial tenant is entitled to install.
      *
-     * Defaults (pages + accounting) plus both vertical packs' transitive deps.
+     * Defaults (content modules) plus both vertical packs' transitive deps.
      * Install still picks packs at onboarding — this only unlocks entitlement.
      *
      * @return list<string>
@@ -39,7 +39,6 @@ class Plan extends Model
             'maintenance',
             'pages',
             'posts',
-            'products',
             'rental',
             'shuttle',
             'tracking',

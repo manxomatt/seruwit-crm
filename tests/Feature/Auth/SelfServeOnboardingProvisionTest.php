@@ -142,7 +142,12 @@ class SelfServeOnboardingProvisionTest extends TestCase
         $this->assertContains('pages', $preview);
         $this->assertContains('shuttle', $preview);
         $this->assertContains('fleet', $preview);
+        $this->assertNotContains('products', $preview);
         $this->assertNotContains('partners', $preview);
         $this->assertNotContains('accounting', $preview);
+
+        $rentalPreview = SelfServeProvisioningPlan::previewModules(['rental']);
+        $this->assertContains('rental', $rentalPreview);
+        $this->assertNotContains('products', $rentalPreview);
     }
 }
