@@ -30,6 +30,7 @@ return [
         'email' => 'Email',
         'social' => 'Sosial',
         'seo' => 'SEO',
+        'maintenance' => 'Maintenance',
     ],
 
     'types' => [

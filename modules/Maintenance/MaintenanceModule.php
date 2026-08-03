@@ -4,7 +4,9 @@ namespace Modules\Maintenance;
 
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
+use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
+use Modules\Maintenance\Console\Commands\MaintenanceScanDue;
 use Modules\Maintenance\Http\Controllers\BayCalendarController;
 use Modules\Maintenance\Http\Controllers\MaintenanceBayController;
 use Modules\Maintenance\Http\Controllers\MaintenanceCategoryController;
@@ -75,7 +77,9 @@ class MaintenanceModule implements ModuleContract
 
     public function boot(): void
     {
-        //
+        Artisan::starting(fn (Artisan $artisan) => $artisan->resolveCommands([
+            MaintenanceScanDue::class,
+        ]));
     }
 
     public function routes(): void

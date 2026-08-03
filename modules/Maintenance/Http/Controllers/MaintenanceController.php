@@ -7,13 +7,14 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Maintenance\Models\WorkOrder;
+use Modules\Maintenance\Support\MaintenanceDueScanner;
 
 class MaintenanceController extends Controller
 {
     /**
      * Dashboard: summary cards + recent work orders across all vehicles.
      */
-    public function index(): Response
+    public function index(MaintenanceDueScanner $dueScanner): Response
     {
         $user = Auth::user();
 
@@ -23,6 +24,7 @@ class MaintenanceController extends Controller
             'approved' => WorkOrder::query()->where('status', WorkOrder::STATUS_APPROVED)->count(),
             'in_progress' => WorkOrder::query()->where('status', WorkOrder::STATUS_IN_PROGRESS)->count(),
             'overdue' => WorkOrder::query()->overdue()->count(),
+            'schedules_due' => $dueScanner->countDueSoon(),
             'completed_this_month' => WorkOrder::query()
                 ->where('status', WorkOrder::STATUS_COMPLETED)
                 ->whereMonth('completed_at', now()->month)

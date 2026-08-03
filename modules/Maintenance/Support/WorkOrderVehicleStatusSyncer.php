@@ -49,6 +49,10 @@ class WorkOrderVehicleStatusSyncer
      */
     public static function vehicleHasOtherInProgress(WorkOrder $workOrder): bool
     {
+        if (! MaintenanceSettings::singleActiveWoPerVehicle()) {
+            return false;
+        }
+
         return WorkOrder::query()
             ->where('vehicle_id', $workOrder->vehicle_id)
             ->whereKeyNot($workOrder->id)
@@ -61,6 +65,10 @@ class WorkOrderVehicleStatusSyncer
      */
     public static function bayHasOtherInProgress(int $bayId, WorkOrder $workOrder): bool
     {
+        if (! MaintenanceSettings::singleActiveWoPerBay()) {
+            return false;
+        }
+
         return WorkOrder::query()
             ->where('bay_id', $bayId)
             ->whereKeyNot($workOrder->id)

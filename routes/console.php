@@ -44,6 +44,13 @@ Schedule::command('rental:scan-ending')
     ->withoutOverlapping()
     ->onOneServer();
 
+// Alerts staff about preventive maintenance schedules due soon / overdue,
+// and optionally opens draft work orders when auto_create_wo is enabled.
+Schedule::command('maintenance:scan-due')
+    ->dailyAt('06:45')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Releases expired passenger seat holds on shuttle public bookings.
 Schedule::command('shuttle:release-expired-holds')
     ->everyMinute()

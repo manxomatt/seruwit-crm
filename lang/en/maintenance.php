@@ -67,6 +67,7 @@ return [
         'in_progress' => 'In Progress',
         'awaiting_approval' => 'Awaiting Approval',
         'overdue' => 'Overdue',
+        'schedules_due' => 'Schedules Due',
         'completed_month' => 'Completed This Month',
         'cost_month' => 'Cost This Month',
         'active_orders' => 'Active Work Orders',
@@ -287,6 +288,13 @@ return [
         'print' => 'Print Job Card',
         'mechanic_sign' => 'Mechanic',
         'supervisor_sign' => 'Supervisor',
+    ],
+
+    'reminders' => [
+        'due_soon_title' => 'Maintenance due soon',
+        'overdue_title' => 'Maintenance overdue',
+        'body' => ':schedule on :vehicle (:category) — due at :target',
+        'auto_wo_note' => 'Auto-created from overdue preventive schedule.',
     ],
 
     'messages' => [

@@ -19,6 +19,7 @@ interface Summary {
     approved: number;
     in_progress: number;
     overdue: number;
+    schedules_due: number;
     completed_this_month: number;
     total_cost_this_month: number;
 }
@@ -88,6 +89,14 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
             bg: 'bg-red-50',
             iconBg: 'bg-red-500',
             textColor: 'text-red-700',
+        },
+        {
+            label: t('maintenance.dashboard.schedules_due'),
+            value: summary.schedules_due,
+            icon: <ClockIcon />,
+            bg: 'bg-orange-50',
+            iconBg: 'bg-orange-500',
+            textColor: 'text-orange-700',
         },
         {
             label: t('maintenance.dashboard.completed_month'),

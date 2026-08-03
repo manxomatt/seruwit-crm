@@ -67,6 +67,7 @@ return [
         'in_progress' => 'Sedang Dikerjakan',
         'awaiting_approval' => 'Menunggu Persetujuan',
         'overdue' => 'Terlambat',
+        'schedules_due' => 'Jadwal Jatuh Tempo',
         'completed_month' => 'Selesai Bulan Ini',
         'cost_month' => 'Biaya Bulan Ini',
         'active_orders' => 'Work Order Aktif',
@@ -287,6 +288,13 @@ return [
         'print' => 'Cetak Job Card',
         'mechanic_sign' => 'Mekanik',
         'supervisor_sign' => 'Supervisor',
+    ],
+
+    'reminders' => [
+        'due_soon_title' => 'Perawatan segera jatuh tempo',
+        'overdue_title' => 'Perawatan terlambat',
+        'body' => ':schedule pada :vehicle (:category) — jatuh tempo :target',
+        'auto_wo_note' => 'Dibuat otomatis dari jadwal preventif yang terlambat.',
     ],
 
     'messages' => [
