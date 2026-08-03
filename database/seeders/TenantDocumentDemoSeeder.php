@@ -20,6 +20,8 @@ use Modules\Fleet\Models\Vehicle;
  */
 class TenantDocumentDemoSeeder extends Seeder
 {
+    public const TAG = '[DOC-DEMO]';
+
     public function run(): void
     {
         if (! class_exists(Document::class) || ! Schema::hasTable('documents') || ! Schema::hasTable('document_types')) {
@@ -29,9 +31,7 @@ class TenantDocumentDemoSeeder extends Seeder
         }
 
         if (! class_exists(Vehicle::class) || ! Schema::hasTable('vehicles') || ! Schema::hasTable('drivers')) {
-            $this->command?->warn('Fleet tables missing. Install the fleet module first.');
-
-            return;
+            throw new \RuntimeException('Install the [fleet] module before installing this demo data.');
         }
 
         $userId = User::query()->value('id');
@@ -99,6 +99,28 @@ class TenantDocumentDemoSeeder extends Seeder
             $drivers->count(),
             Document::query()->count(),
         ));
+    }
+
+    public function isInstalled(): bool
+    {
+        if (! class_exists(Document::class) || ! Schema::hasTable('documents')) {
+            return false;
+        }
+
+        return Document::query()->where('notes', 'like', '%'.self::TAG.'%')->exists();
+    }
+
+    public function uninstall(): void
+    {
+        if (! class_exists(Document::class) || ! Schema::hasTable('documents')) {
+            return;
+        }
+
+        $deleted = Document::query()
+            ->where('notes', 'like', '%'.self::TAG.'%')
+            ->delete();
+
+        $this->command?->info("Document demo data removed ({$deleted} documents).");
     }
 
     /**
@@ -439,6 +461,9 @@ class TenantDocumentDemoSeeder extends Seeder
 
         /** @var DocumentType $type */
         $type = $types->get($typeKey);
+
+        $notes = trim((string) ($overrides['notes'] ?? ''));
+        $overrides['notes'] = trim($notes.' '.self::TAG);
 
         Document::query()->updateOrCreate(
             [

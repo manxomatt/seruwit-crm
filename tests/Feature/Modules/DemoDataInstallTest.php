@@ -7,15 +7,21 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\DemoDatasets;
 use App\Modules\ModuleInstaller;
+use Database\Seeders\TenantDocumentDemoSeeder;
 use Database\Seeders\TenantDriverDemoSeeder;
 use Database\Seeders\TenantFuelDemoSeeder;
+use Database\Seeders\TenantMaintenanceDemoSeeder;
 use Database\Seeders\TenantPartnerDemoSeeder;
 use Database\Seeders\TenantPartnerIndustriesSeeder;
 use Database\Seeders\TenantVehicleDemoSeeder;
+use Modules\Document\DocumentModule;
+use Modules\Document\Models\Document;
 use Modules\Fleet\FleetModule;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\FuelLog;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Maintenance\MaintenanceModule;
+use Modules\Maintenance\Models\WorkOrder;
 use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerIndustry;
 use Tests\TestCase;
@@ -200,6 +206,78 @@ class DemoDataInstallTest extends TestCase
             $this->assertSame(
                 0,
                 FuelLog::query()->where('receipt_number', 'like', TenantFuelDemoSeeder::RECEIPT_PREFIX.'%')->count(),
+            );
+        });
+    }
+
+    public function test_document_and_maintenance_demos_require_modules_then_install_and_uninstall(): void
+    {
+        $tenant = $this->provisionTenant('Docs Maint Demo Co', 'docs-maint-demo', 'owner@docs-maint.test');
+        $owner = $this->ownerOf($tenant, 'owner@docs-maint.test');
+        $tenant->update([
+            'plan' => 'pro',
+            'can_install_demo_data' => true,
+        ]);
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://docs-maint-demo.localhost/module/modules/demos/'.DemoDatasets::DOCUMENTS.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->actingAs($owner)
+            ->post('http://docs-maint-demo.localhost/module/modules/demos/'.DemoDatasets::MAINTENANCE.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        app(ModuleInstaller::class)->install($tenant, app(FleetModule::class));
+        app(ModuleInstaller::class)->install($tenant, app(DocumentModule::class));
+        app(ModuleInstaller::class)->install($tenant, app(MaintenanceModule::class));
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://docs-maint-demo.localhost/module/modules/demos/'.DemoDatasets::DOCUMENTS.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->actingAs($owner)
+            ->post('http://docs-maint-demo.localhost/module/modules/demos/'.DemoDatasets::MAINTENANCE.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::DOCUMENTS));
+            $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::MAINTENANCE));
+            $this->assertGreaterThan(
+                60,
+                Document::query()->where('notes', 'like', '%'.TenantDocumentDemoSeeder::TAG.'%')->count(),
+            );
+            $this->assertGreaterThanOrEqual(
+                10,
+                WorkOrder::query()->where('notes', 'like', '%'.TenantMaintenanceDemoSeeder::TAG.'%')->count(),
+            );
+        });
+
+        $this->actingAs($owner)
+            ->delete('http://docs-maint-demo.localhost/module/modules/demos/'.DemoDatasets::DOCUMENTS)
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->actingAs($owner)
+            ->delete('http://docs-maint-demo.localhost/module/modules/demos/'.DemoDatasets::MAINTENANCE)
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::DOCUMENTS));
+            $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::MAINTENANCE));
+            $this->assertSame(
+                0,
+                Document::query()->where('notes', 'like', '%'.TenantDocumentDemoSeeder::TAG.'%')->count(),
+            );
+            $this->assertSame(
+                0,
+                WorkOrder::query()->where('notes', 'like', '%'.TenantMaintenanceDemoSeeder::TAG.'%')->count(),
             );
         });
     }

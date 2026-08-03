@@ -24,6 +24,10 @@ class DemoDatasets
 
     public const FUEL = 'fuel';
 
+    public const DOCUMENTS = 'documents';
+
+    public const MAINTENANCE = 'maintenance';
+
     /**
      * @return array<string, array{label: string, description: string, seeder: class-string, includes?: list<string>, requires_module?: string}>
      */
@@ -58,6 +62,18 @@ class DemoDatasets
                 'description' => '10 sample fuel fills across vehicles with stations, costs, and km/L. Uses Vehicles demo plates when present. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantFuelDemoSeeder::class,
                 'requires_module' => 'fleet',
+            ],
+            self::DOCUMENTS => [
+                'label' => 'Documents demo',
+                'description' => 'Compliance docs (STNK, KIR, SIM, etc.) for Vehicles + Drivers demos, including expired/expiring scenarios. Requires Documents (and Fleet).',
+                'seeder' => \Database\Seeders\TenantDocumentDemoSeeder::class,
+                'requires_module' => 'document',
+            ],
+            self::MAINTENANCE => [
+                'label' => 'Maintenance demo',
+                'description' => 'Sample work orders and preventive schedules across fleet vehicles. Requires Maintenance (uses Fleet vehicles when present).',
+                'seeder' => \Database\Seeders\TenantMaintenanceDemoSeeder::class,
+                'requires_module' => 'maintenance',
             ],
         ];
     }

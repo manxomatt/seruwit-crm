@@ -28,6 +28,10 @@ class TenantMaintenanceDemoSeeder extends Seeder
             return;
         }
 
+        if (! class_exists(Vehicle::class) || ! Schema::hasTable('vehicles')) {
+            throw new \RuntimeException('Install the [fleet] module before installing this demo data.');
+        }
+
         $userId = User::query()->value('id');
 
         if (! $userId) {
@@ -66,11 +70,59 @@ class TenantMaintenanceDemoSeeder extends Seeder
         ));
     }
 
+    public function isInstalled(): bool
+    {
+        if (! class_exists(WorkOrder::class) || ! Schema::hasTable('work_orders')) {
+            return false;
+        }
+
+        return WorkOrder::query()->where('notes', 'like', '%'.self::TAG.'%')->exists();
+    }
+
+    public function uninstall(): void
+    {
+        if (class_exists(WorkOrder::class) && Schema::hasTable('work_orders')) {
+            $deletedOrders = WorkOrder::query()
+                ->where('notes', 'like', '%'.self::TAG.'%')
+                ->delete();
+        } else {
+            $deletedOrders = 0;
+        }
+
+        if (class_exists(MaintenanceSchedule::class) && Schema::hasTable('maintenance_schedules')) {
+            $deletedSchedules = MaintenanceSchedule::query()
+                ->where('notes', 'like', '%'.self::TAG.'%')
+                ->delete();
+        } else {
+            $deletedSchedules = 0;
+        }
+
+        if (class_exists(Vehicle::class) && Schema::hasTable('vehicles')) {
+            Vehicle::query()
+                ->where('notes', 'like', '%'.self::TAG.'%')
+                ->delete();
+        }
+
+        $this->command?->info(
+            "Maintenance demo data removed ({$deletedOrders} work orders, {$deletedSchedules} schedules).",
+        );
+    }
+
     /**
      * @return \Illuminate\Support\Collection<int, Vehicle>
      */
     protected function resolveVehicles()
     {
+        $preferred = Vehicle::query()
+            ->where('plate_number', 'like', TenantVehicleDemoSeeder::PLATE_PREFIX.' %')
+            ->orderBy('plate_number')
+            ->take(5)
+            ->get();
+
+        if ($preferred->count() >= 2) {
+            return $preferred;
+        }
+
         $vehicles = Vehicle::query()->orderBy('id')->take(5)->get();
 
         if ($vehicles->isNotEmpty()) {
@@ -90,6 +142,7 @@ class TenantMaintenanceDemoSeeder extends Seeder
                 'fuel_type' => 'diesel',
                 'status' => Vehicle::STATUS_ACTIVE,
                 'odometer_km' => 40000 + ($i * 1500),
+                'notes' => self::TAG.' Demo vehicle for maintenance.',
             ]);
         }
 
@@ -255,6 +308,7 @@ class TenantMaintenanceDemoSeeder extends Seeder
                         'next_service_odometer' => $lastOdometer + 5_000,
                         'next_service_date' => null,
                         'is_active' => true,
+                        'notes' => self::TAG,
                     ],
                 );
             }
@@ -275,6 +329,7 @@ class TenantMaintenanceDemoSeeder extends Seeder
                         'next_service_odometer' => null,
                         'next_service_date' => now()->addMonths(3),
                         'is_active' => true,
+                        'notes' => self::TAG,
                     ],
                 );
             }
@@ -296,6 +351,7 @@ class TenantMaintenanceDemoSeeder extends Seeder
                         'next_service_odometer' => $lastOdometer + 10_000,
                         'next_service_date' => null,
                         'is_active' => true,
+                        'notes' => self::TAG,
                     ],
                 );
             }
@@ -314,6 +370,7 @@ class TenantMaintenanceDemoSeeder extends Seeder
                         'last_service_date' => now()->subMonths(5),
                         'next_service_date' => now()->addMonth(),
                         'is_active' => true,
+                        'notes' => self::TAG,
                     ],
                 );
             }
