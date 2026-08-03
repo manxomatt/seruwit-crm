@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Central;
 
+use App\Actions\Auth\EnsureUserHasGlobalId;
 use App\Actions\Tenancy\CreateTenantAction;
 use App\Models\OnboardingSession;
 use App\Rules\ValidSubdomain;
@@ -53,8 +54,16 @@ class StoreOnboardingRequest extends FormRequest
      */
     private function ignoreDomainForRetry(): ?string
     {
+        $authUser = $this->user();
+
+        if ($authUser === null) {
+            return null;
+        }
+
+        $user = app(EnsureUserHasGlobalId::class)->execute($authUser);
+
         $session = OnboardingSession::query()
-            ->where('global_user_id', $this->user()?->global_id)
+            ->where('global_user_id', $user->global_id)
             ->first();
 
         if ($session === null || $session->status !== OnboardingSession::STATUS_FAILED || ! $session->tenant_id) {

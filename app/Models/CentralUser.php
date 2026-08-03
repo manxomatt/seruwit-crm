@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Stancl\Tenancy\Contracts\SyncMaster;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
@@ -37,6 +38,15 @@ class CentralUser extends Authenticatable implements SyncMaster
         'last_login_at',
         'locale',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $user): void {
+            if (blank($user->global_id)) {
+                $user->global_id = (string) Str::uuid();
+            }
+        });
+    }
 
     /**
      * The attributes that should be hidden for serialization.

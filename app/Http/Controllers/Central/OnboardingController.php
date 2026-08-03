@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Central;
 
+use App\Actions\Auth\EnsureUserHasGlobalId;
 use App\Actions\Auth\ResolvePostAuthDestination;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Central\StoreOnboardingRequest;
@@ -18,6 +19,7 @@ class OnboardingController extends Controller
 {
     public function __construct(
         private readonly ResolvePostAuthDestination $postAuthDestination,
+        private readonly EnsureUserHasGlobalId $ensureUserHasGlobalId,
     ) {}
 
     public function show(Request $request): Response|RedirectResponse
@@ -79,6 +81,8 @@ class OnboardingController extends Controller
             return redirect()->route('central.onboarding.status');
         }
 
+        $user = $this->ensureUserHasGlobalId->execute($request->user());
+
         $verticals = array_values(array_unique($request->validated('verticals')));
         $subdomain = $request->validated('subdomain');
 
@@ -91,7 +95,7 @@ class OnboardingController extends Controller
             : null;
 
         $session = OnboardingSession::query()->updateOrCreate(
-            ['global_user_id' => $request->user()->global_id],
+            ['global_user_id' => $user->global_id],
             [
                 'company_name' => $request->validated('company_name'),
                 'subdomain' => $subdomain,
@@ -150,8 +154,10 @@ class OnboardingController extends Controller
 
     private function sessionFor(Request $request): ?OnboardingSession
     {
+        $user = $this->ensureUserHasGlobalId->execute($request->user());
+
         return OnboardingSession::query()
-            ->where('global_user_id', $request->user()->global_id)
+            ->where('global_user_id', $user->global_id)
             ->first();
     }
 }

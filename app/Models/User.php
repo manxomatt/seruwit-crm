@@ -36,7 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail, Syncable
     protected static function booted(): void
     {
         static::creating(function (self $user): void {
-            if ($user->global_id === null) {
+            if (blank($user->global_id)) {
                 $user->global_id = (string) Str::uuid();
             }
         });

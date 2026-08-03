@@ -39,7 +39,9 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $this->assertTrue(User::query()->where('email', 'test@example.com')->exists());
         $this->assertSame(0, Tenant::query()->count());
-        $this->assertNull(User::query()->firstWhere('email', 'test@example.com')->email_verified_at);
+        $registered = User::query()->firstWhere('email', 'test@example.com');
+        $this->assertNull($registered->email_verified_at);
+        $this->assertNotNull($registered->global_id);
 
         Notification::assertSentTo(
             User::query()->firstWhere('email', 'test@example.com'),
