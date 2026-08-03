@@ -58,7 +58,25 @@ class TenantPartnerDemoSeederTest extends TestCase
         );
     }
 
-    public function test_uninstall_removes_tagged_partners_only(): void
+    public function test_reinstall_restores_soft_deleted_demo_codes(): void
+    {
+        $this->seed(TenantPartnerDemoSeeder::class);
+
+        Partner::query()
+            ->where('notes', 'like', '%'.TenantPartnerDemoSeeder::TAG.'%')
+            ->get()
+            ->each->delete();
+
+        $this->assertSame(0, Partner::query()->count());
+        $this->assertGreaterThan(0, Partner::withTrashed()->count());
+
+        $this->seed(TenantPartnerDemoSeeder::class);
+
+        $this->assertSame(20, Partner::query()->count());
+        $this->assertTrue(Partner::query()->where('code', 'PART-C-000001')->exists());
+    }
+
+    public function test_uninstall_force_deletes_tagged_partners(): void
     {
         $this->seed(TenantPartnerDemoSeeder::class);
 
@@ -73,6 +91,7 @@ class TenantPartnerDemoSeederTest extends TestCase
         app(TenantPartnerDemoSeeder::class)->uninstall();
 
         $this->assertSame(1, Partner::query()->count());
+        $this->assertSame(1, Partner::withTrashed()->count());
         $this->assertTrue(Partner::query()->where('code', 'PART-REAL-001')->exists());
         $this->assertFalse(app(TenantPartnerDemoSeeder::class)->isInstalled());
     }

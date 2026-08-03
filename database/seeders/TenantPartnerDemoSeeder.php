@@ -436,10 +436,15 @@ class TenantPartnerDemoSeeder extends Seeder
             $data['industry_id'] = $industryName ? ($industries[$industryName]?->id) : null;
             $data['notes'] = trim(($data['notes'] ?? '').' '.self::TAG.' Demo partner.');
 
-            $partner = Partner::query()->updateOrCreate(
+            // Soft-deleted demo rows still occupy partners_code_unique; restore them.
+            $partner = Partner::withTrashed()->updateOrCreate(
                 ['code' => $data['code']],
                 $data
             );
+
+            if ($partner->trashed()) {
+                $partner->restore();
+            }
 
             if ($tagNames !== [] && Schema::hasTable('partner_partner_tag')) {
                 $tagIds = collect($tagNames)
@@ -493,7 +498,7 @@ class TenantPartnerDemoSeeder extends Seeder
             return;
         }
 
-        $partners = Partner::query()
+        $partners = Partner::withTrashed()
             ->where('notes', 'like', '%'.self::TAG.'%')
             ->get();
 
@@ -510,7 +515,7 @@ class TenantPartnerDemoSeeder extends Seeder
                 $partner->bankAccounts()->delete();
             }
 
-            $partner->delete();
+            $partner->forceDelete();
         }
 
         $this->command?->info('Partners demo data removed.');
