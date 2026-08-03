@@ -41,6 +41,8 @@ return [
             'install' => 'Pasang',
             'install_pack' => 'Pasang pack',
             'uninstall_pack' => 'Copot pack',
+            'install_demo' => 'Pasang data demo',
+            'uninstall_demo' => 'Hapus data demo',
             'installing' => 'Memasang…',
             'uninstalling' => 'Mencopot…',
             'uninstall' => 'Copot',
@@ -50,6 +52,8 @@ return [
         'packs_hint' => 'Pasang atau copot sekumpulan modul untuk satu jenis bisnis sekaligus, plus data demo jika tersedia.',
         'packs_modules_prefix' => 'Termasuk:',
         'packs_seed_only' => 'Hanya master data (tanpa modul opsional)',
+        'demos_heading' => 'Data demo',
+        'demos_hint' => 'Data sampel untuk training dan demo. Diaktifkan oleh admin platform untuk workspace ini.',
         'uninstall_confirm' => [
             'title' => 'Copot modul :module?',
             'message' => 'Menu dan aksesnya dicabut sekarang, tapi datanya disimpan :days hari. Pasang lagi sebelum itu dan semuanya kembali utuh.',
@@ -63,6 +67,8 @@ return [
         'module_installed' => 'Modul :module berhasil dipasang.',
         'pack_installed' => 'Pack :pack berhasil dipasang.',
         'pack_uninstalled' => 'Pack :pack dicopot. Data demo dihapus; data modul disimpan :days hari.',
+        'demo_installed' => 'Data demo :demo berhasil dipasang.',
+        'demo_uninstalled' => 'Data demo :demo dihapus.',
         'module_uninstalled' => 'Modul :module dicopot. Datanya disimpan :days hari — pasang lagi sebelum itu untuk memulihkannya.',
     ],
 ];

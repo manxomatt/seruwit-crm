@@ -41,6 +41,8 @@ return [
             'install' => 'Install',
             'install_pack' => 'Install pack',
             'uninstall_pack' => 'Uninstall pack',
+            'install_demo' => 'Install demo data',
+            'uninstall_demo' => 'Remove demo data',
             'installing' => 'Installing…',
             'uninstalling' => 'Uninstalling…',
             'uninstall' => 'Uninstall',
@@ -50,6 +52,8 @@ return [
         'packs_hint' => 'One-click install or uninstall of modules for a business vertical, plus demo data when available.',
         'packs_modules_prefix' => 'Includes:',
         'packs_seed_only' => 'Master data only (no optional modules)',
+        'demos_heading' => 'Demo data',
+        'demos_hint' => 'Sample records for training and demos. Enabled by the platform administrator for this workspace.',
         'uninstall_confirm' => [
             'title' => 'Uninstall module :module?',
             'message' => 'Its menu and access are revoked now, but the data is kept for :days days. Install it again before then and everything comes back intact.',
@@ -63,6 +67,8 @@ return [
         'module_installed' => 'Module :module installed successfully.',
         'pack_installed' => 'Pack :pack installed successfully.',
         'pack_uninstalled' => 'Pack :pack uninstalled. Demo data was removed; module data is retained for :days days.',
+        'demo_installed' => 'Demo data :demo installed successfully.',
+        'demo_uninstalled' => 'Demo data :demo removed.',
         'module_uninstalled' => 'Module :module uninstalled. Its data is retained for :days days — install it again before then to recover it.',
     ],
 ];

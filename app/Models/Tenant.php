@@ -22,6 +22,7 @@ use Stancl\Tenancy\Database\Models\TenantPivot;
  * @property string|null $tax_id
  * @property string|null $notes
  * @property string|null $plan
+ * @property bool|null $can_install_demo_data
  * @property string|null $reseller_global_id
  */
 class Tenant extends BaseTenant implements TenantWithDatabase
@@ -39,6 +40,15 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function planKey(): ?string
     {
         return $this->plan ?? app(PlanRepository::class)->defaultKey();
+    }
+
+    /**
+     * Whether this workspace may install demo datasets from the modules catalog.
+     * Controlled by central admins (virtual column on tenant data JSON).
+     */
+    public function canInstallDemoData(): bool
+    {
+        return filter_var($this->can_install_demo_data ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     public function planModel(): ?Plan

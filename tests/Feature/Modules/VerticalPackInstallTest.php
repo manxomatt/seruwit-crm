@@ -32,7 +32,7 @@ class VerticalPackInstallTest extends TestCase
         return $tenant->run(fn (): User => User::query()->firstWhere('email', $email));
     }
 
-    public function test_catalog_includes_rental_mobil_pack(): void
+    public function test_catalog_hides_vertical_packs_and_demo_section_by_default(): void
     {
         $tenant = $this->provisionTenant('Pack Co', 'pack-co', 'owner@pack.test');
         $owner = $this->ownerOf($tenant, 'owner@pack.test');
@@ -43,11 +43,29 @@ class VerticalPackInstallTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Modules/Index')
-                ->has('packs')
-                ->where('packs.0.key', VerticalPacks::RENTAL_MOBIL)
-                ->where('packs.1.key', VerticalPacks::TRAVEL_SHUTTLE)
-                ->where('packs.2.key', VerticalPacks::FINANCE)
-                ->where('packs.3.key', VerticalPacks::PARTNER_INDUSTRIES)
+                ->missing('packs')
+                ->where('canInstallDemoData', false)
+                ->where('demos', [])
+            );
+    }
+
+    public function test_catalog_shows_demos_when_tenant_is_allowed(): void
+    {
+        $tenant = $this->provisionTenant('Demo Catalog Co', 'demo-catalog-co', 'owner@demo-catalog.test');
+        $owner = $this->ownerOf($tenant, 'owner@demo-catalog.test');
+        $tenant->update([
+            'plan' => 'pro',
+            'can_install_demo_data' => true,
+        ]);
+        tenancy()->end();
+
+        $this->actingAs($owner)->get('http://demo-catalog-co.localhost/module/modules')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Module/Modules/Index')
+                ->where('canInstallDemoData', true)
+                ->has('demos', 1)
+                ->where('demos.0.key', \App\Modules\DemoDatasets::PARTNERS)
             );
     }
 

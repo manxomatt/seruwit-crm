@@ -57,6 +57,7 @@ interface TenantDetail {
     tax_id: string | null;
     notes: string | null;
     plan: string;
+    can_install_demo_data: boolean;
 }
 
 interface Props {
@@ -82,6 +83,7 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
         subdomain: tenant.subdomain ?? '',
         status: tenant.status,
         plan: tenant.plan,
+        can_install_demo_data: tenant.can_install_demo_data ?? false,
         billing_email: tenant.billing_email ?? '',
         phone: tenant.phone ?? '',
         address: tenant.address ?? '',
@@ -253,6 +255,18 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                             />
                             {errors.plan && <p className="mt-1 text-xs text-red-500">{errors.plan}</p>}
                             <p className="mt-1 text-xs text-gray-500">{t('tenants.fields.plan_hint')}</p>
+                        </label>
+                        <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 sm:col-span-2">
+                            <input
+                                type="checkbox"
+                                className="mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                checked={data.can_install_demo_data}
+                                onChange={(e) => setData('can_install_demo_data', e.target.checked)}
+                            />
+                            <span>
+                                <span className="block text-sm font-medium text-gray-900">{t('tenants.fields.can_install_demo_data')}</span>
+                                <span className="mt-0.5 block text-xs text-gray-500">{t('tenants.fields.can_install_demo_data_hint')}</span>
+                            </span>
                         </label>
                     </div>
                     {data.subdomain !== (tenant.subdomain ?? '') && (

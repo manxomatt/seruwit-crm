@@ -17,6 +17,8 @@ return [
         'created_at' => 'Dibuat',
         'plan' => 'Paket Langganan',
         'plan_hint' => 'Menurunkan paket hanya mencabut akses — modul yang sudah terpasang beserta datanya tetap utuh dan kembali begitu paketnya dinaikkan lagi.',
+        'can_install_demo_data' => 'Izinkan instal data demo',
+        'can_install_demo_data_hint' => 'Jika diaktifkan, workspace ini bisa memasang dan menghapus data sampel dari halaman Modul.',
         'billing_email' => 'Email Billing',
         'phone' => 'Telepon',
         'tax_id' => 'NPWP / Tax ID',

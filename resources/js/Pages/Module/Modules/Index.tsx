@@ -27,17 +27,19 @@ interface Plan {
     description: string;
 }
 
+interface DemoEntry {
+    key: string;
+    label: string;
+    description: string;
+    installed?: boolean;
+}
+
 interface Props {
     modules: ModuleEntry[];
     plan: Plan;
     graceDays: number;
-    packs?: Array<{
-        key: string;
-        label: string;
-        description: string;
-        modules: string[];
-        installed?: boolean;
-    }>;
+    canInstallDemoData?: boolean;
+    demos?: DemoEntry[];
 }
 
 const STATE_BADGE_CLASS: Record<ModuleState, string> = {
@@ -52,7 +54,13 @@ const STATE_BADGE_CLASS: Record<ModuleState, string> = {
 
 const isDisabled = (state: ModuleState): boolean => state === 'disabled' || state === 'disabled_with_data';
 
-export default function Index({ modules, plan, graceDays, packs = [] }: Props): JSX.Element {
+export default function Index({
+    modules,
+    plan,
+    graceDays,
+    canInstallDemoData = false,
+    demos = [],
+}: Props): JSX.Element {
     const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
     const [confirming, setConfirming] = useState<ModuleEntry | null>(null);
@@ -67,18 +75,18 @@ export default function Index({ modules, plan, graceDays, packs = [] }: Props): 
         );
     };
 
-    const installPack = (packKey: string): void => {
-        setBusyKey(`pack:${packKey}`);
+    const installDemo = (demoKey: string): void => {
+        setBusyKey(`demo:${demoKey}`);
         router.post(
-            route('module.modules.packs.install', packKey),
+            route('module.modules.demos.install', demoKey),
             {},
             { preserveScroll: true, onFinish: () => setBusyKey(null) },
         );
     };
 
-    const uninstallPack = (packKey: string): void => {
-        setBusyKey(`pack-uninstall:${packKey}`);
-        router.delete(route('module.modules.packs.uninstall', packKey), {
+    const uninstallDemo = (demoKey: string): void => {
+        setBusyKey(`demo-uninstall:${demoKey}`);
+        router.delete(route('module.modules.demos.uninstall', demoKey), {
             preserveScroll: true,
             onFinish: () => setBusyKey(null),
         });
@@ -125,41 +133,43 @@ export default function Index({ modules, plan, graceDays, packs = [] }: Props): 
                         </div>
                     </div>
 
-                    {packs.length > 0 && (
+                    {canInstallDemoData && demos.length > 0 && (
                         <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
                             <div className="border-b border-gray-100 p-6">
-                                <h3 className="text-base font-semibold text-gray-900">{t('platform.modules_catalog.packs_heading')}</h3>
-                                <p className="mt-1 text-sm text-gray-500">{t('platform.modules_catalog.packs_hint')}</p>
+                                <h3 className="text-base font-semibold text-gray-900">{t('platform.modules_catalog.demos_heading')}</h3>
+                                <p className="mt-1 text-sm text-gray-500">{t('platform.modules_catalog.demos_hint')}</p>
                             </div>
                             <ul className="divide-y divide-gray-100">
-                                {packs.map((pack) => {
-                                    const busy = busyKey === `pack:${pack.key}` || busyKey === `pack-uninstall:${pack.key}`;
+                                {demos.map((demo) => {
+                                    const busy = busyKey === `demo:${demo.key}` || busyKey === `demo-uninstall:${demo.key}`;
 
                                     return (
-                                        <li key={pack.key} className="flex flex-wrap items-center gap-4 p-6">
+                                        <li key={demo.key} className="flex flex-wrap items-center gap-4 p-6">
                                             <div className="min-w-0 flex-1">
-                                                <h4 className="font-medium text-gray-900">{pack.label}</h4>
-                                                <p className="mt-1 text-sm text-gray-500">{pack.description}</p>
-                                                <p className="mt-2 text-xs text-gray-400">
-                                                    {pack.modules.length > 0
-                                                        ? `${t('platform.modules_catalog.packs_modules_prefix')} ${pack.modules.join(', ')}`
-                                                        : t('platform.modules_catalog.packs_seed_only', undefined, 'Master data only')}
-                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-medium text-gray-900">{demo.label}</h4>
+                                                    {demo.installed && (
+                                                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                                                            {t('platform.modules_catalog.states.installed')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="mt-1 text-sm text-gray-500">{demo.description}</p>
                                             </div>
                                             <div className="flex shrink-0 flex-wrap gap-2">
-                                                <PrimaryButton disabled={busy} onClick={() => installPack(pack.key)}>
-                                                    {busyKey === `pack:${pack.key}`
+                                                <PrimaryButton disabled={busy} onClick={() => installDemo(demo.key)}>
+                                                    {busyKey === `demo:${demo.key}`
                                                         ? t('platform.modules_catalog.actions.installing')
-                                                        : t('platform.modules_catalog.actions.install_pack')}
+                                                        : t('platform.modules_catalog.actions.install_demo')}
                                                 </PrimaryButton>
-                                                {pack.installed && (
+                                                {demo.installed && (
                                                     <SecondaryButton
                                                         disabled={busy}
-                                                        onClick={() => uninstallPack(pack.key)}
+                                                        onClick={() => uninstallDemo(demo.key)}
                                                     >
-                                                        {busyKey === `pack-uninstall:${pack.key}`
+                                                        {busyKey === `demo-uninstall:${demo.key}`
                                                             ? t('platform.modules_catalog.actions.uninstalling')
-                                                            : t('platform.modules_catalog.actions.uninstall_pack')}
+                                                            : t('platform.modules_catalog.actions.uninstall_demo')}
                                                     </SecondaryButton>
                                                 )}
                                             </div>

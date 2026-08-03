@@ -31,4 +31,23 @@ class TenantPartnerDemoSeederTest extends TestCase
 
         $this->assertSame(20, Partner::query()->count());
     }
+
+    public function test_uninstall_removes_tagged_partners_only(): void
+    {
+        $this->seed(TenantPartnerDemoSeeder::class);
+
+        Partner::factory()->create([
+            'code' => 'PART-REAL-001',
+            'name' => 'Real Partner',
+            'notes' => 'Not demo',
+        ]);
+
+        $this->assertSame(21, Partner::query()->count());
+
+        app(TenantPartnerDemoSeeder::class)->uninstall();
+
+        $this->assertSame(1, Partner::query()->count());
+        $this->assertTrue(Partner::query()->where('code', 'PART-REAL-001')->exists());
+        $this->assertFalse(app(TenantPartnerDemoSeeder::class)->isInstalled());
+    }
 }

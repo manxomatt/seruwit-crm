@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
+use App\Modules\DemoDatasets;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleCatalog;
 use App\Modules\ModuleInstaller;
@@ -27,21 +28,25 @@ class ModuleController extends Controller
     {
         $this->ensureWorkspaceContext();
 
+        $canInstallDemoData = tenant()->canInstallDemoData();
+
         return Inertia::render('Module/Modules/Index', [
             'modules' => $this->catalog->forCurrentTenant(),
             'plan' => $this->catalog->currentPlan(),
             'plans' => $this->catalog->allPlans(),
             'graceDays' => config('modules.purge_after_days'),
-            'packs' => collect(VerticalPacks::all())
-                ->map(fn (array $pack, string $key): array => [
-                    'key' => $key,
-                    'label' => $pack['label'],
-                    'description' => $pack['description'],
-                    'modules' => $pack['modules'],
-                    'installed' => VerticalPacks::isInstalled($key),
-                ])
-                ->values()
-                ->all(),
+            'canInstallDemoData' => $canInstallDemoData,
+            'demos' => $canInstallDemoData
+                ? collect(DemoDatasets::all())
+                    ->map(fn (array $demo, string $key): array => [
+                        'key' => $key,
+                        'label' => $demo['label'],
+                        'description' => $demo['description'],
+                        'installed' => DemoDatasets::isInstalled($key),
+                    ])
+                    ->values()
+                    ->all()
+                : [],
         ]);
     }
 
@@ -104,6 +109,46 @@ class ModuleController extends Controller
             'pack' => $label,
             'days' => $days,
         ]));
+    }
+
+    public function installDemo(string $demo, ModuleInstaller $installer): RedirectResponse
+    {
+        $this->ensureWorkspaceContext();
+        abort_unless(tenant()->canInstallDemoData(), 403);
+
+        if (! DemoDatasets::find($demo)) {
+            abort(404);
+        }
+
+        try {
+            $installer->installDemo(tenant(), $demo);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $label = DemoDatasets::find($demo)['label'];
+
+        return back()->with('success', __('platform.messages.demo_installed', ['demo' => $label]));
+    }
+
+    public function uninstallDemo(string $demo, ModuleInstaller $installer): RedirectResponse
+    {
+        $this->ensureWorkspaceContext();
+        abort_unless(tenant()->canInstallDemoData(), 403);
+
+        if (! DemoDatasets::find($demo)) {
+            abort(404);
+        }
+
+        try {
+            $installer->uninstallDemo(tenant(), $demo);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $label = DemoDatasets::find($demo)['label'];
+
+        return back()->with('success', __('platform.messages.demo_uninstalled', ['demo' => $label]));
     }
 
     public function uninstall(string $key, ModuleInstaller $installer): RedirectResponse

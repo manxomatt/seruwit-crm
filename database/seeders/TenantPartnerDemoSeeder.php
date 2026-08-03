@@ -15,6 +15,8 @@ use Modules\Partners\Models\PartnerTag;
  */
 class TenantPartnerDemoSeeder extends Seeder
 {
+    public const TAG = '[PARTNERS-DEMO]';
+
     public function run(): void
     {
         if (! class_exists(Partner::class) || ! Schema::hasTable('partners')) {
@@ -432,6 +434,7 @@ class TenantPartnerDemoSeeder extends Seeder
             };
             $data['status'] = 'active';
             $data['industry_id'] = $industryName ? ($industries[$industryName]?->id) : null;
+            $data['notes'] = trim(($data['notes'] ?? '').' '.self::TAG.' Demo partner.');
 
             $partner = Partner::query()->updateOrCreate(
                 ['code' => $data['code']],
@@ -469,6 +472,48 @@ class TenantPartnerDemoSeeder extends Seeder
         $both = Partner::query()->where('customer_rank', '>', 0)->where('supplier_rank', '>', 0)->count();
 
         $this->command?->info("Seeded {$created} partners ({$customers} customer, {$suppliers} supplier, {$both} both).");
+    }
+
+    public function isInstalled(): bool
+    {
+        if (! class_exists(Partner::class) || ! Schema::hasTable('partners')) {
+            return false;
+        }
+
+        return Partner::query()->where('notes', 'like', '%'.self::TAG.'%')->exists();
+    }
+
+    /**
+     * Remove tagged demo partners (and their addresses / tag pivots).
+     * Shared industries and tags are left intact.
+     */
+    public function uninstall(): void
+    {
+        if (! class_exists(Partner::class) || ! Schema::hasTable('partners')) {
+            return;
+        }
+
+        $partners = Partner::query()
+            ->where('notes', 'like', '%'.self::TAG.'%')
+            ->get();
+
+        foreach ($partners as $partner) {
+            if (Schema::hasTable('partner_partner_tag')) {
+                $partner->tags()->detach();
+            }
+
+            if (Schema::hasTable('partner_addresses')) {
+                $partner->addresses()->delete();
+            }
+
+            if (Schema::hasTable('partner_bank_accounts')) {
+                $partner->bankAccounts()->delete();
+            }
+
+            $partner->delete();
+        }
+
+        $this->command?->info('Partners demo data removed.');
     }
 
     /** @return array<string, PartnerIndustry> */

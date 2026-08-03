@@ -141,6 +141,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/modules', [ModuleCatalogController::class, 'index'])->name('modules.index');
         Route::post('/modules/packs/{pack}/install', [ModuleCatalogController::class, 'installPack'])->name('modules.packs.install');
         Route::delete('/modules/packs/{pack}', [ModuleCatalogController::class, 'uninstallPack'])->name('modules.packs.uninstall');
+        Route::post('/modules/demos/{demo}/install', [ModuleCatalogController::class, 'installDemo'])->name('modules.demos.install');
+        Route::delete('/modules/demos/{demo}', [ModuleCatalogController::class, 'uninstallDemo'])->name('modules.demos.uninstall');
         Route::post('/modules/{module}/install', [ModuleCatalogController::class, 'install'])->name('modules.install');
         Route::delete('/modules/{module}', [ModuleCatalogController::class, 'uninstall'])->name('modules.uninstall');
 

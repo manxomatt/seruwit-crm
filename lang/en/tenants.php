@@ -17,6 +17,8 @@ return [
         'created_at' => 'Created',
         'plan' => 'Subscription Plan',
         'plan_hint' => 'Downgrading only revokes access — modules already installed and their data stay intact and return the moment the plan is upgraded again.',
+        'can_install_demo_data' => 'Allow demo data install',
+        'can_install_demo_data_hint' => 'When enabled, this workspace can install and remove sample datasets from Modules.',
         'billing_email' => 'Billing Email',
         'phone' => 'Phone',
         'tax_id' => 'Tax ID (NPWP)',

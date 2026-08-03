@@ -323,6 +323,62 @@ class ModuleInstaller
     }
 
     /**
+     * Run a demo dataset seeder inside $tenant. Requires can_install_demo_data.
+     *
+     * @throws RuntimeException when the dataset is unknown or the tenant is not allowed
+     */
+    public function installDemo(Tenant $tenant, string $demoKey): void
+    {
+        if (! $tenant->canInstallDemoData()) {
+            throw new RuntimeException('This workspace is not allowed to install demo data.');
+        }
+
+        $dataset = DemoDatasets::find($demoKey);
+
+        if (! $dataset) {
+            throw new RuntimeException("Unknown demo dataset [{$demoKey}].");
+        }
+
+        if (! class_exists($dataset['seeder'])) {
+            throw new RuntimeException("Demo seeder for [{$demoKey}] is missing.");
+        }
+
+        $tenant->run(function () use ($dataset): void {
+            app($dataset['seeder'])->run();
+        });
+    }
+
+    /**
+     * Remove a demo dataset's tagged rows from $tenant.
+     *
+     * @throws RuntimeException when the dataset is unknown or the tenant is not allowed
+     */
+    public function uninstallDemo(Tenant $tenant, string $demoKey): void
+    {
+        if (! $tenant->canInstallDemoData()) {
+            throw new RuntimeException('This workspace is not allowed to manage demo data.');
+        }
+
+        $dataset = DemoDatasets::find($demoKey);
+
+        if (! $dataset) {
+            throw new RuntimeException("Unknown demo dataset [{$demoKey}].");
+        }
+
+        if (! class_exists($dataset['seeder'])) {
+            throw new RuntimeException("Demo seeder for [{$demoKey}] is missing.");
+        }
+
+        $tenant->run(function () use ($dataset): void {
+            $seeder = app($dataset['seeder']);
+
+            if (method_exists($seeder, 'uninstall')) {
+                $seeder->uninstall();
+            }
+        });
+    }
+
+    /**
      * Soft-uninstall a module assuming tenant context is already active.
      */
     private function uninstallWithinTenant(ModuleContract $module): void

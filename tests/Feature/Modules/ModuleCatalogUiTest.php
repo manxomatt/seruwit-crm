@@ -66,7 +66,8 @@ class ModuleCatalogUiTest extends TestCase
                 ->where('modules.1.entitled', true)
                 ->where('modules.1.installed', false)
                 ->where('modules.1.state', 'available')
-                ->has('packs')
+                ->where('canInstallDemoData', false)
+                ->where('demos', [])
             );
     }
 
