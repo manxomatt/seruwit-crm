@@ -11,6 +11,7 @@ return [
         'bays' => 'Bays',
         'schedules' => 'Schedules',
         'categories' => 'Categories',
+        'analytics' => 'Analytics',
     ],
 
     'status' => [
@@ -295,6 +296,29 @@ return [
         'overdue_title' => 'Maintenance overdue',
         'body' => ':schedule on :vehicle (:category) — due at :target',
         'auto_wo_note' => 'Auto-created from overdue preventive schedule.',
+    ],
+
+    'analytics' => [
+        'head' => 'Maintenance Analytics',
+        'subtitle' => 'Cost, downtime, and preventive compliance for the selected period.',
+        'from' => 'From',
+        'to' => 'To',
+        'apply' => 'Apply',
+        'view_schedules' => 'View schedules →',
+        'total_cost' => 'Total cost',
+        'labor_cost' => 'Labor',
+        'parts_cost' => 'Parts',
+        'work_orders' => 'Completed WOs',
+        'avg_downtime' => 'Avg downtime',
+        'hours_value' => ':value h',
+        'compliance' => 'On-time preventive',
+        'compliance_detail' => ':on_time of :total preventive jobs completed on or before schedule.',
+        'by_vehicle' => 'Cost by vehicle',
+        'by_category' => 'Cost by category',
+        'by_vendor' => 'Vendor spend',
+        'monthly' => 'Monthly spend (12 months)',
+        'empty' => 'No completed work orders in this period.',
+        'empty_vendors' => 'No vendor spend recorded in this period.',
     ],
 
     'messages' => [

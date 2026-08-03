@@ -11,6 +11,7 @@ return [
         'bays' => 'Bay',
         'schedules' => 'Jadwal',
         'categories' => 'Kategori',
+        'analytics' => 'Analitik',
     ],
 
     'status' => [
@@ -295,6 +296,29 @@ return [
         'overdue_title' => 'Perawatan terlambat',
         'body' => ':schedule pada :vehicle (:category) — jatuh tempo :target',
         'auto_wo_note' => 'Dibuat otomatis dari jadwal preventif yang terlambat.',
+    ],
+
+    'analytics' => [
+        'head' => 'Analitik Maintenance',
+        'subtitle' => 'Biaya, downtime, dan kepatuhan preventif untuk periode yang dipilih.',
+        'from' => 'Dari',
+        'to' => 'Sampai',
+        'apply' => 'Terapkan',
+        'view_schedules' => 'Lihat jadwal →',
+        'total_cost' => 'Total biaya',
+        'labor_cost' => 'Tenaga kerja',
+        'parts_cost' => 'Suku cadang',
+        'work_orders' => 'WO selesai',
+        'avg_downtime' => 'Rata-rata downtime',
+        'hours_value' => ':value jam',
+        'compliance' => 'Preventif tepat waktu',
+        'compliance_detail' => ':on_time dari :total pekerjaan preventif selesai pada atau sebelum jadwal.',
+        'by_vehicle' => 'Biaya per kendaraan',
+        'by_category' => 'Biaya per kategori',
+        'by_vendor' => 'Pengeluaran vendor',
+        'monthly' => 'Pengeluaran bulanan (12 bulan)',
+        'empty' => 'Tidak ada work order selesai di periode ini.',
+        'empty_vendors' => 'Tidak ada pengeluaran vendor di periode ini.',
     ],
 
     'messages' => [

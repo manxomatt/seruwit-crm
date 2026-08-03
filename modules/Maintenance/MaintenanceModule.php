@@ -8,6 +8,7 @@ use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
 use Modules\Maintenance\Console\Commands\MaintenanceScanDue;
 use Modules\Maintenance\Http\Controllers\BayCalendarController;
+use Modules\Maintenance\Http\Controllers\MaintenanceAnalyticsController;
 use Modules\Maintenance\Http\Controllers\MaintenanceBayController;
 use Modules\Maintenance\Http\Controllers\MaintenanceCategoryController;
 use Modules\Maintenance\Http\Controllers\MaintenanceController;
@@ -100,6 +101,10 @@ class MaintenanceModule implements ModuleContract
         Route::get('/maintenance/calendar', [BayCalendarController::class, 'index'])
             ->middleware('permission:maintenance,view')
             ->name('maintenance.calendar.index');
+
+        Route::get('/maintenance/analytics', [MaintenanceAnalyticsController::class, 'index'])
+            ->middleware('permission:maintenance,view')
+            ->name('maintenance.analytics.index');
 
         // Work Orders
         Route::get('/maintenance/work-orders', [WorkOrderController::class, 'index'])

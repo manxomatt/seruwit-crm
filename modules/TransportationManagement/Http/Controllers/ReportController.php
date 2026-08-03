@@ -3,11 +3,15 @@
 namespace Modules\TransportationManagement\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Facades\Modules;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\FuelLog;
 use Modules\Fleet\Models\VehicleMaintenanceLog;
+use Modules\Maintenance\Support\MaintenanceAnalyticsAggregator;
 use Modules\TransportationManagement\Models\Trip;
 
 class ReportController extends Controller
@@ -52,14 +56,7 @@ class ReportController extends Controller
             ->orderByDesc('total_cost')
             ->get();
 
-        $maintenanceCostByVehicle = VehicleMaintenanceLog::query()
-            ->with('vehicle:id,name,plate_number')
-            ->whereBetween('completed_date', [$from, $to])
-            ->where('status', 'completed')
-            ->selectRaw('vehicle_id, sum(cost) as total_cost, count(*) as log_count')
-            ->groupBy('vehicle_id')
-            ->orderByDesc('total_cost')
-            ->get();
+        $maintenanceCostByVehicle = $this->maintenanceCostByVehicle($from, $to);
 
         return Inertia::render('Modules/TransportationManagement/Reports/Index', [
             'filters' => [
@@ -72,5 +69,27 @@ class ReportController extends Controller
             'fuelCostByVehicle' => $fuelCostByVehicle,
             'maintenanceCostByVehicle' => $maintenanceCostByVehicle,
         ]);
+    }
+
+    /**
+     * Prefer completed work-order costs when Maintenance is available; fall
+     * back to legacy VehicleMaintenanceLog rows for tenants without it.
+     *
+     * @return Collection<int, mixed>
+     */
+    private function maintenanceCostByVehicle(Carbon $from, Carbon $to): Collection
+    {
+        if (Modules::available('maintenance') && Schema::hasTable('work_orders')) {
+            return app(MaintenanceAnalyticsAggregator::class)->costByVehicle($from, $to);
+        }
+
+        return VehicleMaintenanceLog::query()
+            ->with('vehicle:id,name,plate_number')
+            ->whereBetween('completed_date', [$from, $to])
+            ->where('status', 'completed')
+            ->selectRaw('vehicle_id, sum(cost) as total_cost, count(*) as log_count')
+            ->groupBy('vehicle_id')
+            ->orderByDesc('total_cost')
+            ->get();
     }
 }

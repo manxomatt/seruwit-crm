@@ -10,6 +10,7 @@ const TABS = [
     { labelKey: 'maintenance.nav.bays', route: 'maintenance.bays.index', pattern: 'maintenance.bays.*' },
     { labelKey: 'maintenance.nav.schedules', route: 'maintenance.schedules.index', pattern: 'maintenance.schedules.*' },
     { labelKey: 'maintenance.nav.categories', route: 'maintenance.categories.index', pattern: 'maintenance.categories.*' },
+    { labelKey: 'maintenance.nav.analytics', route: 'maintenance.analytics.index', pattern: 'maintenance.analytics.*' },
 ] as const;
 
 export default function MaintenanceNav(): JSX.Element {
