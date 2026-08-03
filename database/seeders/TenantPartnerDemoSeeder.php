@@ -516,34 +516,91 @@ class TenantPartnerDemoSeeder extends Seeder
         $this->command?->info('Partners demo data removed.');
     }
 
-    /** @return array<string, PartnerIndustry> */
+    /**
+     * Resolve demo industry labels to PartnerIndustry rows.
+     *
+     * Prefer pack industries (by code) when the i18n migration is present, then
+     * localized JSON name match. Fall back to plain-string name for older schemas
+     * still used by some RefreshDatabase tests.
+     *
+     * @return array<string, PartnerIndustry>
+     */
     private function seedIndustries(): array
     {
         if (! Schema::hasTable('partner_industries')) {
             return [];
         }
 
-        $names = [
-            'Retail & Distribusi',
-            'F&B / Hospitality',
-            'Logistik & Transportasi',
-            'Kesehatan',
-            'Manufaktur FMCG',
-            'Import & Perdagangan',
-            'Agribisnis',
-            'Otomotif & Sparepart',
+        /** @var array<string, string> label => industry code */
+        $map = [
+            'Retail & Distribusi' => 'retail',
+            'F&B / Hospitality' => 'hospitality_tourism',
+            'Logistik & Transportasi' => 'logistics_transport',
+            'Kesehatan' => 'healthcare',
+            'Manufaktur FMCG' => 'manufacturing',
+            'Import & Perdagangan' => 'wholesale_distribution',
+            'Agribisnis' => 'agriculture',
+            'Otomotif & Sparepart' => 'automotive',
         ];
 
+        $hasCode = Schema::hasColumn('partner_industries', 'code');
+        $nameIsJson = $this->partnerIndustryNameIsJson();
         $industries = [];
 
-        foreach ($names as $name) {
-            $industries[$name] = PartnerIndustry::query()->firstOrCreate(
-                ['name' => $name],
-                ['description' => "Industri {$name}", 'is_active' => true]
-            );
+        foreach ($map as $label => $code) {
+            $industry = null;
+
+            if ($hasCode) {
+                $industry = PartnerIndustry::query()->where('code', $code)->first();
+            }
+
+            if ($industry === null && $nameIsJson) {
+                $industry = PartnerIndustry::findByLocalizedName($label);
+            }
+
+            if ($industry === null && ! $nameIsJson) {
+                $industry = PartnerIndustry::query()->where('name', $label)->first();
+            }
+
+            if ($industry === null) {
+                $payload = [
+                    'is_active' => true,
+                    'name' => $nameIsJson
+                        ? PartnerIndustry::normalizeTranslations($label)
+                        : $label,
+                    'description' => $nameIsJson
+                        ? PartnerIndustry::normalizeTranslations("Industri {$label}")
+                        : "Industri {$label}",
+                ];
+
+                if ($hasCode) {
+                    $payload['code'] = $code;
+                }
+
+                $industry = PartnerIndustry::query()->create($payload);
+            }
+
+            $industries[$label] = $industry;
         }
 
         return $industries;
+    }
+
+    private function partnerIndustryNameIsJson(): bool
+    {
+        $connection = Schema::getConnection();
+
+        if ($connection->getDriverName() !== 'pgsql') {
+            // Same migration adds both code and JSON name columns.
+            return Schema::hasColumn('partner_industries', 'code');
+        }
+
+        $row = $connection->selectOne(
+            'select data_type from information_schema.columns where table_schema = current_schema() and table_name = ? and column_name = ?',
+            ['partner_industries', 'name']
+        );
+
+        return in_array($row->data_type ?? null, ['json', 'jsonb'], true);
     }
 
     /** @return array<string, PartnerTag> */

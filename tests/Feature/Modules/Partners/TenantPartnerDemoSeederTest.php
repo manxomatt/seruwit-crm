@@ -3,8 +3,11 @@
 namespace Tests\Feature\Modules\Partners;
 
 use Database\Seeders\TenantPartnerDemoSeeder;
+use Database\Seeders\TenantPartnerIndustriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Modules\Partners\Models\Partner;
+use Modules\Partners\Models\PartnerIndustry;
 use Tests\TestCase;
 
 class TenantPartnerDemoSeederTest extends TestCase
@@ -22,6 +25,7 @@ class TenantPartnerDemoSeederTest extends TestCase
         $this->assertTrue(Partner::query()->where('code', 'PART-C-000001')->exists());
         $this->assertTrue(Partner::query()->where('code', 'PART-S-000001')->exists());
         $this->assertTrue(Partner::query()->where('code', 'PART-B-000001')->exists());
+        $this->assertTrue(Partner::query()->whereNotNull('industry_id')->exists());
     }
 
     public function test_seeder_is_idempotent(): void
@@ -30,6 +34,28 @@ class TenantPartnerDemoSeederTest extends TestCase
         $this->seed(TenantPartnerDemoSeeder::class);
 
         $this->assertSame(20, Partner::query()->count());
+    }
+
+    public function test_reuses_pack_industries_when_code_column_exists(): void
+    {
+        if (! Schema::hasColumn('partner_industries', 'code')) {
+            $this->markTestSkipped('partner_industries.code requires the tenant i18n migration.');
+        }
+
+        $this->seed(TenantPartnerIndustriesSeeder::class);
+        $this->seed(TenantPartnerDemoSeeder::class);
+
+        $this->assertSame(20, Partner::query()->count());
+        $this->assertTrue(
+            Partner::query()
+                ->where('code', 'PART-C-000001')
+                ->whereHas('industry', fn ($q) => $q->where('code', 'retail'))
+                ->exists()
+        );
+        $this->assertSame(
+            count(TenantPartnerIndustriesSeeder::CODES),
+            PartnerIndustry::query()->whereIn('code', TenantPartnerIndustriesSeeder::CODES)->count(),
+        );
     }
 
     public function test_uninstall_removes_tagged_partners_only(): void
