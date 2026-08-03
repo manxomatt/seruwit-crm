@@ -92,64 +92,70 @@ export default function Index({ bays, can }: Props): JSX.Element {
     };
 
     return (
-        <DynamicLayout>
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={t('maintenance.title')}
+                    actions={
+                        can.manage ? (
+                            <PrimaryButton onClick={openCreate}>{t('maintenance.bays.new')}</PrimaryButton>
+                        ) : undefined
+                    }
+                />
+            }
+        >
             <Head title={t('maintenance.bays.head')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <MaintenanceNav />
-                    <PageHeader
-                        title={t('maintenance.bays.head')}
-                        actions={
-                            can.manage ? (
-                                <PrimaryButton onClick={openCreate}>{t('maintenance.bays.new')}</PrimaryButton>
-                            ) : undefined
-                        }
-                    />
+            <MaintenanceNav />
 
-                    <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                        {bays.data.length === 0 ? (
-                            <p className="p-6 text-sm text-gray-500">{t('maintenance.bays.empty')}</p>
-                        ) : (
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.code')}</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.name')}</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.status')}</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.active_jobs')}</th>
-                                        <th className="px-4 py-3" />
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {bays.data.map((bay) => (
-                                        <tr key={bay.id}>
-                                            <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{bay.code}</td>
-                                            <td className="px-4 py-3 text-sm text-gray-700">{bay.name}</td>
-                                            <td className="px-4 py-3 text-sm">
-                                                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${bay.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                                                    {bay.is_active ? t('maintenance.status.active') : t('maintenance.status.inactive')}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm tabular-nums text-gray-700">{bay.active_work_orders_count}</td>
-                                            <td className="px-4 py-3 text-right text-sm">
-                                                {can.manage && (
-                                                    <div className="flex justify-end gap-3">
-                                                        <button type="button" onClick={() => openEdit(bay)} className="text-indigo-600 hover:text-indigo-900">
-                                                            {t('common.edit')}
-                                                        </button>
-                                                        <button type="button" onClick={() => setDeleting(bay)} className="text-red-600 hover:text-red-900">
-                                                            {t('common.delete')}
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div className="border-b border-gray-200 px-6 py-4">
+                    <h3 className="font-semibold text-gray-900">{t('maintenance.bays.head')}</h3>
+                    <p className="mt-1 text-sm text-gray-500">{t('maintenance.bays.section_hint')}</p>
                 </div>
+
+                {bays.data.length === 0 ? (
+                    <p className="p-6 text-sm text-gray-500">{t('maintenance.bays.empty')}</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.code')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.name')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.status')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('maintenance.bays.active_jobs')}</th>
+                                    <th className="px-4 py-3" />
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {bays.data.map((bay) => (
+                                    <tr key={bay.id} className="hover:bg-gray-50">
+                                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{bay.code}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-700">{bay.name}</td>
+                                        <td className="px-4 py-3 text-sm">
+                                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${bay.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                                                {bay.is_active ? t('maintenance.status.active') : t('maintenance.status.inactive')}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm tabular-nums text-gray-700">{bay.active_work_orders_count}</td>
+                                        <td className="px-4 py-3 text-right text-sm">
+                                            {can.manage && (
+                                                <div className="flex justify-end gap-3">
+                                                    <button type="button" onClick={() => openEdit(bay)} className="text-indigo-600 hover:text-indigo-900">
+                                                        {t('common.edit')}
+                                                    </button>
+                                                    <button type="button" onClick={() => setDeleting(bay)} className="text-red-600 hover:text-red-900">
+                                                        {t('common.delete')}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             <Modal show={showModal} onClose={closeModal}>

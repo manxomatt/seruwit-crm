@@ -237,6 +237,7 @@ return [
 
     'bays' => [
         'head' => 'Bay Bengkel',
+        'section_hint' => 'Stall yang dipakai untuk work order in-house.',
         'new' => '+ Bay Baru',
         'empty' => 'Belum ada bay. Tambahkan stall untuk pekerjaan in-house.',
         'code' => 'Kode',

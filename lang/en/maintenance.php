@@ -237,6 +237,7 @@ return [
 
     'bays' => [
         'head' => 'Workshop Bays',
+        'section_hint' => 'Stalls used for in-house work orders.',
         'new' => '+ New Bay',
         'empty' => 'No bays yet. Add stalls used for in-house work.',
         'code' => 'Code',
