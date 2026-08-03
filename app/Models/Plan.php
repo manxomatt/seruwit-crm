@@ -39,6 +39,7 @@ class Plan extends Model
             'maintenance',
             'pages',
             'posts',
+            'receivables',
             'rental',
             'shuttle',
             'tracking',

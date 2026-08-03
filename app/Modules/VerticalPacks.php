@@ -23,13 +23,14 @@ class VerticalPacks
         return [
             self::RENTAL_MOBIL => [
                 'label' => 'Rental Mobil',
-                'description' => 'Fleet, documents, maintenance, tracking, invoicing, rental + demo data.',
+                'description' => 'Fleet, documents, maintenance, tracking, invoicing, receivables, rental + demo data.',
                 'modules' => [
                     'fleet',
                     'document',
                     'maintenance',
                     'tracking',
                     'invoicing',
+                    'receivables',
                     'rental',
                 ],
                 'seeders' => [
@@ -38,13 +39,14 @@ class VerticalPacks
             ],
             self::TRAVEL_SHUTTLE => [
                 'label' => 'Travel Shuttle',
-                'description' => 'Fleet, documents, maintenance, tracking, invoicing, shuttle travel + demo data.',
+                'description' => 'Fleet, documents, maintenance, tracking, invoicing, receivables, shuttle travel + demo data.',
                 'modules' => [
                     'fleet',
                     'document',
                     'maintenance',
                     'tracking',
                     'invoicing',
+                    'receivables',
                     'shuttle',
                 ],
                 'seeders' => [
