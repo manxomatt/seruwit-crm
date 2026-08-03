@@ -211,7 +211,9 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.last_service')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.next_service')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.schedules.columns.status')}</th>
-                                    <th className="relative px-6 py-3"><span className="sr-only">{t('common.actions')}</span></th>
+                                    <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        <span className="sr-only">{t('common.actions')}</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -220,7 +222,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                     const due = isDue(s, vehicleOdometer);
 
                                     return (
-                                        <tr key={s.id} className={`hover:bg-gray-50 ${due ? 'bg-amber-50' : ''}`}>
+                                        <tr key={s.id} className={`group hover:bg-gray-50 ${due ? 'bg-amber-50' : ''}`}>
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-gray-900 text-sm">{s.vehicle?.name}</p>
                                                 <p className="text-gray-400 text-xs">{s.vehicle?.plate_number}</p>
@@ -262,8 +264,8 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                                     {s.is_active ? t('maintenance.status.active') : t('maintenance.status.inactive')}
                                                 </span>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                                <div className="flex items-center justify-end gap-3">
+                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                                     {can.update && (
                                                         <button
                                                             type="button"

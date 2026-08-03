@@ -133,7 +133,7 @@ export default function Index({ categories }: Props): JSX.Element {
 
                 <div className="divide-y divide-gray-100">
                     {categories.data.map((cat) => (
-                        <div key={cat.id} className="flex items-center gap-4 px-6 py-4">
+                        <div key={cat.id} className="group flex items-center gap-4 px-6 py-4 hover:bg-gray-50">
                             <div
                                 className="h-4 w-4 flex-shrink-0 rounded-full border border-white shadow"
                                 style={{ backgroundColor: cat.color }}
@@ -151,7 +151,7 @@ export default function Index({ categories }: Props): JSX.Element {
                                 <p className="text-lg font-bold text-gray-900">{cat.work_orders_count}</p>
                                 <p className="text-xs text-gray-400">{t('maintenance.categories.work_orders')}</p>
                             </div>
-                            <div className="flex-shrink-0 flex items-center gap-3">
+                            <div className="flex flex-shrink-0 items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                 <button
                                     type="button"
                                     onClick={() => openEdit(cat)}

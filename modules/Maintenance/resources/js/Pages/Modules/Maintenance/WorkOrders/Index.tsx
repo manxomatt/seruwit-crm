@@ -180,7 +180,9 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.status')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.schedule')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('maintenance.work_orders.columns.estimate')}</th>
-                                    <th className="relative px-6 py-3"><span className="sr-only">{t('common.actions')}</span></th>
+                                    <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        <span className="sr-only">{t('common.actions')}</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
@@ -189,7 +191,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                                     const priorityBadge = getPriorityBadge(wo.priority, t);
                                     const typeBadge = getTypeBadge(wo.type, t);
                                     return (
-                                        <tr key={wo.id} className="hover:bg-gray-50">
+                                        <tr key={wo.id} className="group hover:bg-gray-50">
                                             <td className="whitespace-nowrap px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <div
@@ -219,12 +221,12 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
                                                 {formatCurrency(wo.estimated_cost, localeTag)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                                <div className="flex items-center justify-end gap-3">
+                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                                     <Link
                                                         href={prefixedRoute('maintenance.work-orders.show', wo.id)}
-                                                        className="text-blue-600 hover:text-blue-900"
-                                                        title={t('maintenance.work_orders.show_title')}
+                                                        className="text-gray-600 hover:text-gray-900"
+                                                        title={t('common.view', undefined, 'View')}
                                                     >
                                                         <EyeIcon />
                                                     </Link>
