@@ -202,7 +202,9 @@ class PurchaseBillService
     private function taxSettings(): array
     {
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-            return \Modules\Accounting\Support\TaxSettings::documentAttributes();
+            return \Modules\Accounting\Support\TaxSettings::documentAttributesFor(
+                \Modules\Accounting\Support\TaxChannels::PAYABLES_PURCHASE_BILL,
+            );
         }
 
         $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';

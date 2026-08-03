@@ -70,7 +70,9 @@ class TerminalController extends Controller
             'lastSale' => $lastSale,
             'tax' => (function (): array {
                 if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-                    $snap = \Modules\Accounting\Support\TaxSettings::snapshot();
+                    $snap = \Modules\Accounting\Support\TaxSettings::snapshot(
+                        channel: \Modules\Accounting\Support\TaxChannels::POS_SALE,
+                    );
 
                     return [
                         'enabled' => $snap['enabled'],

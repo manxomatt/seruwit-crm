@@ -23,8 +23,10 @@ type AccountingNavKey =
     | 'bank'
     | 'opening'
     | 'tax_codes'
+    | 'tax_policies'
     | 'fixed_assets'
-    | 'budgets';
+    | 'budgets'
+    | 'travel_revenue';
 
 interface Props {
     active: AccountingNavKey;
@@ -104,6 +106,7 @@ export default function AccountingShell({ active, title, headerActions, children
     const setup: NavLink[] = [
         { key: 'accounts', href: prefixedRoute('accounting.accounts.index'), label: t('accounting.nav.accounts') },
         { key: 'tax_codes', href: prefixedRoute('accounting.tax-codes.index'), label: t('accounting.nav.tax_codes') },
+        { key: 'tax_policies', href: prefixedRoute('accounting.tax-policies.index'), label: t('accounting.nav.tax_policies') },
         { key: 'periods', href: prefixedRoute('accounting.periods.index'), label: t('accounting.nav.periods') },
         { key: 'opening', href: prefixedRoute('accounting.opening-balances.create'), label: t('accounting.nav.opening') },
         { key: 'fixed_assets', href: prefixedRoute('accounting.fixed-assets.index'), label: t('accounting.nav.fixed_assets') },

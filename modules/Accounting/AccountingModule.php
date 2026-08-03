@@ -23,6 +23,7 @@ use Modules\Accounting\Http\Controllers\OpeningBalanceController;
 use Modules\Accounting\Http\Controllers\PartnerStatementController;
 use Modules\Accounting\Http\Controllers\ProfitAndLossController;
 use Modules\Accounting\Http\Controllers\TaxCodeController;
+use Modules\Accounting\Http\Controllers\TaxPolicyController;
 use Modules\Accounting\Http\Controllers\TaxRegisterController;
 use Modules\Accounting\Http\Controllers\TravelRevenueReportController;
 use Modules\Accounting\Http\Controllers\TrialBalanceController;
@@ -159,6 +160,11 @@ class AccountingModule implements ModuleContract
                 Route::patch('/tax-codes/{taxCode}', [TaxCodeController::class, 'update'])
                     ->middleware('permission:accounting,manage_tax')
                     ->name('tax-codes.update');
+
+                Route::get('/tax-policies', [TaxPolicyController::class, 'index'])->name('tax-policies.index');
+                Route::put('/tax-policies', [TaxPolicyController::class, 'update'])
+                    ->middleware('permission:accounting,manage_tax')
+                    ->name('tax-policies.update');
 
                 Route::get('/journals', [JournalEntryController::class, 'index'])->name('journals.index');
                 Route::get('/journals/create', [JournalEntryController::class, 'create'])

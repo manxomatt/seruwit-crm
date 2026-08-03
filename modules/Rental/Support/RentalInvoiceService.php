@@ -300,7 +300,9 @@ class RentalInvoiceService
 
         return DB::transaction(function () use ($rental, $charge, $notes) {
             if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-                $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributes();
+                $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributesFor(
+                    $this->taxChannelFor($charge),
+                );
             } else {
                 $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
                 $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
@@ -341,5 +343,13 @@ class RentalInvoiceService
 
             return $invoice->fresh(['lines', 'partner']);
         });
+    }
+
+    private function taxChannelFor(RentalCharge $charge): string
+    {
+        return match ($charge->kind) {
+            RentalCharge::KIND_ADDON => \Modules\Accounting\Support\TaxChannels::RENTAL_ADDON,
+            default => \Modules\Accounting\Support\TaxChannels::RENTAL_CHARGE,
+        };
     }
 }

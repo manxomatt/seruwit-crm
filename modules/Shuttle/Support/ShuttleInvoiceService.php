@@ -200,7 +200,9 @@ class ShuttleInvoiceService
     private function taxAttributes(): array
     {
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-            return \Modules\Accounting\Support\TaxSettings::documentAttributes();
+            return \Modules\Accounting\Support\TaxSettings::documentAttributesFor(
+                \Modules\Accounting\Support\TaxChannels::SHUTTLE_INVOICE,
+            );
         }
 
         $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';

@@ -303,7 +303,9 @@ class RentalAccountingService
                 'tax_calculation' => 'exclusive',
             ]
             : (class_exists(\Modules\Accounting\Support\TaxSettings::class)
-                ? \Modules\Accounting\Support\TaxSettings::documentAttributes()
+                ? \Modules\Accounting\Support\TaxSettings::documentAttributesFor(
+                    \Modules\Accounting\Support\TaxChannels::RENTAL_CHARGE,
+                )
                 : [
                     'tax_enabled' => (bool) $first->tax_enabled,
                     'tax_rate' => (float) $first->tax_rate,

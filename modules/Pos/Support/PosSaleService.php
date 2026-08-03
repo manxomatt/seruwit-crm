@@ -357,7 +357,9 @@ class PosSaleService
 
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)
             && class_exists(\Modules\Accounting\Support\TaxComputation::class)) {
-            $snap = \Modules\Accounting\Support\TaxSettings::snapshot();
+            $snap = \Modules\Accounting\Support\TaxSettings::snapshot(
+                channel: \Modules\Accounting\Support\TaxChannels::POS_SALE,
+            );
             // POS retail defaults to inclusive unless the tax code says exclusive.
             if (($snap['calculation'] ?? '') !== \Modules\Accounting\Models\TaxCode::CALC_EXCLUSIVE) {
                 $snap['calculation'] = \Modules\Accounting\Models\TaxCode::CALC_INCLUSIVE;

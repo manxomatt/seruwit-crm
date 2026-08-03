@@ -90,7 +90,9 @@ class PromoAwardSettlementService
         }
 
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-            [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate();
+            [$taxEnabled, $taxRate] = \Modules\Accounting\Support\TaxSettings::enabledAndRate(
+                \Modules\Accounting\Support\TaxChannels::PROMOTIONS_SETTLEMENT,
+            );
         } else {
             $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
             $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');

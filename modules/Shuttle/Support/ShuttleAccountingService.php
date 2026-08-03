@@ -60,7 +60,9 @@ class ShuttleAccountingService
             return ['net' => $fare, 'tax' => 0.0, 'paid' => $fare, 'tax_code_id' => null];
         }
 
-        $snap = \Modules\Accounting\Support\TaxSettings::snapshot();
+        $snap = \Modules\Accounting\Support\TaxSettings::snapshot(
+            channel: \Modules\Accounting\Support\TaxChannels::SHUTTLE_INVOICE,
+        );
 
         if (! $snap['enabled'] || $snap['rate'] <= 0) {
             return [

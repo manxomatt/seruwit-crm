@@ -70,7 +70,9 @@ class OrderInvoiceController extends Controller
 
         $invoice = DB::transaction(function () use ($partnerId, $orders): Invoice {
             if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-                $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributes();
+                $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributesFor(
+                    \Modules\Accounting\Support\TaxChannels::BILLING_ORDER_INVOICE,
+                );
             } else {
                 $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
                 $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');

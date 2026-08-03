@@ -83,7 +83,9 @@ class InvoiceController extends Controller
         $validated = $request->validated();
 
         if (class_exists(\Modules\Accounting\Support\TaxSettings::class)) {
-            $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributes();
+            $taxAttrs = \Modules\Accounting\Support\TaxSettings::documentAttributesFor(
+                \Modules\Accounting\Support\TaxChannels::INVOICING_MANUAL,
+            );
         } else {
             $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
             $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
