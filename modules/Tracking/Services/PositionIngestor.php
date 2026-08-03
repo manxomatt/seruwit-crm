@@ -97,6 +97,13 @@ class PositionIngestor
                 ->values();
         }
 
+        if ($this->config->usesGpsServer()) {
+            return collect((new GpsServerClient($this->config))->latestPositions())
+                ->map(fn (array $row) => PositionPayload::fromGpsServer($row))
+                ->filter()
+                ->values();
+        }
+
         return collect((new TraccarClient($this->config))->latestPositions())
             ->map(fn (array $row) => PositionPayload::fromTraccar($row))
             ->filter()

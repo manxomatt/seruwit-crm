@@ -51,6 +51,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | GPS-Server Timestamp Timezone
+    |--------------------------------------------------------------------------
+    |
+    | USER_GET_OBJECTS returns naive datetimes (no offset). Those clocks are
+    | local to the GPS-Server instance — typically Asia/Jakarta — so we parse
+    | them in this zone before converting into the app timezone.
+    |
+    */
+
+    'gps_server_timezone' => env('TRACKING_GPS_SERVER_TIMEZONE', 'Asia/Jakarta'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Prune Chunk Size
     |--------------------------------------------------------------------------
     |

@@ -11,8 +11,8 @@ use Illuminate\Support\Arr;
  * other modules in an event without dragging Eloquent models across a module
  * boundary.
  *
- * `traccarDeviceId` is the local provider key: Traccar's device id, or Sky
- * Track's numeric IMEI (stored the same way on gps_devices).
+ * `traccarDeviceId` is the local provider key: Traccar's device id, or a
+ * numeric IMEI from Sky Track / GPS-Server (stored the same way on gps_devices).
  */
 class PositionPayload
 {
@@ -183,6 +183,76 @@ class PositionPayload
     }
 
     /**
+     * Builds a payload from a GPS-Server `USER_GET_OBJECTS` row, or null when
+     * the fix is not usable. Speed is already km/h; IMEI is the device key;
+     * odometer is kilometres and is converted to metres for distance tracking.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    public static function fromGpsServer(array $row): ?self
+    {
+        $imei = trim((string) Arr::get($row, 'imei', ''));
+
+        if ($imei === '' || ! ctype_digit($imei)) {
+            return null;
+        }
+
+        $latitude = Arr::get($row, 'lat');
+        $longitude = Arr::get($row, 'lng');
+
+        if (! is_numeric($latitude) || ! is_numeric($longitude)) {
+            return null;
+        }
+
+        $latitude = (float) $latitude;
+        $longitude = (float) $longitude;
+
+        if (abs($latitude) > 90 || abs($longitude) > 180) {
+            return null;
+        }
+
+        if ($latitude === 0.0 && $longitude === 0.0) {
+            return null;
+        }
+
+        $recordedAt = self::parseGpsServerTime(
+            Arr::get($row, 'dt_tracker')
+            ?? Arr::get($row, 'dt_server')
+        );
+
+        if ($recordedAt === null) {
+            return null;
+        }
+
+        if ($recordedAt->isAfter(now()->addMinutes((int) config('tracking.max_future_fix_minutes', 10)))) {
+            return null;
+        }
+
+        $params = Arr::get($row, 'params');
+        $params = is_array($params) ? $params : null;
+
+        $odometerKm = Arr::get($row, 'odometer');
+        $totalDistanceM = is_numeric($odometerKm)
+            ? (int) round(((float) $odometerKm) * 1000)
+            : null;
+
+        return new self(
+            traccarDeviceId: (int) $imei,
+            latitude: $latitude,
+            longitude: $longitude,
+            speedKph: round((float) (Arr::get($row, 'speed') ?? 0), 2),
+            course: is_numeric(Arr::get($row, 'angle')) ? (float) $row['angle'] : null,
+            altitude: is_numeric(Arr::get($row, 'altitude')) ? (float) $row['altitude'] : null,
+            ignition: self::parseBool(Arr::get($params ?? [], 'acc')),
+            motion: self::parseBool(Arr::get($params ?? [], 'track') ?? Arr::get($params ?? [], 'motion')),
+            totalDistanceM: $totalDistanceM,
+            recordedAt: $recordedAt,
+            serverTime: self::parseGpsServerTime(Arr::get($row, 'dt_server')),
+            attributes: $params,
+        );
+    }
+
+    /**
      * The row shape used for the batched insert.
      *
      * @return array<string, mixed>
@@ -226,15 +296,32 @@ class PositionPayload
      */
     private static function parseSkyTrackTime(mixed $value): ?CarbonImmutable
     {
-        if (! is_string($value) || $value === '') {
+        return self::parseNaiveProviderTime(
+            $value,
+            (string) config('tracking.sky_track_timezone', 'Asia/Jakarta'),
+        );
+    }
+
+    /**
+     * GPS-Server also emits naive local datetimes (typically Asia/Jakarta).
+     */
+    private static function parseGpsServerTime(mixed $value): ?CarbonImmutable
+    {
+        return self::parseNaiveProviderTime(
+            $value,
+            (string) config('tracking.gps_server_timezone', 'Asia/Jakarta'),
+        );
+    }
+
+    private static function parseNaiveProviderTime(mixed $value, string $timezone): ?CarbonImmutable
+    {
+        if (! is_string($value) || $value === '' || str_starts_with($value, '0000-00-00')) {
             return null;
         }
 
         try {
-            return CarbonImmutable::parse(
-                $value,
-                (string) config('tracking.sky_track_timezone', 'Asia/Jakarta'),
-            )->timezone((string) config('app.timezone', 'UTC'));
+            return CarbonImmutable::parse($value, $timezone)
+                ->timezone((string) config('app.timezone', 'UTC'));
         } catch (\Throwable) {
             return null;
         }

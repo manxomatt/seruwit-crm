@@ -74,6 +74,21 @@ class TrackingConfigFactory extends Factory
     }
 
     /**
+     * Indicate that the tenant uses the GPS-Server (gsi-tracking) provider.
+     */
+    public function gpsServer(string $apiKey = 'gps-server-key'): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'provider' => TrackingConfig::PROVIDER_GPS_SERVER,
+            'base_url' => 'https://gsi-tracking.example.test',
+            'auth_type' => TrackingConfig::AUTH_API_KEY,
+            'email' => null,
+            'password' => null,
+            'token' => $apiKey,
+        ]);
+    }
+
+    /**
      * Indicate that polling is switched off for this tenant.
      */
     public function disabled(): static

@@ -70,18 +70,20 @@ return [
     'providers' => [
         'traccar' => 'Traccar (generic)',
         'sky_track' => 'Sky Track (custom)',
+        'gps_server' => 'GPS-Server',
     ],
 
     'auth_types' => [
         'basic' => 'Email & password',
         'token' => 'API token',
-        'api_key' => 'API key (X-Api-Key)',
+        'api_key' => 'API key',
     ],
 
     'fields' => [
         'provider' => 'GPS provider',
         'base_url' => 'Traccar server URL',
         'sky_track_url' => 'Sky Track API URL',
+        'gps_server_url' => 'GPS-Server URL',
         'auth_type' => 'Authentication',
         'token' => 'API token',
         'api_key' => 'API key',
@@ -207,7 +209,10 @@ return [
             'title' => 'Tracking Settings',
             'traccar_hint' => 'Generic Traccar-compatible server. Authenticate with email/password or an API token.',
             'sky_track_hint' => 'Custom Sky Track integration. Authenticate with an X-Api-Key header.',
-            'api_key_hint' => 'Sent as the X-Api-Key request header. Leave blank to keep the stored key.',
+            'gps_server_hint' => 'GPS-Server / gsi-tracking API. Authenticate with the API key query parameter.',
+            'api_key_hint' => 'Leave blank to keep the stored key.',
+            'sky_track_api_key_hint' => 'Sent as the X-Api-Key request header. Leave blank to keep the stored key.',
+            'gps_server_api_key_hint' => 'Sent as the key query parameter on /api/api.php. Leave blank to keep the stored key.',
         ],
     ],
 

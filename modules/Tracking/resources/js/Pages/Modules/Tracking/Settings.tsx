@@ -78,19 +78,71 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
     };
 
     const isSkyTrack = data.provider === 'sky_track';
-    const usesToken = !isSkyTrack && data.auth_type === 'token';
+    const isGpsServer = data.provider === 'gps_server';
+    const usesApiKey = isSkyTrack || isGpsServer;
+    const usesToken = !usesApiKey && data.auth_type === 'token';
 
     const setProvider = (provider: string) => {
+        const nextUsesApiKey = provider === 'sky_track' || provider === 'gps_server';
+
         setData({
             ...data,
             provider,
-            auth_type: provider === 'sky_track'
+            auth_type: nextUsesApiKey
                 ? 'api_key'
                 : (data.auth_type === 'api_key' ? 'basic' : data.auth_type),
-            email: provider === 'sky_track' ? '' : data.email,
-            password: provider === 'sky_track' ? '' : data.password,
+            email: nextUsesApiKey ? '' : data.email,
+            password: nextUsesApiKey ? '' : data.password,
             token: '',
         });
+    };
+
+    const providerHint = () => {
+        if (isSkyTrack) {
+            return t('tracking.pages.settings.sky_track_hint');
+        }
+
+        if (isGpsServer) {
+            return t('tracking.pages.settings.gps_server_hint');
+        }
+
+        return t('tracking.pages.settings.traccar_hint');
+    };
+
+    const baseUrlLabel = () => {
+        if (isSkyTrack) {
+            return t('tracking.fields.sky_track_url');
+        }
+
+        if (isGpsServer) {
+            return t('tracking.fields.gps_server_url');
+        }
+
+        return t('tracking.fields.base_url');
+    };
+
+    const baseUrlPlaceholder = () => {
+        if (isSkyTrack) {
+            return 'https://api.sky-track.example.com';
+        }
+
+        if (isGpsServer) {
+            return 'https://gsi-tracking.com';
+        }
+
+        return defaultBaseUrl ?? 'https://gps.example.com';
+    };
+
+    const apiKeyHint = () => {
+        if (isGpsServer) {
+            return t('tracking.pages.settings.gps_server_api_key_hint');
+        }
+
+        if (isSkyTrack) {
+            return t('tracking.pages.settings.sky_track_api_key_hint');
+        }
+
+        return t('tracking.pages.settings.api_key_hint');
     };
 
     return (
@@ -118,20 +170,19 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                 options={[
                                     { value: 'traccar', label: t('tracking.providers.traccar') },
                                     { value: 'sky_track', label: t('tracking.providers.sky_track') },
+                                    { value: 'gps_server', label: t('tracking.providers.gps_server') },
                                 ]}
                             />
                             <InputError message={errors.provider} className="mt-2" />
                             <p className="mt-1 text-xs text-gray-500">
-                                {isSkyTrack
-                                    ? t('tracking.pages.settings.sky_track_hint')
-                                    : t('tracking.pages.settings.traccar_hint')}
+                                {providerHint()}
                             </p>
                         </div>
 
                         <div>
                             <InputLabel
                                 htmlFor="base_url"
-                                value={isSkyTrack ? t('tracking.fields.sky_track_url') : t('tracking.fields.base_url')}
+                                value={baseUrlLabel()}
                             />
                             <TextInput
                                 id="base_url"
@@ -139,16 +190,16 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                 className="mt-1 block w-full"
                                 value={data.base_url}
                                 onChange={(e) => setData('base_url', e.target.value)}
-                                placeholder={isSkyTrack ? 'https://api.sky-track.example.com' : (defaultBaseUrl ?? 'https://gps.example.com')}
-                                required={isSkyTrack}
+                                placeholder={baseUrlPlaceholder()}
+                                required={usesApiKey}
                             />
                             <InputError message={errors.base_url} className="mt-2" />
-                            {!isSkyTrack && defaultBaseUrl && (
+                            {!usesApiKey && defaultBaseUrl && (
                                 <p className="mt-1 text-xs text-gray-500">Leave blank to use the default server: {defaultBaseUrl}</p>
                             )}
                         </div>
 
-                        {isSkyTrack ? (
+                        {usesApiKey ? (
                             <div>
                                 <InputLabel htmlFor="token" value={t('tracking.fields.api_key')} />
                                 <TextInput
@@ -160,7 +211,7 @@ export default function Settings({ config, hasPassword, hasToken, defaultBaseUrl
                                     placeholder={hasToken ? '•••••••• (unchanged)' : ''}
                                 />
                                 <InputError message={errors.token} className="mt-2" />
-                                <p className="mt-1 text-xs text-gray-500">{t('tracking.pages.settings.api_key_hint')}</p>
+                                <p className="mt-1 text-xs text-gray-500">{apiKeyHint()}</p>
                             </div>
                         ) : (
                             <>

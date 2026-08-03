@@ -182,4 +182,75 @@ class PositionPayloadTest extends TestCase
             'data' => ['dt_tracker' => null, 'dt_server' => null],
         ])));
     }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function gpsServerRow(array $overrides = []): array
+    {
+        return array_replace_recursive([
+            'imei' => '352503097417775',
+            'active' => 'true',
+            'dt_server' => '2026-08-03 15:54:04',
+            'dt_tracker' => '2026-08-03 15:53:26',
+            'lat' => '-7.806912',
+            'lng' => '110.413102',
+            'altitude' => '0',
+            'angle' => '103',
+            'speed' => '11',
+            'params' => [
+                'acc' => '1',
+                'track' => '1',
+                'batl' => '6',
+            ],
+            'name' => 'ROCKY',
+            'odometer' => '29549.893497999794',
+        ], $overrides);
+    }
+
+    public function test_it_maps_a_gps_server_row_without_converting_speed(): void
+    {
+        $payload = PositionPayload::fromGpsServer($this->gpsServerRow());
+
+        $this->assertSame(352503097417775, $payload->traccarDeviceId);
+        $this->assertSame(-7.806912, $payload->latitude);
+        $this->assertSame(110.413102, $payload->longitude);
+        $this->assertSame(11.0, $payload->speedKph);
+        $this->assertSame(103.0, $payload->course);
+        $this->assertSame(0.0, $payload->altitude);
+        $this->assertTrue($payload->ignition);
+        $this->assertTrue($payload->motion);
+        $this->assertSame(29549893, $payload->totalDistanceM);
+        // 15:53:26 Asia/Jakarta → 08:53:26 UTC when APP_TIMEZONE is UTC.
+        $this->assertSame('2026-08-03 08:53:26', $payload->recordedAt->toDateTimeString());
+        $this->assertSame('6', $payload->attributes['batl']);
+    }
+
+    public function test_it_falls_back_to_gps_server_server_time(): void
+    {
+        $payload = PositionPayload::fromGpsServer($this->gpsServerRow([
+            'dt_tracker' => null,
+        ]));
+
+        $this->assertSame('2026-08-03 08:54:04', $payload->recordedAt->toDateTimeString());
+    }
+
+    public function test_it_rejects_unusable_gps_server_rows(): void
+    {
+        $this->assertNull(PositionPayload::fromGpsServer($this->gpsServerRow(['imei' => ''])));
+        $this->assertNull(PositionPayload::fromGpsServer($this->gpsServerRow(['imei' => 'ABC'])));
+        $this->assertNull(PositionPayload::fromGpsServer($this->gpsServerRow([
+            'lat' => 0,
+            'lng' => 0,
+        ])));
+        $this->assertNull(PositionPayload::fromGpsServer($this->gpsServerRow([
+            'dt_tracker' => null,
+            'dt_server' => null,
+        ])));
+        $this->assertNull(PositionPayload::fromGpsServer($this->gpsServerRow([
+            'dt_tracker' => '0000-00-00 00:00:00',
+            'dt_server' => '0000-00-00 00:00:00',
+        ])));
+    }
 }

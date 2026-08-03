@@ -21,7 +21,7 @@ class UpdateTrackingConfigRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->input('provider') === TrackingConfig::PROVIDER_SKY_TRACK) {
+        if (in_array($this->input('provider'), TrackingConfig::apiKeyProviders(), true)) {
             $this->merge([
                 'auth_type' => TrackingConfig::AUTH_API_KEY,
                 'email' => null,
@@ -37,14 +37,14 @@ class UpdateTrackingConfigRequest extends FormRequest
      */
     public function rules(): array
     {
-        $isSkyTrack = $this->input('provider') === TrackingConfig::PROVIDER_SKY_TRACK;
+        $usesApiKey = in_array($this->input('provider'), TrackingConfig::apiKeyProviders(), true);
 
         return [
             'provider' => ['required', Rule::in(TrackingConfig::providers())],
-            'base_url' => [$isSkyTrack ? 'required' : 'nullable', 'url', 'max:255'],
+            'base_url' => [$usesApiKey ? 'required' : 'nullable', 'url', 'max:255'],
             'auth_type' => [
                 'required',
-                Rule::in($isSkyTrack
+                Rule::in($usesApiKey
                     ? [TrackingConfig::AUTH_API_KEY]
                     : [TrackingConfig::AUTH_BASIC, TrackingConfig::AUTH_TOKEN]),
             ],

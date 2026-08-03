@@ -157,6 +157,39 @@ class TrackingCommandsTest extends TestCase
         $tenant->run(fn () => $this->assertSame(1, VehiclePosition::count()));
     }
 
+    public function test_it_polls_a_gps_server_tenant(): void
+    {
+        $tenant = $this->trackedTenant('GPS Server One', 'gps-server-one', 'owner@gps-server-one.test');
+        $imei = '352503097417775';
+
+        $tenant->run(function () use ($imei) {
+            TrackingConfig::factory()->gpsServer()->create();
+            GpsDevice::factory()->create([
+                'traccar_device_id' => (int) $imei,
+                'unique_id' => $imei,
+            ]);
+        });
+
+        Http::fake([
+            'gsi-tracking.example.test/api/api.php*' => Http::response([[
+                'imei' => $imei,
+                'dt_server' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                'dt_tracker' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                'lat' => '-7.806912',
+                'lng' => '110.413102',
+                'speed' => '11',
+                'angle' => '103',
+                'altitude' => '0',
+                'params' => ['acc' => '1', 'track' => '1'],
+                'odometer' => '29549.89',
+            ]]),
+        ]);
+
+        $this->artisan('tracking:poll')->assertSuccessful();
+
+        $tenant->run(fn () => $this->assertSame(1, VehiclePosition::count()));
+    }
+
     public function test_a_tenant_without_the_module_installed_is_skipped(): void
     {
         $tenant = $this->provisionTenant('No Track', 'no-track', 'owner@no-track.test');

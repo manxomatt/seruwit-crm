@@ -20,6 +20,8 @@ class TrackingConfig extends Model
 
     public const PROVIDER_SKY_TRACK = 'sky_track';
 
+    public const PROVIDER_GPS_SERVER = 'gps_server';
+
     public const AUTH_BASIC = 'basic';
 
     public const AUTH_TOKEN = 'token';
@@ -101,12 +103,36 @@ class TrackingConfig extends Model
         return [
             self::PROVIDER_TRACCAR,
             self::PROVIDER_SKY_TRACK,
+            self::PROVIDER_GPS_SERVER,
+        ];
+    }
+
+    /**
+     * Providers that authenticate with a single API key (stored in `token`).
+     *
+     * @return list<string>
+     */
+    public static function apiKeyProviders(): array
+    {
+        return [
+            self::PROVIDER_SKY_TRACK,
+            self::PROVIDER_GPS_SERVER,
         ];
     }
 
     public function usesSkyTrack(): bool
     {
         return $this->provider === self::PROVIDER_SKY_TRACK;
+    }
+
+    public function usesGpsServer(): bool
+    {
+        return $this->provider === self::PROVIDER_GPS_SERVER;
+    }
+
+    public function usesApiKeyAuth(): bool
+    {
+        return in_array($this->provider, self::apiKeyProviders(), true);
     }
 
     public function usesTraccar(): bool
@@ -140,7 +166,7 @@ class TrackingConfig extends Model
             return false;
         }
 
-        if ($this->usesSkyTrack()) {
+        if ($this->usesApiKeyAuth()) {
             return filled($this->token);
         }
 

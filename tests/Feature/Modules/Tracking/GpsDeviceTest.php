@@ -180,6 +180,49 @@ class GpsDeviceTest extends TestCase
         $this->assertSame(352503094515944, $created->traccar_device_id);
     }
 
+    public function test_gps_server_sync_imports_objects_by_imei(): void
+    {
+        $user = $this->createAdminUser();
+        TrackingConfig::factory()->gpsServer('gps-server-key')->create();
+        $existing = GpsDevice::factory()->create([
+            'traccar_device_id' => 352503094417117,
+            'unique_id' => '352503094417117',
+            'name' => 'Old name',
+            'status' => 'offline',
+        ]);
+
+        Http::fake([
+            'gsi-tracking.example.test/api/api.php*' => Http::response([
+                [
+                    'imei' => '352503094417117',
+                    'name' => 'PUTIH',
+                    'active' => 'false',
+                    'lat' => '-7.988503',
+                    'lng' => '110.255173',
+                ],
+                [
+                    'imei' => '352503097417775',
+                    'name' => 'ROCKY',
+                    'active' => 'true',
+                    'lat' => '-7.806912',
+                    'lng' => '110.413102',
+                ],
+            ]),
+        ]);
+
+        $this->actingAs($user)->post(route('module.tracking.devices.sync'))->assertSessionHas('success');
+
+        $this->assertSame(2, GpsDevice::count());
+        $this->assertSame('PUTIH', $existing->fresh()->name);
+        $this->assertSame('offline', $existing->fresh()->status);
+
+        $created = GpsDevice::query()->where('unique_id', '352503097417775')->first();
+        $this->assertNotNull($created);
+        $this->assertSame('ROCKY', $created->name);
+        $this->assertSame('online', $created->status);
+        $this->assertSame(352503097417775, $created->traccar_device_id);
+    }
+
     public function test_pairing_captures_the_vehicles_odometer_as_the_baseline(): void
     {
         $user = $this->createAdminUser();

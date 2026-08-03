@@ -342,4 +342,42 @@ class PositionIngestorTest extends TestCase
         $this->assertSame('42.00', $device->last_speed_kph);
         $this->assertSame(2113841, $device->traccar_total_distance_m);
     }
+
+    public function test_it_ingests_gps_server_live_positions_by_imei(): void
+    {
+        $imei = '352503097417775';
+        $device = GpsDevice::factory()->create([
+            'traccar_device_id' => (int) $imei,
+            'unique_id' => $imei,
+        ]);
+
+        Http::fake([
+            'gsi-tracking.example.test/api/api.php*' => Http::response([[
+                'imei' => $imei,
+                'active' => 'true',
+                'dt_server' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                'dt_tracker' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                'lat' => '-7.806912',
+                'lng' => '110.413102',
+                'altitude' => '0',
+                'angle' => '103',
+                'speed' => '11',
+                'params' => [
+                    'acc' => '1',
+                    'track' => '1',
+                ],
+                'odometer' => '29549.893497999794',
+            ]]),
+        ]);
+
+        $config = TrackingConfig::factory()->gpsServer()->create();
+
+        $this->assertSame(1, PositionIngestor::for($config)->ingest($config));
+        $this->assertSame(1, VehiclePosition::count());
+
+        $device->refresh();
+        $this->assertSame('-7.8069120', $device->last_latitude);
+        $this->assertSame('11.00', $device->last_speed_kph);
+        $this->assertSame(29549893, $device->traccar_total_distance_m);
+    }
 }

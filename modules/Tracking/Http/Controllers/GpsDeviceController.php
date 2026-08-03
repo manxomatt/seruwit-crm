@@ -14,6 +14,7 @@ use Modules\Tracking\Exceptions\TraccarException;
 use Modules\Tracking\Http\Requests\PairGpsDeviceRequest;
 use Modules\Tracking\Models\GpsDevice;
 use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Services\GpsServerClient;
 use Modules\Tracking\Services\SkyTrackClient;
 use Modules\Tracking\Services\TraccarClient;
 
@@ -85,9 +86,11 @@ class GpsDeviceController extends Controller
         }
 
         try {
-            $synced = $config->usesSkyTrack()
-                ? $this->syncFromSkyTrack($config)
-                : $this->syncFromTraccar($config);
+            $synced = match (true) {
+                $config->usesSkyTrack() => $this->syncFromSkyTrack($config),
+                $config->usesGpsServer() => $this->syncFromGpsServer($config),
+                default => $this->syncFromTraccar($config),
+            };
         } catch (TraccarException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -134,7 +137,24 @@ class GpsDeviceController extends Controller
      */
     private function syncFromSkyTrack(TrackingConfig $config): int
     {
-        $objects = (new SkyTrackClient($config))->objects();
+        return $this->syncImeiObjects((new SkyTrackClient($config))->objects());
+    }
+
+    /**
+     * GPS-Server also keys objects by IMEI via USER_GET_OBJECTS.
+     *
+     * @throws TraccarException
+     */
+    private function syncFromGpsServer(TrackingConfig $config): int
+    {
+        return $this->syncImeiObjects((new GpsServerClient($config))->objects());
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $objects
+     */
+    private function syncImeiObjects(array $objects): int
+    {
         $synced = 0;
 
         foreach ($objects as $object) {

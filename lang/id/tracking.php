@@ -70,18 +70,20 @@ return [
     'providers' => [
         'traccar' => 'Traccar (generic)',
         'sky_track' => 'Sky Track (custom)',
+        'gps_server' => 'GPS-Server',
     ],
 
     'auth_types' => [
         'basic' => 'Email & password',
         'token' => 'API token',
-        'api_key' => 'API key (X-Api-Key)',
+        'api_key' => 'API key',
     ],
 
     'fields' => [
         'provider' => 'Provider GPS',
         'base_url' => 'URL server Traccar',
         'sky_track_url' => 'URL API Sky Track',
+        'gps_server_url' => 'URL GPS-Server',
         'auth_type' => 'Autentikasi',
         'token' => 'API token',
         'api_key' => 'API key',
@@ -207,7 +209,10 @@ return [
             'title' => 'Pengaturan Tracking',
             'traccar_hint' => 'Server kompatibel Traccar (generic). Autentikasi dengan email/password atau API token.',
             'sky_track_hint' => 'Integrasi khusus Sky Track. Autentikasi memakai header X-Api-Key.',
-            'api_key_hint' => 'Dikirim sebagai header X-Api-Key. Kosongkan untuk mempertahankan key yang tersimpan.',
+            'gps_server_hint' => 'API GPS-Server / gsi-tracking. Autentikasi memakai parameter query key.',
+            'api_key_hint' => 'Kosongkan untuk mempertahankan key yang tersimpan.',
+            'sky_track_api_key_hint' => 'Dikirim sebagai header X-Api-Key. Kosongkan untuk mempertahankan key yang tersimpan.',
+            'gps_server_api_key_hint' => 'Dikirim sebagai parameter query key pada /api/api.php. Kosongkan untuk mempertahankan key yang tersimpan.',
         ],
     ],
 

@@ -113,6 +113,30 @@ class TrackingConfigTest extends TestCase
         $this->assertTrue($config->isConfigured());
     }
 
+    public function test_gps_server_settings_store_url_and_api_key(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->patch(route('module.tracking.settings.update'), $this->payload([
+            'provider' => 'gps_server',
+            'base_url' => 'https://gsi-tracking.com',
+            'auth_type' => 'api_key',
+            'email' => 'ignored@example.test',
+            'password' => 'ignored',
+            'token' => '8A215CA3D0D513899DB7357D9CBE0CD5',
+        ]))->assertSessionHas('success');
+
+        $config = TrackingConfig::first();
+        $this->assertSame('gps_server', $config->provider);
+        $this->assertSame('api_key', $config->auth_type);
+        $this->assertSame('https://gsi-tracking.com', $config->base_url);
+        $this->assertSame('8A215CA3D0D513899DB7357D9CBE0CD5', $config->token);
+        $this->assertNull($config->email);
+        $this->assertNull($config->password);
+        $this->assertTrue($config->isConfigured());
+        $this->assertTrue($config->usesGpsServer());
+    }
+
     public function test_sky_track_requires_a_base_url(): void
     {
         $user = $this->createAdminUser();
@@ -122,6 +146,18 @@ class TrackingConfigTest extends TestCase
             'base_url' => '',
             'auth_type' => 'api_key',
             'token' => 'sky-secret-key',
+        ]))->assertSessionHasErrors(['base_url']);
+    }
+
+    public function test_gps_server_requires_a_base_url(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->patch(route('module.tracking.settings.update'), $this->payload([
+            'provider' => 'gps_server',
+            'base_url' => '',
+            'auth_type' => 'api_key',
+            'token' => 'gps-server-key',
         ]))->assertSessionHasErrors(['base_url']);
     }
 
@@ -160,6 +196,28 @@ class TrackingConfigTest extends TestCase
 
         Http::assertSent(fn ($request) => $request->url() === 'https://api.sky-track.example.test/api/objects'
             && $request->hasHeader('X-Api-Key', 'sky-secret-key'));
+        $this->assertNull(TrackingConfig::first()->last_poll_error);
+    }
+
+    public function test_the_gps_server_connection_test_sends_key_query_parameter(): void
+    {
+        $user = $this->createAdminUser();
+        TrackingConfig::factory()->gpsServer('gps-server-key')->create();
+        Http::fake([
+            'gsi-tracking.example.test/api/api.php*' => Http::response([]),
+        ]);
+
+        $this->actingAs($user)->post(route('module.tracking.settings.test'))->assertSessionHas('success');
+
+        Http::assertSent(function ($request) {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            return str_starts_with($request->url(), 'https://gsi-tracking.example.test/api/api.php')
+                && ($query['api'] ?? null) === 'user'
+                && ($query['ver'] ?? null) === '1.0'
+                && ($query['key'] ?? null) === 'gps-server-key'
+                && ($query['cmd'] ?? null) === 'USER_GET_OBJECTS';
+        });
         $this->assertNull(TrackingConfig::first()->last_poll_error);
     }
 

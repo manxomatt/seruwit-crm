@@ -10,6 +10,7 @@ use Inertia\Response;
 use Modules\Tracking\Exceptions\TraccarException;
 use Modules\Tracking\Http\Requests\UpdateTrackingConfigRequest;
 use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Services\GpsServerClient;
 use Modules\Tracking\Services\SkyTrackClient;
 use Modules\Tracking\Services\TraccarClient;
 
@@ -77,7 +78,7 @@ class TrackingConfigController extends Controller
             }
         }
 
-        if (($validated['provider'] ?? null) === TrackingConfig::PROVIDER_SKY_TRACK) {
+        if (in_array($validated['provider'] ?? null, TrackingConfig::apiKeyProviders(), true)) {
             $validated['auth_type'] = TrackingConfig::AUTH_API_KEY;
             $validated['email'] = null;
             $validated['password'] = null;
@@ -102,6 +103,8 @@ class TrackingConfigController extends Controller
         try {
             if ($config->usesSkyTrack()) {
                 (new SkyTrackClient($config))->verify();
+            } elseif ($config->usesGpsServer()) {
+                (new GpsServerClient($config))->verify();
             } else {
                 (new TraccarClient($config))->verify();
             }
