@@ -24,14 +24,14 @@ interface VehicleRow {
     plate_number: string;
     type: string | null;
     status: string;
-    availability: 'free' | 'booked' | 'unavailable';
+    availability: 'free' | 'booked' | 'in_use' | 'unavailable';
     bookings: Booking[];
 }
 
 interface Board {
     from: string;
     to: string;
-    counts: { total: number; free: number; booked: number };
+    counts: { total: number; free: number; booked: number; in_use: number };
     vehicles: VehicleRow[];
 }
 
@@ -43,6 +43,7 @@ interface Props {
 const AVAIL_STYLES: Record<string, string> = {
     free: 'bg-green-100 text-green-800',
     booked: 'bg-amber-100 text-amber-800',
+    in_use: 'bg-blue-100 text-blue-800',
     unavailable: 'bg-gray-100 text-gray-600',
 };
 
@@ -87,10 +88,11 @@ export default function Index({ board, filters }: Props): JSX.Element {
                 <SecondaryButton type="submit">{t('rental.actions.search')}</SecondaryButton>
             </form>
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-3">
+            <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard label={t('rental.availability.total')} value={board.counts.total} />
                 <StatCard label={t('rental.availability.free')} value={board.counts.free} />
                 <StatCard label={t('rental.availability.booked')} value={board.counts.booked} />
+                <StatCard label={t('rental.availability.in_use')} value={board.counts.in_use} />
             </div>
 
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -140,6 +142,8 @@ export default function Index({ board, filters }: Props): JSX.Element {
                                                         {booking.code}
                                                     </Link>
                                                     <span className="ml-2 text-xs text-gray-500">
+                                                        {t(`rental.status.${booking.status}`, undefined, booking.status)}
+                                                        {' · '}
                                                         {booking.start_date} → {booking.end_date}
                                                         {booking.partner ? ` · ${booking.partner}` : ''}
                                                     </span>

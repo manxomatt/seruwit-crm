@@ -180,8 +180,9 @@ return [
 
     'availability' => [
         'total' => 'Kendaraan',
-        'free' => 'Kosong',
-        'booked' => 'Terbooking',
+        'free' => 'Tersedia',
+        'booked' => 'Dibooking',
+        'in_use' => 'Digunakan',
         'unavailable' => 'Tidak tersedia',
         'column' => 'Ketersediaan',
         'bookings' => 'Booking',

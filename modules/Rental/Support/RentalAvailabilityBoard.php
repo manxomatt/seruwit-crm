@@ -12,10 +12,15 @@ class RentalAvailabilityBoard
     /**
      * Build a vehicle availability board for [$from, $to].
      *
+     * Availability is driven by overlapping rental status:
+     * - draft only (or none) → free (Tersedia)
+     * - confirmed → booked (Dibooking)
+     * - active → in_use (Digunakan)
+     *
      * @return array{
      *     from: string,
      *     to: string,
-     *     counts: array{total: int, free: int, booked: int},
+     *     counts: array{total: int, free: int, booked: int, in_use: int},
      *     vehicles: list<array{
      *         id: int,
      *         name: string,
@@ -38,7 +43,11 @@ class RentalAvailabilityBoard
 
         $rentals = Rental::query()
             ->with('partner:id,name')
-            ->whereIn('status', [Rental::STATUS_CONFIRMED, Rental::STATUS_ACTIVE])
+            ->whereIn('status', [
+                Rental::STATUS_DRAFT,
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+            ])
             ->where('start_date', '<=', $toDate)
             ->where('end_date', '>=', $fromDate)
             ->orderBy('start_date')
@@ -48,6 +57,7 @@ class RentalAvailabilityBoard
         $rows = [];
         $free = 0;
         $booked = 0;
+        $inUse = 0;
 
         foreach ($vehicles as $vehicle) {
             /** @var Collection<int, Rental> $bookings */
@@ -62,16 +72,14 @@ class RentalAvailabilityBoard
                 'partner' => $rental->partner?->name,
             ])->values()->all();
 
-            $availability = 'free';
+            $availability = $this->resolveAvailability($vehicle, $bookings);
 
-            if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
-                $availability = 'unavailable';
-            } elseif ($bookingRows !== []) {
-                $availability = 'booked';
-                $booked++;
-            } else {
-                $free++;
-            }
+            match ($availability) {
+                'in_use' => $inUse++,
+                'booked' => $booked++,
+                'free' => $free++,
+                default => null,
+            };
 
             $rows[] = [
                 'id' => $vehicle->id,
@@ -91,8 +99,30 @@ class RentalAvailabilityBoard
                 'total' => $vehicles->count(),
                 'free' => $free,
                 'booked' => $booked,
+                'in_use' => $inUse,
             ],
             'vehicles' => $rows,
         ];
+    }
+
+    /**
+     * @param  Collection<int, Rental>  $bookings
+     */
+    private function resolveAvailability(Vehicle $vehicle, Collection $bookings): string
+    {
+        if ($vehicle->status !== Vehicle::STATUS_ACTIVE) {
+            return 'unavailable';
+        }
+
+        if ($bookings->contains(fn (Rental $rental): bool => $rental->status === Rental::STATUS_ACTIVE)) {
+            return 'in_use';
+        }
+
+        if ($bookings->contains(fn (Rental $rental): bool => $rental->status === Rental::STATUS_CONFIRMED)) {
+            return 'booked';
+        }
+
+        // Draft rentals (or none) leave the vehicle available.
+        return 'free';
     }
 }

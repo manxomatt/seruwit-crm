@@ -180,8 +180,9 @@ return [
 
     'availability' => [
         'total' => 'Vehicles',
-        'free' => 'Free',
+        'free' => 'Available',
         'booked' => 'Booked',
+        'in_use' => 'In use',
         'unavailable' => 'Unavailable',
         'column' => 'Availability',
         'bookings' => 'Bookings',
