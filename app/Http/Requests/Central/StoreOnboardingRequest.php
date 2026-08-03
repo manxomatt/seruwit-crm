@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Central;
 
+use App\Actions\Tenancy\CreateTenantAction;
+use App\Models\OnboardingSession;
 use App\Rules\ValidSubdomain;
 use App\Support\Onboarding\SelfServeProvisioningPlan;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,7 +23,7 @@ class StoreOnboardingRequest extends FormRequest
     {
         return [
             'company_name' => ['required', 'string', 'max:255'],
-            'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain],
+            'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain($this->ignoreDomainForRetry())],
             'verticals' => ['required', 'array', 'min:1'],
             'verticals.*' => [
                 'required',
@@ -43,5 +45,28 @@ class StoreOnboardingRequest extends FormRequest
             'verticals.required' => __('central.onboarding.validation.verticals_required'),
             'verticals.min' => __('central.onboarding.validation.verticals_required'),
         ];
+    }
+
+    /**
+     * When retrying a failed session for the same subdomain, allow the domain
+     * already attached to that half-provisioned tenant.
+     */
+    private function ignoreDomainForRetry(): ?string
+    {
+        $session = OnboardingSession::query()
+            ->where('global_user_id', $this->user()?->global_id)
+            ->first();
+
+        if ($session === null || $session->status !== OnboardingSession::STATUS_FAILED || ! $session->tenant_id) {
+            return null;
+        }
+
+        $subdomain = $this->input('subdomain');
+
+        if (! is_string($subdomain) || $subdomain === '' || $session->subdomain !== $subdomain) {
+            return null;
+        }
+
+        return CreateTenantAction::fullDomain($subdomain);
     }
 }

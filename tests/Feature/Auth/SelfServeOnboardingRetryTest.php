@@ -22,12 +22,19 @@ class SelfServeOnboardingRetryTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_failed_onboarding_retry_reuses_tenant_for_same_subdomain(): void
+    public function test_failed_onboarding_retry_allows_same_subdomain(): void
     {
         Bus::fake();
 
         $user = User::factory()->create();
-        $tenantId = (string) Str::uuid();
+
+        $tenant = \App\Models\Tenant::withoutEvents(fn () => \App\Models\Tenant::query()->create([
+            'id' => (string) Str::uuid(),
+            'name' => 'Retry Co',
+        ]));
+        $tenant->domains()->create([
+            'domain' => \App\Actions\Tenancy\CreateTenantAction::fullDomain('retry-co'),
+        ]);
 
         OnboardingSession::query()->create([
             'global_user_id' => $user->global_id,
@@ -35,7 +42,7 @@ class SelfServeOnboardingRetryTest extends TestCase
             'subdomain' => 'retry-co',
             'verticals' => ['rental'],
             'status' => OnboardingSession::STATUS_FAILED,
-            'tenant_id' => $tenantId,
+            'tenant_id' => $tenant->getTenantKey(),
             'error_message' => 'Plan [trial] does not include module [receivables].',
         ]);
 
@@ -52,7 +59,7 @@ class SelfServeOnboardingRetryTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame(OnboardingSession::STATUS_PENDING, $session->status);
-        $this->assertSame($tenantId, $session->tenant_id);
+        $this->assertSame($tenant->getTenantKey(), $session->tenant_id);
         $this->assertSame(['rental', 'travel'], $session->verticals);
         $this->assertNull($session->error_message);
 

@@ -45,21 +45,7 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             ->firstOrFail();
 
         try {
-            if ($session->tenant_id) {
-                $tenant = $session->tenant;
-                if ($tenant === null) {
-                    throw new \RuntimeException('Onboarding session references a missing tenant.');
-                }
-            } else {
-                $tenant = $createTenant->execute(
-                    companyName: $session->company_name,
-                    subdomain: $session->subdomain,
-                    owner: $owner,
-                );
-
-                $tenant->update(['plan' => Plan::KEY_TRIAL]);
-                $session->update(['tenant_id' => $tenant->getTenantKey()]);
-            }
+            $tenant = $this->resolveTenant($session, $owner, $createTenant);
 
             foreach (SelfServeProvisioningPlan::defaultContentModules() as $moduleKey) {
                 $module = Modules::find($moduleKey);
@@ -88,5 +74,44 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                 'error_message' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Reuse a half-provisioned tenant when its database still exists; otherwise
+     * discard the orphan row and create a fresh workspace for the same subdomain.
+     */
+    private function resolveTenant(
+        OnboardingSession $session,
+        CentralUser $owner,
+        CreateTenantAction $createTenant,
+    ): \App\Models\Tenant {
+        if ($session->tenant_id) {
+            $tenant = $session->tenant;
+
+            if ($tenant === null) {
+                $session->update(['tenant_id' => null]);
+            } elseif ($tenant->database()->manager()->databaseExists($tenant->database()->getName())) {
+                if ($tenant->planKey() !== Plan::KEY_TRIAL) {
+                    $tenant->update(['plan' => Plan::KEY_TRIAL]);
+                }
+
+                return $tenant;
+            } else {
+                // Domain row would block CreateTenantAction for the same subdomain.
+                $tenant->delete();
+                $session->update(['tenant_id' => null]);
+            }
+        }
+
+        $tenant = $createTenant->execute(
+            companyName: $session->company_name,
+            subdomain: $session->subdomain,
+            owner: $owner,
+        );
+
+        $tenant->update(['plan' => Plan::KEY_TRIAL]);
+        $session->update(['tenant_id' => $tenant->getTenantKey()]);
+
+        return $tenant;
     }
 }
