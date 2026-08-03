@@ -118,146 +118,178 @@ export default function Index({ filters, analytics }: Props): JSX.Element {
     ];
 
     return (
-        <DynamicLayout>
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={t('maintenance.title')}
+                    actions={
+                        <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+                            <div>
+                                <InputLabel htmlFor="from" value={t('maintenance.analytics.from')} />
+                                <TextInput
+                                    id="from"
+                                    type="date"
+                                    className="mt-1 block"
+                                    value={from}
+                                    onChange={(e) => setFrom(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="to" value={t('maintenance.analytics.to')} />
+                                <TextInput
+                                    id="to"
+                                    type="date"
+                                    className="mt-1 block"
+                                    value={to}
+                                    onChange={(e) => setTo(e.target.value)}
+                                />
+                            </div>
+                            <PrimaryButton type="submit">{t('maintenance.analytics.apply')}</PrimaryButton>
+                        </form>
+                    }
+                />
+            }
+        >
             <Head title={t('maintenance.analytics.head')} />
-            <div className="py-6">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <MaintenanceNav />
-                    <PageHeader
-                        title={t('maintenance.analytics.head')}
-                        description={t('maintenance.analytics.subtitle')}
-                    />
+            <MaintenanceNav />
 
-                    <form onSubmit={submit} className="mt-6 flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                        <div>
-                            <InputLabel htmlFor="from" value={t('maintenance.analytics.from')} />
-                            <TextInput id="from" type="date" className="mt-1 block" value={from} onChange={(e) => setFrom(e.target.value)} />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="to" value={t('maintenance.analytics.to')} />
-                            <TextInput id="to" type="date" className="mt-1 block" value={to} onChange={(e) => setTo(e.target.value)} />
-                        </div>
-                        <PrimaryButton type="submit">{t('maintenance.analytics.apply')}</PrimaryButton>
-                        <Link href={prefixedRoute('maintenance.schedules.index')} className="text-sm text-indigo-600 hover:text-indigo-800">
-                            {t('maintenance.analytics.view_schedules')}
-                        </Link>
-                    </form>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{t('maintenance.analytics.head')}</h3>
+                    <p className="mt-1 text-sm text-gray-500">{t('maintenance.analytics.subtitle')}</p>
+                </div>
+                <Link
+                    href={prefixedRoute('maintenance.schedules.index')}
+                    className="text-sm text-indigo-600 hover:text-indigo-800"
+                >
+                    {t('maintenance.analytics.view_schedules')}
+                </Link>
+            </div>
 
-                    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {summaryCards.map((card) => (
-                            <div key={card.label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{card.label}</p>
-                                <p className="mt-2 text-2xl font-semibold text-gray-900">{card.value}</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {summaryCards.map((card) => (
+                    <div key={card.label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{card.label}</p>
+                        <p className="mt-2 text-2xl font-semibold text-gray-900">{card.value}</p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <p className="text-sm text-gray-500">{t('maintenance.analytics.labor_cost')}</p>
+                    <p className="mt-1 text-xl font-semibold text-gray-900">
+                        {formatCurrency(analytics.summary.labor_cost, localeTag)}
+                    </p>
+                </div>
+                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <p className="text-sm text-gray-500">{t('maintenance.analytics.parts_cost')}</p>
+                    <p className="mt-1 text-xl font-semibold text-gray-900">
+                        {formatCurrency(analytics.summary.parts_cost, localeTag)}
+                    </p>
+                </div>
+            </div>
+
+            {analytics.compliance.total > 0 && (
+                <p className="mt-3 text-sm text-gray-500">
+                    {t('maintenance.analytics.compliance_detail', {
+                        on_time: analytics.compliance.on_time,
+                        total: analytics.compliance.total,
+                    })}
+                </p>
+            )}
+
+            <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.by_vehicle')}</h3>
+                {analytics.by_vehicle.length === 0 ? (
+                    <p className="text-sm text-gray-500">{t('maintenance.analytics.empty')}</p>
+                ) : (
+                    <div className="space-y-3">
+                        {analytics.by_vehicle.map((row) => (
+                            <div key={row.vehicle_id ?? row.name}>
+                                <div className="mb-1 flex items-center justify-between gap-3 text-sm">
+                                    <div>
+                                        <span className="font-medium text-gray-900">{row.name}</span>
+                                        {row.plate_number && (
+                                            <span className="ml-2 text-gray-500">{row.plate_number}</span>
+                                        )}
+                                    </div>
+                                    <div className="text-right text-gray-700">
+                                        <div className="font-medium">{formatCurrency(row.total_cost, localeTag)}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {row.work_order_count} WO · {row.downtime_hours}h
+                                        </div>
+                                    </div>
+                                </div>
+                                <Bar value={row.total_cost} max={maxVehicleCost} />
                             </div>
                         ))}
                     </div>
+                )}
+            </section>
 
-                    <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                            <p className="text-sm text-gray-500">{t('maintenance.analytics.labor_cost')}</p>
-                            <p className="mt-1 text-xl font-semibold text-gray-900">{formatCurrency(analytics.summary.labor_cost, localeTag)}</p>
-                        </div>
-                        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                            <p className="text-sm text-gray-500">{t('maintenance.analytics.parts_cost')}</p>
-                            <p className="mt-1 text-xl font-semibold text-gray-900">{formatCurrency(analytics.summary.parts_cost, localeTag)}</p>
-                        </div>
-                    </div>
-
-                    {analytics.compliance.total > 0 && (
-                        <p className="mt-3 text-sm text-gray-500">
-                            {t('maintenance.analytics.compliance_detail', {
-                                on_time: analytics.compliance.on_time,
-                                total: analytics.compliance.total,
-                            })}
-                        </p>
-                    )}
-
-                    <section className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.by_vehicle')}</h3>
-                        {analytics.by_vehicle.length === 0 ? (
-                            <p className="text-sm text-gray-500">{t('maintenance.analytics.empty')}</p>
-                        ) : (
-                            <div className="space-y-3">
-                                {analytics.by_vehicle.map((row) => (
-                                    <div key={row.vehicle_id ?? row.name}>
-                                        <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                                            <div>
-                                                <span className="font-medium text-gray-900">{row.name}</span>
-                                                {row.plate_number && <span className="ml-2 text-gray-500">{row.plate_number}</span>}
-                                            </div>
-                                            <div className="text-right text-gray-700">
-                                                <div className="font-medium">{formatCurrency(row.total_cost, localeTag)}</div>
-                                                <div className="text-xs text-gray-500">
-                                                    {row.work_order_count} WO · {row.downtime_hours}h
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <Bar value={row.total_cost} max={maxVehicleCost} />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-
-                    <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.by_category')}</h3>
-                            {analytics.by_category.length === 0 ? (
-                                <p className="text-sm text-gray-500">{t('maintenance.analytics.empty')}</p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {analytics.by_category.map((row) => (
-                                        <div key={row.category_id ?? row.name}>
-                                            <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                                                <span className="flex items-center gap-2 font-medium text-gray-900">
-                                                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: row.color ?? '#6B7280' }} />
-                                                    {row.name}
-                                                </span>
-                                                <span className="text-gray-700">{formatCurrency(row.total_cost, localeTag)}</span>
-                                            </div>
-                                            <Bar value={row.total_cost} max={maxCategoryCost} />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-
-                        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                            <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.by_vendor')}</h3>
-                            {analytics.by_vendor.length === 0 ? (
-                                <p className="text-sm text-gray-500">{t('maintenance.analytics.empty_vendors')}</p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {analytics.by_vendor.map((row) => (
-                                        <div key={row.vendor_key}>
-                                            <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                                                <span className="font-medium text-gray-900">{row.name}</span>
-                                                <span className="text-gray-700">{formatCurrency(row.total_cost, localeTag)}</span>
-                                            </div>
-                                            <Bar value={row.total_cost} max={maxVendorCost} />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-                    </div>
-
-                    <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.monthly')}</h3>
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.by_category')}</h3>
+                    {analytics.by_category.length === 0 ? (
+                        <p className="text-sm text-gray-500">{t('maintenance.analytics.empty')}</p>
+                    ) : (
                         <div className="space-y-3">
-                            {analytics.monthly_costs.map((row) => (
-                                <div key={row.month}>
+                            {analytics.by_category.map((row) => (
+                                <div key={row.category_id ?? row.name}>
                                     <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                                        <span className="text-gray-700">{row.label}</span>
-                                        <span className="text-gray-900">{formatCurrency(row.cost, localeTag)} · {row.work_order_count}</span>
+                                        <span className="flex items-center gap-2 font-medium text-gray-900">
+                                            <span
+                                                className="h-2.5 w-2.5 rounded-full"
+                                                style={{ backgroundColor: row.color ?? '#6B7280' }}
+                                            />
+                                            {row.name}
+                                        </span>
+                                        <span className="text-gray-700">{formatCurrency(row.total_cost, localeTag)}</span>
                                     </div>
-                                    <Bar value={row.cost} max={maxMonthly} />
+                                    <Bar value={row.total_cost} max={maxCategoryCost} />
                                 </div>
                             ))}
                         </div>
-                    </section>
-                </div>
+                    )}
+                </section>
+
+                <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.by_vendor')}</h3>
+                    {analytics.by_vendor.length === 0 ? (
+                        <p className="text-sm text-gray-500">{t('maintenance.analytics.empty_vendors')}</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {analytics.by_vendor.map((row) => (
+                                <div key={row.vendor_key}>
+                                    <div className="mb-1 flex items-center justify-between gap-3 text-sm">
+                                        <span className="font-medium text-gray-900">{row.name}</span>
+                                        <span className="text-gray-700">{formatCurrency(row.total_cost, localeTag)}</span>
+                                    </div>
+                                    <Bar value={row.total_cost} max={maxVendorCost} />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
             </div>
+
+            <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.monthly')}</h3>
+                <div className="space-y-3">
+                    {analytics.monthly_costs.map((row) => (
+                        <div key={row.month}>
+                            <div className="mb-1 flex items-center justify-between gap-3 text-sm">
+                                <span className="text-gray-700">{row.label}</span>
+                                <span className="text-gray-900">
+                                    {formatCurrency(row.cost, localeTag)} · {row.work_order_count}
+                                </span>
+                            </div>
+                            <Bar value={row.cost} max={maxMonthly} />
+                        </div>
+                    ))}
+                </div>
+            </section>
         </DynamicLayout>
     );
 }
