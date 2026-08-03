@@ -12,6 +12,16 @@ return [
         'create_workspace' => 'Siapkan workspace',
     ],
 
+    'suspended' => [
+        'title' => 'Workspace ditangguhkan',
+        'headline' => 'Akses sementara dinonaktifkan',
+        'status_badge' => 'Ditangguhkan',
+        'message' => 'Workspace :name sedang ditangguhkan. Hubungi administrator untuk mengaktifkannya kembali.',
+        'message_generic' => 'Workspace ini sedang ditangguhkan. Hubungi administrator untuk mengaktifkannya kembali.',
+        'hint' => 'Data Anda tetap aman. Akses akan tersedia kembali setelah workspace diaktifkan.',
+        'back_workspaces' => 'Kembali ke daftar workspace',
+    ],
+
     'onboarding' => [
         'title' => 'Siapkan workspace Anda',
         'welcome' => 'Hampir selesai',

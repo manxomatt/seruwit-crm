@@ -7,10 +7,12 @@ use App\Models\CentralUser;
 use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\WorkspaceSuspendedPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class WorkspaceController extends Controller
 {
@@ -42,9 +44,15 @@ class WorkspaceController extends Controller
      * Enter a workspace: mint a single-use impersonation token and redirect
      * to the tenant domain, where /impersonate/{token} opens the session.
      */
-    public function enter(Request $request, Tenant $tenant): RedirectResponse
+    public function enter(Request $request, Tenant $tenant): RedirectResponse|SymfonyResponse
     {
-        abort_unless($tenant->status === 'active', 403, 'Workspace ini sedang ditangguhkan.');
+        if ($tenant->status !== 'active') {
+            return WorkspaceSuspendedPage::toResponse(
+                $request,
+                $tenant->name,
+                $tenant->domains->first()?->domain,
+            );
+        }
 
         $centralUser = $this->centralUser($request);
 

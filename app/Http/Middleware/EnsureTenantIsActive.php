@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\WorkspaceSuspendedPage;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +17,7 @@ class EnsureTenantIsActive
     public function handle(Request $request, Closure $next): Response
     {
         if (tenancy()->initialized && tenant('status') !== 'active') {
-            abort(403, 'Workspace ini sedang ditangguhkan. Hubungi administrator.');
+            return WorkspaceSuspendedPage::toResponse($request);
         }
 
         return $next($request);

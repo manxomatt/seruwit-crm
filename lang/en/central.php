@@ -12,6 +12,16 @@ return [
         'create_workspace' => 'Set up a workspace',
     ],
 
+    'suspended' => [
+        'title' => 'Workspace suspended',
+        'headline' => 'Access temporarily disabled',
+        'status_badge' => 'Suspended',
+        'message' => 'The :name workspace is currently suspended. Contact your administrator to restore access.',
+        'message_generic' => 'This workspace is currently suspended. Contact your administrator to restore access.',
+        'hint' => 'Your data is safe. Access will return once the workspace is reactivated.',
+        'back_workspaces' => 'Back to workspaces',
+    ],
+
     'onboarding' => [
         'title' => 'Set up your workspace',
         'welcome' => 'Almost there',

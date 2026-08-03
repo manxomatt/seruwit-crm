@@ -185,8 +185,14 @@ class CentralIdentityTest extends TestCase
         $user = User::factory()->create(['email' => 'suspended@example.com']);
         CentralUser::query()->firstWhere('email', 'suspended@example.com')->tenants()->attach($tenant->id);
 
+        $this->withoutVite();
+
         $response = $this->actingAs($user)->get("/workspaces/{$tenant->id}/enter");
 
-        $response->assertForbidden();
+        $response->assertForbidden()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Errors/WorkspaceSuspended')
+                ->where('workspace.name', 'Company A')
+                ->has('workspacesUrl'));
     }
 }

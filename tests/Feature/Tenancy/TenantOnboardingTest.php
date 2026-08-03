@@ -199,7 +199,14 @@ class TenantOnboardingTest extends TestCase
         // instance instead of the cached one from the previous request.
         tenancy()->end();
 
-        $this->get('http://paused-co.localhost/')->assertForbidden();
+        $this->withoutVite();
+
+        $this->get('http://paused-co.localhost/')
+            ->assertForbidden()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Errors/WorkspaceSuspended')
+                ->where('workspace.name', 'Paused Co')
+                ->has('workspacesUrl'));
     }
 
     public function test_workspace_admin_can_send_an_invitation(): void
