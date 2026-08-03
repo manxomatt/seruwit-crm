@@ -64,10 +64,12 @@ class VerticalPackInstallTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Module/Modules/Index')
                 ->where('canInstallDemoData', true)
-                ->has('demos', 2)
+                ->has('demos', 4)
                 ->where('demos.0.key', \App\Modules\DemoDatasets::PARTNER_INDUSTRIES)
                 ->where('demos.1.key', \App\Modules\DemoDatasets::PARTNERS)
                 ->where('demos.1.includes', [\App\Modules\DemoDatasets::PARTNER_INDUSTRIES])
+                ->where('demos.2.key', \App\Modules\DemoDatasets::VEHICLES)
+                ->where('demos.3.key', \App\Modules\DemoDatasets::DRIVERS)
             );
     }
 

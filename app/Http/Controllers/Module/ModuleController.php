@@ -38,13 +38,19 @@ class ModuleController extends Controller
             'canInstallDemoData' => $canInstallDemoData,
             'demos' => $canInstallDemoData
                 ? collect(DemoDatasets::all())
-                    ->map(fn (array $demo, string $key): array => [
-                        'key' => $key,
-                        'label' => $demo['label'],
-                        'description' => $demo['description'],
-                        'installed' => DemoDatasets::isInstalled($key),
-                        'includes' => $demo['includes'] ?? [],
-                    ])
+                    ->map(function (array $demo, string $key): array {
+                        $requiresModule = $demo['requires_module'] ?? null;
+
+                        return [
+                            'key' => $key,
+                            'label' => $demo['label'],
+                            'description' => $demo['description'],
+                            'installed' => DemoDatasets::isInstalled($key),
+                            'includes' => $demo['includes'] ?? [],
+                            'requires_module' => $requiresModule,
+                            'module_available' => $requiresModule === null || Modules::available($requiresModule),
+                        ];
+                    })
                     ->values()
                     ->all()
                 : [],

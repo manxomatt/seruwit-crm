@@ -55,6 +55,7 @@ return [
         'demos_heading' => 'Data demo',
         'demos_hint' => 'Data sampel untuk training dan demo. Diaktifkan oleh admin platform untuk workspace ini.',
         'demos_includes_prefix' => 'Juga memasang:',
+        'demos_requires_module' => 'Memerlukan modul :module terpasang terlebih dahulu.',
         'uninstall_confirm' => [
             'title' => 'Copot modul :module?',
             'message' => 'Menu dan aksesnya dicabut sekarang, tapi datanya disimpan :days hari. Pasang lagi sebelum itu dan semuanya kembali utuh.',

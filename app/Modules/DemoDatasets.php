@@ -10,6 +10,7 @@ namespace App\Modules;
  *
  * Optional `includes` lists other demo keys that install/uninstall with this one
  * (dependencies first on install, reverse on uninstall).
+ * Optional `requires_module` gates install on an optional module being available.
  */
 class DemoDatasets
 {
@@ -17,8 +18,12 @@ class DemoDatasets
 
     public const PARTNERS = 'partners';
 
+    public const VEHICLES = 'vehicles';
+
+    public const DRIVERS = 'drivers';
+
     /**
-     * @return array<string, array{label: string, description: string, seeder: class-string, includes?: list<string>}>
+     * @return array<string, array{label: string, description: string, seeder: class-string, includes?: list<string>, requires_module?: string}>
      */
     public static function all(): array
     {
@@ -34,11 +39,23 @@ class DemoDatasets
                 'seeder' => \Database\Seeders\TenantPartnerDemoSeeder::class,
                 'includes' => [self::PARTNER_INDUSTRIES],
             ],
+            self::VEHICLES => [
+                'label' => 'Vehicles demo',
+                'description' => '30 sample fleet vehicles (trucks, vans, pickups, box) with plates, capacity, and fuel data. Requires Fleet.',
+                'seeder' => \Database\Seeders\TenantVehicleDemoSeeder::class,
+                'requires_module' => 'fleet',
+            ],
+            self::DRIVERS => [
+                'label' => 'Drivers demo',
+                'description' => '30 sample fleet drivers with licenses, contacts, and availability statuses. Requires Fleet.',
+                'seeder' => \Database\Seeders\TenantDriverDemoSeeder::class,
+                'requires_module' => 'fleet',
+            ],
         ];
     }
 
     /**
-     * @return array{label: string, description: string, seeder: class-string, includes?: list<string>}|null
+     * @return array{label: string, description: string, seeder: class-string, includes?: list<string>, requires_module?: string}|null
      */
     public static function find(string $key): ?array
     {

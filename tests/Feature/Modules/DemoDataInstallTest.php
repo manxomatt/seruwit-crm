@@ -7,8 +7,13 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\DemoDatasets;
 use App\Modules\ModuleInstaller;
+use Database\Seeders\TenantDriverDemoSeeder;
 use Database\Seeders\TenantPartnerDemoSeeder;
 use Database\Seeders\TenantPartnerIndustriesSeeder;
+use Database\Seeders\TenantVehicleDemoSeeder;
+use Modules\Fleet\FleetModule;
+use Modules\Fleet\Models\Driver;
+use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerIndustry;
 use Tests\TestCase;
@@ -96,6 +101,59 @@ class DemoDataInstallTest extends TestCase
                 count(TenantPartnerIndustriesSeeder::CODES),
                 PartnerIndustry::query()->whereIn('code', TenantPartnerIndustriesSeeder::CODES)->count(),
             );
+        });
+    }
+
+    public function test_vehicle_and_driver_demos_require_fleet_then_install_and_uninstall(): void
+    {
+        $tenant = $this->provisionTenant('Fleet Demo Co', 'fleet-demo-co', 'owner@fleet-demo.test');
+        $owner = $this->ownerOf($tenant, 'owner@fleet-demo.test');
+        $tenant->update([
+            'plan' => 'pro',
+            'can_install_demo_data' => true,
+        ]);
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://fleet-demo-co.localhost/module/modules/demos/'.DemoDatasets::VEHICLES.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        app(ModuleInstaller::class)->install($tenant, app(FleetModule::class));
+        tenancy()->end();
+
+        $this->actingAs($owner)
+            ->post('http://fleet-demo-co.localhost/module/modules/demos/'.DemoDatasets::VEHICLES.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->actingAs($owner)
+            ->post('http://fleet-demo-co.localhost/module/modules/demos/'.DemoDatasets::DRIVERS.'/install')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::VEHICLES));
+            $this->assertTrue(DemoDatasets::isInstalled(DemoDatasets::DRIVERS));
+            $this->assertSame(30, Vehicle::query()->where('notes', 'like', '%'.TenantVehicleDemoSeeder::TAG.'%')->count());
+            $this->assertSame(30, Driver::query()->where('notes', 'like', '%'.TenantDriverDemoSeeder::TAG.'%')->count());
+        });
+
+        $this->actingAs($owner)
+            ->delete('http://fleet-demo-co.localhost/module/modules/demos/'.DemoDatasets::VEHICLES)
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->actingAs($owner)
+            ->delete('http://fleet-demo-co.localhost/module/modules/demos/'.DemoDatasets::DRIVERS)
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $tenant->run(function (): void {
+            $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::VEHICLES));
+            $this->assertFalse(DemoDatasets::isInstalled(DemoDatasets::DRIVERS));
+            $this->assertSame(0, Vehicle::query()->where('notes', 'like', '%'.TenantVehicleDemoSeeder::TAG.'%')->count());
+            $this->assertSame(0, Driver::query()->where('notes', 'like', '%'.TenantDriverDemoSeeder::TAG.'%')->count());
         });
     }
 

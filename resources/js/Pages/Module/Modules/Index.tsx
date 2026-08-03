@@ -33,6 +33,8 @@ interface DemoEntry {
     description: string;
     installed?: boolean;
     includes?: string[];
+    requires_module?: string | null;
+    module_available?: boolean;
 }
 
 interface Props {
@@ -161,6 +163,11 @@ export default function Index({
                                                         {t('platform.modules_catalog.demos_includes_prefix')} {demo.includes.join(', ')}
                                                     </p>
                                                 )}
+                                                {demo.requires_module && !demo.module_available && (
+                                                    <p className="mt-2 text-xs text-amber-700">
+                                                        {t('platform.modules_catalog.demos_requires_module', { module: demo.requires_module })}
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="flex shrink-0 flex-wrap gap-2">
                                                 {demo.installed ? (
@@ -173,7 +180,10 @@ export default function Index({
                                                             : t('platform.modules_catalog.actions.uninstall_demo')}
                                                     </SecondaryButton>
                                                 ) : (
-                                                    <PrimaryButton disabled={busy} onClick={() => installDemo(demo.key)}>
+                                                    <PrimaryButton
+                                                        disabled={busy || demo.module_available === false}
+                                                        onClick={() => installDemo(demo.key)}
+                                                    >
                                                         {busyKey === `demo:${demo.key}`
                                                             ? t('platform.modules_catalog.actions.installing')
                                                             : t('platform.modules_catalog.actions.install_demo')}

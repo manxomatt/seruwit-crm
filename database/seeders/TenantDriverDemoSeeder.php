@@ -53,6 +53,28 @@ class TenantDriverDemoSeeder extends Seeder
         ));
     }
 
+    public function isInstalled(): bool
+    {
+        if (! class_exists(Driver::class) || ! Schema::hasTable('drivers')) {
+            return false;
+        }
+
+        return Driver::query()->where('notes', 'like', '%'.self::TAG.'%')->exists();
+    }
+
+    public function uninstall(): void
+    {
+        if (! class_exists(Driver::class) || ! Schema::hasTable('drivers')) {
+            return;
+        }
+
+        $deleted = Driver::query()
+            ->where('notes', 'like', '%'.self::TAG.'%')
+            ->delete();
+
+        $this->command?->info("Driver demo data removed ({$deleted} drivers).");
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

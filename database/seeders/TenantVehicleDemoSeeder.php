@@ -53,6 +53,28 @@ class TenantVehicleDemoSeeder extends Seeder
         ));
     }
 
+    public function isInstalled(): bool
+    {
+        if (! class_exists(Vehicle::class) || ! Schema::hasTable('vehicles')) {
+            return false;
+        }
+
+        return Vehicle::query()->where('notes', 'like', '%'.self::TAG.'%')->exists();
+    }
+
+    public function uninstall(): void
+    {
+        if (! class_exists(Vehicle::class) || ! Schema::hasTable('vehicles')) {
+            return;
+        }
+
+        $deleted = Vehicle::query()
+            ->where('notes', 'like', '%'.self::TAG.'%')
+            ->delete();
+
+        $this->command?->info("Vehicle demo data removed ({$deleted} vehicles).");
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

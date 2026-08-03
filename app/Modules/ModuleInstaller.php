@@ -341,11 +341,27 @@ class ModuleInstaller
         }
 
         $tenant->run(function () use ($demoKey, $dataset): void {
+            $requiredModule = $dataset['requires_module'] ?? null;
+
+            if (is_string($requiredModule) && $requiredModule !== '' && ! Modules::available($requiredModule)) {
+                throw new RuntimeException(
+                    "Install the [{$requiredModule}] module before installing this demo data.",
+                );
+            }
+
             foreach (DemoDatasets::includes($demoKey) as $includedKey) {
                 $included = DemoDatasets::find($includedKey);
 
                 if ($included === null || ! class_exists($included['seeder'])) {
                     continue;
+                }
+
+                $includedRequired = $included['requires_module'] ?? null;
+
+                if (is_string($includedRequired) && $includedRequired !== '' && ! Modules::available($includedRequired)) {
+                    throw new RuntimeException(
+                        "Install the [{$includedRequired}] module before installing this demo data.",
+                    );
                 }
 
                 app($included['seeder'])->run();
