@@ -43,15 +43,28 @@ interface Props {
 const AVAIL_STYLES: Record<string, string> = {
     free: 'bg-green-100 text-green-800',
     booked: 'bg-amber-100 text-amber-800',
-    in_use: 'bg-blue-100 text-blue-800',
+    in_use: 'bg-blue-600 text-white',
     unavailable: 'bg-gray-100 text-gray-600',
 };
 
-function StatCard({ label, value }: { label: string; value: number }): JSX.Element {
+function StatCard({
+    label,
+    value,
+    tone = 'default',
+}: {
+    label: string;
+    value: number;
+    tone?: 'default' | 'in_use';
+}): JSX.Element {
+    const toneClass = tone === 'in_use'
+        ? 'border-blue-200 bg-blue-50'
+        : 'border-gray-200 bg-white';
+    const valueClass = tone === 'in_use' ? 'text-blue-700' : 'text-gray-900';
+
     return (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className={`rounded-lg border p-4 shadow-sm ${toneClass}`}>
             <p className="text-xs font-medium uppercase tracking-wider text-gray-500">{label}</p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums text-gray-900">{value}</p>
+            <p className={`mt-2 text-3xl font-semibold tabular-nums ${valueClass}`}>{value}</p>
         </div>
     );
 }
@@ -92,7 +105,7 @@ export default function Index({ board, filters }: Props): JSX.Element {
                 <StatCard label={t('rental.availability.total')} value={board.counts.total} />
                 <StatCard label={t('rental.availability.free')} value={board.counts.free} />
                 <StatCard label={t('rental.availability.booked')} value={board.counts.booked} />
-                <StatCard label={t('rental.availability.in_use')} value={board.counts.in_use} />
+                <StatCard label={t('rental.availability.in_use')} value={board.counts.in_use} tone="in_use" />
             </div>
 
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
