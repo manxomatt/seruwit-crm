@@ -127,6 +127,7 @@ return [
         'batch_delete' => 'Hapus terpilih',
         'batch_delete_confirm' => 'Hapus :count kendaraan terpilih? Tindakan ini tidak dapat dibatalkan.',
         'batch_status_placeholder' => 'Pilih status…',
+        'clear_filters' => 'Hapus filter',
         'sections' => [
             'identity' => 'Profil kendaraan',
             'specs' => 'Spesifikasi',

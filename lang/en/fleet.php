@@ -127,6 +127,7 @@ return [
         'batch_delete' => 'Delete selected',
         'batch_delete_confirm' => 'Delete :count selected vehicles? This cannot be undone.',
         'batch_status_placeholder' => 'Choose status…',
+        'clear_filters' => 'Clear filters',
         'sections' => [
             'identity' => 'Vehicle profile',
             'specs' => 'Specifications',

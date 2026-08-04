@@ -75,6 +75,20 @@ class VehicleTest extends TestCase
                 ->where('vehicles.data.0.name', 'Delivery Truck')
             );
 
+        $this->actingAs($user)->get(route('module.fleet.vehicles.index', ['search' => 'delivery']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('vehicles.data', 1)
+                ->where('vehicles.data.0.name', 'Delivery Truck')
+            );
+
+        $this->actingAs($user)->get(route('module.fleet.vehicles.index', ['search' => 'b 1234']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('vehicles.data', 1)
+                ->where('vehicles.data.0.plate_number', 'B 1234 XYZ')
+            );
+
         $this->actingAs($user)->get(route('module.fleet.vehicles.index', ['status' => 'retired']))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
