@@ -222,8 +222,8 @@ class PositionPayloadTest extends TestCase
         $this->assertTrue($payload->ignition);
         $this->assertTrue($payload->motion);
         $this->assertSame(29549893, $payload->totalDistanceM);
-        // 15:53:26 Asia/Jakarta → 08:53:26 UTC when APP_TIMEZONE is UTC.
-        $this->assertSame('2026-08-03 08:53:26', $payload->recordedAt->toDateTimeString());
+        // GPS-Server timestamps are UTC; with APP_TIMEZONE=UTC the wall clock is unchanged.
+        $this->assertSame('2026-08-03 15:53:26', $payload->recordedAt->toDateTimeString());
         $this->assertSame('6', $payload->attributes['batl']);
     }
 
@@ -233,7 +233,17 @@ class PositionPayloadTest extends TestCase
             'dt_tracker' => null,
         ]));
 
-        $this->assertSame('2026-08-03 08:54:04', $payload->recordedAt->toDateTimeString());
+        $this->assertSame('2026-08-03 15:54:04', $payload->recordedAt->toDateTimeString());
+    }
+
+    public function test_it_converts_gps_server_utc_into_the_app_timezone(): void
+    {
+        config(['app.timezone' => 'Asia/Jakarta']);
+
+        $payload = PositionPayload::fromGpsServer($this->gpsServerRow());
+
+        // 15:53:26 UTC → 22:53:26 Asia/Jakarta
+        $this->assertSame('2026-08-03 22:53:26', $payload->recordedAt->toDateTimeString());
     }
 
     public function test_it_rejects_unusable_gps_server_rows(): void

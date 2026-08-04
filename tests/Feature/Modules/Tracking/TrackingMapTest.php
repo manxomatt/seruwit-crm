@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Tracking;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Models\GpsDevice;
@@ -71,5 +72,32 @@ class TrackingMapTest extends TestCase
         $device->refresh();
         $this->assertSame($vehicle->id, $device->vehicle_id);
         $this->assertSame(1200, $device->odometer_base_km);
+    }
+
+    public function test_gps_server_map_timestamps_use_the_general_timezone_setting(): void
+    {
+        $user = $this->createAdminUser();
+        TrackingConfig::factory()->gpsServer()->create([
+            'last_polled_at' => '2026-08-03 15:54:04',
+        ]);
+        Setting::factory()->create([
+            'key' => 'general.timezone',
+            'group' => 'general',
+            'value' => 'Asia/Jakarta',
+            'type' => 'text',
+            'label' => 'Timezone',
+        ]);
+        GpsDevice::factory()->at(-7.806912, 110.413102)->create([
+            'last_recorded_at' => '2026-08-03 15:53:26',
+        ]);
+
+        $this->actingAs($user)->get(route('module.tracking.map'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Tracking/Map')
+                // 15:53:26 UTC → 22:53:26 Asia/Jakarta
+                ->where('devices.0.last_recorded_at', '2026-08-03 22:53:26')
+                ->where('lastPolledAt', '2026-08-03 22:54:04')
+            );
     }
 }

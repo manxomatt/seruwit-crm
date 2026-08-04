@@ -173,8 +173,8 @@ class TrackingCommandsTest extends TestCase
         Http::fake([
             'gsi-tracking.example.test/api/api.php*' => Http::response([[
                 'imei' => $imei,
-                'dt_server' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
-                'dt_tracker' => now('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                'dt_server' => now()->utc()->format('Y-m-d H:i:s'),
+                'dt_tracker' => now()->utc()->format('Y-m-d H:i:s'),
                 'lat' => '-7.806912',
                 'lng' => '110.413102',
                 'speed' => '11',

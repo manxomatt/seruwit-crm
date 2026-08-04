@@ -303,13 +303,15 @@ class PositionPayload
     }
 
     /**
-     * GPS-Server also emits naive local datetimes (typically Asia/Jakarta).
+     * GPS-Server emits naive UTC datetimes. Parse them as UTC, then convert
+     * into the app timezone for storage/compare. The map reformats into the
+     * tenant's general.timezone setting for display.
      */
     private static function parseGpsServerTime(mixed $value): ?CarbonImmutable
     {
         return self::parseNaiveProviderTime(
             $value,
-            (string) config('tracking.gps_server_timezone', 'Asia/Jakarta'),
+            (string) config('tracking.gps_server_timezone', 'UTC'),
         );
     }
 

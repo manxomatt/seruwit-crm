@@ -55,12 +55,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | USER_GET_OBJECTS returns naive datetimes (no offset). Those clocks are
-    | local to the GPS-Server instance — typically Asia/Jakarta — so we parse
-    | them in this zone before converting into the app timezone.
+    | UTC, so we parse them in this zone before converting into the app
+    | timezone for storage. The live map then reformats them into the tenant's
+    | general.timezone setting for display.
     |
     */
 
-    'gps_server_timezone' => env('TRACKING_GPS_SERVER_TIMEZONE', 'Asia/Jakarta'),
+    'gps_server_timezone' => env('TRACKING_GPS_SERVER_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------

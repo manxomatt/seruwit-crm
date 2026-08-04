@@ -10,6 +10,7 @@ use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Models\GpsDevice;
 use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Support\TrackingTimezone;
 
 class TrackingMapController extends Controller
 {
@@ -52,7 +53,9 @@ class TrackingMapController extends Controller
         }
 
         return Inertia::render('Modules/Tracking/Map', [
-            'devices' => $devices,
+            'devices' => $config->usesGpsServer()
+                ? $devices->map(fn (GpsDevice $device) => $this->deviceForGpsServerMap($device))->values()->all()
+                : $devices,
             'pairableVehicles' => Vehicle::query()
                 ->whereDoesntHave('gpsDevice')
                 ->orderBy('name')
@@ -60,11 +63,30 @@ class TrackingMapController extends Controller
             'activeRentalVehicleIds' => $activeRentalVehicleIds,
             'rentalFilterAvailable' => Modules::available('rental'),
             'pollEnabled' => $config->poll_enabled,
-            'lastPolledAt' => $config->last_polled_at?->toDateTimeString(),
+            'lastPolledAt' => $config->usesGpsServer()
+                ? TrackingTimezone::formatForDisplay($config->last_polled_at)
+                : $config->last_polled_at?->toDateTimeString(),
             'lastPollError' => $config->last_poll_error,
             'can' => [
                 'update' => $user->hasPermissionFor('tracking', 'update'),
             ],
         ]);
+    }
+
+    /**
+     * GPS-Server stores UTC instants; present them in the tenant's general
+     * timezone so the map timestamps match Settings → Timezone.
+     *
+     * @return array<string, mixed>
+     */
+    private function deviceForGpsServerMap(GpsDevice $device): array
+    {
+        return [
+            ...$device->toArray(),
+            'last_recorded_at' => TrackingTimezone::formatForDisplay($device->last_recorded_at),
+            'last_seen_at' => TrackingTimezone::formatForDisplay($device->last_seen_at),
+            'last_polled_at' => TrackingTimezone::formatForDisplay($device->last_polled_at),
+            'vehicle' => $device->vehicle,
+        ];
     }
 }
