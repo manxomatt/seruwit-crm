@@ -13,6 +13,7 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Http\Requests\StoreRentalRequest;
+use Modules\Rental\Http\Requests\StoreWalkInCustomerRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
@@ -23,6 +24,7 @@ use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLocationHydrator;
+use Modules\Rental\Support\WalkInCustomerCreator;
 
 class RentalController extends Controller
 {
@@ -58,6 +60,8 @@ class RentalController extends Controller
 
     public function create(): Response
     {
+        $selectedPartnerId = request()->integer('partner_id') ?: null;
+
         return Inertia::render('Modules/Rental/Create', [
             'vehicles' => Vehicle::query()
                 ->where('status', Vehicle::STATUS_ACTIVE)
@@ -75,6 +79,7 @@ class RentalController extends Controller
                 )
                 ->orderBy('name')
                 ->get(['id', 'name', 'code']),
+            'selectedPartnerId' => $selectedPartnerId,
             'rates' => RentalRate::query()
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -100,6 +105,25 @@ class RentalController extends Controller
             'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
             'suggestRateUrl' => route($this->getRoutePrefix().'.rental.rates.suggest'),
         ]);
+    }
+
+    /**
+     * Quick-create (or reuse) a walk-in customer, then return to the rental form
+     * with that customer already selected.
+     */
+    public function storeWalkInCustomer(StoreWalkInCustomerRequest $request, WalkInCustomerCreator $creator): RedirectResponse
+    {
+        $result = $creator->createOrReuse($request->validated());
+        $partner = $result['partner'];
+
+        return redirect()
+            ->route($this->getRoutePrefix().'.rental.create', ['partner_id' => $partner->id])
+            ->with(
+                'success',
+                $result['created']
+                    ? __('rental.messages.walk_in_created', ['name' => $partner->name])
+                    : __('rental.messages.walk_in_reused', ['name' => $partner->name]),
+            );
     }
 
     public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator): RedirectResponse

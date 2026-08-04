@@ -111,6 +111,10 @@ return [
     'placeholders' => [
         'search' => 'Cari kode atau partner…',
         'select_partner' => 'Pilih partner…',
+        'walk_in_name' => 'Nama lengkap pelanggan',
+        'walk_in_phone' => '08xxxxxxxxxx',
+        'walk_in_email' => 'opsional@email.com',
+        'walk_in_id_number' => 'No. KTP / identitas (opsional)',
         'select_vehicle' => 'Pilih kendaraan…',
         'select_location' => 'Pilih cabang…',
         'no_insurance' => 'Tanpa paket asuransi',
@@ -153,6 +157,8 @@ return [
         'cancel_rental' => 'Batalkan Rental',
         'new_rate' => 'Tarif Baru',
         'create_rate' => 'Buat Tarif',
+        'walk_in_customer' => 'Pelanggan walk-in',
+        'save_walk_in' => 'Simpan & pilih',
         'view_invoice' => 'Buka',
         'print_contract' => 'Cetak kontrak',
         'print_handover' => 'Cetak BA serah terima',
@@ -366,6 +372,8 @@ return [
         ],
         'create' => [
             'title' => 'Rental Baru',
+            'walk_in_title' => 'Buat cepat pelanggan walk-in',
+            'walk_in_hint' => 'Membuat data pelanggan (atau memakai yang sudah ada dengan nomor HP sama) lalu memilihnya di form ini.',
         ],
         'edit' => [
             'title' => 'Edit Rental :code',
@@ -424,6 +432,8 @@ return [
 
     'messages' => [
         'created' => 'Rental dibuat.',
+        'walk_in_created' => 'Pelanggan walk-in “:name” dibuat dan dipilih.',
+        'walk_in_reused' => 'Pelanggan “:name” ditemukan dari nomor HP dan dipilih.',
         'updated' => 'Rental diperbarui.',
         'deleted' => 'Rental dihapus.',
         'confirmed' => 'Rental dikonfirmasi.',
@@ -509,6 +519,8 @@ return [
         'addon_code_required' => 'Pilih jenis biaya.',
         'addon_code_invalid' => 'Jenis biaya tidak valid.',
         'addon_amount_required' => 'Masukkan jumlah.',
+        'walk_in_name_required' => 'Masukkan nama pelanggan walk-in.',
+        'walk_in_phone_required' => 'Masukkan nomor HP pelanggan walk-in.',
         'addon_amount_min' => 'Jumlah harus lebih dari nol.',
         'swap_vehicle_required' => 'Pilih kendaraan pengganti.',
         'swap_vehicle_same' => 'Pilih kendaraan yang berbeda.',

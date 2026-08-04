@@ -166,6 +166,73 @@ class RentalCrudTest extends TestCase
             ->assertSessionHasErrors('end_date');
     }
 
+    public function test_walk_in_customer_can_be_quick_created_from_rental_form(): void
+    {
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.walk_in_customers.store'), [
+                'name' => 'Budi Walk-in',
+                'phone' => '081234567890',
+                'email' => 'budi@example.test',
+                'id_number' => '3175010101010001',
+            ])
+            ->assertRedirect(route('module.rental.create', [
+                'partner_id' => Partner::query()->where('name', 'Budi Walk-in')->value('id'),
+            ]))
+            ->assertSessionHas('success');
+
+        $partner = Partner::query()->where('name', 'Budi Walk-in')->first();
+        $this->assertNotNull($partner);
+        $this->assertSame('individual', $partner->account_type);
+        $this->assertSame('customer', $partner->sub_type);
+        $this->assertSame(1, $partner->customer_rank);
+        $this->assertSame('active', $partner->status);
+        $this->assertSame('6281234567890', $partner->phone);
+        $this->assertSame('budi@example.test', $partner->email);
+        $this->assertSame('3175010101010001', $partner->id_number);
+    }
+
+    public function test_walk_in_customer_reuses_existing_partner_by_phone(): void
+    {
+        $existing = Partner::factory()->individual()->create([
+            'name' => 'Existing Customer',
+            'phone' => '6281234567890',
+            'mobile' => '6281234567890',
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.walk_in_customers.store'), [
+                'name' => 'Someone Else',
+                'phone' => '081234567890',
+            ])
+            ->assertRedirect(route('module.rental.create', ['partner_id' => $existing->id]))
+            ->assertSessionHas('success');
+
+        $this->assertSame(1, Partner::query()->where('phone', '6281234567890')->orWhere('mobile', '6281234567890')->count());
+        $this->assertSame('Existing Customer', $existing->fresh()->name);
+    }
+
+    public function test_walk_in_customer_requires_name_and_phone(): void
+    {
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.walk_in_customers.store'), [
+                'name' => '',
+                'phone' => '',
+            ])
+            ->assertSessionHasErrors(['name', 'phone']);
+    }
+
+    public function test_rental_create_preselects_partner_from_query(): void
+    {
+        $partner = Partner::factory()->create();
+
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.rental.create', ['partner_id' => $partner->id]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Create')
+                ->where('selectedPartnerId', $partner->id));
+    }
+
     public function test_rental_blocks_overlapping_vehicle_booking(): void
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);

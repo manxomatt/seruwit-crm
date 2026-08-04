@@ -111,6 +111,10 @@ return [
     'placeholders' => [
         'search' => 'Search code or partner…',
         'select_partner' => 'Select partner…',
+        'walk_in_name' => 'Customer full name',
+        'walk_in_phone' => '08xxxxxxxxxx',
+        'walk_in_email' => 'optional@email.com',
+        'walk_in_id_number' => 'KTP / ID number (optional)',
         'select_vehicle' => 'Select vehicle…',
         'select_location' => 'Select branch…',
         'no_insurance' => 'No insurance package',
@@ -153,6 +157,8 @@ return [
         'cancel_rental' => 'Cancel Rental',
         'new_rate' => 'New Rate',
         'create_rate' => 'Create Rate',
+        'walk_in_customer' => 'Walk-in customer',
+        'save_walk_in' => 'Save & select',
         'view_invoice' => 'Open',
         'print_contract' => 'Print contract',
         'print_handover' => 'Print handover',
@@ -366,6 +372,8 @@ return [
         ],
         'create' => [
             'title' => 'New Rental',
+            'walk_in_title' => 'Quick-create walk-in customer',
+            'walk_in_hint' => 'Creates a customer record (or reuses one with the same phone) and selects them on this form.',
         ],
         'edit' => [
             'title' => 'Edit Rental :code',
@@ -424,6 +432,8 @@ return [
 
     'messages' => [
         'created' => 'Rental created.',
+        'walk_in_created' => 'Walk-in customer “:name” created and selected.',
+        'walk_in_reused' => 'Existing customer “:name” found by phone and selected.',
         'updated' => 'Rental updated.',
         'deleted' => 'Rental deleted.',
         'confirmed' => 'Rental confirmed.',
@@ -509,6 +519,8 @@ return [
         'addon_code_required' => 'Choose a charge type.',
         'addon_code_invalid' => 'Invalid charge type.',
         'addon_amount_required' => 'Enter an amount.',
+        'walk_in_name_required' => 'Enter the walk-in customer name.',
+        'walk_in_phone_required' => 'Enter the walk-in customer phone number.',
         'addon_amount_min' => 'Amount must be greater than zero.',
         'swap_vehicle_required' => 'Choose a replacement vehicle.',
         'swap_vehicle_same' => 'Choose a different vehicle.',

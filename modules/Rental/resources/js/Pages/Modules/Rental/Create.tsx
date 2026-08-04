@@ -3,13 +3,14 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import MoneyInput from '@/Components/MoneyInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useEffect, useMemo, useRef } from 'react';
+import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
 import RentalNav from '../../../RentalNav';
 import PageHeader from '@/Components/PageHeader';
 
@@ -69,6 +70,7 @@ interface Props {
     vehicles: Vehicle[];
     drivers: Driver[];
     partners: Partner[];
+    selectedPartnerId?: number | null;
     rates: Rate[];
     locations?: LocationOption[];
     insurancePackages?: InsurancePackage[];
@@ -109,6 +111,7 @@ export default function Create({
     vehicles,
     drivers,
     partners,
+    selectedPartnerId = null,
     rates,
     locations = [],
     insurancePackages = [],
@@ -118,10 +121,11 @@ export default function Create({
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const suggestedRateId = useRef<number | null>(null);
+    const [showWalkIn, setShowWalkIn] = useState(false);
     const { data, setData, post, processing, errors } = useForm<FormData>({
         vehicle_id: '',
         driver_id: '',
-        partner_id: '',
+        partner_id: selectedPartnerId ? String(selectedPartnerId) : '',
         start_date: '',
         end_date: '',
         period_type: 'daily',
@@ -138,6 +142,13 @@ export default function Create({
         insurance_package_id: '',
         fuel_policy_notes: '',
         notes: '',
+    });
+
+    const walkInForm = useForm({
+        name: '',
+        phone: '',
+        email: '',
+        id_number: '',
     });
 
     const partnerOptions = useMemo(
@@ -289,6 +300,23 @@ export default function Create({
         post(prefixedRoute('rental.store'));
     };
 
+    useEffect(() => {
+        if (selectedPartnerId) {
+            setData('partner_id', String(selectedPartnerId));
+        }
+    }, [selectedPartnerId, setData]);
+
+    const submitWalkIn: FormEventHandler = (e) => {
+        e.preventDefault();
+        walkInForm.post(prefixedRoute('rental.walk_in_customers.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowWalkIn(false);
+                walkInForm.reset();
+            },
+        });
+    };
+
     return (
         <DynamicLayout
             header={<PageHeader title={t('rental.pages.create.title')} />}
@@ -302,7 +330,16 @@ export default function Create({
                     <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">{t('rental.sections.booking')}</h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
+                            <div className="flex items-center justify-between gap-2">
+                                <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowWalkIn(true)}
+                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                                >
+                                    + {t('rental.actions.walk_in_customer')}
+                                </button>
+                            </div>
                             <Select
                                 id="partner_id"
                                 className="mt-1"
@@ -548,6 +585,73 @@ export default function Create({
                     <PrimaryButton disabled={processing}>{t('rental.actions.create_rental')}</PrimaryButton>
                 </div>
             </form>
+
+            <Modal show={showWalkIn} onClose={() => !walkInForm.processing && setShowWalkIn(false)} maxWidth="md">
+                <form onSubmit={submitWalkIn} className="p-6 space-y-4">
+                    <div>
+                        <h3 className="text-lg font-medium text-gray-900">{t('rental.pages.create.walk_in_title')}</h3>
+                        <p className="mt-1 text-sm text-gray-500">{t('rental.pages.create.walk_in_hint')}</p>
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="walk_in_name" value={`${t('partners.fields.name')} *`} />
+                        <TextInput
+                            id="walk_in_name"
+                            className="mt-1 block w-full"
+                            value={walkInForm.data.name}
+                            onChange={(e) => walkInForm.setData('name', e.target.value)}
+                            placeholder={t('rental.placeholders.walk_in_name')}
+                            required
+                        />
+                        <InputError message={walkInForm.errors.name} className="mt-1" />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="walk_in_phone" value={`${t('partners.fields.phone')} *`} />
+                        <TextInput
+                            id="walk_in_phone"
+                            className="mt-1 block w-full"
+                            value={walkInForm.data.phone}
+                            onChange={(e) => walkInForm.setData('phone', e.target.value)}
+                            placeholder={t('rental.placeholders.walk_in_phone')}
+                            required
+                        />
+                        <InputError message={walkInForm.errors.phone} className="mt-1" />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="walk_in_email" value={t('partners.fields.email')} />
+                        <TextInput
+                            id="walk_in_email"
+                            type="email"
+                            className="mt-1 block w-full"
+                            value={walkInForm.data.email}
+                            onChange={(e) => walkInForm.setData('email', e.target.value)}
+                            placeholder={t('rental.placeholders.walk_in_email')}
+                        />
+                        <InputError message={walkInForm.errors.email} className="mt-1" />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="walk_in_id_number" value={t('partners.fields.id_number')} />
+                        <TextInput
+                            id="walk_in_id_number"
+                            className="mt-1 block w-full"
+                            value={walkInForm.data.id_number}
+                            onChange={(e) => walkInForm.setData('id_number', e.target.value)}
+                            placeholder={t('rental.placeholders.walk_in_id_number')}
+                        />
+                        <InputError message={walkInForm.errors.id_number} className="mt-1" />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <SecondaryButton type="button" onClick={() => setShowWalkIn(false)} disabled={walkInForm.processing}>
+                            {t('common.cancel')}
+                        </SecondaryButton>
+                        <PrimaryButton disabled={walkInForm.processing}>{t('rental.actions.save_walk_in')}</PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
         </DynamicLayout>
     );
 }

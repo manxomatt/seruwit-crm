@@ -115,6 +115,7 @@ class RentalModule implements ModuleContract
         // Rentals CRUD
         Route::get('/rental/list', [RentalController::class, 'index'])->middleware('permission:rental,view')->name('rental.index');
         Route::get('/rental/create', [RentalController::class, 'create'])->middleware('permission:rental,create')->name('rental.create');
+        Route::post('/rental/walk-in-customers', [RentalController::class, 'storeWalkInCustomer'])->middleware('permission:rental,create')->name('rental.walk_in_customers.store');
         Route::post('/rental', [RentalController::class, 'store'])->middleware('permission:rental,create')->name('rental.store');
         Route::get('/rental/{rental}', [RentalController::class, 'show'])->middleware('permission:rental,view')->name('rental.show');
         Route::get('/rental/{rental}/edit', [RentalController::class, 'edit'])->middleware('permission:rental,update')->name('rental.edit');
