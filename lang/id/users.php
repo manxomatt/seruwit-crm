@@ -11,6 +11,7 @@ return [
         'password_hint' => 'Kata Sandi (kosongkan untuk mempertahankan yang lama)',
         'roles' => 'Peran',
         'warehouses' => 'Situs yang di-assign',
+        'fleet_bases' => 'Base armada yang di-assign',
         'first_name' => 'Nama Depan',
         'last_name' => 'Nama Belakang',
         'phone_number' => 'Nomor Telepon',
@@ -31,6 +32,9 @@ return [
     'warehouses_selected' => 'Dipilih: :count situs',
     'warehouses_hint_head' => 'Warehouse Head harus di-assign ke tepat satu situs.',
     'warehouses_hint_manager' => 'Warehouse Manager bisa di-assign ke satu atau lebih situs.',
+    'fleet_bases_selected' => 'Dipilih: :count base armada',
+    'fleet_bases_hint_head' => 'Fleet Base Head harus di-assign ke tepat satu base.',
+    'fleet_bases_hint_manager' => 'Fleet Base Manager bisa di-assign ke satu atau lebih base.',
     'system_badge' => 'Sistem',
 
     'pages' => [
@@ -100,6 +104,8 @@ return [
         'roles_exists' => 'Satu atau lebih peran yang dipilih tidak valid.',
         'warehouse_ids_required' => 'Assign minimal satu gudang/toko untuk peran ini.',
         'warehouse_head_single_site' => 'Warehouse Head hanya boleh di-assign ke satu situs.',
+        'fleet_base_ids_required' => 'Assign minimal satu base armada untuk peran ini.',
+        'fleet_base_head_single_base' => 'Fleet Base Head hanya boleh di-assign ke satu base.',
     ],
 
     'messages' => [

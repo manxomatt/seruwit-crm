@@ -36,15 +36,23 @@ interface Vehicle {
     kir_expires_at: string | null;
     photo_url: string | null;
     notes: string | null;
+    home_base_id: number | null;
+}
+
+interface HomeBaseOption {
+    id: number;
+    code: string;
+    name: string;
 }
 
 interface Props {
     vehicle: Vehicle;
+    bases?: HomeBaseOption[];
 }
 
 const VEHICLE_STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'] as const;
 
-export default function Edit({ vehicle }: Props): JSX.Element {
+export default function Edit({ vehicle, bases = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
@@ -63,6 +71,7 @@ export default function Edit({ vehicle }: Props): JSX.Element {
         expected_km_per_liter: vehicle.expected_km_per_liter ?? '',
         fuel_type: vehicle.fuel_type,
         status: vehicle.status,
+        home_base_id: vehicle.home_base_id ? String(vehicle.home_base_id) : '',
         odometer_km: vehicle.odometer_km,
         stnk_expires_at: toDateInputValue(vehicle.stnk_expires_at),
         kir_expires_at: toDateInputValue(vehicle.kir_expires_at),
@@ -212,6 +221,24 @@ export default function Edit({ vehicle }: Props): JSX.Element {
                                     }))}
                                 />
                                 <InputError message={errors.status} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="home_base_id" value={t('fleet.vehicles.home_base')} />
+                                <Select
+                                    id="home_base_id"
+                                    className="mt-1"
+                                    value={data.home_base_id}
+                                    onChange={(value) => setData('home_base_id', value)}
+                                    placeholder={t('fleet.vehicles.home_base_none')}
+                                    options={[
+                                        { value: '', label: t('fleet.vehicles.home_base_none') },
+                                        ...bases.map((base) => ({
+                                            value: String(base.id),
+                                            label: `${base.code} — ${base.name}`,
+                                        })),
+                                    ]}
+                                />
+                                <InputError message={errors.home_base_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="stnk_expires_at" value={t('fleet.vehicles.stnk_expires')} />

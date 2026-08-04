@@ -69,6 +69,7 @@ interface Vehicle {
     expected_km_per_liter: string | number | null;
     fuel_type: string;
     status: string;
+    home_base?: { id: number; code: string; name: string } | null;
     odometer_km: number;
     stnk_expires_at: string | null;
     kir_expires_at: string | null;
@@ -306,6 +307,21 @@ export default function Show({
                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
                                         {t(`fleet.status.${vehicle.status}`)}
                                     </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.home_base')}</dt>
+                                <dd className="mt-1 text-sm text-gray-900">
+                                    {vehicle.home_base ? (
+                                        <Link
+                                            href={prefixedRoute('fleet.bases.show', vehicle.home_base.id)}
+                                            className="text-indigo-600 hover:text-indigo-900"
+                                        >
+                                            {vehicle.home_base.code} — {vehicle.home_base.name}
+                                        </Link>
+                                    ) : (
+                                        '—'
+                                    )}
                                 </dd>
                             </div>
                             <div>

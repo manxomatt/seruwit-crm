@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Models\FleetBase;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Inventory\Models\Warehouse;
 use Modules\Inventory\Support\AccessibleWarehouses;
 
@@ -67,6 +69,8 @@ class UserController extends Controller
             'roles' => $roles,
             'warehouses' => $this->assignableWarehouses(),
             'warehouseScopedRoleSlugs' => AccessibleWarehouses::scopedRoleSlugs(),
+            'fleetBases' => $this->assignableFleetBases(),
+            'fleetBaseScopedRoleSlugs' => AccessibleFleetBases::scopedRoleSlugs(),
         ]);
     }
 
@@ -86,6 +90,7 @@ class UserController extends Controller
         }
 
         $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
+        $this->syncUserFleetBases($user, $validated['roles'] ?? [], $validated['fleet_base_ids'] ?? []);
 
         // Create user profile if any profile data is provided
         if (
@@ -131,13 +136,21 @@ class UserController extends Controller
             $userWarehouseIds = $user->warehouses()->pluck('warehouses.id')->map(fn ($id) => (int) $id)->all();
         }
 
+        $userFleetBaseIds = [];
+        if (Modules::available('fleet') && Schema::hasTable('user_fleet_base')) {
+            $userFleetBaseIds = $user->fleetBases()->pluck('fleet_bases.id')->map(fn ($id) => (int) $id)->all();
+        }
+
         return Inertia::render('Modules/Users/Edit', [
             'user' => $user,
             'userRoles' => $user->roles->pluck('id')->toArray(),
             'userWarehouseIds' => $userWarehouseIds,
+            'userFleetBaseIds' => $userFleetBaseIds,
             'roles' => $roles,
             'warehouses' => $this->assignableWarehouses(),
             'warehouseScopedRoleSlugs' => AccessibleWarehouses::scopedRoleSlugs(),
+            'fleetBases' => $this->assignableFleetBases(),
+            'fleetBaseScopedRoleSlugs' => AccessibleFleetBases::scopedRoleSlugs(),
         ]);
     }
 
@@ -162,6 +175,7 @@ class UserController extends Controller
         }
 
         $this->syncUserWarehouses($user, $validated['roles'] ?? [], $validated['warehouse_ids'] ?? []);
+        $this->syncUserFleetBases($user, $validated['roles'] ?? [], $validated['fleet_base_ids'] ?? []);
 
         // Update or create user profile
         $user->profile()->updateOrCreate(
@@ -210,6 +224,26 @@ class UserController extends Controller
     }
 
     /**
+     * @return list<array{id: int, code: string, name: string}>
+     */
+    protected function assignableFleetBases(): array
+    {
+        if (! Modules::available('fleet') || ! Schema::hasTable('fleet_bases')) {
+            return [];
+        }
+
+        return FleetBase::query()
+            ->orderBy('name')
+            ->get(['id', 'code', 'name'])
+            ->map(fn (FleetBase $base): array => [
+                'id' => $base->id,
+                'code' => $base->code,
+                'name' => $base->name,
+            ])
+            ->all();
+    }
+
+    /**
      * @param  list<int>  $roleIds
      * @param  list<int>  $warehouseIds
      */
@@ -223,5 +257,21 @@ class UserController extends Controller
         $isScoped = count(array_intersect($slugs, AccessibleWarehouses::scopedRoleSlugs())) > 0;
 
         $user->warehouses()->sync($isScoped ? $warehouseIds : []);
+    }
+
+    /**
+     * @param  list<int>  $roleIds
+     * @param  list<int>  $fleetBaseIds
+     */
+    protected function syncUserFleetBases(User $user, array $roleIds, array $fleetBaseIds): void
+    {
+        if (! Modules::available('fleet') || ! Schema::hasTable('user_fleet_base')) {
+            return;
+        }
+
+        $slugs = Role::query()->whereIn('id', $roleIds)->pluck('slug')->all();
+        $isScoped = count(array_intersect($slugs, AccessibleFleetBases::scopedRoleSlugs())) > 0;
+
+        $user->fleetBases()->sync($isScoped ? $fleetBaseIds : []);
     }
 }

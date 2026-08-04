@@ -92,6 +92,26 @@ class RoleSeeder extends Seeder
             ]
         );
 
+        Role::query()->firstOrCreate(
+            ['slug' => 'fleet_base_head'],
+            [
+                'name' => 'Fleet Base Head',
+                'description' => 'Owns operations for a single fleet home base',
+                'is_system' => true,
+                'dashboard_path' => '/module/fleet/bases',
+            ]
+        );
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'fleet_base_manager'],
+            [
+                'name' => 'Fleet Base Manager',
+                'description' => 'Owns operations across one or more fleet home bases',
+                'is_system' => true,
+                'dashboard_path' => '/module/fleet/bases',
+            ]
+        );
+
         SystemRolePermissions::syncAllSystemRoles();
     }
 }

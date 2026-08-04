@@ -5,6 +5,7 @@ namespace Modules\Fleet\Models;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Fleet\Database\Factories\VehicleFactory;
 
@@ -53,6 +54,7 @@ class Vehicle extends Model
         'expected_km_per_liter',
         'fuel_type',
         'status',
+        'home_base_id',
         'odometer_km',
         'stnk_expires_at',
         'kir_expires_at',
@@ -75,7 +77,16 @@ class Vehicle extends Model
             'expected_km_per_liter' => 'decimal:2',
             'stnk_expires_at' => 'date:Y-m-d',
             'kir_expires_at' => 'date:Y-m-d',
+            'home_base_id' => 'integer',
         ];
+    }
+
+    /**
+     * @return BelongsTo<FleetBase, $this>
+     */
+    public function homeBase(): BelongsTo
+    {
+        return $this->belongsTo(FleetBase::class, 'home_base_id');
     }
 
     /**

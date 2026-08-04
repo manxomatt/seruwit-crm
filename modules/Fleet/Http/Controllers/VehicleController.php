@@ -15,6 +15,7 @@ use Modules\Fleet\Http\Requests\StoreVehicleRequest;
 use Modules\Fleet\Http\Requests\UpdateVehicleRequest;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\AccessibleFleetBases;
 use Modules\Fleet\Support\FuelConsumptionCalculator;
 use Modules\Fleet\Support\FuelLogRecorder;
 use Modules\Maintenance\Models\WorkOrder;
@@ -69,7 +70,9 @@ class VehicleController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Modules/Fleet/Vehicles/Create');
+        return Inertia::render('Modules/Fleet/Vehicles/Create', [
+            'bases' => $this->homeBaseOptions(),
+        ]);
     }
 
     /**
@@ -92,7 +95,7 @@ class VehicleController extends Controller
 
         $maintenanceEnabled = Modules::available('maintenance');
 
-        $vehicle->load(['fuelLogs.driver']);
+        $vehicle->load(['fuelLogs.driver', 'homeBase:id,code,name']);
 
         if (! $maintenanceEnabled) {
             $vehicle->load(['maintenanceLogs']);
@@ -221,7 +224,25 @@ class VehicleController extends Controller
     {
         return Inertia::render('Modules/Fleet/Vehicles/Edit', [
             'vehicle' => $vehicle,
+            'bases' => $this->homeBaseOptions(),
         ]);
+    }
+
+    /**
+     * @return list<array{id: int, code: string, name: string}>
+     */
+    private function homeBaseOptions(): array
+    {
+        return AccessibleFleetBases::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'code', 'name'])
+            ->map(fn ($base): array => [
+                'id' => (int) $base->id,
+                'code' => $base->code,
+                'name' => $base->name,
+            ])
+            ->all();
     }
 
     /**

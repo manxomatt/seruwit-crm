@@ -15,7 +15,17 @@ import PageHeader from '@/Components/PageHeader';
 
 const VEHICLE_STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'] as const;
 
-export default function Create(): JSX.Element {
+interface HomeBaseOption {
+    id: number;
+    code: string;
+    name: string;
+}
+
+interface Props {
+    bases?: HomeBaseOption[];
+}
+
+export default function Create({ bases = [] }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, post, processing, errors } = useForm({
@@ -34,6 +44,7 @@ export default function Create(): JSX.Element {
         expected_km_per_liter: '',
         fuel_type: 'petrol',
         status: 'active',
+        home_base_id: '',
         odometer_km: 0,
         stnk_expires_at: '',
         kir_expires_at: '',
@@ -183,6 +194,24 @@ export default function Create(): JSX.Element {
                                     }))}
                                 />
                                 <InputError message={errors.status} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="home_base_id" value={t('fleet.vehicles.home_base')} />
+                                <Select
+                                    id="home_base_id"
+                                    className="mt-1"
+                                    value={data.home_base_id}
+                                    onChange={(value) => setData('home_base_id', value)}
+                                    placeholder={t('fleet.vehicles.home_base_none')}
+                                    options={[
+                                        { value: '', label: t('fleet.vehicles.home_base_none') },
+                                        ...bases.map((base) => ({
+                                            value: String(base.id),
+                                            label: `${base.code} — ${base.name}`,
+                                        })),
+                                    ]}
+                                />
+                                <InputError message={errors.home_base_id} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="stnk_expires_at" value={t('fleet.vehicles.stnk_expires')} />

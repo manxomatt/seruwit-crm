@@ -11,6 +11,7 @@ return [
         'password_hint' => 'Password (leave blank to keep current)',
         'roles' => 'Roles',
         'warehouses' => 'Assigned sites',
+        'fleet_bases' => 'Assigned fleet bases',
         'first_name' => 'First Name',
         'last_name' => 'Last Name',
         'phone_number' => 'Phone Number',
@@ -31,6 +32,9 @@ return [
     'warehouses_selected' => 'Selected: :count site(s)',
     'warehouses_hint_head' => 'Warehouse Head must be assigned to exactly one site.',
     'warehouses_hint_manager' => 'Warehouse Manager can be assigned to one or more sites.',
+    'fleet_bases_selected' => 'Selected: :count fleet base(s)',
+    'fleet_bases_hint_head' => 'Fleet Base Head must be assigned to exactly one base.',
+    'fleet_bases_hint_manager' => 'Fleet Base Manager can be assigned to one or more bases.',
     'system_badge' => 'System',
 
     'pages' => [
@@ -100,6 +104,8 @@ return [
         'roles_exists' => 'One or more selected roles are invalid.',
         'warehouse_ids_required' => 'Assign at least one warehouse or store site for this role.',
         'warehouse_head_single_site' => 'A Warehouse Head can only be assigned to one site.',
+        'fleet_base_ids_required' => 'Assign at least one fleet base for this role.',
+        'fleet_base_head_single_base' => 'A Fleet Base Head can only be assigned to one base.',
     ],
 
     'messages' => [

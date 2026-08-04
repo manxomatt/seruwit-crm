@@ -24,16 +24,26 @@ interface WarehouseOption {
     kind: string | null;
 }
 
+interface FleetBaseOption {
+    id: number;
+    code: string;
+    name: string;
+}
+
 interface Props {
     roles: Role[];
     warehouses?: WarehouseOption[];
     warehouseScopedRoleSlugs?: string[];
+    fleetBases?: FleetBaseOption[];
+    fleetBaseScopedRoleSlugs?: string[];
 }
 
 export default function Create({
     roles,
     warehouses = [],
     warehouseScopedRoleSlugs = ['warehouse_head', 'warehouse_manager'],
+    fleetBases = [],
+    fleetBaseScopedRoleSlugs = ['fleet_base_head', 'fleet_base_manager'],
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -44,6 +54,7 @@ export default function Create({
         password_confirmation: '',
         roles: [] as number[],
         warehouse_ids: [] as number[],
+        fleet_base_ids: [] as number[],
         first_name: '',
         last_name: '',
         phone_number: '',
@@ -74,10 +85,24 @@ export default function Create({
         }
     };
 
+    const toggleFleetBase = (fleetBaseId: number) => {
+        if (data.fleet_base_ids.includes(fleetBaseId)) {
+            setData(
+                'fleet_base_ids',
+                data.fleet_base_ids.filter((id) => id !== fleetBaseId),
+            );
+        } else {
+            setData('fleet_base_ids', [...data.fleet_base_ids, fleetBaseId]);
+        }
+    };
+
     const selectedRoleSlugs = roles.filter((role) => data.roles.includes(role.id)).map((role) => role.slug);
     const needsWarehouses = selectedRoleSlugs.some((slug) => warehouseScopedRoleSlugs.includes(slug));
     const isHeadOnly =
         selectedRoleSlugs.includes('warehouse_head') && !selectedRoleSlugs.includes('warehouse_manager');
+    const needsFleetBases = selectedRoleSlugs.some((slug) => fleetBaseScopedRoleSlugs.includes(slug));
+    const isFleetHeadOnly =
+        selectedRoleSlugs.includes('fleet_base_head') && !selectedRoleSlugs.includes('fleet_base_manager');
 
     return (
         <DynamicLayout
@@ -292,6 +317,48 @@ export default function Create({
                                         <InputError message={errors.warehouse_ids} className="mt-2" />
                                         <p className="mt-2 text-sm text-gray-500">
                                             {t('users.warehouses_selected', { count: data.warehouse_ids.length })}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {needsFleetBases && fleetBases.length > 0 && (
+                                    <div className="mt-6">
+                                        <InputLabel value={t('users.fields.fleet_bases')} />
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            {isFleetHeadOnly
+                                                ? t('users.fleet_bases_hint_head')
+                                                : t('users.fleet_bases_hint_manager')}
+                                        </p>
+                                        <div className="mt-2 max-h-[240px] divide-y overflow-y-auto rounded-lg border">
+                                            {fleetBases.map((base) => (
+                                                <label
+                                                    key={base.id}
+                                                    className="flex cursor-pointer items-start p-3 hover:bg-gray-50"
+                                                >
+                                                    <input
+                                                        type={isFleetHeadOnly ? 'radio' : 'checkbox'}
+                                                        name="fleet_base_ids"
+                                                        checked={data.fleet_base_ids.includes(base.id)}
+                                                        onChange={() => {
+                                                            if (isFleetHeadOnly) {
+                                                                setData('fleet_base_ids', [base.id]);
+                                                            } else {
+                                                                toggleFleetBase(base.id);
+                                                            }
+                                                        }}
+                                                        className="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                    />
+                                                    <div className="ml-3">
+                                                        <span className="text-sm font-medium text-gray-900">
+                                                            {base.code} — {base.name}
+                                                        </span>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <InputError message={errors.fleet_base_ids} className="mt-2" />
+                                        <p className="mt-2 text-sm text-gray-500">
+                                            {t('users.fleet_bases_selected', { count: data.fleet_base_ids.length })}
                                         </p>
                                     </div>
                                 )}

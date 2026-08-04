@@ -53,6 +53,11 @@ class SystemRolePermissions
                 ->pluck('id')
                 ->map(fn ($id): int => (int) $id)
                 ->all(),
+            'fleet_base_head', 'fleet_base_manager' => Permission::query()
+                ->where(fn ($q) => $q->where('module', 'fleet')->whereIn('action', ['view', 'create', 'update', 'delete']))
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all(),
             default => [],
         };
     }

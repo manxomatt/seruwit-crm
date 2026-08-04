@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/react';
 
 const TABS = [
     { labelKey: 'fleet.nav.dashboard', route: 'fleet.dashboard', pattern: 'fleet.dashboard' },
+    { labelKey: 'fleet.nav.bases', route: 'fleet.bases.index', pattern: 'fleet.bases.*' },
     { labelKey: 'fleet.nav.vehicles', route: 'fleet.vehicles.index', pattern: 'fleet.vehicles.*' },
     { labelKey: 'fleet.nav.drivers', route: 'fleet.drivers.index', pattern: 'fleet.drivers.*' },
     { labelKey: 'fleet.nav.fuel', route: 'fleet.fuel.index', pattern: 'fleet.fuel.index' },

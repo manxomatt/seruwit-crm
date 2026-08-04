@@ -4,6 +4,7 @@ namespace Modules\Fleet\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Fleet\Support\AccessibleFleetBases;
 
 class UpdateVehicleRequest extends FormRequest
 {
@@ -38,12 +39,28 @@ class UpdateVehicleRequest extends FormRequest
             'expected_km_per_liter' => ['nullable', 'numeric', 'min:0'],
             'fuel_type' => ['sometimes', 'required', 'string', 'in:petrol,diesel,electric,hybrid'],
             'status' => ['sometimes', 'required', 'string', 'in:active,maintenance,retired,out_of_service'],
+            'home_base_id' => ['nullable', 'integer', 'exists:fleet_bases,id'],
             'odometer_km' => ['integer', 'min:0'],
             'stnk_expires_at' => ['nullable', 'date'],
             'kir_expires_at' => ['nullable', 'date'],
             'photo_url' => ['nullable', 'string', 'max:2048'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->exists('home_base_id')) {
+            $this->merge([
+                'home_base_id' => $this->filled('home_base_id') ? $this->input('home_base_id') : null,
+            ]);
+        }
+
+        if ($this->exists('rental_class')) {
+            $this->merge([
+                'rental_class' => $this->filled('rental_class') ? $this->input('rental_class') : null,
+            ]);
+        }
     }
 
     /**
@@ -60,5 +77,12 @@ class UpdateVehicleRequest extends FormRequest
             'fuel_type.in' => 'Select a valid fuel type.',
             'status.in' => 'Select a valid vehicle status.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            AccessibleFleetBases::rejectIfDenied($validator, $this->input('home_base_id'));
+        });
     }
 }

@@ -38,12 +38,19 @@ class UpdateUserRequest extends FormRequest
             'phone_number' => ['nullable', 'string', 'max:50'],
             'avatar_url' => ['nullable', 'string', 'max:2048'],
             'warehouse_ids' => ['nullable', 'array'],
+            'fleet_base_ids' => ['nullable', 'array'],
         ];
 
         if (Modules::available('inventory') && Schema::hasTable('warehouses')) {
             $rules['warehouse_ids.*'] = ['integer', 'exists:warehouses,id'];
         } else {
             $rules['warehouse_ids.*'] = ['integer'];
+        }
+
+        if (Modules::available('fleet') && Schema::hasTable('fleet_bases')) {
+            $rules['fleet_base_ids.*'] = ['integer', 'exists:fleet_bases,id'];
+        } else {
+            $rules['fleet_base_ids.*'] = ['integer'];
         }
 
         return $rules;
@@ -67,15 +74,21 @@ class UpdateUserRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator): void {
-            if (! Modules::available('inventory')) {
-                return;
+            if (Modules::available('inventory')) {
+                AccessibleWarehouses::validateAssignment(
+                    $validator,
+                    array_map('intval', $this->input('roles', [])),
+                    array_map('intval', $this->input('warehouse_ids', [])),
+                );
             }
 
-            AccessibleWarehouses::validateAssignment(
-                $validator,
-                array_map('intval', $this->input('roles', [])),
-                array_map('intval', $this->input('warehouse_ids', [])),
-            );
+            if (Modules::available('fleet')) {
+                \Modules\Fleet\Support\AccessibleFleetBases::validateAssignment(
+                    $validator,
+                    array_map('intval', $this->input('roles', [])),
+                    array_map('intval', $this->input('fleet_base_ids', [])),
+                );
+            }
         });
     }
 }
