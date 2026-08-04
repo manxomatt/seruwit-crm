@@ -20,6 +20,8 @@ class DemoDatasets
 
     public const VEHICLES = 'vehicles';
 
+    public const FLEET_BASES = 'fleet_bases';
+
     public const DRIVERS = 'drivers';
 
     public const FUEL = 'fuel';
@@ -49,6 +51,12 @@ class DemoDatasets
                 'label' => 'Vehicles demo',
                 'description' => '30 sample fleet vehicles (trucks, vans, pickups, box) with plates, capacity, and fuel data. Requires Fleet.',
                 'seeder' => \Database\Seeders\TenantVehicleDemoSeeder::class,
+                'requires_module' => 'fleet',
+            ],
+            self::FLEET_BASES => [
+                'label' => 'Fleet bases demo',
+                'description' => '5 sample home bases (depot, yard, satellite, workshop) with PIC, hours, and map coordinates. Assigns Vehicles demo units when present. Requires Fleet.',
+                'seeder' => \Database\Seeders\TenantFleetBaseDemoSeeder::class,
                 'requires_module' => 'fleet',
             ],
             self::DRIVERS => [

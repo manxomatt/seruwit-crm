@@ -4,12 +4,13 @@ import { useTrans } from '@/hooks/useTrans';
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import LocationMapPicker from '@/Components/Map/LocationMapPicker';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useCallback } from 'react';
 import FleetNav from '../../../../FleetNav';
 import PageHeader from '@/Components/PageHeader';
 
@@ -84,6 +85,17 @@ export default function Create({
         post(prefixedRoute('fleet.bases.store'));
     };
 
+    const handleMapChange = useCallback(
+        (next: { latitude: string; longitude: string; address?: string }) => {
+            setData('latitude', next.latitude);
+            setData('longitude', next.longitude);
+            if (next.address) {
+                setData('address', next.address);
+            }
+        },
+        [setData],
+    );
+
     const toggleStaff = (userId: number) => {
         if (data.staff_ids.includes(userId)) {
             setData(
@@ -149,7 +161,27 @@ export default function Create({
 
                         <section className="space-y-6">
                             <h3 className="text-sm font-semibold text-gray-900">{t('fleet.bases.sections.address')}</h3>
+                            <div>
+                                <InputLabel value={t('fleet.bases.map_title')} />
+                                <p className="mb-2 text-xs text-gray-500">{t('fleet.bases.map_hint')}</p>
+                                <LocationMapPicker
+                                    latitude={data.latitude}
+                                    longitude={data.longitude}
+                                    onChange={handleMapChange}
+                                    height="360px"
+                                />
+                            </div>
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <div>
+                                    <InputLabel htmlFor="latitude" value={t('fleet.bases.latitude')} />
+                                    <TextInput id="latitude" type="number" step="any" className="mt-1 block w-full" value={data.latitude} onChange={(e) => setData('latitude', e.target.value)} />
+                                    <InputError message={errors.latitude} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="longitude" value={t('fleet.bases.longitude')} />
+                                    <TextInput id="longitude" type="number" step="any" className="mt-1 block w-full" value={data.longitude} onChange={(e) => setData('longitude', e.target.value)} />
+                                    <InputError message={errors.longitude} className="mt-2" />
+                                </div>
                                 <div className="sm:col-span-2">
                                     <InputLabel htmlFor="address" value={t('fleet.bases.address')} />
                                     <TextInput id="address" className="mt-1 block w-full" value={data.address} onChange={(e) => setData('address', e.target.value)} />
@@ -169,16 +201,6 @@ export default function Create({
                                     <InputLabel htmlFor="zip" value={t('fleet.bases.zip')} />
                                     <TextInput id="zip" className="mt-1 block w-full" value={data.zip} onChange={(e) => setData('zip', e.target.value)} />
                                     <InputError message={errors.zip} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="latitude" value={t('fleet.bases.latitude')} />
-                                    <TextInput id="latitude" type="number" step="any" className="mt-1 block w-full" value={data.latitude} onChange={(e) => setData('latitude', e.target.value)} />
-                                    <InputError message={errors.latitude} className="mt-2" />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor="longitude" value={t('fleet.bases.longitude')} />
-                                    <TextInput id="longitude" type="number" step="any" className="mt-1 block w-full" value={data.longitude} onChange={(e) => setData('longitude', e.target.value)} />
-                                    <InputError message={errors.longitude} className="mt-2" />
                                 </div>
                             </div>
                         </section>
