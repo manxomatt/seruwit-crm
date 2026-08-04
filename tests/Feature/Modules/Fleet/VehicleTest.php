@@ -269,4 +269,90 @@ class VehicleTest extends TestCase
 
         $this->assertDatabaseMissing('fuel_logs', ['id' => $log->id]);
     }
+
+    public function test_admin_can_batch_update_vehicle_status(): void
+    {
+        $user = $this->createAdminUser();
+        $first = Vehicle::factory()->create(['status' => 'active']);
+        $second = Vehicle::factory()->create(['status' => 'active']);
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.vehicles.batch-status'), [
+                'ids' => [$first->id, $second->id],
+                'status' => 'maintenance',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('vehicles', ['id' => $first->id, 'status' => 'maintenance']);
+        $this->assertDatabaseHas('vehicles', ['id' => $second->id, 'status' => 'maintenance']);
+    }
+
+    public function test_batch_status_update_requires_valid_status_and_ids(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.vehicles.batch-status'), [
+                'ids' => [$vehicle->id],
+                'status' => 'not-a-status',
+            ])
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.vehicles.batch-status'), [
+                'ids' => [],
+                'status' => 'active',
+            ])
+            ->assertSessionHasErrors('ids');
+    }
+
+    public function test_admin_can_batch_delete_vehicles(): void
+    {
+        $user = $this->createAdminUser();
+        $first = Vehicle::factory()->create();
+        $second = Vehicle::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('module.fleet.vehicles.batch-destroy'), [
+                'ids' => [$first->id, $second->id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('vehicles', ['id' => $first->id]);
+        $this->assertDatabaseMissing('vehicles', ['id' => $second->id]);
+    }
+
+    public function test_batch_delete_skips_vehicles_still_in_use(): void
+    {
+        $user = $this->createAdminUser();
+        $free = Vehicle::factory()->create();
+        $busy = Vehicle::factory()->create();
+        Trip::factory()->create(['vehicle_id' => $busy->id, 'status' => Trip::STATUS_SCHEDULED]);
+
+        $this->actingAs($user)
+            ->post(route('module.fleet.vehicles.batch-destroy'), [
+                'ids' => [$free->id, $busy->id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('vehicles', ['id' => $free->id]);
+        $this->assertDatabaseHas('vehicles', ['id' => $busy->id]);
+    }
+
+    public function test_user_without_update_permission_cannot_batch_update_status(): void
+    {
+        $user = $this->createUserWithRole();
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.vehicles.batch-status'), [
+                'ids' => [$vehicle->id],
+                'status' => 'maintenance',
+            ])
+            ->assertForbidden();
+    }
 }

@@ -2,11 +2,14 @@
 
 namespace Tests\Traits;
 
+use App\Http\Middleware\EnsureTenantIsActive;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\ModuleRegistrySeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 trait WithRoles
 {
@@ -18,6 +21,18 @@ trait WithRoles
      */
     protected function setUpRoles(): void
     {
+        // `module.*` routes are the tenant-domain copies of app.php. Non-tenancy
+        // feature tests hit them on a central host (localhost / localhost.test),
+        // which PreventAccessFromCentralDomains would 404. Skip those gates unless
+        // the test also uses WithTenant and drives a real tenant domain.
+        if (! in_array(WithTenant::class, class_uses_recursive(static::class), true)) {
+            $this->withoutMiddleware([
+                InitializeTenancyByDomain::class,
+                PreventAccessFromCentralDomains::class,
+                EnsureTenantIsActive::class,
+            ]);
+        }
+
         $this->seed(PermissionSeeder::class);
         $this->seed(ModuleRegistrySeeder::class);
         $this->seed(RoleSeeder::class);

@@ -107,6 +107,8 @@ class FleetModule implements ModuleContract
         Route::get('/fleet/vehicles', [VehicleController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.vehicles.index');
         Route::get('/fleet/vehicles/create', [VehicleController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.vehicles.create');
         Route::post('/fleet/vehicles', [VehicleController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.vehicles.store');
+        Route::patch('/fleet/vehicles/batch-status', [VehicleController::class, 'batchUpdateStatus'])->middleware('permission:fleet,update')->name('fleet.vehicles.batch-status');
+        Route::post('/fleet/vehicles/batch-destroy', [VehicleController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.vehicles.batch-destroy');
         Route::get('/fleet/vehicles/{vehicle}', [VehicleController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.vehicles.show');
         Route::get('/fleet/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.vehicles.edit');
         Route::patch('/fleet/vehicles/{vehicle}', [VehicleController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.vehicles.update');

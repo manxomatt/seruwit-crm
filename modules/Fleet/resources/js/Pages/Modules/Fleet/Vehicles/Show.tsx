@@ -11,7 +11,7 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { formatDate } from '@/utils/date';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useState, type ReactNode } from 'react';
 import FleetNav from '../../../../FleetNav';
 
 interface MaintenanceLog {
@@ -105,16 +105,18 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
+type ExpiryTone = 'ok' | 'soon' | 'expired' | 'empty';
+
 const getStatusBadgeColor = (status: string) => {
     switch (status) {
         case 'active':
-            return 'bg-green-100 text-green-800';
+            return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20';
         case 'maintenance':
-            return 'bg-yellow-100 text-yellow-800';
+            return 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20';
         case 'out_of_service':
-            return 'bg-red-100 text-red-800';
+            return 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20';
         default:
-            return 'bg-gray-100 text-gray-800';
+            return 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20';
     }
 };
 
@@ -128,6 +130,107 @@ const TrashIcon = () => (
         />
     </svg>
 );
+
+function StatCard({
+    label,
+    value,
+    hint,
+    tone = 'default',
+}: {
+    label: string;
+    value: string;
+    hint?: string;
+    tone?: 'default' | 'warning' | 'danger' | 'success';
+}): JSX.Element {
+    const valueTone =
+        tone === 'danger'
+            ? 'text-rose-700'
+            : tone === 'warning'
+              ? 'text-amber-700'
+              : tone === 'success'
+                ? 'text-emerald-700'
+                : 'text-gray-900';
+
+    return (
+        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+            <p className={`mt-1 text-lg font-semibold tabular-nums ${valueTone}`}>{value}</p>
+            {hint && <p className="mt-0.5 text-xs text-gray-500">{hint}</p>}
+        </div>
+    );
+}
+
+function DetailRow({ label, children }: { label: string; children: ReactNode }): JSX.Element {
+    return (
+        <div className="flex flex-col gap-0.5 border-b border-gray-100 py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <dt className="shrink-0 text-sm text-gray-500">{label}</dt>
+            <dd className="text-sm font-medium text-gray-900 sm:text-right">{children}</dd>
+        </div>
+    );
+}
+
+function SectionCard({
+    title,
+    subtitle,
+    action,
+    children,
+}: {
+    title: string;
+    subtitle?: string;
+    action?: ReactNode;
+    children: ReactNode;
+}): JSX.Element {
+    return (
+        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 px-6 py-4">
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+                    {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
+                </div>
+                {action}
+            </div>
+            <div className="px-6 py-4">{children}</div>
+        </section>
+    );
+}
+
+function expiryTone(date: string | null): ExpiryTone {
+    if (!date) {
+        return 'empty';
+    }
+
+    const target = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(target.getTime())) {
+        return 'empty';
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((target.getTime() - today.getTime()) / 86_400_000);
+
+    if (diffDays < 0) {
+        return 'expired';
+    }
+
+    if (diffDays <= 30) {
+        return 'soon';
+    }
+
+    return 'ok';
+}
+
+function expiryBadgeClass(tone: ExpiryTone): string {
+    switch (tone) {
+        case 'expired':
+            return 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20';
+        case 'soon':
+            return 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20';
+        case 'ok':
+            return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20';
+        default:
+            return 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20';
+    }
+}
 
 export default function Show({
     vehicle,
@@ -245,219 +348,330 @@ export default function Show({
         return t('fleet.vehicles.delete_fuel_confirm', { label: pendingDelete.label });
     };
 
-    const fuelSummaryParts = [
-        `${t('fleet.vehicles.avg_kml')}: ${fuelSummary.average_km_per_liter ?? '—'}`,
-        fuelSummary.expected_km_per_liter
+    const openFuelModal = (): void => {
+        fuelForm.setData({
+            ...fuelForm.data,
+            filled_at: new Date().toISOString().slice(0, 10),
+            odometer_km: String(fuelSummary.suggested_odometer_km || ''),
+            odometer_source: fuelSummary.suggested_odometer_source || 'vehicle',
+        });
+        setShowFuelModal(true);
+    };
+
+    const stnkTone = expiryTone(vehicle.stnk_expires_at);
+    const kirTone = expiryTone(vehicle.kir_expires_at);
+    const docsAttention = (documentSummary?.expired ?? 0) + (documentSummary?.expiring_soon ?? 0);
+    const subtitleParts = [vehicle.brand, vehicle.model_year, vehicle.color].filter(Boolean);
+    const fuelEconomyValue =
+        fuelSummary.average_km_per_liter != null ? String(fuelSummary.average_km_per_liter) : '—';
+    const fuelEconomyHint =
+        fuelSummary.expected_km_per_liter != null
             ? `${t('fleet.vehicles.expected')}: ${fuelSummary.expected_km_per_liter}`
-            : null,
-        fuelSummary.anomaly_count > 0
-            ? `${t('fleet.vehicles.anomalies')}: ${fuelSummary.anomaly_count}`
-            : null,
-        trackingEnabled ? 'GPS odometer linked' : null,
-    ].filter(Boolean);
+            : t('fleet.vehicles.fuel_economy_hint');
+
+    const expiryLabel = (tone: ExpiryTone): string => {
+        if (tone === 'expired') {
+            return t('fleet.vehicles.expiry_expired');
+        }
+        if (tone === 'soon') {
+            return t('fleet.vehicles.expiry_soon');
+        }
+        if (tone === 'ok') {
+            return t('fleet.vehicles.expiry_ok');
+        }
+
+        return '—';
+    };
 
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('fleet.title')}</h2>
-                    <div className="flex gap-2">
-                        {can.update && (
-                            <Link href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}>
-                                <SecondaryButton>{t('common.edit')}</SecondaryButton>
-                            </Link>
-                        )}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{t('fleet.title')}</p>
+                        <h2 className="font-mono text-xl font-semibold leading-tight text-gray-800">{vehicle.plate_number}</h2>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                         <Link href={prefixedRoute('fleet.vehicles.index')}>
                             <SecondaryButton>{t('common.back')}</SecondaryButton>
                         </Link>
+                        {can.update && (
+                            <Link href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}>
+                                <PrimaryButton type="button">{t('common.edit')}</PrimaryButton>
+                            </Link>
+                        )}
                     </div>
                 </div>
             }
         >
-            <Head title={t('fleet.vehicles.show')} />
+            <Head title={`${vehicle.plate_number} · ${vehicle.name}`} />
 
             <FleetNav />
 
             <div className="space-y-6">
-                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div className="p-6">
-                        {vehicle.photo_url ? (
-                            <img src={vehicle.photo_url} alt={vehicle.name} className="mb-6 h-48 w-full rounded-lg object-cover sm:w-64" />
-                        ) : (
-                            <div className="mb-6 flex h-48 w-full items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-400 sm:w-64">
-                                {t('fleet.vehicles.photo_empty')}
-                            </div>
-                        )}
-                        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.name')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.name}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.plate')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.plate_number}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.type')}</dt>
-                                <dd className="mt-1 text-sm capitalize text-gray-900">{vehicle.type}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.status')}</dt>
-                                <dd className="mt-1">
+                <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                    <div className="flex flex-col gap-5 border-b border-gray-100 p-6 lg:flex-row">
+                        <div className="shrink-0">
+                            {vehicle.photo_url ? (
+                                <img
+                                    src={vehicle.photo_url}
+                                    alt={vehicle.name}
+                                    className="h-44 w-full rounded-xl object-cover sm:h-52 sm:w-72"
+                                />
+                            ) : (
+                                <div className="flex h-44 w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 text-center sm:h-52 sm:w-72">
+                                    <p className="text-sm font-medium text-gray-500">{t('fleet.vehicles.photo_empty')}</p>
+                                    <p className="mt-1 text-xs text-gray-400">{t('fleet.vehicles.no_photo_hint')}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="min-w-0 flex-1 space-y-4">
+                            <div className="space-y-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-mono text-sm font-semibold text-indigo-600">{vehicle.plate_number}</span>
                                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
                                         {t(`fleet.status.${vehicle.status}`)}
                                     </span>
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.home_base')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">
+                                    <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium capitalize text-indigo-700 ring-1 ring-inset ring-indigo-600/20">
+                                        {vehicle.type.replaceAll('_', ' ')}
+                                    </span>
+                                    <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-medium capitalize text-slate-700 ring-1 ring-inset ring-slate-500/20">
+                                        {vehicle.fuel_type}
+                                    </span>
+                                </div>
+                                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">{vehicle.name}</h1>
+                                {subtitleParts.length > 0 && (
+                                    <p className="text-sm text-gray-600">{subtitleParts.join(' · ')}</p>
+                                )}
+                                <p className="text-sm text-gray-600">
+                                    <span className="text-gray-500">{t('fleet.vehicles.home_base')}: </span>
                                     {vehicle.home_base ? (
                                         <Link
                                             href={prefixedRoute('fleet.bases.show', vehicle.home_base.id)}
-                                            className="text-indigo-600 hover:text-indigo-900"
+                                            className="font-medium text-indigo-600 hover:text-indigo-800"
                                         >
                                             {vehicle.home_base.code} — {vehicle.home_base.name}
                                         </Link>
                                     ) : (
-                                        '—'
+                                        <span className="text-gray-400">{t('fleet.vehicles.home_base_none')}</span>
                                     )}
-                                </dd>
+                                </p>
                             </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.brand')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.brand || '—'}</dd>
+
+                            <div className="flex flex-wrap gap-2">
+                                {can.create && (
+                                    <PrimaryButton type="button" onClick={openFuelModal}>
+                                        {t('fleet.vehicles.quick_fuel')}
+                                    </PrimaryButton>
+                                )}
+                                {maintenanceEnabled ? (
+                                    <Link
+                                        href={`${prefixedRoute('maintenance.work-orders.create')}?vehicle_id=${vehicle.id}`}
+                                    >
+                                        <SecondaryButton type="button">{t('fleet.vehicles.quick_service')}</SecondaryButton>
+                                    </Link>
+                                ) : (
+                                    can.create && (
+                                        <SecondaryButton type="button" onClick={() => setShowMaintenanceModal(true)}>
+                                            {t('fleet.vehicles.log_maintenance')}
+                                        </SecondaryButton>
+                                    )
+                                )}
+                                {documentsEnabled && (
+                                    <Link href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}>
+                                        <SecondaryButton type="button">{t('fleet.vehicles.documents')}</SecondaryButton>
+                                    </Link>
+                                )}
                             </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.model_year')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.model_year || '—'}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.color')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.color || '—'}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.capacity')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.capacity || '—'}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.fuel_type')}</dt>
-                                <dd className="mt-1 text-sm capitalize text-gray-900">{vehicle.fuel_type}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.odometer')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{vehicle.odometer_km.toLocaleString()} km</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.stnk_expires')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{formatDate(vehicle.stnk_expires_at, localeTag)}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.kir_expires')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{formatDate(vehicle.kir_expires_at, localeTag)}</dd>
-                            </div>
-                            {vehicle.notes && (
-                                <div className="sm:col-span-3">
-                                    <dt className="text-sm font-medium text-gray-500">{t('fleet.vehicles.notes')}</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{vehicle.notes}</dd>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 px-6 py-4 lg:grid-cols-4">
+                        <StatCard
+                            label={t('fleet.vehicles.odometer')}
+                            value={`${vehicle.odometer_km.toLocaleString()} km`}
+                            hint={t('fleet.vehicles.odometer_hint')}
+                        />
+                        <StatCard
+                            label={t('fleet.vehicles.avg_kml')}
+                            value={fuelEconomyValue}
+                            hint={fuelEconomyHint}
+                            tone={fuelSummary.anomaly_count > 0 ? 'warning' : 'default'}
+                        />
+                        {documentsEnabled ? (
+                            <StatCard
+                                label={t('fleet.vehicles.documents')}
+                                value={String(docsAttention)}
+                                hint={
+                                    docsAttention > 0
+                                        ? t('fleet.vehicles.docs_attention_hint')
+                                        : t('fleet.vehicles.docs_ok_hint')
+                                }
+                                tone={docsAttention > 0 ? 'danger' : 'success'}
+                            />
+                        ) : (
+                            <StatCard
+                                label={t('fleet.vehicles.fuel_logs')}
+                                value={String(vehicle.fuel_logs.length)}
+                                hint={t('fleet.vehicles.fills')}
+                            />
+                        )}
+                        <StatCard
+                            label={t('fleet.vehicles.anomalies')}
+                            value={String(fuelSummary.anomaly_count)}
+                            hint={t('fleet.vehicles.fuel_summary')}
+                            tone={fuelSummary.anomaly_count > 0 ? 'warning' : 'success'}
+                        />
+                    </div>
+                </section>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+                    <div className="space-y-6 lg:col-span-3">
+                        <SectionCard title={t('fleet.vehicles.sections.specs')}>
+                            <dl>
+                                <DetailRow label={t('fleet.vehicles.brand')}>{vehicle.brand || '—'}</DetailRow>
+                                <DetailRow label={t('fleet.vehicles.model_year')}>{vehicle.model_year || '—'}</DetailRow>
+                                <DetailRow label={t('fleet.vehicles.color')}>{vehicle.color || '—'}</DetailRow>
+                                <DetailRow label={t('fleet.vehicles.capacity')}>{vehicle.capacity || '—'}</DetailRow>
+                                <DetailRow label={t('fleet.vehicles.tank_capacity')}>
+                                    {vehicle.tank_capacity_liters != null ? `${vehicle.tank_capacity_liters} L` : '—'}
+                                </DetailRow>
+                                <DetailRow label={t('fleet.vehicles.expected_kml')}>
+                                    {vehicle.expected_km_per_liter ?? '—'}
+                                </DetailRow>
+                                {vehicle.notes && <DetailRow label={t('fleet.vehicles.notes')}>{vehicle.notes}</DetailRow>}
+                            </dl>
+                        </SectionCard>
+                    </div>
+
+                    <div className="space-y-6 lg:col-span-2">
+                        <SectionCard
+                            title={t('fleet.vehicles.sections.compliance')}
+                            subtitle={t('fleet.vehicles.sections.compliance_hint')}
+                        >
+                            <div className="space-y-4">
+                                <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                            {t('fleet.vehicles.stnk_expires')}
+                                        </p>
+                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${expiryBadgeClass(stnkTone)}`}>
+                                            {expiryLabel(stnkTone)}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900">
+                                        {formatDate(vehicle.stnk_expires_at, localeTag)}
+                                    </p>
                                 </div>
-                            )}
-                        </dl>
+                                <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                            {t('fleet.vehicles.kir_expires')}
+                                        </p>
+                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${expiryBadgeClass(kirTone)}`}>
+                                            {expiryLabel(kirTone)}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-sm font-semibold text-gray-900">
+                                        {formatDate(vehicle.kir_expires_at, localeTag)}
+                                    </p>
+                                </div>
+                            </div>
+                        </SectionCard>
+
+                        {documentsEnabled && (
+                            <SectionCard
+                                title={t('fleet.vehicles.documents')}
+                                action={
+                                    <Link
+                                        href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}
+                                        className="text-sm font-medium text-indigo-600 hover:underline"
+                                    >
+                                        {t('fleet.vehicles.manage_documents')}
+                                    </Link>
+                                }
+                            >
+                                {!documentSummary || documentSummary.total === 0 ? (
+                                    <p className="text-sm text-gray-500">{t('fleet.vehicles.no_documents')}</p>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                            <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_total')}</p>
+                                            <p className="mt-1 text-xl font-semibold tabular-nums">{documentSummary.total}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_nearest')}</p>
+                                            <p className="mt-1 font-medium">{formatDate(documentSummary.nearest_expiry, localeTag)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_expired')}</p>
+                                            <p className="mt-1 text-xl font-semibold tabular-nums text-rose-700">{documentSummary.expired}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_expiring')}</p>
+                                            <p className="mt-1 text-xl font-semibold tabular-nums text-amber-700">{documentSummary.expiring_soon}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </SectionCard>
+                        )}
                     </div>
                 </div>
 
-                {documentsEnabled && (
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6">
-                            <div className="mb-3 flex items-center justify-between">
-                                <h3 className="text-lg font-medium text-gray-900">{t('fleet.vehicles.documents')}</h3>
-                                <Link
-                                    href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}
-                                    className="text-sm font-medium text-indigo-600 hover:underline"
-                                >
-                                    {t('fleet.vehicles.manage_documents')}
-                                </Link>
-                            </div>
-                            {!documentSummary || documentSummary.total === 0 ? (
-                                <p className="text-sm text-gray-500">{t('fleet.vehicles.no_documents')}</p>
-                            ) : (
-                                <div className="grid gap-3 sm:grid-cols-4 text-sm">
-                                    <div>
-                                        <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_total')}</p>
-                                        <p className="mt-1 text-xl font-semibold tabular-nums">{documentSummary.total}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_expired')}</p>
-                                        <p className="mt-1 text-xl font-semibold tabular-nums text-red-700">{documentSummary.expired}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_expiring')}</p>
-                                        <p className="mt-1 text-xl font-semibold tabular-nums text-amber-700">{documentSummary.expiring_soon}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_nearest')}</p>
-                                        <p className="mt-1 font-medium">
-                                            {formatDate(documentSummary.nearest_expiry, localeTag)}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div className="p-6">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-gray-900">
-                                {maintenanceEnabled
-                                    ? t('fleet.vehicles.service_history')
-                                    : t('fleet.vehicles.maintenance')}
-                            </h3>
-                            {maintenanceEnabled ? (
-                                <Link
-                                    href={prefixedRoute('maintenance.work-orders.create') + `?vehicle_id=${vehicle.id}`}
-                                    className="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-gray-700"
-                                >
-                                    {t('maintenance.work_orders.new')}
-                                </Link>
-                            ) : (
-                                can.create && (
-                                    <PrimaryButton onClick={() => setShowMaintenanceModal(true)}>
-                                        {t('fleet.vehicles.log_maintenance')}
-                                    </PrimaryButton>
-                                )
-                            )}
-                        </div>
-                        {maintenanceEnabled ? (
-                            !serviceHistory || serviceHistory.length === 0 ? (
-                                <p className="text-sm text-gray-500">{t('fleet.vehicles.no_service_history')}</p>
-                            ) : (
+                <SectionCard
+                    title={
+                        maintenanceEnabled
+                            ? t('fleet.vehicles.service_history')
+                            : t('fleet.vehicles.maintenance')
+                    }
+                    action={
+                        maintenanceEnabled ? (
+                            <Link
+                                href={`${prefixedRoute('maintenance.work-orders.create')}?vehicle_id=${vehicle.id}`}
+                                className="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-gray-700"
+                            >
+                                {t('maintenance.work_orders.new')}
+                            </Link>
+                        ) : (
+                            can.create && (
+                                <PrimaryButton type="button" onClick={() => setShowMaintenanceModal(true)}>
+                                    {t('fleet.vehicles.log_maintenance')}
+                                </PrimaryButton>
+                            )
+                        )
+                    }
+                >
+                    {maintenanceEnabled ? (
+                        !serviceHistory || serviceHistory.length === 0 ? (
+                            <p className="text-sm text-gray-500">{t('fleet.vehicles.no_service_history')}</p>
+                        ) : (
+                            <div className="-mx-6 overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead>
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_ref')}</th>
+                                            <th className="px-6 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_ref')}</th>
                                             <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_title')}</th>
                                             <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.status')}</th>
                                             <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_completed')}</th>
                                             <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.wo_total')}</th>
-                                            <th className="px-3 py-2" />
+                                            <th className="px-6 py-2" />
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {serviceHistory.map((wo) => (
-                                            <tr key={wo.id}>
-                                                <td className="whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-900">{wo.reference_number}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-700">
+                                            <tr key={wo.id} className="hover:bg-gray-50/80">
+                                                <td className="whitespace-nowrap px-6 py-3 text-sm font-medium text-gray-900">{wo.reference_number}</td>
+                                                <td className="px-3 py-3 text-sm text-gray-700">
                                                     <div>{wo.title}</div>
                                                     {wo.category && <div className="text-xs text-gray-500">{wo.category}</div>}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-500">{wo.status.replace('_', ' ')}</td>
-                                                <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{formatDate(wo.completed_at ?? wo.scheduled_date, localeTag)}</td>
-                                                <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                                <td className="whitespace-nowrap px-3 py-3 text-sm capitalize text-gray-500">{wo.status.replace('_', ' ')}</td>
+                                                <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{formatDate(wo.completed_at ?? wo.scheduled_date, localeTag)}</td>
+                                                <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
                                                     {wo.total_cost != null ? `Rp ${Number(wo.total_cost).toLocaleString()}` : '—'}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
+                                                <td className="whitespace-nowrap px-6 py-3 text-right text-sm">
                                                     <Link
                                                         href={prefixedRoute('maintenance.work-orders.show', wo.id)}
                                                         className="text-indigo-600 hover:text-indigo-900"
@@ -469,30 +683,32 @@ export default function Show({
                                         ))}
                                     </tbody>
                                 </table>
-                            )
-                        ) : (vehicle.maintenance_logs?.length ?? 0) === 0 ? (
-                            <p className="text-sm text-gray-500">{t('fleet.vehicles.no_maintenance')}</p>
-                        ) : (
+                            </div>
+                        )
+                    ) : (vehicle.maintenance_logs?.length ?? 0) === 0 ? (
+                        <p className="text-sm text-gray-500">{t('fleet.vehicles.no_maintenance')}</p>
+                    ) : (
+                        <div className="-mx-6 overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead>
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.type')}</th>
+                                        <th className="px-6 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.type')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.notes')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.date')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.cost')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.vehicles.status')}</th>
-                                        <th className="px-3 py-2" />
+                                        <th className="px-6 py-2" />
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {(vehicle.maintenance_logs ?? []).map((log) => (
-                                        <tr key={log.id}>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-900">{log.type.replace('_', ' ')}</td>
-                                            <td className="px-3 py-2 text-sm text-gray-500">{log.description}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{formatDate(log.scheduled_date, localeTag)}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{log.cost ? `Rp ${Number(log.cost).toLocaleString()}` : '—'}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm capitalize text-gray-500">{log.status}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
+                                        <tr key={log.id} className="hover:bg-gray-50/80">
+                                            <td className="whitespace-nowrap px-6 py-3 text-sm capitalize text-gray-900">{log.type.replace('_', ' ')}</td>
+                                            <td className="px-3 py-3 text-sm text-gray-500">{log.description}</td>
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{formatDate(log.scheduled_date, localeTag)}</td>
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{log.cost ? `Rp ${Number(log.cost).toLocaleString()}` : '—'}</td>
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm capitalize text-gray-500">{log.status}</td>
+                                            <td className="whitespace-nowrap px-6 py-3 text-right text-sm">
                                                 {can.delete && (
                                                     <button
                                                         type="button"
@@ -514,74 +730,76 @@ export default function Show({
                                     ))}
                                 </tbody>
                             </table>
-                        )}
-                    </div>
-                </div>
-
-                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div className="p-6">
-                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <h3 className="text-lg font-medium text-gray-900">{t('fleet.vehicles.fuel_logs')}</h3>
-                                <p className="text-xs text-gray-500">{fuelSummaryParts.join(' · ')}</p>
-                            </div>
-                            {can.create && (
-                                <PrimaryButton
-                                    onClick={() => {
-                                        fuelForm.setData({
-                                            ...fuelForm.data,
-                                            filled_at: new Date().toISOString().slice(0, 10),
-                                            odometer_km: String(fuelSummary.suggested_odometer_km || ''),
-                                            odometer_source: fuelSummary.suggested_odometer_source || 'vehicle',
-                                        });
-                                        setShowFuelModal(true);
-                                    }}
-                                >
-                                    {t('fleet.vehicles.add_fuel')}
-                                </PrimaryButton>
-                            )}
                         </div>
-                        {vehicle.fuel_logs.length === 0 ? (
-                            <p className="text-sm text-gray-500">{t('fleet.vehicles.no_fuel')}</p>
-                        ) : (
+                    )}
+                </SectionCard>
+
+                <SectionCard
+                    title={t('fleet.vehicles.fuel_logs')}
+                    subtitle={[
+                        `${t('fleet.vehicles.avg_kml')}: ${fuelSummary.average_km_per_liter ?? '—'}`,
+                        fuelSummary.expected_km_per_liter
+                            ? `${t('fleet.vehicles.expected')}: ${fuelSummary.expected_km_per_liter}`
+                            : null,
+                        fuelSummary.anomaly_count > 0
+                            ? `${t('fleet.vehicles.anomalies')}: ${fuelSummary.anomaly_count}`
+                            : null,
+                        trackingEnabled ? 'GPS odometer linked' : null,
+                    ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    action={
+                        can.create && (
+                            <PrimaryButton type="button" onClick={openFuelModal}>
+                                {t('fleet.vehicles.add_fuel')}
+                            </PrimaryButton>
+                        )
+                    }
+                >
+                    {vehicle.fuel_logs.length === 0 ? (
+                        <p className="text-sm text-gray-500">{t('fleet.vehicles.no_fuel')}</p>
+                    ) : (
+                        <div className="-mx-6 overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead>
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.date')}</th>
+                                        <th className="px-6 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.date')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.liters')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.cost')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.odometer')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Δ km</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.km_l')}</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.fuel.flags')}</th>
-                                        <th className="px-3 py-2" />
+                                        <th className="px-6 py-2" />
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {vehicle.fuel_logs.map((log) => (
-                                        <tr key={log.id} className={log.anomaly_flags?.length ? 'bg-amber-50/60' : ''}>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900">
+                                        <tr key={log.id} className={log.anomaly_flags?.length ? 'bg-amber-50/60' : 'hover:bg-gray-50/80'}>
+                                            <td className="whitespace-nowrap px-6 py-3 text-sm text-gray-900">
                                                 {formatDate(log.filled_at, localeTag)}
-                                                {log.is_full_tank && <span className="ml-1 text-xs text-indigo-600">{t('fleet.fuel.full_tank')}</span>}
+                                                {log.is_full_tank && (
+                                                    <span className="ml-1 text-xs text-indigo-600">{t('fleet.fuel.full_tank')}</span>
+                                                )}
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{log.liters} L</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">Rp {Number(log.cost).toLocaleString()}</td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{log.liters} L</td>
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">Rp {Number(log.cost).toLocaleString()}</td>
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
                                                 {log.odometer_km ? `${log.odometer_km.toLocaleString()} km` : '—'}
                                                 {log.odometer_source && (
                                                     <span className="ml-1 text-xs uppercase text-gray-400">{log.odometer_source}</span>
                                                 )}
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
                                                 {log.distance_since_last_km != null ? `${log.distance_since_last_km} km` : '—'}
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+                                            <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
                                                 {log.km_per_liter ?? '—'}
                                                 {log.liters_per_100km != null && (
                                                     <span className="block text-xs text-gray-400">{log.liters_per_100km} L/100km</span>
                                                 )}
                                             </td>
-                                            <td className="px-3 py-2 text-sm">
+                                            <td className="px-3 py-3 text-sm">
                                                 {log.anomaly_flags?.length ? (
                                                     <ul className="space-y-0.5 text-xs text-amber-800">
                                                         {log.anomaly_flags.map((flag) => (
@@ -594,7 +812,7 @@ export default function Show({
                                                     <span className="text-xs text-gray-400">—</span>
                                                 )}
                                             </td>
-                                            <td className="whitespace-nowrap px-3 py-2 text-right text-sm">
+                                            <td className="whitespace-nowrap px-6 py-3 text-right text-sm">
                                                 {can.delete && (
                                                     <button
                                                         type="button"
@@ -616,27 +834,27 @@ export default function Show({
                                     ))}
                                 </tbody>
                             </table>
-                        )}
-                    </div>
-                </div>
+                        </div>
+                    )}
+                </SectionCard>
 
                 {can.delete && (
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="flex items-center justify-between p-6">
+                    <section className="overflow-hidden rounded-xl border border-rose-200 bg-rose-50/40">
+                        <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-900">{t('common.delete')}</h3>
-                                <p className="text-sm text-gray-500">{t('common.confirm_delete_message')}</p>
+                                <h3 className="text-sm font-semibold text-rose-900">{t('common.delete')}</h3>
+                                <p className="text-sm text-rose-700/80">{t('common.confirm_delete_message')}</p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setPendingDelete({ type: 'vehicle' })}
-                                className="rounded-md p-2 text-red-600 transition hover:bg-red-50 hover:text-red-900"
-                                title={t('common.delete')}
+                                className="inline-flex items-center justify-center gap-2 rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
                             >
                                 <TrashIcon />
+                                {t('common.delete')}
                             </button>
                         </div>
-                    </div>
+                    </section>
                 )}
             </div>
 

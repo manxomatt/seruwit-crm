@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Http\Requests\BatchDeleteVehiclesRequest;
+use Modules\Fleet\Http\Requests\BatchUpdateVehicleStatusRequest;
 use Modules\Fleet\Http\Requests\StoreVehicleRequest;
 use Modules\Fleet\Http\Requests\UpdateVehicleRequest;
 use Modules\Fleet\Models\Driver;
@@ -276,5 +278,64 @@ class VehicleController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.fleet.vehicles.index')
             ->with('success', __('fleet.messages.vehicle_deleted'));
+    }
+
+    /**
+     * Update status for multiple vehicles at once.
+     */
+    public function batchUpdateStatus(BatchUpdateVehicleStatusRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+        $status = $request->validated('status');
+
+        $updated = Vehicle::query()
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+
+        return back()->with('success', __('fleet.messages.vehicles_status_updated', [
+            'count' => $updated,
+            'status' => __('fleet.status.'.$status),
+        ]));
+    }
+
+    /**
+     * Delete multiple vehicles, skipping any blocked by foreign-key constraints.
+     */
+    public function batchDestroy(BatchDeleteVehiclesRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+
+        $deleted = 0;
+        $blocked = 0;
+
+        $vehicles = Vehicle::query()->whereIn('id', $ids)->get();
+
+        foreach ($vehicles as $vehicle) {
+            try {
+                DB::transaction(fn () => $vehicle->delete());
+                $deleted++;
+            } catch (QueryException) {
+                $blocked++;
+            }
+        }
+
+        if ($deleted === 0 && $blocked > 0) {
+            return back()->with('error', __('fleet.messages.vehicles_batch_delete_blocked', [
+                'blocked' => $blocked,
+            ]));
+        }
+
+        if ($blocked > 0) {
+            return back()->with('success', __('fleet.messages.vehicles_batch_deleted_partial', [
+                'deleted' => $deleted,
+                'blocked' => $blocked,
+            ]));
+        }
+
+        return back()->with('success', __('fleet.messages.vehicles_batch_deleted', [
+            'count' => $deleted,
+        ]));
     }
 }

@@ -7,6 +7,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router } from '@inertiajs/react';
@@ -116,7 +117,15 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
     const [search, setSearch] = useState(filters.search || '');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
+    const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [selected, setSelected] = useState<number[]>([]);
+    const [batchStatus, setBatchStatus] = useState('');
+
+    const canBatch = can.update || can.delete;
+    const pageIds = useMemo(() => vehicles.data.map((vehicle) => vehicle.id), [vehicles.data]);
+    const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+    const somePageSelected = pageIds.some((id) => selected.includes(id));
 
     const columnDefs = useMemo<Array<ColumnDef<VehicleColumn>>>(
         () =>
@@ -135,6 +144,10 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(visibleColumns));
     }, [visibleColumns]);
 
+    useEffect(() => {
+        setSelected((prev) => prev.filter((id) => pageIds.includes(id)));
+    }, [pageIds]);
+
     const visibleDataColumnCount = columnDefs.filter((column) => visibleColumns[column.key]).length;
 
     const handleSearch: FormEventHandler = (e) => {
@@ -150,6 +163,25 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
             search: search || undefined,
             status: status || undefined,
         }, { preserveState: true, replace: true });
+    };
+
+    const toggleRow = (id: number) => {
+        setSelected((prev) => (prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]));
+    };
+
+    const toggleAllOnPage = () => {
+        setSelected((prev) => {
+            if (allPageSelected) {
+                return prev.filter((id) => !pageIds.includes(id));
+            }
+
+            return Array.from(new Set([...prev, ...pageIds]));
+        });
+    };
+
+    const clearSelection = () => {
+        setSelected([]);
+        setBatchStatus('');
     };
 
     const openDeleteDialog = (vehicle: Vehicle) => {
@@ -169,6 +201,43 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
             onSuccess: () => closeDeleteDialog(),
             onFinish: () => setProcessing(false),
         });
+    };
+
+    const applyBatchStatus = () => {
+        if (!can.update || selected.length === 0 || !batchStatus) {
+            return;
+        }
+
+        setProcessing(true);
+        router.patch(
+            prefixedRoute('fleet.vehicles.batch-status'),
+            { ids: selected, status: batchStatus },
+            {
+                preserveScroll: true,
+                onSuccess: () => clearSelection(),
+                onFinish: () => setProcessing(false),
+            },
+        );
+    };
+
+    const confirmBatchDelete = () => {
+        if (!can.delete || selected.length === 0) {
+            return;
+        }
+
+        setProcessing(true);
+        router.post(
+            prefixedRoute('fleet.vehicles.batch-destroy'),
+            { ids: selected },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setShowBatchDeleteDialog(false);
+                    clearSelection();
+                },
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -223,6 +292,48 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                         />
                     </form>
 
+                    {canBatch && selected.length > 0 && (
+                        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50/70 px-4 py-3">
+                            <p className="text-sm font-medium text-indigo-900">
+                                {t('fleet.vehicles.batch_selected', { count: selected.length })}
+                            </p>
+                            {can.update && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Select
+                                        className="w-48"
+                                        value={batchStatus}
+                                        onChange={setBatchStatus}
+                                        placeholder={t('fleet.vehicles.batch_status_placeholder')}
+                                        options={STATUSES.map((status) => ({
+                                            value: status,
+                                            label: t(`fleet.status.${status}`),
+                                        }))}
+                                    />
+                                    <PrimaryButton
+                                        type="button"
+                                        onClick={applyBatchStatus}
+                                        disabled={!batchStatus || processing}
+                                    >
+                                        {t('fleet.vehicles.batch_apply_status')}
+                                    </PrimaryButton>
+                                </div>
+                            )}
+                            {can.delete && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBatchDeleteDialog(true)}
+                                    disabled={processing}
+                                    className="inline-flex items-center rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                                >
+                                    {t('fleet.vehicles.batch_delete')}
+                                </button>
+                            )}
+                            <SecondaryButton type="button" onClick={clearSelection}>
+                                {t('fleet.vehicles.batch_clear')}
+                            </SecondaryButton>
+                        </div>
+                    )}
+
                     {vehicles.data.length === 0 ? (
                         <div className="py-12 text-center">
                             <h3 className="text-sm font-medium text-gray-900">{t('fleet.vehicles.empty')}</h3>
@@ -233,6 +344,22 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
+                                            {canBatch && (
+                                                <th className="w-10 px-4 py-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                        checked={allPageSelected}
+                                                        ref={(input) => {
+                                                            if (input) {
+                                                                input.indeterminate = somePageSelected && !allPageSelected;
+                                                            }
+                                                        }}
+                                                        onChange={toggleAllOnPage}
+                                                        aria-label={t('fleet.vehicles.batch_selected', { count: pageIds.length })}
+                                                    />
+                                                </th>
+                                            )}
                                             {visibleColumns.photo && (
                                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                                     {t('fleet.vehicles.columns.photo')}
@@ -279,87 +406,105 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 bg-white">
-                                        {vehicles.data.map((vehicle) => (
-                                            <tr key={vehicle.id} className="group hover:bg-gray-50">
-                                                {visibleColumns.photo && (
-                                                    <td className="whitespace-nowrap px-6 py-4">
-                                                        {vehicle.photo_url ? (
-                                                            <img
-                                                                src={vehicle.photo_url}
-                                                                alt={vehicle.name}
-                                                                className="h-10 w-14 rounded object-cover"
+                                        {vehicles.data.map((vehicle) => {
+                                            const isSelected = selected.includes(vehicle.id);
+
+                                            return (
+                                                <tr
+                                                    key={vehicle.id}
+                                                    className={`group hover:bg-gray-50 ${isSelected ? 'bg-indigo-50/40' : ''}`}
+                                                >
+                                                    {canBatch && (
+                                                        <td className="whitespace-nowrap px-4 py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                                checked={isSelected}
+                                                                onChange={() => toggleRow(vehicle.id)}
+                                                                aria-label={vehicle.name}
                                                             />
-                                                        ) : (
-                                                            <span className="inline-flex h-10 w-14 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">
-                                                                —
+                                                        </td>
+                                                    )}
+                                                    {visibleColumns.photo && (
+                                                        <td className="whitespace-nowrap px-6 py-4">
+                                                            {vehicle.photo_url ? (
+                                                                <img
+                                                                    src={vehicle.photo_url}
+                                                                    alt={vehicle.name}
+                                                                    className="h-10 w-14 rounded object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="inline-flex h-10 w-14 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">
+                                                                    —
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    )}
+                                                    {visibleColumns.name && (
+                                                        <td className="whitespace-nowrap px-6 py-4">
+                                                            <div className="text-sm font-medium text-gray-900">{vehicle.name}</div>
+                                                            {vehicle.brand && <div className="text-xs text-gray-500">{vehicle.brand}</div>}
+                                                        </td>
+                                                    )}
+                                                    {visibleColumns.plate_number && (
+                                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{vehicle.plate_number}</td>
+                                                    )}
+                                                    {visibleColumns.model_year && (
+                                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                            {vehicle.model_year ?? '—'}
+                                                        </td>
+                                                    )}
+                                                    {visibleColumns.color && (
+                                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                            {vehicle.color || '—'}
+                                                        </td>
+                                                    )}
+                                                    {visibleColumns.type && (
+                                                        <td className="whitespace-nowrap px-6 py-4 text-sm capitalize text-gray-500">{vehicle.type}</td>
+                                                    )}
+                                                    {visibleColumns.odometer && (
+                                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{vehicle.odometer_km.toLocaleString()} km</td>
+                                                    )}
+                                                    {visibleColumns.status && (
+                                                        <td className="whitespace-nowrap px-6 py-4">
+                                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
+                                                                {t(`fleet.status.${vehicle.status}`)}
                                                             </span>
-                                                        )}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.name && (
-                                                    <td className="whitespace-nowrap px-6 py-4">
-                                                        <div className="text-sm font-medium text-gray-900">{vehicle.name}</div>
-                                                        {vehicle.brand && <div className="text-xs text-gray-500">{vehicle.brand}</div>}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.plate_number && (
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{vehicle.plate_number}</td>
-                                                )}
-                                                {visibleColumns.model_year && (
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {vehicle.model_year ?? '—'}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.color && (
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                        {vehicle.color || '—'}
-                                                    </td>
-                                                )}
-                                                {visibleColumns.type && (
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm capitalize text-gray-500">{vehicle.type}</td>
-                                                )}
-                                                {visibleColumns.odometer && (
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{vehicle.odometer_km.toLocaleString()} km</td>
-                                                )}
-                                                {visibleColumns.status && (
-                                                    <td className="whitespace-nowrap px-6 py-4">
-                                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
-                                                            {t(`fleet.status.${vehicle.status}`)}
-                                                        </span>
-                                                    </td>
-                                                )}
-                                                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                    <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-                                                        <Link
-                                                            href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
-                                                            className="text-gray-600 hover:text-gray-900"
-                                                            title={t('common.view', undefined, 'View')}
-                                                        >
-                                                            <EyeIcon />
-                                                        </Link>
-                                                        {can.update && (
+                                                        </td>
+                                                    )}
+                                                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                                        <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                                                             <Link
-                                                                href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}
-                                                                className="text-indigo-600 hover:text-indigo-900"
-                                                                title={t('common.edit')}
+                                                                href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
+                                                                className="text-gray-600 hover:text-gray-900"
+                                                                title={t('common.view', undefined, 'View')}
                                                             >
-                                                                <PencilIcon />
+                                                                <EyeIcon />
                                                             </Link>
-                                                        )}
-                                                        {can.delete && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openDeleteDialog(vehicle)}
-                                                                className="text-red-600 hover:text-red-900"
-                                                                title={t('common.delete')}
-                                                            >
-                                                                <TrashIcon />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                            {can.update && (
+                                                                <Link
+                                                                    href={prefixedRoute('fleet.vehicles.edit', vehicle.id)}
+                                                                    className="text-indigo-600 hover:text-indigo-900"
+                                                                    title={t('common.edit')}
+                                                                >
+                                                                    <PencilIcon />
+                                                                </Link>
+                                                            )}
+                                                            {can.delete && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openDeleteDialog(vehicle)}
+                                                                    className="text-red-600 hover:text-red-900"
+                                                                    title={t('common.delete')}
+                                                                >
+                                                                    <TrashIcon />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -412,6 +557,14 @@ export default function Index({ vehicles, filters, can }: Props): JSX.Element {
                         ? t('fleet.vehicles.delete_confirm', { name: vehicleToDelete.name })
                         : undefined
                 }
+            />
+
+            <ConfirmDeleteDialog
+                show={showBatchDeleteDialog}
+                onClose={() => !processing && setShowBatchDeleteDialog(false)}
+                onConfirm={confirmBatchDelete}
+                processing={processing}
+                message={t('fleet.vehicles.batch_delete_confirm', { count: selected.length })}
             />
         </DynamicLayout>
     );
