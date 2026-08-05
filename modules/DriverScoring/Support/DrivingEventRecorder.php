@@ -104,7 +104,7 @@ class DrivingEventRecorder
         }
 
         return new PositionPayload(
-            traccarDeviceId: (int) ($row->gps_device_id ?? 0),
+            externalDeviceId: (int) ($row->gps_device_id ?? 0),
             latitude: (float) $row->latitude,
             longitude: (float) $row->longitude,
             speedKph: (float) $row->speed_kph,

@@ -66,6 +66,7 @@ class TrackingModuleLifecycleTest extends TestCase
 
         $tenant->run(function () {
             $this->assertTrue(Schema::hasTable('gps_devices'));
+            $this->assertTrue(Schema::hasTable('gps_sources'));
             $this->assertTrue(Schema::hasTable('vehicle_positions'));
             $this->assertTrue(Schema::hasTable('tracking_configs'));
 
@@ -111,7 +112,7 @@ class TrackingModuleLifecycleTest extends TestCase
 
             VehiclePositionsRecorded::dispatch(
                 [new PositionPayload(
-                    traccarDeviceId: 7,
+                    externalDeviceId: 7,
                     latitude: -6.2,
                     longitude: 106.8,
                     speedKph: 40,

@@ -8,46 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Tracking\Database\Factories\TrackingConfigFactory;
 
 /**
- * The tenant's connection to its GPS provider account, plus the thresholds that
- * decide how noisy telemetry becomes trip data. One row per tenant.
+ * Tenant-level tracking thresholds and retention. GPS server credentials live on
+ * GpsSource — a tenant may connect to several providers at once.
  */
 class TrackingConfig extends Model
 {
     /** @use HasFactory<TrackingConfigFactory> */
     use HasFactory;
 
-    public const PROVIDER_TRACCAR = 'traccar';
-
-    public const PROVIDER_SKY_TRACK = 'sky_track';
-
-    public const PROVIDER_GPS_SERVER = 'gps_server';
-
-    public const AUTH_BASIC = 'basic';
-
-    public const AUTH_TOKEN = 'token';
-
-    public const AUTH_API_KEY = 'api_key';
-
-    /**
-     * Factory resolution assumes App\Models, so a module's models must point at
-     * their own factory explicitly.
-     */
     protected static function newFactory(): Factory
     {
         return TrackingConfigFactory::new();
     }
 
-    /**
-     * @var list<string>
-     */
     protected $fillable = [
-        'provider',
-        'base_url',
-        'auth_type',
-        'email',
-        'password',
-        'token',
-        'poll_enabled',
         'alerts_enabled',
         'alert_speed_kph',
         'alert_stale_minutes',
@@ -57,19 +31,11 @@ class TrackingConfig extends Model
         'checkpoint_min_distance_m',
         'checkpoint_min_interval_minutes',
         'retention_days',
-        'last_polled_at',
-        'last_poll_error',
     ];
 
-    /**
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'password' => 'encrypted',
-            'token' => 'encrypted',
-            'poll_enabled' => 'boolean',
             'alerts_enabled' => 'boolean',
             'alert_speed_kph' => 'integer',
             'alert_stale_minutes' => 'integer',
@@ -79,99 +45,11 @@ class TrackingConfig extends Model
             'checkpoint_min_distance_m' => 'integer',
             'checkpoint_min_interval_minutes' => 'integer',
             'retention_days' => 'integer',
-            'last_polled_at' => 'datetime',
         ];
     }
 
-    /**
-     * The tenant's single config row, created on first read so the settings
-     * page always has something to edit.
-     */
     public static function current(): self
     {
-        return static::query()->firstOrCreate([], [
-            'provider' => self::PROVIDER_TRACCAR,
-            'base_url' => config('services.traccar.base_url'),
-        ]);
-    }
-
-    /**
-     * @return list<string>
-     */
-    public static function providers(): array
-    {
-        return [
-            self::PROVIDER_TRACCAR,
-            self::PROVIDER_SKY_TRACK,
-            self::PROVIDER_GPS_SERVER,
-        ];
-    }
-
-    /**
-     * Providers that authenticate with a single API key (stored in `token`).
-     *
-     * @return list<string>
-     */
-    public static function apiKeyProviders(): array
-    {
-        return [
-            self::PROVIDER_SKY_TRACK,
-            self::PROVIDER_GPS_SERVER,
-        ];
-    }
-
-    public function usesSkyTrack(): bool
-    {
-        return $this->provider === self::PROVIDER_SKY_TRACK;
-    }
-
-    public function usesGpsServer(): bool
-    {
-        return $this->provider === self::PROVIDER_GPS_SERVER;
-    }
-
-    public function usesApiKeyAuth(): bool
-    {
-        return in_array($this->provider, self::apiKeyProviders(), true);
-    }
-
-    public function usesTraccar(): bool
-    {
-        return $this->provider === self::PROVIDER_TRACCAR;
-    }
-
-    /**
-     * The server this tenant talks to: its own override, else the company's
-     * default Traccar server from config (Traccar provider only).
-     */
-    public function baseUrl(): ?string
-    {
-        if ($this->base_url) {
-            return $this->base_url;
-        }
-
-        return $this->usesTraccar()
-            ? config('services.traccar.base_url')
-            : null;
-    }
-
-    /**
-     * Whether there is enough here to attempt a call at all. Checked before
-     * every poll so an unconfigured tenant is skipped silently rather than
-     * failing loudly once a minute.
-     */
-    public function isConfigured(): bool
-    {
-        if (! $this->baseUrl()) {
-            return false;
-        }
-
-        if ($this->usesApiKeyAuth()) {
-            return filled($this->token);
-        }
-
-        return $this->auth_type === self::AUTH_TOKEN
-            ? filled($this->token)
-            : filled($this->email) && filled($this->password);
+        return static::query()->firstOrCreate([], []);
     }
 }

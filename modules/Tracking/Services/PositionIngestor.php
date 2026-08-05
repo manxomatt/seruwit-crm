@@ -8,78 +8,80 @@ use Illuminate\Support\Facades\Log;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Events\VehiclePositionsRecorded;
 use Modules\Tracking\Models\GpsDevice;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Models\TrackingConfig;
 use Modules\Tracking\Models\VehiclePosition;
 use Modules\Tracking\Support\PositionPayload;
 
 /**
- * Turns one provider poll into stored positions, refreshed device state and
+ * Turns one GPS source poll into stored positions, refreshed device state and
  * updated odometers, then announces what landed.
  */
 class PositionIngestor
 {
-    public function __construct(private readonly TrackingConfig $config) {}
+    public function __construct(
+        private readonly GpsSource $source,
+        private readonly TrackingConfig $settings,
+        private readonly GpsProviderFactory $providers = new GpsProviderFactory,
+    ) {}
 
-    public static function for(TrackingConfig $config): self
+    public static function for(GpsSource $source, ?TrackingConfig $settings = null): self
     {
-        return new self($config);
+        return new self($source, $settings ?? TrackingConfig::current());
     }
 
     /**
      * Pulls the latest fixes and records them. Returns how many new positions
      * were stored, for the command's output.
      */
-    public function ingest(TrackingConfig $config): int
+    public function ingest(): int
     {
         $payloads = $this->latestPayloads();
 
-        // Unpaired devices are loaded too: their last fix still updates, which
-        // is what lets the pairing screen show live candidates.
-        $devices = GpsDevice::query()->get()->keyBy('traccar_device_id');
+        $devices = GpsDevice::query()
+            ->where('gps_source_id', $this->source->id)
+            ->get()
+            ->keyBy('external_device_id');
 
         $fresh = $payloads->filter(function (PositionPayload $payload) use ($devices) {
-            $device = $devices->get($payload->traccarDeviceId);
+            $device = $devices->get($payload->externalDeviceId);
 
             if ($device === null) {
                 return false;
             }
 
-            // A parked vehicle re-reports the same fix every minute; skipping
-            // it here keeps the common case down to zero writes.
             return $device->last_recorded_at === null
                 || $payload->recordedAt->gt($device->last_recorded_at);
         })->values();
 
         if ($fresh->isEmpty()) {
-            $config->forceFill(['last_polled_at' => now(), 'last_poll_error' => null])->save();
+            $this->source->forceFill(['last_polled_at' => now(), 'last_poll_error' => null])->save();
 
             return 0;
         }
 
         $rows = $fresh->map(function (PositionPayload $payload) use ($devices) {
-            $device = $devices->get($payload->traccarDeviceId);
+            $device = $devices->get($payload->externalDeviceId);
 
             return $payload->toRow($device->id, $device->vehicle_id);
         })->all();
 
-        // Idempotency comes from the (gps_device_id, recorded_at) unique index,
-        // so a replayed poll or a retried HTTP call writes nothing twice.
         VehiclePosition::insertOrIgnore($rows);
 
-        foreach ($fresh->groupBy(fn (PositionPayload $payload) => $payload->traccarDeviceId) as $traccarId => $group) {
-            $this->applyToDevice($devices->get($traccarId), $group->last(), $group);
+        foreach ($fresh->groupBy(fn (PositionPayload $payload) => $payload->externalDeviceId) as $externalId => $group) {
+            $this->applyToDevice($devices->get($externalId), $group->last(), $group);
         }
 
-        $config->forceFill(['last_polled_at' => now(), 'last_poll_error' => null])->save();
+        $this->source->forceFill(['last_polled_at' => now(), 'last_poll_error' => null])->save();
 
         VehiclePositionsRecorded::dispatch(
             $fresh->all(),
             $devices->filter(fn (GpsDevice $device) => $device->vehicle_id !== null)
-                ->mapWithKeys(fn (GpsDevice $device) => [$device->traccar_device_id => $device->vehicle_id])
+                ->mapWithKeys(fn (GpsDevice $device) => [$device->external_device_id => $device->vehicle_id])
                 ->all(),
-            $config->geofence_radius_m,
-            $config->checkpoint_min_distance_m,
-            $config->checkpoint_min_interval_minutes,
+            $this->settings->geofence_radius_m,
+            $this->settings->checkpoint_min_distance_m,
+            $this->settings->checkpoint_min_interval_minutes,
         );
 
         return $fresh->count();
@@ -90,30 +92,18 @@ class PositionIngestor
      */
     private function latestPayloads(): Collection
     {
-        if ($this->config->usesSkyTrack()) {
-            return collect((new SkyTrackClient($this->config))->latestPositions())
-                ->map(fn (array $row) => PositionPayload::fromSkyTrack($row))
-                ->filter()
-                ->values();
-        }
+        $rows = $this->providers->make($this->source)->latestPositions();
 
-        if ($this->config->usesGpsServer()) {
-            return collect((new GpsServerClient($this->config))->latestPositions())
-                ->map(fn (array $row) => PositionPayload::fromGpsServer($row))
-                ->filter()
-                ->values();
-        }
+        $mapper = match (true) {
+            $this->source->usesSkyTrack() => fn (array $row) => PositionPayload::fromSkyTrack($row),
+            $this->source->usesGpsServer() => fn (array $row) => PositionPayload::fromGpsServer($row),
+            default => fn (array $row) => PositionPayload::fromTraccar($row),
+        };
 
-        return collect((new TraccarClient($this->config))->latestPositions())
-            ->map(fn (array $row) => PositionPayload::fromTraccar($row))
-            ->filter()
-            ->values();
+        return collect($rows)->map($mapper)->filter()->values();
     }
 
     /**
-     * Refreshes a device's denormalized last fix and rolls its odometer
-     * forward.
-     *
      * @param  Collection<int, PositionPayload>  $group
      */
     private function applyToDevice(GpsDevice $device, PositionPayload $latest, $group): void
@@ -128,7 +118,7 @@ class PositionIngestor
             'last_recorded_at' => $latest->recordedAt,
             'last_seen_at' => now(),
             'last_polled_at' => now(),
-            'traccar_total_distance_m' => $latest->totalDistanceM ?? $device->traccar_total_distance_m,
+            'provider_total_distance_m' => $latest->totalDistanceM ?? $device->provider_total_distance_m,
             'accumulated_distance_m' => $device->accumulated_distance_m + $travelled,
         ])->save();
 
@@ -136,13 +126,6 @@ class PositionIngestor
     }
 
     /**
-     * Metres covered since the previous poll, in whole metres.
-     *
-     * Providers keep their own per-device odometer, which is more trustworthy
-     * than anything derived from two sampled points, so it is preferred whenever
-     * it is present and moving forward. A device reset zeroes that counter,
-     * which shows up as a backwards value and falls through to haversine.
-     *
      * @param  Collection<int, PositionPayload>  $group
      */
     private function distanceTravelled(GpsDevice $device, $group): int
@@ -152,9 +135,9 @@ class PositionIngestor
         $delta = null;
 
         if ($latest->totalDistanceM !== null
-            && $device->traccar_total_distance_m !== null
-            && $latest->totalDistanceM >= $device->traccar_total_distance_m) {
-            $delta = $latest->totalDistanceM - $device->traccar_total_distance_m;
+            && $device->provider_total_distance_m !== null
+            && $latest->totalDistanceM >= $device->provider_total_distance_m) {
+            $delta = $latest->totalDistanceM - $device->provider_total_distance_m;
         }
 
         if ($delta === null) {
@@ -172,8 +155,6 @@ class PositionIngestor
             return 0;
         }
 
-        // Drift while parked: a stationary vehicle wanders a few metres between
-        // fixes, which would otherwise accrue kilometres overnight.
         return $delta < (int) config('tracking.min_odometer_delta_m', 20) ? 0 : $delta;
     }
 
@@ -198,11 +179,6 @@ class PositionIngestor
         return (int) round($metres);
     }
 
-    /**
-     * Writes the device's implied reading onto its vehicle, but only when the
-     * whole-kilometre value actually changed — otherwise this would issue 1,440
-     * no-op updates per vehicle per day.
-     */
     private function syncOdometer(GpsDevice $device): void
     {
         if ($device->vehicle_id === null) {

@@ -24,6 +24,7 @@ interface Device {
     last_speed_kph: string | null;
     last_recorded_at: string | null;
     vehicle: { id: number; name: string; plate_number: string } | null;
+    source?: { id: number; name: string; provider: string } | null;
 }
 
 interface Vehicle {
@@ -45,7 +46,8 @@ interface PaginatedDevices {
 interface Props {
     devices: PaginatedDevices;
     pairableVehicles: Vehicle[];
-    filters: { search: string | null };
+    sources: Array<{ id: number; name: string; provider: string }>;
+    filters: { search: string | null; source_id: number | null };
     can: { create: boolean; update: boolean; delete: boolean };
 }
 
@@ -71,30 +73,43 @@ const UnlinkIcon = () => (
     </svg>
 );
 
-export default function Index({ devices, pairableVehicles, filters, can }: Props): JSX.Element {
+export default function Index({ devices, pairableVehicles, sources, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [pairing, setPairing] = useState<Device | null>(null);
     const [search, setSearch] = useState(filters.search || '');
+    const [sourceId, setSourceId] = useState(filters.source_id ? String(filters.source_id) : '');
 
     const form = useForm({ vehicle_id: '' });
-    const hasSearch = Boolean(filters.search);
+    const hasFilters = Boolean(filters.search || filters.source_id);
 
     const sync = () => {
-        router.post(prefixedRoute('tracking.devices.sync'), {}, { preserveScroll: true });
+        router.post(
+            prefixedRoute('tracking.devices.sync'),
+            sourceId ? { source_id: Number(sourceId) } : {},
+            { preserveScroll: true },
+        );
     };
 
-    const handleSearch: FormEventHandler = (e) => {
-        e.preventDefault();
+    const applyFilters = (nextSearch: string, nextSourceId: string) => {
         router.get(
             prefixedRoute('tracking.devices.index'),
-            { search: search || undefined },
+            {
+                search: nextSearch || undefined,
+                source_id: nextSourceId || undefined,
+            },
             { preserveState: true, replace: true },
         );
     };
 
+    const handleSearch: FormEventHandler = (e) => {
+        e.preventDefault();
+        applyFilters(search, sourceId);
+    };
+
     const clearSearch = () => {
         setSearch('');
+        setSourceId('');
         router.get(prefixedRoute('tracking.devices.index'), {}, { preserveState: true, replace: true });
     };
 
@@ -140,8 +155,26 @@ export default function Index({ devices, pairableVehicles, filters, can }: Props
                                 className="w-full"
                             />
                         </div>
+                        {sources.length > 0 && (
+                            <div className="w-full sm:w-56">
+                                <Select
+                                    value={sourceId}
+                                    onChange={(value) => {
+                                        setSourceId(value);
+                                        applyFilters(search, value);
+                                    }}
+                                    options={[
+                                        { value: '', label: t('tracking.fields.all_sources') },
+                                        ...sources.map((source) => ({
+                                            value: String(source.id),
+                                            label: source.name,
+                                        })),
+                                    ]}
+                                />
+                            </div>
+                        )}
                         <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
-                        {hasSearch && (
+                        {hasFilters && (
                             <SecondaryButton type="button" onClick={clearSearch}>
                                 {t('common.clear_filters')}
                             </SecondaryButton>
@@ -151,9 +184,9 @@ export default function Index({ devices, pairableVehicles, filters, can }: Props
                     {devices.data.length === 0 ? (
                         <div className="py-12 text-center">
                             <h3 className="text-sm font-medium text-gray-900">
-                                {hasSearch ? t('tracking.pages.devices.empty_search') : t('tracking.pages.devices.empty')}
+                                {hasFilters ? t('tracking.pages.devices.empty_search') : t('tracking.pages.devices.empty')}
                             </h3>
-                            {!hasSearch && (
+                            {!hasFilters && (
                                 <p className="mt-1 text-sm text-gray-500">
                                     {t('tracking.pages.devices.empty_hint')}
                                 </p>
@@ -167,6 +200,7 @@ export default function Index({ devices, pairableVehicles, filters, can }: Props
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.device')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">IMEI</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.source')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.vehicle')}</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Fix</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tracking.fields.status')}</th>
@@ -178,6 +212,7 @@ export default function Index({ devices, pairableVehicles, filters, can }: Props
                                             <tr key={device.id} className="hover:bg-gray-50">
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{device.name}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{device.unique_id}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{device.source?.name ?? '—'}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                                     {device.vehicle ? `${device.vehicle.name} (${device.vehicle.plate_number})` : (
                                                         <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">

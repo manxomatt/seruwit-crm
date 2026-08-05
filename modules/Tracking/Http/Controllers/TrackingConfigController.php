@@ -7,40 +7,52 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Tracking\Exceptions\TraccarException;
+use Modules\Tracking\Exceptions\GpsProviderException;
+use Modules\Tracking\Http\Requests\StoreGpsSourceRequest;
+use Modules\Tracking\Http\Requests\UpdateGpsSourceRequest;
 use Modules\Tracking\Http\Requests\UpdateTrackingConfigRequest;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Models\TrackingConfig;
-use Modules\Tracking\Services\GpsServerClient;
-use Modules\Tracking\Services\SkyTrackClient;
-use Modules\Tracking\Services\TraccarClient;
+use Modules\Tracking\Services\GpsProviderFactory;
 
 class TrackingConfigController extends Controller
 {
-    /**
-     * Get the route prefix for this controller.
-     */
     protected function getRoutePrefix(): string
     {
         return 'module';
     }
 
     /**
-     * Show the GPS provider connection settings.
+     * Settings hub: GPS sources + tenant alert/retention thresholds.
      */
     public function edit(): Response
     {
         $user = Auth::user();
         $config = TrackingConfig::current();
 
+        $sources = GpsSource::query()
+            ->withCount(['devices', 'devices as paired_devices_count' => fn ($q) => $q->whereNotNull('vehicle_id')])
+            ->orderBy('name')
+            ->get()
+            ->map(fn (GpsSource $source): array => [
+                'id' => $source->id,
+                'name' => $source->name,
+                'provider' => $source->provider,
+                'base_url' => $source->base_url,
+                'auth_type' => $source->auth_type,
+                'email' => $source->email,
+                'poll_enabled' => $source->poll_enabled,
+                'configured' => $source->isConfigured(),
+                'has_password' => filled($source->password),
+                'has_token' => filled($source->token),
+                'last_polled_at' => $source->last_polled_at?->toDateTimeString(),
+                'last_poll_error' => $source->last_poll_error,
+                'devices_count' => $source->devices_count,
+                'paired_devices_count' => $source->paired_devices_count,
+            ]);
+
         return Inertia::render('Modules/Tracking/Settings', [
-            // The stored secrets are deliberately absent from the payload; the
-            // page only needs to know whether one exists.
             'config' => $config->only([
-                'provider',
-                'base_url',
-                'auth_type',
-                'email',
-                'poll_enabled',
                 'alerts_enabled',
                 'alert_speed_kph',
                 'alert_stale_minutes',
@@ -51,70 +63,80 @@ class TrackingConfigController extends Controller
                 'checkpoint_min_interval_minutes',
                 'retention_days',
             ]),
-            'hasPassword' => filled($config->password),
-            'hasToken' => filled($config->token),
+            'sources' => $sources,
             'defaultBaseUrl' => config('services.traccar.base_url'),
-            'lastPolledAt' => $config->last_polled_at?->toDateTimeString(),
-            'lastPollError' => $config->last_poll_error,
+            'maxSources' => GpsSource::MAX_PER_TENANT,
             'can' => [
                 'update' => $user->hasPermissionFor('tracking', 'update'),
+                'create' => $user->hasPermissionFor('tracking', 'create'),
+                'delete' => $user->hasPermissionFor('tracking', 'delete'),
             ],
         ]);
     }
 
-    /**
-     * Save the connection settings and thresholds.
-     */
     public function update(UpdateTrackingConfigRequest $request): RedirectResponse
     {
-        $config = TrackingConfig::current();
+        TrackingConfig::current()->update($request->validated());
+
+        return back()->with('success', __('tracking.messages.settings_saved'));
+    }
+
+    public function storeSource(StoreGpsSourceRequest $request): RedirectResponse
+    {
         $validated = $request->validated();
 
-        // A blank secret means the operator did not retype it, so keep the one
-        // already stored rather than wiping the connection.
+        GpsSource::query()->create($validated);
+
+        return back()->with('success', __('tracking.messages.source_created'));
+    }
+
+    public function updateSource(UpdateGpsSourceRequest $request, GpsSource $source): RedirectResponse
+    {
+        $validated = $request->validated();
+
         foreach (['password', 'token'] as $secret) {
             if (blank($validated[$secret] ?? null)) {
                 unset($validated[$secret]);
             }
         }
 
-        if (in_array($validated['provider'] ?? null, TrackingConfig::apiKeyProviders(), true)) {
-            $validated['auth_type'] = TrackingConfig::AUTH_API_KEY;
+        if (in_array($validated['provider'] ?? null, GpsSource::apiKeyProviders(), true)) {
+            $validated['auth_type'] = GpsSource::AUTH_API_KEY;
             $validated['email'] = null;
             $validated['password'] = null;
         }
 
-        $config->update($validated);
+        $source->update($validated);
 
-        return back()->with('success', __('tracking.messages.settings_saved'));
+        return back()->with('success', __('tracking.messages.source_updated'));
     }
 
-    /**
-     * Try the stored credentials against the configured GPS provider.
-     */
-    public function test(): RedirectResponse
+    public function destroySource(GpsSource $source): RedirectResponse
     {
-        $config = TrackingConfig::current();
+        if ($source->hasPairedDevices()) {
+            return back()->with('error', __('tracking.messages.source_has_paired_devices'));
+        }
 
-        if (! $config->isConfigured()) {
+        $source->delete();
+
+        return back()->with('success', __('tracking.messages.source_deleted'));
+    }
+
+    public function testSource(GpsSource $source, GpsProviderFactory $providers): RedirectResponse
+    {
+        if (! $source->isConfigured()) {
             return back()->with('error', __('tracking.messages.fill_credentials'));
         }
 
         try {
-            if ($config->usesSkyTrack()) {
-                (new SkyTrackClient($config))->verify();
-            } elseif ($config->usesGpsServer()) {
-                (new GpsServerClient($config))->verify();
-            } else {
-                (new TraccarClient($config))->verify();
-            }
-        } catch (TraccarException $e) {
-            $config->forceFill(['last_poll_error' => $e->getMessage()])->save();
+            $providers->make($source)->verify();
+        } catch (GpsProviderException $e) {
+            $source->forceFill(['last_poll_error' => $e->getMessage()])->save();
 
             return back()->with('error', $e->getMessage());
         }
 
-        $config->forceFill(['last_poll_error' => null])->save();
+        $source->forceFill(['last_poll_error' => null])->save();
 
         return back()->with('success', __('tracking.messages.connection_ok'));
     }

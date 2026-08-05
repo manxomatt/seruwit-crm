@@ -6,7 +6,7 @@ use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Models\GpsDevice;
-use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Models\GpsSource;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -26,7 +26,6 @@ class TrackingMapTest extends TestCase
     public function test_the_map_shows_every_positioned_device_paired_or_not(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->create();
 
         // A freshly synced fleet: positions reported, none paired yet.
         Vehicle::factory()->create(); // available to pair from the map panel
@@ -49,7 +48,7 @@ class TrackingMapTest extends TestCase
     public function test_the_map_reports_the_last_poll_time(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->create(['last_polled_at' => now()]);
+        GpsSource::factory()->create(['last_polled_at' => now()]);
 
         $this->actingAs($user)->get(route('module.tracking.map'))
             ->assertInertia(fn ($page) => $page->whereNot('lastPolledAt', null));
@@ -58,7 +57,6 @@ class TrackingMapTest extends TestCase
     public function test_an_unpaired_map_device_can_be_paired_to_a_vehicle(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->create();
         $vehicle = Vehicle::factory()->create(['odometer_km' => 1200]);
         $device = GpsDevice::factory()->at(-6.2, 106.8)->create();
 
@@ -77,7 +75,7 @@ class TrackingMapTest extends TestCase
     public function test_gps_server_map_timestamps_use_the_general_timezone_setting(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->gpsServer()->create([
+        GpsSource::factory()->gpsServer()->create([
             'last_polled_at' => '2026-08-03 15:54:04',
         ]);
         Setting::factory()->create([

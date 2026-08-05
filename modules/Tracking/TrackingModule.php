@@ -21,7 +21,7 @@ use Modules\Tracking\Listeners\DetectTrackingAlerts;
 use Modules\Tracking\Models\GpsDevice;
 
 /**
- * GPS telemetry for Fleet vehicles, pulled from a Traccar server: device
+ * GPS telemetry for Fleet vehicles, pulled from one or more GPS servers: device
  * pairing, position history, and the live fleet map.
  *
  * Foundation rather than Vertical because tracking a vehicle is useful to any
@@ -43,7 +43,7 @@ class TrackingModule implements ModuleContract
 
     public function description(): string
     {
-        return 'Live GPS tracking for fleet vehicles via Traccar: device pairing, position history, and automatic odometer.';
+        return 'Live GPS tracking for fleet vehicles via one or more GPS servers: device pairing, position history, and automatic odometer.';
     }
 
     public function tier(): ModuleTier
@@ -131,6 +131,9 @@ class TrackingModule implements ModuleContract
 
         Route::get('/tracking/settings', [TrackingConfigController::class, 'edit'])->middleware('permission:tracking,view')->name('tracking.settings.edit');
         Route::patch('/tracking/settings', [TrackingConfigController::class, 'update'])->middleware('permission:tracking,update')->name('tracking.settings.update');
-        Route::post('/tracking/settings/test', [TrackingConfigController::class, 'test'])->middleware('permission:tracking,update')->name('tracking.settings.test');
+        Route::post('/tracking/settings/sources', [TrackingConfigController::class, 'storeSource'])->middleware('permission:tracking,create')->name('tracking.settings.sources.store');
+        Route::patch('/tracking/settings/sources/{source}', [TrackingConfigController::class, 'updateSource'])->middleware('permission:tracking,update')->name('tracking.settings.sources.update');
+        Route::delete('/tracking/settings/sources/{source}', [TrackingConfigController::class, 'destroySource'])->middleware('permission:tracking,delete')->name('tracking.settings.sources.destroy');
+        Route::post('/tracking/settings/sources/{source}/test', [TrackingConfigController::class, 'testSource'])->middleware('permission:tracking,update')->name('tracking.settings.sources.test');
     }
 }

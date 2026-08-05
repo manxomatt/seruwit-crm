@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Modules\ModuleInstaller;
 use Illuminate\Support\Facades\Http;
 use Modules\Tracking\Models\GpsDevice;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Models\TrackingConfig;
 use Modules\Tracking\Models\VehiclePosition;
 use Modules\Tracking\TrackingModule;
@@ -85,13 +86,15 @@ class TrackingCommandsTest extends TestCase
         $second = $this->trackedTenant('Track Two', 'track-two', 'owner@track-two.test');
 
         $first->run(function () {
-            TrackingConfig::factory()->create(['base_url' => 'https://gps.example.test']);
-            GpsDevice::factory()->create(['traccar_device_id' => 11]);
+            TrackingConfig::factory()->create();
+            $source = GpsSource::factory()->create(['base_url' => 'https://gps.example.test']);
+            GpsDevice::factory()->forSource($source)->create(['external_device_id' => 11]);
         });
 
         $second->run(function () {
-            TrackingConfig::factory()->create(['base_url' => 'https://gps.example.test']);
-            GpsDevice::factory()->create(['traccar_device_id' => 22]);
+            TrackingConfig::factory()->create();
+            $source = GpsSource::factory()->create(['base_url' => 'https://gps.example.test']);
+            GpsDevice::factory()->forSource($source)->create(['external_device_id' => 22]);
         });
 
         Http::fake($this->fleetStubs('gps.example.test', [
@@ -99,7 +102,8 @@ class TrackingCommandsTest extends TestCase
             $this->position(22),
         ]));
 
-        $this->artisan('tracking:poll')->assertSuccessful();
+        $this->artisan('tracking:poll', ['--tenant' => $first->id])->assertSuccessful();
+        $this->artisan('tracking:poll', ['--tenant' => $second->id])->assertSuccessful();
 
         // Each tenant only stores the fix belonging to the device it knows.
         $first->run(fn () => $this->assertSame(1, VehiclePosition::count()));
@@ -111,13 +115,14 @@ class TrackingCommandsTest extends TestCase
         $tenant = $this->trackedTenant('Track Off', 'track-off', 'owner@track-off.test');
 
         $tenant->run(function () {
-            TrackingConfig::factory()->disabled()->create(['base_url' => 'https://gps.example.test']);
-            GpsDevice::factory()->create(['traccar_device_id' => 11]);
+            TrackingConfig::factory()->create();
+            $source = GpsSource::factory()->disabled()->create(['base_url' => 'https://gps.example.test']);
+            GpsDevice::factory()->forSource($source)->create(['external_device_id' => 11]);
         });
 
         Http::fake(['gps.example.test/api/*' => Http::response([])]);
 
-        $this->artisan('tracking:poll')->assertSuccessful();
+        $this->artisan('tracking:poll', ['--tenant' => $tenant->id])->assertSuccessful();
 
         Http::assertNothingSent();
         $tenant->run(fn () => $this->assertSame(0, VehiclePosition::count()));
@@ -129,9 +134,10 @@ class TrackingCommandsTest extends TestCase
         $imei = '358735072143802';
 
         $tenant->run(function () use ($imei) {
-            TrackingConfig::factory()->skyTrack()->create();
-            GpsDevice::factory()->create([
-                'traccar_device_id' => (int) $imei,
+            TrackingConfig::factory()->create();
+            $source = GpsSource::factory()->skyTrack()->create();
+            GpsDevice::factory()->forSource($source)->create([
+                'external_device_id' => (int) $imei,
                 'unique_id' => $imei,
             ]);
         });
@@ -152,7 +158,7 @@ class TrackingCommandsTest extends TestCase
             ]]),
         ]);
 
-        $this->artisan('tracking:poll')->assertSuccessful();
+        $this->artisan('tracking:poll', ['--tenant' => $tenant->id])->assertSuccessful();
 
         $tenant->run(fn () => $this->assertSame(1, VehiclePosition::count()));
     }
@@ -163,9 +169,10 @@ class TrackingCommandsTest extends TestCase
         $imei = '352503097417775';
 
         $tenant->run(function () use ($imei) {
-            TrackingConfig::factory()->gpsServer()->create();
-            GpsDevice::factory()->create([
-                'traccar_device_id' => (int) $imei,
+            TrackingConfig::factory()->create();
+            $source = GpsSource::factory()->gpsServer()->create();
+            GpsDevice::factory()->forSource($source)->create([
+                'external_device_id' => (int) $imei,
                 'unique_id' => $imei,
             ]);
         });
@@ -185,7 +192,7 @@ class TrackingCommandsTest extends TestCase
             ]]),
         ]);
 
-        $this->artisan('tracking:poll')->assertSuccessful();
+        $this->artisan('tracking:poll', ['--tenant' => $tenant->id])->assertSuccessful();
 
         $tenant->run(fn () => $this->assertSame(1, VehiclePosition::count()));
     }
@@ -199,7 +206,7 @@ class TrackingCommandsTest extends TestCase
 
         // No tracking_configs table exists in this schema at all, so a missing
         // gate would surface here as a QueryException rather than a pass.
-        $this->artisan('tracking:poll')->assertSuccessful();
+        $this->artisan('tracking:poll', ['--tenant' => $tenant->id])->assertSuccessful();
 
         Http::assertNothingSent();
     }
@@ -210,29 +217,33 @@ class TrackingCommandsTest extends TestCase
         $healthy = $this->trackedTenant('Track Fine', 'track-fine', 'owner@track-fine.test');
 
         $broken->run(function () {
-            TrackingConfig::factory()->create(['base_url' => 'https://broken.example.test']);
-            GpsDevice::factory()->create(['traccar_device_id' => 11]);
+            TrackingConfig::factory()->create();
+            $source = GpsSource::factory()->create(['base_url' => 'https://broken.example.test']);
+            GpsDevice::factory()->forSource($source)->create(['external_device_id' => 11]);
         });
 
         $healthy->run(function () {
-            TrackingConfig::factory()->create(['base_url' => 'https://gps.example.test']);
-            GpsDevice::factory()->create(['traccar_device_id' => 22]);
+            TrackingConfig::factory()->create();
+            $source = GpsSource::factory()->create(['base_url' => 'https://gps.example.test']);
+            GpsDevice::factory()->forSource($source)->create(['external_device_id' => 22]);
         });
 
         Http::fake([
             'broken.example.test/api/*' => Http::response([], 401),
             ...$this->fleetStubs('gps.example.test', [$this->position(22)]),
+            '*' => Http::response([], 404),
         ]);
 
         $this->artisan('tracking:poll')->assertFailed();
 
         // The healthy tenant still ingested, and the broken one carries the
-        // reason on its own config for its settings page to show.
+        // reason on its own source for its settings page to show.
         $healthy->run(fn () => $this->assertSame(1, VehiclePosition::count()));
         $broken->run(function () {
-            $config = TrackingConfig::first();
-            $this->assertNotNull($config->last_poll_error);
-            $this->assertNotNull($config->last_polled_at);
+            $source = GpsSource::query()->where('base_url', 'https://broken.example.test')->first();
+            $this->assertNotNull($source);
+            $this->assertNotNull($source->last_poll_error);
+            $this->assertNotNull($source->last_polled_at);
         });
     }
 
@@ -242,7 +253,7 @@ class TrackingCommandsTest extends TestCase
 
         $tenant->run(function () {
             TrackingConfig::factory()->create(['retention_days' => 30]);
-            $device = GpsDevice::factory()->create(['traccar_device_id' => 11]);
+            $device = GpsDevice::factory()->create(['external_device_id' => 11]);
 
             VehiclePosition::factory()->create([
                 'gps_device_id' => $device->id,
@@ -254,7 +265,7 @@ class TrackingCommandsTest extends TestCase
             ]);
         });
 
-        $this->artisan('tracking:prune')->assertSuccessful();
+        $this->artisan('tracking:prune', ['--tenant' => $tenant->id])->assertSuccessful();
 
         $tenant->run(function () {
             $this->assertSame(1, VehiclePosition::count());

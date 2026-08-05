@@ -131,7 +131,7 @@ class PositionPayloadTest extends TestCase
     {
         $payload = PositionPayload::fromSkyTrack($this->skyTrackRow());
 
-        $this->assertSame(358735072143802, $payload->traccarDeviceId);
+        $this->assertSame(358735072143802, $payload->externalDeviceId);
         $this->assertSame(-7.036783, $payload->latitude);
         $this->assertSame(107.396587, $payload->longitude);
         // Sky Track already reports km/h — do not apply the Traccar knots factor.
@@ -213,7 +213,7 @@ class PositionPayloadTest extends TestCase
     {
         $payload = PositionPayload::fromGpsServer($this->gpsServerRow());
 
-        $this->assertSame(352503097417775, $payload->traccarDeviceId);
+        $this->assertSame(352503097417775, $payload->externalDeviceId);
         $this->assertSame(-7.806912, $payload->latitude);
         $this->assertSame(110.413102, $payload->longitude);
         $this->assertSame(11.0, $payload->speedKph);

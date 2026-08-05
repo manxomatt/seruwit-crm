@@ -9,14 +9,11 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Models\GpsDevice;
-use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Support\TrackingTimezone;
 
 class TrackingMapController extends Controller
 {
-    /**
-     * Get the route prefix for this controller.
-     */
     protected function getRoutePrefix(): string
     {
         return 'module';
@@ -29,14 +26,18 @@ class TrackingMapController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
-        $config = TrackingConfig::current();
+        $sources = GpsSource::query()->orderBy('name')->get();
+        $pollEnabled = $sources->contains(fn (GpsSource $source) => $source->poll_enabled && $source->isConfigured());
+        $lastPolledAt = $sources->max('last_polled_at');
+        $lastPollError = $sources
+            ->filter(fn (GpsSource $source) => filled($source->last_poll_error))
+            ->sortByDesc('last_polled_at')
+            ->first()
+            ?->last_poll_error;
+        $hasGpsServerSource = $sources->contains(fn (GpsSource $source) => $source->usesGpsServer());
 
-        // Every device that has reported a fix, paired or not: right after a
-        // sync the whole fleet is unpaired, and a map that hid it would look
-        // broken. Paired devices carry their vehicle's name; the rest fall back
-        // to the device name and are flagged unpaired on the client.
         $devices = GpsDevice::query()
-            ->with('vehicle:id,name,plate_number,status')
+            ->with(['vehicle:id,name,plate_number,status', 'source:id,name,provider'])
             ->whereNotNull('last_latitude')
             ->orderBy('name')
             ->get();
@@ -53,7 +54,7 @@ class TrackingMapController extends Controller
         }
 
         return Inertia::render('Modules/Tracking/Map', [
-            'devices' => $config->usesGpsServer()
+            'devices' => $hasGpsServerSource
                 ? $devices->map(fn (GpsDevice $device) => $this->deviceForGpsServerMap($device))->values()->all()
                 : $devices,
             'pairableVehicles' => Vehicle::query()
@@ -62,11 +63,11 @@ class TrackingMapController extends Controller
                 ->get(['id', 'name', 'plate_number', 'odometer_km']),
             'activeRentalVehicleIds' => $activeRentalVehicleIds,
             'rentalFilterAvailable' => Modules::available('rental'),
-            'pollEnabled' => $config->poll_enabled,
-            'lastPolledAt' => $config->usesGpsServer()
-                ? TrackingTimezone::formatForDisplay($config->last_polled_at)
-                : $config->last_polled_at?->toDateTimeString(),
-            'lastPollError' => $config->last_poll_error,
+            'pollEnabled' => $pollEnabled,
+            'lastPolledAt' => $hasGpsServerSource
+                ? TrackingTimezone::formatForDisplay($lastPolledAt)
+                : $lastPolledAt?->toDateTimeString(),
+            'lastPollError' => $lastPollError,
             'can' => [
                 'update' => $user->hasPermissionFor('tracking', 'update'),
             ],
@@ -81,12 +82,11 @@ class TrackingMapController extends Controller
      */
     private function deviceForGpsServerMap(GpsDevice $device): array
     {
-        return [
-            ...$device->toArray(),
-            'last_recorded_at' => TrackingTimezone::formatForDisplay($device->last_recorded_at),
-            'last_seen_at' => TrackingTimezone::formatForDisplay($device->last_seen_at),
-            'last_polled_at' => TrackingTimezone::formatForDisplay($device->last_polled_at),
-            'vehicle' => $device->vehicle,
-        ];
+        $payload = $device->toArray();
+        $payload['last_recorded_at'] = TrackingTimezone::formatForDisplay($device->last_recorded_at);
+        $payload['last_polled_at'] = TrackingTimezone::formatForDisplay($device->last_polled_at);
+        $payload['last_seen_at'] = TrackingTimezone::formatForDisplay($device->last_seen_at);
+
+        return $payload;
     }
 }

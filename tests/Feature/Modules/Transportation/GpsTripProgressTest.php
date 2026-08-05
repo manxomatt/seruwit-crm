@@ -37,7 +37,7 @@ class GpsTripProgressTest extends TestCase
     private function report(Trip $trip, array $fixes, int $minDistanceM = 200, int $minIntervalMinutes = 5, int $radiusM = 200): void
     {
         $positions = array_map(fn (array $fix) => new PositionPayload(
-            traccarDeviceId: 7,
+            externalDeviceId: 7,
             latitude: $fix[0],
             longitude: $fix[1],
             speedKph: 40,

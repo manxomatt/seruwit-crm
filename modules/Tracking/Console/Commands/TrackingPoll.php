@@ -5,25 +5,23 @@ namespace Modules\Tracking\Console\Commands;
 use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 use Illuminate\Console\Command;
-use Modules\Tracking\Exceptions\TraccarException;
-use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Exceptions\GpsProviderException;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Services\PositionIngestor;
 use Throwable;
 
 /**
- * Pulls the latest vehicle positions from each tenant's GPS provider.
+ * Pulls the latest vehicle positions from each tenant's GPS sources.
  *
- * Runs per tenant and keeps going if one fails, so a single expired token or
- * unreachable server cannot stall tracking for everybody else — the same shape
- * as modules:purge-expired. A provider failure is recorded on the tenant's own
- * config so it surfaces on their settings page rather than only in the log.
+ * Runs per tenant and keeps going if one source fails, so a single expired
+ * token or unreachable server cannot stall tracking for everybody else.
  */
 class TrackingPoll extends Command
 {
     protected $signature = 'tracking:poll
                             {--tenant= : Limit to a single tenant id}';
 
-    protected $description = 'Fetch the latest GPS positions from each tenant\'s tracking provider';
+    protected $description = 'Fetch the latest GPS positions from each tenant\'s tracking sources';
 
     public function handle(): int
     {
@@ -42,22 +40,45 @@ class TrackingPoll extends Command
                         return null;
                     }
 
-                    $config = TrackingConfig::current();
+                    $sources = GpsSource::query()->pollable()->get();
 
-                    if (! $config->poll_enabled || ! $config->isConfigured()) {
+                    if ($sources->isEmpty()) {
                         return null;
                     }
 
-                    try {
-                        return PositionIngestor::for($config)->ingest($config);
-                    } catch (TraccarException $e) {
-                        $config->forceFill([
-                            'last_polled_at' => now(),
-                            'last_poll_error' => $e->getMessage(),
-                        ])->save();
+                    $storedForTenant = 0;
+                    $attempted = false;
+                    $sourceFailed = false;
 
-                        throw $e;
+                    foreach ($sources as $source) {
+                        if (! $source->isConfigured()) {
+                            continue;
+                        }
+
+                        $attempted = true;
+
+                        try {
+                            $storedForTenant += PositionIngestor::for($source)->ingest();
+                        } catch (GpsProviderException $e) {
+                            $source->forceFill([
+                                'last_polled_at' => now(),
+                                'last_poll_error' => $e->getMessage(),
+                            ])->save();
+
+                            $sourceFailed = true;
+                            $this->error("  source #{$source->id} ({$source->name}): {$e->getMessage()}");
+                        }
                     }
+
+                    if (! $attempted) {
+                        return null;
+                    }
+
+                    if ($sourceFailed) {
+                        throw new GpsProviderException('One or more GPS sources failed to poll.');
+                    }
+
+                    return $storedForTenant;
                 });
 
                 if ($count === null) {

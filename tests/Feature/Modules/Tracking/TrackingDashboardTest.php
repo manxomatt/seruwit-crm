@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Modules\Tracking;
 
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Models\GpsDevice;
-use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Support\TrackingStatusBoard;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
@@ -30,18 +32,17 @@ class TrackingDashboardTest extends TestCase
 
     public function test_user_without_permission_cannot_view_tracking_dashboard(): void
     {
-        $user = $this->createUserWithoutRole();
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::where('slug', 'driver')->first());
 
         $this->actingAs($user)->get(route('module.tracking.dashboard'))->assertForbidden();
     }
 
     public function test_tracking_dashboard_shows_status_board(): void
     {
-        TrackingConfig::current()->update([
-            'poll_enabled' => true,
+        GpsSource::factory()->withToken('test-token')->create([
             'base_url' => 'https://traccar.example.test',
-            'auth_type' => 'token',
-            'token' => 'test-token',
+            'poll_enabled' => true,
         ]);
 
         $vehicle = Vehicle::factory()->create();

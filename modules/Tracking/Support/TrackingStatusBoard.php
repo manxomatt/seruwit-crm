@@ -4,6 +4,7 @@ namespace Modules\Tracking\Support;
 
 use Illuminate\Support\Facades\Schema;
 use Modules\Tracking\Models\GpsDevice;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Models\TrackingConfig;
 use Modules\Tracking\Models\TrackingGeofence;
 use Modules\Tracking\Models\VehiclePosition;
@@ -22,7 +23,8 @@ class TrackingStatusBoard
      */
     public function build(int $recentLimit = 8): array
     {
-        $config = TrackingConfig::current();
+        $settings = TrackingConfig::current();
+        $sources = GpsSource::query()->orderBy('name')->get();
         $staleBefore = now()->subMinutes(self::STALE_MINUTES);
 
         $devices = GpsDevice::query()
@@ -84,6 +86,15 @@ class TrackingStatusBoard
                 ->count();
         }
 
+        $configuredSources = $sources->filter(fn (GpsSource $source) => $source->isConfigured());
+        $pollEnabledSources = $configuredSources->filter(fn (GpsSource $source) => $source->poll_enabled);
+        $lastPolledAt = $sources->max('last_polled_at');
+        $lastPollError = $sources
+            ->filter(fn (GpsSource $source) => filled($source->last_poll_error))
+            ->sortByDesc('last_polled_at')
+            ->first()
+            ?->last_poll_error;
+
         $recent = $devices
             ->take($recentLimit)
             ->map(fn (GpsDevice $device): array => [
@@ -125,13 +136,24 @@ class TrackingStatusBoard
                 'positions_today' => $positionsToday,
             ],
             'config' => [
-                'configured' => $config->isConfigured(),
-                'provider' => $config->provider,
-                'poll_enabled' => (bool) $config->poll_enabled,
-                'alerts_enabled' => (bool) $config->alerts_enabled,
-                'last_polled_at' => $config->last_polled_at?->toIso8601String(),
-                'last_poll_error' => $config->last_poll_error,
+                'configured' => $configuredSources->isNotEmpty(),
+                'provider' => $configuredSources->pluck('provider')->unique()->values()->implode(', ') ?: null,
+                'poll_enabled' => $pollEnabledSources->isNotEmpty(),
+                'alerts_enabled' => (bool) $settings->alerts_enabled,
+                'last_polled_at' => $lastPolledAt?->toIso8601String(),
+                'last_poll_error' => $lastPollError,
+                'sources_total' => $sources->count(),
+                'sources_polling' => $pollEnabledSources->count(),
             ],
+            'sources' => $sources->map(fn (GpsSource $source): array => [
+                'id' => $source->id,
+                'name' => $source->name,
+                'provider' => $source->provider,
+                'configured' => $source->isConfigured(),
+                'poll_enabled' => $source->poll_enabled,
+                'last_polled_at' => $source->last_polled_at?->toIso8601String(),
+                'last_poll_error' => $source->last_poll_error,
+            ])->values()->all(),
             'recent' => $recent,
         ];
     }

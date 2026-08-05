@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Tracking\Models\GpsDevice;
-use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Models\GpsSource;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -115,8 +115,8 @@ class GpsDeviceTest extends TestCase
     public function test_syncing_imports_devices_and_updates_existing_ones(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->create(['base_url' => 'https://gps.example.test']);
-        $existing = GpsDevice::factory()->create(['traccar_device_id' => 1, 'name' => 'Old name']);
+        $source = GpsSource::factory()->create(['base_url' => 'https://gps.example.test']);
+        $existing = GpsDevice::factory()->forSource($source)->create(['external_device_id' => 1, 'name' => 'Old name']);
 
         Http::fake([
             'gps.example.test/api/devices*' => Http::response([
@@ -134,7 +134,7 @@ class GpsDeviceTest extends TestCase
     public function test_syncing_without_credentials_is_refused(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->create(['base_url' => null, 'email' => null, 'password' => null]);
+        GpsSource::factory()->create(['base_url' => null, 'email' => null, 'password' => null, 'token' => null]);
 
         $this->actingAs($user)->post(route('module.tracking.devices.sync'))->assertSessionHas('error');
 
@@ -144,9 +144,9 @@ class GpsDeviceTest extends TestCase
     public function test_sky_track_sync_imports_objects_by_imei(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->skyTrack('sky-secret-key')->create();
-        $existing = GpsDevice::factory()->create([
-            'traccar_device_id' => 358735072143802,
+        $source = GpsSource::factory()->skyTrack('sky-secret-key')->create();
+        $existing = GpsDevice::factory()->forSource($source)->create([
+            'external_device_id' => 358735072143802,
             'unique_id' => '358735072143802',
             'name' => 'Old name',
             'status' => 'offline',
@@ -177,15 +177,15 @@ class GpsDeviceTest extends TestCase
         $this->assertNotNull($created);
         $this->assertSame('Hiace D 7047 VE', $created->name);
         $this->assertSame('offline', $created->status);
-        $this->assertSame(352503094515944, $created->traccar_device_id);
+        $this->assertSame(352503094515944, $created->external_device_id);
     }
 
     public function test_gps_server_sync_imports_objects_by_imei(): void
     {
         $user = $this->createAdminUser();
-        TrackingConfig::factory()->gpsServer('gps-server-key')->create();
-        $existing = GpsDevice::factory()->create([
-            'traccar_device_id' => 352503094417117,
+        $source = GpsSource::factory()->gpsServer('gps-server-key')->create();
+        $existing = GpsDevice::factory()->forSource($source)->create([
+            'external_device_id' => 352503094417117,
             'unique_id' => '352503094417117',
             'name' => 'Old name',
             'status' => 'offline',
@@ -220,7 +220,7 @@ class GpsDeviceTest extends TestCase
         $this->assertNotNull($created);
         $this->assertSame('ROCKY', $created->name);
         $this->assertSame('online', $created->status);
-        $this->assertSame(352503097417775, $created->traccar_device_id);
+        $this->assertSame(352503097417775, $created->external_device_id);
     }
 
     public function test_pairing_captures_the_vehicles_odometer_as_the_baseline(): void
@@ -239,7 +239,7 @@ class GpsDeviceTest extends TestCase
         $this->assertSame(0, $device->accumulated_distance_m);
         // Cleared so the first poll measures from now rather than crediting the
         // vehicle with the tracker's whole previous life.
-        $this->assertNull($device->traccar_total_distance_m);
+        $this->assertNull($device->provider_total_distance_m);
     }
 
     public function test_a_vehicle_can_only_carry_one_tracker(): void

@@ -10,6 +10,8 @@ return [
         'geofences' => 'Geofence',
         'devices' => 'Perangkat',
         'settings' => 'Pengaturan',
+        'sources' => 'Sumber',
+        'general' => 'Umum',
     ],
 
     'dashboard' => [
@@ -110,6 +112,9 @@ return [
         'active_rentals_only' => 'Hanya sewa aktif',
         'is_active' => 'Aktif',
         'centre' => 'Titik pusat',
+        'source' => 'Sumber GPS',
+        'all_sources' => 'Semua sumber',
+        'source_name' => 'Nama sumber',
     ],
 
     'placeholders' => [
@@ -128,6 +133,7 @@ return [
         'play_playback' => 'Putar',
         'pause_playback' => 'Jeda',
         'add_geofence' => 'Tambah geofence',
+        'add_source' => 'Tambah sumber',
     ],
 
     'geofence' => [
@@ -213,11 +219,23 @@ return [
             'api_key_hint' => 'Kosongkan untuk mempertahankan key yang tersimpan.',
             'sky_track_api_key_hint' => 'Dikirim sebagai header X-Api-Key. Kosongkan untuk mempertahankan key yang tersimpan.',
             'gps_server_api_key_hint' => 'Dikirim sebagai parameter query key pada /api/api.php. Kosongkan untuk mempertahankan key yang tersimpan.',
+            'empty_sources' => 'Belum ada sumber GPS. Tambahkan sumber untuk menghubungkan tracker.',
+            'create_source' => 'Tambah sumber GPS',
+            'edit_source' => 'Edit sumber GPS',
+            'configured' => 'Terkonfigurasi',
+            'not_configured' => 'Belum dikonfigurasi',
+            'source_devices' => ':total perangkat · :paired ter-pair',
         ],
     ],
 
     'messages' => [
         'settings_saved' => 'Pengaturan tracking disimpan.',
+        'source_created' => 'Sumber GPS dibuat.',
+        'source_updated' => 'Sumber GPS diperbarui.',
+        'source_deleted' => 'Sumber GPS dihapus.',
+        'source_has_paired_devices' => 'Unpair atau pindahkan perangkat sebelum menghapus sumber ini.',
+        'source_limit' => 'Anda dapat menghubungkan hingga :max sumber GPS.',
+        'source_provider_immutable' => 'Provider tidak dapat diubah setelah dibuat.',
         'fill_credentials' => 'Isi URL server dan kredensial terlebih dahulu.',
         'connection_ok' => 'Berhasil terhubung ke provider GPS.',
         'configure_first' => 'Konfigurasi koneksi provider GPS terlebih dahulu.',

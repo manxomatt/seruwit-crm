@@ -3,7 +3,6 @@
 namespace Modules\Tracking\Exceptions;
 
 /**
- * The Traccar server could not be reached or answered with an error — a
- * transient condition, unlike bad credentials.
+ * @deprecated Use GpsProviderUnavailableException
  */
-class TraccarUnavailableException extends TraccarException {}
+class TraccarUnavailableException extends GpsProviderUnavailableException {}

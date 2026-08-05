@@ -42,11 +42,11 @@ class TrackingAlertTest extends TestCase
         ]);
 
         $vehicle = Vehicle::factory()->create();
-        $device = GpsDevice::factory()->pairedTo($vehicle)->create(['traccar_device_id' => 11]);
+        $device = GpsDevice::factory()->pairedTo($vehicle)->create(['external_device_id' => 11]);
 
         $event = new VehiclePositionsRecorded(
             positions: [$this->payload(11, -6.2, 106.8, 120)],
-            vehicleIdsByTraccarDeviceId: [11 => $vehicle->id],
+            vehicleIdsByExternalDeviceId: [11 => $vehicle->id],
             geofenceRadiusM: 200,
             checkpointMinDistanceM: 200,
             checkpointMinIntervalMinutes: 5,
@@ -74,7 +74,7 @@ class TrackingAlertTest extends TestCase
         ]);
 
         $vehicle = Vehicle::factory()->create();
-        GpsDevice::factory()->pairedTo($vehicle)->create(['traccar_device_id' => 22]);
+        GpsDevice::factory()->pairedTo($vehicle)->create(['external_device_id' => 22]);
         Rental::factory()->create([
             'vehicle_id' => $vehicle->id,
             'status' => Rental::STATUS_ACTIVE,
@@ -95,7 +95,7 @@ class TrackingAlertTest extends TestCase
         // Seed "inside" state without notifying.
         $listener->handle(new VehiclePositionsRecorded(
             positions: [$this->payload(22, -6.9175, 107.6191, 0)],
-            vehicleIdsByTraccarDeviceId: [22 => $vehicle->id],
+            vehicleIdsByExternalDeviceId: [22 => $vehicle->id],
             geofenceRadiusM: 200,
             checkpointMinDistanceM: 200,
             checkpointMinIntervalMinutes: 5,
@@ -105,7 +105,7 @@ class TrackingAlertTest extends TestCase
 
         $listener->handle(new VehiclePositionsRecorded(
             positions: [$this->payload(22, -6.2, 106.8, 40)],
-            vehicleIdsByTraccarDeviceId: [22 => $vehicle->id],
+            vehicleIdsByExternalDeviceId: [22 => $vehicle->id],
             geofenceRadiusM: 200,
             checkpointMinDistanceM: 200,
             checkpointMinIntervalMinutes: 5,
@@ -133,13 +133,13 @@ class TrackingAlertTest extends TestCase
 
         $vehicle = Vehicle::factory()->create();
         GpsDevice::factory()->pairedTo($vehicle)->create([
-            'traccar_device_id' => 33,
+            'external_device_id' => 33,
             'last_recorded_at' => now()->subMinutes(45),
         ]);
 
         (new DetectTrackingAlerts)->handle(new VehiclePositionsRecorded(
             positions: [],
-            vehicleIdsByTraccarDeviceId: [],
+            vehicleIdsByExternalDeviceId: [],
             geofenceRadiusM: 200,
             checkpointMinDistanceM: 200,
             checkpointMinIntervalMinutes: 5,
@@ -151,7 +151,7 @@ class TrackingAlertTest extends TestCase
     private function payload(int $deviceId, float $lat, float $lng, float $speedKph): PositionPayload
     {
         return new PositionPayload(
-            traccarDeviceId: $deviceId,
+            externalDeviceId: $deviceId,
             latitude: $lat,
             longitude: $lng,
             speedKph: $speedKph,

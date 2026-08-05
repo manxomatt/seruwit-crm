@@ -418,7 +418,7 @@ class DriverScoringTest extends TestCase
     private function payload(CarbonImmutable $at, float $speedKph, ?bool $ignition = null): PositionPayload
     {
         return new PositionPayload(
-            traccarDeviceId: 1,
+            externalDeviceId: 1,
             latitude: -6.2,
             longitude: 106.8,
             speedKph: $speedKph,

@@ -6,9 +6,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
-use Modules\Tracking\Exceptions\TraccarAuthenticationException;
-use Modules\Tracking\Exceptions\TraccarUnavailableException;
-use Modules\Tracking\Models\TrackingConfig;
+use Modules\Tracking\Exceptions\GpsProviderAuthenticationException;
+use Modules\Tracking\Exceptions\GpsProviderUnavailableException;
+use Modules\Tracking\Models\GpsSource;
 use Modules\Tracking\Services\TraccarClient;
 use Tests\TestCase;
 
@@ -16,9 +16,9 @@ class TraccarClientTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function client(?TrackingConfig $config = null): TraccarClient
+    private function client(?GpsSource $source = null): TraccarClient
     {
-        return new TraccarClient($config ?? TrackingConfig::factory()->create([
+        return new TraccarClient($source ?? GpsSource::factory()->create([
             'base_url' => 'https://gps.example.test',
         ]));
     }
@@ -87,9 +87,9 @@ class TraccarClientTest extends TestCase
     {
         Http::fake(['gps.example.test/api/*' => Http::response([])]);
 
-        $this->client(TrackingConfig::factory()->create([
+        $this->client(GpsSource::factory()->create([
             'base_url' => 'https://gps.example.test',
-            'auth_type' => TrackingConfig::AUTH_BASIC,
+            'auth_type' => GpsSource::AUTH_BASIC,
             'email' => 'ops@example.test',
             'password' => 'secret',
         ]))->devices();
@@ -104,7 +104,7 @@ class TraccarClientTest extends TestCase
     {
         Http::fake(['gps.example.test/api/*' => Http::response([])]);
 
-        $this->client(TrackingConfig::factory()->withToken('abc123')->create([
+        $this->client(GpsSource::factory()->withToken('abc123')->create([
             'base_url' => 'https://gps.example.test',
         ]))->devices();
 
@@ -115,7 +115,7 @@ class TraccarClientTest extends TestCase
     {
         Http::fake(['gps.example.test/api/*' => Http::response([], 401)]);
 
-        $this->expectException(TraccarAuthenticationException::class);
+        $this->expectException(GpsProviderAuthenticationException::class);
         $this->client()->devices();
     }
 
@@ -123,7 +123,7 @@ class TraccarClientTest extends TestCase
     {
         Http::fake(['gps.example.test/api/*' => Http::response([], 500)]);
 
-        $this->expectException(TraccarUnavailableException::class);
+        $this->expectException(GpsProviderUnavailableException::class);
         $this->client()->devices();
     }
 
@@ -131,7 +131,7 @@ class TraccarClientTest extends TestCase
     {
         Http::fake(['gps.example.test/api/*' => fn () => throw new ConnectionException('timed out')]);
 
-        $this->expectException(TraccarUnavailableException::class);
+        $this->expectException(GpsProviderUnavailableException::class);
         $this->client()->devices();
     }
 }

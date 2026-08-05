@@ -10,6 +10,8 @@ return [
         'geofences' => 'Geofences',
         'devices' => 'Devices',
         'settings' => 'Settings',
+        'sources' => 'Sources',
+        'general' => 'General',
     ],
 
     'dashboard' => [
@@ -110,6 +112,9 @@ return [
         'active_rentals_only' => 'Active rentals only',
         'is_active' => 'Active',
         'centre' => 'Centre point',
+        'source' => 'GPS source',
+        'all_sources' => 'All sources',
+        'source_name' => 'Source name',
     ],
 
     'placeholders' => [
@@ -128,6 +133,7 @@ return [
         'play_playback' => 'Play',
         'pause_playback' => 'Pause',
         'add_geofence' => 'Add geofence',
+        'add_source' => 'Add source',
     ],
 
     'geofence' => [
@@ -213,11 +219,23 @@ return [
             'api_key_hint' => 'Leave blank to keep the stored key.',
             'sky_track_api_key_hint' => 'Sent as the X-Api-Key request header. Leave blank to keep the stored key.',
             'gps_server_api_key_hint' => 'Sent as the key query parameter on /api/api.php. Leave blank to keep the stored key.',
+            'empty_sources' => 'No GPS sources yet. Add a source to connect your trackers.',
+            'create_source' => 'Add GPS source',
+            'edit_source' => 'Edit GPS source',
+            'configured' => 'Configured',
+            'not_configured' => 'Not configured',
+            'source_devices' => ':total device(s) · :paired paired',
         ],
     ],
 
     'messages' => [
         'settings_saved' => 'Tracking settings saved.',
+        'source_created' => 'GPS source created.',
+        'source_updated' => 'GPS source updated.',
+        'source_deleted' => 'GPS source deleted.',
+        'source_has_paired_devices' => 'Unpair or move devices before deleting this source.',
+        'source_limit' => 'You can connect up to :max GPS sources.',
+        'source_provider_immutable' => 'The provider cannot be changed after creation.',
         'fill_credentials' => 'Fill in the server URL and credentials first.',
         'connection_ok' => 'Connected to the GPS provider successfully.',
         'configure_first' => 'Configure the GPS provider connection first.',

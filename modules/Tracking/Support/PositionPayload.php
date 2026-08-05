@@ -11,7 +11,7 @@ use Illuminate\Support\Arr;
  * other modules in an event without dragging Eloquent models across a module
  * boundary.
  *
- * `traccarDeviceId` is the local provider key: Traccar's device id, or a
+ * `externalDeviceId` is the local provider key: Traccar's device id, or a
  * numeric IMEI from Sky Track / GPS-Server (stored the same way on gps_devices).
  */
 class PositionPayload
@@ -27,7 +27,7 @@ class PositionPayload
      * @param  array<string, mixed>|null  $attributes
      */
     public function __construct(
-        public readonly int $traccarDeviceId,
+        public readonly int $externalDeviceId,
         public readonly float $latitude,
         public readonly float $longitude,
         public readonly float $speedKph,
@@ -98,7 +98,7 @@ class PositionPayload
         $totalDistance = Arr::get($attributes ?? [], 'totalDistance');
 
         return new self(
-            traccarDeviceId: (int) $deviceId,
+            externalDeviceId: (int) $deviceId,
             latitude: $latitude,
             longitude: $longitude,
             speedKph: round(((float) (Arr::get($row, 'speed') ?? 0)) * self::KNOTS_TO_KPH, 2),
@@ -167,7 +167,7 @@ class PositionPayload
         $totalDistance = Arr::get($params ?? [], 'totalDistance');
 
         return new self(
-            traccarDeviceId: (int) $imei,
+            externalDeviceId: (int) $imei,
             latitude: $latitude,
             longitude: $longitude,
             speedKph: round((float) (Arr::get($data, 'speed') ?? 0), 2),
@@ -237,7 +237,7 @@ class PositionPayload
             : null;
 
         return new self(
-            traccarDeviceId: (int) $imei,
+            externalDeviceId: (int) $imei,
             latitude: $latitude,
             longitude: $longitude,
             speedKph: round((float) (Arr::get($row, 'speed') ?? 0), 2),

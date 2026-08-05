@@ -23,11 +23,11 @@ class VehiclePositionsRecorded
 
     /**
      * @param  array<int, PositionPayload>  $positions  keyed by nothing; each carries its own vehicle id
-     * @param  array<int, int>  $vehicleIdsByTraccarDeviceId  paired vehicle for each reporting device
+     * @param  array<int, int>  $vehicleIdsByExternalDeviceId  paired vehicle for each reporting device
      */
     public function __construct(
         public readonly array $positions,
-        public readonly array $vehicleIdsByTraccarDeviceId,
+        public readonly array $vehicleIdsByExternalDeviceId,
         public readonly int $geofenceRadiusM,
         public readonly int $checkpointMinDistanceM,
         public readonly int $checkpointMinIntervalMinutes,
@@ -44,7 +44,7 @@ class VehiclePositionsRecorded
         $grouped = [];
 
         foreach ($this->positions as $position) {
-            $vehicleId = $this->vehicleIdsByTraccarDeviceId[$position->traccarDeviceId] ?? null;
+            $vehicleId = $this->vehicleIdsByExternalDeviceId[$position->externalDeviceId] ?? null;
 
             if ($vehicleId === null) {
                 continue;
