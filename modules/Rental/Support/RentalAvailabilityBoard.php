@@ -45,6 +45,8 @@ class RentalAvailabilityBoard
             ->with('partner:id,name')
             ->whereIn('status', [
                 Rental::STATUS_DRAFT,
+                Rental::STATUS_PENDING,
+                Rental::STATUS_PENDING_RESERVED,
                 Rental::STATUS_CONFIRMED,
                 Rental::STATUS_ACTIVE,
             ])
@@ -118,11 +120,14 @@ class RentalAvailabilityBoard
             return 'in_use';
         }
 
-        if ($bookings->contains(fn (Rental $rental): bool => $rental->status === Rental::STATUS_CONFIRMED)) {
+        if ($bookings->contains(fn (Rental $rental): bool => in_array($rental->status, [
+            Rental::STATUS_CONFIRMED,
+            Rental::STATUS_PENDING_RESERVED,
+        ], true))) {
             return 'booked';
         }
 
-        // Draft rentals (or none) leave the vehicle available.
+        // Draft / pending (or none) leave the vehicle available.
         return 'free';
     }
 }

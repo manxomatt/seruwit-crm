@@ -298,7 +298,12 @@ class GatewayCheckoutService
 
             $rental = \Modules\Rental\Models\Rental::query()->lockForUpdate()->findOrFail($charge->rental_id);
 
-            if ($rental->status === \Modules\Rental\Models\Rental::STATUS_CANCELLED) {
+            if (in_array($rental->status, [
+                \Modules\Rental\Models\Rental::STATUS_CANCELLED,
+                \Modules\Rental\Models\Rental::STATUS_CANCELLED_PAID,
+                \Modules\Rental\Models\Rental::STATUS_NO_SHOW,
+                \Modules\Rental\Models\Rental::STATUS_NO_SHOW_PAID,
+            ], true)) {
                 throw ValidationException::withMessages([
                     'rental' => __('receivables.gateway.rental_cancelled'),
                 ]);
@@ -307,6 +312,9 @@ class GatewayCheckoutService
             app(\Modules\Rental\Support\RentalAccountingService::class)->receiveDeposit($rental, [
                 'payment_method' => $method,
             ]);
+
+            app(\Modules\Rental\Support\RentalConfirmationService::class)
+                ->confirmAfterPaymentIfPending($rental->fresh());
 
             return;
         }

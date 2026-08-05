@@ -21,8 +21,7 @@ use Modules\Rental\Models\RentalVehicleSwap;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 use Modules\Rental\Support\RentalAccountingService;
 use Modules\Rental\Support\RentalAddonCatalog;
-use Modules\Rental\Support\RentalBookingExtrasService;
-use Modules\Rental\Support\RentalEligibility;
+use Modules\Rental\Support\RentalConfirmationService;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
@@ -34,9 +33,8 @@ class RentalActionController extends Controller
         private readonly RentalInvoiceService $invoices,
         private readonly RentalAccountingService $accounting,
         private readonly RentalMailer $mailer,
-        private readonly RentalEligibility $eligibility,
         private readonly RentalHandoverMedia $handoverMedia,
-        private readonly RentalBookingExtrasService $bookingExtras,
+        private readonly RentalConfirmationService $confirmation,
     ) {}
 
     protected function getRoutePrefix(): string
@@ -45,14 +43,15 @@ class RentalActionController extends Controller
     }
 
     /**
-     * Confirm a draft rental — blocks the vehicle and raises the base invoice.
+     * Confirm a draft / pending rental — blocks the vehicle and raises the base invoice.
      */
     public function confirm(Request $request, Rental $rental): RedirectResponse
     {
-        abort_if($rental->status !== Rental::STATUS_DRAFT, 422, __('rental.errors.confirm_draft_only'));
-
-        $rental->loadMissing(['partner', 'vehicle']);
-        $this->eligibility->assertCanConfirm($rental->partner);
+        abort_if(
+            ! in_array($rental->status, Rental::confirmableStatuses(), true),
+            422,
+            __('rental.errors.confirm_draft_only'),
+        );
 
         $request->validate([
             'payment_method' => ['nullable', 'string', Rule::in(['cash', 'transfer', 'giro', 'card', 'other'])],
@@ -61,48 +60,22 @@ class RentalActionController extends Controller
             'deposit_collected' => ['sometimes', 'boolean'],
         ]);
 
-        $availability = Rental::vehicleAvailabilityReasons(
-            $rental->vehicle,
-            $rental->start_date->toDateString(),
-            $rental->end_date->toDateString(),
-            $rental->id,
-        );
-        if ($availability !== []) {
-            return back()->withErrors(['vehicle_id' => $availability[0]]);
-        }
-
         if ($this->hasPendingDepositCharge($rental)) {
             return back()->withErrors([
                 'deposit' => __('rental.errors.deposit_pending_gateway'),
             ]);
         }
 
-        $rental->update([
-            'status' => Rental::STATUS_CONFIRMED,
-            'confirmed_by' => auth()->id(),
-            'confirmed_at' => now(),
-        ]);
-
-        if ((float) $rental->deposit_amount <= 0) {
-            $rental->settleDeposit([
-                'deposit_applied_amount' => 0,
-                'deposit_refunded_amount' => 0,
-            ]);
-        } elseif ($rental->deposit_received_at !== null) {
-            // Already collected (e.g. Midtrans before confirm).
-        } elseif ($request->boolean('deposit_collected')) {
-            $this->accounting->receiveDeposit($rental->fresh(), [
-                'payment_method' => $request->input('payment_method', 'cash'),
+        try {
+            $this->confirmation->confirm($rental, [
+                'payment_method' => $request->input('payment_method'),
                 'company_bank_account_id' => $request->input('company_bank_account_id'),
+                'deposit_collected' => $request->boolean('deposit_collected'),
+                'confirmed_by' => auth()->id(),
             ]);
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
         }
-        // else: leave deposit unpaid — must be received before checkout
-
-        $this->bookingExtras->applyOnConfirm($rental->fresh(['insurancePackage']));
-        $this->invoices->invoiceBase($rental->fresh());
-        $this->accounting->issueDraftInvoices($rental->fresh());
-
-        $this->mailer->notify($rental->fresh(['vehicle', 'partner']), RentalLifecycleMailNotification::EVENT_CONFIRMED);
 
         return back()->with('success', __('rental.messages.confirmed'));
     }
@@ -256,6 +229,8 @@ class RentalActionController extends Controller
     {
         abort_if(
             ! in_array($rental->status, [
+                Rental::STATUS_PENDING,
+                Rental::STATUS_PENDING_RESERVED,
                 Rental::STATUS_CONFIRMED,
                 Rental::STATUS_ACTIVE,
                 Rental::STATUS_RETURNED,
@@ -269,6 +244,14 @@ class RentalActionController extends Controller
         abort_if($rental->deposit_status === Rental::DEPOSIT_SETTLED, 422, __('rental.errors.deposit_already_settled'));
 
         $this->accounting->receiveDeposit($rental, $request->validated());
+
+        if (in_array($rental->fresh()->status, [Rental::STATUS_PENDING, Rental::STATUS_PENDING_RESERVED], true)) {
+            try {
+                $this->confirmation->confirmAfterPaymentIfPending($rental->fresh());
+            } catch (ValidationException $e) {
+                return back()->withErrors($e->errors());
+            }
+        }
 
         return back()->with('success', __('rental.messages.deposit_received'));
     }
@@ -310,31 +293,71 @@ class RentalActionController extends Controller
     }
 
     /**
-     * Cancel a draft or confirmed rental.
+     * Cancel a draft / pending / confirmed rental (optionally charge cancellation fee).
      */
     public function cancel(Request $request, Rental $rental): RedirectResponse
     {
         abort_if(
-            ! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED]),
+            ! in_array($rental->status, Rental::cancellableStatuses(), true),
             422,
             __('rental.errors.cancel_draft_confirmed_only'),
         );
 
         $request->validate([
             'cancelled_reason' => ['required', 'string', 'max:500'],
+            'charge_fee' => ['sometimes', 'boolean'],
         ]);
 
-        // Always clear deposit liability if cash was received (incl. draft + Midtrans).
-        $this->accounting->refundDepositOnCancel($rental->fresh());
-        $this->accounting->settleInvoicesOnCancel($rental->fresh());
         $this->expirePendingDepositCharges($rental);
 
-        $rental->update([
-            'status' => Rental::STATUS_CANCELLED,
-            'cancelled_reason' => $request->cancelled_reason,
-        ]);
+        try {
+            $this->confirmation->cancel(
+                $rental,
+                $request->string('cancelled_reason')->toString(),
+                $request->boolean('charge_fee'),
+            );
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
 
         return back()->with('success', __('rental.messages.cancelled'));
+    }
+
+    /**
+     * Mark a confirmed (Open) booking as no-show, optionally charging the no-show fee.
+     */
+    public function markNoShow(Request $request, Rental $rental): RedirectResponse
+    {
+        $request->validate([
+            'charge_fee' => ['sometimes', 'boolean'],
+            'cancelled_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $this->confirmation->markNoShow(
+                $rental,
+                $request->boolean('charge_fee'),
+                $request->input('cancelled_reason'),
+            );
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success', __('rental.messages.no_show'));
+    }
+
+    /**
+     * Charge cancellation / no-show fee later (cancelled → cancelled_paid, no_show → no_show_paid).
+     */
+    public function markFeePaid(Rental $rental): RedirectResponse
+    {
+        try {
+            $this->confirmation->markFeePaid($rental);
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success', __('rental.messages.fee_charged'));
     }
 
     /**

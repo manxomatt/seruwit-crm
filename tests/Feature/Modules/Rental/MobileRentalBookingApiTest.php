@@ -114,9 +114,9 @@ class MobileRentalBookingApiTest extends TestCase
                 'Idempotency-Key' => (string) Str::uuid(),
             ])
             ->assertCreated()
-            ->assertJsonPath('booking.status', Rental::STATUS_CONFIRMED)
+            ->assertJsonPath('booking.status', Rental::STATUS_PENDING_RESERVED)
             ->assertJsonPath('booking.vehicle.id', $vehicle->id)
-            ->assertJsonStructure(['booking' => ['public_token', 'code', 'deposit_amount']]);
+            ->assertJsonStructure(['booking' => ['public_token', 'code', 'deposit_amount', 'reserved_until']]);
 
         $publicToken = $booking->json('booking.public_token');
         $this->assertNotEmpty($publicToken);

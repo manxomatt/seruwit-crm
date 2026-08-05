@@ -270,6 +270,8 @@ class RentalController extends Controller
                 && $rental->deposit_received_at === null
                 && in_array($rental->status, [
                     Rental::STATUS_DRAFT,
+                    Rental::STATUS_PENDING,
+                    Rental::STATUS_PENDING_RESERVED,
                     Rental::STATUS_CONFIRMED,
                     Rental::STATUS_ACTIVE,
                 ], true),
@@ -279,7 +281,7 @@ class RentalController extends Controller
     public function edit(Rental $rental): Response
     {
         abort_if(
-            ! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED]),
+            ! in_array($rental->status, Rental::editableStatuses(), true),
             403,
             __('rental.errors.edit_draft_confirmed_only'),
         );
@@ -317,7 +319,7 @@ class RentalController extends Controller
     public function update(UpdateRentalRequest $request, Rental $rental, RentalLocationHydrator $hydrator): RedirectResponse
     {
         abort_if(
-            ! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED]),
+            ! in_array($rental->status, Rental::editableStatuses(), true),
             403,
             __('rental.errors.edit_draft_confirmed_only'),
         );

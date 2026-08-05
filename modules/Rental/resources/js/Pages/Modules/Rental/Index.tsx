@@ -57,12 +57,28 @@ interface Props {
     filters: { status: string | null; search: string | null };
 }
 
-const STATUSES = ['draft', 'confirmed', 'active', 'returned', 'completed', 'cancelled'] as const;
+const STATUSES = [
+    'draft',
+    'pending',
+    'pending_reserved',
+    'confirmed',
+    'active',
+    'returned',
+    'completed',
+    'cancelled',
+    'cancelled_paid',
+    'no_show',
+    'no_show_paid',
+] as const;
 
 function statusBadgeClass(status: string): string {
     switch (status) {
         case 'draft':
             return 'bg-gray-100 text-gray-700';
+        case 'pending':
+            return 'bg-slate-100 text-slate-700';
+        case 'pending_reserved':
+            return 'bg-indigo-100 text-indigo-800';
         case 'confirmed':
             return 'bg-sky-100 text-sky-800';
         case 'active':
@@ -72,7 +88,11 @@ function statusBadgeClass(status: string): string {
         case 'completed':
             return 'bg-emerald-100 text-emerald-800';
         case 'cancelled':
+        case 'cancelled_paid':
             return 'bg-red-100 text-red-800';
+        case 'no_show':
+        case 'no_show_paid':
+            return 'bg-orange-100 text-orange-800';
         default:
             return 'bg-gray-100 text-gray-700';
     }

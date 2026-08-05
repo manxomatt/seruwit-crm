@@ -44,6 +44,13 @@ Schedule::command('rental:scan-ending')
     ->withoutOverlapping()
     ->onOneServer();
 
+// HQ-style: Pending Reserved → Pending when the unpaid hold TTL expires.
+Schedule::command('rental:expire-pending-reserved')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->onOneServer()
+    ->runInBackground();
+
 // Alerts staff about preventive maintenance schedules due soon / overdue,
 // and optionally opens draft work orders when auto_create_wo is enabled.
 Schedule::command('maintenance:scan-due')

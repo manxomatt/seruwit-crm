@@ -6,6 +6,7 @@ use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
+use Modules\Rental\Console\Commands\RentalExpirePendingReserved;
 use Modules\Rental\Console\Commands\RentalScanEnding;
 use Modules\Rental\Http\Controllers\PartnerPortalController;
 use Modules\Rental\Http\Controllers\RentalActionController;
@@ -86,6 +87,7 @@ class RentalModule implements ModuleContract
     {
         Artisan::starting(fn (Artisan $artisan) => $artisan->resolveCommands([
             RentalScanEnding::class,
+            RentalExpirePendingReserved::class,
         ]));
     }
 
@@ -132,6 +134,8 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/return', [RentalActionController::class, 'return'])->middleware('permission:rental,update')->name('rental.return');
         Route::post('/rental/{rental}/complete', [RentalActionController::class, 'complete'])->middleware('permission:rental,approve')->name('rental.complete');
         Route::post('/rental/{rental}/cancel', [RentalActionController::class, 'cancel'])->middleware('permission:rental,update')->name('rental.cancel');
+        Route::post('/rental/{rental}/no-show', [RentalActionController::class, 'markNoShow'])->middleware('permission:rental,update')->name('rental.no_show');
+        Route::post('/rental/{rental}/mark-fee-paid', [RentalActionController::class, 'markFeePaid'])->middleware('permission:rental,update')->name('rental.mark_fee_paid');
         Route::post('/rental/{rental}/extend', [RentalActionController::class, 'extend'])->middleware('permission:rental,update')->name('rental.extend');
         Route::post('/rental/{rental}/swap-vehicle', [RentalActionController::class, 'swapVehicle'])->middleware('permission:rental,update')->name('rental.swap');
         Route::post('/rental/{rental}/deposit-receive', [RentalActionController::class, 'receiveDeposit'])->middleware('permission:rental,update')->name('rental.deposit.receive');

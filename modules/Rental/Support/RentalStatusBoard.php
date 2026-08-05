@@ -81,10 +81,14 @@ class RentalStatusBoard
         return [
             'counts' => [
                 'draft' => (int) ($byStatus[Rental::STATUS_DRAFT] ?? 0),
+                'pending' => (int) ($byStatus[Rental::STATUS_PENDING] ?? 0),
+                'pending_reserved' => (int) ($byStatus[Rental::STATUS_PENDING_RESERVED] ?? 0),
                 'confirmed' => (int) ($byStatus[Rental::STATUS_CONFIRMED] ?? 0),
                 'active' => (int) ($byStatus[Rental::STATUS_ACTIVE] ?? 0),
                 'returned' => (int) ($byStatus[Rental::STATUS_RETURNED] ?? 0),
                 'completed' => (int) ($byStatus[Rental::STATUS_COMPLETED] ?? 0),
+                'cancelled' => (int) (($byStatus[Rental::STATUS_CANCELLED] ?? 0) + ($byStatus[Rental::STATUS_CANCELLED_PAID] ?? 0)),
+                'no_show' => (int) (($byStatus[Rental::STATUS_NO_SHOW] ?? 0) + ($byStatus[Rental::STATUS_NO_SHOW_PAID] ?? 0)),
                 'overdue' => Rental::query()->overdue()->count(),
                 'ending_soon' => Rental::query()->endingSoon(3)->count(),
                 'unsettled_deposits' => $unsettledDeposits,

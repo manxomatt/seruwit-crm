@@ -21,6 +21,10 @@ class Rental extends Model
 
     public const STATUS_DRAFT = 'draft';
 
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_PENDING_RESERVED = 'pending_reserved';
+
     public const STATUS_CONFIRMED = 'confirmed';
 
     public const STATUS_ACTIVE = 'active';
@@ -30,6 +34,12 @@ class Rental extends Model
     public const STATUS_COMPLETED = 'completed';
 
     public const STATUS_CANCELLED = 'cancelled';
+
+    public const STATUS_CANCELLED_PAID = 'cancelled_paid';
+
+    public const STATUS_NO_SHOW = 'no_show';
+
+    public const STATUS_NO_SHOW_PAID = 'no_show_paid';
 
     public const CHANNEL_STAFF = 'staff';
 
@@ -101,8 +111,11 @@ class Rental extends Model
         'insurance_package_id',
         'fuel_policy_notes',
         'cancelled_reason',
+        'cancelled_at',
+        'no_show_at',
         'confirmed_by',
         'confirmed_at',
+        'reserved_until',
         'checked_out_at',
         'returned_at',
         'completed_at',
@@ -140,6 +153,9 @@ class Rental extends Model
             'checkout_signed_at' => 'datetime',
             'return_signed_at' => 'datetime',
             'confirmed_at' => 'datetime',
+            'reserved_until' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'no_show_at' => 'datetime',
             'checked_out_at' => 'datetime',
             'returned_at' => 'datetime',
             'completed_at' => 'datetime',
@@ -311,13 +327,87 @@ class Rental extends Model
     }
 
     /**
-     * Rentals that are blocking vehicle availability: confirmed or active.
+     * Statuses that reserve / occupy the vehicle calendar.
+     *
+     * @return list<string>
+     */
+    public static function blockingStatuses(): array
+    {
+        return [
+            self::STATUS_PENDING_RESERVED,
+            self::STATUS_CONFIRMED,
+            self::STATUS_ACTIVE,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function confirmableStatuses(): array
+    {
+        return [
+            self::STATUS_DRAFT,
+            self::STATUS_PENDING,
+            self::STATUS_PENDING_RESERVED,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function cancellableStatuses(): array
+    {
+        return [
+            self::STATUS_DRAFT,
+            self::STATUS_PENDING,
+            self::STATUS_PENDING_RESERVED,
+            self::STATUS_CONFIRMED,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function editableStatuses(): array
+    {
+        return [
+            self::STATUS_DRAFT,
+            self::STATUS_PENDING,
+            self::STATUS_PENDING_RESERVED,
+            self::STATUS_CONFIRMED,
+        ];
+    }
+
+    /**
+     * All filterable lifecycle statuses (HQ-style + internal returned).
+     *
+     * @return list<string>
+     */
+    public static function allStatuses(): array
+    {
+        return [
+            self::STATUS_DRAFT,
+            self::STATUS_PENDING,
+            self::STATUS_PENDING_RESERVED,
+            self::STATUS_CONFIRMED,
+            self::STATUS_ACTIVE,
+            self::STATUS_RETURNED,
+            self::STATUS_COMPLETED,
+            self::STATUS_CANCELLED,
+            self::STATUS_CANCELLED_PAID,
+            self::STATUS_NO_SHOW,
+            self::STATUS_NO_SHOW_PAID,
+        ];
+    }
+
+    /**
+     * Rentals that are blocking vehicle availability.
      *
      * @param  Builder<self>  $query
      */
     public function scopeActive(Builder $query): void
     {
-        $query->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_ACTIVE]);
+        $query->whereIn('status', self::blockingStatuses());
     }
 
     /**
@@ -354,14 +444,14 @@ class Rental extends Model
     }
 
     /**
-     * Whether vehicle $id has a confirmed/active rental overlapping [$start, $end],
+     * Whether vehicle $id has a blocking rental overlapping [$start, $end],
      * optionally excluding a specific rental (for updates).
      */
     public static function hasOverlapFor(int $vehicleId, string $start, string $end, ?int $excludingId = null): bool
     {
         return static::query()
             ->where('vehicle_id', $vehicleId)
-            ->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_ACTIVE])
+            ->whereIn('status', self::blockingStatuses())
             ->where('start_date', '<=', $end)
             ->where('end_date', '>=', $start)
             ->when($excludingId, fn (Builder $q) => $q->where('id', '!=', $excludingId))

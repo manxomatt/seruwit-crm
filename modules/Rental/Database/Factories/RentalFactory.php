@@ -60,8 +60,11 @@ class RentalFactory extends Factory
             'return_location' => null,
             'fuel_policy_notes' => null,
             'cancelled_reason' => null,
+            'cancelled_at' => null,
+            'no_show_at' => null,
             'confirmed_by' => null,
             'confirmed_at' => null,
+            'reserved_until' => null,
             'checked_out_at' => null,
             'returned_at' => null,
             'completed_at' => null,
@@ -73,8 +76,27 @@ class RentalFactory extends Factory
         return $this->state(fn (array $a): array => [
             'status' => Rental::STATUS_CONFIRMED,
             'confirmed_at' => now(),
+            'reserved_until' => null,
             'deposit_received_at' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? now() : null,
             'deposit_payment_method' => ((float) ($a['deposit_amount'] ?? 0)) > 0 ? 'cash' : null,
+        ]);
+    }
+
+    public function pendingReserved(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'reserved_until' => now()->addMinutes(120),
+            'channel' => Rental::CHANNEL_MOBILE,
+        ]);
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => Rental::STATUS_PENDING,
+            'reserved_until' => null,
+            'channel' => Rental::CHANNEL_MOBILE,
         ]);
     }
 
@@ -133,6 +155,36 @@ class RentalFactory extends Factory
         return $this->state(fn (array $a): array => [
             'status' => Rental::STATUS_CANCELLED,
             'cancelled_reason' => fake()->sentence(),
+            'cancelled_at' => now(),
+            'reserved_until' => null,
+        ]);
+    }
+
+    public function cancelledPaid(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => Rental::STATUS_CANCELLED_PAID,
+            'cancelled_reason' => fake()->sentence(),
+            'cancelled_at' => now(),
+            'reserved_until' => null,
+        ]);
+    }
+
+    public function noShow(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => Rental::STATUS_NO_SHOW,
+            'no_show_at' => now(),
+            'reserved_until' => null,
+        ]);
+    }
+
+    public function noShowPaid(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => Rental::STATUS_NO_SHOW_PAID,
+            'no_show_at' => now(),
+            'reserved_until' => null,
         ]);
     }
 }

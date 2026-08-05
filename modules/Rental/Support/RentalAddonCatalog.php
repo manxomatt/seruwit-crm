@@ -21,6 +21,10 @@ class RentalAddonCatalog
 
     public const OTHER = 'other';
 
+    public const CANCELLATION_FEE = 'cancellation_fee';
+
+    public const NO_SHOW_FEE = 'no_show_fee';
+
     /**
      * @return list<string>
      */
@@ -34,6 +38,8 @@ class RentalAddonCatalog
             self::DELIVERY,
             self::FUEL,
             self::OTHER,
+            self::CANCELLATION_FEE,
+            self::NO_SHOW_FEE,
         ];
 
         if (Schema::hasTable('rental_insurance_packages')) {

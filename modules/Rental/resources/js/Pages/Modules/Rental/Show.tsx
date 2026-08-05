@@ -162,9 +162,17 @@ interface Props {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700', confirmed: 'bg-blue-100 text-blue-700',
-    active: 'bg-amber-100 text-amber-700', returned: 'bg-purple-100 text-purple-700',
-    completed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700',
+    draft: 'bg-gray-100 text-gray-700',
+    pending: 'bg-slate-100 text-slate-700',
+    pending_reserved: 'bg-indigo-100 text-indigo-800',
+    confirmed: 'bg-blue-100 text-blue-700',
+    active: 'bg-amber-100 text-amber-700',
+    returned: 'bg-purple-100 text-purple-700',
+    completed: 'bg-green-100 text-green-700',
+    cancelled: 'bg-red-100 text-red-700',
+    cancelled_paid: 'bg-red-100 text-red-800',
+    no_show: 'bg-orange-100 text-orange-800',
+    no_show_paid: 'bg-orange-100 text-orange-900',
 };
 
 const PAYMENT_COLORS: Record<string, string> = {
@@ -203,10 +211,11 @@ export default function Show({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const [modal, setModal] = useState<'confirm' | 'cancel' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
+    const [modal, setModal] = useState<'confirm' | 'cancel' | 'no_show' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
     const [confirming, setConfirming] = useState(false);
 
-    const cancelForm = useForm({ cancelled_reason: '' });
+    const cancelForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
+    const noShowForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
     const checkoutForm = useForm({
         start_odometer: '',
         start_fuel_level: 'full',
@@ -260,6 +269,7 @@ export default function Show({
     };
 
     const submitCancel: FormEventHandler = (e) => { e.preventDefault(); cancelForm.post(prefixedRoute('rental.cancel', rental.id), { onSuccess: () => setModal(null) }); };
+    const submitNoShow: FormEventHandler = (e) => { e.preventDefault(); noShowForm.post(prefixedRoute('rental.no_show', rental.id), { onSuccess: () => setModal(null) }); };
     const submitCheckout: FormEventHandler = (e) => { e.preventDefault(); checkoutForm.post(prefixedRoute('rental.checkout', rental.id), { onSuccess: () => setModal(null) }); };
     const submitReturn: FormEventHandler = (e) => { e.preventDefault(); returnForm.post(prefixedRoute('rental.return', rental.id), { onSuccess: () => setModal(null) }); };
     const submitExtend: FormEventHandler = (e) => { e.preventDefault(); extendForm.post(prefixedRoute('rental.extend', rental.id), { onSuccess: () => setModal(null) }); };
@@ -285,10 +295,13 @@ export default function Show({
     const is = (s: string) => rental.status === s;
     const isLiveTracking = trackingEnabled && is('active');
     const depositHeld = rental.deposit_status !== 'settled' && Number(rental.deposit_amount) > 0;
-    const canReceiveDeposit = depositHeld && !rental.deposit_received_at && (is('confirmed') || is('active') || is('returned'));
+    const canReceiveDeposit = depositHeld && !rental.deposit_received_at && (is('pending') || is('pending_reserved') || is('confirmed') || is('active') || is('returned'));
     const canSettleDeposit = depositHeld && !!rental.deposit_received_at && (is('returned') || is('completed'));
     const depositBlocksCheckout = is('confirmed') && depositHeld && !rental.deposit_received_at;
-    const canPrintContract = !is('draft') && !is('cancelled');
+    const canPrintContract = is('confirmed') || is('active') || is('returned') || is('completed');
+    const canConfirm = is('draft') || is('pending') || is('pending_reserved');
+    const canCancel = is('draft') || is('pending') || is('pending_reserved') || is('confirmed');
+    const canMarkFeePaid = is('cancelled') || is('no_show');
     const canPrintHandover = is('active') || is('returned') || is('completed');
 
     // Mirror trip Show: only refresh while the vehicle is out on an active rental.
@@ -355,12 +368,12 @@ export default function Show({
                                 <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
                             </a>
                         )}
-                        {(is('draft') || is('confirmed')) && (
+                        {(is('draft') || is('pending') || is('pending_reserved') || is('confirmed')) && (
                             <Link href={prefixedRoute('rental.edit', rental.id)}>
                                 <SecondaryButton>{t('common.edit')}</SecondaryButton>
                             </Link>
                         )}
-                        {is('draft') && (
+                        {canConfirm && (
                             <PrimaryButton onClick={() => setModal('confirm')}>
                                 {t('rental.actions.confirm')}
                             </PrimaryButton>
@@ -384,6 +397,7 @@ export default function Show({
                                 >
                                     {t('rental.actions.checkout')}
                                 </PrimaryButton>
+                                <DangerButton onClick={() => setModal('no_show')}>{t('rental.actions.mark_no_show')}</DangerButton>
                             </>
                         )}
                         {is('active') && (
@@ -414,7 +428,10 @@ export default function Show({
                         {is('completed') && canSettleDeposit && (
                             <SecondaryButton onClick={() => setModal('deposit')}>{t('rental.actions.settle_deposit')}</SecondaryButton>
                         )}
-                        {(is('draft') || is('confirmed')) && (
+                        {canMarkFeePaid && (
+                            <SecondaryButton onClick={() => action('mark_fee_paid')}>{t('rental.actions.mark_fee_paid')}</SecondaryButton>
+                        )}
+                        {canCancel && (
                             <DangerButton onClick={() => setModal('cancel')}>{t('common.cancel')}</DangerButton>
                         )}
             </div>
@@ -965,9 +982,43 @@ export default function Show({
                     <InputLabel htmlFor="cancelled_reason" value={`${t('rental.fields.cancel_reason')} *`} />
                     <textarea id="cancelled_reason" rows={3} value={cancelForm.data.cancelled_reason} onChange={(e) => cancelForm.setData('cancelled_reason', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                     <InputError message={cancelForm.errors.cancelled_reason} className="mt-1" />
+                    <label className="mt-3 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <input
+                            type="checkbox"
+                            className="mt-0.5 rounded border-gray-300"
+                            checked={cancelForm.data.charge_fee}
+                            onChange={(e) => cancelForm.setData('charge_fee', e.target.checked)}
+                        />
+                        <span>{t('rental.modals.cancel_fee_hint')}</span>
+                    </label>
                     <div className="mt-4 flex justify-end gap-3">
                         <SecondaryButton type="button" onClick={() => setModal(null)}>{t('rental.nav.back')}</SecondaryButton>
-                        <DangerButton disabled={cancelForm.processing}>{t('rental.actions.cancel_rental')}</DangerButton>
+                        <DangerButton disabled={cancelForm.processing}>
+                            {cancelForm.data.charge_fee ? t('rental.actions.cancel_with_fee') : t('rental.actions.cancel_rental')}
+                        </DangerButton>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal show={modal === 'no_show'} onClose={() => setModal(null)}>
+                <form onSubmit={submitNoShow} className="p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.no_show')}</h2>
+                    <InputLabel htmlFor="no_show_reason" value={t('rental.fields.cancel_reason')} />
+                    <textarea id="no_show_reason" rows={3} value={noShowForm.data.cancelled_reason} onChange={(e) => noShowForm.setData('cancelled_reason', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <label className="mt-3 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <input
+                            type="checkbox"
+                            className="mt-0.5 rounded border-gray-300"
+                            checked={noShowForm.data.charge_fee}
+                            onChange={(e) => noShowForm.setData('charge_fee', e.target.checked)}
+                        />
+                        <span>{t('rental.modals.no_show_fee_hint')}</span>
+                    </label>
+                    <div className="mt-4 flex justify-end gap-3">
+                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('rental.nav.back')}</SecondaryButton>
+                        <DangerButton disabled={noShowForm.processing}>
+                            {noShowForm.data.charge_fee ? t('rental.actions.no_show_with_fee') : t('rental.actions.mark_no_show')}
+                        </DangerButton>
                     </div>
                 </form>
             </Modal>

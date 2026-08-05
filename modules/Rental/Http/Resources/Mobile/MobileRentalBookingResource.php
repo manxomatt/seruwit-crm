@@ -50,6 +50,7 @@ class MobileRentalBookingResource extends JsonResource
             'vehicle' => $rental->vehicle ? (new MobileRentalVehicleResource($rental->vehicle))->resolve() : null,
             'cancelled_reason' => $rental->cancelled_reason,
             'confirmed_at' => $rental->confirmed_at?->toIso8601String(),
+            'reserved_until' => $rental->reserved_until?->toIso8601String(),
             'booking_path' => '/api/mobile/v1/rental/bookings/'.$token,
         ];
     }

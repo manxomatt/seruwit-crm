@@ -59,7 +59,13 @@ class PartnerPortalController extends Controller
             'canPayDeposit' => $this->gatewayAvailable()
                 && (float) $rental->deposit_amount > 0
                 && $rental->deposit_received_at === null
-                && in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED, Rental::STATUS_ACTIVE], true),
+                && in_array($rental->status, [
+                    Rental::STATUS_DRAFT,
+                    Rental::STATUS_PENDING,
+                    Rental::STATUS_PENDING_RESERVED,
+                    Rental::STATUS_CONFIRMED,
+                    Rental::STATUS_ACTIVE,
+                ], true),
         ]);
     }
 

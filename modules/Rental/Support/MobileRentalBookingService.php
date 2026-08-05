@@ -21,11 +21,9 @@ class MobileRentalBookingService
         private readonly RentalRateResolver $rates,
         private readonly RentalLocationHydrator $hydrator,
         private readonly RentalEligibility $eligibility,
-        private readonly RentalInvoiceService $invoices,
-        private readonly RentalAccountingService $accounting,
-        private readonly RentalBookingExtrasService $bookingExtras,
         private readonly MobilePassengerPartnerResolver $partners,
-        private readonly RentalMailer $mailer,
+        private readonly RentalBookingPolicy $policy,
+        private readonly RentalConfirmationService $confirmation,
     ) {}
 
     /**
@@ -99,7 +97,7 @@ class MobileRentalBookingService
     }
 
     /**
-     * Create + auto-confirm a mobile rental so the vehicle is reserved.
+     * Create an HQ-style Pending Reserved hold (vehicle reserved until TTL / payment).
      *
      * @param  array<string, mixed>  $input
      */
@@ -130,8 +128,9 @@ class MobileRentalBookingService
         $periods = $quote['total_periods'];
         $ratePerPeriod = (float) $rate->rate_per_period;
         $baseAmount = round($ratePerPeriod * $periods, 2);
+        $reservedUntil = $this->policy->reservedUntilTimestamp();
 
-        return DB::transaction(function () use ($input, $vehicle, $partner, $bookerPhone, $rate, $hydrated, $periods, $ratePerPeriod, $baseAmount): Rental {
+        return DB::transaction(function () use ($input, $vehicle, $partner, $bookerPhone, $rate, $hydrated, $periods, $ratePerPeriod, $baseAmount, $reservedUntil): Rental {
             $rental = Rental::query()->create([
                 'code' => Rental::nextCode(),
                 'channel' => Rental::CHANNEL_MOBILE,
@@ -139,7 +138,8 @@ class MobileRentalBookingService
                 'booker_phone' => $bookerPhone,
                 'vehicle_id' => $vehicle->id,
                 'partner_id' => $partner->id,
-                'status' => Rental::STATUS_DRAFT,
+                'status' => Rental::STATUS_PENDING_RESERVED,
+                'reserved_until' => $reservedUntil,
                 'start_date' => $input['start_date'],
                 'end_date' => $input['end_date'],
                 'period_type' => $input['period_type'],
@@ -175,27 +175,12 @@ class MobileRentalBookingService
                 ]);
             }
 
-            $rental->update([
-                'status' => Rental::STATUS_CONFIRMED,
-                'confirmed_at' => now(),
-                'confirmed_by' => null,
-            ]);
-
             if ((float) $rental->deposit_amount <= 0) {
-                $rental->settleDeposit([
-                    'deposit_applied_amount' => 0,
-                    'deposit_refunded_amount' => 0,
+                // Zero deposit: promote immediately to Open (nothing to wait for).
+                return $this->confirmation->confirm($rental->fresh(), [
+                    'confirmed_by' => null,
                 ]);
             }
-
-            $this->bookingExtras->applyOnConfirm($rental->fresh(['insurancePackage']));
-            $this->invoices->invoiceBase($rental->fresh());
-            $this->accounting->issueDraftInvoices($rental->fresh());
-
-            $this->mailer->notify(
-                $rental->fresh(['vehicle', 'partner']),
-                \Modules\Rental\Notifications\RentalLifecycleMailNotification::EVENT_CONFIRMED,
-            );
 
             return $rental->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
         });
@@ -209,22 +194,11 @@ class MobileRentalBookingService
             ]);
         }
 
-        if (! in_array($rental->status, [Rental::STATUS_DRAFT, Rental::STATUS_CONFIRMED], true)) {
-            throw ValidationException::withMessages([
-                'booking' => __('rental.errors.cancel_draft_confirmed_only'),
-            ]);
-        }
-
-        $this->accounting->refundDepositOnCancel($rental->fresh());
-        $this->accounting->settleInvoicesOnCancel($rental->fresh());
         $this->expirePendingDepositCharges($rental);
 
-        $rental->update([
-            'status' => Rental::STATUS_CANCELLED,
-            'cancelled_reason' => $reason,
-        ]);
+        $cancelled = $this->confirmation->cancel($rental, $reason, chargeFee: false);
 
-        return $rental->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
+        return $cancelled->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
     }
 
     private function expirePendingDepositCharges(Rental $rental): void

@@ -20,10 +20,14 @@ interface RentalRow {
 interface Board {
     counts: {
         draft: number;
+        pending?: number;
+        pending_reserved?: number;
         confirmed: number;
         active: number;
         returned: number;
         completed: number;
+        cancelled?: number;
+        no_show?: number;
         overdue: number;
         ending_soon: number;
         unsettled_deposits: number;
