@@ -454,19 +454,21 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                         className="w-full !py-2 pl-9 text-sm"
                                     />
                                 </div>
-                                <Select
-                                    className="!py-1.5 text-sm"
-                                    value={filters.type_id || ''}
-                                    onChange={(value) => applyFilters({ type_id: value || null })}
-                                    placeholder={t('partners.types.all')}
-                                    options={[
-                                        { value: '', label: t('partners.types.all') },
-                                        ...partnerTypes.map((type) => ({
-                                            value: String(type.id),
-                                            label: type.name,
-                                        })),
-                                    ]}
-                                />
+                                <div className="w-56 shrink-0 sm:w-64">
+                                    <Select
+                                        className="!py-1.5 text-sm"
+                                        value={filters.type_id || ''}
+                                        onChange={(value) => applyFilters({ type_id: value || null })}
+                                        placeholder={t('partners.types.all')}
+                                        options={[
+                                            { value: '', label: t('partners.types.all') },
+                                            ...partnerTypes.map((type) => ({
+                                                value: String(type.id),
+                                                label: type.name,
+                                            })),
+                                        ]}
+                                    />
+                                </div>
                                 <button
                                     type="submit"
                                     className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50"
