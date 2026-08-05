@@ -222,7 +222,27 @@ return [
     'edit' => [
         'title' => 'Edit :name',
         'head' => 'Edit Kontak',
+        'subtitle' => 'Perbarui profil, kanal kontak, dan pengaturan komersial.',
         'submit' => 'Simpan Perubahan',
+        'view_contact' => 'Lihat Kontak',
+        'code_readonly' => 'Kode kontak tidak dapat diubah.',
+        'types_hint' => 'Pilih satu atau lebih peran yang dimiliki kontak ini.',
+        'sections' => [
+            'account' => 'Akun & Status',
+            'account_hint' => 'Perusahaan atau individu, status, dan tipe kontak',
+            'identity' => 'Identitas',
+            'identity_hint' => 'Nama dan detail identitas terkait',
+            'contact' => 'Kanal Kontak',
+            'contact_hint' => 'Telepon, email, website, dan alamat utama',
+            'business' => 'Bisnis & Komersial',
+            'business_hint' => 'Industri, NPWP, kredit, dan akses portal',
+            'tags' => 'Tag',
+            'tags_hint' => 'Label opsional untuk filter dan laporan',
+            'notes' => 'Catatan',
+            'notes_hint' => 'Catatan yang terlihat dan komentar internal',
+            'risk' => 'Kontrol risiko',
+            'risk_hint' => 'Blacklist kontak ini untuk rental jika diperlukan',
+        ],
     ],
 
     'show' => [

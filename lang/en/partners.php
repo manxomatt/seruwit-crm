@@ -222,7 +222,27 @@ return [
     'edit' => [
         'title' => 'Edit :name',
         'head' => 'Edit Contact',
+        'subtitle' => 'Update profile, contact channels, and commercial settings.',
         'submit' => 'Save Changes',
+        'view_contact' => 'View Contact',
+        'code_readonly' => 'Contact code cannot be changed.',
+        'types_hint' => 'Select one or more roles this contact can play.',
+        'sections' => [
+            'account' => 'Account & Status',
+            'account_hint' => 'Company or individual, status, and contact types',
+            'identity' => 'Identity',
+            'identity_hint' => 'Name and related identity details',
+            'contact' => 'Contact Channels',
+            'contact_hint' => 'Phone, email, website, and primary address',
+            'business' => 'Business & Commercial',
+            'business_hint' => 'Industry, tax ID, credit, and portal access',
+            'tags' => 'Tags',
+            'tags_hint' => 'Optional labels for filtering and reporting',
+            'notes' => 'Notes',
+            'notes_hint' => 'Visible notes and internal comments',
+            'risk' => 'Risk controls',
+            'risk_hint' => 'Blacklist this contact for rental when needed',
+        ],
     ],
 
     'show' => [
