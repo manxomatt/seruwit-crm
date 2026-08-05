@@ -5,7 +5,7 @@ return [
     'posts' => 'Postingan',
     'carousels' => 'Carousel',
     'media' => 'Media',
-    'partners' => 'Mitra',
+    'partners' => 'Kontak',
     'products' => 'Produk',
     'fleet' => 'Armada',
     'document' => 'Dokumen',

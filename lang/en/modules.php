@@ -5,7 +5,7 @@ return [
     'posts' => 'Posts',
     'carousels' => 'Carousels',
     'media' => 'Media',
-    'partners' => 'Partners',
+    'partners' => 'Contacts',
     'products' => 'Products',
     'fleet' => 'Fleet',
     'document' => 'Documents',
