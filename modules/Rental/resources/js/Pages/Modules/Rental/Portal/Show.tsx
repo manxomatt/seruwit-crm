@@ -72,13 +72,13 @@ export default function Show({ partner, rental, canPayDeposit }: Props): JSX.Ele
                     </dd>
                     <dt className="text-gray-500">{t('rental.fields.total_amount')}</dt>
                     <dd className="tabular-nums text-gray-900">{formatMoney(rental.total_amount)}</dd>
-                    {rental.pickup_location && (
+                    {typeof rental.pickup_location === 'string' && rental.pickup_location && (
                         <>
                             <dt className="text-gray-500">{t('rental.fields.pickup_location')}</dt>
                             <dd className="text-gray-900">{rental.pickup_location}</dd>
                         </>
                     )}
-                    {rental.return_location && (
+                    {typeof rental.return_location === 'string' && rental.return_location && (
                         <>
                             <dt className="text-gray-500">{t('rental.fields.return_location')}</dt>
                             <dd className="text-gray-900">{rental.return_location}</dd>

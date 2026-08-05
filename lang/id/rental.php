@@ -3,6 +3,57 @@
 return [
     'title' => 'Rental',
 
+    'wizard' => [
+        'steps' => [
+            '1' => 'Dates',
+            '2' => 'Vehicles',
+            '3' => 'Extras',
+            '4' => 'Customer',
+            '5' => 'Confirm',
+        ],
+        'next' => 'Lanjut',
+        'back' => 'Kembali',
+        'create_reservation' => 'Buat Reservasi',
+        'save_reservation' => 'Simpan Reservasi',
+        'no_vehicles' => 'Tidak ada kendaraan tersedia untuk tanggal ini.',
+        'no_rates_hint' => 'Belum ada tarif rental aktif. Buat tarif di menu Tarif, atau hubungi admin.',
+        'no_rates_manual_hint' => 'Belum ada tarif otomatis. Pilih kendaraan lalu isi harga secara manual.',
+        'no_rate_label' => 'Tanpa tarif otomatis',
+        'manual_rate' => 'Isi harga manual',
+        'enter_rate_manual' => 'Kendaraan ini belum punya tarif. Isi tarif per periode (wajib) dan deposit.',
+        'vehicles_load_failed' => 'Gagal memuat kendaraan tersedia.',
+        'quote_failed' => 'Gagal memuat penawaran harga.',
+        'quote_unavailable' => 'Reservasi ini tidak lagi tersedia.',
+        'walk_in_failed' => 'Gagal menyimpan pelanggan walk-in.',
+        'summary' => [
+            'dates' => 'Tanggal',
+            'vehicle' => 'Kendaraan & pelanggan',
+            'pricing' => 'Harga',
+        ],
+    ],
+
+    'post_confirm' => [
+        'title' => 'Setelah konfirmasi',
+        'steps' => [
+            '6' => 'Payments',
+            '7' => 'Pickup',
+            '8' => 'Contract',
+            '9' => 'Return',
+            '10' => 'Changes',
+        ],
+        'hints' => [
+            '6' => 'Terima deposit dan cek saldo invoice sebelum pickup.',
+            '7' => 'Catat odometer, BBM, checklist, foto, dan tanda tangan saat serah terima.',
+            '8' => 'Cetak kontrak rental dan form handover.',
+            '9' => 'Terima kembali kendaraan, selesaikan deposit, lalu complete.',
+            '10' => 'Perpanjang, tukar kendaraan, atau tambah ekstra selama unit masih keluar.',
+        ],
+        'pickup_done' => 'Pickup untuk reservasi ini sudah selesai.',
+        'return_done' => 'Return untuk reservasi ini sudah selesai.',
+        'changes_closed' => 'Extend, swap, dan add-on tersedia saat rental aktif.',
+        'current_step' => 'Langkah saat ini',
+    ],
+
     'nav' => [
         'dashboard' => 'Dashboard',
         'list' => 'Rental',
@@ -42,6 +93,7 @@ return [
         'code' => 'Kode',
         'partner' => 'Partner',
         'customer' => 'Pelanggan',
+        'phone' => 'Telepon',
         'vehicle' => 'Kendaraan',
         'driver' => 'Driver',
         'driver_optional' => 'Driver (opsional)',
@@ -157,8 +209,8 @@ return [
         'settle_deposit' => 'Settle Deposit',
         'receive_deposit' => 'Terima deposit',
         'remove' => 'Hapus',
-        'new_rental' => 'Rental Baru',
-        'create_rental' => 'Buat Rental',
+        'new_rental' => 'Reservasi Baru',
+        'create_rental' => 'Buat Reservasi',
         'cancel_rental' => 'Batalkan Rental',
         'mark_no_show' => 'Tandai No Show',
         'mark_fee_paid' => 'Tagih biaya',
@@ -191,6 +243,8 @@ return [
         'last_location' => 'Lokasi terakhir',
         'billing' => 'Tagihan & pembayaran',
         'deposit_settlement' => 'Settlement deposit',
+        'quick_facts' => 'Ringkasan cepat',
+        'quick_facts_hint' => 'Referensi booking sekilas',
     ],
 
     'availability' => [
@@ -245,6 +299,8 @@ return [
         'refunded' => 'Dikembalikan',
         'received' => 'Kas diterima',
         'not_received' => 'Belum diterima',
+        'status' => 'Status deposit',
+        'none' => 'Tidak ada deposit',
     ],
 
     'invoice' => [
@@ -380,12 +436,12 @@ return [
             'empty' => 'Tidak ada rental.',
         ],
         'create' => [
-            'title' => 'Rental Baru',
+            'title' => 'Reservasi Baru',
             'walk_in_title' => 'Buat cepat pelanggan walk-in',
             'walk_in_hint' => 'Membuat data pelanggan (atau memakai yang sudah ada dengan nomor HP sama) lalu memilihnya di form ini.',
         ],
         'edit' => [
-            'title' => 'Edit Rental :code',
+            'title' => 'Edit Reservasi :code',
             'head' => 'Edit :code',
         ],
         'show' => [
@@ -445,10 +501,10 @@ return [
     ],
 
     'messages' => [
-        'created' => 'Rental dibuat.',
+        'created' => 'Reservasi dibuat.',
         'walk_in_created' => 'Pelanggan walk-in “:name” dibuat dan dipilih.',
         'walk_in_reused' => 'Pelanggan “:name” ditemukan dari nomor HP dan dipilih.',
-        'updated' => 'Rental diperbarui.',
+        'updated' => 'Reservasi diperbarui.',
         'deleted' => 'Rental dihapus.',
         'confirmed' => 'Rental dikonfirmasi.',
         'checked_out' => 'Kendaraan di-check out. Rental sekarang aktif.',

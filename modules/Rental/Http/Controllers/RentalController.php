@@ -24,6 +24,7 @@ use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLocationHydrator;
+use Modules\Rental\Support\RentalPostConfirmProgress;
 use Modules\Rental\Support\WalkInCustomerCreator;
 
 class RentalController extends Controller
@@ -104,26 +105,39 @@ class RentalController extends Controller
             'insurancePackages' => $this->insurancePackageOptions(),
             'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
             'suggestRateUrl' => route($this->getRoutePrefix().'.rental.rates.suggest'),
+            'availableVehiclesUrl' => route($this->getRoutePrefix().'.rental.reservations.available_vehicles'),
+            'quoteUrl' => route($this->getRoutePrefix().'.rental.reservations.quote'),
+            'walkInUrl' => route($this->getRoutePrefix().'.rental.walk_in_customers.store'),
         ]);
     }
 
     /**
-     * Quick-create (or reuse) a walk-in customer, then return to the rental form
-     * with that customer already selected.
+     * Quick-create (or reuse) a walk-in customer.
+     * JSON requests keep the Reservation wizard state; form posts redirect to create.
      */
-    public function storeWalkInCustomer(StoreWalkInCustomerRequest $request, WalkInCustomerCreator $creator): RedirectResponse
+    public function storeWalkInCustomer(StoreWalkInCustomerRequest $request, WalkInCustomerCreator $creator): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $result = $creator->createOrReuse($request->validated());
         $partner = $result['partner'];
+        $message = $result['created']
+            ? __('rental.messages.walk_in_created', ['name' => $partner->name])
+            : __('rental.messages.walk_in_reused', ['name' => $partner->name]);
+
+        if ($request->wantsJson() || $request->expectsJson() || $request->header('X-Reservation-Wizard') === '1') {
+            return response()->json([
+                'partner' => [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'code' => $partner->code,
+                ],
+                'created' => $result['created'],
+                'message' => $message,
+            ]);
+        }
 
         return redirect()
             ->route($this->getRoutePrefix().'.rental.create', ['partner_id' => $partner->id])
-            ->with(
-                'success',
-                $result['created']
-                    ? __('rental.messages.walk_in_created', ['name' => $partner->name])
-                    : __('rental.messages.walk_in_reused', ['name' => $partner->name]),
-            );
+            ->with('success', $message);
     }
 
     public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator): RedirectResponse
@@ -156,8 +170,9 @@ class RentalController extends Controller
             'extensions',
             'damages',
             'insurancePackage',
-            'pickupLocation:id,code,name,address,city',
-            'returnLocation:id,code,name,address,city',
+            // Do not eager-load pickupLocation/returnLocation here: Laravel serializes
+            // those relations as pickup_location / return_location and overwrites the
+            // text snapshot columns, which crashes React when rendered as children.
             'vehicleSwaps.fromVehicle:id,name,plate_number',
             'vehicleSwaps.toVehicle:id,name,plate_number',
             'vehicleSwaps.swappedByUser:id,name',
@@ -275,6 +290,7 @@ class RentalController extends Controller
                     Rental::STATUS_CONFIRMED,
                     Rental::STATUS_ACTIVE,
                 ], true),
+            'postConfirm' => app(RentalPostConfirmProgress::class)->for($rental),
         ]);
     }
 
@@ -293,7 +309,7 @@ class RentalController extends Controller
             'vehicles' => Vehicle::query()
                 ->where('status', Vehicle::STATUS_ACTIVE)
                 ->orderBy('name')
-                ->get(['id', 'name', 'plate_number', 'type']),
+                ->get(['id', 'name', 'plate_number', 'type', 'rental_class']),
             'drivers' => Driver::query()
                 ->where('status', Driver::STATUS_AVAILABLE)
                 ->orderBy('name')
@@ -313,6 +329,9 @@ class RentalController extends Controller
             'locations' => $this->locationOptions(),
             'insurancePackages' => $this->insurancePackageOptions(),
             'defaultOneWayFee' => (float) \App\Models\Setting::getValue('rental.default_one_way_fee', '150000'),
+            'availableVehiclesUrl' => route($this->getRoutePrefix().'.rental.reservations.available_vehicles'),
+            'quoteUrl' => route($this->getRoutePrefix().'.rental.reservations.quote'),
+            'walkInUrl' => route($this->getRoutePrefix().'.rental.walk_in_customers.store'),
         ]);
     }
 

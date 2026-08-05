@@ -5,6 +5,7 @@ namespace Tests\Feature\Modules\Rental;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalDamage;
@@ -277,6 +278,38 @@ class RentalCrudTest extends TestCase
                 ->has('invoicingEnabled')
                 ->has('checklistItems')
                 ->has('fuelLevels')
+            );
+    }
+
+    public function test_rental_show_keeps_location_text_columns_as_strings(): void
+    {
+        $pickup = Location::factory()->create([
+            'name' => 'Bandara Soekarno-Hatta',
+            'address' => 'Terminal 3',
+            'city' => 'Tangerang',
+        ]);
+        $return = Location::factory()->create([
+            'name' => 'Hotel Mulia',
+            'address' => 'Jl. Asia Afrika',
+            'city' => 'Jakarta',
+        ]);
+
+        $rental = Rental::factory()->create([
+            'pickup_location_id' => $pickup->id,
+            'return_location_id' => $return->id,
+            'pickup_location' => 'Terminal 3, Tangerang',
+            'return_location' => 'Jl. Asia Afrika, Jakarta',
+        ]);
+
+        $this->actingAs($this->createUserWithRole())
+            ->get(route('module.rental.show', $rental))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Show')
+                ->where('rental.pickup_location', 'Terminal 3, Tangerang')
+                ->where('rental.return_location', 'Jl. Asia Afrika, Jakarta')
+                ->where('rental.pickup_location_id', $pickup->id)
+                ->where('rental.return_location_id', $return->id)
             );
     }
 

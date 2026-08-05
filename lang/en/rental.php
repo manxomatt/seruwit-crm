@@ -3,6 +3,57 @@
 return [
     'title' => 'Rental',
 
+    'wizard' => [
+        'steps' => [
+            '1' => 'Dates',
+            '2' => 'Vehicles',
+            '3' => 'Extras',
+            '4' => 'Customer',
+            '5' => 'Confirm',
+        ],
+        'next' => 'Next',
+        'back' => 'Back',
+        'create_reservation' => 'Create Reservation',
+        'save_reservation' => 'Save Reservation',
+        'no_vehicles' => 'No vehicles available for these dates.',
+        'no_rates_hint' => 'There are no active rental rates. Create a rate under Rates, or ask an admin.',
+        'no_rates_manual_hint' => 'No automatic rates found. Select a vehicle and enter pricing manually.',
+        'no_rate_label' => 'No automatic rate',
+        'manual_rate' => 'Enter price manually',
+        'enter_rate_manual' => 'This vehicle has no tariff. Enter rate per period (required) and deposit.',
+        'vehicles_load_failed' => 'Could not load available vehicles.',
+        'quote_failed' => 'Could not load price quote.',
+        'quote_unavailable' => 'This reservation is no longer available.',
+        'walk_in_failed' => 'Could not save walk-in customer.',
+        'summary' => [
+            'dates' => 'Dates',
+            'vehicle' => 'Vehicle & customer',
+            'pricing' => 'Pricing',
+        ],
+    ],
+
+    'post_confirm' => [
+        'title' => 'After confirmation',
+        'steps' => [
+            '6' => 'Payments',
+            '7' => 'Pickup',
+            '8' => 'Contract',
+            '9' => 'Return',
+            '10' => 'Changes',
+        ],
+        'hints' => [
+            '6' => 'Collect the deposit and review invoice balance before pickup.',
+            '7' => 'Record odometer, fuel, checklist, photos, and signature at handover.',
+            '8' => 'Print the rental contract and handover form.',
+            '9' => 'Check the vehicle back in, then settle the deposit and complete.',
+            '10' => 'Extend the rental, swap the vehicle, or add extras while the unit is out.',
+        ],
+        'pickup_done' => 'Pickup is complete for this reservation.',
+        'return_done' => 'Return is complete for this reservation.',
+        'changes_closed' => 'Extend, swap, and add-ons are available while the rental is active.',
+        'current_step' => 'Current step',
+    ],
+
     'nav' => [
         'dashboard' => 'Dashboard',
         'list' => 'Rentals',
@@ -42,6 +93,7 @@ return [
         'code' => 'Code',
         'partner' => 'Partner',
         'customer' => 'Customer',
+        'phone' => 'Phone',
         'vehicle' => 'Vehicle',
         'driver' => 'Driver',
         'driver_optional' => 'Driver (optional)',
@@ -157,8 +209,8 @@ return [
         'settle_deposit' => 'Settle Deposit',
         'receive_deposit' => 'Receive deposit',
         'remove' => 'Remove',
-        'new_rental' => 'New Rental',
-        'create_rental' => 'Create Rental',
+        'new_rental' => 'New Reservation',
+        'create_rental' => 'Create Reservation',
         'cancel_rental' => 'Cancel Rental',
         'mark_no_show' => 'Mark No Show',
         'mark_fee_paid' => 'Charge fee',
@@ -191,6 +243,8 @@ return [
         'last_location' => 'Last known location',
         'billing' => 'Billing & payment',
         'deposit_settlement' => 'Deposit settlement',
+        'quick_facts' => 'Quick facts',
+        'quick_facts_hint' => 'At-a-glance booking references',
     ],
 
     'availability' => [
@@ -245,6 +299,8 @@ return [
         'refunded' => 'Refunded',
         'received' => 'Cash received',
         'not_received' => 'Not received',
+        'status' => 'Deposit status',
+        'none' => 'No deposit required',
     ],
 
     'invoice' => [
@@ -380,12 +436,12 @@ return [
             'empty' => 'No rentals found.',
         ],
         'create' => [
-            'title' => 'New Rental',
+            'title' => 'New Reservation',
             'walk_in_title' => 'Quick-create walk-in customer',
             'walk_in_hint' => 'Creates a customer record (or reuses one with the same phone) and selects them on this form.',
         ],
         'edit' => [
-            'title' => 'Edit Rental :code',
+            'title' => 'Edit Reservation :code',
             'head' => 'Edit :code',
         ],
         'show' => [
@@ -445,10 +501,10 @@ return [
     ],
 
     'messages' => [
-        'created' => 'Rental created.',
+        'created' => 'Reservation created.',
         'walk_in_created' => 'Walk-in customer “:name” created and selected.',
         'walk_in_reused' => 'Existing customer “:name” found by phone and selected.',
-        'updated' => 'Rental updated.',
+        'updated' => 'Reservation updated.',
         'deleted' => 'Rental deleted.',
         'confirmed' => 'Rental confirmed.',
         'checked_out' => 'Vehicle checked out. Rental is now active.',

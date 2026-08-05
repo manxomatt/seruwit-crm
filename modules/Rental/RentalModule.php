@@ -15,6 +15,7 @@ use Modules\Rental\Http\Controllers\RentalController;
 use Modules\Rental\Http\Controllers\RentalDashboardController;
 use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
+use Modules\Rental\Http\Controllers\RentalReservationWizardController;
 
 /**
  * Vehicle rental management: booking, checkout, return, damage reporting, and
@@ -113,6 +114,14 @@ class RentalModule implements ModuleContract
 
         // Availability board (before {rental} wildcard)
         Route::get('/rental/availability', [RentalAvailabilityController::class, 'index'])->middleware('permission:rental,view')->name('rental.availability.index');
+
+        // Reservation wizard JSON helpers (before {rental} wildcard)
+        Route::get('/rental/reservations/available-vehicles', [RentalReservationWizardController::class, 'availableVehicles'])
+            ->middleware('permission:rental,view')
+            ->name('rental.reservations.available_vehicles');
+        Route::post('/rental/reservations/quote', [RentalReservationWizardController::class, 'quote'])
+            ->middleware('permission:rental,view')
+            ->name('rental.reservations.quote');
 
         // Rentals CRUD
         Route::get('/rental/list', [RentalController::class, 'index'])->middleware('permission:rental,view')->name('rental.index');

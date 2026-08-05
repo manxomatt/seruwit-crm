@@ -18,8 +18,20 @@ import { formatMoney } from '@/utils/money';
 import { formatDateTimeDmYHi } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
 import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
-import { ChangeEvent, FormEventHandler, useState } from 'react';
+import { ChangeEvent, FormEventHandler, useEffect, useState } from 'react';
+import PostConfirmPanel from '../../../PostConfirm/PostConfirmPanel';
+import PostConfirmStepper from '../../../PostConfirm/PostConfirmStepper';
+import type { PostConfirmAction, PostConfirmProgress, PostConfirmStepId } from '../../../PostConfirm/types';
+import { POST_CONFIRM_STEPS } from '../../../PostConfirm/types';
 import RentalNav from '../../../RentalNav';
+import {
+    DetailRow,
+    EmptyBlock,
+    PaymentBadge,
+    SectionCard,
+    StatCard,
+    StatusBadge,
+} from './ShowUi';
 
 async function filesToDataUrls(files: FileList | null): Promise<string[]> {
     if (! files || files.length === 0) {
@@ -101,8 +113,8 @@ interface Rental {
     late_fee_per_day: string | null;
     overdue_days: number | null;
     late_fee_amount: string;
-    pickup_location: string | null;
-    return_location: string | null;
+    pickup_location: string | { id: number; code: string; name: string; address: string | null; city: string | null } | null;
+    return_location: string | { id: number; code: string; name: string; address: string | null; city: string | null } | null;
     one_way_fee_amount: string | null;
     insurance_package_id: number | null;
     insurance_package?: { id: number; code: string; name: string; deductible_amount: string | number } | null;
@@ -159,32 +171,26 @@ interface Props {
     handoverEvidence?: HandoverEvidence;
     gatewayEnabled?: boolean;
     canPayDepositOnline?: boolean;
+    postConfirm?: PostConfirmProgress;
 }
-
-const STATUS_COLORS: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700',
-    pending: 'bg-slate-100 text-slate-700',
-    pending_reserved: 'bg-indigo-100 text-indigo-800',
-    confirmed: 'bg-blue-100 text-blue-700',
-    active: 'bg-amber-100 text-amber-700',
-    returned: 'bg-purple-100 text-purple-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-    cancelled_paid: 'bg-red-100 text-red-800',
-    no_show: 'bg-orange-100 text-orange-800',
-    no_show_paid: 'bg-orange-100 text-orange-900',
-};
-
-const PAYMENT_COLORS: Record<string, string> = {
-    none: 'bg-gray-100 text-gray-600',
-    draft: 'bg-slate-100 text-slate-700',
-    unpaid: 'bg-red-100 text-red-700',
-    partial: 'bg-amber-100 text-amber-700',
-    paid: 'bg-green-100 text-green-700',
-};
 
 function emptyChecklist(items: string[]): Record<string, boolean> {
     return Object.fromEntries(items.map((key) => [key, true]));
+}
+
+/** Text snapshot column can be overwritten by the Location relation in JSON — normalize for display. */
+function locationDisplay(value: unknown): string {
+    if (value == null || value === '') {
+        return '';
+    }
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (typeof value === 'object') {
+        const loc = value as { name?: string; address?: string | null; city?: string | null };
+        return [loc.address, loc.city].filter(Boolean).join(', ') || loc.name || '';
+    }
+    return String(value);
 }
 
 export default function Show({
@@ -208,11 +214,23 @@ export default function Show({
         return_signature_url: null,
     },
     canPayDepositOnline = false,
+    postConfirm = { visible: false, current_step: null, steps: [] },
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [modal, setModal] = useState<'confirm' | 'cancel' | 'no_show' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
     const [confirming, setConfirming] = useState(false);
+    const [lifecycleStep, setLifecycleStep] = useState<PostConfirmStepId>(
+        postConfirm.current_step && POST_CONFIRM_STEPS.includes(postConfirm.current_step)
+            ? postConfirm.current_step
+            : 6,
+    );
+
+    useEffect(() => {
+        if (postConfirm.visible && postConfirm.current_step && POST_CONFIRM_STEPS.includes(postConfirm.current_step)) {
+            setLifecycleStep(postConfirm.current_step);
+        }
+    }, [postConfirm.visible, postConfirm.current_step]);
 
     const cancelForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
     const noShowForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
@@ -315,6 +333,40 @@ export default function Show({
 
     const periodLabel = t(`rental.period_type.${rental.period_type}`, undefined, rental.period_type);
 
+    const handlePostConfirmAction = (name: PostConfirmAction) => {
+        switch (name) {
+            case 'receive_deposit':
+                action('deposit.receive');
+                break;
+            case 'pay_deposit_online':
+                action('deposit.pay_online');
+                break;
+            case 'settle_deposit':
+                setModal('deposit');
+                break;
+            case 'checkout':
+                setModal('checkout');
+                break;
+            case 'return':
+                setModal('return');
+                break;
+            case 'complete':
+                action('complete');
+                break;
+            case 'extend':
+                setModal('extend');
+                break;
+            case 'swap':
+                setModal('swap');
+                break;
+            case 'addon':
+                setModal('addon');
+                break;
+            default:
+                break;
+        }
+    };
+
     const timelineSteps = [
         { label: t('rental.timeline.created'), date: rental.confirmed_at ? '' : t('rental.timeline.pending'), done: true },
         { label: t('rental.timeline.confirmed'), date: rental.confirmed_at ? formatDateTimeDmYHi(rental.confirmed_at) : null, by: rental.confirmed_by?.name, done: !!rental.confirmed_at },
@@ -327,17 +379,28 @@ export default function Show({
         <DynamicLayout
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <h2 className="font-mono text-xl font-semibold text-gray-800">{rental.code}</h2>
-                        <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[rental.status]}`}>
-                            {t(`rental.status.${rental.status}`, undefined, rental.status)}
-                        </span>
-                        {rental.is_overdue && (
-                            <span className="inline-flex rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
-                                {t('rental.status.overdue')}
-                            </span>
-                        )}
+                    <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            {t('rental.title')}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <h2 className="font-mono text-xl font-semibold leading-tight text-gray-800 dark:text-white">
+                                {rental.code}
+                            </h2>
+                            <StatusBadge
+                                status={rental.status}
+                                label={t(`rental.status.${rental.status}`, undefined, rental.status)}
+                            />
+                            {rental.is_overdue && (
+                                <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20 dark:bg-rose-950 dark:text-rose-200">
+                                    {t('rental.status.overdue')}
+                                </span>
+                            )}
+                        </div>
                     </div>
+                    <Link href={prefixedRoute('rental.index')}>
+                        <SecondaryButton type="button">{t('rental.nav.back_to_list')}</SecondaryButton>
+                    </Link>
                 </div>
             }
         >
@@ -345,308 +408,428 @@ export default function Show({
 
             <RentalNav />
 
-            {depositBlocksCheckout && (
-                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    <p className="font-medium">{t('rental.errors.checkout_deposit_required')}</p>
-                    <p className="mt-1 text-amber-800/90">
-                        {t('rental.modals.confirm_deposit_body', {
-                            code: rental.code,
-                            amount: formatMoney(rental.deposit_amount),
-                        })}
-                    </p>
-                </div>
-            )}
+            <div className="space-y-6">
+                {/* Hero identity */}
+                <section className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <div className="flex flex-col gap-5 border-b border-gray-100 p-5 dark:border-gray-700 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 flex-1 space-y-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <StatusBadge
+                                    status={rental.status}
+                                    label={t(`rental.status.${rental.status}`, undefined, rental.status)}
+                                />
+                                {invoicingEnabled && (
+                                    <PaymentBadge
+                                        status={payment.status}
+                                        label={t(`rental.payment.${payment.status}`, undefined, payment.status)}
+                                    />
+                                )}
+                                {depositHeld && !rental.deposit_received_at && (
+                                    <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                                        {t('rental.deposit.not_received')}
+                                    </span>
+                                )}
+                                {depositHeld && rental.deposit_received_at && rental.deposit_status !== 'settled' && (
+                                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                        {t('rental.deposit.received')}
+                                    </span>
+                                )}
+                            </div>
 
-            <div className="mb-6 flex flex-wrap justify-end gap-2">
-                        {canPrintContract && (
-                            <a href={prefixedRoute('rental.pdf.contract', rental.id)} target="_blank" rel="noreferrer">
-                                <SecondaryButton type="button">{t('rental.actions.print_contract')}</SecondaryButton>
-                            </a>
-                        )}
-                        {canPrintHandover && (
-                            <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer">
-                                <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
-                            </a>
-                        )}
-                        {(is('draft') || is('pending') || is('pending_reserved') || is('confirmed')) && (
-                            <Link href={prefixedRoute('rental.edit', rental.id)}>
-                                <SecondaryButton>{t('common.edit')}</SecondaryButton>
-                            </Link>
-                        )}
-                        {canConfirm && (
-                            <PrimaryButton onClick={() => setModal('confirm')}>
-                                {t('rental.actions.confirm')}
-                            </PrimaryButton>
-                        )}
-                        {canPayDepositOnline && (
-                            <SecondaryButton onClick={() => action('deposit.pay_online')}>{t('receivables.gateway.pay_deposit')}</SecondaryButton>
-                        )}
-                        {is('confirmed') && (
-                            <>
-                                {canReceiveDeposit && (
-                                    <PrimaryButton onClick={() => action('deposit.receive')}>
-                                        {t('rental.actions.receive_deposit')}
+                            <div>
+                                <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+                                    {rental.vehicle.name}
+                                </h1>
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    <span className="font-mono font-medium text-gray-700 dark:text-gray-200">
+                                        {rental.vehicle.plate_number}
+                                    </span>
+                                    <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                                    {rental.partner.name}
+                                    {rental.driver && (
+                                        <>
+                                            <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                                            {rental.driver.name}
+                                        </>
+                                    )}
+                                </p>
+                            </div>
+
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                                <span className="font-medium text-gray-900 dark:text-white">
+                                    {rental.start_date} → {rental.end_date}
+                                </span>
+                                <span className="ml-2 text-gray-500">
+                                    ({rental.total_periods} {periodLabel})
+                                </span>
+                            </p>
+                        </div>
+
+                        {/* Toolbar: keep core booking actions on one row */}
+                        <div className="flex shrink-0 flex-col items-stretch gap-2 lg:items-end">
+                            <div className="flex flex-nowrap items-center justify-end gap-2 overflow-x-auto">
+                                {canPrintContract && (
+                                    <a href={prefixedRoute('rental.pdf.contract', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
+                                        <SecondaryButton type="button">{t('rental.actions.print_contract')}</SecondaryButton>
+                                    </a>
+                                )}
+                                {(is('draft') || is('pending') || is('pending_reserved') || is('confirmed')) && (
+                                    <Link href={prefixedRoute('rental.edit', rental.id)} className="shrink-0">
+                                        <SecondaryButton>{t('common.edit')}</SecondaryButton>
+                                    </Link>
+                                )}
+                                {is('confirmed') && (
+                                    <DangerButton className="shrink-0" onClick={() => setModal('no_show')}>
+                                        {t('rental.actions.mark_no_show')}
+                                    </DangerButton>
+                                )}
+                                {canCancel && (
+                                    <DangerButton className="shrink-0" onClick={() => setModal('cancel')}>
+                                        {t('common.cancel')}
+                                    </DangerButton>
+                                )}
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                                {canPrintHandover && (
+                                    <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer">
+                                        <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
+                                    </a>
+                                )}
+                                {canConfirm && (
+                                    <PrimaryButton onClick={() => setModal('confirm')}>
+                                        {t('rental.actions.confirm')}
                                     </PrimaryButton>
                                 )}
-                                <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
-                                <PrimaryButton
-                                    onClick={() => setModal('checkout')}
-                                    disabled={depositBlocksCheckout}
-                                    title={depositBlocksCheckout ? t('rental.errors.checkout_deposit_required') : undefined}
-                                    className={depositBlocksCheckout ? 'opacity-50' : undefined}
-                                >
-                                    {t('rental.actions.checkout')}
-                                </PrimaryButton>
-                                <DangerButton onClick={() => setModal('no_show')}>{t('rental.actions.mark_no_show')}</DangerButton>
-                            </>
-                        )}
-                        {is('active') && (
-                            <>
-                                {canReceiveDeposit && (
-                                    <SecondaryButton onClick={() => action('deposit.receive')}>{t('rental.actions.receive_deposit')}</SecondaryButton>
+                                {!postConfirm.visible && canPayDepositOnline && (
+                                    <SecondaryButton onClick={() => action('deposit.pay_online')}>
+                                        {t('receivables.gateway.pay_deposit')}
+                                    </SecondaryButton>
                                 )}
-                                <SecondaryButton onClick={() => setModal('extend')}>{t('rental.actions.extend')}</SecondaryButton>
-                                <SecondaryButton onClick={() => setModal('swap')}>{t('rental.actions.swap_vehicle')}</SecondaryButton>
-                                <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
-                                <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
-                                <PrimaryButton onClick={() => setModal('return')}>{t('rental.actions.return')}</PrimaryButton>
-                            </>
-                        )}
-                        {is('returned') && (
-                            <>
-                                {canReceiveDeposit && (
-                                    <SecondaryButton onClick={() => action('deposit.receive')}>{t('rental.actions.receive_deposit')}</SecondaryButton>
+                                {!postConfirm.visible && is('confirmed') && (
+                                    <>
+                                        {canReceiveDeposit && (
+                                            <PrimaryButton onClick={() => action('deposit.receive')}>
+                                                {t('rental.actions.receive_deposit')}
+                                            </PrimaryButton>
+                                        )}
+                                        <PrimaryButton
+                                            onClick={() => setModal('checkout')}
+                                            disabled={depositBlocksCheckout}
+                                            title={depositBlocksCheckout ? t('rental.errors.checkout_deposit_required') : undefined}
+                                            className={depositBlocksCheckout ? 'opacity-50' : undefined}
+                                        >
+                                            {t('rental.actions.checkout')}
+                                        </PrimaryButton>
+                                    </>
                                 )}
-                                <SecondaryButton onClick={() => setModal('addon')}>{t('rental.actions.add_addon')}</SecondaryButton>
-                                <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
-                                {canSettleDeposit && (
-                                    <SecondaryButton onClick={() => setModal('deposit')}>{t('rental.actions.settle_deposit')}</SecondaryButton>
+                                {!postConfirm.visible && is('active') && (
+                                    <>
+                                        <SecondaryButton onClick={() => setModal('extend')}>{t('rental.actions.extend')}</SecondaryButton>
+                                        <PrimaryButton onClick={() => setModal('return')}>{t('rental.actions.return')}</PrimaryButton>
+                                    </>
                                 )}
-                                <PrimaryButton onClick={() => action('complete')}>{t('rental.actions.complete')}</PrimaryButton>
-                            </>
-                        )}
-                        {is('completed') && canSettleDeposit && (
-                            <SecondaryButton onClick={() => setModal('deposit')}>{t('rental.actions.settle_deposit')}</SecondaryButton>
-                        )}
-                        {canMarkFeePaid && (
-                            <SecondaryButton onClick={() => action('mark_fee_paid')}>{t('rental.actions.mark_fee_paid')}</SecondaryButton>
-                        )}
-                        {canCancel && (
-                            <DangerButton onClick={() => setModal('cancel')}>{t('common.cancel')}</DangerButton>
-                        )}
-            </div>
-
-                {/* Vehicle position — primary visual while the unit is out */}
-                <div className="mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-sm font-semibold text-gray-700">
-                                {isLiveTracking && live
-                                    ? t('rental.sections.live_location')
-                                    : t('rental.sections.last_location')}
-                            </h2>
-                            {isLiveTracking && live && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                                    {t('rental.tracking.live')}
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                            {live && (
-                                <p className="text-xs text-gray-500">
-                                    {formatSpeedKph(livePosition?.speed_kph)}
-                                    {recordedLabel ? ` — ${t('rental.tracking.last_seen', { time: recordedLabel })}` : ''}
-                                </p>
-                            )}
-                            {trackingEnabled && hasGpsDevice && gpsSummary && (
-                                <Link
-                                    href={prefixedRoute('tracking.history', {
-                                        vehicle_id: rental.vehicle.id,
-                                        from: gpsSummary.from,
-                                        to: gpsSummary.to,
-                                    })}
-                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-900"
-                                >
-                                    {t('rental.tracking.view_trail')}
-                                </Link>
-                            )}
+                                {!postConfirm.visible && is('returned') && (
+                                    <PrimaryButton onClick={() => action('complete')}>{t('rental.actions.complete')}</PrimaryButton>
+                                )}
+                                {(is('active') || is('returned')) && (
+                                    <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
+                                )}
+                                {canMarkFeePaid && (
+                                    <SecondaryButton onClick={() => action('mark_fee_paid')}>{t('rental.actions.mark_fee_paid')}</SecondaryButton>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {live ? (
-                        <div className="p-4">
-                            <LeafletMap bounds={[live]} height="360px">
-                                <VehicleMarker
-                                    position={live}
-                                    label={`${rental.vehicle.name} (${rental.vehicle.plate_number})`}
-                                    tone={liveTone}
-                                >
-                                    <>
-                                        <br />
-                                        {formatSpeedKph(livePosition?.speed_kph)}
-                                        {recordedLabel && (
-                                            <>
-                                                <br />
-                                                <span className="text-gray-500">{recordedLabel}</span>
-                                            </>
-                                        )}
-                                    </>
-                                </VehicleMarker>
-                            </LeafletMap>
-                            {isLiveTracking && (
-                                <p className="mt-2 text-xs text-gray-400">{t('rental.tracking.hint_active')}</p>
-                            )}
-                            {gpsSummary && (
-                                <div className="mt-3 grid grid-cols-1 gap-2 rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600 sm:grid-cols-3">
-                                    <p>{t('rental.tracking.gps_km', { km: gpsSummary.distance_km.toLocaleString('id-ID') })}</p>
-                                    <p>
-                                        {gpsSummary.odometer_km !== null
-                                            ? t('rental.tracking.odometer_km', { km: gpsSummary.odometer_km.toLocaleString('id-ID') })
-                                            : t('rental.tracking.odometer_pending')}
-                                    </p>
-                                    <p>{t('rental.tracking.gps_points', { count: gpsSummary.points })}</p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="px-4 py-10 text-center">
-                            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-400">
-                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                                </svg>
+                    <div className="grid grid-cols-2 gap-3 bg-gray-50/70 p-4 dark:bg-gray-900/40 sm:grid-cols-4 sm:px-6">
+                        <StatCard
+                            label={t('rental.fields.total_amount')}
+                            value={formatMoney(rental.total_amount)}
+                        />
+                        <StatCard
+                            label={t('rental.fields.deposit')}
+                            value={formatMoney(rental.deposit_amount)}
+                            hint={
+                                Number(rental.deposit_amount) <= 0
+                                    ? t('rental.deposit.none')
+                                    : rental.deposit_received_at
+                                      ? t('rental.deposit.received')
+                                      : t('rental.deposit.not_received')
+                            }
+                            tone={
+                                Number(rental.deposit_amount) <= 0 || rental.deposit_received_at
+                                    ? 'success'
+                                    : 'danger'
+                            }
+                        />
+                        <StatCard
+                            label={t('rental.fields.period')}
+                            value={`${rental.total_periods} ${periodLabel}`}
+                            hint={`${rental.start_date} → ${rental.end_date}`}
+                        />
+                        {invoicingEnabled ? (
+                            <StatCard
+                                label={t('rental.fields.balance_due')}
+                                value={formatMoney(payment.balance_due)}
+                                hint={t(`rental.payment.${payment.status}`, undefined, payment.status)}
+                                tone={payment.balance_due > 0 ? 'warning' : 'success'}
+                            />
+                        ) : (
+                            <StatCard
+                                label={t('rental.fields.base_amount')}
+                                value={formatMoney(rental.base_amount)}
+                            />
+                        )}
+                    </div>
+                </section>
+
+                {postConfirm.visible && (
+                    <div className="space-y-3">
+                        <PostConfirmStepper
+                            progress={postConfirm}
+                            step={lifecycleStep}
+                            onStepChange={setLifecycleStep}
+                        />
+                        <PostConfirmPanel
+                            step={lifecycleStep}
+                            rentalStatus={rental.status}
+                            depositAmount={rental.deposit_amount}
+                            depositReceived={!!rental.deposit_received_at}
+                            depositBlocksCheckout={depositBlocksCheckout}
+                            canReceiveDeposit={canReceiveDeposit}
+                            canSettleDeposit={canSettleDeposit}
+                            canPayDepositOnline={canPayDepositOnline}
+                            canPrintContract={canPrintContract}
+                            canPrintHandover={canPrintHandover}
+                            payment={payment}
+                            invoicingEnabled={invoicingEnabled}
+                            rentalId={rental.id}
+                            onAction={handlePostConfirmAction}
+                        />
+                    </div>
+                )}
+
+                {depositBlocksCheckout && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+                        <p className="font-medium">{t('rental.errors.checkout_deposit_required')}</p>
+                        <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
+                            {t('rental.modals.confirm_deposit_body', {
+                                code: rental.code,
+                                amount: formatMoney(rental.deposit_amount),
+                            })}
+                        </p>
+                    </div>
+                )}
+
+                {/* Live map — show prominently when tracking is relevant */}
+                {(isLiveTracking || live || (trackingEnabled && hasGpsDevice)) && (
+                    <SectionCard
+                        title={isLiveTracking && live ? t('rental.sections.live_location') : t('rental.sections.last_location')}
+                        action={
+                            <div className="flex flex-wrap items-center gap-3">
+                                {isLiveTracking && live && (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                                        {t('rental.tracking.live')}
+                                    </span>
+                                )}
+                                {trackingEnabled && hasGpsDevice && gpsSummary && (
+                                    <Link
+                                        href={prefixedRoute('tracking.history', {
+                                            vehicle_id: rental.vehicle.id,
+                                            from: gpsSummary.from,
+                                            to: gpsSummary.to,
+                                        })}
+                                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                                    >
+                                        {t('rental.tracking.view_trail')}
+                                    </Link>
+                                )}
                             </div>
-                            <p className="text-sm text-gray-500">
+                        }
+                    >
+                        {live ? (
+                            <div className="space-y-3">
+                                {recordedLabel && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {formatSpeedKph(livePosition?.speed_kph)}
+                                        {` — ${t('rental.tracking.last_seen', { time: recordedLabel })}`}
+                                    </p>
+                                )}
+                                <LeafletMap bounds={[live]} height="320px">
+                                    <VehicleMarker
+                                        position={live}
+                                        label={`${rental.vehicle.name} (${rental.vehicle.plate_number})`}
+                                        tone={liveTone}
+                                    >
+                                        <>
+                                            <br />
+                                            {formatSpeedKph(livePosition?.speed_kph)}
+                                            {recordedLabel && (
+                                                <>
+                                                    <br />
+                                                    <span className="text-gray-500">{recordedLabel}</span>
+                                                </>
+                                            )}
+                                        </>
+                                    </VehicleMarker>
+                                </LeafletMap>
+                                {isLiveTracking && (
+                                    <p className="text-xs text-gray-400">{t('rental.tracking.hint_active')}</p>
+                                )}
+                                {gpsSummary && (
+                                    <div className="grid grid-cols-1 gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-gray-900/50 dark:text-gray-300 sm:grid-cols-3">
+                                        <p>{t('rental.tracking.gps_km', { km: gpsSummary.distance_km.toLocaleString('id-ID') })}</p>
+                                        <p>
+                                            {gpsSummary.odometer_km !== null
+                                                ? t('rental.tracking.odometer_km', { km: gpsSummary.odometer_km.toLocaleString('id-ID') })
+                                                : t('rental.tracking.odometer_pending')}
+                                        </p>
+                                        <p>{t('rental.tracking.gps_points', { count: gpsSummary.points })}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <EmptyBlock>
                                 {!trackingEnabled
                                     ? t('rental.tracking.unavailable')
                                     : !hasGpsDevice
                                       ? t('rental.tracking.no_device')
                                       : t('rental.tracking.no_fix')}
-                            </p>
-                            {trackingEnabled && hasGpsDevice && gpsSummary && gpsSummary.points > 0 && (
-                                <Link
-                                    href={prefixedRoute('tracking.history', {
-                                        vehicle_id: rental.vehicle.id,
-                                        from: gpsSummary.from,
-                                        to: gpsSummary.to,
-                                    })}
-                                    className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-900"
-                                >
-                                    {t('rental.tracking.view_trail')}
-                                </Link>
-                            )}
-                        </div>
-                    )}
-                </div>
+                            </EmptyBlock>
+                        )}
+                    </SectionCard>
+                )}
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {/* Left column */}
-                    <div className="space-y-6 lg:col-span-2">
-                        {/* Booking info */}
-                        <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.booking_details')}</h2>
-                            </div>
-                            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-sm">
-                                <dt className="text-gray-500">{t('rental.fields.vehicle')}</dt>
-                                <dd className="text-gray-900 dark:text-white">{rental.vehicle.name} <span className="text-gray-400">({rental.vehicle.plate_number})</span></dd>
-                                <dt className="text-gray-500">{t('rental.fields.customer')}</dt>
-                                <dd className="text-gray-900 dark:text-white">{rental.partner.name}</dd>
-                                {rental.driver && <><dt className="text-gray-500">{t('rental.fields.driver')}</dt><dd className="text-gray-900 dark:text-white">{rental.driver.name}</dd></>}
-                                <dt className="text-gray-500">{t('rental.fields.period')}</dt>
-                                <dd className="text-gray-900 dark:text-white">{rental.start_date} → {rental.end_date} ({rental.total_periods} {periodLabel})</dd>
-                                {rental.actual_return_date && <><dt className="text-gray-500">{t('rental.fields.actual_return')}</dt><dd className="text-gray-900 dark:text-white">{rental.actual_return_date}</dd></>}
-                                {rental.pickup_location && <><dt className="text-gray-500">{t('rental.fields.pickup_location')}</dt><dd className="text-gray-900 dark:text-white">{rental.pickup_location}</dd></>}
-                                {rental.return_location && <><dt className="text-gray-500">{t('rental.fields.return_location')}</dt><dd className="text-gray-900 dark:text-white">{rental.return_location}</dd></>}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+                    <div className="space-y-6 lg:col-span-3">
+                        <SectionCard title={t('rental.sections.booking_details')}>
+                            <dl>
+                                <DetailRow label={t('rental.fields.vehicle')}>
+                                    {rental.vehicle.name}{' '}
+                                    <span className="font-mono text-gray-500">({rental.vehicle.plate_number})</span>
+                                </DetailRow>
+                                <DetailRow label={t('rental.fields.customer')}>{rental.partner.name}</DetailRow>
+                                {rental.driver && (
+                                    <DetailRow label={t('rental.fields.driver')}>{rental.driver.name}</DetailRow>
+                                )}
+                                <DetailRow label={t('rental.fields.period')}>
+                                    {rental.start_date} → {rental.end_date} ({rental.total_periods} {periodLabel})
+                                </DetailRow>
+                                {rental.actual_return_date && (
+                                    <DetailRow label={t('rental.fields.actual_return')}>{rental.actual_return_date}</DetailRow>
+                                )}
+                                {locationDisplay(rental.pickup_location) && (
+                                    <DetailRow label={t('rental.fields.pickup_location')}>
+                                        {locationDisplay(rental.pickup_location)}
+                                    </DetailRow>
+                                )}
+                                {locationDisplay(rental.return_location) && (
+                                    <DetailRow label={t('rental.fields.return_location')}>
+                                        {locationDisplay(rental.return_location)}
+                                    </DetailRow>
+                                )}
                                 {Number(rental.one_way_fee_amount ?? 0) > 0 && (
-                                    <>
-                                        <dt className="text-gray-500">{t('rental.fields.one_way_fee')}</dt>
-                                        <dd className="text-gray-900 dark:text-white">Rp {Number(rental.one_way_fee_amount).toLocaleString('id-ID')}</dd>
-                                    </>
+                                    <DetailRow label={t('rental.fields.one_way_fee')}>
+                                        {formatMoney(rental.one_way_fee_amount)}
+                                    </DetailRow>
                                 )}
                                 {rental.insurance_package && (
-                                    <>
-                                        <dt className="text-gray-500">{t('rental.fields.insurance_package')}</dt>
-                                        <dd className="text-gray-900 dark:text-white">{rental.insurance_package.name}</dd>
-                                    </>
+                                    <DetailRow label={t('rental.fields.insurance_package')}>
+                                        {rental.insurance_package.name}
+                                    </DetailRow>
                                 )}
-                                {rental.fuel_policy_notes && <><dt className="text-gray-500">{t('rental.fields.fuel_policy_notes')}</dt><dd className="text-gray-900 dark:text-white">{rental.fuel_policy_notes}</dd></>}
+                                {rental.fuel_policy_notes && (
+                                    <DetailRow label={t('rental.fields.fuel_policy_notes')}>
+                                        {rental.fuel_policy_notes}
+                                    </DetailRow>
+                                )}
                             </dl>
-                        </div>
+                        </SectionCard>
 
-                        {/* Pricing */}
-                        <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.pricing_snapshot')}</h2>
-                            </div>
-                            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-sm">
-                                <dt className="text-gray-500">{t('rental.fields.rate')}</dt>
-                                <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.rate_per_period)} / {periodLabel}</dd>
-                                {rental.km_limit_per_period && <><dt className="text-gray-500">{t('rental.fields.km_limit')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{t('rental.rates.km', { km: rental.km_limit_per_period })} / {periodLabel}</dd></>}
-                                {rental.excess_km_rate && <><dt className="text-gray-500">{t('rental.fields.excess_km_rate')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.excess_km_rate)} / km</dd></>}
-                                {rental.late_fee_per_day && <><dt className="text-gray-500">{t('rental.fields.late_fee_per_day')}</dt><dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.late_fee_per_day)} / day</dd></>}
-                                <dt className="text-gray-500">{t('rental.fields.deposit')}</dt>
-                                <dd className="tabular-nums text-gray-900 dark:text-white">
-                                    {formatMoney(rental.deposit_amount)}{' '}
-                                    <span className={`ml-1 text-xs ${rental.deposit_status === 'settled' ? 'text-green-600' : 'text-amber-600'}`}>
+                        <SectionCard title={t('rental.sections.pricing_snapshot')}>
+                            <dl>
+                                <DetailRow label={t('rental.fields.rate')}>
+                                    <span className="tabular-nums">
+                                        {formatMoney(rental.rate_per_period)} / {periodLabel}
+                                    </span>
+                                </DetailRow>
+                                {rental.km_limit_per_period && (
+                                    <DetailRow label={t('rental.fields.km_limit')}>
+                                        {t('rental.rates.km', { km: rental.km_limit_per_period })} / {periodLabel}
+                                    </DetailRow>
+                                )}
+                                {rental.excess_km_rate && (
+                                    <DetailRow label={t('rental.fields.excess_km_rate')}>
+                                        <span className="tabular-nums">{formatMoney(rental.excess_km_rate)} / km</span>
+                                    </DetailRow>
+                                )}
+                                {rental.late_fee_per_day && (
+                                    <DetailRow label={t('rental.fields.late_fee_per_day')}>
+                                        <span className="tabular-nums">{formatMoney(rental.late_fee_per_day)} / day</span>
+                                    </DetailRow>
+                                )}
+                                <DetailRow label={t('rental.fields.deposit')}>
+                                    <span className="tabular-nums">{formatMoney(rental.deposit_amount)}</span>
+                                    <span className="ml-2 text-xs font-normal text-gray-500">
                                         {t(`rental.deposit.${rental.deposit_status}`, undefined, rental.deposit_status)}
                                     </span>
-                                    {depositHeld && rental.deposit_received_at && (
-                                        <span className="ml-1 text-xs text-green-600">{t('rental.deposit.received')}</span>
-                                    )}
-                                    {depositHeld && !rental.deposit_received_at && (
-                                        <span className="ml-1 text-xs text-red-600">{t('rental.deposit.not_received')}</span>
-                                    )}
-                                </dd>
+                                </DetailRow>
                                 {rental.deposit_status === 'settled' && Number(rental.deposit_amount) > 0 && (
                                     <>
-                                        <dt className="text-gray-500">{t('rental.deposit.applied')}</dt>
-                                        <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.deposit_applied_amount)}</dd>
-                                        <dt className="text-gray-500">{t('rental.deposit.refunded')}</dt>
-                                        <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(rental.deposit_refunded_amount)}</dd>
+                                        <DetailRow label={t('rental.deposit.applied')}>
+                                            <span className="tabular-nums">{formatMoney(rental.deposit_applied_amount)}</span>
+                                        </DetailRow>
+                                        <DetailRow label={t('rental.deposit.refunded')}>
+                                            <span className="tabular-nums">{formatMoney(rental.deposit_refunded_amount)}</span>
+                                        </DetailRow>
                                     </>
                                 )}
-                                <dt className="text-gray-500 font-medium">{t('rental.fields.base_amount')}</dt>
-                                <dd className="tabular-nums font-medium text-gray-900 dark:text-white">{formatMoney(rental.base_amount)}</dd>
+                                <DetailRow label={t('rental.fields.base_amount')}>
+                                    <span className="tabular-nums">{formatMoney(rental.base_amount)}</span>
+                                </DetailRow>
                                 {Number(rental.excess_amount) > 0 && (
-                                    <>
-                                        <dt className="text-gray-500">{t('rental.fields.excess_km', { km: rental.excess_km ?? 0 })}</dt>
-                                        <dd className="tabular-nums text-red-600">{formatMoney(rental.excess_amount)}</dd>
-                                    </>
+                                    <DetailRow label={t('rental.fields.excess_km', { km: rental.excess_km ?? 0 })}>
+                                        <span className="tabular-nums text-rose-600">{formatMoney(rental.excess_amount)}</span>
+                                    </DetailRow>
                                 )}
                                 {Number(rental.late_fee_amount) > 0 && (
-                                    <>
-                                        <dt className="text-gray-500">{t('rental.fields.late_fee', { days: rental.overdue_days ?? 0 })}</dt>
-                                        <dd className="tabular-nums text-red-600">{formatMoney(rental.late_fee_amount)}</dd>
-                                    </>
+                                    <DetailRow label={t('rental.fields.late_fee', { days: rental.overdue_days ?? 0 })}>
+                                        <span className="tabular-nums text-rose-600">{formatMoney(rental.late_fee_amount)}</span>
+                                    </DetailRow>
                                 )}
-                                <dt className="border-t border-gray-100 pt-2 text-gray-700 font-semibold dark:border-gray-700">{t('rental.fields.total_amount')}</dt>
-                                <dd className="border-t border-gray-100 pt-2 tabular-nums text-gray-900 font-semibold dark:border-gray-700 dark:text-white">{formatMoney(rental.total_amount)}</dd>
+                                <DetailRow label={t('rental.fields.total_amount')}>
+                                    <span className="text-base font-semibold tabular-nums">{formatMoney(rental.total_amount)}</span>
+                                </DetailRow>
                             </dl>
-                        </div>
+                        </SectionCard>
 
-                        {/* Billing */}
                         {invoicingEnabled && (
-                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.billing')}</h2>
-                                    <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${PAYMENT_COLORS[payment.status] ?? PAYMENT_COLORS.none}`}>
-                                        {t(`rental.payment.${payment.status}`, undefined, payment.status)}
-                                    </span>
-                                </div>
-                                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-sm">
-                                    <dt className="text-gray-500">{t('rental.fields.invoiced')}</dt>
-                                    <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(payment.total_invoiced)}</dd>
-                                    <dt className="text-gray-500">{t('rental.fields.paid')}</dt>
-                                    <dd className="tabular-nums text-gray-900 dark:text-white">{formatMoney(payment.total_paid)}</dd>
-                                    <dt className="text-gray-500 font-medium">{t('rental.fields.balance_due')}</dt>
-                                    <dd className="tabular-nums font-medium text-gray-900 dark:text-white">{formatMoney(payment.balance_due)}</dd>
+                            <SectionCard
+                                title={t('rental.sections.billing')}
+                                action={
+                                    <PaymentBadge
+                                        status={payment.status}
+                                        label={t(`rental.payment.${payment.status}`, undefined, payment.status)}
+                                    />
+                                }
+                            >
+                                <dl>
+                                    <DetailRow label={t('rental.fields.invoiced')}>
+                                        <span className="tabular-nums">{formatMoney(payment.total_invoiced)}</span>
+                                    </DetailRow>
+                                    <DetailRow label={t('rental.fields.paid')}>
+                                        <span className="tabular-nums">{formatMoney(payment.total_paid)}</span>
+                                    </DetailRow>
+                                    <DetailRow label={t('rental.fields.balance_due')}>
+                                        <span className="tabular-nums">{formatMoney(payment.balance_due)}</span>
+                                    </DetailRow>
                                 </dl>
-                                {payment.invoices.length > 0 && (
-                                    <div className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-gray-700 dark:border-gray-700">
+                                {payment.invoices.length > 0 ? (
+                                    <div className="mt-2 divide-y divide-gray-100 border-t border-gray-100 dark:divide-gray-700 dark:border-gray-700">
                                         {payment.invoices.map((inv) => (
-                                            <div key={inv.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                                            <div key={inv.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                                                 <div>
                                                     <Link
                                                         href={prefixedRoute('invoicing.invoices.show', inv.id)}
@@ -665,51 +848,49 @@ export default function Show({
                                             </div>
                                         ))}
                                     </div>
+                                ) : (
+                                    <div className="mt-3">
+                                        <EmptyBlock>{t('rental.payment.none')}</EmptyBlock>
+                                    </div>
                                 )}
-                            </div>
+                            </SectionCard>
                         )}
 
-                        {/* Odometer / handover */}
-                        {(rental.start_odometer || rental.end_odometer || rental.checkout_checklist || rental.return_checklist) && (
-                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.handover')}</h2>
-                                </div>
-                                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-sm">
+                        {(rental.start_odometer != null || rental.end_odometer != null || rental.checkout_checklist || rental.return_checklist) && (
+                            <SectionCard title={t('rental.sections.handover')}>
+                                <dl>
                                     {rental.start_odometer != null && (
-                                        <>
-                                            <dt className="text-gray-500">{t('rental.fields.checkout')}</dt>
-                                            <dd className="tabular-nums text-gray-900 dark:text-white">
+                                        <DetailRow label={t('rental.fields.checkout')}>
+                                            <span className="tabular-nums">
                                                 {t('rental.rates.km', { km: rental.start_odometer.toLocaleString() })}
-                                                {rental.start_fuel_level && (
-                                                    <span className="ml-2 text-xs text-gray-500">
-                                                        BBM: {t(`rental.fuel.${rental.start_fuel_level}`, undefined, rental.start_fuel_level)}
-                                                    </span>
-                                                )}
-                                            </dd>
-                                        </>
+                                            </span>
+                                            {rental.start_fuel_level && (
+                                                <span className="ml-2 text-xs font-normal text-gray-500">
+                                                    BBM: {t(`rental.fuel.${rental.start_fuel_level}`, undefined, rental.start_fuel_level)}
+                                                </span>
+                                            )}
+                                        </DetailRow>
                                     )}
                                     {rental.end_odometer != null && (
-                                        <>
-                                            <dt className="text-gray-500">{t('rental.fields.return')}</dt>
-                                            <dd className="tabular-nums text-gray-900 dark:text-white">
+                                        <DetailRow label={t('rental.fields.return')}>
+                                            <span className="tabular-nums">
                                                 {t('rental.rates.km', { km: rental.end_odometer.toLocaleString() })}
-                                                {rental.end_fuel_level && (
-                                                    <span className="ml-2 text-xs text-gray-500">
-                                                        BBM: {t(`rental.fuel.${rental.end_fuel_level}`, undefined, rental.end_fuel_level)}
-                                                    </span>
-                                                )}
-                                            </dd>
-                                        </>
+                                            </span>
+                                            {rental.end_fuel_level && (
+                                                <span className="ml-2 text-xs font-normal text-gray-500">
+                                                    BBM: {t(`rental.fuel.${rental.end_fuel_level}`, undefined, rental.end_fuel_level)}
+                                                </span>
+                                            )}
+                                        </DetailRow>
                                     )}
                                 </dl>
                                 {rental.checkout_checklist && (
-                                    <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                                    <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{t('rental.checklist.checkout')}</p>
                                         <ul className="grid gap-1 sm:grid-cols-2">
                                             {checklistItems.map((key) => (
                                                 <li key={`out-${key}`} className="text-xs text-gray-700 dark:text-gray-300">
-                                                    <span className={rental.checkout_checklist?.[key] ? 'text-green-600' : 'text-red-600'}>
+                                                    <span className={rental.checkout_checklist?.[key] ? 'text-emerald-600' : 'text-rose-600'}>
                                                         {rental.checkout_checklist?.[key] ? '✓' : '✗'}
                                                     </span>{' '}
                                                     {t(`rental.checklist.items.${key}`)}
@@ -721,23 +902,23 @@ export default function Show({
                                             <div className="mt-3 flex flex-wrap gap-2">
                                                 {handoverEvidence.checkout_photos.map((url) => (
                                                     <a key={url} href={url} target="_blank" rel="noreferrer">
-                                                        <img src={url} alt="" className="h-16 w-16 rounded object-cover" />
+                                                        <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
                                                     </a>
                                                 ))}
                                             </div>
                                         )}
                                         {handoverEvidence.checkout_signature_url && (
-                                            <img src={handoverEvidence.checkout_signature_url} alt="" className="mt-3 h-16 rounded border border-gray-200 bg-white dark:border-gray-600" />
+                                            <img src={handoverEvidence.checkout_signature_url} alt="" className="mt-3 h-16 rounded-lg border border-gray-200 bg-white dark:border-gray-600" />
                                         )}
                                     </div>
                                 )}
                                 {rental.return_checklist && (
-                                    <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                                    <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{t('rental.checklist.return')}</p>
                                         <ul className="grid gap-1 sm:grid-cols-2">
                                             {checklistItems.map((key) => (
                                                 <li key={`in-${key}`} className="text-xs text-gray-700 dark:text-gray-300">
-                                                    <span className={rental.return_checklist?.[key] ? 'text-green-600' : 'text-red-600'}>
+                                                    <span className={rental.return_checklist?.[key] ? 'text-emerald-600' : 'text-rose-600'}>
                                                         {rental.return_checklist?.[key] ? '✓' : '✗'}
                                                     </span>{' '}
                                                     {t(`rental.checklist.items.${key}`)}
@@ -749,28 +930,24 @@ export default function Show({
                                             <div className="mt-3 flex flex-wrap gap-2">
                                                 {handoverEvidence.return_photos.map((url) => (
                                                     <a key={url} href={url} target="_blank" rel="noreferrer">
-                                                        <img src={url} alt="" className="h-16 w-16 rounded object-cover" />
+                                                        <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
                                                     </a>
                                                 ))}
                                             </div>
                                         )}
                                         {handoverEvidence.return_signature_url && (
-                                            <img src={handoverEvidence.return_signature_url} alt="" className="mt-3 h-16 rounded border border-gray-200 bg-white dark:border-gray-600" />
+                                            <img src={handoverEvidence.return_signature_url} alt="" className="mt-3 h-16 rounded-lg border border-gray-200 bg-white dark:border-gray-600" />
                                         )}
                                     </div>
                                 )}
-                            </div>
+                            </SectionCard>
                         )}
 
-                        {/* Extensions */}
                         {rental.extensions.length > 0 && (
-                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.extensions')}</h2>
-                                </div>
-                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.extensions')}>
+                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {rental.extensions.map((ext) => (
-                                        <div key={ext.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                                        <div key={ext.id} className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0">
                                             <div>
                                                 <span className="text-gray-900 dark:text-white">{ext.original_end_date} → {ext.new_end_date}</span>
                                                 <span className="ml-2 text-gray-400">(+{ext.extended_periods} {periodLabel})</span>
@@ -779,18 +956,14 @@ export default function Show({
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </SectionCard>
                         )}
 
-                        {/* Vehicle swaps */}
                         {vehicleSwaps.length > 0 && (
-                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.vehicle_swaps')}</h2>
-                                </div>
-                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.vehicle_swaps')}>
+                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {vehicleSwaps.map((swap) => (
-                                        <div key={swap.id} className="px-4 py-3 text-sm">
+                                        <div key={swap.id} className="py-3 text-sm first:pt-0 last:pb-0">
                                             <p className="text-gray-900 dark:text-white">
                                                 {swap.from_vehicle} → {swap.to_vehicle}
                                             </p>
@@ -803,18 +976,14 @@ export default function Show({
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </SectionCard>
                         )}
 
-                        {/* Add-ons */}
                         {addonCharges.length > 0 && (
-                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.addons')}</h2>
-                                </div>
-                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.addons')}>
+                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {addonCharges.map((charge) => (
-                                        <div key={charge.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                                        <div key={charge.id} className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0">
                                             <div>
                                                 <p className="text-gray-900 dark:text-white">{charge.description}</p>
                                                 <p className="text-xs text-gray-400">
@@ -830,7 +999,7 @@ export default function Show({
                                                     <button
                                                         type="button"
                                                         onClick={() => router.delete(prefixedRoute('rental.addons.destroy', [rental.id, charge.id]), { preserveScroll: true })}
-                                                        className="text-xs text-gray-400 hover:text-red-600"
+                                                        className="text-xs text-gray-400 hover:text-rose-600"
                                                     >
                                                         {t('rental.actions.remove')}
                                                     </button>
@@ -839,22 +1008,18 @@ export default function Show({
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </SectionCard>
                         )}
 
-                        {/* Damages */}
                         {rental.damages.length > 0 && (
-                            <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-                                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.damages')}</h2>
-                                </div>
-                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            <SectionCard title={t('rental.sections.damages')}>
+                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {rental.damages.map((dmg) => (
-                                        <div key={dmg.id} className="flex items-start justify-between gap-3 px-4 py-3 text-sm">
+                                        <div key={dmg.id} className="flex items-start justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0">
                                             <div className="flex flex-1 gap-3">
                                                 {dmg.photo_path && (
                                                     <a href={dmg.photo_path} target="_blank" rel="noreferrer" className="shrink-0">
-                                                        <img src={dmg.photo_path} alt="" className="h-14 w-14 rounded object-cover ring-1 ring-gray-200" />
+                                                        <img src={dmg.photo_path} alt="" className="h-14 w-14 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-600" />
                                                     </a>
                                                 )}
                                                 <div className="flex-1">
@@ -863,10 +1028,11 @@ export default function Show({
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="tabular-nums text-red-600">{formatMoney(dmg.amount)}</span>
+                                                <span className="tabular-nums text-rose-600">{formatMoney(dmg.amount)}</span>
                                                 <button
+                                                    type="button"
                                                     onClick={() => router.delete(prefixedRoute('rental.damages.destroy', [rental.id, dmg.id]), { preserveScroll: true })}
-                                                    className="text-xs text-gray-400 hover:text-red-600"
+                                                    className="text-xs text-gray-400 hover:text-rose-600"
                                                 >
                                                     {t('rental.actions.remove')}
                                                 </button>
@@ -874,40 +1040,71 @@ export default function Show({
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </SectionCard>
                         )}
                     </div>
 
-                    {/* Right column — timeline */}
-                    <div className="space-y-4">
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.timeline')}</h2>
-                            <ol className="relative border-l border-gray-200 dark:border-gray-700">
+                    <div className="space-y-6 lg:col-span-2">
+                        <SectionCard title={t('rental.sections.timeline')}>
+                            <ol className="relative space-y-0 border-l border-gray-200 dark:border-gray-600">
                                 {timelineSteps.map((step, i) => (
-                                    <li key={i} className="mb-4 ml-4">
-                                        <div className={`absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border ${step.done ? 'border-green-500 bg-green-500' : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'}`} />
-                                        <p className={`text-sm font-medium ${step.done ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>{step.label}</p>
-                                        {step.date && <p className="text-xs text-gray-400">{step.date}</p>}
-                                        {step.by && <p className="text-xs text-gray-400">{t('rental.timeline.by', { name: step.by })}</p>}
+                                    <li key={i} className="relative mb-5 ml-4 last:mb-0">
+                                        <div
+                                            className={`absolute -left-[1.4rem] mt-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-gray-800 ${
+                                                step.done ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                                            }`}
+                                        />
+                                        <p className={`text-sm font-medium ${step.done ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+                                            {step.label}
+                                        </p>
+                                        {step.date && <p className="mt-0.5 text-xs text-gray-400">{step.date}</p>}
+                                        {step.by && (
+                                            <p className="text-xs text-gray-400">{t('rental.timeline.by', { name: step.by })}</p>
+                                        )}
                                     </li>
                                 ))}
-                                {rental.status === 'cancelled' && (
-                                    <li className="mb-4 ml-4">
-                                        <div className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-red-500 bg-red-500" />
-                                        <p className="text-sm font-medium text-red-600">{t('rental.timeline.cancelled')}</p>
-                                        {rental.cancelled_reason && <p className="text-xs text-gray-400">{rental.cancelled_reason}</p>}
+                                {(rental.status === 'cancelled' || rental.status === 'cancelled_paid') && (
+                                    <li className="relative mb-0 ml-4">
+                                        <div className="absolute -left-[1.4rem] mt-1.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-4 ring-white dark:ring-gray-800" />
+                                        <p className="text-sm font-medium text-rose-600 dark:text-rose-400">{t('rental.timeline.cancelled')}</p>
+                                        {rental.cancelled_reason && (
+                                            <p className="mt-0.5 text-xs text-gray-400">{rental.cancelled_reason}</p>
+                                        )}
                                     </li>
                                 )}
                             </ol>
-                        </div>
+                        </SectionCard>
+
                         {rental.notes && (
-                            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                                <h2 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">{t('rental.sections.notes')}</h2>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{rental.notes}</p>
-                            </div>
+                            <SectionCard title={t('rental.sections.notes')}>
+                                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                                    {rental.notes}
+                                </p>
+                            </SectionCard>
                         )}
+
+                        <SectionCard title={t('rental.sections.quick_facts')} subtitle={t('rental.sections.quick_facts_hint')}>
+                            <dl>
+                                <DetailRow label={t('rental.fields.code')}>
+                                    <span className="font-mono">{rental.code}</span>
+                                </DetailRow>
+                                <DetailRow label={t('rental.fields.status')}>
+                                    <StatusBadge
+                                        status={rental.status}
+                                        label={t(`rental.status.${rental.status}`, undefined, rental.status)}
+                                    />
+                                </DetailRow>
+                                {rental.confirmed_by && (
+                                    <DetailRow label={t('rental.timeline.confirmed')}>{rental.confirmed_by.name}</DetailRow>
+                                )}
+                                {rental.partner.phone && (
+                                    <DetailRow label={t('rental.fields.phone')}>{rental.partner.phone}</DetailRow>
+                                )}
+                            </dl>
+                        </SectionCard>
                     </div>
                 </div>
+            </div>
 
             {/* Modals */}
             <Modal show={modal === 'confirm'} onClose={() => !confirming && setModal(null)} maxWidth="md">
