@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Partners\Http\Requests\BatchDeletePartnersRequest;
+use Modules\Partners\Http\Requests\BatchUpdatePartnerStatusRequest;
 use Modules\Partners\Http\Requests\ExportPartnersRequest;
 use Modules\Partners\Http\Requests\ImportPartnersRequest;
 use Modules\Partners\Http\Requests\StorePartnerRequest;
@@ -383,5 +385,64 @@ class PartnerController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.partners.index')
             ->with('success', __('partners.messages.deleted'));
+    }
+
+    /**
+     * Update status for multiple contacts at once.
+     */
+    public function batchUpdateStatus(BatchUpdatePartnerStatusRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+        $status = $request->validated('status');
+
+        $updated = Partner::query()
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+
+        return back()->with('success', __('partners.messages.batch_status_updated', [
+            'count' => $updated,
+            'status' => __('partners.status.'.$status),
+        ]));
+    }
+
+    /**
+     * Delete multiple contacts, skipping any blocked by foreign-key constraints.
+     */
+    public function batchDestroy(BatchDeletePartnersRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+
+        $deleted = 0;
+        $blocked = 0;
+
+        $partners = Partner::query()->whereIn('id', $ids)->get();
+
+        foreach ($partners as $partner) {
+            try {
+                DB::transaction(fn () => $partner->delete());
+                $deleted++;
+            } catch (QueryException) {
+                $blocked++;
+            }
+        }
+
+        if ($deleted === 0 && $blocked > 0) {
+            return back()->with('error', __('partners.messages.batch_delete_blocked', [
+                'blocked' => $blocked,
+            ]));
+        }
+
+        if ($blocked > 0) {
+            return back()->with('success', __('partners.messages.batch_deleted_partial', [
+                'deleted' => $deleted,
+                'blocked' => $blocked,
+            ]));
+        }
+
+        return back()->with('success', __('partners.messages.batch_deleted', [
+            'count' => $deleted,
+        ]));
     }
 }

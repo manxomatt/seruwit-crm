@@ -83,6 +83,8 @@ class PartnersModule implements ModuleContract
         Route::post('/partners/import', [PartnerController::class, 'import'])->middleware('permission:partners,create')->name('partners.import');
         Route::get('/partners/create', [PartnerController::class, 'create'])->middleware('permission:partners,create')->name('partners.create');
         Route::post('/partners', [PartnerController::class, 'store'])->middleware('permission:partners,create')->name('partners.store');
+        Route::patch('/partners/batch-status', [PartnerController::class, 'batchUpdateStatus'])->middleware('permission:partners,update')->name('partners.batch-status');
+        Route::post('/partners/batch-destroy', [PartnerController::class, 'batchDestroy'])->middleware('permission:partners,delete')->name('partners.batch-destroy');
 
         Route::get('/partners/locations', [LocationController::class, 'index'])->middleware('permission:partners,view')->name('partners.locations.index');
         Route::post('/partners/locations', [LocationController::class, 'store'])->middleware('permission:partners,create')->name('partners.locations.store');
