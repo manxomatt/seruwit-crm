@@ -73,6 +73,12 @@ interface ChildPartner {
     account_type: string;
 }
 
+interface PartnerTypeRef {
+    id: number;
+    code: string;
+    label?: string;
+}
+
 interface Partner {
     id: number;
     code: string;
@@ -99,6 +105,7 @@ interface Partner {
     parent: ParentPartner | null;
     children: ChildPartner[];
     tags: Tag[];
+    types: PartnerTypeRef[];
     addresses: Address[];
     bank_accounts: BankAccount[];
 }
@@ -284,13 +291,35 @@ export default function Show({ partner, can }: Props): JSX.Element {
         ? bankAccountToDelete.account_number.slice(-4)
         : '';
 
-    const roleBadges: Array<{ key: string; label: string; className: string }> = [];
-    if (partner.customer_rank > 0) {
-        roleBadges.push({ key: 'customer', label: t('partners.role.customer'), className: 'bg-blue-100 text-blue-800' });
-    }
-    if (partner.supplier_rank > 0) {
-        roleBadges.push({ key: 'supplier', label: t('partners.role.supplier'), className: 'bg-purple-100 text-purple-800' });
-    }
+    const typeBadges =
+        partner.types?.length > 0
+            ? partner.types.map((type) => ({
+                  key: type.code,
+                  label: type.label || type.code,
+                  className: 'bg-indigo-100 text-indigo-800',
+              }))
+            : [];
+    const roleBadges: Array<{ key: string; label: string; className: string }> =
+        typeBadges.length > 0
+            ? typeBadges
+            : (() => {
+                  const badges: Array<{ key: string; label: string; className: string }> = [];
+                  if (partner.customer_rank > 0) {
+                      badges.push({
+                          key: 'customer',
+                          label: t('partners.role.customer'),
+                          className: 'bg-blue-100 text-blue-800',
+                      });
+                  }
+                  if (partner.supplier_rank > 0) {
+                      badges.push({
+                          key: 'supplier',
+                          label: t('partners.role.supplier'),
+                          className: 'bg-purple-100 text-purple-800',
+                      });
+                  }
+                  return badges;
+              })();
 
     return (
         <DynamicLayout

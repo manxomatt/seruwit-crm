@@ -15,6 +15,8 @@ class VerticalPacks
 
     public const PARTNER_INDUSTRIES = 'partner_industries';
 
+    public const PARTNER_TYPES = 'partner_types';
+
     /**
      * @return array<string, array{label: string, description: string, modules: list<string>, seeders: list<class-string>}>
      */
@@ -35,6 +37,7 @@ class VerticalPacks
                 ],
                 'seeders' => [
                     \Database\Seeders\TenantRentalDemoSeeder::class,
+                    \Database\Seeders\TenantPartnerTypesSeeder::class,
                 ],
             ],
             self::TRAVEL_SHUTTLE => [
@@ -75,6 +78,14 @@ class VerticalPacks
                 'modules' => [],
                 'seeders' => [
                     \Database\Seeders\TenantPartnerIndustriesSeeder::class,
+                ],
+            ],
+            self::PARTNER_TYPES => [
+                'label' => 'Contact Types',
+                'description' => 'Seeds rental, logistics, and CRM contact-type masters (ID/EN) such as fleet owner, shipper, and travel agent.',
+                'modules' => [],
+                'seeders' => [
+                    \Database\Seeders\TenantPartnerTypesSeeder::class,
                 ],
             ],
         ];

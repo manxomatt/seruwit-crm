@@ -18,7 +18,6 @@ class StorePartnerRequest extends FormRequest
     {
         return [
             'account_type' => ['required', 'string', 'in:company,individual'],
-            'sub_type' => ['nullable', 'string', 'in:customer,supplier,other'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
@@ -31,8 +30,8 @@ class StorePartnerRequest extends FormRequest
             'parent_id' => ['nullable', 'exists:partners,id'],
             'industry_id' => ['nullable', 'exists:partner_industries,id'],
             'title_id' => ['nullable', 'exists:partner_titles,id'],
-            'is_customer' => ['boolean'],
-            'is_supplier' => ['boolean'],
+            'type_ids' => ['nullable', 'array'],
+            'type_ids.*' => ['exists:partner_types,id'],
             'credit_limit' => ['nullable', 'numeric', 'min:0'],
             'price_list_id' => array_values(array_filter([
                 'nullable',

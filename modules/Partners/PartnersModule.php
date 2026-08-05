@@ -11,6 +11,7 @@ use Modules\Partners\Http\Controllers\PartnerBankAccountController;
 use Modules\Partners\Http\Controllers\PartnerController;
 use Modules\Partners\Http\Controllers\PartnerDashboardController;
 use Modules\Partners\Http\Controllers\PartnerIndustryController;
+use Modules\Partners\Http\Controllers\PartnerTypeController;
 
 class PartnersModule implements ModuleContract
 {
@@ -21,12 +22,12 @@ class PartnersModule implements ModuleContract
 
     public function label(): string
     {
-        return 'Partners';
+        return 'Contacts';
     }
 
     public function description(): string
     {
-        return 'Unified contact management for customers, vendors, and suppliers.';
+        return 'Unified contact management for customers, vendors, suppliers, and custom contact types.';
     }
 
     public function tier(): ModuleTier
@@ -47,7 +48,7 @@ class PartnersModule implements ModuleContract
     public function menu(): ?array
     {
         return [
-            'name' => 'Partners',
+            'name' => 'Contacts',
             'slug' => 'partners',
             'icon' => 'customers',
             'route_name' => 'partners.dashboard',
@@ -92,6 +93,11 @@ class PartnersModule implements ModuleContract
         Route::post('/partners/industries', [PartnerIndustryController::class, 'store'])->middleware('permission:partners,create')->name('partners.industries.store');
         Route::patch('/partners/industries/{industry}', [PartnerIndustryController::class, 'update'])->middleware('permission:partners,update')->name('partners.industries.update');
         Route::delete('/partners/industries/{industry}', [PartnerIndustryController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.industries.destroy');
+
+        Route::get('/partners/types', [PartnerTypeController::class, 'index'])->middleware('permission:partners,view')->name('partners.types.index');
+        Route::post('/partners/types', [PartnerTypeController::class, 'store'])->middleware('permission:partners,create')->name('partners.types.store');
+        Route::patch('/partners/types/{type}', [PartnerTypeController::class, 'update'])->middleware('permission:partners,update')->name('partners.types.update');
+        Route::delete('/partners/types/{type}', [PartnerTypeController::class, 'destroy'])->middleware('permission:partners,delete')->name('partners.types.destroy');
 
         Route::get('/partners/{partner}', [PartnerController::class, 'show'])->middleware('permission:partners,view')->name('partners.show');
         Route::get('/partners/{partner}/edit', [PartnerController::class, 'edit'])->middleware('permission:partners,update')->name('partners.edit');

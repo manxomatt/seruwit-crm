@@ -29,6 +29,18 @@ interface Industry {
     label?: string;
 }
 
+interface PartnerTypeOption {
+    id: number;
+    code: string;
+    name: string;
+}
+
+interface PartnerTypeRef {
+    id: number;
+    code: string;
+    label?: string;
+}
+
 interface Partner {
     id: number;
     code: string;
@@ -42,6 +54,7 @@ interface Partner {
     status: string;
     industry: Industry | null;
     tags: Tag[];
+    types: PartnerTypeRef[];
 }
 
 interface PaginatedPartners {
@@ -58,11 +71,13 @@ interface Filters {
     status: string | null;
     account_type: string | null;
     role: string | null;
+    type_id: string | null;
 }
 
 interface Props {
     partners: PaginatedPartners;
     filters: Filters;
+    partnerTypes: PartnerTypeOption[];
     exportColumns: ExportColumnOption[];
     can: { create: boolean; update: boolean; delete: boolean; export: boolean; import: boolean };
 }
@@ -118,7 +133,7 @@ function readStoredColumns(): Partial<Record<PartnerColumn, boolean>> | null {
     }
 }
 
-export default function Index({ partners, filters, exportColumns, can }: Props): JSX.Element {
+export default function Index({ partners, filters, partnerTypes, exportColumns, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const page = usePage();
@@ -150,6 +165,14 @@ export default function Index({ partners, filters, exportColumns, can }: Props):
     const visibleDataColumnCount = columnDefs.filter((column) => visibleColumns[column.key]).length;
 
     const getRoleBadges = (partner: Partner) => {
+        if (partner.types?.length > 0) {
+            return partner.types.map((type) => ({
+                key: type.code,
+                label: type.label || type.code,
+                className: 'bg-indigo-100 text-indigo-800',
+            }));
+        }
+
         const badges: Array<{ key: string; label: string; className: string }> = [];
         if (partner.customer_rank > 0) {
             badges.push({ key: 'customer', label: t('partners.role.customer'), className: 'bg-blue-100 text-blue-800' });
@@ -167,6 +190,7 @@ export default function Index({ partners, filters, exportColumns, can }: Props):
             status: filters.status || undefined,
             account_type: filters.account_type || undefined,
             role: filters.role || undefined,
+            type_id: filters.type_id || undefined,
         }, { preserveState: true, replace: true });
     };
 
@@ -176,6 +200,7 @@ export default function Index({ partners, filters, exportColumns, can }: Props):
             status: key === 'status' ? value || undefined : filters.status || undefined,
             account_type: key === 'account_type' ? value || undefined : filters.account_type || undefined,
             role: key === 'role' ? value || undefined : filters.role || undefined,
+            type_id: key === 'type_id' ? value || undefined : filters.type_id || undefined,
         }, { preserveState: true, replace: true });
     };
 
@@ -257,6 +282,19 @@ export default function Index({ partners, filters, exportColumns, can }: Props):
                                 { value: '', label: t('partners.role.all') },
                                 { value: 'customer', label: t('partners.role.customer') },
                                 { value: 'supplier', label: t('partners.role.supplier') },
+                            ]}
+                        />
+                        <Select
+                            className="w-44"
+                            value={filters.type_id || ''}
+                            onChange={(value) => handleFilter('type_id', value)}
+                            placeholder={t('partners.types.all')}
+                            options={[
+                                { value: '', label: t('partners.types.all') },
+                                ...partnerTypes.map((type) => ({
+                                    value: String(type.id),
+                                    label: type.name,
+                                })),
                             ]}
                         />
                         <Select

@@ -16,6 +16,8 @@ class DemoDatasets
 {
     public const PARTNER_INDUSTRIES = 'partner_industries';
 
+    public const PARTNER_TYPES = 'partner_types';
+
     public const PARTNERS = 'partners';
 
     public const VEHICLES = 'vehicles';
@@ -41,11 +43,16 @@ class DemoDatasets
                 'description' => 'Common ERP/CRM industry masters (ID/EN) for classifying partners.',
                 'seeder' => \Database\Seeders\TenantPartnerIndustriesSeeder::class,
             ],
+            self::PARTNER_TYPES => [
+                'label' => 'Contact types',
+                'description' => 'Rental, logistics, and CRM contact-type masters (ID/EN) such as fleet owner, shipper, and travel agent.',
+                'seeder' => \Database\Seeders\TenantPartnerTypesSeeder::class,
+            ],
             self::PARTNERS => [
-                'label' => 'Partners demo',
-                'description' => 'Sample customers, suppliers, and dual-role partners with tags and addresses. Also installs Partner industries.',
+                'label' => 'Contacts demo',
+                'description' => 'Sample customers, suppliers, and dual-role contacts with tags and addresses. Also installs contact types and industries.',
                 'seeder' => \Database\Seeders\TenantPartnerDemoSeeder::class,
-                'includes' => [self::PARTNER_INDUSTRIES],
+                'includes' => [self::PARTNER_TYPES, self::PARTNER_INDUSTRIES],
             ],
             self::VEHICLES => [
                 'label' => 'Vehicles demo',

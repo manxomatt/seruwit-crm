@@ -7,6 +7,7 @@ use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerAddress;
 use Modules\Partners\Models\PartnerBankAccount;
 use Modules\Partners\Models\PartnerTag;
+use Modules\Partners\Models\PartnerType;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -21,6 +22,11 @@ class PartnerTest extends TestCase
 
         $this->withoutVite();
         $this->setUpRoles();
+    }
+
+    private function typeId(string $code): int
+    {
+        return PartnerType::findByCode($code)->id;
     }
 
     public function test_guests_cannot_access_partners(): void
@@ -60,12 +66,10 @@ class PartnerTest extends TestCase
 
         $this->actingAs($user)->post(route('module.partners.store'), [
             'account_type' => 'company',
-            'sub_type' => 'customer',
             'name' => 'PT Test Partner',
             'email' => 'test@partner.com',
             'phone' => '081234567890',
-            'is_customer' => true,
-            'is_supplier' => false,
+            'type_ids' => [$this->typeId('customer')],
             'status' => 'active',
         ])->assertRedirect();
 
@@ -73,6 +77,7 @@ class PartnerTest extends TestCase
         $this->assertNotNull($partner);
         $this->assertEquals(1, $partner->customer_rank);
         $this->assertEquals(0, $partner->supplier_rank);
+        $this->assertTrue($partner->types()->where('code', 'customer')->exists());
         $this->assertStringStartsWith('PART-', $partner->code);
     }
 
@@ -83,8 +88,7 @@ class PartnerTest extends TestCase
         $this->actingAs($user)->post(route('module.partners.store'), [
             'account_type' => 'company',
             'name' => 'CV Supplier Utama',
-            'is_customer' => false,
-            'is_supplier' => true,
+            'type_ids' => [$this->typeId('supplier')],
             'status' => 'active',
         ])->assertRedirect();
 
@@ -100,8 +104,7 @@ class PartnerTest extends TestCase
         $this->actingAs($user)->post(route('module.partners.store'), [
             'account_type' => 'company',
             'name' => 'PT Dual Role',
-            'is_customer' => true,
-            'is_supplier' => true,
+            'type_ids' => [$this->typeId('customer'), $this->typeId('supplier')],
             'status' => 'active',
         ])->assertRedirect();
 
@@ -118,8 +121,7 @@ class PartnerTest extends TestCase
         $this->actingAs($user)->patch(route('module.partners.update', $partner), [
             'account_type' => 'company',
             'name' => 'New Name',
-            'is_customer' => true,
-            'is_supplier' => true,
+            'type_ids' => [$this->typeId('customer'), $this->typeId('supplier')],
             'credit_limit' => '1500000',
             'status' => 'active',
         ])->assertRedirect();
@@ -182,8 +184,7 @@ class PartnerTest extends TestCase
         $this->actingAs($user)->post(route('module.partners.store'), [
             'account_type' => 'company',
             'name' => 'PT Tagged',
-            'is_customer' => true,
-            'is_supplier' => false,
+            'type_ids' => [$this->typeId('customer')],
             'status' => 'active',
             'tag_ids' => [$tag->id],
         ])->assertRedirect();
@@ -261,8 +262,7 @@ class PartnerTest extends TestCase
             'name' => 'John Doe',
             'parent_id' => $company->id,
             'job_title' => 'Director',
-            'is_customer' => true,
-            'is_supplier' => false,
+            'type_ids' => [$this->typeId('customer')],
             'status' => 'active',
         ])->assertRedirect();
 

@@ -129,6 +129,12 @@ class Partner extends Model
         return $this->belongsToMany(PartnerTag::class, 'partner_partner_tag', 'partner_id', 'tag_id');
     }
 
+    /** @return BelongsToMany<PartnerType, $this> */
+    public function types(): BelongsToMany
+    {
+        return $this->belongsToMany(PartnerType::class, 'partner_partner_type', 'partner_id', 'partner_type_id');
+    }
+
     /** @return HasMany<PartnerAddress, $this> */
     public function addresses(): HasMany
     {

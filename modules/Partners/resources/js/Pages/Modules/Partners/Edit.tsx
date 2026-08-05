@@ -37,11 +37,25 @@ interface ParentPartner {
     code: string;
 }
 
+interface PartnerTypeOption {
+    id: number;
+    code: string;
+    name: string;
+}
+
+interface PartnerTypeRef {
+    id: number;
+    code: string;
+    label?: string;
+    name?: string | Record<string, string>;
+}
+
 interface PartnerData {
     id: number;
     code: string;
     account_type: string;
     sub_type: string | null;
+    types?: PartnerTypeRef[];
     name: string;
     email: string | null;
     phone: string | null;
@@ -86,14 +100,14 @@ interface Props {
     partners: ParentPartner[];
     priceLists?: Array<{ id: number; name: string; code: string | null }>;
     portalUsers?: PortalUser[];
+    partnerTypes: PartnerTypeOption[];
 }
 
-export default function Edit({ partner, industries, titles, tags, partners, priceLists = [], portalUsers = [] }: Props): JSX.Element {
+export default function Edit({ partner, industries, titles, tags, partners, priceLists = [], portalUsers = [], partnerTypes }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const { data, setData, patch, processing, errors } = useForm({
         account_type: partner.account_type,
-        sub_type: partner.sub_type || 'customer',
         name: partner.name,
         email: partner.email || '',
         phone: partner.phone || '',
@@ -109,8 +123,7 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
         parent_id: partner.parent_id ? String(partner.parent_id) : '',
         industry_id: partner.industry_id ? String(partner.industry_id) : '',
         title_id: partner.title_id ? String(partner.title_id) : '',
-        is_customer: partner.customer_rank > 0,
-        is_supplier: partner.supplier_rank > 0,
+        type_ids: partner.types?.map((type) => type.id) ?? [],
         credit_limit: partner.credit_limit ? parseMoneyInput(formatMoneyInput(partner.credit_limit)) : '',
         payment_term_days: partner.payment_term_days != null ? String(partner.payment_term_days) : '',
         price_list_id: partner.price_list_id ? String(partner.price_list_id) : '',
@@ -125,6 +138,15 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
     });
 
     const isIndividual = data.account_type === 'individual';
+
+    const toggleType = (typeId: number) => {
+        setData(
+            'type_ids',
+            data.type_ids.includes(typeId)
+                ? data.type_ids.filter((id) => id !== typeId)
+                : [...data.type_ids, typeId],
+        );
+    };
 
     const toggleTag = (tagId: number) => {
         setData('tag_ids', data.tag_ids.includes(tagId)
@@ -164,25 +186,25 @@ export default function Edit({ partner, industries, titles, tags, partners, pric
                                 />
                                 <InputError message={errors.account_type} className="mt-2" />
                             </div>
-                            <div className="flex items-end gap-6">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.is_customer}
-                                        onChange={(e) => setData('is_customer', e.target.checked)}
-                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                    />
-                                    <span className="text-sm text-gray-700">{t('partners.role.customer')}</span>
-                                </label>
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.is_supplier}
-                                        onChange={(e) => setData('is_supplier', e.target.checked)}
-                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                    />
-                                    <span className="text-sm text-gray-700">{t('partners.role.supplier')}</span>
-                                </label>
+                            <div className="sm:col-span-2">
+                                <InputLabel value={t('partners.fields.contact_types')} />
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {partnerTypes.map((type) => (
+                                        <button
+                                            key={type.id}
+                                            type="button"
+                                            onClick={() => toggleType(type.id)}
+                                            className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+                                                data.type_ids.includes(type.id)
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {type.name}
+                                        </button>
+                                    ))}
+                                </div>
+                                <InputError message={errors.type_ids} className="mt-2" />
                             </div>
                             <div>
                                 <InputLabel htmlFor="status" value={t('partners.fields.status')} />

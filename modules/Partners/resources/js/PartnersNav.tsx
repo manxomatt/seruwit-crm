@@ -9,6 +9,7 @@ const TABS: Array<{ labelKey: string; route: string; patterns: string[] }> = [
         route: 'partners.index',
         patterns: ['partners.index', 'partners.create', 'partners.show', 'partners.edit'],
     },
+    { labelKey: 'partners.nav.types', route: 'partners.types.index', patterns: ['partners.types.*'] },
     { labelKey: 'partners.nav.industries', route: 'partners.industries.index', patterns: ['partners.industries.*'] },
     { labelKey: 'partners.nav.locations', route: 'partners.locations.index', patterns: ['partners.locations.*'] },
 ];

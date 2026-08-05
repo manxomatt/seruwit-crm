@@ -19,8 +19,10 @@ use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerIndustry;
 use Modules\Partners\Models\PartnerTag;
 use Modules\Partners\Models\PartnerTitle;
+use Modules\Partners\Models\PartnerType;
 use Modules\Partners\Support\PartnerCsvImporter;
 use Modules\Partners\Support\PartnerExportColumns;
+use Modules\Partners\Support\PartnerTypeRankSync;
 use Modules\Partners\Support\SimpleXlsxWriter;
 use Modules\Sales\Models\PriceList;
 use Modules\Sales\Support\PriceListResolver;
@@ -38,7 +40,7 @@ class PartnerController extends Controller
         $user = Auth::user();
 
         $partners = $this->filteredPartnersQuery()
-            ->with('industry', 'tags')
+            ->with('industry', 'tags', 'types')
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -50,7 +52,9 @@ class PartnerController extends Controller
                 'status' => request('status'),
                 'account_type' => request('account_type'),
                 'role' => request('role'),
+                'type_id' => request('type_id'),
             ],
+            'partnerTypes' => $this->activePartnerTypes(),
             'exportColumns' => collect(PartnerExportColumns::definitions())
                 ->map(fn (array $definition, string $key): array => [
                     'key' => $key,
@@ -86,6 +90,7 @@ class PartnerController extends Controller
                 'title',
                 'parent',
                 'tags',
+                'types',
                 PriceListResolver::tablesReady() ? 'priceList' : null,
             ])))
             ->orderBy('code')
@@ -156,7 +161,7 @@ class PartnerController extends Controller
     }
 
     /**
-     * @param  array{search?: string|null, status?: string|null, account_type?: string|null, role?: string|null}|null  $filters
+     * @param  array{search?: string|null, status?: string|null, account_type?: string|null, role?: string|null, type_id?: string|null}|null  $filters
      * @return Builder<Partner>
      */
     private function filteredPartnersQuery(?array $filters = null): Builder
@@ -166,6 +171,7 @@ class PartnerController extends Controller
             'status' => request('status'),
             'account_type' => request('account_type'),
             'role' => request('role'),
+            'type_id' => request('type_id'),
         ];
 
         return Partner::query()
@@ -187,7 +193,36 @@ class PartnerController extends Controller
                 } elseif ($role === 'supplier') {
                     $query->where('supplier_rank', '>', 0);
                 }
+            })
+            ->when($filters['type_id'] ?? null, function ($query, $typeId) {
+                $query->whereHas('types', fn ($q) => $q->where('partner_types.id', $typeId));
             });
+    }
+
+    /**
+     * @return list<array{id: int, code: string, name: string, affects_customer_rank: bool, affects_supplier_rank: bool}>
+     */
+    private function activePartnerTypes(): array
+    {
+        $locale = app()->getLocale();
+        $fallback = (string) config('localization.default', 'id');
+
+        return PartnerType::query()
+            ->where('is_active', true)
+            ->orderByRaw(
+                "coalesce(nullif(name->>?, ''), nullif(name->>?, ''), nullif(name->>'id', ''), nullif(name->>'en', '')) asc",
+                [$locale, $fallback],
+            )
+            ->get()
+            ->map(fn (PartnerType $type): array => [
+                'id' => $type->id,
+                'code' => $type->code,
+                'name' => $type->label,
+                'affects_customer_rank' => $type->affects_customer_rank,
+                'affects_supplier_rank' => $type->affects_supplier_rank,
+            ])
+            ->values()
+            ->all();
     }
 
     public function create(): Response
@@ -209,6 +244,7 @@ class PartnerController extends Controller
             'priceLists' => PriceListResolver::tablesReady()
                 ? PriceList::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code'])
                 : [],
+            'partnerTypes' => $this->activePartnerTypes(),
         ]);
     }
 
@@ -216,20 +252,26 @@ class PartnerController extends Controller
     {
         $validated = $request->validated();
         $tagIds = $validated['tag_ids'] ?? [];
-        unset($validated['tag_ids']);
+        $typeIds = $validated['type_ids'] ?? [];
+        unset($validated['tag_ids'], $validated['type_ids'], $validated['is_customer'], $validated['is_supplier'], $validated['sub_type']);
 
         if (! PriceListResolver::tablesReady()) {
             unset($validated['price_list_id']);
         }
 
-        $validated['customer_rank'] = ($validated['is_customer'] ?? false) ? 1 : 0;
-        $validated['supplier_rank'] = ($validated['is_supplier'] ?? false) ? 1 : 0;
-        unset($validated['is_customer'], $validated['is_supplier']);
+        $types = $typeIds !== []
+            ? PartnerType::query()->whereIn('id', $typeIds)->get()
+            : collect();
+
+        $rankAttributes = PartnerTypeRankSync::rankAttributes($types);
 
         $partner = Partner::create([
             ...$validated,
+            ...$rankAttributes,
             'code' => Partner::nextCode(),
         ]);
+
+        PartnerTypeRankSync::sync($partner, $typeIds);
 
         if ($tagIds) {
             $partner->tags()->sync($tagIds);
@@ -247,6 +289,7 @@ class PartnerController extends Controller
             'industry',
             'title',
             'tags',
+            'types',
             'parent',
             'children',
             'addresses',
@@ -264,7 +307,7 @@ class PartnerController extends Controller
 
     public function edit(Partner $partner): Response
     {
-        $partner->load('tags');
+        $partner->load('tags', 'types');
 
         return Inertia::render('Modules/Partners/Edit', [
             'partner' => $partner,
@@ -289,6 +332,7 @@ class PartnerController extends Controller
                 ? PriceList::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code'])
                 : [],
             'portalUsers' => \App\Models\User::query()->orderBy('name')->get(['id', 'name', 'email']),
+            'partnerTypes' => $this->activePartnerTypes(),
         ]);
     }
 
@@ -296,20 +340,11 @@ class PartnerController extends Controller
     {
         $validated = $request->validated();
         $tagIds = $validated['tag_ids'] ?? null;
-        unset($validated['tag_ids']);
+        $typeIds = $validated['type_ids'] ?? null;
+        unset($validated['tag_ids'], $validated['type_ids'], $validated['is_customer'], $validated['is_supplier'], $validated['sub_type']);
 
         if (! PriceListResolver::tablesReady()) {
             unset($validated['price_list_id']);
-        }
-
-        if (array_key_exists('is_customer', $validated)) {
-            $validated['customer_rank'] = $validated['is_customer'] ? max(1, $partner->customer_rank) : 0;
-            unset($validated['is_customer']);
-        }
-
-        if (array_key_exists('is_supplier', $validated)) {
-            $validated['supplier_rank'] = $validated['is_supplier'] ? max(1, $partner->supplier_rank) : 0;
-            unset($validated['is_supplier']);
         }
 
         if (array_key_exists('is_blacklisted', $validated)) {
@@ -325,6 +360,10 @@ class PartnerController extends Controller
         }
 
         $partner->update($validated);
+
+        if ($typeIds !== null) {
+            PartnerTypeRankSync::sync($partner, $typeIds);
+        }
 
         if ($tagIds !== null) {
             $partner->tags()->sync($tagIds);

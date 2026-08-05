@@ -10,6 +10,7 @@ use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerIndustry;
 use Modules\Partners\Models\PartnerTag;
 use Modules\Partners\Models\PartnerTitle;
+use Modules\Partners\Models\PartnerType;
 use Modules\Sales\Models\PriceList;
 use Modules\Sales\Support\PriceListResolver;
 
@@ -113,7 +114,7 @@ class PartnerCsvImporter
             'code' => ['code', 'partner_code', 'kode'],
             'name' => ['name', 'partner_name', 'nama'],
             'account_type' => ['account_type', 'account type', 'tipe_akun', 'tipe akun'],
-            'sub_type' => ['sub_type', 'sub type', 'sub_tipe'],
+            'partner_types' => ['partner_types', 'partner types', 'contact types', 'tipe_kontak', 'tipe kontak', 'sub_type', 'sub type', 'sub_tipe'],
             'email' => ['email'],
             'phone' => ['phone', 'telepon', 'telp'],
             'mobile' => ['mobile', 'whatsapp', 'hp'],
@@ -218,15 +219,11 @@ class PartnerCsvImporter
             ]);
         }
 
-        $subType = $get('sub_type');
-        if ($subType !== null) {
-            $subType = strtolower($subType);
-            if (! in_array($subType, ['customer', 'supplier', 'other'], true)) {
-                throw ValidationException::withMessages([
-                    'sub_type' => __('partners.import.errors.sub_type_in'),
-                ]);
-            }
-        }
+        $typeIds = $this->resolveTypeIds($get('partner_types'), $get('is_customer'), $get('is_supplier'));
+        $types = $typeIds !== []
+            ? PartnerType::query()->whereIn('id', $typeIds)->get()
+            : collect();
+        $rankAttributes = PartnerTypeRankSync::rankAttributes($types);
 
         $industryName = $get('industry');
         $industryId = null;
@@ -288,7 +285,6 @@ class PartnerCsvImporter
             'code' => $get('code'),
             'name' => $name,
             'account_type' => $accountType,
-            'sub_type' => $subType,
             'email' => $get('email'),
             'phone' => $get('phone'),
             'mobile' => $get('mobile'),
@@ -303,8 +299,9 @@ class PartnerCsvImporter
             'industry_id' => $industryId,
             'title_id' => $titleId,
             'parent_id' => $parentId,
-            'customer_rank' => $this->toBool($get('is_customer')) ? 1 : 0,
-            'supplier_rank' => $this->toBool($get('is_supplier')) ? 1 : 0,
+            'customer_rank' => $rankAttributes['customer_rank'],
+            'supplier_rank' => $rankAttributes['supplier_rank'],
+            'sub_type' => $rankAttributes['sub_type'],
             'credit_limit' => $get('credit_limit'),
             'payment_term_days' => $get('payment_term_days'),
             'price_list_id' => $priceListId,
@@ -313,6 +310,7 @@ class PartnerCsvImporter
             'comment' => $get('comment'),
             'status' => $status,
             'tag_names' => $tagNames,
+            'type_ids' => $typeIds,
         ];
     }
 
@@ -322,7 +320,8 @@ class PartnerCsvImporter
     private function upsertPartner(array $payload): string
     {
         $tagNames = $payload['tag_names'] ?? [];
-        unset($payload['tag_names']);
+        $typeIds = $payload['type_ids'] ?? [];
+        unset($payload['tag_names'], $payload['type_ids']);
 
         if (! Schema::hasColumn('partners', 'payment_term_days')) {
             unset($payload['payment_term_days']);
@@ -332,7 +331,7 @@ class PartnerCsvImporter
             unset($payload['price_list_id']);
         }
 
-        return DB::transaction(function () use ($payload, $tagNames): string {
+        return DB::transaction(function () use ($payload, $tagNames, $typeIds): string {
             $existing = null;
             if (! empty($payload['code'])) {
                 $existing = Partner::query()->where('code', $payload['code'])->first();
@@ -344,12 +343,14 @@ class PartnerCsvImporter
                 }
 
                 $partner = Partner::query()->create($payload);
+                PartnerTypeRankSync::sync($partner, $typeIds);
                 $this->syncTags($partner, $tagNames);
 
                 return 'created';
             }
 
             $existing->update($payload);
+            PartnerTypeRankSync::sync($existing, $typeIds);
             $this->syncTags($existing, $tagNames);
 
             return 'updated';
@@ -381,5 +382,59 @@ class PartnerCsvImporter
         }
 
         return in_array(strtolower($value), ['1', 'true', 'yes', 'y', 'ya'], true);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function resolveTypeIds(?string $typesRaw, ?string $isCustomer, ?string $isSupplier): array
+    {
+        $typeIds = [];
+
+        if ($typesRaw !== null) {
+            $labels = array_values(array_filter(array_map(
+                fn (string $label): string => trim($label),
+                preg_split('/[|,;]/', $typesRaw) ?: [],
+            )));
+
+            foreach ($labels as $label) {
+                $type = PartnerType::findByCode(strtolower($label))
+                    ?? $this->findTypeByLabel($label);
+
+                if ($type === null) {
+                    throw ValidationException::withMessages([
+                        'partner_types' => __('partners.import.errors.type_not_found', ['name' => $label]),
+                    ]);
+                }
+
+                $typeIds[] = $type->id;
+            }
+        }
+
+        if ($typeIds === [] && $this->toBool($isCustomer)) {
+            $customer = PartnerType::findByCode('customer');
+            if ($customer !== null) {
+                $typeIds[] = $customer->id;
+            }
+        }
+
+        if ($this->toBool($isSupplier)) {
+            $supplier = PartnerType::findByCode('supplier');
+            if ($supplier !== null) {
+                $typeIds[] = $supplier->id;
+            }
+        }
+
+        return array_values(array_unique($typeIds));
+    }
+
+    private function findTypeByLabel(string $label): ?PartnerType
+    {
+        return PartnerType::query()
+            ->where(function ($query) use ($label): void {
+                $query->where('name->id', $label)
+                    ->orWhere('name->en', $label);
+            })
+            ->first();
     }
 }

@@ -35,7 +35,7 @@ class MenuSeeder extends Seeder
                 'sort_order' => 5,
             ],
             [
-                'name' => 'Partners',
+                'name' => 'Contacts',
                 'slug' => 'partners',
                 'icon' => 'customers',
                 'route_name' => 'partners.dashboard',

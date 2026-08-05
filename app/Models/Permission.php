@@ -40,7 +40,7 @@ class Permission extends Model
         'roles' => 'Roles',
         'live-updates' => 'Live Updates',
         'analytics' => 'Analytics',
-        'partners' => 'Partners',
+        'partners' => 'Contacts',
         'accounting' => 'Accounting',
     ];
 
