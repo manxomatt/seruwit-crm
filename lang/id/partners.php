@@ -216,7 +216,24 @@ return [
     'create' => [
         'title' => 'Tambah Kontak',
         'head' => 'Tambah Kontak',
+        'subtitle' => 'Buat perusahaan atau individu baru dengan tipe kontak dan detail komersial.',
         'submit' => 'Simpan Kontak',
+        'code_hint' => 'Kode kontak akan dibuat secara otomatis.',
+        'types_hint' => 'Pilih satu atau lebih peran yang dimiliki kontak ini.',
+        'sections' => [
+            'account' => 'Akun & Status',
+            'account_hint' => 'Perusahaan atau individu, status, dan tipe kontak',
+            'identity' => 'Identitas',
+            'identity_hint' => 'Nama dan detail identitas terkait',
+            'contact' => 'Kanal Kontak',
+            'contact_hint' => 'Telepon, email, website, dan alamat utama',
+            'business' => 'Bisnis & Komersial',
+            'business_hint' => 'Industri, NPWP, kredit, dan daftar harga',
+            'tags' => 'Tag',
+            'tags_hint' => 'Label opsional untuk filter dan laporan',
+            'notes' => 'Catatan',
+            'notes_hint' => 'Catatan yang terlihat dan komentar internal',
+        ],
     ],
 
     'edit' => [

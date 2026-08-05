@@ -216,7 +216,24 @@ return [
     'create' => [
         'title' => 'Add Contact',
         'head' => 'Add Contact',
+        'subtitle' => 'Create a new company or individual with contact types and commercial details.',
         'submit' => 'Save Contact',
+        'code_hint' => 'A contact code will be generated automatically.',
+        'types_hint' => 'Select one or more roles this contact can play.',
+        'sections' => [
+            'account' => 'Account & Status',
+            'account_hint' => 'Company or individual, status, and contact types',
+            'identity' => 'Identity',
+            'identity_hint' => 'Name and related identity details',
+            'contact' => 'Contact Channels',
+            'contact_hint' => 'Phone, email, website, and primary address',
+            'business' => 'Business & Commercial',
+            'business_hint' => 'Industry, tax ID, credit, and price list',
+            'tags' => 'Tags',
+            'tags_hint' => 'Optional labels for filtering and reporting',
+            'notes' => 'Notes',
+            'notes_hint' => 'Visible notes and internal comments',
+        ],
     ],
 
     'edit' => [
