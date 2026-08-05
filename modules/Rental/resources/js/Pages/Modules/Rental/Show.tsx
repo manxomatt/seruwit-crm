@@ -465,7 +465,7 @@ export default function Show({
                             </p>
                         </div>
 
-                        {/* Toolbar: keep core booking actions on one row */}
+                        {/* Toolbar */}
                         <div className="flex shrink-0 flex-col items-stretch gap-2 lg:items-end">
                             <div className="flex flex-nowrap items-center justify-end gap-2 overflow-x-auto">
                                 {canPrintContract && (
@@ -473,6 +473,19 @@ export default function Show({
                                         <SecondaryButton type="button">{t('rental.actions.print_contract')}</SecondaryButton>
                                     </a>
                                 )}
+                                {canPrintHandover && (
+                                    <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
+                                        <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
+                                    </a>
+                                )}
+                                {(is('active') || is('returned')) && (
+                                    <SecondaryButton className="shrink-0" onClick={() => setModal('damage')}>
+                                        {t('rental.actions.add_damage')}
+                                    </SecondaryButton>
+                                )}
+                            </div>
+
+                            <div className="flex flex-nowrap items-center justify-end gap-2 overflow-x-auto">
                                 {(is('draft') || is('pending') || is('pending_reserved') || is('confirmed')) && (
                                     <Link href={prefixedRoute('rental.edit', rental.id)} className="shrink-0">
                                         <SecondaryButton>{t('common.edit')}</SecondaryButton>
@@ -491,11 +504,6 @@ export default function Show({
                             </div>
 
                             <div className="flex flex-wrap items-center justify-end gap-2">
-                                {canPrintHandover && (
-                                    <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer">
-                                        <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
-                                    </a>
-                                )}
                                 {canConfirm && (
                                     <PrimaryButton onClick={() => setModal('confirm')}>
                                         {t('rental.actions.confirm')}
@@ -531,9 +539,6 @@ export default function Show({
                                 )}
                                 {!postConfirm.visible && is('returned') && (
                                     <PrimaryButton onClick={() => action('complete')}>{t('rental.actions.complete')}</PrimaryButton>
-                                )}
-                                {(is('active') || is('returned')) && (
-                                    <SecondaryButton onClick={() => setModal('damage')}>{t('rental.actions.add_damage')}</SecondaryButton>
                                 )}
                                 {canMarkFeePaid && (
                                     <SecondaryButton onClick={() => action('mark_fee_paid')}>{t('rental.actions.mark_fee_paid')}</SecondaryButton>
