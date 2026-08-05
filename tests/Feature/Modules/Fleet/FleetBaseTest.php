@@ -50,6 +50,134 @@ class FleetBaseTest extends TestCase
             );
     }
 
+    public function test_index_supports_case_insensitive_search_and_filters(): void
+    {
+        $user = $this->createAdminUser();
+        FleetBase::factory()->create([
+            'manager_id' => $user->id,
+            'code' => 'JKT-CGK-01',
+            'name' => 'Depot Cakung',
+            'kind' => 'depot',
+            'status' => 'active',
+            'city' => 'Jakarta',
+        ]);
+        FleetBase::factory()->create([
+            'manager_id' => $user->id,
+            'code' => 'BDG-YRD-02',
+            'name' => 'Yard Bandung',
+            'kind' => 'yard',
+            'status' => 'inactive',
+            'city' => 'Bandung',
+        ]);
+
+        $this->actingAs($user)->get(route('module.fleet.bases.index', ['search' => 'cakung']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('bases.data', 1)
+                ->where('bases.data.0.name', 'Depot Cakung')
+            );
+
+        $this->actingAs($user)->get(route('module.fleet.bases.index', ['status' => 'inactive']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('bases.data', 1)
+                ->where('bases.data.0.name', 'Yard Bandung')
+            );
+
+        $this->actingAs($user)->get(route('module.fleet.bases.index', ['kind' => 'depot']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('bases.data', 1)
+                ->where('bases.data.0.code', 'JKT-CGK-01')
+            );
+    }
+
+    public function test_admin_can_batch_update_base_status(): void
+    {
+        $user = $this->createAdminUser();
+        $first = FleetBase::factory()->create(['manager_id' => $user->id, 'status' => 'active']);
+        $second = FleetBase::factory()->create(['manager_id' => $user->id, 'status' => 'active']);
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.bases.batch-status'), [
+                'ids' => [$first->id, $second->id],
+                'status' => 'inactive',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('fleet_bases', ['id' => $first->id, 'status' => 'inactive']);
+        $this->assertDatabaseHas('fleet_bases', ['id' => $second->id, 'status' => 'inactive']);
+    }
+
+    public function test_batch_status_update_requires_valid_status_and_ids(): void
+    {
+        $user = $this->createAdminUser();
+        $base = FleetBase::factory()->create(['manager_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.bases.batch-status'), [
+                'ids' => [$base->id],
+                'status' => 'not-a-status',
+            ])
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.bases.batch-status'), [
+                'ids' => [],
+                'status' => 'active',
+            ])
+            ->assertSessionHasErrors('ids');
+    }
+
+    public function test_admin_can_batch_delete_bases(): void
+    {
+        $user = $this->createAdminUser();
+        $first = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $second = FleetBase::factory()->create(['manager_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->post(route('module.fleet.bases.batch-destroy'), [
+                'ids' => [$first->id, $second->id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('fleet_bases', ['id' => $first->id]);
+        $this->assertDatabaseMissing('fleet_bases', ['id' => $second->id]);
+    }
+
+    public function test_batch_delete_skips_bases_still_in_use(): void
+    {
+        $user = $this->createAdminUser();
+        $free = FleetBase::factory()->create(['manager_id' => $user->id]);
+        $busy = FleetBase::factory()->create(['manager_id' => $user->id]);
+        Vehicle::factory()->create(['home_base_id' => $busy->id]);
+
+        $this->actingAs($user)
+            ->post(route('module.fleet.bases.batch-destroy'), [
+                'ids' => [$free->id, $busy->id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('fleet_bases', ['id' => $free->id]);
+        $this->assertDatabaseHas('fleet_bases', ['id' => $busy->id]);
+    }
+
+    public function test_user_without_update_permission_cannot_batch_update_status(): void
+    {
+        $user = $this->createUserWithRole();
+        $base = FleetBase::factory()->create(['manager_id' => $user->id, 'status' => 'active']);
+
+        $this->actingAs($user)
+            ->patch(route('module.fleet.bases.batch-status'), [
+                'ids' => [$base->id],
+                'status' => 'inactive',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_admin_can_create_a_fleet_base(): void
     {
         $user = $this->createAdminUser();

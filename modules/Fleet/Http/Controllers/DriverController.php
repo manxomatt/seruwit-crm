@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Http\Requests\BatchDeleteDriversRequest;
+use Modules\Fleet\Http\Requests\BatchUpdateDriverStatusRequest;
 use Modules\Fleet\Http\Requests\StoreDriverRequest;
 use Modules\Fleet\Http\Requests\UpdateDriverRequest;
 use Modules\Fleet\Models\Driver;
@@ -34,10 +36,14 @@ class DriverController extends Controller
 
         $drivers = Driver::query()
             ->when(request('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('license_number', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+                $like = "%{$search}%";
+
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'ilike', $like)
+                        ->orWhere('license_number', 'ilike', $like)
+                        ->orWhere('license_type', 'ilike', $like)
+                        ->orWhere('phone', 'ilike', $like)
+                        ->orWhere('email', 'ilike', $like);
                 });
             })
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
@@ -190,5 +196,64 @@ class DriverController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.fleet.drivers.index')
             ->with('success', __('fleet.messages.driver_deleted'));
+    }
+
+    /**
+     * Update status for multiple drivers at once.
+     */
+    public function batchUpdateStatus(BatchUpdateDriverStatusRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+        $status = $request->validated('status');
+
+        $updated = Driver::query()
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+
+        return back()->with('success', __('fleet.messages.drivers_status_updated', [
+            'count' => $updated,
+            'status' => __('fleet.status.'.$status),
+        ]));
+    }
+
+    /**
+     * Delete multiple drivers, skipping any blocked by foreign-key constraints.
+     */
+    public function batchDestroy(BatchDeleteDriversRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+
+        $deleted = 0;
+        $blocked = 0;
+
+        $drivers = Driver::query()->whereIn('id', $ids)->get();
+
+        foreach ($drivers as $driver) {
+            try {
+                DB::transaction(fn () => $driver->delete());
+                $deleted++;
+            } catch (QueryException) {
+                $blocked++;
+            }
+        }
+
+        if ($deleted === 0 && $blocked > 0) {
+            return back()->with('error', __('fleet.messages.drivers_batch_delete_blocked', [
+                'blocked' => $blocked,
+            ]));
+        }
+
+        if ($blocked > 0) {
+            return back()->with('success', __('fleet.messages.drivers_batch_deleted_partial', [
+                'deleted' => $deleted,
+                'blocked' => $blocked,
+            ]));
+        }
+
+        return back()->with('success', __('fleet.messages.drivers_batch_deleted', [
+            'count' => $deleted,
+        ]));
     }
 }

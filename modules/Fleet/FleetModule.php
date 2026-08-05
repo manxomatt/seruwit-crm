@@ -99,6 +99,8 @@ class FleetModule implements ModuleContract
         Route::get('/fleet/bases', [FleetBaseController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.bases.index');
         Route::get('/fleet/bases/create', [FleetBaseController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.bases.create');
         Route::post('/fleet/bases', [FleetBaseController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.bases.store');
+        Route::patch('/fleet/bases/batch-status', [FleetBaseController::class, 'batchUpdateStatus'])->middleware('permission:fleet,update')->name('fleet.bases.batch-status');
+        Route::post('/fleet/bases/batch-destroy', [FleetBaseController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.bases.batch-destroy');
         Route::get('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.bases.show');
         Route::get('/fleet/bases/{fleetBase}/edit', [FleetBaseController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.bases.edit');
         Route::patch('/fleet/bases/{fleetBase}', [FleetBaseController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.bases.update');
@@ -126,6 +128,8 @@ class FleetModule implements ModuleContract
         Route::get('/fleet/drivers', [DriverController::class, 'index'])->middleware('permission:fleet,view')->name('fleet.drivers.index');
         Route::get('/fleet/drivers/create', [DriverController::class, 'create'])->middleware('permission:fleet,create')->name('fleet.drivers.create');
         Route::post('/fleet/drivers', [DriverController::class, 'store'])->middleware('permission:fleet,create')->name('fleet.drivers.store');
+        Route::patch('/fleet/drivers/batch-status', [DriverController::class, 'batchUpdateStatus'])->middleware('permission:fleet,update')->name('fleet.drivers.batch-status');
+        Route::post('/fleet/drivers/batch-destroy', [DriverController::class, 'batchDestroy'])->middleware('permission:fleet,delete')->name('fleet.drivers.batch-destroy');
         Route::get('/fleet/drivers/{driver}', [DriverController::class, 'show'])->middleware('permission:fleet,view')->name('fleet.drivers.show');
         Route::get('/fleet/drivers/{driver}/edit', [DriverController::class, 'edit'])->middleware('permission:fleet,update')->name('fleet.drivers.edit');
         Route::patch('/fleet/drivers/{driver}', [DriverController::class, 'update'])->middleware('permission:fleet,update')->name('fleet.drivers.update');

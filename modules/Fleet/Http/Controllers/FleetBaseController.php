@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Http\Requests\BatchDeleteFleetBasesRequest;
+use Modules\Fleet\Http\Requests\BatchUpdateFleetBaseStatusRequest;
 use Modules\Fleet\Http\Requests\StoreFleetBaseRequest;
 use Modules\Fleet\Http\Requests\UpdateFleetBaseRequest;
 use Modules\Fleet\Models\FleetBase;
@@ -36,11 +38,13 @@ class FleetBaseController extends Controller
             ->with(['manager:id,name,email'])
             ->withCount('vehicles')
             ->when(request('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%")
-                        ->orWhere('city', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+                $like = "%{$search}%";
+
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'ilike', $like)
+                        ->orWhere('code', 'ilike', $like)
+                        ->orWhere('city', 'ilike', $like)
+                        ->orWhere('phone', 'ilike', $like);
                 });
             })
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
@@ -167,6 +171,73 @@ class FleetBaseController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.fleet.bases.index')
             ->with('success', __('fleet.messages.base_deleted'));
+    }
+
+    /**
+     * Update status for multiple fleet bases at once.
+     */
+    public function batchUpdateStatus(BatchUpdateFleetBaseStatusRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+        $status = $request->validated('status');
+
+        $updated = AccessibleFleetBases::query()
+            ->whereIn('id', $ids)
+            ->update(['status' => $status]);
+
+        if ($updated === 0) {
+            return back()->with('error', __('fleet.validation.base_access_denied'));
+        }
+
+        return back()->with('success', __('fleet.messages.bases_status_updated', [
+            'count' => $updated,
+            'status' => __('fleet.status.'.$status),
+        ]));
+    }
+
+    /**
+     * Delete multiple fleet bases, skipping any blocked by foreign-key constraints.
+     */
+    public function batchDestroy(BatchDeleteFleetBasesRequest $request): RedirectResponse
+    {
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $request->validated('ids'));
+
+        $deleted = 0;
+        $blocked = 0;
+
+        $bases = AccessibleFleetBases::query()->whereIn('id', $ids)->get();
+
+        if ($bases->isEmpty()) {
+            return back()->with('error', __('fleet.validation.base_access_denied'));
+        }
+
+        foreach ($bases as $base) {
+            try {
+                DB::transaction(fn () => $base->delete());
+                $deleted++;
+            } catch (QueryException) {
+                $blocked++;
+            }
+        }
+
+        if ($deleted === 0 && $blocked > 0) {
+            return back()->with('error', __('fleet.messages.bases_batch_delete_blocked', [
+                'blocked' => $blocked,
+            ]));
+        }
+
+        if ($blocked > 0) {
+            return back()->with('success', __('fleet.messages.bases_batch_deleted_partial', [
+                'deleted' => $deleted,
+                'blocked' => $blocked,
+            ]));
+        }
+
+        return back()->with('success', __('fleet.messages.bases_batch_deleted', [
+            'count' => $deleted,
+        ]));
     }
 
     /**
