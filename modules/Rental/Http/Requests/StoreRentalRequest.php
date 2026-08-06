@@ -78,7 +78,13 @@ class StoreRentalRequest extends FormRequest
                 (string) $this->period_type,
             );
 
-            if ($suggested?->min_periods) {
+            if ($suggested === null) {
+                $v->errors()->add('vehicle_id', __('rental.validation.rate_required'));
+
+                return;
+            }
+
+            if ($suggested->min_periods) {
                 $periods = Rental::computePeriods(
                     (string) $this->start_date,
                     (string) $this->end_date,

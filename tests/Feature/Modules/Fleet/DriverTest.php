@@ -49,6 +49,17 @@ class DriverTest extends TestCase
             );
     }
 
+    public function test_admin_can_open_create_driver_page(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->get(route('module.fleet.drivers.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Drivers/Create')
+            );
+    }
+
     public function test_admin_can_create_a_driver(): void
     {
         $user = $this->createAdminUser();
@@ -63,6 +74,19 @@ class DriverTest extends TestCase
         $driver = Driver::firstWhere('license_number', 'SIM-12345678');
         $response->assertRedirect(route('module.fleet.drivers.show', $driver));
         $this->assertDatabaseHas('drivers', ['license_number' => 'SIM-12345678', 'name' => 'Budi Santoso']);
+    }
+
+    public function test_admin_can_open_edit_driver_page(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+
+        $this->actingAs($user)->get(route('module.fleet.drivers.edit', $driver))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Drivers/Edit')
+                ->where('driver.id', $driver->id)
+            );
     }
 
     public function test_creating_a_driver_requires_a_unique_license_number(): void

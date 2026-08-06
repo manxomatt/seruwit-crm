@@ -43,7 +43,7 @@ class RentalReservationWizardController extends Controller
         $vehicles = Vehicle::query()
             ->where('status', Vehicle::STATUS_ACTIVE)
             ->orderBy('name')
-            ->get(['id', 'name', 'plate_number', 'type', 'rental_class', 'status', 'stnk_expires_at', 'kir_expires_at']);
+            ->get(['id', 'name', 'plate_number', 'type', 'rental_class', 'status', 'photo_url', 'stnk_expires_at', 'kir_expires_at']);
 
         $rows = [];
         $skippedNoRate = 0;
@@ -76,17 +76,19 @@ class RentalReservationWizardController extends Controller
 
             $rate = $rates->suggest($vehicle, $start, $end, $periodType);
 
-            if ($rate !== null && $rate->min_periods !== null && $periods < (int) $rate->min_periods) {
+            if ($rate === null) {
+                $skippedNoRate++;
+
+                continue;
+            }
+
+            if ($rate->min_periods !== null && $periods < (int) $rate->min_periods) {
                 $skippedUnavailable++;
 
                 continue;
             }
 
-            if ($rate === null) {
-                $skippedNoRate++;
-            }
-
-            $ratePerPeriod = $rate !== null ? (float) $rate->rate_per_period : null;
+            $ratePerPeriod = (float) $rate->rate_per_period;
 
             $rows[] = [
                 'id' => $vehicle->id,
@@ -94,7 +96,8 @@ class RentalReservationWizardController extends Controller
                 'plate_number' => $vehicle->plate_number,
                 'type' => $vehicle->type,
                 'rental_class' => $vehicle->rental_class,
-                'rate' => $rate ? [
+                'photo_url' => $vehicle->photo_url,
+                'rate' => [
                     'id' => $rate->id,
                     'name' => $rate->name,
                     'period_type' => $rate->period_type,
@@ -104,9 +107,9 @@ class RentalReservationWizardController extends Controller
                     'late_fee_per_day' => $rate->late_fee_per_day !== null ? (float) $rate->late_fee_per_day : null,
                     'deposit_amount' => (float) ($rate->deposit_amount ?? 0),
                     'min_periods' => $rate->min_periods !== null ? (int) $rate->min_periods : null,
-                ] : null,
+                ],
                 'total_periods' => $periods,
-                'base_amount' => $ratePerPeriod !== null ? round($ratePerPeriod * $periods, 2) : null,
+                'base_amount' => round($ratePerPeriod * $periods, 2),
             ];
         }
 
@@ -137,8 +140,6 @@ class RentalReservationWizardController extends Controller
             'one_way_fee_amount' => ['nullable', 'numeric', 'min:0'],
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
             'exclude_rental_id' => ['nullable', 'integer', 'exists:rentals,id'],
-            'rate_per_period' => ['nullable', 'numeric', 'min:0'],
-            'deposit_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $excludeId = isset($data['exclude_rental_id']) ? (int) $data['exclude_rental_id'] : null;
@@ -154,32 +155,12 @@ class RentalReservationWizardController extends Controller
         $quote = $booking->quote($data);
         $rate = $quote['rate'];
 
-        // Staff may enter pricing manually when no tariff matches.
-        if ($rate === null && isset($data['rate_per_period']) && (float) $data['rate_per_period'] >= 0) {
-            $periods = Rental::computePeriods($data['start_date'], $data['end_date'], $data['period_type']);
-            $ratePerPeriod = round((float) $data['rate_per_period'], 2);
-            $base = round($ratePerPeriod * $periods, 2);
-            $oneWay = isset($data['one_way_fee_amount']) ? (float) $data['one_way_fee_amount'] : ($quote['one_way_fee_amount'] ?? 0);
-            $insurance = $quote['insurance_amount'] ?? 0;
-            $deposit = isset($data['deposit_amount']) ? (float) $data['deposit_amount'] : 0;
-
-            $quote = [
-                'available' => $reasons === [],
-                'reasons' => $reasons,
-                'total_periods' => $periods,
-                'rate_per_period' => $ratePerPeriod,
-                'deposit_amount' => $deposit,
-                'base_amount' => $base,
-                'one_way_fee_amount' => $oneWay > 0 ? $oneWay : null,
-                'insurance_amount' => $insurance > 0 ? $insurance : null,
-                'total_amount' => round($base + ($oneWay ?: 0) + ($insurance ?: 0), 2),
-                'min_periods' => null,
-                'rate' => null,
-            ];
-        } else {
-            $quote['reasons'] = $reasons;
-            $quote['available'] = $reasons === [] && $rate !== null;
+        if ($rate === null) {
+            $reasons[] = __('rental.validation.rate_required');
         }
+
+        $quote['reasons'] = $reasons;
+        $quote['available'] = $reasons === [] && $rate !== null;
 
         $ratePayload = $quote['rate'] ?? $rate;
 

@@ -113,6 +113,18 @@ class VehicleTest extends TestCase
             );
     }
 
+    public function test_admin_can_open_create_vehicle_page(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->get(route('module.fleet.vehicles.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Create')
+                ->has('bases')
+            );
+    }
+
     public function test_admin_can_create_a_vehicle(): void
     {
         $user = $this->createAdminUser();
@@ -195,6 +207,20 @@ class VehicleTest extends TestCase
             'fuel_type' => 'diesel',
             'status' => 'active',
         ])->assertSessionHasErrors(['name', 'plate_number']);
+    }
+
+    public function test_admin_can_open_edit_vehicle_page(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+
+        $this->actingAs($user)->get(route('module.fleet.vehicles.edit', $vehicle))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Vehicles/Edit')
+                ->where('vehicle.id', $vehicle->id)
+                ->has('bases')
+            );
     }
 
     public function test_admin_can_update_a_vehicle(): void

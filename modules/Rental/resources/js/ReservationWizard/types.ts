@@ -63,6 +63,7 @@ export type AvailableVehicle = {
     plate_number: string;
     type: string | null;
     rental_class: string | null;
+    photo_url: string | null;
     rate: {
         id: number;
         name: string;

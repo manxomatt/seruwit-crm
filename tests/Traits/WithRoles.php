@@ -8,6 +8,8 @@ use App\Models\User;
 use Database\Seeders\ModuleRegistrySeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -30,6 +32,8 @@ trait WithRoles
                 InitializeTenancyByDomain::class,
                 PreventAccessFromCentralDomains::class,
                 EnsureTenantIsActive::class,
+                ValidateCsrfToken::class,
+                VerifyCsrfToken::class,
             ]);
         }
 

@@ -25,6 +25,7 @@ use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPostConfirmProgress;
+use Modules\Rental\Support\RentalRateResolver;
 use Modules\Rental\Support\WalkInCustomerCreator;
 
 class RentalController extends Controller
@@ -62,6 +63,9 @@ class RentalController extends Controller
     public function create(): Response
     {
         $selectedPartnerId = request()->integer('partner_id') ?: null;
+        $prefillVehicleId = request()->integer('vehicle_id') ?: null;
+        $prefillStartDate = filled(request('start_date')) ? (string) request('start_date') : null;
+        $prefillEndDate = filled(request('end_date')) ? (string) request('end_date') : null;
 
         return Inertia::render('Modules/Rental/Create', [
             'vehicles' => Vehicle::query()
@@ -81,6 +85,11 @@ class RentalController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'code']),
             'selectedPartnerId' => $selectedPartnerId,
+            'prefill' => [
+                'vehicle_id' => $prefillVehicleId,
+                'start_date' => $prefillStartDate,
+                'end_date' => $prefillEndDate,
+            ],
             'rates' => RentalRate::query()
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -140,9 +149,10 @@ class RentalController extends Controller
             ->with('success', $message);
     }
 
-    public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator): RedirectResponse
+    public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator, RentalRateResolver $rates): RedirectResponse
     {
         $validated = $hydrator->hydrate($request->validated());
+        $validated = $this->applyResolvedRatePricing($validated, $rates);
         $totalPeriods = Rental::computePeriods($validated['start_date'], $validated['end_date'], $validated['period_type']);
         $rate = (float) $validated['rate_per_period'];
 
@@ -290,6 +300,9 @@ class RentalController extends Controller
                     Rental::STATUS_CONFIRMED,
                     Rental::STATUS_ACTIVE,
                 ], true),
+            'companyBankAccounts' => class_exists(\Modules\Accounting\Support\PaymentAccountResolver::class)
+                ? \Modules\Accounting\Support\PaymentAccountResolver::optionsForForms()
+                : [],
             'postConfirm' => app(RentalPostConfirmProgress::class)->for($rental),
         ]);
     }
@@ -335,7 +348,7 @@ class RentalController extends Controller
         ]);
     }
 
-    public function update(UpdateRentalRequest $request, Rental $rental, RentalLocationHydrator $hydrator): RedirectResponse
+    public function update(UpdateRentalRequest $request, Rental $rental, RentalLocationHydrator $hydrator, RentalRateResolver $rates): RedirectResponse
     {
         abort_if(
             ! in_array($rental->status, Rental::editableStatuses(), true),
@@ -344,6 +357,7 @@ class RentalController extends Controller
         );
 
         $validated = $hydrator->hydrate($request->validated());
+        $validated = $this->applyResolvedRatePricing($validated, $rates);
         $totalPeriods = Rental::computePeriods($validated['start_date'], $validated['end_date'], $validated['period_type']);
         $rate = (float) $validated['rate_per_period'];
 
@@ -401,5 +415,32 @@ class RentalController extends Controller
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
+    }
+
+    /**
+     * Pricing always comes from the active tariff scheme — never from free-form input.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function applyResolvedRatePricing(array $validated, RentalRateResolver $rates): array
+    {
+        $vehicle = Vehicle::query()->findOrFail((int) $validated['vehicle_id']);
+        $rate = $rates->suggest(
+            $vehicle,
+            (string) $validated['start_date'],
+            (string) $validated['end_date'],
+            (string) $validated['period_type'],
+        );
+
+        abort_if($rate === null, 422, __('rental.validation.rate_required'));
+
+        $validated['rate_per_period'] = (float) $rate->rate_per_period;
+        $validated['km_limit_per_period'] = $rate->km_limit_per_period;
+        $validated['excess_km_rate'] = $rate->excess_km_rate;
+        $validated['late_fee_per_day'] = $rate->late_fee_per_day;
+        $validated['deposit_amount'] = (float) ($rate->deposit_amount ?? 0);
+
+        return $validated;
     }
 }

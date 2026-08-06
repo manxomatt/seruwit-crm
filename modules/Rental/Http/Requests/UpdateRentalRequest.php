@@ -5,6 +5,7 @@ namespace Modules\Rental\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Support\RentalRateResolver;
 
 class UpdateRentalRequest extends FormRequest
 {
@@ -52,6 +53,38 @@ class UpdateRentalRequest extends FormRequest
 
             foreach ($reasons as $reason) {
                 $v->errors()->add('vehicle_id', $reason);
+            }
+
+            if (! $this->start_date || ! $this->end_date || ! $this->period_type) {
+                return;
+            }
+
+            $suggested = app(RentalRateResolver::class)->suggest(
+                $vehicle,
+                (string) $this->start_date,
+                (string) $this->end_date,
+                (string) $this->period_type,
+            );
+
+            if ($suggested === null) {
+                $v->errors()->add('vehicle_id', __('rental.validation.rate_required'));
+
+                return;
+            }
+
+            if ($suggested->min_periods) {
+                $periods = Rental::computePeriods(
+                    (string) $this->start_date,
+                    (string) $this->end_date,
+                    (string) $this->period_type,
+                );
+
+                if ($periods < (int) $suggested->min_periods) {
+                    $v->errors()->add('end_date', __('rental.validation.min_periods', [
+                        'min' => $suggested->min_periods,
+                        'rate' => $suggested->name,
+                    ]));
+                }
             }
         });
     }

@@ -23,6 +23,11 @@ interface Props {
     availableVehiclesUrl: string;
     quoteUrl: string;
     walkInUrl: string;
+    prefill?: {
+        vehicle_id?: number | null;
+        start_date?: string | null;
+        end_date?: string | null;
+    };
 }
 
 export default function Create({
@@ -35,16 +40,17 @@ export default function Create({
     availableVehiclesUrl,
     quoteUrl,
     walkInUrl,
+    prefill = {},
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
 
     const initial: ReservationFormData = {
-        vehicle_id: '',
+        vehicle_id: prefill.vehicle_id ? String(prefill.vehicle_id) : '',
         driver_id: '',
         partner_id: selectedPartnerId ? String(selectedPartnerId) : '',
-        start_date: '',
-        end_date: '',
+        start_date: prefill.start_date ?? '',
+        end_date: prefill.end_date ?? '',
         period_type: 'daily',
         rate_per_period: '',
         km_limit_per_period: '',
@@ -60,6 +66,8 @@ export default function Create({
         fuel_policy_notes: '',
         notes: '',
     };
+
+    const hasPrefill = Boolean(prefill.vehicle_id || prefill.start_date || prefill.end_date);
 
     return (
         <DynamicLayout header={<PageHeader title={t('rental.pages.create.title')} />}>
@@ -78,6 +86,7 @@ export default function Create({
                 walkInUrl={walkInUrl}
                 submitUrl={prefixedRoute('rental.store')}
                 cancelUrl={prefixedRoute('rental.index')}
+                skipDraftRestore={hasPrefill}
             />
         </DynamicLayout>
     );

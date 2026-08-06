@@ -17,8 +17,12 @@ import Select from '@/Components/Select';
 import { formatMoney } from '@/utils/money';
 import { formatDateTimeDmYHi } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
-import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage, usePoll } from '@inertiajs/react';
 import { ChangeEvent, FormEventHandler, useEffect, useState } from 'react';
+import ConfirmPaymentPanel, {
+    type CompanyBankAccountOption,
+    type DepositPaymentMethod,
+} from '../../../ConfirmPayment/ConfirmPaymentPanel';
 import PostConfirmPanel from '../../../PostConfirm/PostConfirmPanel';
 import PostConfirmStepper from '../../../PostConfirm/PostConfirmStepper';
 import type { PostConfirmAction, PostConfirmProgress, PostConfirmStepId } from '../../../PostConfirm/types';
@@ -171,6 +175,7 @@ interface Props {
     handoverEvidence?: HandoverEvidence;
     gatewayEnabled?: boolean;
     canPayDepositOnline?: boolean;
+    companyBankAccounts?: CompanyBankAccountOption[];
     postConfirm?: PostConfirmProgress;
 }
 
@@ -214,12 +219,20 @@ export default function Show({
         return_signature_url: null,
     },
     canPayDepositOnline = false,
+    companyBankAccounts = [],
     postConfirm = { visible: false, current_step: null, steps: [] },
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
-    const [modal, setModal] = useState<'confirm' | 'cancel' | 'no_show' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
+    const page = usePage();
+    const confirmErrors = (page.props.errors ?? {}) as Partial<
+        Record<'payment_method' | 'company_bank_account_id' | 'deposit', string>
+    >;
+    const [modal, setModal] = useState<'cancel' | 'no_show' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
     const [confirming, setConfirming] = useState(false);
+    const [showConfirmPayment, setShowConfirmPayment] = useState(false);
+    const [confirmPaymentMethod, setConfirmPaymentMethod] = useState<DepositPaymentMethod>('cash');
+    const [confirmBankAccountId, setConfirmBankAccountId] = useState('');
     const [lifecycleStep, setLifecycleStep] = useState<PostConfirmStepId>(
         postConfirm.current_step && POST_CONFIRM_STEPS.includes(postConfirm.current_step)
             ? postConfirm.current_step
@@ -231,6 +244,17 @@ export default function Show({
             setLifecycleStep(postConfirm.current_step);
         }
     }, [postConfirm.visible, postConfirm.current_step]);
+
+    useEffect(() => {
+        if (! showConfirmPayment) {
+            return;
+        }
+
+        document.getElementById('rental-confirm-payment')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+        });
+    }, [showConfirmPayment]);
 
     const cancelForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
     const noShowForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
@@ -271,19 +295,27 @@ export default function Show({
     const needsDepositOnConfirm =
         Number(rental.deposit_amount) > 0 && !rental.deposit_received_at;
 
+    const openConfirmPayment = () => {
+        setShowConfirmPayment(true);
+    };
+
     const submitConfirm = (depositCollected: boolean) => {
         setConfirming(true);
-        router.post(
-            prefixedRoute('rental.confirm', rental.id),
-            depositCollected
-                ? { deposit_collected: true, payment_method: 'cash' }
-                : {},
-            {
-                preserveScroll: true,
-                onFinish: () => setConfirming(false),
-                onSuccess: () => setModal(null),
-            },
-        );
+        const payload = depositCollected
+            ? {
+                deposit_collected: true,
+                payment_method: confirmPaymentMethod,
+                ...(confirmBankAccountId !== ''
+                    ? { company_bank_account_id: Number(confirmBankAccountId) }
+                    : {}),
+            }
+            : {};
+
+        router.post(prefixedRoute('rental.confirm', rental.id), payload, {
+            preserveScroll: true,
+            onFinish: () => setConfirming(false),
+            onSuccess: () => setShowConfirmPayment(false),
+        });
     };
 
     const submitCancel: FormEventHandler = (e) => { e.preventDefault(); cancelForm.post(prefixedRoute('rental.cancel', rental.id), { onSuccess: () => setModal(null) }); };
@@ -466,84 +498,84 @@ export default function Show({
                         </div>
 
                         {/* Toolbar */}
-                        <div className="flex shrink-0 flex-col items-stretch gap-2 lg:items-end">
-                            <div className="flex flex-nowrap items-center justify-end gap-2 overflow-x-auto">
-                                {canPrintContract && (
-                                    <a href={prefixedRoute('rental.pdf.contract', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
-                                        <SecondaryButton type="button">{t('rental.actions.print_contract')}</SecondaryButton>
-                                    </a>
-                                )}
-                                {canPrintHandover && (
-                                    <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
-                                        <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
-                                    </a>
-                                )}
-                                {(is('active') || is('returned')) && (
-                                    <SecondaryButton className="shrink-0" onClick={() => setModal('damage')}>
-                                        {t('rental.actions.add_damage')}
-                                    </SecondaryButton>
-                                )}
-                            </div>
-
-                            <div className="flex flex-nowrap items-center justify-end gap-2 overflow-x-auto">
-                                {(is('draft') || is('pending') || is('pending_reserved') || is('confirmed')) && (
-                                    <Link href={prefixedRoute('rental.edit', rental.id)} className="shrink-0">
-                                        <SecondaryButton>{t('common.edit')}</SecondaryButton>
-                                    </Link>
-                                )}
-                                {is('confirmed') && (
-                                    <DangerButton className="shrink-0" onClick={() => setModal('no_show')}>
-                                        {t('rental.actions.mark_no_show')}
-                                    </DangerButton>
-                                )}
-                                {canCancel && (
-                                    <DangerButton className="shrink-0" onClick={() => setModal('cancel')}>
-                                        {t('common.cancel')}
-                                    </DangerButton>
-                                )}
-                            </div>
-
-                            <div className="flex flex-wrap items-center justify-end gap-2">
-                                {canConfirm && (
-                                    <PrimaryButton onClick={() => setModal('confirm')}>
-                                        {t('rental.actions.confirm')}
-                                    </PrimaryButton>
-                                )}
-                                {!postConfirm.visible && canPayDepositOnline && (
-                                    <SecondaryButton onClick={() => action('deposit.pay_online')}>
-                                        {t('receivables.gateway.pay_deposit')}
-                                    </SecondaryButton>
-                                )}
-                                {!postConfirm.visible && is('confirmed') && (
-                                    <>
-                                        {canReceiveDeposit && (
-                                            <PrimaryButton onClick={() => action('deposit.receive')}>
-                                                {t('rental.actions.receive_deposit')}
-                                            </PrimaryButton>
-                                        )}
-                                        <PrimaryButton
-                                            onClick={() => setModal('checkout')}
-                                            disabled={depositBlocksCheckout}
-                                            title={depositBlocksCheckout ? t('rental.errors.checkout_deposit_required') : undefined}
-                                            className={depositBlocksCheckout ? 'opacity-50' : undefined}
-                                        >
-                                            {t('rental.actions.checkout')}
+                        <div className="flex max-w-full shrink-0 flex-nowrap items-center justify-end gap-2 overflow-x-auto lg:max-w-[min(100%,36rem)]">
+                            {canPrintContract && (
+                                <a href={prefixedRoute('rental.pdf.contract', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
+                                    <SecondaryButton type="button">{t('rental.actions.print_contract')}</SecondaryButton>
+                                </a>
+                            )}
+                            {canPrintHandover && (
+                                <a href={prefixedRoute('rental.pdf.handover', rental.id)} target="_blank" rel="noreferrer" className="shrink-0">
+                                    <SecondaryButton type="button">{t('rental.actions.print_handover')}</SecondaryButton>
+                                </a>
+                            )}
+                            {(is('active') || is('returned')) && (
+                                <SecondaryButton className="shrink-0" onClick={() => setModal('damage')}>
+                                    {t('rental.actions.add_damage')}
+                                </SecondaryButton>
+                            )}
+                            {(is('draft') || is('pending') || is('pending_reserved') || is('confirmed')) && (
+                                <Link href={prefixedRoute('rental.edit', rental.id)} className="shrink-0">
+                                    <SecondaryButton>{t('common.edit')}</SecondaryButton>
+                                </Link>
+                            )}
+                            {canCancel && (
+                                <DangerButton className="shrink-0" onClick={() => setModal('cancel')}>
+                                    {t('common.cancel')}
+                                </DangerButton>
+                            )}
+                            {canConfirm && !showConfirmPayment && (
+                                <PrimaryButton className="shrink-0" onClick={openConfirmPayment}>
+                                    {t('rental.actions.confirm')}
+                                </PrimaryButton>
+                            )}
+                            {is('confirmed') && (
+                                <DangerButton className="shrink-0" onClick={() => setModal('no_show')}>
+                                    {t('rental.actions.mark_no_show')}
+                                </DangerButton>
+                            )}
+                            {!postConfirm.visible && canPayDepositOnline && (
+                                <SecondaryButton className="shrink-0" onClick={() => action('deposit.pay_online')}>
+                                    {t('receivables.gateway.pay_deposit')}
+                                </SecondaryButton>
+                            )}
+                            {!postConfirm.visible && is('confirmed') && (
+                                <>
+                                    {canReceiveDeposit && (
+                                        <PrimaryButton className="shrink-0" onClick={() => action('deposit.receive')}>
+                                            {t('rental.actions.receive_deposit')}
                                         </PrimaryButton>
-                                    </>
-                                )}
-                                {!postConfirm.visible && is('active') && (
-                                    <>
-                                        <SecondaryButton onClick={() => setModal('extend')}>{t('rental.actions.extend')}</SecondaryButton>
-                                        <PrimaryButton onClick={() => setModal('return')}>{t('rental.actions.return')}</PrimaryButton>
-                                    </>
-                                )}
-                                {!postConfirm.visible && is('returned') && (
-                                    <PrimaryButton onClick={() => action('complete')}>{t('rental.actions.complete')}</PrimaryButton>
-                                )}
-                                {canMarkFeePaid && (
-                                    <SecondaryButton onClick={() => action('mark_fee_paid')}>{t('rental.actions.mark_fee_paid')}</SecondaryButton>
-                                )}
-                            </div>
+                                    )}
+                                    <PrimaryButton
+                                        className={`shrink-0${depositBlocksCheckout ? ' opacity-50' : ''}`}
+                                        onClick={() => setModal('checkout')}
+                                        disabled={depositBlocksCheckout}
+                                        title={depositBlocksCheckout ? t('rental.errors.checkout_deposit_required') : undefined}
+                                    >
+                                        {t('rental.actions.checkout')}
+                                    </PrimaryButton>
+                                </>
+                            )}
+                            {!postConfirm.visible && is('active') && (
+                                <>
+                                    <SecondaryButton className="shrink-0" onClick={() => setModal('extend')}>
+                                        {t('rental.actions.extend')}
+                                    </SecondaryButton>
+                                    <PrimaryButton className="shrink-0" onClick={() => setModal('return')}>
+                                        {t('rental.actions.return')}
+                                    </PrimaryButton>
+                                </>
+                            )}
+                            {!postConfirm.visible && is('returned') && (
+                                <PrimaryButton className="shrink-0" onClick={() => action('complete')}>
+                                    {t('rental.actions.complete')}
+                                </PrimaryButton>
+                            )}
+                            {canMarkFeePaid && (
+                                <SecondaryButton className="shrink-0" onClick={() => action('mark_fee_paid')}>
+                                    {t('rental.actions.mark_fee_paid')}
+                                </SecondaryButton>
+                            )}
                         </div>
                     </div>
 
@@ -588,6 +620,26 @@ export default function Show({
                         )}
                     </div>
                 </section>
+
+                {showConfirmPayment && canConfirm && (
+                    <ConfirmPaymentPanel
+                        rentalCode={rental.code}
+                        depositAmount={rental.deposit_amount}
+                        needsDeposit={needsDepositOnConfirm}
+                        canPayOnline={!!canPayDepositOnline}
+                        confirming={confirming}
+                        paymentMethod={confirmPaymentMethod}
+                        companyBankAccountId={confirmBankAccountId}
+                        companyBankAccounts={companyBankAccounts}
+                        errors={confirmErrors}
+                        onPaymentMethodChange={setConfirmPaymentMethod}
+                        onCompanyBankAccountChange={setConfirmBankAccountId}
+                        onConfirmWithDeposit={() => submitConfirm(true)}
+                        onConfirmLater={() => submitConfirm(false)}
+                        onPayOnline={() => action('deposit.pay_online')}
+                        onCancel={() => setShowConfirmPayment(false)}
+                    />
+                )}
 
                 {postConfirm.visible && (
                     <div className="space-y-3">
@@ -1112,72 +1164,6 @@ export default function Show({
             </div>
 
             {/* Modals */}
-            <Modal show={modal === 'confirm'} onClose={() => !confirming && setModal(null)} maxWidth="md">
-                <div className="p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {t('rental.modals.confirm')}
-                    </h2>
-
-                    {needsDepositOnConfirm ? (
-                        <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                            <p>
-                                {t('rental.modals.confirm_deposit_body', {
-                                    code: rental.code,
-                                    amount: formatMoney(rental.deposit_amount),
-                                })}
-                            </p>
-                            <p className="text-xs text-amber-700 dark:text-amber-300">
-                                {t('rental.modals.confirm_deposit_hint')}
-                            </p>
-                        </div>
-                    ) : (
-                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
-                            {t('rental.modals.confirm_body', { code: rental.code })}
-                        </p>
-                    )}
-
-                    <div className="mt-6 flex flex-wrap justify-end gap-3">
-                        <SecondaryButton
-                            type="button"
-                            onClick={() => setModal(null)}
-                            disabled={confirming}
-                        >
-                            {t('rental.nav.back')}
-                        </SecondaryButton>
-                        {needsDepositOnConfirm ? (
-                            <>
-                                <SecondaryButton
-                                    type="button"
-                                    onClick={() => submitConfirm(false)}
-                                    disabled={confirming}
-                                >
-                                    {t('rental.actions.pay_deposit_later')}
-                                </SecondaryButton>
-                                <PrimaryButton
-                                    type="button"
-                                    onClick={() => submitConfirm(true)}
-                                    disabled={confirming}
-                                >
-                                    {confirming
-                                        ? t('rental.actions.confirming')
-                                        : t('rental.actions.deposit_collected')}
-                                </PrimaryButton>
-                            </>
-                        ) : (
-                            <PrimaryButton
-                                type="button"
-                                onClick={() => submitConfirm(false)}
-                                disabled={confirming}
-                            >
-                                {confirming
-                                    ? t('rental.actions.confirming')
-                                    : t('rental.actions.confirm_rental')}
-                            </PrimaryButton>
-                        )}
-                    </div>
-                </div>
-            </Modal>
-
             <Modal show={modal === 'cancel'} onClose={() => setModal(null)}>
                 <form onSubmit={submitCancel} className="p-6">
                     <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.cancel')}</h2>

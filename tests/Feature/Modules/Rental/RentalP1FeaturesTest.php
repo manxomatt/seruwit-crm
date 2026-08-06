@@ -10,6 +10,7 @@ use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalInsurancePackage;
+use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Models\RentalVehicleSwap;
 use Modules\Rental\Support\RentalAddonCatalog;
 use Tests\TestCase;
@@ -53,6 +54,14 @@ class RentalP1FeaturesTest extends TestCase
         ]);
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         $partner = Partner::factory()->create(['status' => 'active']);
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 400000,
+            'deposit_amount' => 0,
+            'is_active' => true,
+        ]);
 
         $this->actingAs($this->createAdminUser())
             ->post(route('module.rental.store'), [

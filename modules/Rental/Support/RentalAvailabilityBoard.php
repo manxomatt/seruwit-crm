@@ -9,6 +9,10 @@ use Modules\Rental\Models\Rental;
 
 class RentalAvailabilityBoard
 {
+    public function __construct(
+        private readonly RentalRateResolver $rates,
+    ) {}
+
     /**
      * Build a vehicle availability board for [$from, $to].
      *
@@ -27,7 +31,9 @@ class RentalAvailabilityBoard
      *         plate_number: string,
      *         type: string|null,
      *         status: string,
+     *         photo_url: string|null,
      *         availability: string,
+     *         has_rate: bool,
      *         bookings: list<array{id: int, code: string, status: string, start_date: string, end_date: string, partner: string|null}>
      *     }>
      * }
@@ -39,7 +45,7 @@ class RentalAvailabilityBoard
 
         $vehicles = Vehicle::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'plate_number', 'type', 'status']);
+            ->get(['id', 'name', 'plate_number', 'type', 'status', 'photo_url', 'rental_class']);
 
         $rentals = Rental::query()
             ->with('partner:id,name')
@@ -75,6 +81,7 @@ class RentalAvailabilityBoard
             ])->values()->all();
 
             $availability = $this->resolveAvailability($vehicle, $bookings);
+            $hasRate = $this->rates->hasMatchingRate($vehicle, $fromDate, $toDate);
 
             match ($availability) {
                 'in_use' => $inUse++,
@@ -89,7 +96,9 @@ class RentalAvailabilityBoard
                 'plate_number' => $vehicle->plate_number,
                 'type' => $vehicle->type,
                 'status' => $vehicle->status,
+                'photo_url' => $vehicle->photo_url,
                 'availability' => $availability,
+                'has_rate' => $hasRate,
                 'bookings' => $bookingRows,
             ];
         }

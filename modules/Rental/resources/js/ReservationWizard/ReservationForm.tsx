@@ -22,6 +22,7 @@ import type {
     WizardStep,
 } from './types';
 import { csrfToken } from './types';
+import { clearWizardDraft, readWizardDraft, wizardStorageKey, writeWizardDraft } from './wizardDraft';
 
 interface Props {
     mode: 'create' | 'edit';
@@ -37,6 +38,8 @@ interface Props {
     submitUrl: string;
     cancelUrl: string;
     excludeRentalId?: number | null;
+    /** When true (e.g. Availability prefill), skip restoring a previous draft. */
+    skipDraftRestore?: boolean;
 }
 
 export default function ReservationForm({
@@ -53,10 +56,20 @@ export default function ReservationForm({
     submitUrl,
     cancelUrl,
     excludeRentalId = null,
+    skipDraftRestore = false,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
-    const [step, setStep] = useState<WizardStep>(1);
+    const storageKey = wizardStorageKey(mode, excludeRentalId);
+
+    // Hydrate once from sessionStorage on mount.
+    const restored = useMemo(
+        () => (skipDraftRestore ? null : readWizardDraft(storageKey, initial)),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
+    const [step, setStep] = useState<WizardStep>(restored?.step ?? 1);
     const [partners, setPartners] = useState(initialPartners);
     const [available, setAvailable] = useState<AvailableVehicle[]>([]);
     const [vehiclesMeta, setVehiclesMeta] = useState<AvailableVehiclesMeta | null>(null);
@@ -67,7 +80,18 @@ export default function ReservationForm({
     const [quoteLoading, setQuoteLoading] = useState(false);
     const [quoteError, setQuoteError] = useState<string | null>(null);
 
-    const { data, setData, post, put, processing, errors, transform } = useForm<ReservationFormData>(initial);
+    const { data, setData, post, patch, processing, errors, transform } = useForm<ReservationFormData>(
+        restored?.data ?? initial,
+    );
+
+    useEffect(() => {
+        writeWizardDraft(storageKey, { step, data });
+    }, [storageKey, step, data]);
+
+    const discardDraft = useCallback((): void => {
+        clearWizardDraft(storageKey);
+    }, [storageKey]);
+
 
     const isOneWay =
         data.pickup_location_id !== '' &&
@@ -152,13 +176,6 @@ export default function ReservationForm({
             };
             setAvailable(payload.vehicles);
             setVehiclesMeta(payload.meta);
-            if (data.vehicle_id) {
-                const match = payload.vehicles.find((v) => String(v.id) === data.vehicle_id) ?? null;
-                setSelectedVehicle(match);
-                if (!match) {
-                    clearVehicleSelection();
-                }
-            }
         } catch {
             setAvailable([]);
             setVehiclesMeta(null);
@@ -168,11 +185,9 @@ export default function ReservationForm({
         }
     }, [
         availableVehiclesUrl,
-        clearVehicleSelection,
         data.end_date,
         data.period_type,
         data.start_date,
-        data.vehicle_id,
         excludeRentalId,
         t,
     ]);
@@ -182,6 +197,22 @@ export default function ReservationForm({
             void loadAvailableVehicles();
         }
     }, [step, loadAvailableVehicles]);
+
+    // Keep selection in sync with the loaded list without re-fetching on every pick.
+    useEffect(() => {
+        if (! data.vehicle_id) {
+            setSelectedVehicle(null);
+
+            return;
+        }
+
+        const match = available.find((vehicle) => String(vehicle.id) === data.vehicle_id) ?? null;
+        setSelectedVehicle(match);
+
+        if (available.length > 0 && ! match) {
+            clearVehicleSelection();
+        }
+    }, [available, clearVehicleSelection, data.vehicle_id]);
 
     const loadQuote = useCallback(async (): Promise<void> => {
         if (!data.vehicle_id || !data.start_date || !data.end_date || !data.period_type) {
@@ -211,8 +242,6 @@ export default function ReservationForm({
                     one_way_fee_amount: data.one_way_fee_amount || null,
                     insurance_package_id: data.insurance_package_id || null,
                     exclude_rental_id: excludeRentalId,
-                    rate_per_period: data.rate_per_period || null,
-                    deposit_amount: data.deposit_amount || null,
                 }),
             });
 
@@ -222,37 +251,25 @@ export default function ReservationForm({
 
             const payload = (await response.json()) as { quote: ServerQuote };
             setQuote(payload.quote);
-
-            if (payload.quote.rate_per_period != null) {
-                setData((current) => ({
-                    ...current,
-                    rate_per_period: String(payload.quote.rate_per_period),
-                    deposit_amount: String(payload.quote.deposit_amount ?? current.deposit_amount),
-                    km_limit_per_period:
-                        payload.quote.rate?.km_limit_per_period != null
-                            ? String(payload.quote.rate.km_limit_per_period)
-                            : current.km_limit_per_period,
-                    excess_km_rate:
-                        payload.quote.rate?.excess_km_rate != null
-                            ? String(payload.quote.rate.excess_km_rate)
-                            : current.excess_km_rate,
-                    late_fee_per_day:
-                        payload.quote.rate?.late_fee_per_day != null
-                            ? String(payload.quote.rate.late_fee_per_day)
-                            : current.late_fee_per_day,
-                    one_way_fee_amount:
-                        payload.quote.one_way_fee_amount != null && payload.quote.one_way_fee_amount > 0
-                            ? String(payload.quote.one_way_fee_amount)
-                            : current.one_way_fee_amount,
-                }));
-            }
         } catch {
             setQuote(null);
             setQuoteError(t('rental.wizard.quote_failed'));
         } finally {
             setQuoteLoading(false);
         }
-    }, [data, excludeRentalId, quoteUrl, setData, t]);
+    }, [
+        data.vehicle_id,
+        data.start_date,
+        data.end_date,
+        data.period_type,
+        data.pickup_location_id,
+        data.return_location_id,
+        data.one_way_fee_amount,
+        data.insurance_package_id,
+        excludeRentalId,
+        quoteUrl,
+        t,
+    ]);
 
     useEffect(() => {
         if (step === 5) {
@@ -273,33 +290,24 @@ export default function ReservationForm({
         if (step === 4) {
             return Boolean(data.partner_id);
         }
-        return quote?.available === true;
-    }, [data, quote, step]);
+
+        return !quoteLoading && quote?.available === true;
+    }, [data.end_date, data.partner_id, data.period_type, data.rate_per_period, data.start_date, data.vehicle_id, quote, quoteLoading, step]);
 
     const selectVehicle = (vehicle: AvailableVehicle): void => {
         setSelectedVehicle(vehicle);
-        if (vehicle.rate) {
-            setData((current) => ({
-                ...current,
-                vehicle_id: String(vehicle.id),
-                period_type: vehicle.rate!.period_type || current.period_type,
-                rate_per_period: String(vehicle.rate!.rate_per_period),
-                km_limit_per_period: vehicle.rate!.km_limit_per_period?.toString() ?? '',
-                excess_km_rate: vehicle.rate!.excess_km_rate?.toString() ?? '',
-                late_fee_per_day: vehicle.rate!.late_fee_per_day?.toString() ?? '',
-                deposit_amount: String(vehicle.rate!.deposit_amount),
-            }));
+        if (! vehicle.rate) {
             return;
         }
 
         setData((current) => ({
             ...current,
             vehicle_id: String(vehicle.id),
-            rate_per_period: '',
-            km_limit_per_period: '',
-            excess_km_rate: '',
-            late_fee_per_day: '',
-            deposit_amount: '',
+            rate_per_period: String(vehicle.rate!.rate_per_period),
+            km_limit_per_period: vehicle.rate!.km_limit_per_period?.toString() ?? '',
+            excess_km_rate: vehicle.rate!.excess_km_rate?.toString() ?? '',
+            late_fee_per_day: vehicle.rate!.late_fee_per_day?.toString() ?? '',
+            deposit_amount: String(vehicle.rate!.deposit_amount),
         }));
     };
 
@@ -363,9 +371,9 @@ export default function ReservationForm({
         }));
 
         if (mode === 'edit') {
-            put(submitUrl);
+            patch(submitUrl, { onSuccess: discardDraft });
         } else {
-            post(submitUrl);
+            post(submitUrl, { onSuccess: discardDraft });
         }
     };
 
@@ -394,7 +402,6 @@ export default function ReservationForm({
                 {step === 2 && (
                     <StepVehicles
                         data={data}
-                        setData={setData}
                         errors={errors}
                         vehicles={available}
                         meta={vehiclesMeta}
@@ -411,6 +418,7 @@ export default function ReservationForm({
                         drivers={drivers}
                         insurancePackages={insurancePackages}
                         isOneWay={isOneWay}
+                        selectedVehicle={selectedVehicle}
                     />
                 )}
                 {step === 4 && (
@@ -421,6 +429,10 @@ export default function ReservationForm({
                         partners={partners}
                         setPartners={setPartners}
                         walkInUrl={walkInUrl}
+                        selectedVehicle={selectedVehicle}
+                        drivers={drivers}
+                        insurancePackages={insurancePackages}
+                        isOneWay={isOneWay}
                     />
                 )}
                 {step === 5 && (
@@ -431,6 +443,8 @@ export default function ReservationForm({
                         quoteError={quoteError}
                         selectedVehicle={selectedVehicle}
                         partners={partners}
+                        drivers={drivers}
+                        insurancePackages={insurancePackages}
                     />
                 )}
             </div>
@@ -442,7 +456,7 @@ export default function ReservationForm({
                             {t('rental.wizard.back')}
                         </SecondaryButton>
                     ) : (
-                        <Link href={cancelUrl || prefixedRoute('rental.index')}>
+                        <Link href={cancelUrl || prefixedRoute('rental.index')} onClick={discardDraft}>
                             <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
                         </Link>
                     )}
@@ -453,7 +467,7 @@ export default function ReservationForm({
                             {t('rental.wizard.next')}
                         </PrimaryButton>
                     ) : (
-                        <PrimaryButton disabled={processing || !canNext || quoteLoading}>
+                        <PrimaryButton type="submit" disabled={processing || !canNext || quoteLoading}>
                             {mode === 'edit' ? t('rental.wizard.save_reservation') : t('rental.wizard.create_reservation')}
                         </PrimaryButton>
                     )}

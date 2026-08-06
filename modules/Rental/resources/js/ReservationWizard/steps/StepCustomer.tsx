@@ -7,7 +7,14 @@ import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { FormEventHandler, useMemo, useState } from 'react';
-import type { PartnerOption, ReservationFormData } from '../types';
+import PreviousStepsSummary from '../PreviousStepsSummary';
+import type {
+    AvailableVehicle,
+    DriverOption,
+    InsurancePackage,
+    PartnerOption,
+    ReservationFormData,
+} from '../types';
 import { csrfToken } from '../types';
 
 type SetData = <K extends keyof ReservationFormData>(key: K, value: ReservationFormData[K]) => void;
@@ -19,6 +26,10 @@ interface Props {
     partners: PartnerOption[];
     setPartners: (partners: PartnerOption[]) => void;
     walkInUrl: string;
+    selectedVehicle: AvailableVehicle | null;
+    drivers: DriverOption[];
+    insurancePackages: InsurancePackage[];
+    isOneWay: boolean;
 }
 
 export default function StepCustomer({
@@ -28,6 +39,10 @@ export default function StepCustomer({
     partners,
     setPartners,
     walkInUrl,
+    selectedVehicle,
+    drivers,
+    insurancePackages,
+    isOneWay,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const [showWalkIn, setShowWalkIn] = useState(false);
@@ -93,29 +108,42 @@ export default function StepCustomer({
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                    {t('rental.wizard.steps.4')}
-                </h2>
-                <button
-                    type="button"
-                    onClick={() => setShowWalkIn(true)}
-                    className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                    + {t('rental.actions.walk_in_customer')}
-                </button>
-            </div>
-            <div>
-                <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
-                <Select
-                    id="partner_id"
-                    className="mt-1"
-                    value={data.partner_id}
-                    onChange={(value) => setData('partner_id', value)}
-                    placeholder={t('rental.placeholders.select_partner')}
-                    options={partnerOptions}
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+                <div className="space-y-4 lg:col-span-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                            {t('rental.wizard.steps.4')}
+                        </h2>
+                        <button
+                            type="button"
+                            onClick={() => setShowWalkIn(true)}
+                            className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                        >
+                            + {t('rental.actions.walk_in_customer')}
+                        </button>
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
+                        <Select
+                            id="partner_id"
+                            className="mt-1"
+                            value={data.partner_id}
+                            onChange={(value) => setData('partner_id', value)}
+                            placeholder={t('rental.placeholders.select_partner')}
+                            options={partnerOptions}
+                        />
+                        <InputError message={errors.partner_id} className="mt-1" />
+                    </div>
+                </div>
+
+                <PreviousStepsSummary
+                    data={data}
+                    selectedVehicle={selectedVehicle}
+                    includeExtras
+                    drivers={drivers}
+                    insurancePackages={insurancePackages}
+                    isOneWay={isOneWay}
                 />
-                <InputError message={errors.partner_id} className="mt-1" />
             </div>
 
             <Modal show={showWalkIn} onClose={() => !processing && setShowWalkIn(false)} maxWidth="md">

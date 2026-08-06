@@ -26,26 +26,41 @@ class RentalReservationWizardTest extends TestCase
         $this->user = $this->createAdminUser();
     }
 
-    public function test_available_vehicles_includes_units_without_rates(): void
+    public function test_available_vehicles_excludes_units_without_rates(): void
     {
-        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'name' => 'No Rate Car']);
+        $withRate = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'name' => 'Priced Car']);
+        $withoutRate = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'name' => 'No Rate Car']);
+
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $withRate->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 300000,
+            'deposit_amount' => 500000,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
 
         $start = now()->addDays(2)->toDateString();
         $end = now()->addDays(4)->toDateString();
 
-        $this->actingAs($this->user)
+        $response = $this->actingAs($this->user)
             ->getJson(route('module.rental.reservations.available_vehicles', [
                 'start_date' => $start,
                 'end_date' => $end,
                 'period_type' => 'daily',
             ]))
             ->assertOk()
-            ->assertJsonPath('meta.has_active_rates', false)
-            ->assertJsonPath('vehicles.0.id', $vehicle->id)
-            ->assertJsonPath('vehicles.0.rate', null);
+            ->assertJsonPath('meta.has_active_rates', true)
+            ->assertJsonPath('meta.skipped_no_rate', 1);
+
+        $ids = collect($response->json('vehicles'))->pluck('id')->all();
+        $this->assertContains($withRate->id, $ids);
+        $this->assertNotContains($withoutRate->id, $ids);
+        $this->assertNotNull($response->json('vehicles.0.rate'));
     }
 
-    public function test_quote_accepts_manual_rate_when_no_tariff(): void
+    public function test_quote_rejects_vehicle_without_tariff(): void
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         $start = now()->addDay()->toDateString();
@@ -61,20 +76,23 @@ class RentalReservationWizardTest extends TestCase
                 'deposit_amount' => 800000,
             ])
             ->assertOk()
-            ->assertJsonPath('quote.available', true)
-            ->assertJsonPath('quote.total_periods', 2)
-            ->assertJsonPath('quote.rate_per_period', 400000)
-            ->assertJsonPath('quote.base_amount', 800000)
-            ->assertJsonPath('quote.deposit_amount', 800000);
+            ->assertJsonPath('quote.available', false)
+            ->assertJsonPath('quote.rate', null);
     }
 
     public function test_available_vehicles_returns_only_free_units_for_range(): void
     {
-        $free = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'name' => 'Free Car']);
+        $free = Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'name' => 'Free Car',
+            'photo_url' => 'https://cdn.example.test/vehicles/free-car.jpg',
+        ]);
         $busy = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'name' => 'Busy Car']);
 
         RentalRate::factory()->daily()->create([
             'vehicle_id' => $free->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
             'rate_per_period' => 300000,
             'deposit_amount' => 500000,
             'is_active' => true,
@@ -82,6 +100,8 @@ class RentalReservationWizardTest extends TestCase
         ]);
         RentalRate::factory()->daily()->create([
             'vehicle_id' => $busy->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
             'rate_per_period' => 300000,
             'deposit_amount' => 500000,
             'is_active' => true,
@@ -108,6 +128,10 @@ class RentalReservationWizardTest extends TestCase
         $ids = collect($response->json('vehicles'))->pluck('id')->all();
         $this->assertContains($free->id, $ids);
         $this->assertNotContains($busy->id, $ids);
+
+        $freeRow = collect($response->json('vehicles'))->firstWhere('id', $free->id);
+        $this->assertSame('https://cdn.example.test/vehicles/free-car.jpg', $freeRow['photo_url']);
+        $this->assertArrayHasKey('photo_url', $freeRow);
     }
 
     public function test_available_vehicles_excludes_self_when_editing(): void

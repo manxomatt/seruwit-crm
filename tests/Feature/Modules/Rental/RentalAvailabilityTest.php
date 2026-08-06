@@ -5,6 +5,7 @@ namespace Tests\Feature\Modules\Rental;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalRate;
 use Tests\TestCase;
 use Tests\Traits\WithRoles;
 
@@ -61,8 +62,10 @@ class RentalAvailabilityTest extends TestCase
                 ->where('board.counts.booked', 1)
                 ->where('board.counts.in_use', 1)
                 ->has('board.vehicles', 4)
+                ->has('board.vehicles.0.photo_url')
+                ->has('board.vehicles.0.has_rate')
                 ->where('board.vehicles', fn ($vehicles) => collect($vehicles)->contains(
-                    fn ($row) => $row['id'] === $free->id && $row['availability'] === 'free'
+                    fn ($row) => $row['id'] === $free->id && $row['availability'] === 'free' && $row['has_rate'] === false
                 ) && collect($vehicles)->contains(
                     fn ($row) => $row['id'] === $draftVehicle->id
                         && $row['availability'] === 'free'
@@ -74,6 +77,35 @@ class RentalAvailabilityTest extends TestCase
                 ) && collect($vehicles)->contains(
                     fn ($row) => $row['id'] === $activeVehicle->id
                         && $row['availability'] === 'in_use'
+                )));
+    }
+
+    public function test_availability_marks_vehicles_with_rate_as_bookable(): void
+    {
+        $withRate = Vehicle::factory()->create(['name' => 'Rated Car', 'status' => Vehicle::STATUS_ACTIVE]);
+        $withoutRate = Vehicle::factory()->create(['name' => 'Bare Car', 'status' => Vehicle::STATUS_ACTIVE]);
+
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $withRate->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 350000,
+            'deposit_amount' => 700000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->get(route('module.rental.availability.index', [
+                'from' => '2027-06-01',
+                'to' => '2027-06-14',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Availability/Index')
+                ->where('board.vehicles', fn ($vehicles) => collect($vehicles)->contains(
+                    fn ($row) => $row['id'] === $withRate->id && $row['has_rate'] === true
+                ) && collect($vehicles)->contains(
+                    fn ($row) => $row['id'] === $withoutRate->id && $row['has_rate'] === false
                 )));
     }
 

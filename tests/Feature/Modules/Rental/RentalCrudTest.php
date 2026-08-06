@@ -128,6 +128,43 @@ class RentalCrudTest extends TestCase
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         $partner = Partner::factory()->create();
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 400000,
+            'deposit_amount' => 800000,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.store'), [
+                'vehicle_id' => $vehicle->id,
+                'partner_id' => $partner->id,
+                'start_date' => '2027-01-10',
+                'end_date' => '2027-01-14',
+                'period_type' => 'daily',
+                'rate_per_period' => 1,
+                'deposit_amount' => 1,
+            ])
+            ->assertRedirect(route('module.rental.show', Rental::query()->first()));
+
+        $rental = Rental::first();
+        $this->assertNotNull($rental);
+        $this->assertSame(Rental::STATUS_DRAFT, $rental->status);
+        $this->assertSame(5, $rental->total_periods);
+        $this->assertEquals(400000, (float) $rental->rate_per_period);
+        $this->assertEquals(800000, (float) $rental->deposit_amount);
+        $this->assertEquals(2000000, (float) $rental->base_amount);
+        $this->assertEquals(2000000, (float) $rental->total_amount);
+        $this->assertStringStartsWith('RENT-', $rental->code);
+    }
+
+    public function test_rental_create_requires_linked_rate_scheme(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $partner = Partner::factory()->create();
 
         $this->actingAs($this->createAdminUser())
             ->post(route('module.rental.store'), [
@@ -139,21 +176,23 @@ class RentalCrudTest extends TestCase
                 'rate_per_period' => 400000,
                 'deposit_amount' => 800000,
             ])
-            ->assertRedirect(route('module.rental.show', Rental::query()->first()));
+            ->assertSessionHasErrors('vehicle_id');
 
-        $rental = Rental::first();
-        $this->assertNotNull($rental);
-        $this->assertSame(Rental::STATUS_DRAFT, $rental->status);
-        $this->assertSame(5, $rental->total_periods);
-        $this->assertEquals(2000000, (float) $rental->base_amount);
-        $this->assertEquals(2000000, (float) $rental->total_amount);
-        $this->assertStringStartsWith('RENT-', $rental->code);
+        $this->assertDatabaseCount('rentals', 0);
     }
 
     public function test_rental_create_validates_end_date_before_start(): void
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         $partner = Partner::factory()->create();
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 400000,
+            'deposit_amount' => 800000,
+            'is_active' => true,
+        ]);
 
         $this->actingAs($this->createAdminUser())
             ->post(route('module.rental.store'), [
@@ -238,6 +277,14 @@ class RentalCrudTest extends TestCase
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         $partner = Partner::factory()->create();
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $vehicle->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 400000,
+            'deposit_amount' => 800000,
+            'is_active' => true,
+        ]);
 
         // Existing confirmed rental occupies Jan 10–15
         Rental::factory()->confirmed()->create([
@@ -278,6 +325,7 @@ class RentalCrudTest extends TestCase
                 ->has('invoicingEnabled')
                 ->has('checklistItems')
                 ->has('fuelLevels')
+                ->has('companyBankAccounts')
             );
     }
 
@@ -341,6 +389,14 @@ class RentalCrudTest extends TestCase
         $rental = Rental::factory()->create(['status' => Rental::STATUS_DRAFT]);
         $newVehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
         $partner = Partner::factory()->create();
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $newVehicle->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 600000,
+            'deposit_amount' => 1200000,
+            'is_active' => true,
+        ]);
 
         $this->actingAs($this->createAdminUser())
             ->patch(route('module.rental.update', $rental), [
@@ -349,13 +405,15 @@ class RentalCrudTest extends TestCase
                 'start_date' => '2027-02-01',
                 'end_date' => '2027-02-07',
                 'period_type' => 'daily',
-                'rate_per_period' => 600000,
-                'deposit_amount' => 1200000,
+                'rate_per_period' => 1,
+                'deposit_amount' => 1,
             ])
             ->assertRedirect();
 
         $rental->refresh();
         $this->assertEquals(7, $rental->total_periods);
+        $this->assertEquals(600000, (float) $rental->rate_per_period);
+        $this->assertEquals(1200000, (float) $rental->deposit_amount);
         $this->assertEquals(4200000, (float) $rental->base_amount);
     }
 
@@ -402,6 +460,26 @@ class RentalCrudTest extends TestCase
         $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
         $this->assertNotNull($rental->confirmed_at);
         $this->assertNotNull($rental->confirmed_by);
+    }
+
+    public function test_confirm_with_transfer_records_payment_method(): void
+    {
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_DRAFT,
+            'deposit_amount' => 500_000,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.confirm', $rental), [
+                'deposit_collected' => true,
+                'payment_method' => 'transfer',
+            ])
+            ->assertRedirect();
+
+        $rental->refresh();
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
+        $this->assertSame('transfer', $rental->deposit_payment_method);
+        $this->assertNotNull($rental->deposit_received_at);
     }
 
     public function test_confirm_succeeds_when_gateway_charges_table_is_missing(): void

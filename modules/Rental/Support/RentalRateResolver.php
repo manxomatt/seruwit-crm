@@ -52,6 +52,20 @@ class RentalRateResolver
         return $ranked->first()['rate'] ?? null;
     }
 
+    /**
+     * Whether any active period tariff applies to this vehicle for the window.
+     */
+    public function hasMatchingRate(Vehicle $vehicle, string $startDate, string $endDate): bool
+    {
+        foreach ([RentalRate::PERIOD_DAILY, RentalRate::PERIOD_WEEKLY, RentalRate::PERIOD_MONTHLY] as $periodType) {
+            if ($this->suggest($vehicle, $startDate, $endDate, $periodType) !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function specificityScore(RentalRate $rate, ?Vehicle $vehicle): int
     {
         if ($rate->vehicle_id) {

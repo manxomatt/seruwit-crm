@@ -178,6 +178,23 @@ class FleetBaseTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_admin_can_open_create_fleet_base_page(): void
+    {
+        $user = $this->createAdminUser();
+
+        $this->actingAs($user)->get(route('module.fleet.bases.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Bases/Create')
+                ->has('managers')
+                ->has('kinds')
+                ->has('locations')
+                ->has('warehouses')
+                ->has('locationLinkEnabled')
+                ->has('warehouseLinkEnabled')
+            );
+    }
+
     public function test_admin_can_create_a_fleet_base(): void
     {
         $user = $this->createAdminUser();
@@ -246,6 +263,25 @@ class FleetBaseTest extends TestCase
                 ->component('Modules/Fleet/Bases/Show')
                 ->where('base.id', $base->id)
                 ->where('base.code', $base->code)
+            );
+    }
+
+    public function test_admin_can_open_edit_fleet_base_page(): void
+    {
+        $user = $this->createAdminUser();
+        $base = FleetBase::factory()->create(['manager_id' => $user->id]);
+
+        $this->actingAs($user)->get(route('module.fleet.bases.edit', $base))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Fleet/Bases/Edit')
+                ->where('base.id', $base->id)
+                ->has('managers')
+                ->has('kinds')
+                ->has('locations')
+                ->has('warehouses')
+                ->has('locationLinkEnabled')
+                ->has('warehouseLinkEnabled')
             );
     }
 
