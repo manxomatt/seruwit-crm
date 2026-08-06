@@ -6,10 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
-use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Rental\Http\Requests\StoreRentalRateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRateRequest;
 use Modules\Rental\Models\RentalRate;
@@ -22,26 +19,9 @@ class RentalRateController extends Controller
         return 'module';
     }
 
-    public function index(): Response
+    public function index(): RedirectResponse
     {
-        return Inertia::render('Modules/Rental/Rates/Index', [
-            'rates' => RentalRate::query()
-                ->with('vehicle:id,name,plate_number,type')
-                ->orderBy('period_type')
-                ->orderBy('name')
-                ->get(),
-            'vehicles' => Vehicle::query()
-                ->where('status', Vehicle::STATUS_ACTIVE)
-                ->orderBy('name')
-                ->get(['id', 'name', 'plate_number', 'type']),
-            'rentalClasses' => collect(VehicleRentalClass::values())
-                ->map(fn (string $value): array => [
-                    'value' => $value,
-                    'label' => VehicleRentalClass::label($value),
-                ])
-                ->values()
-                ->all(),
-        ]);
+        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates']);
     }
 
     public function suggest(Request $request, RentalRateResolver $resolver): JsonResponse

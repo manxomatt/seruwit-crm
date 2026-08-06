@@ -6,6 +6,7 @@ return [
     'finance' => 'Keuangan',
     'procurement_warehouse' => 'Pengadaan & Gudang',
     'fleet_compliance' => 'Armada & Kepatuhan',
+    'car_rental' => 'Rental Mobil',
     'distribution_logistics' => 'Distribusi & Logistik',
     'sales_commercial' => 'Sales & Komersial',
     'content' => 'Konten',

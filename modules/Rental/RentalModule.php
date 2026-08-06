@@ -16,6 +16,7 @@ use Modules\Rental\Http\Controllers\RentalDashboardController;
 use Modules\Rental\Http\Controllers\RentalPdfController;
 use Modules\Rental\Http\Controllers\RentalRateController;
 use Modules\Rental\Http\Controllers\RentalReservationWizardController;
+use Modules\Rental\Http\Controllers\RentalSettingsController;
 
 /**
  * Vehicle rental management: booking, checkout, return, damage reporting, and
@@ -105,7 +106,12 @@ class RentalModule implements ModuleContract
             ->middleware('permission:rental,view')
             ->name('rental.dashboard.export');
 
-        // Tariff rates
+        // Settings (rates tab)
+        Route::get('/rental/settings', [RentalSettingsController::class, 'index'])
+            ->middleware('permission:rental,view')
+            ->name('rental.settings.index');
+
+        // Tariff rates (CRUD; index redirects to settings?tab=rates)
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');
         Route::get('/rental/rates/suggest', [RentalRateController::class, 'suggest'])->middleware('permission:rental,create')->name('rental.rates.suggest');
         Route::post('/rental/rates', [RentalRateController::class, 'store'])->middleware('permission:rental,create')->name('rental.rates.store');

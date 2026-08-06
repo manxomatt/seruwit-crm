@@ -6,6 +6,7 @@ return [
     'finance' => 'Finance',
     'procurement_warehouse' => 'Supply & Warehouse',
     'fleet_compliance' => 'Fleet & Compliance',
+    'car_rental' => 'Car Rental',
     'distribution_logistics' => 'Distribution & Logistics',
     'sales_commercial' => 'Sales & Commercial',
     'content' => 'Content',

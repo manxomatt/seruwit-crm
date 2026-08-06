@@ -54,11 +54,18 @@ return [
         'current_step' => 'Langkah saat ini',
     ],
 
+    'settings' => [
+        'title' => 'Pengaturan rental',
+        'tab_rates' => 'Tarif',
+    ],
+
     'nav' => [
         'dashboard' => 'Dashboard',
         'list' => 'Rental',
+        'reservation' => 'Reservasi',
         'availability' => 'Ketersediaan',
         'rates' => 'Tarif',
+        'settings' => 'Pengaturan',
         'back_to_list' => '← Kembali ke Rental',
         'back' => '← Kembali',
     ],

@@ -54,11 +54,18 @@ return [
         'current_step' => 'Current step',
     ],
 
+    'settings' => [
+        'title' => 'Rental settings',
+        'tab_rates' => 'Rates',
+    ],
+
     'nav' => [
         'dashboard' => 'Dashboard',
         'list' => 'Rentals',
+        'reservation' => 'Reservation',
         'availability' => 'Availability',
         'rates' => 'Rates',
+        'settings' => 'Settings',
         'back_to_list' => '← Back to Rentals',
         'back' => '← Back',
     ],
