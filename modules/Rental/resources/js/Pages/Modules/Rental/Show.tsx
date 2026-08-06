@@ -18,11 +18,12 @@ import { formatMoney } from '@/utils/money';
 import { formatDateTimeDmYHi } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
 import { Head, Link, router, useForm, usePage, usePoll } from '@inertiajs/react';
-import { ChangeEvent, FormEventHandler, useEffect, useState } from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import ConfirmPaymentPanel, {
     type CompanyBankAccountOption,
     type DepositPaymentMethod,
 } from '../../../ConfirmPayment/ConfirmPaymentPanel';
+import HandoverPhotoPicker from '../../../HandoverPhotoPicker';
 import PostConfirmPanel from '../../../PostConfirm/PostConfirmPanel';
 import PostConfirmStepper from '../../../PostConfirm/PostConfirmStepper';
 import type { PostConfirmAction, PostConfirmProgress, PostConfirmStepId } from '../../../PostConfirm/types';
@@ -36,24 +37,6 @@ import {
     StatCard,
     StatusBadge,
 } from './ShowUi';
-
-async function filesToDataUrls(files: FileList | null): Promise<string[]> {
-    if (! files || files.length === 0) {
-        return [];
-    }
-
-    const urls: string[] = [];
-    for (const file of Array.from(files)) {
-        urls.push(await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        }));
-    }
-
-    return urls;
-}
 
 interface Extension { id: number; original_end_date: string; new_end_date: string; extended_periods: number; additional_amount: string; notes: string | null; }
 interface Damage { id: number; description: string; amount: string; photo_path: string | null; reported_at: string; }
@@ -133,7 +116,7 @@ interface Rental {
     return_notes: string | null;
     notes: string | null; cancelled_reason: string | null;
     confirmed_at: string | null; checked_out_at: string | null; returned_at: string | null; completed_at: string | null;
-    vehicle: { id: number; name: string; plate_number: string; type: string; status: string; };
+    vehicle: { id: number; name: string; plate_number: string; type: string; status: string; photo_url: string | null; };
     partner: { id: number; name: string; code: string; phone: string | null; };
     driver: { id: number; name: string; phone: string | null; } | null;
     confirmed_by: { id: number; name: string; } | null;
@@ -444,57 +427,75 @@ export default function Show({
                 {/* Hero identity */}
                 <section className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <div className="flex flex-col gap-5 border-b border-gray-100 p-5 dark:border-gray-700 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 flex-1 space-y-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <StatusBadge
-                                    status={rental.status}
-                                    label={t(`rental.status.${rental.status}`, undefined, rental.status)}
-                                />
-                                {invoicingEnabled && (
-                                    <PaymentBadge
-                                        status={payment.status}
-                                        label={t(`rental.payment.${payment.status}`, undefined, payment.status)}
+                        <div className="flex min-w-0 flex-1 flex-col gap-5 sm:flex-row sm:items-start">
+                            <div className="shrink-0 overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-900/40 dark:ring-gray-600">
+                                {rental.vehicle.photo_url ? (
+                                    <img
+                                        src={rental.vehicle.photo_url}
+                                        alt={rental.vehicle.name}
+                                        className="h-40 w-full object-cover sm:h-44 sm:w-64"
                                     />
-                                )}
-                                {depositHeld && !rental.deposit_received_at && (
-                                    <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
-                                        {t('rental.deposit.not_received')}
-                                    </span>
-                                )}
-                                {depositHeld && rental.deposit_received_at && rental.deposit_status !== 'settled' && (
-                                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                                        {t('rental.deposit.received')}
-                                    </span>
+                                ) : (
+                                    <div className="flex h-40 w-full items-center justify-center px-4 text-center sm:h-44 sm:w-64">
+                                        <p className="text-sm text-gray-400 dark:text-gray-500">
+                                            {t('rental.availability.no_photo')}
+                                        </p>
+                                    </div>
                                 )}
                             </div>
 
-                            <div>
-                                <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                                    {rental.vehicle.name}
-                                </h1>
-                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    <span className="font-mono font-medium text-gray-700 dark:text-gray-200">
-                                        {rental.vehicle.plate_number}
-                                    </span>
-                                    <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                                    {rental.partner.name}
-                                    {rental.driver && (
-                                        <>
-                                            <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                                            {rental.driver.name}
-                                        </>
+                            <div className="min-w-0 flex-1 space-y-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <StatusBadge
+                                        status={rental.status}
+                                        label={t(`rental.status.${rental.status}`, undefined, rental.status)}
+                                    />
+                                    {invoicingEnabled && (
+                                        <PaymentBadge
+                                            status={payment.status}
+                                            label={t(`rental.payment.${payment.status}`, undefined, payment.status)}
+                                        />
                                     )}
+                                    {depositHeld && !rental.deposit_received_at && (
+                                        <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                                            {t('rental.deposit.not_received')}
+                                        </span>
+                                    )}
+                                    {depositHeld && rental.deposit_received_at && rental.deposit_status !== 'settled' && (
+                                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                            {t('rental.deposit.received')}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+                                        {rental.vehicle.name}
+                                    </h1>
+                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        <span className="font-mono font-medium text-gray-700 dark:text-gray-200">
+                                            {rental.vehicle.plate_number}
+                                        </span>
+                                        <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                                        {rental.partner.name}
+                                        {rental.driver && (
+                                            <>
+                                                <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                                                {rental.driver.name}
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
+
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                        {rental.start_date} → {rental.end_date}
+                                    </span>
+                                    <span className="ml-2 text-gray-500">
+                                        ({rental.total_periods} {periodLabel})
+                                    </span>
                                 </p>
                             </div>
-
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                    {rental.start_date} → {rental.end_date}
-                                </span>
-                                <span className="ml-2 text-gray-500">
-                                    ({rental.total_periods} {periodLabel})
-                                </span>
-                            </p>
                         </div>
 
                         {/* Toolbar */}
@@ -1212,19 +1213,19 @@ export default function Show({
             </Modal>
 
             <Modal show={modal === 'checkout'} onClose={() => setModal(null)}>
-                <form onSubmit={submitCheckout} className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.checkout')}</h2>
+                <form onSubmit={submitCheckout} className="flex max-h-[90vh] flex-col p-6">
+                    <h2 className="mb-4 shrink-0 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.checkout')}</h2>
                     {checkoutForm.errors.deposit && (
-                        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                        <div className="mb-4 shrink-0 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                             {checkoutForm.errors.deposit}
                         </div>
                     )}
                     {depositBlocksCheckout && (
-                        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                        <div className="mb-4 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                             {t('rental.errors.checkout_deposit_required')}
                         </div>
                     )}
-                    <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
                         <div>
                             <InputLabel htmlFor="start_odometer" value={t('rental.fields.start_odometer')} />
                             <TextInput id="start_odometer" type="number" min="0" value={checkoutForm.data.start_odometer} onChange={(e) => checkoutForm.setData('start_odometer', e.target.value)} className="mt-1 w-full" />
@@ -1245,7 +1246,7 @@ export default function Show({
                         </div>
                         <div>
                             <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t('rental.checklist.checkout')}</p>
-                            <div className="space-y-1.5">
+                            <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
                                 {checklistItems.map((key) => (
                                     <label key={key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <input
@@ -1267,19 +1268,16 @@ export default function Show({
                             <textarea id="checkout_notes" rows={2} value={checkoutForm.data.checkout_notes} onChange={(e) => checkoutForm.setData('checkout_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="checkout_photos" value={`${t('rental.fields.checkout_photos')} *`} />
-                            <input
+                            <HandoverPhotoPicker
                                 id="checkout_photos"
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="mt-1 block w-full text-sm text-gray-600 dark:text-gray-300"
-                                onChange={async (e: ChangeEvent<HTMLInputElement>) => {
-                                    checkoutForm.setData('checkout_photos', await filesToDataUrls(e.target.files));
-                                }}
+                                label={t('rental.fields.checkout_photos')}
+                                value={checkoutForm.data.checkout_photos}
+                                onChange={(photos) => checkoutForm.setData('checkout_photos', photos)}
+                                error={checkoutForm.errors.checkout_photos}
                             />
-                            <InputError message={checkoutForm.errors.checkout_photos} className="mt-1" />
                         </div>
+                    </div>
+                    <div className="mt-4 shrink-0 space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
                         <div>
                             <InputLabel value={`${t('rental.fields.signature')} *`} />
                             <SignaturePad
@@ -1289,22 +1287,22 @@ export default function Show({
                             />
                             <InputError message={checkoutForm.errors.checkout_signature} className="mt-1" />
                         </div>
-                    </div>
-                    <div className="mt-4 flex justify-end gap-3">
-                        <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
-                        {depositBlocksCheckout ? (
-                            <PrimaryButton
-                                type="button"
-                                onClick={() => {
-                                    setModal(null);
-                                    action('deposit.receive');
-                                }}
-                            >
-                                {t('rental.actions.receive_deposit')}
-                            </PrimaryButton>
-                        ) : (
-                            <PrimaryButton disabled={checkoutForm.processing}>{t('rental.actions.checkout')}</PrimaryButton>
-                        )}
+                        <div className="flex justify-end gap-3">
+                            <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
+                            {depositBlocksCheckout ? (
+                                <PrimaryButton
+                                    type="button"
+                                    onClick={() => {
+                                        setModal(null);
+                                        action('deposit.receive');
+                                    }}
+                                >
+                                    {t('rental.actions.receive_deposit')}
+                                </PrimaryButton>
+                            ) : (
+                                <PrimaryButton disabled={checkoutForm.processing}>{t('rental.actions.checkout')}</PrimaryButton>
+                            )}
+                        </div>
                     </div>
                 </form>
             </Modal>
@@ -1360,18 +1358,13 @@ export default function Show({
                             <textarea id="return_notes" rows={2} value={returnForm.data.return_notes} onChange={(e) => returnForm.setData('return_notes', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="return_photos" value={`${t('rental.fields.return_photos')} *`} />
-                            <input
+                            <HandoverPhotoPicker
                                 id="return_photos"
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="mt-1 block w-full text-sm text-gray-600 dark:text-gray-300"
-                                onChange={async (e: ChangeEvent<HTMLInputElement>) => {
-                                    returnForm.setData('return_photos', await filesToDataUrls(e.target.files));
-                                }}
+                                label={t('rental.fields.return_photos')}
+                                value={returnForm.data.return_photos}
+                                onChange={(photos) => returnForm.setData('return_photos', photos)}
+                                error={returnForm.errors.return_photos}
                             />
-                            <InputError message={returnForm.errors.return_photos} className="mt-1" />
                         </div>
                         <div>
                             <InputLabel value={`${t('rental.fields.signature')} *`} />
@@ -1431,7 +1424,7 @@ export default function Show({
                                     })),
                                 ]}
                                 value={swapForm.data.to_vehicle_id}
-                                onChange={(e) => swapForm.setData('to_vehicle_id', e.target.value)}
+                                onChange={(value) => swapForm.setData('to_vehicle_id', value)}
                                 className="mt-1 w-full"
                             />
                             <InputError message={swapForm.errors.to_vehicle_id} className="mt-1" />
@@ -1502,16 +1495,18 @@ export default function Show({
                     <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.addon')}</h2>
                     <div className="space-y-4">
                         <div>
-                            <InputLabel value={`${t('rental.fields.addon_code')} *`} />
-                            <select
-                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            <InputLabel htmlFor="addon_code" value={`${t('rental.fields.addon_code')} *`} />
+                            <Select
+                                id="addon_code"
+                                className="mt-1 w-full"
                                 value={addonForm.data.addon_code}
-                                onChange={(e) => addonForm.setData('addon_code', e.target.value)}
-                            >
-                                {addonCodes.map((option) => (
-                                    <option key={option.value} value={option.value}>{option.label}</option>
-                                ))}
-                            </select>
+                                onChange={(value) => addonForm.setData('addon_code', value)}
+                                placeholder={t('rental.placeholders.select_addon_code')}
+                                options={addonCodes.map((option) => ({
+                                    value: option.value,
+                                    label: option.label || t(`rental.addon.codes.${option.value}`, undefined, option.value),
+                                }))}
+                            />
                             <InputError message={addonForm.errors.addon_code} className="mt-1" />
                         </div>
                         <div>

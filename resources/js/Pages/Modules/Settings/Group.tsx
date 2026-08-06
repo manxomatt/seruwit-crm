@@ -2,6 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
+import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -22,6 +23,16 @@ interface Setting {
     sort_order: number;
 }
 
+interface MailConfig {
+    is_enabled: boolean;
+    host: string | null;
+    port: number | null;
+    encryption: string | null;
+    username: string | null;
+    has_password: boolean;
+    is_configured: boolean;
+}
+
 interface Props {
     groupSettings: Setting[];
     groups: string[];
@@ -29,6 +40,8 @@ interface Props {
     canEditValues: boolean;
     canManageStructure: boolean;
     appearanceResetUrl?: string | null;
+    mailConfig?: MailConfig | null;
+    mailConfigUpdateUrl?: string | null;
 }
 
 const formatGroupLabel = (group: string): string => group.charAt(0).toUpperCase() + group.slice(1);
@@ -45,6 +58,150 @@ const TrashIcon = () => (
     </svg>
 );
 
+function MailSmtpForm({
+    mailConfig,
+    updateUrl,
+    canEdit,
+}: {
+    mailConfig: MailConfig;
+    updateUrl: string | null;
+    canEdit: boolean;
+}): JSX.Element {
+    const { t } = useTrans();
+    const { data, setData, patch, processing, errors } = useForm({
+        is_enabled: mailConfig.is_enabled,
+        host: mailConfig.host ?? '',
+        port: mailConfig.port ?? 587,
+        encryption: mailConfig.encryption ?? 'tls',
+        username: mailConfig.username ?? '',
+        password: '',
+    });
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (!updateUrl) {
+            return;
+        }
+        patch(updateUrl, { preserveScroll: true });
+    };
+
+    return (
+        <div className="mt-8 border-t border-gray-200 pt-8">
+            <div className="mb-4">
+                <h4 className="text-base font-medium text-gray-900">{t('settings.mail.title')}</h4>
+                <p className="mt-1 text-sm text-gray-500">{t('settings.mail.subtitle')}</p>
+                {mailConfig.is_configured ? (
+                    <p className="mt-2 text-xs font-medium text-green-700">{t('settings.mail.status_active')}</p>
+                ) : (
+                    <p className="mt-2 text-xs text-amber-700">{t('settings.mail.status_inactive')}</p>
+                )}
+            </div>
+
+            {!canEdit || !updateUrl ? (
+                <div className="space-y-3 text-sm text-gray-700">
+                    <p>
+                        <span className="font-medium">{t('settings.mail.enabled')}:</span>{' '}
+                        {mailConfig.is_enabled ? t('settings.value_display.yes') : t('settings.value_display.no')}
+                    </p>
+                    <p>
+                        <span className="font-medium">{t('settings.mail.host')}:</span> {mailConfig.host || '—'}
+                    </p>
+                    <p>
+                        <span className="font-medium">{t('settings.mail.port')}:</span> {mailConfig.port ?? '—'}
+                    </p>
+                    <p>
+                        <span className="font-medium">{t('settings.mail.username')}:</span> {mailConfig.username || '—'}
+                    </p>
+                </div>
+            ) : (
+                <form onSubmit={submit} className="max-w-xl space-y-4">
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                            type="checkbox"
+                            checked={data.is_enabled}
+                            onChange={(e) => setData('is_enabled', e.target.checked)}
+                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                        />
+                        {t('settings.mail.enabled')}
+                    </label>
+
+                    <div>
+                        <InputLabel htmlFor="smtp_host" value={t('settings.mail.host')} />
+                        <TextInput
+                            id="smtp_host"
+                            value={data.host}
+                            onChange={(e) => setData('host', e.target.value)}
+                            className="mt-1 block w-full"
+                            placeholder="smtp.gmail.com"
+                            autoComplete="off"
+                        />
+                        <InputError message={errors.host} className="mt-1" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <InputLabel htmlFor="smtp_port" value={t('settings.mail.port')} />
+                            <TextInput
+                                id="smtp_port"
+                                type="number"
+                                value={String(data.port)}
+                                onChange={(e) => setData('port', Number(e.target.value) || 0)}
+                                className="mt-1 block w-full"
+                            />
+                            <InputError message={errors.port} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="smtp_encryption" value={t('settings.mail.encryption')} />
+                            <select
+                                id="smtp_encryption"
+                                value={data.encryption}
+                                onChange={(e) => setData('encryption', e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            >
+                                <option value="tls">{t('settings.mail.encryption_tls')}</option>
+                                <option value="ssl">{t('settings.mail.encryption_ssl')}</option>
+                                <option value="">{t('settings.mail.encryption_none')}</option>
+                            </select>
+                            <InputError message={errors.encryption} className="mt-1" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="smtp_username" value={t('settings.mail.username')} />
+                        <TextInput
+                            id="smtp_username"
+                            value={data.username}
+                            onChange={(e) => setData('username', e.target.value)}
+                            className="mt-1 block w-full"
+                            autoComplete="off"
+                        />
+                        <InputError message={errors.username} className="mt-1" />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="smtp_password" value={t('settings.mail.password')} />
+                        <TextInput
+                            id="smtp_password"
+                            type="password"
+                            value={data.password}
+                            onChange={(e) => setData('password', e.target.value)}
+                            className="mt-1 block w-full"
+                            placeholder={mailConfig.has_password ? '••••••••' : ''}
+                            autoComplete="new-password"
+                        />
+                        <p className="mt-1 text-xs text-gray-400">{t('settings.mail.password_hint')}</p>
+                        <InputError message={errors.password} className="mt-1" />
+                    </div>
+
+                    <div className="pt-2">
+                        <PrimaryButton disabled={processing}>{t('settings.mail.save')}</PrimaryButton>
+                    </div>
+                </form>
+            )}
+        </div>
+    );
+}
+
 export default function Group({
     groupSettings,
     groups,
@@ -52,6 +209,8 @@ export default function Group({
     canEditValues,
     canManageStructure,
     appearanceResetUrl = null,
+    mailConfig = null,
+    mailConfigUpdateUrl = null,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -275,6 +434,14 @@ export default function Group({
                                 )}
                             </div>
                         </form>
+                    )}
+
+                    {mailConfig && (
+                        <MailSmtpForm
+                            mailConfig={mailConfig}
+                            updateUrl={mailConfigUpdateUrl}
+                            canEdit={canEditValues}
+                        />
                     )}
                 </div>
             </div>

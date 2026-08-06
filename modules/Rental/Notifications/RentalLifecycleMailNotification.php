@@ -118,10 +118,21 @@ class RentalLifecycleMailNotification extends Notification
             default => __('rental.mail.default_body', ['code' => $rental->code]),
         };
 
-        return (new MailMessage)
+        $footer = \App\Models\Setting::getValue('email.footer_text')
+            ?: __('rental.mail.footer');
+
+        $message = (new MailMessage)
             ->subject($subject)
             ->line($line)
             ->action(__('rental.mail.view_rental'), $url)
-            ->line(__('rental.mail.footer'));
+            ->line($footer);
+
+        $replyTo = config('mail.reply_to.address');
+
+        if (filled($replyTo)) {
+            $message->replyTo($replyTo, config('mail.reply_to.name'));
+        }
+
+        return $message;
     }
 }

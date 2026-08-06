@@ -23,6 +23,12 @@ return [
         'quote_failed' => 'Gagal memuat penawaran harga.',
         'quote_unavailable' => 'Reservasi ini tidak lagi tersedia.',
         'walk_in_failed' => 'Gagal menyimpan pelanggan walk-in.',
+        'customer' => [
+            'selected_hint' => 'Detail pelanggan yang dipilih untuk reservasi ini',
+            'no_details' => 'Belum ada detail kontak tambahan untuk pelanggan ini.',
+            'license_expired' => 'SIM kedaluwarsa pada :date. Konfirmasi akan ditolak sampai SIM diperbarui.',
+            'license_expiring' => 'SIM akan kedaluwarsa pada :date.',
+        ],
         'confirm' => [
             'subtitle' => 'Periksa detail di bawah, lalu buat reservasi sebagai draft Quote.',
             'ready_title' => 'Siap dibuat',
@@ -186,6 +192,15 @@ return [
         'balance_due' => 'Sisa tagihan',
     ],
 
+    'hints' => [
+        'checkout_photos_count' => 'Unggah :min–:max foto kondisi kendaraan.',
+        'checkout_photos_add' => 'Klik untuk unggah foto',
+        'checkout_photos_add_more' => 'Tambah foto lagi',
+        'checkout_photos_remaining' => 'Masih bisa menambah :count foto',
+        'checkout_photos_full' => 'Maksimal :max foto sudah tercapai.',
+        'checkout_photos_processing' => 'Mengompres foto…',
+    ],
+
     'placeholders' => [
         'search' => 'Cari kode atau partner…',
         'select_partner' => 'Pilih partner…',
@@ -206,6 +221,7 @@ return [
         'late_fee_fallback' => 'Kosong = tarif harian (sewa harian)',
         'fuel_policy' => 'mis. Kembalikan dengan level BBM yang sama',
         'addon_description' => 'mis. Asuransi full 3 hari',
+        'select_addon_code' => 'Pilih jenis biaya…',
     ],
 
     'actions' => [
@@ -599,6 +615,7 @@ return [
         'partner_license_expired' => 'SIM pelanggan kedaluwarsa pada :date.',
         'partner_missing' => 'Pelanggan rental wajib sebelum konfirmasi.',
         'handover_photo_required' => 'Tambahkan minimal satu foto kondisi.',
+        'handover_photo_max' => 'Maksimal :max foto kondisi yang boleh diunggah.',
         'handover_signature_required' => 'Tanda tangan pelanggan wajib.',
     ],
 

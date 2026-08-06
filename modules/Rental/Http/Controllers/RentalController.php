@@ -76,14 +76,7 @@ class RentalController extends Controller
                 ->where('status', Driver::STATUS_AVAILABLE)
                 ->orderBy('name')
                 ->get(['id', 'name', 'phone']),
-            'partners' => Partner::query()
-                ->where('status', 'active')
-                ->when(
-                    Schema::hasColumn('partners', 'is_blacklisted'),
-                    fn ($query) => $query->where('is_blacklisted', false),
-                )
-                ->orderBy('name')
-                ->get(['id', 'name', 'code']),
+            'partners' => $this->partnerOptions(),
             'selectedPartnerId' => $selectedPartnerId,
             'prefill' => [
                 'vehicle_id' => $prefillVehicleId,
@@ -134,11 +127,7 @@ class RentalController extends Controller
 
         if ($request->wantsJson() || $request->expectsJson() || $request->header('X-Reservation-Wizard') === '1') {
             return response()->json([
-                'partner' => [
-                    'id' => $partner->id,
-                    'name' => $partner->name,
-                    'code' => $partner->code,
-                ],
+                'partner' => $this->partnerOption($partner),
                 'created' => $result['created'],
                 'message' => $message,
             ]);
@@ -173,7 +162,7 @@ class RentalController extends Controller
     public function show(Rental $rental): Response
     {
         $rental->load([
-            'vehicle:id,name,plate_number,type,status',
+            'vehicle:id,name,plate_number,type,status,photo_url',
             'driver:id,name,phone',
             'partner:id,name,code,phone',
             'confirmedBy:id,name',
@@ -327,14 +316,7 @@ class RentalController extends Controller
                 ->where('status', Driver::STATUS_AVAILABLE)
                 ->orderBy('name')
                 ->get(['id', 'name', 'phone']),
-            'partners' => Partner::query()
-                ->where('status', 'active')
-                ->when(
-                    Schema::hasColumn('partners', 'is_blacklisted'),
-                    fn ($query) => $query->where('is_blacklisted', false),
-                )
-                ->orderBy('name')
-                ->get(['id', 'name', 'code']),
+            'partners' => $this->partnerOptions(),
             'rates' => RentalRate::query()
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -399,6 +381,83 @@ class RentalController extends Controller
         return Location::query()->active()->orderBy('name')->get([
             'id', 'code', 'name', 'address', 'city',
         ]);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, array{
+     *     id: int,
+     *     name: string,
+     *     code: string,
+     *     phone: string|null,
+     *     mobile: string|null,
+     *     email: string|null,
+     *     id_number: string|null,
+     *     license_number: string|null,
+     *     license_expires_at: string|null,
+     *     address: string|null,
+     *     account_type: string|null,
+     *     status: string|null
+     * }>
+     */
+    private function partnerOptions()
+    {
+        return Partner::query()
+            ->where('status', 'active')
+            ->when(
+                Schema::hasColumn('partners', 'is_blacklisted'),
+                fn ($query) => $query->where('is_blacklisted', false),
+            )
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'code',
+                'phone',
+                'mobile',
+                'email',
+                'id_number',
+                'license_number',
+                'license_expires_at',
+                'address',
+                'account_type',
+                'status',
+            ])
+            ->map(fn (Partner $partner): array => $this->partnerOption($partner))
+            ->values();
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     code: string,
+     *     phone: string|null,
+     *     mobile: string|null,
+     *     email: string|null,
+     *     id_number: string|null,
+     *     license_number: string|null,
+     *     license_expires_at: string|null,
+     *     address: string|null,
+     *     account_type: string|null,
+     *     status: string|null
+     * }
+     */
+    private function partnerOption(Partner $partner): array
+    {
+        return [
+            'id' => $partner->id,
+            'name' => $partner->name,
+            'code' => $partner->code,
+            'phone' => $partner->phone,
+            'mobile' => $partner->mobile,
+            'email' => $partner->email,
+            'id_number' => $partner->id_number,
+            'license_number' => $partner->license_number,
+            'license_expires_at' => $partner->license_expires_at?->toDateString(),
+            'address' => $partner->address,
+            'account_type' => $partner->account_type,
+            'status' => $partner->status,
+        ];
     }
 
     /**

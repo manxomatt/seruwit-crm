@@ -309,6 +309,9 @@ class RentalCrudTest extends TestCase
     public function test_can_view_rental_show(): void
     {
         $rental = Rental::factory()->create();
+        $rental->vehicle->update([
+            'photo_url' => 'https://cdn.example.test/vehicles/rental-show.jpg',
+        ]);
 
         $this->actingAs($this->createUserWithRole())
             ->get(route('module.rental.show', $rental))
@@ -326,6 +329,7 @@ class RentalCrudTest extends TestCase
                 ->has('checklistItems')
                 ->has('fuelLevels')
                 ->has('companyBankAccounts')
+                ->where('rental.vehicle.photo_url', 'https://cdn.example.test/vehicles/rental-show.jpg')
             );
     }
 
@@ -609,6 +613,37 @@ class RentalCrudTest extends TestCase
                 'start_odometer' => 1000,
             ])
             ->assertSessionHasErrors(['checkout_photos', 'checkout_signature']);
+    }
+
+    public function test_checkout_rejects_more_than_five_photos(): void
+    {
+        $rental = Rental::factory()->confirmed()->create();
+        $pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.checkout', $rental), $this->rentalCheckoutPayload([
+                'checkout_photos' => array_fill(0, 6, $pixel),
+            ]))
+            ->assertSessionHasErrors('checkout_photos');
+
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->fresh()->status);
+    }
+
+    public function test_checkout_accepts_up_to_five_photos(): void
+    {
+        $rental = Rental::factory()->confirmed()->create();
+        $pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.checkout', $rental), $this->rentalCheckoutPayload([
+                'checkout_photos' => array_fill(0, 5, $pixel),
+            ]))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $rental->refresh();
+        $this->assertSame(Rental::STATUS_ACTIVE, $rental->status);
+        $this->assertCount(5, $rental->checkout_photos ?? []);
     }
 
     public function test_complete_transitions_returned_to_completed(): void

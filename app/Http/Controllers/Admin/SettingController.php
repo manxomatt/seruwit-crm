@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSettingRequest;
 use App\Http\Requests\UpdateSettingRequest;
+use App\Models\MailConfig;
 use App\Models\Setting;
 use App\Models\Tenant;
+use App\Support\TenantMailConfigBootstrapper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -52,6 +54,7 @@ class SettingController extends Controller
             ->pluck('group');
 
         $user = Auth::user();
+        $canEditValues = $user->hasPermissionFor('settings', 'update');
 
         return Inertia::render('Modules/Settings/Group', [
             // Named distinctly from the shared Inertia `settings` map (site_name,
@@ -63,10 +66,18 @@ class SettingController extends Controller
             // the *values* of its own settings (settings.bulk-update exists on
             // every domain). Defining, renaming, or deleting a setting stays a
             // central-only route (see routes/web.php).
-            'canEditValues' => $user->hasPermissionFor('settings', 'update'),
+            'canEditValues' => $canEditValues,
             'canManageStructure' => ! tenancy()->initialized && $user->can('manage-settings'),
-            'appearanceResetUrl' => $group === 'appearance' && $user->hasPermissionFor('settings', 'update')
+            'appearanceResetUrl' => $group === 'appearance' && $canEditValues
                 ? route($this->getRoutePrefix().'.settings.appearance.reset')
+                : null,
+            // SMTP credentials live in mail_configs (encrypted), not the settings
+            // key/value table — only available inside a tenant workspace.
+            'mailConfig' => $group === 'email' && tenancy()->initialized && MailConfig::tableReady()
+                ? MailConfig::current()->toPublicArray()
+                : null,
+            'mailConfigUpdateUrl' => $group === 'email' && tenancy()->initialized && $canEditValues
+                ? route($this->getRoutePrefix().'.settings.mail.update')
                 : null,
         ]);
     }
@@ -162,6 +173,10 @@ class SettingController extends Controller
 
         foreach ($data['settings'] as $settingData) {
             Setting::where('id', $settingData['id'])->update(['value' => $settingData['value']]);
+        }
+
+        if (tenancy()->initialized && $data['group'] === 'email') {
+            app(TenantMailConfigBootstrapper::class)->refresh();
         }
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $data['group'])

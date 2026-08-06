@@ -23,6 +23,12 @@ return [
         'quote_failed' => 'Could not load price quote.',
         'quote_unavailable' => 'This reservation is no longer available.',
         'walk_in_failed' => 'Could not save walk-in customer.',
+        'customer' => [
+            'selected_hint' => 'Selected customer details for this reservation',
+            'no_details' => 'No additional contact details on file for this customer.',
+            'license_expired' => 'Driving license expired on :date. Confirmation will be blocked until the license is updated.',
+            'license_expiring' => 'Driving license expires soon on :date.',
+        ],
         'confirm' => [
             'subtitle' => 'Review the details below, then create the reservation as a Quote draft.',
             'ready_title' => 'Ready to create',
@@ -186,6 +192,15 @@ return [
         'balance_due' => 'Balance due',
     ],
 
+    'hints' => [
+        'checkout_photos_count' => 'Upload :min–:max photos of the vehicle condition.',
+        'checkout_photos_add' => 'Click to upload photos',
+        'checkout_photos_add_more' => 'Add more photos',
+        'checkout_photos_remaining' => ':count more can be added',
+        'checkout_photos_full' => 'Maximum of :max photos reached.',
+        'checkout_photos_processing' => 'Compressing photos…',
+    ],
+
     'placeholders' => [
         'search' => 'Search code or partner…',
         'select_partner' => 'Select partner…',
@@ -206,6 +221,7 @@ return [
         'late_fee_fallback' => 'Blank = daily rate (daily rentals)',
         'fuel_policy' => 'e.g. Return with the same fuel level',
         'addon_description' => 'e.g. Full coverage for 3 days',
+        'select_addon_code' => 'Select charge type…',
     ],
 
     'actions' => [
@@ -599,6 +615,7 @@ return [
         'partner_license_expired' => 'Customer driving license expired on :date.',
         'partner_missing' => 'Rental customer is required before confirm.',
         'handover_photo_required' => 'Add at least one condition photo.',
+        'handover_photo_max' => 'You can upload at most :max condition photos.',
         'handover_signature_required' => 'Customer signature is required.',
     ],
 

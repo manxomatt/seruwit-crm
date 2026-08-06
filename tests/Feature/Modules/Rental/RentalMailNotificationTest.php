@@ -63,10 +63,8 @@ class RentalMailNotificationTest extends TestCase
 
         $admin = $this->createAdminUser();
         $partner = Partner::factory()->create(['email' => 'customer@example.test']);
-        $rental = Rental::factory()->create([
+        $rental = Rental::factory()->confirmed()->create([
             'partner_id' => $partner->id,
-            'status' => Rental::STATUS_CONFIRMED,
-            'confirmed_at' => now(),
         ]);
 
         $this->actingAs($admin)
@@ -74,7 +72,8 @@ class RentalMailNotificationTest extends TestCase
                 'start_odometer' => 1000,
                 'start_fuel_level' => 'full',
             ]))
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
 
         Notification::assertSentTo(
             $admin,
@@ -111,5 +110,25 @@ class RentalMailNotificationTest extends TestCase
 
         Notification::assertSentTo($admin, RentalLifecycleMailNotification::class);
         Notification::assertSentToTimes($admin, RentalLifecycleMailNotification::class, 1);
+    }
+
+    public function test_mailer_skips_when_email_notifications_disabled(): void
+    {
+        Notification::fake();
+
+        \App\Models\Setting::factory()->create([
+            'key' => 'email.notification_enabled',
+            'group' => 'email',
+            'value' => '0',
+            'type' => 'boolean',
+            'label' => 'Enable Email Notifications',
+        ]);
+
+        $this->createAdminUser();
+        $rental = Rental::factory()->create();
+
+        app(RentalMailer::class)->notify($rental, RentalLifecycleMailNotification::EVENT_CONFIRMED);
+
+        Notification::assertNothingSent();
     }
 }

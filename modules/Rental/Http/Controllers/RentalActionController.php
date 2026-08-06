@@ -116,9 +116,14 @@ class RentalActionController extends Controller
             'checkout_checklist' => ['nullable', 'array'],
             'checkout_checklist.*' => ['boolean'],
             'checkout_notes' => ['nullable', 'string', 'max:1000'],
-            'checkout_photos' => ['required', 'array', 'min:1'],
+            'checkout_photos' => ['required', 'array', 'min:1', 'max:5'],
             'checkout_photos.*' => ['string', 'starts_with:data:image/'],
             'checkout_signature' => ['required', 'string', 'starts_with:data:image/'],
+        ], [
+            'checkout_photos.required' => __('rental.errors.handover_photo_required'),
+            'checkout_photos.min' => __('rental.errors.handover_photo_required'),
+            'checkout_photos.max' => __('rental.errors.handover_photo_max', ['max' => 5]),
+            'checkout_signature.required' => __('rental.errors.handover_signature_required'),
         ]);
 
         $photos = $this->handoverMedia->storePhotos($request->input('checkout_photos', []));
@@ -156,9 +161,14 @@ class RentalActionController extends Controller
             'return_checklist.*' => ['boolean'],
             'return_notes' => ['nullable', 'string', 'max:1000'],
             'deposit_returned' => ['boolean'],
-            'return_photos' => ['required', 'array', 'min:1'],
+            'return_photos' => ['required', 'array', 'min:1', 'max:5'],
             'return_photos.*' => ['string', 'starts_with:data:image/'],
             'return_signature' => ['required', 'string', 'starts_with:data:image/'],
+        ], [
+            'return_photos.required' => __('rental.errors.handover_photo_required'),
+            'return_photos.min' => __('rental.errors.handover_photo_required'),
+            'return_photos.max' => __('rental.errors.handover_photo_max', ['max' => 5]),
+            'return_signature.required' => __('rental.errors.handover_signature_required'),
         ]);
 
         $photos = $this->handoverMedia->storePhotos($request->input('return_photos', []));

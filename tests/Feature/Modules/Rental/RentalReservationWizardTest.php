@@ -205,7 +205,7 @@ class RentalReservationWizardTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('partner.name', 'Walk In Guest')
-            ->assertJsonStructure(['partner' => ['id', 'name', 'code'], 'created', 'message']);
+            ->assertJsonStructure(['partner' => ['id', 'name', 'code', 'phone', 'email'], 'created', 'message']);
 
         $this->assertDatabaseHas('partners', [
             'id' => $response->json('partner.id'),
@@ -215,6 +215,13 @@ class RentalReservationWizardTest extends TestCase
 
     public function test_create_page_exposes_wizard_urls(): void
     {
+        $partner = Partner::factory()->create([
+            'status' => 'active',
+            'phone' => '628111222333',
+            'email' => 'customer@example.test',
+            'is_blacklisted' => false,
+        ]);
+
         $this->actingAs($this->user)
             ->get(route('module.rental.create'))
             ->assertOk()
@@ -222,7 +229,13 @@ class RentalReservationWizardTest extends TestCase
                 ->component('Modules/Rental/Create')
                 ->has('availableVehiclesUrl')
                 ->has('quoteUrl')
-                ->has('walkInUrl'));
+                ->has('walkInUrl')
+                ->where('partners.0.id', $partner->id)
+                ->where('partners.0.phone', '628111222333')
+                ->where('partners.0.email', 'customer@example.test')
+                ->has('partners.0.mobile')
+                ->has('partners.0.account_type')
+                ->has('partners.0.license_expires_at'));
     }
 
     public function test_edit_page_exposes_wizard_urls(): void

@@ -32,6 +32,88 @@ interface Props {
     isOneWay: boolean;
 }
 
+type LicenseAlert = {
+    tone: 'danger' | 'warning';
+    date: string;
+};
+
+const LICENSE_EXPIRING_SOON_DAYS = 30;
+
+function partnerInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+        return '?';
+    }
+    if (parts.length === 1) {
+        return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+}
+
+function parseDateOnly(value: string): Date | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) {
+        return null;
+    }
+
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function startOfToday(): Date {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return today;
+}
+
+function licenseAlertFor(expiresAt: string | null | undefined): LicenseAlert | null {
+    if (!expiresAt) {
+        return null;
+    }
+
+    const expiry = parseDateOnly(expiresAt);
+    if (!expiry) {
+        return null;
+    }
+
+    const today = startOfToday();
+    if (expiry < today) {
+        return { tone: 'danger', date: expiresAt };
+    }
+
+    const soon = new Date(today);
+    soon.setDate(soon.getDate() + LICENSE_EXPIRING_SOON_DAYS);
+    if (expiry <= soon) {
+        return { tone: 'warning', date: expiresAt };
+    }
+
+    return null;
+}
+
+function DetailItem({
+    label,
+    value,
+    valueClassName = 'text-gray-900',
+}: {
+    label: string;
+    value: string | null | undefined;
+    valueClassName?: string;
+}): JSX.Element | null {
+    if (!value) {
+        return null;
+    }
+
+    return (
+        <div className="min-w-0">
+            <dt className="text-[11px] font-medium uppercase tracking-wide text-gray-400">{label}</dt>
+            <dd className={`mt-0.5 break-words text-sm ${valueClassName}`}>{value}</dd>
+        </div>
+    );
+}
+
 export default function StepCustomer({
     data,
     setData,
@@ -53,6 +135,26 @@ export default function StepCustomer({
     const partnerOptions = useMemo(
         () => partners.map((p) => ({ value: String(p.id), label: `${p.name} (${p.code})` })),
         [partners],
+    );
+
+    const selectedPartner = useMemo(
+        () => partners.find((partner) => String(partner.id) === data.partner_id) ?? null,
+        [partners, data.partner_id],
+    );
+
+    const licenseAlert = licenseAlertFor(selectedPartner?.license_expires_at);
+    const accountTypeLabel = selectedPartner?.account_type
+        ? t(`partners.account_type.${selectedPartner.account_type}`)
+        : null;
+
+    const hasDetails = Boolean(
+        selectedPartner?.phone ||
+            selectedPartner?.mobile ||
+            selectedPartner?.email ||
+            selectedPartner?.id_number ||
+            selectedPartner?.license_number ||
+            selectedPartner?.license_expires_at ||
+            selectedPartner?.address,
     );
 
     const submitWalkIn: FormEventHandler = async (e) => {
@@ -92,9 +194,10 @@ export default function StepCustomer({
             }
 
             if (payload.partner) {
-                if (!partners.some((p) => p.id === payload.partner!.id)) {
-                    setPartners([payload.partner, ...partners]);
-                }
+                const nextPartners = partners.some((p) => p.id === payload.partner!.id)
+                    ? partners.map((p) => (p.id === payload.partner!.id ? payload.partner! : p))
+                    : [payload.partner, ...partners];
+                setPartners(nextPartners);
                 setData('partner_id', String(payload.partner.id));
                 setShowWalkIn(false);
                 setWalkIn({ name: '', phone: '', email: '', id_number: '' });
@@ -134,6 +237,83 @@ export default function StepCustomer({
                         />
                         <InputError message={errors.partner_id} className="mt-1" />
                     </div>
+
+                    {selectedPartner && (
+                        <section
+                            className="overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white via-white to-indigo-50/60 shadow-sm"
+                            aria-live="polite"
+                        >
+                            <div className="flex items-start gap-4 border-b border-gray-100 px-4 py-4 sm:px-5">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold tracking-wide text-white">
+                                    {partnerInitials(selectedPartner.name)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="truncate text-base font-semibold text-gray-900">
+                                            {selectedPartner.name}
+                                        </h3>
+                                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-mono text-[11px] font-medium text-indigo-700 ring-1 ring-inset ring-indigo-100">
+                                            {selectedPartner.code}
+                                        </span>
+                                        {accountTypeLabel && (
+                                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700 ring-1 ring-inset ring-gray-200">
+                                                {accountTypeLabel}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        {t('rental.wizard.customer.selected_hint')}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {licenseAlert && (
+                                <div
+                                    className={
+                                        licenseAlert.tone === 'danger'
+                                            ? 'border-b border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800 sm:px-5'
+                                            : 'border-b border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:px-5'
+                                    }
+                                    role="alert"
+                                >
+                                    {licenseAlert.tone === 'danger'
+                                        ? t('rental.wizard.customer.license_expired', { date: licenseAlert.date })
+                                        : t('rental.wizard.customer.license_expiring', { date: licenseAlert.date })}
+                                </div>
+                            )}
+
+                            {hasDetails ? (
+                                <dl className="grid grid-cols-1 gap-4 px-4 py-4 sm:grid-cols-2 sm:px-5">
+                                    <DetailItem label={t('partners.fields.phone')} value={selectedPartner.phone} />
+                                    <DetailItem label={t('partners.fields.mobile')} value={selectedPartner.mobile} />
+                                    <DetailItem label={t('partners.fields.email')} value={selectedPartner.email} />
+                                    <DetailItem label={t('partners.fields.id_number')} value={selectedPartner.id_number} />
+                                    <DetailItem
+                                        label={t('partners.fields.license_number')}
+                                        value={selectedPartner.license_number}
+                                    />
+                                    <DetailItem
+                                        label={t('partners.fields.license_expires_at')}
+                                        value={selectedPartner.license_expires_at}
+                                        valueClassName={
+                                            licenseAlert?.tone === 'danger'
+                                                ? 'font-medium text-red-700'
+                                                : licenseAlert?.tone === 'warning'
+                                                  ? 'font-medium text-amber-700'
+                                                  : 'text-gray-900'
+                                        }
+                                    />
+                                    <div className="sm:col-span-2">
+                                        <DetailItem label={t('partners.fields.address')} value={selectedPartner.address} />
+                                    </div>
+                                </dl>
+                            ) : (
+                                <p className="px-4 py-3 text-sm text-gray-500 sm:px-5">
+                                    {t('rental.wizard.customer.no_details')}
+                                </p>
+                            )}
+                        </section>
+                    )}
                 </div>
 
                 <PreviousStepsSummary

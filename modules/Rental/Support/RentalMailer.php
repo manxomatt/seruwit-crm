@@ -2,6 +2,7 @@
 
 namespace Modules\Rental\Support;
 
+use App\Models\Setting;
 use App\Support\NotificationRecipients;
 use Illuminate\Support\Facades\Notification;
 use Modules\Rental\Models\Rental;
@@ -9,7 +10,7 @@ use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 
 /**
  * Sends rental lifecycle emails to staff (rental.view) and the partner email
- * when present. Silent no-op when nobody has an address.
+ * when present. Silent no-op when nobody has an address or mail is disabled.
  */
 class RentalMailer
 {
@@ -18,6 +19,10 @@ class RentalMailer
      */
     public function notify(Rental $rental, string $event, array $context = []): void
     {
+        if (Setting::getValue('email.notification_enabled', '1') !== '1') {
+            return;
+        }
+
         $rental->loadMissing(['vehicle:id,name,plate_number', 'partner:id,name,email']);
 
         $notification = new RentalLifecycleMailNotification($rental, $event, $context);

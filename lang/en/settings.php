@@ -114,4 +114,31 @@ return [
         'bulk_updated' => 'Settings updated successfully.',
         'appearance_reset' => 'Appearance settings restored to defaults.',
     ],
+
+    'mail' => [
+        'title' => 'SMTP Server',
+        'subtitle' => 'Use your own SMTP account for transactional emails from this workspace. When disabled or incomplete, the platform default mailer is used.',
+        'status_active' => 'Tenant SMTP is active — outgoing mail uses these credentials.',
+        'status_inactive' => 'Tenant SMTP is not active — outgoing mail uses the platform default mailer.',
+        'enabled' => 'Use custom SMTP for this workspace',
+        'host' => 'SMTP Host',
+        'port' => 'Port',
+        'encryption' => 'Encryption',
+        'encryption_tls' => 'TLS',
+        'encryption_ssl' => 'SSL',
+        'encryption_none' => 'None',
+        'username' => 'Username',
+        'password' => 'Password',
+        'password_hint' => 'Leave blank to keep the current password.',
+        'save' => 'Save SMTP Settings',
+        'messages' => [
+            'saved' => 'SMTP settings saved successfully.',
+        ],
+        'validation' => [
+            'host_required' => 'SMTP host is required when custom SMTP is enabled.',
+            'port_required' => 'SMTP port is required when custom SMTP is enabled.',
+            'username_required' => 'SMTP username is required when custom SMTP is enabled.',
+            'password_required' => 'SMTP password is required when custom SMTP is enabled for the first time.',
+        ],
+    ],
 ];

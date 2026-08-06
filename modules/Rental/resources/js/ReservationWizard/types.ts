@@ -38,6 +38,15 @@ export type PartnerOption = {
     id: number;
     name: string;
     code: string;
+    phone?: string | null;
+    mobile?: string | null;
+    email?: string | null;
+    id_number?: string | null;
+    license_number?: string | null;
+    license_expires_at?: string | null;
+    address?: string | null;
+    account_type?: string | null;
+    status?: string | null;
 };
 
 export type LocationOption = {

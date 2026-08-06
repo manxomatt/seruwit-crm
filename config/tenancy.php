@@ -45,6 +45,7 @@ return [
         Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class, // Redis (phpredis) is now the default cache store, which supports tagging.
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
+        App\Support\TenantMailConfigBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
     ],
 

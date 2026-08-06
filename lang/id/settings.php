@@ -114,4 +114,31 @@ return [
         'bulk_updated' => 'Pengaturan berhasil diperbarui.',
         'appearance_reset' => 'Pengaturan Appearance dikembalikan ke default.',
     ],
+
+    'mail' => [
+        'title' => 'Server SMTP',
+        'subtitle' => 'Gunakan akun SMTP milik Anda untuk email transaksi di workspace ini. Jika dinonaktifkan atau belum lengkap, mailer default platform yang dipakai.',
+        'status_active' => 'SMTP tenant aktif — email keluar memakai kredensial ini.',
+        'status_inactive' => 'SMTP tenant belum aktif — email keluar memakai mailer default platform.',
+        'enabled' => 'Gunakan SMTP kustom untuk workspace ini',
+        'host' => 'Host SMTP',
+        'port' => 'Port',
+        'encryption' => 'Enkripsi',
+        'encryption_tls' => 'TLS',
+        'encryption_ssl' => 'SSL',
+        'encryption_none' => 'Tidak ada',
+        'username' => 'Username',
+        'password' => 'Password',
+        'password_hint' => 'Kosongkan untuk mempertahankan password saat ini.',
+        'save' => 'Simpan Pengaturan SMTP',
+        'messages' => [
+            'saved' => 'Pengaturan SMTP berhasil disimpan.',
+        ],
+        'validation' => [
+            'host_required' => 'Host SMTP wajib diisi jika SMTP kustom diaktifkan.',
+            'port_required' => 'Port SMTP wajib diisi jika SMTP kustom diaktifkan.',
+            'username_required' => 'Username SMTP wajib diisi jika SMTP kustom diaktifkan.',
+            'password_required' => 'Password SMTP wajib diisi saat SMTP kustom diaktifkan untuk pertama kali.',
+        ],
+    ],
 ];
