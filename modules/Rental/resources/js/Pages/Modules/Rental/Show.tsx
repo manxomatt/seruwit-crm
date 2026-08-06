@@ -1502,6 +1502,8 @@ export default function Show({
                                 value={addonForm.data.addon_code}
                                 onChange={(value) => addonForm.setData('addon_code', value)}
                                 placeholder={t('rental.placeholders.select_addon_code')}
+                                searchable
+                                maxVisibleOptions={Math.max(addonCodes.length, 1)}
                                 options={addonCodes.map((option) => ({
                                     value: option.value,
                                     label: option.label || t(`rental.addon.codes.${option.value}`, undefined, option.value),
