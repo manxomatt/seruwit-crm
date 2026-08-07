@@ -111,6 +111,8 @@ class Rental extends Model
         'return_location',
         'pickup_location_id',
         'return_location_id',
+        'pickup_fleet_base_id',
+        'return_fleet_base_id',
         'one_way_fee_amount',
         'insurance_package_id',
         'fuel_policy_notes',
@@ -168,6 +170,8 @@ class Rental extends Model
             'deposit_company_bank_account_id' => 'integer',
             'pickup_location_id' => 'integer',
             'return_location_id' => 'integer',
+            'pickup_fleet_base_id' => 'integer',
+            'return_fleet_base_id' => 'integer',
             'insurance_package_id' => 'integer',
         ];
     }
@@ -188,6 +192,18 @@ class Rental extends Model
     public function returnLocation(): BelongsTo
     {
         return $this->belongsTo(\Modules\Partners\Models\Location::class, 'return_location_id');
+    }
+
+    /** @return BelongsTo<\Modules\Fleet\Models\FleetBase, $this> */
+    public function pickupFleetBase(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Fleet\Models\FleetBase::class, 'pickup_fleet_base_id');
+    }
+
+    /** @return BelongsTo<\Modules\Fleet\Models\FleetBase, $this> */
+    public function returnFleetBase(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Fleet\Models\FleetBase::class, 'return_fleet_base_id');
     }
 
     /** @return BelongsTo<RentalInsurancePackage, $this> */

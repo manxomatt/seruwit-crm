@@ -10,7 +10,6 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Driver;
 use Modules\Fleet\Models\Vehicle;
-use Modules\Partners\Models\Location;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Http\Requests\StoreRentalRequest;
 use Modules\Rental\Http\Requests\StoreWalkInCustomerRequest;
@@ -373,17 +372,12 @@ class RentalController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Location>
+     * @return \Illuminate\Support\Collection<int, object{id: int, code: string, name: string, address: string|null, city: string|null}>
      */
     private function locationOptions()
     {
-        if (! Schema::hasTable('locations')) {
-            return collect();
-        }
-
-        return Location::query()->active()->orderBy('name')->get([
-            'id', 'code', 'name', 'address', 'city',
-        ]);
+        return collect(app(RentalLocationHydrator::class)->depotOptions())
+            ->map(fn (array $depot): object => (object) $depot);
     }
 
     /**

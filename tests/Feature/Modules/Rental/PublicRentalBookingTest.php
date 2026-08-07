@@ -7,10 +7,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Modules\Fleet\Models\FleetBase;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\FleetBaseKind;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Invoicing\Models\InvoiceLine;
-use Modules\Partners\Models\Location;
 use Modules\Receivables\Models\GatewayCharge;
 use Modules\Receivables\Models\PaymentGatewayConfig;
 use Modules\Rental\Models\Rental;
@@ -85,9 +86,72 @@ class PublicRentalBookingTest extends TestCase
                 ->where('vehicles.0.plate_number', 'B **** XYZ'));
     }
 
+    public function test_search_lists_depot_bases_as_branch_options(): void
+    {
+        $depot = FleetBase::factory()->create([
+            'name' => 'Depot Cakung',
+            'kind' => FleetBaseKind::Depot->value,
+            'status' => FleetBase::STATUS_ACTIVE,
+            'city' => 'Jakarta',
+        ]);
+        FleetBase::factory()->create([
+            'name' => 'Yard Only',
+            'kind' => FleetBaseKind::Yard->value,
+            'status' => FleetBase::STATUS_ACTIVE,
+        ]);
+
+        $this->get(route('book.rental.search'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Public/Search')
+                ->has('locations', 1)
+                ->where('locations.0.id', $depot->id)
+                ->where('locations.0.name', 'Depot Cakung'));
+    }
+
+    public function test_search_defaults_dates_and_hides_vehicles_without_rate(): void
+    {
+        $bookable = Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'rental_class' => 'economy',
+            'name' => 'Bookable Car',
+        ]);
+        Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'rental_class' => null,
+            'name' => 'No Class Car',
+        ]);
+
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => null,
+            'rental_class' => 'economy',
+            'rate_per_period' => 250000,
+            'deposit_amount' => 500000,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $this->get(route('book.rental.search'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Public/Search')
+                ->where('searched', true)
+                ->has('filters.start_date')
+                ->has('filters.end_date')
+                ->has('vehicles', 1)
+                ->where('vehicles.0.id', $bookable->id)
+                ->where('vehicles.0.from_price', 250000));
+    }
+
     public function test_vehicle_show_and_booking_lifecycle(): void
     {
-        $location = Location::factory()->create(['is_active' => true, 'name' => 'Cabang Sudirman']);
+        $depot = FleetBase::factory()->create([
+            'name' => 'Depot Sudirman',
+            'kind' => FleetBaseKind::Depot->value,
+            'status' => FleetBase::STATUS_ACTIVE,
+            'address' => 'Jl. Sudirman 1',
+            'city' => 'Jakarta',
+        ]);
         $vehicle = Vehicle::factory()->create([
             'status' => Vehicle::STATUS_ACTIVE,
             'rental_class' => 'mpv',
@@ -109,8 +173,8 @@ class PublicRentalBookingTest extends TestCase
             'vehicle' => $vehicle->id,
             'start_date' => $start,
             'end_date' => $end,
-            'pickup_location_id' => $location->id,
-            'return_location_id' => $location->id,
+            'pickup_location_id' => $depot->id,
+            'return_location_id' => $depot->id,
         ]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -135,8 +199,8 @@ class PublicRentalBookingTest extends TestCase
                 'customer_name' => 'Budi Santoso',
                 'booker_phone' => $phone,
                 'otp_code' => $otp,
-                'pickup_location_id' => $location->id,
-                'return_location_id' => $location->id,
+                'pickup_location_id' => $depot->id,
+                'return_location_id' => $depot->id,
             ])
             ->assertRedirect();
 
@@ -145,6 +209,9 @@ class PublicRentalBookingTest extends TestCase
         $this->assertSame(Rental::STATUS_PENDING_RESERVED, $rental->status);
         $this->assertSame('6281234567890', $rental->booker_phone);
         $this->assertNotNull($rental->public_token);
+        $this->assertSame($depot->id, $rental->pickup_fleet_base_id);
+        $this->assertSame($depot->id, $rental->return_fleet_base_id);
+        $this->assertStringContainsString('Sudirman', (string) $rental->pickup_location);
 
         $this->get(route('book.rental.booking.show', $rental->public_token))
             ->assertOk()

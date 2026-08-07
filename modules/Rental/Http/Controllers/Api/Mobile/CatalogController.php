@@ -7,11 +7,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
-use Modules\Partners\Models\Location;
 use Modules\Rental\Http\Controllers\Api\Mobile\Concerns\InteractsWithMobileRentalApi;
 use Modules\Rental\Http\Resources\Mobile\MobileRentalVehicleResource;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalInsurancePackage;
+use Modules\Rental\Support\RentalLocationHydrator;
 
 class CatalogController extends Controller
 {
@@ -89,22 +89,11 @@ class CatalogController extends Controller
     {
         $this->ensurePassengerChannelEnabled();
 
-        $locations = Location::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'code', 'name', 'address', 'city', 'latitude', 'longitude']);
+        $depots = app(RentalLocationHydrator::class)->depotOptions();
 
         return response()->json([
-            'data' => $locations->map(fn (Location $location): array => [
-                'id' => $location->id,
-                'code' => $location->code,
-                'name' => $location->name,
-                'address' => $location->address,
-                'city' => $location->city,
-                'latitude' => $location->latitude !== null ? (string) $location->latitude : null,
-                'longitude' => $location->longitude !== null ? (string) $location->longitude : null,
-            ])->all(),
-            'meta' => ['count' => $locations->count()],
+            'data' => $depots,
+            'meta' => ['count' => count($depots)],
         ]);
     }
 

@@ -166,6 +166,8 @@ class MobileRentalBookingService
                 'total_amount' => $baseAmount,
                 'pickup_location_id' => $hydrated['pickup_location_id'] ?? null,
                 'return_location_id' => $hydrated['return_location_id'] ?? null,
+                'pickup_fleet_base_id' => $hydrated['pickup_fleet_base_id'] ?? null,
+                'return_fleet_base_id' => $hydrated['return_fleet_base_id'] ?? null,
                 'pickup_location' => $hydrated['pickup_location'] ?? ($input['pickup_location'] ?? null),
                 'return_location' => $hydrated['return_location'] ?? ($input['return_location'] ?? null),
                 'one_way_fee_amount' => $hydrated['one_way_fee_amount'] ?? null,

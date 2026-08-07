@@ -14,7 +14,6 @@ use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Invoicing\Models\Invoice;
-use Modules\Partners\Models\Location;
 use Modules\Rental\Http\Requests\Public\CancelPublicRentalBookingRequest;
 use Modules\Rental\Http\Requests\Public\StorePublicRentalBookingRequest;
 use Modules\Rental\Models\Rental;
@@ -24,6 +23,7 @@ use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\RentalBookingPolicy;
 use Modules\Rental\Support\RentalExtensionService;
 use Modules\Rental\Support\RentalInvoiceService;
+use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPassengerDocMedia;
 use Modules\Rental\Support\RentalPlateMasker;
 use Modules\Rental\Support\RentalRateResolver;
@@ -43,27 +43,31 @@ class PublicRentalBookingController extends Controller
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'period_type' => ['nullable', 'string', 'in:daily,weekly,monthly'],
-            'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
-            'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'pickup_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
+            'return_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
             'rental_class' => ['nullable', 'string', 'in:'.implode(',', VehicleRentalClass::values())],
         ]);
 
-        $start = $validated['start_date'] ?? null;
-        $end = $validated['end_date'] ?? $start;
+        $start = $validated['start_date'] ?? now()->toDateString();
+        $end = $validated['end_date'] ?? now()->addDays(2)->toDateString();
         $periodType = $validated['period_type'] ?? 'daily';
-        $searched = filled($start) && filled($end);
+        $searched = true;
 
-        $vehicles = collect();
-        if ($searched) {
-            $vehicles = Vehicle::query()
-                ->where('status', Vehicle::STATUS_ACTIVE)
-                ->when($validated['rental_class'] ?? null, fn ($q, $class) => $q->where('rental_class', $class))
-                ->orderBy('name')
-                ->get()
-                ->filter(fn (Vehicle $vehicle): bool => Rental::vehicleAvailabilityReasons($vehicle, $start, $end) === [])
-                ->values()
-                ->map(fn (Vehicle $vehicle): array => $this->vehicleCard($vehicle, $rates, $start, $end, $periodType));
-        }
+        $vehicles = Vehicle::query()
+            ->where('status', Vehicle::STATUS_ACTIVE)
+            ->when($validated['rental_class'] ?? null, fn ($q, $class) => $q->where('rental_class', $class))
+            ->orderBy('name')
+            ->get()
+            ->filter(function (Vehicle $vehicle) use ($start, $end, $periodType, $rates): bool {
+                if (Rental::vehicleAvailabilityReasons($vehicle, $start, $end) !== []) {
+                    return false;
+                }
+
+                // Only list units that can actually be quoted/booked for this period.
+                return $rates->suggest($vehicle, $start, $end, $periodType) !== null;
+            })
+            ->values()
+            ->map(fn (Vehicle $vehicle): array => $this->vehicleCard($vehicle, $rates, $start, $end, $periodType));
 
         return Inertia::render('Modules/Rental/Public/Search', [
             'brand' => $this->brand(),
@@ -78,11 +82,18 @@ class PublicRentalBookingController extends Controller
             'classes' => collect(VehicleRentalClass::values())
                 ->map(fn (string $value): array => [
                     'value' => $value,
-                    'label' => VehicleRentalClass::label($value),
+                    'label' => match ($value) {
+                        VehicleRentalClass::ECONOMY => 'Economy',
+                        VehicleRentalClass::MPV => 'MPV',
+                        VehicleRentalClass::SUV => 'SUV',
+                        VehicleRentalClass::PREMIUM => 'Premium',
+                        VehicleRentalClass::OTHER => 'Lainnya',
+                        default => VehicleRentalClass::label($value) ?: ucfirst($value),
+                    },
                 ])
                 ->values()
                 ->all(),
-            'locations' => $this->locationOptions(),
+            'locations' => app(RentalLocationHydrator::class)->depotOptions(),
             'vehicles' => $vehicles,
             'searched' => $searched,
             'hold_ttl_minutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
@@ -99,8 +110,8 @@ class PublicRentalBookingController extends Controller
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'period_type' => ['nullable', 'string', 'in:daily,weekly,monthly'],
-            'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
-            'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'pickup_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
+            'return_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
         ]);
 
@@ -127,7 +138,7 @@ class PublicRentalBookingController extends Controller
                 'insurance_package_id' => $validated['insurance_package_id'] ?? null,
             ],
             'quote' => $this->quotePayload($quote),
-            'locations' => $this->locationOptions(),
+            'locations' => app(RentalLocationHydrator::class)->depotOptions(),
             'insurance_packages' => RentalInsurancePackage::query()
                 ->where('is_active', true)
                 ->where('period_type', $periodType)
@@ -156,8 +167,8 @@ class PublicRentalBookingController extends Controller
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'period_type' => ['required', 'string', 'in:daily,weekly,monthly'],
-            'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
-            'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'pickup_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
+            'return_location_id' => app(RentalLocationHydrator::class)->depotIdRules(),
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
         ]);
 
@@ -530,17 +541,7 @@ class PublicRentalBookingController extends Controller
      */
     private function locationOptions(): array
     {
-        return Location::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'address', 'city'])
-            ->map(fn (Location $location): array => [
-                'id' => $location->id,
-                'name' => $location->name,
-                'address' => $location->address,
-                'city' => $location->city,
-            ])
-            ->all();
+        return app(RentalLocationHydrator::class)->depotOptions();
     }
 
     /**
