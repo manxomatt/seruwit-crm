@@ -1,5 +1,6 @@
+import PublicSelect from '@/Components/PublicSelect';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FormEvent } from 'react';
+import { FormEvent, useMemo } from 'react';
 
 interface Brand {
     name: string;
@@ -53,15 +54,14 @@ interface Props {
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
-/** Native select — reliable option list on public PWA (Headless portal can look empty). */
-const selectClassName =
-    'mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white bg-[length:1.25rem] bg-[right_0.6rem_center] bg-no-repeat py-2.5 pl-3 pr-10 text-sm text-slate-900 shadow-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600';
-
-const selectChevron =
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9'/%3E%3C/svg%3E";
-
 const fieldClassName =
-    'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600';
+    'mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600';
+
+const periodOptions = [
+    { value: 'daily', label: 'Harian' },
+    { value: 'weekly', label: 'Mingguan' },
+    { value: 'monthly', label: 'Bulanan' },
+];
 
 export default function Search({
     brand,
@@ -80,6 +80,33 @@ export default function Search({
         return_location_id: filters.return_location_id ? String(filters.return_location_id) : '',
         rental_class: filters.rental_class ?? '',
     });
+
+    const depotOptions = useMemo(
+        () =>
+            locations.map((location) => ({
+                value: String(location.id),
+                label: location.city ? `${location.name} · ${location.city}` : location.name,
+            })),
+        [locations],
+    );
+
+    const classOptions = useMemo(
+        () => [
+            { value: '', label: 'Semua kelas' },
+            ...classes.map((item) => ({ value: item.value, label: item.label || item.value })),
+        ],
+        [classes],
+    );
+
+    const pickupOptions = useMemo(
+        () => [{ value: '', label: 'Pilih depot' }, ...depotOptions],
+        [depotOptions],
+    );
+
+    const returnOptions = useMemo(
+        () => [{ value: '', label: 'Sama dengan jemput' }, ...depotOptions],
+        [depotOptions],
+    );
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -122,7 +149,7 @@ export default function Search({
                     </Link>
                 </div>
 
-                <form onSubmit={submit} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+                <form onSubmit={submit} className="space-y-3 overflow-visible rounded-2xl bg-white p-4 shadow-sm">
                     <div className="grid grid-cols-2 gap-3">
                         <label className="text-xs font-medium text-slate-600">
                             Mulai sewa
@@ -146,82 +173,56 @@ export default function Search({
                         </label>
                     </div>
 
-                    <label className="block text-xs font-medium text-slate-600">
-                        Periode tarif
-                        <select
-                            className={selectClassName}
-                            style={{ backgroundImage: `url("${selectChevron}")` }}
+                    <div>
+                        <label className="mb-1 block text-xs font-medium text-slate-600">Periode tarif</label>
+                        <PublicSelect
                             value={form.data.period_type}
-                            onChange={(e) => form.setData('period_type', e.target.value)}
-                        >
-                            <option value="daily">Harian</option>
-                            <option value="weekly">Mingguan</option>
-                            <option value="monthly">Bulanan</option>
-                        </select>
-                    </label>
+                            onChange={(value) => form.setData('period_type', value || 'daily')}
+                            options={periodOptions}
+                            placeholder="Pilih periode"
+                        />
+                    </div>
 
-                    <label className="block text-xs font-medium text-slate-600">
-                        Cabang jemput (depot)
-                        <select
-                            className={selectClassName}
-                            style={{ backgroundImage: `url("${selectChevron}")` }}
+                    <div>
+                        <label className="mb-1 block text-xs font-medium text-slate-600">Cabang jemput (depot)</label>
+                        <PublicSelect
                             value={form.data.pickup_location_id}
-                            onChange={(e) => {
-                                const value = e.target.value;
+                            onChange={(value) => {
                                 form.setData({
                                     ...form.data,
                                     pickup_location_id: value,
                                     return_location_id: form.data.return_location_id || value,
                                 });
                             }}
-                        >
-                            <option value="">Pilih depot</option>
-                            {locations.map((location) => (
-                                <option key={location.id} value={String(location.id)}>
-                                    {location.name}
-                                    {location.city ? ` · ${location.city}` : ''}
-                                </option>
-                            ))}
-                        </select>
+                            options={pickupOptions}
+                            placeholder="Pilih depot"
+                            emptyText="Belum ada depot aktif"
+                        />
                         {locations.length === 0 && (
                             <p className="mt-1 text-xs text-amber-700">Belum ada depot aktif di Fleet → Bases.</p>
                         )}
-                    </label>
+                    </div>
 
-                    <label className="block text-xs font-medium text-slate-600">
-                        Cabang kembali (depot)
-                        <select
-                            className={selectClassName}
-                            style={{ backgroundImage: `url("${selectChevron}")` }}
+                    <div>
+                        <label className="mb-1 block text-xs font-medium text-slate-600">Cabang kembali (depot)</label>
+                        <PublicSelect
                             value={form.data.return_location_id}
-                            onChange={(e) => form.setData('return_location_id', e.target.value)}
-                        >
-                            <option value="">Sama dengan jemput</option>
-                            {locations.map((location) => (
-                                <option key={location.id} value={String(location.id)}>
-                                    {location.name}
-                                    {location.city ? ` · ${location.city}` : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                            onChange={(value) => form.setData('return_location_id', value)}
+                            options={returnOptions}
+                            placeholder="Sama dengan jemput"
+                            emptyText="Belum ada depot aktif"
+                        />
+                    </div>
 
-                    <label className="block text-xs font-medium text-slate-600">
-                        Kelas kendaraan
-                        <select
-                            className={selectClassName}
-                            style={{ backgroundImage: `url("${selectChevron}")` }}
+                    <div>
+                        <label className="mb-1 block text-xs font-medium text-slate-600">Kelas kendaraan</label>
+                        <PublicSelect
                             value={form.data.rental_class}
-                            onChange={(e) => form.setData('rental_class', e.target.value)}
-                        >
-                            <option value="">Semua kelas</option>
-                            {classes.map((item) => (
-                                <option key={item.value} value={item.value}>
-                                    {item.label || item.value}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                            onChange={(value) => form.setData('rental_class', value)}
+                            options={classOptions}
+                            placeholder="Semua kelas"
+                        />
+                    </div>
 
                     <button
                         type="submit"

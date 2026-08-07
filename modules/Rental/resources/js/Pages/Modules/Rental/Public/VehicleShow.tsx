@@ -1,6 +1,7 @@
+import PublicSelect from '@/Components/PublicSelect';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 
 interface Brand {
     name: string;
@@ -71,14 +72,8 @@ interface Props {
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
 
-const selectClassName =
-    'mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white bg-[length:1.25rem] bg-[right_0.6rem_center] bg-no-repeat py-2.5 pl-3 pr-10 text-sm text-slate-900 shadow-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600';
-
-const selectChevron =
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9'/%3E%3C/svg%3E";
-
 const fieldClassName =
-    'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600';
+    'mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600';
 
 export default function VehicleShow({
     brand,
@@ -111,6 +106,36 @@ export default function VehicleShow({
         otp_code: '',
         notes: '',
     });
+
+    const depotOptions = useMemo(
+        () =>
+            locations.map((location) => ({
+                value: String(location.id),
+                label: location.city ? `${location.name} · ${location.city}` : location.name,
+            })),
+        [locations],
+    );
+
+    const pickupOptions = useMemo(
+        () => [{ value: '', label: 'Pilih depot' }, ...depotOptions],
+        [depotOptions],
+    );
+
+    const returnOptions = useMemo(
+        () => [{ value: '', label: 'Sama dengan jemput' }, ...depotOptions],
+        [depotOptions],
+    );
+
+    const insuranceOptions = useMemo(
+        () => [
+            { value: '', label: 'Tanpa asuransi tambahan' },
+            ...insurance_packages.map((pkg) => ({
+                value: String(pkg.id),
+                label: `${pkg.name} · ${money(pkg.amount)}`,
+            })),
+        ],
+        [insurance_packages],
+    );
 
     const refreshQuote = async (overrides: Partial<typeof form.data> = {}) => {
         const payload = { ...form.data, ...overrides };
@@ -182,7 +207,7 @@ export default function VehicleShow({
                     </div>
                 </div>
 
-                <form onSubmit={submit} className="mt-4 space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+                <form onSubmit={submit} className="mt-4 space-y-3 overflow-visible rounded-2xl bg-white p-4 shadow-sm">
                     <div className="grid grid-cols-2 gap-3">
                         <label className="text-xs font-medium text-slate-600">
                             Mulai
@@ -212,14 +237,11 @@ export default function VehicleShow({
                         </label>
                     </div>
 
-                    <label className="block text-xs font-medium text-slate-600">
-                        Cabang jemput (depot)
-                        <select
-                            className={selectClassName}
-                            style={{ backgroundImage: `url("${selectChevron}")` }}
+                    <div>
+                        <label className="mb-1 block text-xs font-medium text-slate-600">Cabang jemput (depot)</label>
+                        <PublicSelect
                             value={form.data.pickup_location_id}
-                            onChange={(e) => {
-                                const value = e.target.value;
+                            onChange={(value) => {
                                 form.setData({
                                     ...form.data,
                                     pickup_location_id: value,
@@ -230,61 +252,42 @@ export default function VehicleShow({
                                     return_location_id: form.data.return_location_id || value,
                                 });
                             }}
-                        >
-                            <option value="">Pilih depot</option>
-                            {locations.map((location) => (
-                                <option key={location.id} value={String(location.id)}>
-                                    {location.name}
-                                    {location.city ? ` · ${location.city}` : ''}
-                                </option>
-                            ))}
-                        </select>
+                            options={pickupOptions}
+                            placeholder="Pilih depot"
+                            emptyText="Belum ada depot aktif"
+                        />
                         {locations.length === 0 && (
                             <p className="mt-1 text-xs text-amber-700">Belum ada depot aktif di Fleet → Bases.</p>
                         )}
-                    </label>
+                    </div>
 
-                    <label className="block text-xs font-medium text-slate-600">
-                        Cabang kembali (depot)
-                        <select
-                            className={selectClassName}
-                            style={{ backgroundImage: `url("${selectChevron}")` }}
+                    <div>
+                        <label className="mb-1 block text-xs font-medium text-slate-600">Cabang kembali (depot)</label>
+                        <PublicSelect
                             value={form.data.return_location_id}
-                            onChange={(e) => {
-                                form.setData('return_location_id', e.target.value);
-                                void refreshQuote({ return_location_id: e.target.value });
+                            onChange={(value) => {
+                                form.setData('return_location_id', value);
+                                void refreshQuote({ return_location_id: value });
                             }}
-                        >
-                            <option value="">Sama dengan jemput</option>
-                            {locations.map((location) => (
-                                <option key={location.id} value={String(location.id)}>
-                                    {location.name}
-                                    {location.city ? ` · ${location.city}` : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
+                            options={returnOptions}
+                            placeholder="Sama dengan jemput"
+                            emptyText="Belum ada depot aktif"
+                        />
+                    </div>
 
                     {insurance_packages.length > 0 && (
-                        <label className="block text-xs font-medium text-slate-600">
-                            Paket asuransi
-                            <select
-                                className={selectClassName}
-                                style={{ backgroundImage: `url("${selectChevron}")` }}
+                        <div>
+                            <label className="mb-1 block text-xs font-medium text-slate-600">Paket asuransi</label>
+                            <PublicSelect
                                 value={form.data.insurance_package_id}
-                                onChange={(e) => {
-                                    form.setData('insurance_package_id', e.target.value);
-                                    void refreshQuote({ insurance_package_id: e.target.value });
+                                onChange={(value) => {
+                                    form.setData('insurance_package_id', value);
+                                    void refreshQuote({ insurance_package_id: value });
                                 }}
-                            >
-                                <option value="">Tanpa asuransi tambahan</option>
-                                {insurance_packages.map((pkg) => (
-                                    <option key={pkg.id} value={String(pkg.id)}>
-                                        {pkg.name} · {money(pkg.amount)}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                                options={insuranceOptions}
+                                placeholder="Tanpa asuransi tambahan"
+                            />
+                        </div>
                     )}
 
                     <div className="rounded-xl bg-slate-50 p-3 text-sm">
