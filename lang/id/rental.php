@@ -76,7 +76,13 @@ return [
 
     'settings' => [
         'title' => 'Pengaturan rental',
+        'tab_general' => 'Umum',
         'tab_rates' => 'Tarif',
+        'save' => 'Simpan pengaturan',
+        'calendar_section' => 'Kalender',
+        'calendar_section_hint' => 'Atur perilaku kalender kendaraan untuk staf.',
+        'calendar_click_to_book' => 'Buat reservasi dari klik tanggal kalender',
+        'calendar_click_to_book_hint' => 'Jika aktif, klik hari ini atau tanggal ke depan (atau sel kendaraan kosong pada hari tersebut) membuka wizard reservasi dengan tanggal itu.',
     ],
 
     'nav' => [
@@ -84,6 +90,7 @@ return [
         'list' => 'Rental',
         'reservation' => 'Reservasi',
         'availability' => 'Ketersediaan',
+        'calendar' => 'Kalender',
         'rates' => 'Tarif',
         'settings' => 'Pengaturan',
         'back_to_list' => '← Kembali ke Rental',
@@ -301,6 +308,30 @@ return [
         'no_photo' => 'Tanpa foto',
     ],
 
+    'calendar' => [
+        'prev' => 'Sebelumnya',
+        'next' => 'Berikutnya',
+        'today' => 'Hari ini',
+        'subtitle' => ':vehicles kendaraan · utilisasi :percent% pada periode ini',
+        'empty_fleet' => 'Belum ada kendaraan di armada.',
+        'no_booking' => 'Tidak ada booking hari ini',
+        'day_mix' => ':in_use dipakai · :booked dibooking · :free kosong',
+        'avg_util' => 'rata-rata :percent%',
+        'click_day_hint' => 'Klik hari ini atau tanggal ke depan untuk mulai reservasi. Di timeline, klik sel kosong untuk booking kendaraan itu.',
+        'click_disabled_hint' => 'Klik kalender untuk reservasi dinonaktifkan di Pengaturan.',
+        'past_date' => 'Tanggal lampau tidak bisa dibooking',
+        'book_on_date' => 'Buat reservasi untuk tanggal ini',
+        'book_vehicle_on_date' => 'Buat reservasi kendaraan ini pada tanggal ini',
+        'open_month' => 'Buka tampilan bulan',
+        'views' => [
+            'today' => 'Hari ini',
+            'week' => 'Minggu',
+            'month' => 'Bulan',
+            'quarter' => '3 bulan',
+            'year' => 'Tahun',
+        ],
+    ],
+
     'checklist' => [
         'checkout' => 'Checklist checkout',
         'return' => 'Checklist return',
@@ -497,6 +528,10 @@ return [
             'subtitle' => 'Lihat kendaraan yang kosong atau terbooking pada rentang tanggal.',
             'empty' => 'Tidak ada kendaraan.',
         ],
+        'calendar' => [
+            'title' => 'Kalender kendaraan',
+            'head' => 'Kalender',
+        ],
         'rates' => [
             'title' => 'Tarif',
             'head' => 'Tarif Rental',
@@ -575,6 +610,7 @@ return [
         'addon_removed' => 'Biaya tambahan dihapus.',
         'deposit_received' => 'Penerimaan deposit dicatat.',
         'deposit_settled' => 'Deposit sudah di-settle.',
+        'settings_updated' => 'Pengaturan rental disimpan.',
         'rate_created' => 'Tarif dibuat.',
         'rate_updated' => 'Tarif diperbarui.',
         'rate_deleted' => 'Tarif dihapus.',
@@ -654,6 +690,7 @@ return [
         'addon_amount_min' => 'Jumlah harus lebih dari nol.',
         'swap_vehicle_required' => 'Pilih kendaraan pengganti.',
         'swap_vehicle_same' => 'Pilih kendaraan yang berbeda.',
+        'calendar_click_to_book_required' => 'Pilih apakah klik kalender untuk reservasi diaktifkan.',
         'min_periods' => 'Tarif ":rate" membutuhkan minimal :min periode.',
         'rate_required' => 'Kendaraan ini belum terhubung ke skema tarif aktif untuk periode yang dipilih.',
     ],

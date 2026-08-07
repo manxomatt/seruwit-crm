@@ -170,6 +170,13 @@ const AvailabilityIcon = () => (
     </svg>
 );
 
+/** Vehicle usage timeline calendar */
+const RentalCalendarIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+);
+
 const CanvassingIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -298,7 +305,7 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing'] },
     { titleKey: 'procurement_warehouse', modules: ['purchasing', 'sales', 'inventory'] },
     { titleKey: 'fleet_compliance', modules: ['fleet', 'document', 'maintenance', 'tracking', 'scoring'] },
-    { titleKey: 'car_rental', modules: ['rental-dashboard', 'rental-reservation', 'rental-availability', 'rental-settings'] },
+    { titleKey: 'car_rental', modules: ['rental-dashboard', 'rental-reservation', 'rental-availability', 'rental-calendar', 'rental-settings'] },
     { titleKey: 'distribution_logistics', modules: ['transportation', 'orders', 'outbound', 'routing'] },
     { titleKey: 'sales_commercial', modules: ['pos', 'canvassing', 'shuttle', 'promotions'] },
     { titleKey: 'content', tier: 'content', also: ['media'] },
@@ -386,6 +393,13 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             route: 'module.rental.availability.index',
             routePatterns: ['module.rental.availability.*'],
             icon: <AvailabilityIcon />,
+        },
+        {
+            key: 'rental-calendar',
+            labelKey: 'rental.nav.calendar',
+            route: 'module.rental.calendar.index',
+            routePatterns: ['module.rental.calendar.*'],
+            icon: <RentalCalendarIcon />,
         },
         {
             key: 'rental-settings',

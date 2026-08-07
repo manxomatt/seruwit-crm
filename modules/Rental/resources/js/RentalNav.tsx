@@ -19,6 +19,11 @@ const TABS = [
         patterns: ['rental.availability.*'],
     },
     {
+        labelKey: 'rental.nav.calendar',
+        route: 'rental.calendar.index',
+        patterns: ['rental.calendar.*'],
+    },
+    {
         labelKey: 'rental.nav.settings',
         route: 'rental.settings.index',
         patterns: ['rental.settings.*', 'rental.rates.*'],

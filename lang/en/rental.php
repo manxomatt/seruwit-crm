@@ -76,7 +76,13 @@ return [
 
     'settings' => [
         'title' => 'Rental settings',
+        'tab_general' => 'General',
         'tab_rates' => 'Rates',
+        'save' => 'Save settings',
+        'calendar_section' => 'Calendar',
+        'calendar_section_hint' => 'Control how the vehicle calendar behaves for staff.',
+        'calendar_click_to_book' => 'Create reservation from calendar date click',
+        'calendar_click_to_book_hint' => 'When enabled, clicking today or a future date (or a free vehicle cell on those days) opens the reservation wizard with that date prefilled.',
     ],
 
     'nav' => [
@@ -84,6 +90,7 @@ return [
         'list' => 'Rentals',
         'reservation' => 'Reservation',
         'availability' => 'Availability',
+        'calendar' => 'Calendar',
         'rates' => 'Rates',
         'settings' => 'Settings',
         'back_to_list' => '← Back to Rentals',
@@ -301,6 +308,30 @@ return [
         'no_photo' => 'No photo',
     ],
 
+    'calendar' => [
+        'prev' => 'Previous',
+        'next' => 'Next',
+        'today' => 'Today',
+        'subtitle' => ':vehicles vehicles · :percent% utilised in this period',
+        'empty_fleet' => 'No vehicles in the fleet yet.',
+        'no_booking' => 'No booking on this day',
+        'day_mix' => ':in_use in use · :booked booked · :free free',
+        'avg_util' => ':percent% avg',
+        'click_day_hint' => 'Click today or a future date to start a reservation. On the timeline, click a free cell to book that vehicle.',
+        'click_disabled_hint' => 'Calendar click-to-book is disabled in Settings.',
+        'past_date' => 'Past dates cannot be booked',
+        'book_on_date' => 'Create reservation for this date',
+        'book_vehicle_on_date' => 'Create reservation for this vehicle on this date',
+        'open_month' => 'Open month view',
+        'views' => [
+            'today' => 'Today',
+            'week' => 'Week',
+            'month' => 'Month',
+            'quarter' => '3 months',
+            'year' => 'Year',
+        ],
+    ],
+
     'checklist' => [
         'checkout' => 'Checkout checklist',
         'return' => 'Return checklist',
@@ -497,6 +528,10 @@ return [
             'subtitle' => 'See which vehicles are free or booked for a date range.',
             'empty' => 'No vehicles found.',
         ],
+        'calendar' => [
+            'title' => 'Vehicle calendar',
+            'head' => 'Calendar',
+        ],
         'rates' => [
             'title' => 'Tariff Rates',
             'head' => 'Rental Rates',
@@ -575,6 +610,7 @@ return [
         'addon_removed' => 'Extra charge removed.',
         'deposit_received' => 'Deposit cash recorded.',
         'deposit_settled' => 'Deposit settled.',
+        'settings_updated' => 'Rental settings saved.',
         'rate_created' => 'Rate created.',
         'rate_updated' => 'Rate updated.',
         'rate_deleted' => 'Rate deleted.',
@@ -654,6 +690,7 @@ return [
         'addon_amount_min' => 'Amount must be greater than zero.',
         'swap_vehicle_required' => 'Choose a replacement vehicle.',
         'swap_vehicle_same' => 'Choose a different vehicle.',
+        'calendar_click_to_book_required' => 'Choose whether calendar click-to-book is enabled.',
         'min_periods' => 'Rate ":rate" requires at least :min period(s).',
         'rate_required' => 'This vehicle is not linked to an active rate scheme for the selected period.',
     ],

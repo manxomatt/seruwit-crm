@@ -11,6 +11,7 @@ use Modules\Rental\Console\Commands\RentalScanEnding;
 use Modules\Rental\Http\Controllers\PartnerPortalController;
 use Modules\Rental\Http\Controllers\RentalActionController;
 use Modules\Rental\Http\Controllers\RentalAvailabilityController;
+use Modules\Rental\Http\Controllers\RentalCalendarController;
 use Modules\Rental\Http\Controllers\RentalController;
 use Modules\Rental\Http\Controllers\RentalDashboardController;
 use Modules\Rental\Http\Controllers\RentalPdfController;
@@ -110,6 +111,9 @@ class RentalModule implements ModuleContract
         Route::get('/rental/settings', [RentalSettingsController::class, 'index'])
             ->middleware('permission:rental,view')
             ->name('rental.settings.index');
+        Route::patch('/rental/settings/general', [RentalSettingsController::class, 'updateGeneral'])
+            ->middleware('permission:rental,update')
+            ->name('rental.settings.general.update');
 
         // Tariff rates (CRUD; index redirects to settings?tab=rates)
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');
@@ -120,6 +124,9 @@ class RentalModule implements ModuleContract
 
         // Availability board (before {rental} wildcard)
         Route::get('/rental/availability', [RentalAvailabilityController::class, 'index'])->middleware('permission:rental,view')->name('rental.availability.index');
+
+        // Vehicle usage calendar (before {rental} wildcard)
+        Route::get('/rental/calendar', [RentalCalendarController::class, 'index'])->middleware('permission:rental,view')->name('rental.calendar.index');
 
         // Reservation wizard JSON helpers (before {rental} wildcard)
         Route::get('/rental/reservations/available-vehicles', [RentalReservationWizardController::class, 'availableVehicles'])

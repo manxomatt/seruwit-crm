@@ -3,27 +3,33 @@
 namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
+use Modules\Rental\Http\Requests\UpdateRentalGeneralSettingsRequest;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Support\RentalCalendarOptions;
 
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['rates'];
+    public const TABS = ['general', 'rates'];
 
     public function index(Request $request): Response
     {
-        $tab = $request->string('tab', 'rates')->toString();
+        $tab = $request->string('tab', 'general')->toString();
         if (! in_array($tab, self::TABS, true)) {
-            $tab = 'rates';
+            $tab = 'general';
         }
 
         return Inertia::render('Modules/Rental/Settings/Index', [
             'tab' => $tab,
+            'general' => [
+                'calendar_click_to_book' => RentalCalendarOptions::clickToBookEnabled(),
+            ],
             'rates' => RentalRate::query()
                 ->with('vehicle:id,name,plate_number,type')
                 ->orderBy('period_type')
@@ -41,5 +47,12 @@ class RentalSettingsController extends Controller
                 ->values()
                 ->all(),
         ]);
+    }
+
+    public function updateGeneral(UpdateRentalGeneralSettingsRequest $request): RedirectResponse
+    {
+        RentalCalendarOptions::setClickToBookEnabled($request->boolean('calendar_click_to_book'));
+
+        return back()->with('success', __('rental.messages.settings_updated'));
     }
 }
