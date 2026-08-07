@@ -22,6 +22,10 @@ class RentalGeneralSettings
 
     public const KEY_NO_SHOW_FEE_AMOUNT = 'rental.no_show_fee_amount';
 
+    public const KEY_PASSENGER_FREE_CANCEL_HOURS = 'rental.passenger_free_cancel_hours';
+
+    public const KEY_PUBLIC_MASK_PLATES = 'rental.public_mask_plates';
+
     public const KEY_CALENDAR_CLICK_TO_BOOK = 'rental.calendar_click_to_book';
 
     /**
@@ -37,6 +41,8 @@ class RentalGeneralSettings
             self::KEY_CANCELLATION_FEE_AMOUNT,
             self::KEY_NO_SHOW_FEE_TYPE,
             self::KEY_NO_SHOW_FEE_AMOUNT,
+            self::KEY_PASSENGER_FREE_CANCEL_HOURS,
+            self::KEY_PUBLIC_MASK_PLATES,
             self::KEY_CALENDAR_CLICK_TO_BOOK,
         ];
     }
@@ -50,6 +56,8 @@ class RentalGeneralSettings
      *     cancellation_fee_amount: string,
      *     no_show_fee_type: string,
      *     no_show_fee_amount: string,
+     *     passenger_free_cancel_hours: string,
+     *     public_mask_plates: bool,
      *     calendar_click_to_book: bool
      * }
      */
@@ -63,6 +71,8 @@ class RentalGeneralSettings
             'cancellation_fee_amount' => (string) Setting::getValue(self::KEY_CANCELLATION_FEE_AMOUNT, '0'),
             'no_show_fee_type' => (string) Setting::getValue(self::KEY_NO_SHOW_FEE_TYPE, RentalBookingPolicy::FEE_TYPE_FIXED),
             'no_show_fee_amount' => (string) Setting::getValue(self::KEY_NO_SHOW_FEE_AMOUNT, '0'),
+            'passenger_free_cancel_hours' => (string) Setting::getValue(self::KEY_PASSENGER_FREE_CANCEL_HOURS, '24'),
+            'public_mask_plates' => Setting::getValue(self::KEY_PUBLIC_MASK_PLATES, '1') === '1',
             'calendar_click_to_book' => Setting::getValue(self::KEY_CALENDAR_CLICK_TO_BOOK, '1') === '1',
         ];
     }
@@ -76,6 +86,8 @@ class RentalGeneralSettings
      *     cancellation_fee_amount: int|float|string,
      *     no_show_fee_type: string,
      *     no_show_fee_amount: int|float|string,
+     *     passenger_free_cancel_hours: int|string,
+     *     public_mask_plates: bool,
      *     calendar_click_to_book: bool
      * }  $data
      */
@@ -88,6 +100,8 @@ class RentalGeneralSettings
         self::put(self::KEY_CANCELLATION_FEE_AMOUNT, (string) $data['cancellation_fee_amount'], 'number', 'Cancellation fee amount', 12);
         self::put(self::KEY_NO_SHOW_FEE_TYPE, (string) $data['no_show_fee_type'], 'string', 'No-show fee type', 13);
         self::put(self::KEY_NO_SHOW_FEE_AMOUNT, (string) $data['no_show_fee_amount'], 'number', 'No-show fee amount', 14);
+        self::put(self::KEY_PASSENGER_FREE_CANCEL_HOURS, (string) $data['passenger_free_cancel_hours'], 'number', 'Passenger free-cancel window (hours)', 15);
+        self::put(self::KEY_PUBLIC_MASK_PLATES, $data['public_mask_plates'] ? '1' : '0', 'boolean', 'Mask plates on public booking pages', 16);
         self::put(self::KEY_CALENDAR_CLICK_TO_BOOK, $data['calendar_click_to_book'] ? '1' : '0', 'boolean', 'Calendar click to book', 20);
     }
 

@@ -15,7 +15,11 @@ class RentalLifecycleMailNotification extends Notification
 {
     use Queueable;
 
+    public const EVENT_BOOKED = 'booked';
+
     public const EVENT_CONFIRMED = 'confirmed';
+
+    public const EVENT_CANCELLED = 'cancelled';
 
     public const EVENT_CHECKED_OUT = 'checked_out';
 
@@ -30,7 +34,7 @@ class RentalLifecycleMailNotification extends Notification
     public const EVENT_DEPOSIT_SETTLED = 'deposit_settled';
 
     /**
-     * @param  array{days?: int, invoice_count?: int, applied?: float, refunded?: float}  $context
+     * @param  array{days?: int, invoice_count?: int, applied?: float, refunded?: float, fee_amount?: float}  $context
      */
     public function __construct(
         public readonly Rental $rental,
@@ -53,10 +57,12 @@ class RentalLifecycleMailNotification extends Notification
             ? $rental->vehicle->name.' ('.$rental->vehicle->plate_number.')'
             : '—';
         $partner = $rental->partner?->name ?? '—';
-        $url = url(route('module.rental.show', $rental, absolute: false));
+        [$url, $actionLabel] = $this->actionLink($rental);
 
         $subject = match ($this->event) {
+            self::EVENT_BOOKED => __('rental.mail.booked_subject', ['code' => $rental->code]),
             self::EVENT_CONFIRMED => __('rental.mail.confirmed_subject', ['code' => $rental->code]),
+            self::EVENT_CANCELLED => __('rental.mail.cancelled_subject', ['code' => $rental->code]),
             self::EVENT_CHECKED_OUT => __('rental.mail.checked_out_subject', ['code' => $rental->code]),
             self::EVENT_RETURNED => __('rental.mail.returned_subject', ['code' => $rental->code]),
             self::EVENT_ENDING => __('rental.mail.ending_subject', [
@@ -70,12 +76,26 @@ class RentalLifecycleMailNotification extends Notification
         };
 
         $line = match ($this->event) {
+            self::EVENT_BOOKED => __('rental.mail.booked_body', [
+                'code' => $rental->code,
+                'vehicle' => $vehicle,
+                'partner' => $partner,
+                'start' => $rental->start_date?->toDateString(),
+                'end' => $rental->end_date?->toDateString(),
+                'deposit' => number_format((float) $rental->deposit_amount, 0, ',', '.'),
+            ]),
             self::EVENT_CONFIRMED => __('rental.mail.confirmed_body', [
                 'code' => $rental->code,
                 'vehicle' => $vehicle,
                 'partner' => $partner,
                 'start' => $rental->start_date?->toDateString(),
                 'end' => $rental->end_date?->toDateString(),
+            ]),
+            self::EVENT_CANCELLED => __('rental.mail.cancelled_body', [
+                'code' => $rental->code,
+                'vehicle' => $vehicle,
+                'partner' => $partner,
+                'fee' => number_format((float) ($this->context['fee_amount'] ?? 0), 0, ',', '.'),
             ]),
             self::EVENT_CHECKED_OUT => __('rental.mail.checked_out_body', [
                 'code' => $rental->code,
@@ -124,7 +144,7 @@ class RentalLifecycleMailNotification extends Notification
         $message = (new MailMessage)
             ->subject($subject)
             ->line($line)
-            ->action(__('rental.mail.view_rental'), $url)
+            ->action($actionLabel, $url)
             ->line($footer);
 
         $replyTo = config('mail.reply_to.address');
@@ -134,5 +154,26 @@ class RentalLifecycleMailNotification extends Notification
         }
 
         return $message;
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function actionLink(Rental $rental): array
+    {
+        if (
+            in_array((string) $rental->channel, Rental::passengerChannels(), true)
+            && filled($rental->public_token)
+        ) {
+            return [
+                url('/book/rental/booking/'.$rental->public_token),
+                __('rental.mail.view_booking'),
+            ];
+        }
+
+        return [
+            url(route('module.rental.show', $rental, absolute: false)),
+            __('rental.mail.view_rental'),
+        ];
     }
 }

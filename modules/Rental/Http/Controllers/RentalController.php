@@ -167,6 +167,9 @@ class RentalController extends Controller
             'partner:id,name,code,phone',
             'confirmedBy:id,name',
             'extensions',
+            'extensionRequests' => fn ($query) => $query
+                ->where('status', \Modules\Rental\Models\RentalExtensionRequest::STATUS_PENDING)
+                ->latest('id'),
             'damages',
             'insurancePackage',
             // Do not eager-load pickupLocation/returnLocation here: Laravel serializes

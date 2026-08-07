@@ -1,0 +1,742 @@
+<?php
+
+namespace Modules\Rental\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use App\Modules\Facades\Modules;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Inertia\Inertia;
+use Inertia\Response;
+use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\VehicleRentalClass;
+use Modules\Invoicing\Models\Invoice;
+use Modules\Partners\Models\Location;
+use Modules\Rental\Http\Requests\Public\CancelPublicRentalBookingRequest;
+use Modules\Rental\Http\Requests\Public\StorePublicRentalBookingRequest;
+use Modules\Rental\Models\Rental;
+use Modules\Rental\Models\RentalExtensionRequest;
+use Modules\Rental\Models\RentalInsurancePackage;
+use Modules\Rental\Support\MobileRentalBookingService;
+use Modules\Rental\Support\RentalBookingPolicy;
+use Modules\Rental\Support\RentalExtensionService;
+use Modules\Rental\Support\RentalInvoiceService;
+use Modules\Rental\Support\RentalPassengerDocMedia;
+use Modules\Rental\Support\RentalPlateMasker;
+use Modules\Rental\Support\RentalRateResolver;
+use Modules\Shuttle\Support\PassengerOtpService;
+use Throwable;
+
+/**
+ * Public customer self-booking for rental (PWA). Tenant resolved by domain; no staff auth.
+ */
+class PublicRentalBookingController extends Controller
+{
+    public function search(Request $request, RentalRateResolver $rates): Response
+    {
+        $this->ensureAvailable();
+
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'period_type' => ['nullable', 'string', 'in:daily,weekly,monthly'],
+            'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'rental_class' => ['nullable', 'string', 'in:'.implode(',', VehicleRentalClass::values())],
+        ]);
+
+        $start = $validated['start_date'] ?? null;
+        $end = $validated['end_date'] ?? $start;
+        $periodType = $validated['period_type'] ?? 'daily';
+        $searched = filled($start) && filled($end);
+
+        $vehicles = collect();
+        if ($searched) {
+            $vehicles = Vehicle::query()
+                ->where('status', Vehicle::STATUS_ACTIVE)
+                ->when($validated['rental_class'] ?? null, fn ($q, $class) => $q->where('rental_class', $class))
+                ->orderBy('name')
+                ->get()
+                ->filter(fn (Vehicle $vehicle): bool => Rental::vehicleAvailabilityReasons($vehicle, $start, $end) === [])
+                ->values()
+                ->map(fn (Vehicle $vehicle): array => $this->vehicleCard($vehicle, $rates, $start, $end, $periodType));
+        }
+
+        return Inertia::render('Modules/Rental/Public/Search', [
+            'brand' => $this->brand(),
+            'filters' => [
+                'start_date' => $start,
+                'end_date' => $end,
+                'period_type' => $periodType,
+                'pickup_location_id' => $validated['pickup_location_id'] ?? null,
+                'return_location_id' => $validated['return_location_id'] ?? ($validated['pickup_location_id'] ?? null),
+                'rental_class' => $validated['rental_class'] ?? null,
+            ],
+            'classes' => collect(VehicleRentalClass::values())
+                ->map(fn (string $value): array => [
+                    'value' => $value,
+                    'label' => VehicleRentalClass::label($value),
+                ])
+                ->values()
+                ->all(),
+            'locations' => $this->locationOptions(),
+            'vehicles' => $vehicles,
+            'searched' => $searched,
+            'hold_ttl_minutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
+            'gateway_available' => $this->gatewayAvailable(),
+        ]);
+    }
+
+    public function showVehicle(Request $request, Vehicle $vehicle, MobileRentalBookingService $bookings): Response
+    {
+        $this->ensureAvailable();
+        abort_unless($vehicle->status === Vehicle::STATUS_ACTIVE, 404);
+
+        $validated = $request->validate([
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'period_type' => ['nullable', 'string', 'in:daily,weekly,monthly'],
+            'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
+        ]);
+
+        $periodType = $validated['period_type'] ?? 'daily';
+        $quote = $bookings->quote([
+            'vehicle_id' => $vehicle->id,
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'period_type' => $periodType,
+            'pickup_location_id' => $validated['pickup_location_id'] ?? null,
+            'return_location_id' => $validated['return_location_id'] ?? null,
+            'insurance_package_id' => $validated['insurance_package_id'] ?? null,
+        ]);
+
+        return Inertia::render('Modules/Rental/Public/VehicleShow', [
+            'brand' => $this->brand(),
+            'vehicle' => $this->vehicleDetail($vehicle),
+            'filters' => [
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'period_type' => $periodType,
+                'pickup_location_id' => $validated['pickup_location_id'] ?? null,
+                'return_location_id' => $validated['return_location_id'] ?? ($validated['pickup_location_id'] ?? null),
+                'insurance_package_id' => $validated['insurance_package_id'] ?? null,
+            ],
+            'quote' => $this->quotePayload($quote),
+            'locations' => $this->locationOptions(),
+            'insurance_packages' => RentalInsurancePackage::query()
+                ->where('is_active', true)
+                ->where('period_type', $periodType)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get(['id', 'code', 'name', 'amount', 'description'])
+                ->map(fn (RentalInsurancePackage $package): array => [
+                    'id' => $package->id,
+                    'code' => $package->code,
+                    'name' => $package->name,
+                    'amount' => (float) $package->amount,
+                    'description' => $package->description,
+                ])
+                ->all(),
+            'hold_ttl_minutes' => app(RentalBookingPolicy::class)->pendingReservedTtlMinutes(),
+            'gateway_available' => $this->gatewayAvailable(),
+        ]);
+    }
+
+    public function quote(Request $request, MobileRentalBookingService $bookings): JsonResponse
+    {
+        $this->ensureAvailable();
+
+        $data = $request->validate([
+            'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'period_type' => ['required', 'string', 'in:daily,weekly,monthly'],
+            'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
+        ]);
+
+        return response()->json([
+            'quote' => $this->quotePayload($bookings->quote($data)),
+        ]);
+    }
+
+    public function store(
+        StorePublicRentalBookingRequest $request,
+        MobileRentalBookingService $bookings,
+        PassengerOtpService $otp,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $data = $request->validated();
+
+        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
+            return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')])->withInput();
+        }
+
+        $phone = $otp->normalize($data['booker_phone']);
+
+        try {
+            $rental = $bookings->create($phone, $data, Rental::CHANNEL_WEB);
+        } catch (Throwable $e) {
+            $message = $e instanceof \Illuminate\Validation\ValidationException
+                ? collect($e->errors())->flatten()->first()
+                : $e->getMessage();
+
+            return back()->with('error', $message ?: __('rental.public.quote_unavailable'))->withInput();
+        }
+
+        return redirect()
+            ->route('book.rental.booking.show', $rental->public_token)
+            ->with('success', __('rental.public.booking_created'));
+    }
+
+    public function sendOtp(Request $request, PassengerOtpService $otp): JsonResponse|RedirectResponse
+    {
+        $this->ensureAvailable();
+
+        $data = $request->validate([
+            'booker_phone' => ['required', 'string', 'max:32'],
+        ]);
+
+        $code = $otp->send($data['booker_phone']);
+
+        if ($request->wantsJson()) {
+            $payload = ['ok' => true, 'message' => __('rental.public.otp_sent')];
+            if (! app()->environment('production')) {
+                $payload['debug_code'] = $code;
+            }
+
+            return response()->json($payload);
+        }
+
+        return back()->with('success', __('rental.public.otp_sent'));
+    }
+
+    public function show(string $token): Response
+    {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        return Inertia::render('Modules/Rental/Public/Booking', [
+            'brand' => $this->brand(),
+            'booking' => $this->bookingPayload($rental),
+            'gateway_available' => $this->gatewayAvailable(),
+        ]);
+    }
+
+    public function payDeposit(Request $request, string $token, PassengerOtpService $otp): RedirectResponse
+    {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        $data = $request->validate([
+            'booker_phone' => ['required', 'string', 'max:32'],
+            'otp_code' => ['required', 'string', 'size:6'],
+        ]);
+
+        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
+            return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')]);
+        }
+
+        $phone = $otp->normalize($data['booker_phone']);
+        if ($rental->booker_phone !== null && $rental->booker_phone !== $phone) {
+            return back()->with('error', __('rental.public.forbidden'));
+        }
+
+        if ($rental->isDepositReceived()) {
+            return back()->with('error', __('rental.public.deposit_already_received'));
+        }
+
+        if (! in_array($rental->status, [
+            Rental::STATUS_DRAFT,
+            Rental::STATUS_PENDING,
+            Rental::STATUS_PENDING_RESERVED,
+            Rental::STATUS_CONFIRMED,
+        ], true)) {
+            return back()->with('error', __('rental.public.pay_status_invalid'));
+        }
+
+        if (! $this->gatewayAvailable()) {
+            return back()->with('error', __('rental.public.gateway_unavailable'));
+        }
+
+        try {
+            $charge = app(\Modules\Receivables\Support\GatewayCheckoutService::class)
+                ->createRentalDepositCharge(
+                    $rental->loadMissing('partner'),
+                    '/book/rental/booking/'.$rental->public_token,
+                );
+
+            return redirect()->away($charge->redirect_url);
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function cancel(
+        CancelPublicRentalBookingRequest $request,
+        string $token,
+        MobileRentalBookingService $bookings,
+        PassengerOtpService $otp,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+        $data = $request->validated();
+
+        if (! $this->assertOtp($otp, $data['booker_phone'], $data['otp_code'])) {
+            return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')]);
+        }
+
+        $phone = $otp->normalize($data['booker_phone']);
+        if ($rental->booker_phone !== null && $rental->booker_phone !== $phone) {
+            return back()->with('error', __('rental.public.forbidden'));
+        }
+
+        try {
+            $bookings->cancel($rental, $data['cancelled_reason']);
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', __('rental.public.booking_cancelled'));
+    }
+
+    public function payInvoice(Request $request, string $token, PassengerOtpService $otp): RedirectResponse
+    {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+        $data = $request->validate([
+            'booker_phone' => ['required', 'string', 'max:32'],
+            'otp_code' => ['required', 'string', 'size:6'],
+            'invoice_id' => ['required', 'integer'],
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+            return $error;
+        }
+
+        if (! $this->gatewayAvailable()) {
+            return back()->with('error', __('rental.public.gateway_unavailable'));
+        }
+
+        $invoice = app(RentalInvoiceService::class)
+            ->invoicesFor($rental)
+            ->firstWhere('id', (int) $data['invoice_id']);
+
+        if ($invoice === null) {
+            return back()->with('error', __('rental.public.invoice_not_found'));
+        }
+
+        try {
+            $charge = app(\Modules\Receivables\Support\GatewayCheckoutService::class)
+                ->createInvoiceCharge($invoice, '/book/rental/booking/'.$rental->public_token);
+
+            return redirect()->away($charge->redirect_url);
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function requestExtend(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+        RentalExtensionService $extensions,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+        $data = $request->validate([
+            'booker_phone' => ['required', 'string', 'max:32'],
+            'otp_code' => ['required', 'string', 'size:6'],
+            'new_end_date' => ['required', 'date', 'after:'.$rental->end_date?->toDateString()],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+            return $error;
+        }
+
+        try {
+            $extensions->requestFromPassenger(
+                $rental,
+                $data['new_end_date'],
+                Rental::CHANNEL_WEB,
+                $data['notes'] ?? null,
+            );
+        } catch (Throwable $e) {
+            $message = $e instanceof \Illuminate\Validation\ValidationException
+                ? collect($e->errors())->flatten()->first()
+                : $e->getMessage();
+
+            return back()->with('error', $message);
+        }
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', __('rental.public.extend_requested'));
+    }
+
+    public function uploadDocuments(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+        RentalPassengerDocMedia $docs,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+        $data = $request->validate([
+            'booker_phone' => ['required', 'string', 'max:32'],
+            'otp_code' => ['required', 'string', 'size:6'],
+            'ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'sim' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+            return $error;
+        }
+
+        if (! $request->hasFile('ktp') && ! $request->hasFile('sim')) {
+            return back()->withErrors(['ktp' => __('rental.public.documents_required')]);
+        }
+
+        $updates = [];
+        if ($request->hasFile('ktp')) {
+            $updates['passenger_ktp_path'] = $docs->storeUpload($request->file('ktp'), $rental->id, 'ktp');
+        }
+        if ($request->hasFile('sim')) {
+            $updates['passenger_sim_path'] = $docs->storeUpload($request->file('sim'), $rental->id, 'sim');
+        }
+
+        $rental->update($updates);
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', __('rental.public.documents_uploaded'));
+    }
+
+    public function history(Request $request, PassengerOtpService $otp): Response
+    {
+        $this->ensureAvailable();
+
+        $phone = $request->string('phone')->toString();
+        $otpCode = $request->string('otp_code')->toString();
+        $bookings = [];
+
+        if ($phone !== '' && $otpCode !== '' && $this->assertOtp($otp, $phone, $otpCode)) {
+            $normalized = $otp->normalize($phone);
+            $bookings = Rental::query()
+                ->whereIn('channel', Rental::passengerChannels())
+                ->where('booker_phone', $normalized)
+                ->with(['vehicle', 'insurancePackage', 'pickupLocation', 'returnLocation'])
+                ->latest()
+                ->limit(20)
+                ->get()
+                ->map(fn (Rental $rental): array => $this->bookingPayload($rental))
+                ->all();
+        }
+
+        return Inertia::render('Modules/Rental/Public/History', [
+            'brand' => $this->brand(),
+            'phone' => $phone,
+            'bookings' => $bookings,
+        ]);
+    }
+
+    private function ensureAvailable(): void
+    {
+        if (! tenancy()->initialized && ! app()->runningUnitTests()) {
+            abort(404);
+        }
+
+        if (! Modules::available('rental') || ! Schema::hasTable('rentals')) {
+            abort(404);
+        }
+
+        if (Setting::getValue('rental.passenger_booking_enabled', '0') !== '1') {
+            abort(404, __('rental.public.disabled'));
+        }
+    }
+
+    /**
+     * @return array{name: string, color: string, support_phone: string|null}
+     */
+    private function brand(): array
+    {
+        return [
+            'name' => (string) config('app.name', 'Rental'),
+            'color' => '#0f766e',
+            'support_phone' => null,
+        ];
+    }
+
+    private function gatewayAvailable(): bool
+    {
+        return class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
+            && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable();
+    }
+
+    private function assertOtp(PassengerOtpService $otp, string $phone, string $code): bool
+    {
+        if ($otp->isVerified($phone)) {
+            return true;
+        }
+
+        return $otp->verify($phone, $code);
+    }
+
+    private function guardBooker(
+        PassengerOtpService $otp,
+        Rental $rental,
+        string $phone,
+        string $code,
+    ): ?RedirectResponse {
+        if (! $this->assertOtp($otp, $phone, $code)) {
+            return back()->withErrors(['otp_code' => __('rental.public.otp_invalid')]);
+        }
+
+        $normalized = $otp->normalize($phone);
+        if ($rental->booker_phone !== null && $rental->booker_phone !== $normalized) {
+            return back()->with('error', __('rental.public.forbidden'));
+        }
+
+        return null;
+    }
+
+    private function findPassengerBooking(string $token): Rental
+    {
+        return Rental::query()
+            ->where('public_token', $token)
+            ->whereIn('channel', Rental::passengerChannels())
+            ->with(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation'])
+            ->firstOrFail();
+    }
+
+    /**
+     * @return list<array{id: int, name: string, address: string|null, city: string|null}>
+     */
+    private function locationOptions(): array
+    {
+        return Location::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'address', 'city'])
+            ->map(fn (Location $location): array => [
+                'id' => $location->id,
+                'name' => $location->name,
+                'address' => $location->address,
+                'city' => $location->city,
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function vehicleCard(
+        Vehicle $vehicle,
+        RentalRateResolver $rates,
+        string $start,
+        string $end,
+        string $periodType,
+    ): array {
+        $rate = $rates->suggest($vehicle, $start, $end, $periodType);
+
+        return [
+            'id' => $vehicle->id,
+            'name' => $vehicle->name,
+            'plate_number' => RentalPlateMasker::mask((string) $vehicle->plate_number),
+            'rental_class' => $vehicle->rental_class,
+            'rental_class_label' => $vehicle->rental_class
+                ? VehicleRentalClass::label((string) $vehicle->rental_class)
+                : null,
+            'capacity_seats' => $vehicle->capacity_seats,
+            'color' => $vehicle->color,
+            'model_year' => $vehicle->model_year,
+            'photo_url' => $vehicle->photo_url,
+            'from_price' => $rate ? (float) $rate->rate_per_period : null,
+            'deposit_amount' => $rate && $rate->deposit_amount !== null ? (float) $rate->deposit_amount : null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function vehicleDetail(Vehicle $vehicle): array
+    {
+        return [
+            'id' => $vehicle->id,
+            'name' => $vehicle->name,
+            'plate_number' => RentalPlateMasker::mask((string) $vehicle->plate_number),
+            'type' => $vehicle->type,
+            'rental_class' => $vehicle->rental_class,
+            'rental_class_label' => $vehicle->rental_class
+                ? VehicleRentalClass::label((string) $vehicle->rental_class)
+                : null,
+            'brand' => $vehicle->brand,
+            'model_year' => $vehicle->model_year,
+            'color' => $vehicle->color,
+            'capacity_seats' => $vehicle->capacity_seats,
+            'fuel_type' => $vehicle->fuel_type,
+            'photo_url' => $vehicle->photo_url,
+        ];
+    }
+
+    /**
+     * @param  array{
+     *     available: bool,
+     *     reasons: list<string>,
+     *     total_periods: int,
+     *     rate_per_period: float|null,
+     *     deposit_amount: float|null,
+     *     base_amount: float|null,
+     *     one_way_fee_amount: float|null,
+     *     insurance_amount: float|null,
+     *     total_amount: float|null,
+     *     min_periods: int|null
+     * }  $quote
+     * @return array<string, mixed>
+     */
+    private function quotePayload(array $quote): array
+    {
+        return [
+            'available' => $quote['available'],
+            'reasons' => $quote['reasons'],
+            'total_periods' => $quote['total_periods'],
+            'rate_per_period' => $quote['rate_per_period'],
+            'deposit_amount' => $quote['deposit_amount'],
+            'base_amount' => $quote['base_amount'],
+            'one_way_fee_amount' => $quote['one_way_fee_amount'],
+            'insurance_amount' => $quote['insurance_amount'],
+            'total_amount' => $quote['total_amount'],
+            'min_periods' => $quote['min_periods'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function bookingPayload(Rental $rental): array
+    {
+        return [
+            'code' => $rental->code,
+            'public_token' => $rental->public_token,
+            'status' => $rental->status,
+            'channel' => $rental->channel,
+            'booker_phone' => $rental->booker_phone,
+            'start_date' => $rental->start_date?->toDateString(),
+            'end_date' => $rental->end_date?->toDateString(),
+            'period_type' => $rental->period_type,
+            'total_periods' => (int) $rental->total_periods,
+            'rate_per_period' => (float) $rental->rate_per_period,
+            'base_amount' => (float) $rental->base_amount,
+            'deposit_amount' => (float) $rental->deposit_amount,
+            'deposit_received' => $rental->isDepositReceived(),
+            'total_amount' => (float) $rental->total_amount,
+            'pickup_location' => $rental->pickup_location ?? $rental->pickupLocation?->name,
+            'return_location' => $rental->return_location ?? $rental->returnLocation?->name,
+            'reserved_until' => $rental->reserved_until?->toIso8601String(),
+            'cancelled_reason' => $rental->cancelled_reason,
+            'vehicle' => $rental->vehicle ? [
+                'id' => $rental->vehicle->id,
+                'name' => $rental->vehicle->name,
+                'plate_number' => (string) $rental->vehicle->plate_number,
+                'photo_url' => $rental->vehicle->photo_url,
+            ] : null,
+            'insurance_package' => $rental->insurancePackage ? [
+                'id' => $rental->insurancePackage->id,
+                'name' => $rental->insurancePackage->name,
+                'amount' => (float) $rental->insurancePackage->amount,
+            ] : null,
+            'can_pay_deposit' => ! $rental->isDepositReceived()
+                && (float) $rental->deposit_amount > 0
+                && in_array($rental->status, [
+                    Rental::STATUS_DRAFT,
+                    Rental::STATUS_PENDING,
+                    Rental::STATUS_PENDING_RESERVED,
+                    Rental::STATUS_CONFIRMED,
+                ], true),
+            'cancel' => app(RentalBookingPolicy::class)->passengerCancelAssessment($rental),
+            'payment' => $this->paymentPayload($rental),
+            'can_request_extend' => $rental->status === Rental::STATUS_ACTIVE,
+            'extend_request' => $this->pendingExtendRequestPayload($rental),
+            'documents' => [
+                'ktp_uploaded' => filled($rental->passenger_ktp_path),
+                'sim_uploaded' => filled($rental->passenger_sim_path),
+                'ktp_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_ktp_path),
+                'sim_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_sim_path),
+            ],
+        ];
+    }
+
+    /**
+     * @return array{
+     *     status: string,
+     *     balance_due: float,
+     *     can_pay_balance: bool,
+     *     invoices: list<array{id: int, code: string, status: string, balance: float, total: float}>
+     * }
+     */
+    private function paymentPayload(Rental $rental): array
+    {
+        $summary = app(RentalInvoiceService::class)->paymentSummary($rental);
+        $payable = collect($summary['invoices'])
+            ->filter(fn (array $invoice): bool => in_array($invoice['status'], [
+                Invoice::STATUS_ISSUED,
+                Invoice::STATUS_PARTIALLY_PAID,
+            ], true) && $invoice['balance'] > 0)
+            ->map(fn (array $invoice): array => [
+                'id' => $invoice['id'],
+                'code' => $invoice['code'],
+                'status' => $invoice['status'],
+                'balance' => $invoice['balance'],
+                'total' => $invoice['total'],
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'status' => $summary['status'],
+            'balance_due' => (float) $summary['balance_due'],
+            'can_pay_balance' => $payable !== [] && $this->gatewayAvailable(),
+            'invoices' => $payable,
+        ];
+    }
+
+    /**
+     * @return array{id: int, requested_end_date: string, estimated_periods: int, estimated_amount: float, status: string}|null
+     */
+    private function pendingExtendRequestPayload(Rental $rental): ?array
+    {
+        $request = RentalExtensionRequest::query()
+            ->where('rental_id', $rental->id)
+            ->where('status', RentalExtensionRequest::STATUS_PENDING)
+            ->latest('id')
+            ->first();
+
+        if ($request === null) {
+            return null;
+        }
+
+        return [
+            'id' => $request->id,
+            'requested_end_date' => $request->requested_end_date?->toDateString(),
+            'estimated_periods' => (int) $request->estimated_periods,
+            'estimated_amount' => (float) $request->estimated_amount,
+            'status' => $request->status,
+        ];
+    }
+}

@@ -183,7 +183,7 @@ return [
         'invalid_signature' => 'Signature Midtrans tidak valid.',
         'deposit_none' => 'Rental ini tidak punya deposit.',
         'deposit_already_received' => 'Deposit sudah diterima.',
-        'deposit_status_invalid' => 'Deposit online hanya untuk rental draft, confirmed, atau active.',
+        'deposit_status_invalid' => 'Deposit online hanya untuk rental draft, pending, pending reserved, confirmed, atau active.',
         'invoice_nothing_due' => 'Invoice ini tidak punya sisa tagihan.',
         'invoice_not_open' => 'Hanya invoice issued yang dapat dibayar online.',
         'item_deposit' => 'Deposit rental :code',

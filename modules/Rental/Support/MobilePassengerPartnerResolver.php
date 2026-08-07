@@ -12,7 +12,7 @@ class MobilePassengerPartnerResolver
 {
     public function __construct(private readonly PassengerOtpService $otp) {}
 
-    public function resolve(string $phone, ?string $name = null): Partner
+    public function resolve(string $phone, ?string $name = null, ?string $email = null): Partner
     {
         $normalized = $this->otp->normalize($phone);
         $local = $this->toLocalFormat($normalized);
@@ -28,8 +28,18 @@ class MobilePassengerPartnerResolver
             ->first();
 
         if ($partner !== null) {
+            $updates = [];
+
             if ($partner->phone === null || $partner->phone === '') {
-                $partner->forceFill(['phone' => $normalized])->save();
+                $updates['phone'] = $normalized;
+            }
+
+            if (filled($email) && ($partner->email === null || $partner->email === '')) {
+                $updates['email'] = $email;
+            }
+
+            if ($updates !== []) {
+                $partner->forceFill($updates)->save();
             }
 
             return $partner->fresh();
@@ -42,6 +52,7 @@ class MobilePassengerPartnerResolver
             'name' => filled($name) ? $name : 'Customer '.$normalized,
             'phone' => $normalized,
             'mobile' => $normalized,
+            'email' => filled($email) ? $email : null,
             'customer_rank' => 1,
             'supplier_rank' => 0,
             'status' => 'active',

@@ -183,7 +183,7 @@ return [
         'invalid_signature' => 'Invalid Midtrans signature.',
         'deposit_none' => 'This rental has no deposit to collect.',
         'deposit_already_received' => 'Deposit has already been received.',
-        'deposit_status_invalid' => 'Deposit can only be paid online for draft, confirmed, or active rentals.',
+        'deposit_status_invalid' => 'Deposit can only be paid online for draft, pending, pending reserved, confirmed, or active rentals.',
         'invoice_nothing_due' => 'This invoice has no remaining balance.',
         'invoice_not_open' => 'Only issued invoices can be paid online.',
         'item_deposit' => 'Rental deposit :code',

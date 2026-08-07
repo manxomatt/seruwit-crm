@@ -49,6 +49,8 @@ interface GeneralSettings {
     cancellation_fee_amount: string;
     no_show_fee_type: string;
     no_show_fee_amount: string;
+    passenger_free_cancel_hours: string;
+    public_mask_plates: boolean;
     calendar_click_to_book: boolean;
 }
 
@@ -68,6 +70,8 @@ const DEFAULT_GENERAL: GeneralSettings = {
     cancellation_fee_amount: '0',
     no_show_fee_type: 'fixed',
     no_show_fee_amount: '0',
+    passenger_free_cancel_hours: '24',
+    public_mask_plates: true,
     calendar_click_to_book: true,
 };
 
@@ -82,6 +86,8 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
         cancellation_fee_amount: general.cancellation_fee_amount,
         no_show_fee_type: general.no_show_fee_type,
         no_show_fee_amount: general.no_show_fee_amount,
+        passenger_free_cancel_hours: general.passenger_free_cancel_hours,
+        public_mask_plates: general.public_mask_plates,
         calendar_click_to_book: general.calendar_click_to_book,
     });
 
@@ -143,6 +149,25 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                             {t('rental.settings.passenger_booking_enabled_hint')}
                         </p>
                         <InputError message={errors.passenger_booking_enabled} className="mt-1" />
+                    </div>
+                </div>
+
+                <div className="mt-4 flex items-start gap-3">
+                    <Checkbox
+                        id="public_mask_plates"
+                        checked={data.public_mask_plates}
+                        onChange={(e) => setData('public_mask_plates', e.target.checked)}
+                    />
+                    <div>
+                        <InputLabel
+                            htmlFor="public_mask_plates"
+                            value={t('rental.settings.public_mask_plates')}
+                            className="!mb-0"
+                        />
+                        <p className="mt-1 text-sm text-gray-500">
+                            {t('rental.settings.public_mask_plates_hint')}
+                        </p>
+                        <InputError message={errors.public_mask_plates} className="mt-1" />
                     </div>
                 </div>
 
@@ -218,6 +243,24 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                             {t('rental.settings.cancellation_fee_amount_hint')}
                         </p>
                         <InputError message={errors.cancellation_fee_amount} className="mt-1" />
+                    </div>
+                    <div className="sm:col-span-2">
+                        <InputLabel
+                            htmlFor="passenger_free_cancel_hours"
+                            value={t('rental.settings.passenger_free_cancel_hours')}
+                        />
+                        <TextInput
+                            id="passenger_free_cancel_hours"
+                            type="number"
+                            min={0}
+                            className="mt-1 w-full"
+                            value={data.passenger_free_cancel_hours}
+                            onChange={(e) => setData('passenger_free_cancel_hours', e.target.value)}
+                        />
+                        <p className="mt-1 text-sm text-gray-500">
+                            {t('rental.settings.passenger_free_cancel_hours_hint')}
+                        </p>
+                        <InputError message={errors.passenger_free_cancel_hours} className="mt-1" />
                     </div>
                     <div>
                         <InputLabel htmlFor="no_show_fee_type" value={t('rental.settings.no_show_fee_type')} />

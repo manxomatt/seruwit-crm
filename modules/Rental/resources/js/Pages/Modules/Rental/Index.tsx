@@ -31,6 +31,7 @@ interface Driver {
 interface Rental {
     id: number;
     code: string;
+    channel?: string | null;
     status: string;
     start_date: string;
     end_date: string;
@@ -200,6 +201,11 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                                         >
                                             {rental.code}
                                         </Link>
+                                        {rental.channel && rental.channel !== 'staff' && (
+                                            <span className="ml-2 inline-flex rounded-md bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-800">
+                                                {t(`rental.channel.${rental.channel}`, undefined, rental.channel)}
+                                            </span>
+                                        )}
                                         {rental.is_overdue && (
                                             <span className="ml-2 inline-flex rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
                                                 {t('rental.status.overdue')}

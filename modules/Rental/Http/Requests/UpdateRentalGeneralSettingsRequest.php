@@ -28,6 +28,8 @@ class UpdateRentalGeneralSettingsRequest extends FormRequest
             'cancellation_fee_amount' => ['required', 'numeric', 'min:0'],
             'no_show_fee_type' => ['required', Rule::in($feeTypes)],
             'no_show_fee_amount' => ['required', 'numeric', 'min:0'],
+            'passenger_free_cancel_hours' => ['required', 'integer', 'min:0', 'max:8760'],
+            'public_mask_plates' => ['required', 'boolean'],
             'calendar_click_to_book' => ['required', 'boolean'],
         ];
     }
@@ -45,6 +47,8 @@ class UpdateRentalGeneralSettingsRequest extends FormRequest
             'cancellation_fee_amount.required' => __('rental.validation.cancellation_fee_amount_required'),
             'no_show_fee_type.required' => __('rental.validation.no_show_fee_type_required'),
             'no_show_fee_amount.required' => __('rental.validation.no_show_fee_amount_required'),
+            'passenger_free_cancel_hours.required' => __('rental.validation.passenger_free_cancel_hours_required'),
+            'public_mask_plates.required' => __('rental.validation.public_mask_plates_required'),
             'calendar_click_to_book.required' => __('rental.validation.calendar_click_to_book_required'),
         ];
     }

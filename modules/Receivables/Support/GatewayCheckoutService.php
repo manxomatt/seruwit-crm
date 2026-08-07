@@ -38,9 +38,9 @@ class GatewayCheckoutService
     }
 
     /**
-     * @param  object{id: int, code: string, partner_id: int, deposit_amount: mixed, deposit_received_at: mixed, status: string, partner?: object|null}  $rental
+     * @param  object{id: int, code: string, partner_id: int, deposit_amount: mixed, deposit_received_at: mixed, status: string, public_token?: string|null, partner?: object|null}  $rental
      */
-    public function createRentalDepositCharge(object $rental): GatewayCharge
+    public function createRentalDepositCharge(object $rental, ?string $finishPath = null): GatewayCharge
     {
         $amount = round((float) $rental->deposit_amount, 2);
 
@@ -56,7 +56,13 @@ class GatewayCheckoutService
             ]);
         }
 
-        if (! in_array($rental->status, ['draft', 'confirmed', 'active'], true)) {
+        if (! in_array($rental->status, [
+            'draft',
+            'pending',
+            'pending_reserved',
+            'confirmed',
+            'active',
+        ], true)) {
             throw ValidationException::withMessages([
                 'deposit' => __('receivables.gateway.deposit_status_invalid'),
             ]);
@@ -73,11 +79,11 @@ class GatewayCheckoutService
             'customer_name' => $partner->name ?? null,
             'customer_email' => $partner->email ?? null,
             'customer_phone' => $partner->phone ?? $partner->mobile ?? null,
-            'finish_path' => '/module/rental/'.$rental->id,
+            'finish_path' => $finishPath ?? '/module/rental/'.$rental->id,
         ]);
     }
 
-    public function createInvoiceCharge(Invoice $invoice): GatewayCharge
+    public function createInvoiceCharge(Invoice $invoice, ?string $finishPath = null): GatewayCharge
     {
         $balance = round((float) $invoice->balanceDue(), 2);
 
@@ -104,7 +110,7 @@ class GatewayCheckoutService
             'customer_name' => $invoice->partner?->name,
             'customer_email' => $invoice->partner?->email,
             'customer_phone' => $invoice->partner?->phone ?? $invoice->partner?->mobile,
-            'finish_path' => '/module/invoicing/invoices/'.$invoice->id,
+            'finish_path' => $finishPath ?? '/module/invoicing/invoices/'.$invoice->id,
         ]);
     }
 

@@ -17,11 +17,13 @@ use Modules\Rental\Http\Requests\SwapRentalVehicleRequest;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalCharge;
 use Modules\Rental\Models\RentalDamage;
+use Modules\Rental\Models\RentalExtensionRequest;
 use Modules\Rental\Models\RentalVehicleSwap;
 use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 use Modules\Rental\Support\RentalAccountingService;
 use Modules\Rental\Support\RentalAddonCatalog;
 use Modules\Rental\Support\RentalConfirmationService;
+use Modules\Rental\Support\RentalExtensionService;
 use Modules\Rental\Support\RentalHandoverChecklist;
 use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
@@ -35,6 +37,7 @@ class RentalActionController extends Controller
         private readonly RentalMailer $mailer,
         private readonly RentalHandoverMedia $handoverMedia,
         private readonly RentalConfirmationService $confirmation,
+        private readonly RentalExtensionService $extensions,
     ) {}
 
     protected function getRoutePrefix(): string
@@ -375,53 +378,64 @@ class RentalActionController extends Controller
      */
     public function extend(Request $request, Rental $rental): RedirectResponse
     {
-        abort_if($rental->status !== Rental::STATUS_ACTIVE, 422, __('rental.errors.extend_active_only'));
-
         $request->validate([
             'new_end_date' => ['required', 'date', 'after:end_date'],
             'notes' => ['nullable', 'string'],
         ]);
 
-        $rental->loadMissing('vehicle');
-        $newEnd = $request->string('new_end_date')->toString();
-        $reasons = Rental::vehicleAvailabilityReasons(
-            $rental->vehicle,
-            $rental->start_date->toDateString(),
-            $newEnd,
-            $rental->id,
-        );
-
-        if ($reasons !== []) {
-            return back()->withErrors(['new_end_date' => $reasons[0]]);
+        try {
+            $this->extensions->apply(
+                $rental,
+                $request->string('new_end_date')->toString(),
+                $request->input('notes'),
+            );
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
         }
 
-        $originalEnd = $rental->end_date->toDateString();
-        $extendedPeriods = Rental::computePeriods(
-            $rental->end_date->copy()->addDay()->toDateString(),
-            $newEnd,
-            $rental->period_type,
-        );
-        $additionalAmount = $extendedPeriods * (float) $rental->rate_per_period;
-
-        $extension = $rental->extensions()->create([
-            'original_end_date' => $originalEnd,
-            'new_end_date' => $newEnd,
-            'extended_periods' => $extendedPeriods,
-            'additional_amount' => $additionalAmount,
-            'notes' => $request->notes,
-        ]);
-
-        $rental->update([
-            'end_date' => $newEnd,
-            'total_periods' => $rental->total_periods + $extendedPeriods,
-            'base_amount' => (float) $rental->base_amount + $additionalAmount,
-            'total_amount' => (float) $rental->total_amount + $additionalAmount,
-        ]);
-
-        $this->invoices->invoiceExtension($rental->fresh(), $extension);
-        $this->accounting->issueDraftInvoices($rental->fresh());
-
         return back()->with('success', __('rental.messages.extended'));
+    }
+
+    public function approveExtensionRequest(Request $request, Rental $rental, RentalExtensionRequest $extensionRequest): RedirectResponse
+    {
+        abort_unless((int) $extensionRequest->rental_id === (int) $rental->id, 404);
+
+        $data = $request->validate([
+            'staff_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $this->extensions->approveRequest(
+                $extensionRequest,
+                reviewedBy: $request->user()?->id,
+                staffNotes: $data['staff_notes'] ?? null,
+            );
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success', __('rental.messages.extend_request_approved'));
+    }
+
+    public function rejectExtensionRequest(Request $request, Rental $rental, RentalExtensionRequest $extensionRequest): RedirectResponse
+    {
+        abort_unless((int) $extensionRequest->rental_id === (int) $rental->id, 404);
+
+        $data = $request->validate([
+            'staff_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $this->extensions->rejectRequest(
+                $extensionRequest,
+                reviewedBy: $request->user()?->id,
+                staffNotes: $data['staff_notes'] ?? null,
+            );
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success', __('rental.messages.extend_request_rejected'));
     }
 
     /**

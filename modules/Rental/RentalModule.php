@@ -159,6 +159,12 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/no-show', [RentalActionController::class, 'markNoShow'])->middleware('permission:rental,update')->name('rental.no_show');
         Route::post('/rental/{rental}/mark-fee-paid', [RentalActionController::class, 'markFeePaid'])->middleware('permission:rental,update')->name('rental.mark_fee_paid');
         Route::post('/rental/{rental}/extend', [RentalActionController::class, 'extend'])->middleware('permission:rental,update')->name('rental.extend');
+        Route::post('/rental/{rental}/extension-requests/{extensionRequest}/approve', [RentalActionController::class, 'approveExtensionRequest'])
+            ->middleware('permission:rental,update')
+            ->name('rental.extension_requests.approve');
+        Route::post('/rental/{rental}/extension-requests/{extensionRequest}/reject', [RentalActionController::class, 'rejectExtensionRequest'])
+            ->middleware('permission:rental,update')
+            ->name('rental.extension_requests.reject');
         Route::post('/rental/{rental}/swap-vehicle', [RentalActionController::class, 'swapVehicle'])->middleware('permission:rental,update')->name('rental.swap');
         Route::post('/rental/{rental}/deposit-receive', [RentalActionController::class, 'receiveDeposit'])->middleware('permission:rental,update')->name('rental.deposit.receive');
         Route::post('/rental/{rental}/deposit-pay-online', [RentalActionController::class, 'payDepositOnline'])->middleware('permission:rental,update')->name('rental.deposit.pay_online');

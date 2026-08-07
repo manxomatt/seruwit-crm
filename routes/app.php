@@ -20,6 +20,7 @@ use App\Http\Controllers\TodoController;
 use App\Modules\Facades\Modules;
 use Illuminate\Support\Facades\Route;
 use Modules\Orders\Http\Controllers\PublicTrackingController;
+use Modules\Rental\Http\Controllers\PublicRentalBookingController;
 use Modules\Shuttle\Http\Controllers\PublicPassengerBookingController;
 
 /*
@@ -60,6 +61,24 @@ Route::middleware('throttle:30,1')->prefix('book/shuttle')->name('book.shuttle.'
     Route::post('/ticket/{token}/cancel', [PublicPassengerBookingController::class, 'cancel'])->name('cancel');
     Route::post('/ticket/{token}/pay', [PublicPassengerBookingController::class, 'pay'])->name('pay');
     Route::get('/history', [PublicPassengerBookingController::class, 'history'])->name('history');
+});
+
+// Public rental vehicle booking (PWA) — gated inside controller.
+Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')->group(function (): void {
+    Route::get('/', [PublicRentalBookingController::class, 'search'])->name('search');
+    Route::get('/vehicles/{vehicle}', [PublicRentalBookingController::class, 'showVehicle'])->name('vehicles.show');
+    Route::post('/quote', [PublicRentalBookingController::class, 'quote'])->name('quote');
+    Route::post('/bookings', [PublicRentalBookingController::class, 'store'])->name('bookings.store');
+    Route::post('/otp', [PublicRentalBookingController::class, 'sendOtp'])
+        ->middleware('throttle:20,1')
+        ->name('otp');
+    Route::get('/booking/{token}', [PublicRentalBookingController::class, 'show'])->name('booking.show');
+    Route::post('/booking/{token}/pay-deposit', [PublicRentalBookingController::class, 'payDeposit'])->name('booking.pay_deposit');
+    Route::post('/booking/{token}/pay-invoice', [PublicRentalBookingController::class, 'payInvoice'])->name('booking.pay_invoice');
+    Route::post('/booking/{token}/cancel', [PublicRentalBookingController::class, 'cancel'])->name('booking.cancel');
+    Route::post('/booking/{token}/extend-request', [PublicRentalBookingController::class, 'requestExtend'])->name('booking.extend_request');
+    Route::post('/booking/{token}/documents', [PublicRentalBookingController::class, 'uploadDocuments'])->name('booking.documents');
+    Route::get('/history', [PublicRentalBookingController::class, 'history'])->name('history');
 });
 
 // Capacitor / native passenger API (JSON). CSRF exempt — see bootstrap/app.php.

@@ -29,6 +29,7 @@ abstract class TestCase extends BaseTestCase
         $app = parent::createApplication();
 
         $this->pinTestingDatabaseEnvironment();
+        $app['env'] = 'testing';
         $this->pinTestingDatabaseConfig($app['config']);
         $this->assertTestingDatabaseIsSafe($app['config']);
 
@@ -44,6 +45,10 @@ abstract class TestCase extends BaseTestCase
 
     private function pinTestingDatabaseEnvironment(): void
     {
+        $_ENV['APP_ENV'] = 'testing';
+        $_SERVER['APP_ENV'] = 'testing';
+        putenv('APP_ENV=testing');
+
         $_ENV['DB_DATABASE'] = self::TESTING_DATABASE;
         $_SERVER['DB_DATABASE'] = self::TESTING_DATABASE;
         putenv('DB_DATABASE='.self::TESTING_DATABASE);

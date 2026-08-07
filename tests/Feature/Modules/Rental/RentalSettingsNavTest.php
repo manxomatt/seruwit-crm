@@ -34,6 +34,8 @@ class RentalSettingsNavTest extends TestCase
             'cancellation_fee_amount' => 0,
             'no_show_fee_type' => 'fixed',
             'no_show_fee_amount' => 0,
+            'passenger_free_cancel_hours' => 24,
+            'public_mask_plates' => true,
             'calendar_click_to_book' => true,
         ], $overrides);
     }

@@ -11,6 +11,7 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Notifications\RentalLifecycleMailNotification;
 
 /**
  * Passenger-facing rental booking façade over staff domain services.
@@ -24,6 +25,7 @@ class MobileRentalBookingService
         private readonly MobilePassengerPartnerResolver $partners,
         private readonly RentalBookingPolicy $policy,
         private readonly RentalConfirmationService $confirmation,
+        private readonly RentalMailer $mailer,
     ) {}
 
     /**
@@ -101,8 +103,14 @@ class MobileRentalBookingService
      *
      * @param  array<string, mixed>  $input
      */
-    public function create(string $bookerPhone, array $input): Rental
+    public function create(string $bookerPhone, array $input, string $channel = Rental::CHANNEL_MOBILE): Rental
     {
+        if (! in_array($channel, Rental::passengerChannels(), true)) {
+            throw ValidationException::withMessages([
+                'channel' => __('rental.public.not_passenger_channel'),
+            ]);
+        }
+
         $quote = $this->quote($input);
 
         if (! $quote['available'] || $quote['rate'] === null) {
@@ -114,7 +122,11 @@ class MobileRentalBookingService
         /** @var RentalRate $rate */
         $rate = $quote['rate'];
         $vehicle = Vehicle::query()->findOrFail((int) $input['vehicle_id']);
-        $partner = $this->partners->resolve($bookerPhone, $input['customer_name'] ?? null);
+        $partner = $this->partners->resolve(
+            $bookerPhone,
+            $input['customer_name'] ?? null,
+            $input['customer_email'] ?? null,
+        );
         $this->eligibility->assertCanConfirm($partner);
 
         $hydrated = $this->hydrator->hydrate([
@@ -130,10 +142,10 @@ class MobileRentalBookingService
         $baseAmount = round($ratePerPeriod * $periods, 2);
         $reservedUntil = $this->policy->reservedUntilTimestamp();
 
-        return DB::transaction(function () use ($input, $vehicle, $partner, $bookerPhone, $rate, $hydrated, $periods, $ratePerPeriod, $baseAmount, $reservedUntil): Rental {
+        $created = DB::transaction(function () use ($input, $vehicle, $partner, $bookerPhone, $rate, $hydrated, $periods, $ratePerPeriod, $baseAmount, $reservedUntil, $channel): Rental {
             $rental = Rental::query()->create([
                 'code' => Rental::nextCode(),
-                'channel' => Rental::CHANNEL_MOBILE,
+                'channel' => $channel,
                 'public_token' => Str::random(40),
                 'booker_phone' => $bookerPhone,
                 'vehicle_id' => $vehicle->id,
@@ -184,19 +196,48 @@ class MobileRentalBookingService
 
             return $rental->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
         });
+
+        if ($created->status === Rental::STATUS_PENDING_RESERVED) {
+            $this->mailer->notify(
+                $created->loadMissing(['vehicle', 'partner']),
+                RentalLifecycleMailNotification::EVENT_BOOKED,
+            );
+        }
+
+        return $created;
     }
 
     public function cancel(Rental $rental, string $reason): Rental
     {
-        if ($rental->channel !== Rental::CHANNEL_MOBILE) {
+        if (! in_array((string) $rental->channel, Rental::passengerChannels(), true)) {
             throw ValidationException::withMessages([
-                'booking' => __('rental.public.not_mobile_channel'),
+                'booking' => __('rental.public.not_passenger_channel'),
+            ]);
+        }
+
+        $assessment = $this->policy->passengerCancelAssessment($rental);
+
+        if (! $assessment['can_cancel']) {
+            throw ValidationException::withMessages([
+                'booking' => $assessment['reason'] ?? __('rental.public.cancel_not_allowed'),
             ]);
         }
 
         $this->expirePendingDepositCharges($rental);
 
-        $cancelled = $this->confirmation->cancel($rental, $reason, chargeFee: false);
+        $cancelled = $this->confirmation->cancel(
+            $rental,
+            $reason,
+            chargeFee: (bool) $assessment['charge_fee'],
+        );
+
+        $this->mailer->notify(
+            $cancelled->loadMissing(['vehicle', 'partner']),
+            RentalLifecycleMailNotification::EVENT_CANCELLED,
+            [
+                'fee_amount' => (float) $assessment['fee_amount'],
+            ],
+        );
 
         return $cancelled->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
     }

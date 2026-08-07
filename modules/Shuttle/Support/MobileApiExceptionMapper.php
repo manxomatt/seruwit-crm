@@ -39,6 +39,7 @@ class MobileApiExceptionMapper
             __('shuttle.public.cancelled_by_passenger') => ['cancel_not_allowed', 400],
             __('rental.public.disabled') => ['passenger_booking_disabled', 404],
             __('rental.public.not_mobile_channel') => ['not_mobile_channel', 400],
+            __('rental.public.not_passenger_channel') => ['not_passenger_channel', 400],
             __('rental.public.gateway_unavailable') => ['gateway_unavailable', 503],
             __('rental.errors.cancel_draft_confirmed_only') => ['cancel_not_allowed', 400],
         ];

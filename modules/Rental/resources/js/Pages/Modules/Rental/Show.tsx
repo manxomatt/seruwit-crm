@@ -39,6 +39,15 @@ import {
 } from './ShowUi';
 
 interface Extension { id: number; original_end_date: string; new_end_date: string; extended_periods: number; additional_amount: string; notes: string | null; }
+interface ExtensionRequest {
+    id: number;
+    requested_end_date: string;
+    estimated_periods: number;
+    estimated_amount: string;
+    status: string;
+    channel: string | null;
+    notes: string | null;
+}
 interface Damage { id: number; description: string; amount: string; photo_path: string | null; reported_at: string; }
 interface AddonCharge {
     id: number;
@@ -121,6 +130,7 @@ interface Rental {
     driver: { id: number; name: string; phone: string | null; } | null;
     confirmed_by: { id: number; name: string; } | null;
     extensions: Extension[];
+    extension_requests?: ExtensionRequest[];
     damages: Damage[];
 }
 
@@ -998,6 +1008,70 @@ export default function Show({
                                         )}
                                     </div>
                                 )}
+                            </SectionCard>
+                        )}
+
+                        {(rental.extension_requests?.length ?? 0) > 0 && (
+                            <SectionCard title={t('rental.sections.extension_requests')}>
+                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {rental.extension_requests!.map((req) => (
+                                        <div key={req.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                                            <div className="flex items-center justify-between gap-3 text-sm">
+                                                <div>
+                                                    <span className="text-gray-900 dark:text-white">
+                                                        → {req.requested_end_date}
+                                                    </span>
+                                                    <span className="ml-2 text-gray-400">
+                                                        (+{req.estimated_periods} {periodLabel})
+                                                    </span>
+                                                    {req.channel && (
+                                                        <span className="ml-2 text-xs text-gray-400">
+                                                            · {t(`rental.channel.${req.channel}`, undefined, req.channel)}
+                                                        </span>
+                                                    )}
+                                                    {req.notes && (
+                                                        <p className="mt-1 text-xs text-gray-500">{req.notes}</p>
+                                                    )}
+                                                </div>
+                                                <span className="tabular-nums text-gray-700 dark:text-gray-300">
+                                                    {formatMoney(req.estimated_amount)}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                <PrimaryButton
+                                                    type="button"
+                                                    onClick={() =>
+                                                        router.post(
+                                                            prefixedRoute('rental.extension_requests.approve', [
+                                                                rental.id,
+                                                                req.id,
+                                                            ]),
+                                                            {},
+                                                            { preserveScroll: true },
+                                                        )
+                                                    }
+                                                >
+                                                    {t('rental.actions.approve', undefined, 'Approve')}
+                                                </PrimaryButton>
+                                                <SecondaryButton
+                                                    type="button"
+                                                    onClick={() =>
+                                                        router.post(
+                                                            prefixedRoute('rental.extension_requests.reject', [
+                                                                rental.id,
+                                                                req.id,
+                                                            ]),
+                                                            {},
+                                                            { preserveScroll: true },
+                                                        )
+                                                    }
+                                                >
+                                                    {t('rental.actions.reject', undefined, 'Reject')}
+                                                </SecondaryButton>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </SectionCard>
                         )}
 

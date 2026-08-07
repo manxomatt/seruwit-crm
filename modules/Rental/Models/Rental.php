@@ -45,6 +45,8 @@ class Rental extends Model
 
     public const CHANNEL_MOBILE = 'mobile';
 
+    public const CHANNEL_WEB = 'web';
+
     public const DEPOSIT_HELD = 'held';
 
     public const DEPOSIT_SETTLED = 'settled';
@@ -103,6 +105,8 @@ class Rental extends Model
         'deposit_company_bank_account_id',
         'total_amount',
         'notes',
+        'passenger_ktp_path',
+        'passenger_sim_path',
         'pickup_location',
         'return_location',
         'pickup_location_id',
@@ -214,6 +218,12 @@ class Rental extends Model
     public function extensions(): HasMany
     {
         return $this->hasMany(RentalExtension::class)->latest();
+    }
+
+    /** @return HasMany<RentalExtensionRequest, $this> */
+    public function extensionRequests(): HasMany
+    {
+        return $this->hasMany(RentalExtensionRequest::class)->latest();
     }
 
     /** @return HasMany<RentalDamage, $this> */
@@ -337,6 +347,19 @@ class Rental extends Model
             self::STATUS_PENDING_RESERVED,
             self::STATUS_CONFIRMED,
             self::STATUS_ACTIVE,
+        ];
+    }
+
+    /**
+     * Self-serve passenger channels (Capacitor app + public web PWA).
+     *
+     * @return list<string>
+     */
+    public static function passengerChannels(): array
+    {
+        return [
+            self::CHANNEL_MOBILE,
+            self::CHANNEL_WEB,
         ];
     }
 

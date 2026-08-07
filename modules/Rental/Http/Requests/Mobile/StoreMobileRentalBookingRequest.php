@@ -23,6 +23,7 @@ class StoreMobileRentalBookingRequest extends FormRequest
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'period_type' => ['required', 'string', Rule::in(['daily', 'weekly', 'monthly'])],
             'customer_name' => ['nullable', 'string', 'max:255'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
             'pickup_location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'return_location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'pickup_location' => ['nullable', 'string', 'max:255'],
