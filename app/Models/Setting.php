@@ -40,6 +40,50 @@ class Setting extends Model
     }
 
     /**
+     * Keys edited only via module-specific screens (not Modules/Settings).
+     *
+     * @return list<string>
+     */
+    public static function moduleManagedKeys(): array
+    {
+        return [
+            'rental.default_one_way_fee',
+            'rental.passenger_booking_enabled',
+            'rental.pending_reserved_ttl_minutes',
+            'rental.cancellation_fee_type',
+            'rental.cancellation_fee_amount',
+            'rental.no_show_fee_type',
+            'rental.no_show_fee_amount',
+            'rental.calendar_click_to_book',
+        ];
+    }
+
+    /**
+     * Groups used as private storage for module UIs (not listed in Modules/Settings).
+     *
+     * @return list<string>
+     */
+    public static function moduleManagedGroups(): array
+    {
+        return [
+            'rental_internal',
+        ];
+    }
+
+    /**
+     * Exclude settings that have a dedicated module settings UI.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeVisibleInSettingsUi(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query
+            ->whereNotIn('key', static::moduleManagedKeys())
+            ->whereNotIn('group', static::moduleManagedGroups());
+    }
+
+    /**
      * Get a setting value by key.
      */
     public static function getValue(string $key, mixed $default = null): mixed

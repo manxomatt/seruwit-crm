@@ -406,7 +406,7 @@ const MODULE_SIDEBAR_CHILDREN: Record<string, ModuleSidebarChild[]> = {
             labelKey: 'rental.nav.settings',
             route: 'module.rental.settings.index',
             routePatterns: ['module.rental.settings.*', 'module.rental.rates.*'],
-            params: { tab: 'rates' },
+            params: { tab: 'general' },
             icon: <SettingsIcon />,
         },
     ],

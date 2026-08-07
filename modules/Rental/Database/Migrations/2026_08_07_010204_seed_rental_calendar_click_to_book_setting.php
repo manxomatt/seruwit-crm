@@ -18,11 +18,11 @@ return new class extends Migration
 
         DB::table('settings')->insert([
             'key' => 'rental.calendar_click_to_book',
-            'group' => 'rental',
+            'group' => 'rental_internal',
             'value' => '1',
             'type' => 'boolean',
             'label' => 'Calendar click to book',
-            'description' => 'When enabled, clicking a date (or free vehicle cell) on the rental calendar opens the reservation wizard.',
+            'description' => 'Managed via Rental → Settings → General.',
             'is_public' => false,
             'sort_order' => 20,
             'created_at' => now(),

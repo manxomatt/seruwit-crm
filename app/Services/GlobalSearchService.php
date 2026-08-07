@@ -195,6 +195,7 @@ class GlobalSearchService
         }
 
         return Setting::query()
+            ->visibleInSettingsUi()
             ->where(fn (Builder $q) => $q
                 ->where('key', 'ilike', "%{$query}%")
                 ->orWhere('label', 'ilike', "%{$query}%")

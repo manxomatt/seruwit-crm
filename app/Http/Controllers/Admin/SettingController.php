@@ -30,7 +30,10 @@ class SettingController extends Controller
      */
     public function index(): RedirectResponse
     {
-        $firstGroup = Setting::query()->orderBy('group')->value('group') ?? 'general';
+        $firstGroup = Setting::query()
+            ->visibleInSettingsUi()
+            ->orderBy('group')
+            ->value('group') ?? 'general';
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $firstGroup);
     }
@@ -43,11 +46,13 @@ class SettingController extends Controller
     public function group(string $group): Response
     {
         $settings = Setting::query()
+            ->visibleInSettingsUi()
             ->where('group', $group)
             ->orderBy('sort_order')
             ->get();
 
         $groups = Setting::query()
+            ->visibleInSettingsUi()
             ->select('group')
             ->distinct()
             ->orderBy('group')

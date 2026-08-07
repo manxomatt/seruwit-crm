@@ -41,7 +41,7 @@ export default function RentalNav(): JSX.Element {
                     const active = tab.patterns.some((pattern) => isCurrentRoute(pattern));
                     const href =
                         tab.route === 'rental.settings.index'
-                            ? prefixedRoute(tab.route, { tab: 'rates' })
+                            ? prefixedRoute(tab.route, { tab: 'general' })
                             : prefixedRoute(tab.route);
 
                     return (
