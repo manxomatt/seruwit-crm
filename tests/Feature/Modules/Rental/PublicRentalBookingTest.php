@@ -728,4 +728,39 @@ class PublicRentalBookingTest extends TestCase
         $this->assertSame('rejected', $rental->deposit_proof_status);
         $this->assertSame('Nominal tidak sesuai', $rental->deposit_proof_rejected_reason);
     }
+
+    public function test_customer_can_submit_pickup_request_with_digital_signature(): void
+    {
+        Storage::fake('public');
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_CONFIRMED,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '628123456789',
+            'public_token' => 'tokenpickup'.str_repeat('a', 24),
+        ]);
+
+        $phone = '08123456789';
+        $otp = app(PassengerOtpService::class)->send($phone);
+
+        $fakeSignature = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+        $this->from(route('book.rental.booking.show', $rental->public_token))
+            ->post(route('book.rental.booking.request_pickup', $rental->public_token), [
+                'booker_phone' => $phone,
+                'otp_code' => $otp,
+                'terms_agreed' => true,
+                'customer_signature' => $fakeSignature,
+                'pickup_notes' => 'Tiba di depot pukul 10:00',
+            ])
+            ->assertRedirect(route('book.rental.booking.show', $rental->public_token))
+            ->assertSessionHas('success');
+
+        $rental->refresh();
+        $this->assertNotNull($rental->pickup_requested_at);
+        $this->assertSame('pending', $rental->pickup_request_status);
+        $this->assertTrue($rental->pickup_terms_agreed);
+        $this->assertSame('Tiba di depot pukul 10:00', $rental->pickup_notes);
+        $this->assertNotNull($rental->pickup_customer_signature_path);
+    }
 }

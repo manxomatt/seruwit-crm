@@ -276,10 +276,12 @@ class RentalController extends Controller
             'handoverEvidence' => [
                 'checkout_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->checkout_photos),
                 'checkout_signature_url' => app(RentalHandoverMedia::class)->publicUrl($rental->checkout_signature_path),
+                'checkout_staff_signature_url' => app(RentalHandoverMedia::class)->publicUrl($rental->checkout_staff_signature_path),
                 'return_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->return_photos),
                 'return_signature_url' => app(RentalHandoverMedia::class)->publicUrl($rental->return_signature_path),
             ],
             'depositProofUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->deposit_proof_path),
+            'pickupCustomerSignatureUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->pickup_customer_signature_path),
             'gatewayEnabled' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
                 && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable(),
             'canPayDepositOnline' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)

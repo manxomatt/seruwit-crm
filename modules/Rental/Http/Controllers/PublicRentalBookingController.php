@@ -22,6 +22,7 @@ use Modules\Rental\Models\RentalInsurancePackage;
 use Modules\Rental\Support\MobileRentalBookingService;
 use Modules\Rental\Support\RentalBookingPolicy;
 use Modules\Rental\Support\RentalExtensionService;
+use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPassengerDocMedia;
@@ -481,6 +482,49 @@ class PublicRentalBookingController extends Controller
             ->with('success', __('rental.public.documents_uploaded'));
     }
 
+    public function requestPickup(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+        RentalHandoverMedia $handoverMedia,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        abort_if(
+            $rental->status !== Rental::STATUS_CONFIRMED,
+            422,
+            'Permohonan pickup hanya dapat dilakukan untuk reservasi yang sudah dikonfirmasi.'
+        );
+
+        $data = $request->validate([
+            'booker_phone' => ['required', 'string', 'max:32'],
+            'otp_code' => ['required', 'string', 'size:6'],
+            'terms_agreed' => ['required', 'boolean', 'accepted'],
+            'customer_signature' => ['required', 'string', 'starts_with:data:image/'],
+            'pickup_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        if ($error = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+            return $error;
+        }
+
+        $signaturePath = $handoverMedia->storeSignature($data['customer_signature'], 'rental/pickup-signatures');
+
+        $rental->update([
+            'pickup_requested_at' => now(),
+            'pickup_request_status' => 'pending',
+            'pickup_customer_signature_path' => $signaturePath,
+            'pickup_terms_agreed' => true,
+            'pickup_notes' => $data['pickup_notes'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('book.rental.booking.show', $token)
+            ->with('success', 'Permohonan pickup dan tanda tangan kontrak digital berhasil dikirim. Silakan tunjukkan layar ini kepada staf depot.');
+    }
+
     public function history(Request $request, PassengerOtpService $otp): Response
     {
         $this->ensureAvailable();
@@ -729,6 +773,14 @@ class PublicRentalBookingController extends Controller
                 'uploaded_at' => $rental->deposit_proof_uploaded_at?->toIso8601String(),
                 'rejected_reason' => $rental->deposit_proof_rejected_reason,
                 'bank_account_id' => $rental->deposit_company_bank_account_id,
+            ],
+            'pickup_request' => [
+                'requested_at' => $rental->pickup_requested_at?->toIso8601String(),
+                'status' => $rental->pickup_request_status,
+                'customer_signature_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->pickup_customer_signature_path),
+                'terms_agreed' => (bool) $rental->pickup_terms_agreed,
+                'notes' => $rental->pickup_notes,
+                'can_request' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at),
             ],
         ];
     }

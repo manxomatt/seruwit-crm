@@ -84,6 +84,7 @@ interface PaymentInvoice {
 interface HandoverEvidence {
     checkout_photos: string[];
     checkout_signature_url: string | null;
+    checkout_staff_signature_url?: string | null;
     return_photos: string[];
     return_signature_url: string | null;
 }
@@ -132,6 +133,11 @@ interface Rental {
     deposit_proof_rejected_reason?: string | null;
     deposit_company_bank_account_id?: number | null;
     depositCompanyBankAccount?: { id: number; name: string; bank_name?: string | null; account_number?: string | null; account_holder?: string | null } | null;
+    pickup_requested_at?: string | null;
+    pickup_request_status?: string | null;
+    pickup_customer_signature_path?: string | null;
+    pickup_terms_agreed?: boolean;
+    pickup_notes?: string | null;
     vehicle: { id: number; name: string; plate_number: string; type: string; status: string; photo_url: string | null; };
     partner: { id: number; name: string; code: string; phone: string | null; };
     driver: { id: number; name: string; phone: string | null; } | null;
@@ -174,6 +180,7 @@ interface Props {
     fuelLevels: string[];
     handoverEvidence?: HandoverEvidence;
     depositProofUrl?: string | null;
+    pickupCustomerSignatureUrl?: string | null;
     gatewayEnabled?: boolean;
     canPayDepositOnline?: boolean;
     companyBankAccounts?: CompanyBankAccountOption[];
@@ -220,6 +227,7 @@ export default function Show({
         return_signature_url: null,
     },
     depositProofUrl = null,
+    pickupCustomerSignatureUrl = null,
     canPayDepositOnline = false,
     companyBankAccounts = [],
     postConfirm = { visible: false, current_step: null, steps: [] },
@@ -271,6 +279,7 @@ export default function Show({
         checkout_notes: '',
         checkout_photos: [] as string[],
         checkout_signature: null as string | null,
+        checkout_staff_signature: null as string | null,
     });
     const returnForm = useForm({
         actual_return_date: '',
@@ -778,6 +787,71 @@ export default function Show({
                                 className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
                             >
                                 Setujui & Konfirmasi Deposit ({formatMoney(rental.deposit_amount)})
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                )}
+
+                {/* Customer Pickup Request & Contract Signature Card */}
+                {rental.pickup_requested_at && rental.status === 'confirmed' && (
+                    <div className="rounded-xl border border-blue-300 bg-blue-50/80 p-5 dark:border-blue-800 dark:bg-blue-950/40 shadow-sm space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/80 pb-3 dark:border-blue-800/80">
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center rounded-full bg-blue-200/80 px-2.5 py-0.5 text-xs font-bold text-blue-900 dark:bg-blue-900/60 dark:text-blue-200">
+                                    Siap Serah Terima (Pickup)
+                                </span>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                                    Permohonan Pickup & Kontrak Digital Pelanggan
+                                </h3>
+                            </div>
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                Waktu Pengajuan: {formatDateTimeDmYHi(rental.pickup_requested_at)}
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                                <div>
+                                    <span className="font-semibold text-gray-500">Persetujuan Syarat & Kontrak:</span>{' '}
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                                        ✓ Disetujui oleh Penyewa ({rental.partner?.name})
+                                    </span>
+                                </div>
+                                {rental.pickup_notes && (
+                                    <div>
+                                        <span className="font-semibold text-gray-500">Catatan Pelanggan:</span>{' '}
+                                        <span className="italic text-gray-900 dark:text-white">{rental.pickup_notes}</span>
+                                    </div>
+                                )}
+                                <div>
+                                    <span className="font-semibold text-gray-500">Status Pembayaran Deposit:</span>{' '}
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                                        Lunas ({formatMoney(rental.deposit_amount)})
+                                    </span>
+                                </div>
+                            </div>
+
+                            {pickupCustomerSignatureUrl && (
+                                <div className="space-y-1">
+                                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 block">Tanda Tangan Digital Pelanggan:</span>
+                                    <div className="rounded-lg border border-gray-200 bg-white p-2 text-center dark:border-gray-700 dark:bg-gray-800">
+                                        <img
+                                            src={pickupCustomerSignatureUrl}
+                                            alt="Tanda Tangan Digital Pelanggan"
+                                            className="h-20 max-w-full object-contain mx-auto"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-blue-200/80 dark:border-blue-800/80">
+                            <PrimaryButton
+                                type="button"
+                                onClick={() => setModal('checkout')}
+                                className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                            >
+                                Proses Pickup & Serahkan Kendaraan (Checkout)
                             </PrimaryButton>
                         </div>
                     </div>
@@ -1444,16 +1518,53 @@ export default function Show({
                             />
                         </div>
                     </div>
-                    <div className="mt-4 shrink-0 space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <div>
-                            <InputLabel value={`${t('rental.fields.signature')} *`} />
-                            <SignaturePad
-                                className="mt-1"
-                                value={checkoutForm.data.checkout_signature}
-                                onChange={(value) => checkoutForm.setData('checkout_signature', value)}
-                            />
-                            <InputError message={checkoutForm.errors.checkout_signature} className="mt-1" />
+                    <div className="mt-4 shrink-0 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            {/* Tanda Tangan Penyewa / Pelanggan */}
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <InputLabel value="Tanda Tangan Penyewa (Pelanggan) *" />
+                                    {pickupCustomerSignatureUrl && (
+                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                            ✓ Terverifikasi Kontrak PWA
+                                        </span>
+                                    )}
+                                </div>
+                                {pickupCustomerSignatureUrl ? (
+                                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-2.5 text-center dark:border-emerald-800 dark:bg-emerald-950/30">
+                                        <p className="text-[10px] text-emerald-800 dark:text-emerald-300 font-bold mb-1">
+                                            ✓ Tanda Tangan Digital PWA Pelanggan Terdaftar
+                                        </p>
+                                        <img
+                                            src={pickupCustomerSignatureUrl}
+                                            alt="Tanda Tangan Pelanggan"
+                                            className="h-16 max-w-full object-contain mx-auto bg-white p-1 rounded border border-emerald-100 dark:border-emerald-900"
+                                        />
+                                        <p className="text-[10px] text-slate-500 mt-1">
+                                            Otomatis digunakan. Gambar di bawah jika ingin memperbarui tanda tangan.
+                                        </p>
+                                    </div>
+                                ) : null}
+                                <SignaturePad
+                                    className="mt-1"
+                                    value={checkoutForm.data.checkout_signature || ''}
+                                    onChange={(value) => checkoutForm.setData('checkout_signature', value)}
+                                />
+                                <InputError message={checkoutForm.errors.checkout_signature} className="mt-1" />
+                            </div>
+
+                            {/* Tanda Tangan Staf / Admin (Pihak Penyerah Kendaraan) */}
+                            <div className="space-y-1.5">
+                                <InputLabel value="Tanda Tangan Staf / Admin (Penyerah Unit) *" />
+                                <SignaturePad
+                                    className="mt-1"
+                                    value={checkoutForm.data.checkout_staff_signature || ''}
+                                    onChange={(value) => checkoutForm.setData('checkout_staff_signature', value)}
+                                />
+                                <InputError message={checkoutForm.errors.checkout_staff_signature} className="mt-1" />
+                            </div>
                         </div>
+
                         <div className="flex justify-end gap-3">
                             <SecondaryButton type="button" onClick={() => setModal(null)}>{t('common.cancel')}</SecondaryButton>
                             {depositBlocksCheckout ? (

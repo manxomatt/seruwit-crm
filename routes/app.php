@@ -78,6 +78,7 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
     Route::post('/booking/{token}/pay-invoice', [PublicRentalBookingController::class, 'payInvoice'])->name('booking.pay_invoice');
     Route::post('/booking/{token}/cancel', [PublicRentalBookingController::class, 'cancel'])->name('booking.cancel');
     Route::post('/booking/{token}/extend-request', [PublicRentalBookingController::class, 'requestExtend'])->name('booking.extend_request');
+    Route::post('/booking/{token}/request-pickup', [PublicRentalBookingController::class, 'requestPickup'])->name('booking.request_pickup');
     Route::post('/booking/{token}/documents', [PublicRentalBookingController::class, 'uploadDocuments'])->name('booking.documents');
     Route::get('/history', [PublicRentalBookingController::class, 'history'])->name('history');
 });

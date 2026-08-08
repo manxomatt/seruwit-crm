@@ -113,6 +113,8 @@ class RentalActionController extends Controller
             ]);
         }
 
+        $hasCustomerSignature = filled($rental->pickup_customer_signature_path) || filled($rental->checkout_signature_path);
+
         $request->validate([
             'start_odometer' => ['nullable', 'integer', 'min:0'],
             'start_fuel_level' => ['nullable', 'string', Rule::in(RentalHandoverChecklist::fuelLevels())],
@@ -121,7 +123,14 @@ class RentalActionController extends Controller
             'checkout_notes' => ['nullable', 'string', 'max:1000'],
             'checkout_photos' => ['required', 'array', 'min:1', 'max:5'],
             'checkout_photos.*' => ['string', 'starts_with:data:image/'],
-            'checkout_signature' => ['required', 'string', 'starts_with:data:image/'],
+            'checkout_signature' => [$hasCustomerSignature ? 'nullable' : 'required', 'string', function ($attribute, $value, $fail) use ($hasCustomerSignature): void {
+                if ($value && ! str_starts_with((string) $value, 'data:image/')) {
+                    if (! $hasCustomerSignature) {
+                        $fail(__('rental.errors.handover_signature_required'));
+                    }
+                }
+            }],
+            'checkout_staff_signature' => ['nullable', 'string'],
         ], [
             'checkout_photos.required' => __('rental.errors.handover_photo_required'),
             'checkout_photos.min' => __('rental.errors.handover_photo_required'),
@@ -130,7 +139,15 @@ class RentalActionController extends Controller
         ]);
 
         $photos = $this->handoverMedia->storePhotos($request->input('checkout_photos', []));
-        $signaturePath = $this->handoverMedia->storeSignature($request->input('checkout_signature'));
+        $rawSignature = $request->input('checkout_signature');
+        $signaturePath = ($rawSignature && str_starts_with($rawSignature, 'data:image/'))
+            ? $this->handoverMedia->storeSignature($rawSignature)
+            : null;
+
+        $rawStaffSig = $request->input('checkout_staff_signature');
+        $staffSignaturePath = ($rawStaffSig && str_starts_with($rawStaffSig, 'data:image/'))
+            ? $this->handoverMedia->storeSignature($rawStaffSig)
+            : null;
 
         $rental->update([
             'status' => Rental::STATUS_ACTIVE,
@@ -140,7 +157,8 @@ class RentalActionController extends Controller
             'checkout_checklist' => RentalHandoverChecklist::normalize($request->input('checkout_checklist')),
             'checkout_notes' => $request->checkout_notes,
             'checkout_photos' => $photos,
-            'checkout_signature_path' => $signaturePath,
+            'checkout_signature_path' => $signaturePath ?: ($rental->pickup_customer_signature_path ?: $rental->checkout_signature_path),
+            'checkout_staff_signature_path' => $staffSignaturePath,
             'checkout_signed_at' => now(),
         ]);
 

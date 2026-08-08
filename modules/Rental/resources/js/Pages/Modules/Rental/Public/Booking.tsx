@@ -73,6 +73,14 @@ interface Booking {
         rejected_reason: string | null;
         bank_account_id: number | null;
     };
+    pickup_request?: {
+        requested_at: string | null;
+        status: string | null;
+        customer_signature_url: string | null;
+        terms_agreed: boolean;
+        notes: string | null;
+        can_request: boolean;
+    };
 }
 
 interface Props {
@@ -97,6 +105,101 @@ const statusBadgeConfig: Record<string, { label: string; color: string; bg: stri
     cancelled: { label: 'Dibatalkan', color: 'text-red-700', bg: 'bg-red-100 border-red-300' },
     cancelled_paid: { label: 'Dibatalkan', color: 'text-red-700', bg: 'bg-red-100 border-red-300' },
 };
+
+function DigitalSignaturePad({
+    onChange,
+}: {
+    value?: string;
+    onChange: (val: string) => void;
+}) {
+    const [drawing, setDrawing] = useState(false);
+    const [hasDrawn, setHasDrawn] = useState(false);
+
+    const getPos = (e: any, canvas: HTMLCanvasElement) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top,
+        };
+    };
+
+    const startDraw = (e: any) => {
+        const canvas = e.target as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        setDrawing(true);
+        const pos = getPos(e, canvas);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+    };
+
+    const draw = (e: any) => {
+        if (!drawing) return;
+        const canvas = e.target as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const pos = getPos(e, canvas);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        setHasDrawn(true);
+    };
+
+    const stopDraw = (e: any) => {
+        if (!drawing) return;
+        setDrawing(false);
+        const canvas = e.target as HTMLCanvasElement;
+        onChange(canvas.toDataURL('image/png'));
+    };
+
+    const clearCanvas = (canvas: HTMLCanvasElement) => {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setHasDrawn(false);
+        onChange('');
+    };
+
+    return (
+        <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700">Area Tanda Tangan Digital *</span>
+                {hasDrawn && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            const container = e.currentTarget.parentElement?.parentElement;
+                            const canvas = container?.querySelector('canvas');
+                            if (canvas) clearCanvas(canvas as HTMLCanvasElement);
+                        }}
+                        className="text-[11px] font-bold text-red-600 underline"
+                    >
+                        Hapus / Reset
+                    </button>
+                )}
+            </div>
+            <canvas
+                width={320}
+                height={120}
+                onMouseDown={startDraw}
+                onMouseMove={draw}
+                onMouseUp={stopDraw}
+                onMouseLeave={stopDraw}
+                onTouchStart={startDraw}
+                onTouchMove={draw}
+                onTouchEnd={stopDraw}
+                className="w-full h-28 rounded-xl border border-slate-300 bg-white touch-none cursor-crosshair"
+            />
+            <p className="text-[10px] text-slate-500">
+                Gunakan jari atau stylus Anda di atas kotak putih untuk membubuhkan tanda tangan digital persetujuan sewa.
+            </p>
+        </div>
+    );
+}
 
 export default function BookingView({ brand, booking, gateway_available, company_bank_accounts = [] }: Props) {
     const { flash } = usePage().props as {
@@ -190,6 +293,14 @@ export default function BookingView({ brand, booking, gateway_available, company
         invoice_id: 0,
     });
 
+    const pickupForm = useForm({
+        booker_phone: booking.booker_phone ?? '',
+        otp_code: '',
+        terms_agreed: false,
+        customer_signature: '',
+        pickup_notes: '',
+    });
+
     const sendOtp = async (phone: string) => {
         if (!phone) {
             alert('Masukkan nomor telepon terlebih dahulu');
@@ -208,6 +319,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                 extendForm.setData('otp_code', String(data.debug_code));
                 docsForm.setData('otp_code', String(data.debug_code));
                 invoiceForm.setData('otp_code', String(data.debug_code));
+                pickupForm.setData('otp_code', String(data.debug_code));
             }
         } catch (err: any) {
             setOtpHint(err.response?.data?.message || 'Gagal mengirim OTP');
@@ -279,6 +391,20 @@ export default function BookingView({ brand, booking, gateway_available, company
         docsForm.post(url, {
             forceFormData: true,
             onSuccess: () => setShowDocs(false),
+        });
+    };
+
+    const submitPickupRequest = (e: FormEvent) => {
+        e.preventDefault();
+        if (!pickupForm.data.customer_signature) {
+            pickupForm.setError('customer_signature', 'Silakan bubuhkan tanda tangan digital Anda pada kotak yang tersedia.');
+            return;
+        }
+        const url = typeof route === 'function' && route().has('book.rental.booking.request_pickup')
+            ? route('book.rental.booking.request_pickup', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/request-pickup`;
+        pickupForm.post(url, {
+            preserveScroll: true,
         });
     };
 
@@ -719,6 +845,160 @@ export default function BookingView({ brand, booking, gateway_available, company
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                     </svg>
                                     Bayar Deposit Online ({money(booking.deposit_amount)})
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                )}
+
+                {/* Pickup Request & Digital Contract Section */}
+                {booking.status === 'confirmed' && (
+                    <div className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-slate-200/80 space-y-4 border-l-4 border-l-teal-600">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-teal-800">
+                                    Pickup Kendaraan & Kontrak Digital
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    {booking.pickup_request?.requested_at
+                                        ? 'Permohonan pickup dan tanda tangan digital telah dikirim'
+                                        : 'Konfirmasi serah terima unit di depot & tandatangani kontrak sewa secara digital'}
+                                </p>
+                            </div>
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                booking.pickup_request?.requested_at
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-teal-100 text-teal-800'
+                            }`}>
+                                {booking.pickup_request?.requested_at ? 'Permohonan Terkirim ✓' : 'Siap Pickup'}
+                            </span>
+                        </div>
+
+                        {/* Ringkasan Syarat & Checklist Informasi */}
+                        <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/80 space-y-2 text-xs text-slate-700">
+                            <p className="font-bold text-slate-900 border-b border-slate-200 pb-1">
+                                Informasi & Persyaratan Serah Terima Depot:
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <span className={`h-2 w-2 rounded-full ${booking.documents?.ktp_uploaded ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                <span>Verifikasi KTP Penyewa: <b>{booking.documents?.ktp_uploaded ? 'Sudah Diunggah' : 'Belum diunggah (Wajib di depot)'}</b></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={`h-2 w-2 rounded-full ${booking.documents?.sim_uploaded ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                <span>Verifikasi SIM A Penyewa: <b>{booking.documents?.sim_uploaded ? 'Sudah Diunggah' : 'Belum diunggah (Wajib di depot)'}</b></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                <span>Status Pembayaran Deposit: <b>Lunas / Terverifikasi ({money(booking.deposit_amount)})</b></span>
+                            </div>
+                        </div>
+
+                        {booking.pickup_request?.requested_at ? (
+                            <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-200 text-xs text-emerald-900 space-y-2">
+                                <div className="flex items-center gap-2 font-bold text-emerald-800 text-sm">
+                                    <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Permohonan Pickup & Kontrak Berhasil Diperbarui
+                                </div>
+                                <p>
+                                    Tanda tangan digital dan persetujuan kontrak sewa Anda telah dicatat pada sistem. Silakan tunjukkan layar HP ini ke petugas depot untuk pemeriksaan fisik kendaraan & penyerahan kunci.
+                                </p>
+                                {booking.pickup_request.customer_signature_url && (
+                                    <div className="pt-2">
+                                        <span className="text-[11px] font-semibold text-slate-600 block mb-1">Tanda Tangan Digital Anda:</span>
+                                        <div className="rounded-lg bg-white p-2 border border-slate-200 inline-block">
+                                            <img
+                                                src={booking.pickup_request.customer_signature_url}
+                                                alt="Tanda Tangan Digital"
+                                                className="h-16 max-w-full object-contain"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <form onSubmit={submitPickupRequest} className="space-y-4 pt-1" noValidate>
+                                {/* Digital Contract Terms Checkbox */}
+                                <div className="rounded-xl bg-amber-50/70 p-3.5 border border-amber-200 space-y-2">
+                                    <label className="flex items-start gap-2.5 cursor-pointer text-xs text-amber-950">
+                                        <input
+                                            type="checkbox"
+                                            checked={pickupForm.data.terms_agreed}
+                                            onChange={(e) => pickupForm.setData('terms_agreed', e.target.checked)}
+                                            className="mt-0.5 rounded border-amber-400 text-teal-600 focus:ring-teal-500"
+                                            required
+                                        />
+                                        <span>
+                                            Saya telah membaca, memahami, dan menyetujui seluruh <b>Syarat & Ketentuan Sewa Kendaraan</b>, siap menjaga kondisi kendaraan, dan mematuhi ketentuan batas waktu pengembalian.
+                                        </span>
+                                    </label>
+                                    {pickupForm.errors.terms_agreed && (
+                                        <p className="text-xs text-red-600 font-medium">{pickupForm.errors.terms_agreed}</p>
+                                    )}
+                                </div>
+
+                                {/* Customer Digital Signature Pad */}
+                                <div>
+                                    <DigitalSignaturePad
+                                        value={pickupForm.data.customer_signature}
+                                        onChange={(val) => pickupForm.setData('customer_signature', val)}
+                                    />
+                                    {pickupForm.errors.customer_signature && (
+                                        <p className="text-xs text-red-600 mt-1 font-medium">{pickupForm.errors.customer_signature}</p>
+                                    )}
+                                </div>
+
+                                {/* Notes Input */}
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-700 block">Catatan Tambahan Pickup (Opsional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Contoh: Sudah berada di lokasi depot"
+                                        className={fieldClassName}
+                                        value={pickupForm.data.pickup_notes}
+                                        onChange={(e) => pickupForm.setData('pickup_notes', e.target.value)}
+                                    />
+                                </div>
+
+                                {/* Phone & OTP verification */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                        type="tel"
+                                        placeholder="No. HP Booker"
+                                        className={fieldClassName}
+                                        value={pickupForm.data.booker_phone}
+                                        onChange={(e) => pickupForm.setData('booker_phone', e.target.value)}
+                                        required
+                                    />
+                                    <div className="flex gap-1">
+                                        <input
+                                            type="text"
+                                            placeholder="OTP"
+                                            className={fieldClassName}
+                                            maxLength={6}
+                                            value={pickupForm.data.otp_code}
+                                            onChange={(e) => pickupForm.setData('otp_code', e.target.value)}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => void sendOtp(pickupForm.data.booker_phone)}
+                                            className="mt-1 rounded-xl bg-slate-800 px-2.5 text-xs font-bold text-white"
+                                        >
+                                            OTP
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {otpHint && <p className="text-xs font-medium text-teal-700 bg-teal-50 p-2 rounded-lg">{otpHint}</p>}
+
+                                <button
+                                    type="submit"
+                                    disabled={pickupForm.processing}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white shadow-lg shadow-teal-600/30 transition hover:bg-teal-700 disabled:opacity-50"
+                                >
+                                    {pickupForm.processing ? 'Mengirim...' : 'Submit Permohonan Pickup & Kontrak Digital'}
                                 </button>
                             </form>
                         )}
