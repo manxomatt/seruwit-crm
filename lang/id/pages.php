@@ -21,6 +21,7 @@ return [
         ],
         'homepage' => 'Homepage',
         'preview' => 'Pratinjau',
+        'open_editor' => 'Buka editor visual',
         'copy' => 'Salin Halaman',
         'rename' => 'Ubah Nama',
         'set_homepage' => 'Jadikan Homepage',

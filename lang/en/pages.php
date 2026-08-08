@@ -21,6 +21,7 @@ return [
         ],
         'homepage' => 'Homepage',
         'preview' => 'Preview',
+        'open_editor' => 'Open visual editor',
         'copy' => 'Copy Page',
         'rename' => 'Rename',
         'set_homepage' => 'Set as Homepage',
