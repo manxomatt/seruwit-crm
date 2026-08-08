@@ -134,9 +134,14 @@ export default function Editor({ page }: Props): JSX.Element {
             run: (editor) => editor.setDevice('Mobile'),
         });
 
-        // Load existing content
-        if (page.gjs_data) {
-            gjsEditor.loadProjectData(page.gjs_data);
+        // Load existing content: check if gjs_data actually has components, otherwise fallback to HTML/CSS
+        const gjsPages = (page.gjs_data as any)?.pages;
+        const hasGjsComponents = Array.isArray(gjsPages) &&
+            gjsPages.length > 0 &&
+            gjsPages[0]?.frames?.[0]?.component?.components?.length > 0;
+
+        if (hasGjsComponents) {
+            gjsEditor.loadProjectData(page.gjs_data!);
         } else if (page.html) {
             gjsEditor.setComponents(page.html);
             if (page.css) {
