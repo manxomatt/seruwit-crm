@@ -614,4 +614,118 @@ class PublicRentalBookingTest extends TestCase
             'amount' => 900000,
         ]);
     }
+
+    public function test_customer_can_upload_manual_deposit_transfer_proof(): void
+    {
+        Storage::fake('public');
+
+        $account = \Modules\Accounting\Models\Account::query()->create([
+            'code' => '1020-01',
+            'name' => 'Bank BCA',
+            'type' => \Modules\Accounting\Models\Account::TYPE_ASSET,
+            'normal_balance' => \Modules\Accounting\Models\Account::NORMAL_DEBIT,
+            'is_active' => true,
+        ]);
+
+        $bank = \Modules\Accounting\Models\CompanyBankAccount::query()->create([
+            'account_id' => $account->id,
+            'name' => 'BCA Operasional',
+            'kind' => \Modules\Accounting\Models\CompanyBankAccount::KIND_BANK,
+            'bank_name' => 'BCA',
+            'account_number' => '1234567890',
+            'account_holder' => 'PT Seruwit Biz',
+            'is_active' => true,
+        ]);
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '628123456789',
+            'public_token' => 'tokenproof'.str_repeat('a', 26),
+            'deposit_amount' => 500000,
+        ]);
+
+        $phone = '08123456789';
+        $otp = app(PassengerOtpService::class)->send($phone);
+
+        $file = UploadedFile::fake()->create('proof.jpg', 500, 'image/jpeg');
+
+        $this->from(route('book.rental.booking.show', $rental->public_token))
+            ->post(route('book.rental.booking.upload_deposit_proof', $rental->public_token), [
+                'booker_phone' => $phone,
+                'otp_code' => $otp,
+                'company_bank_account_id' => $bank->id,
+                'deposit_proof' => $file,
+            ])
+            ->assertRedirect(route('book.rental.booking.show', $rental->public_token))
+            ->assertSessionHas('success');
+
+        $rental->refresh();
+        $this->assertSame('transfer', $rental->deposit_payment_method);
+        $this->assertSame($bank->id, $rental->deposit_company_bank_account_id);
+        $this->assertSame('pending', $rental->deposit_proof_status);
+        $this->assertNotNull($rental->deposit_proof_path);
+    }
+
+    public function test_admin_can_approve_manual_deposit_proof_and_confirm_reservation(): void
+    {
+        $user = $this->createAdminUser();
+
+        $account = \Modules\Accounting\Models\Account::query()->create([
+            'code' => '1020-02',
+            'name' => 'Bank Mandiri',
+            'type' => \Modules\Accounting\Models\Account::TYPE_ASSET,
+            'normal_balance' => \Modules\Accounting\Models\Account::NORMAL_DEBIT,
+            'is_active' => true,
+        ]);
+
+        $bank = \Modules\Accounting\Models\CompanyBankAccount::query()->create([
+            'account_id' => $account->id,
+            'name' => 'BCA Operasional',
+            'kind' => \Modules\Accounting\Models\CompanyBankAccount::KIND_BANK,
+            'is_active' => true,
+        ]);
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'channel' => Rental::CHANNEL_WEB,
+            'deposit_amount' => 500000,
+            'deposit_payment_method' => 'transfer',
+            'deposit_company_bank_account_id' => $bank->id,
+            'deposit_proof_path' => 'rental/passenger-docs/1/proof.jpg',
+            'deposit_proof_status' => 'pending',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('module.rental.approve_deposit_proof', $rental->id))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $rental->refresh();
+        $this->assertSame('approved', $rental->deposit_proof_status);
+        $this->assertNotNull($rental->deposit_received_at);
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->status);
+    }
+
+    public function test_admin_can_reject_manual_deposit_proof(): void
+    {
+        $user = $this->createAdminUser();
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_PENDING_RESERVED,
+            'deposit_amount' => 500000,
+            'deposit_proof_status' => 'pending',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('module.rental.reject_deposit_proof', $rental->id), [
+                'rejected_reason' => 'Nominal tidak sesuai',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $rental->refresh();
+        $this->assertSame('rejected', $rental->deposit_proof_status);
+        $this->assertSame('Nominal tidak sesuai', $rental->deposit_proof_rejected_reason);
+    }
 }

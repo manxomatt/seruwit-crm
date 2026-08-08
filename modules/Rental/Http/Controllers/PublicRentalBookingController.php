@@ -239,6 +239,7 @@ class PublicRentalBookingController extends Controller
             'brand' => $this->brand(),
             'booking' => $this->bookingPayload($rental),
             'gateway_available' => $this->gatewayAvailable(),
+            'company_bank_accounts' => $this->companyBankAccounts(),
         ]);
     }
 
@@ -290,6 +291,47 @@ class PublicRentalBookingController extends Controller
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function uploadDepositProof(
+        Request $request,
+        string $token,
+        PassengerOtpService $otp,
+        RentalPassengerDocMedia $docMedia,
+    ): RedirectResponse {
+        $this->ensureAvailable();
+
+        $rental = $this->findPassengerBooking($token);
+
+        $data = $request->validate([
+            'booker_phone' => ['required', 'string', 'max:32'],
+            'otp_code' => ['required', 'string', 'size:6'],
+            'company_bank_account_id' => ['nullable'],
+            'deposit_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ]);
+
+        if ($guardResponse = $this->guardBooker($otp, $rental, $data['booker_phone'], $data['otp_code'])) {
+            return $guardResponse;
+        }
+
+        if ($rental->isDepositReceived()) {
+            return back()->with('error', __('rental.public.deposit_already_received'));
+        }
+
+        $proofPath = $docMedia->storeDepositProof($request->file('deposit_proof'), $rental->id);
+
+        $bankAccountId = ! empty($data['company_bank_account_id']) ? (int) $data['company_bank_account_id'] : null;
+
+        $rental->update([
+            'deposit_payment_method' => 'transfer',
+            'deposit_company_bank_account_id' => $bankAccountId,
+            'deposit_proof_path' => $proofPath,
+            'deposit_proof_uploaded_at' => now(),
+            'deposit_proof_status' => 'pending',
+            'deposit_proof_rejected_reason' => null,
+        ]);
+
+        return back()->with('success', 'Bukti transfer deposit berhasil diunggah. Menunggu konfirmasi/approval admin.');
     }
 
     public function cancel(
@@ -680,6 +722,14 @@ class PublicRentalBookingController extends Controller
                 'ktp_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_ktp_path),
                 'sim_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->passenger_sim_path),
             ],
+            'deposit_proof' => [
+                'path' => $rental->deposit_proof_path,
+                'url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->deposit_proof_path),
+                'status' => $rental->deposit_proof_status,
+                'uploaded_at' => $rental->deposit_proof_uploaded_at?->toIso8601String(),
+                'rejected_reason' => $rental->deposit_proof_rejected_reason,
+                'bank_account_id' => $rental->deposit_company_bank_account_id,
+            ],
         ];
     }
 
@@ -739,5 +789,30 @@ class PublicRentalBookingController extends Controller
             'estimated_amount' => (float) $request->estimated_amount,
             'status' => $request->status,
         ];
+    }
+
+    /**
+     * @return list<array{id: int, name: string, bank_name: string|null, account_number: string|null, account_holder: string|null}>
+     */
+    private function companyBankAccounts(): array
+    {
+        if (! class_exists(\Modules\Accounting\Models\CompanyBankAccount::class)) {
+            return [];
+        }
+
+        return \Modules\Accounting\Models\CompanyBankAccount::query()
+            ->where('is_active', true)
+            ->where('kind', \Modules\Accounting\Models\CompanyBankAccount::KIND_BANK)
+            ->orderBy('name')
+            ->get(['id', 'name', 'bank_name', 'account_number', 'account_holder'])
+            ->map(fn ($acc): array => [
+                'id' => (int) $acc->id,
+                'name' => (string) $acc->name,
+                'bank_name' => $acc->bank_name,
+                'account_number' => $acc->account_number,
+                'account_holder' => $acc->account_holder,
+            ])
+            ->values()
+            ->all();
     }
 }

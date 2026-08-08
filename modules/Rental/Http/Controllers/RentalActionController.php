@@ -644,4 +644,56 @@ class RentalActionController extends Controller
             ->where('status', \Modules\Receivables\Models\GatewayCharge::STATUS_PENDING)
             ->update(['status' => \Modules\Receivables\Models\GatewayCharge::STATUS_CANCELLED]);
     }
+
+    /**
+     * Approve manual bank transfer deposit proof and receive deposit.
+     */
+    public function approveDepositProof(Rental $rental): RedirectResponse
+    {
+        abort_unless(
+            $rental->deposit_proof_status === 'pending',
+            422,
+            'Bukti transfer deposit tidak dalam status pending.',
+        );
+
+        $rental->update([
+            'deposit_proof_status' => 'approved',
+            'deposit_proof_approved_at' => now(),
+            'deposit_proof_approved_by' => auth()->id(),
+        ]);
+
+        $this->accounting->receiveDeposit($rental, [
+            'payment_method' => $rental->deposit_payment_method ?? 'transfer',
+            'company_bank_account_id' => $rental->deposit_company_bank_account_id,
+        ]);
+
+        if (in_array($rental->status, [Rental::STATUS_PENDING, Rental::STATUS_PENDING_RESERVED, Rental::STATUS_DRAFT], true)) {
+            $this->confirmation->confirmAfterPaymentIfPending($rental->fresh());
+        }
+
+        return back()->with('success', 'Bukti transfer deposit disetujui. Deposit berhasil diterima & reservasi dikonfirmasi.');
+    }
+
+    /**
+     * Reject manual bank transfer deposit proof.
+     */
+    public function rejectDepositProof(Request $request, Rental $rental): RedirectResponse
+    {
+        abort_unless(
+            $rental->deposit_proof_status === 'pending',
+            422,
+            'Bukti transfer deposit tidak dalam status pending.',
+        );
+
+        $validated = $request->validate([
+            'rejected_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $rental->update([
+            'deposit_proof_status' => 'rejected',
+            'deposit_proof_rejected_reason' => $validated['rejected_reason'],
+        ]);
+
+        return back()->with('success', 'Bukti transfer deposit ditolak.');
+    }
 }

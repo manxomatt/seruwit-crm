@@ -191,6 +191,25 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                 </div>
             </section>
 
+            <section className="rounded-xl border border-teal-200 bg-teal-50/60 p-5 shadow-sm dark:border-teal-800 dark:bg-teal-950/40">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 className="text-sm font-bold text-teal-900 dark:text-teal-200">
+                            Setup Rekening Bank Perusahaan (Transfer Manual)
+                        </h2>
+                        <p className="mt-1 text-xs text-teal-700 dark:text-teal-300">
+                            Kelola daftar rekening bank tujuan transfer manual untuk pembayaran deposit sewa kendaraan di PWA publik.
+                        </p>
+                    </div>
+                    <Link
+                        href={prefixedRoute('accounting.bank-accounts.index')}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-teal-800 shadow-sm"
+                    >
+                        Kelola Rekening Bank ↗
+                    </Link>
+                </div>
+            </section>
+
             <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                     {t('rental.settings.fees_section')}

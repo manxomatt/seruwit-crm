@@ -171,6 +171,7 @@ class RentalController extends Controller
                 ->latest('id'),
             'damages',
             'insurancePackage',
+            'depositCompanyBankAccount:id,name,bank_name,account_number,account_holder',
             // Do not eager-load pickupLocation/returnLocation here: Laravel serializes
             // those relations as pickup_location / return_location and overwrites the
             // text snapshot columns, which crashes React when rendered as children.
@@ -278,6 +279,7 @@ class RentalController extends Controller
                 'return_photos' => app(RentalHandoverMedia::class)->publicUrls($rental->return_photos),
                 'return_signature_url' => app(RentalHandoverMedia::class)->publicUrl($rental->return_signature_path),
             ],
+            'depositProofUrl' => app(\Modules\Rental\Support\RentalPassengerDocMedia::class)->publicUrl($rental->deposit_proof_path),
             'gatewayEnabled' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)
                 && app(\Modules\Receivables\Support\GatewayCheckoutService::class)->isAvailable(),
             'canPayDepositOnline' => class_exists(\Modules\Receivables\Support\GatewayCheckoutService::class)

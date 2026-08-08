@@ -125,6 +125,13 @@ interface Rental {
     return_notes: string | null;
     notes: string | null; cancelled_reason: string | null;
     confirmed_at: string | null; checked_out_at: string | null; returned_at: string | null; completed_at: string | null;
+    deposit_proof_path?: string | null;
+    deposit_proof_uploaded_at?: string | null;
+    deposit_proof_status?: string | null;
+    deposit_proof_approved_at?: string | null;
+    deposit_proof_rejected_reason?: string | null;
+    deposit_company_bank_account_id?: number | null;
+    depositCompanyBankAccount?: { id: number; name: string; bank_name?: string | null; account_number?: string | null; account_holder?: string | null } | null;
     vehicle: { id: number; name: string; plate_number: string; type: string; status: string; photo_url: string | null; };
     partner: { id: number; name: string; code: string; phone: string | null; };
     driver: { id: number; name: string; phone: string | null; } | null;
@@ -166,6 +173,7 @@ interface Props {
     checklistItems: string[];
     fuelLevels: string[];
     handoverEvidence?: HandoverEvidence;
+    depositProofUrl?: string | null;
     gatewayEnabled?: boolean;
     canPayDepositOnline?: boolean;
     companyBankAccounts?: CompanyBankAccountOption[];
@@ -211,6 +219,7 @@ export default function Show({
         return_photos: [],
         return_signature_url: null,
     },
+    depositProofUrl = null,
     canPayDepositOnline = false,
     companyBankAccounts = [],
     postConfirm = { visible: false, current_step: null, steps: [] },
@@ -224,6 +233,9 @@ export default function Show({
     const [modal, setModal] = useState<'cancel' | 'no_show' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
     const [confirming, setConfirming] = useState(false);
     const [showConfirmPayment, setShowConfirmPayment] = useState(false);
+    const [showApproveProofModal, setShowApproveProofModal] = useState(false);
+    const [approvingProof, setApprovingProof] = useState(false);
+    const [showRejectProofModal, setShowRejectProofModal] = useState(false);
     const [confirmPaymentMethod, setConfirmPaymentMethod] = useState<DepositPaymentMethod>('cash');
     const [confirmBankAccountId, setConfirmBankAccountId] = useState('');
     const [lifecycleStep, setLifecycleStep] = useState<PostConfirmStepId>(
@@ -251,6 +263,7 @@ export default function Show({
 
     const cancelForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
     const noShowForm = useForm({ cancelled_reason: '', charge_fee: false as boolean });
+    const rejectProofForm = useForm({ rejected_reason: 'Bukti transfer tidak terbaca atau nominal tidak sesuai' });
     const checkoutForm = useForm({
         start_odometer: '',
         start_fuel_level: 'full',
@@ -687,6 +700,86 @@ export default function Show({
                                 amount: formatMoney(rental.deposit_amount),
                             })}
                         </p>
+                    </div>
+                )}
+
+                {/* Deposit Proof Verification Card */}
+                {rental.deposit_proof_status === 'pending' && (
+                    <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-5 dark:border-amber-800 dark:bg-amber-950/40 shadow-sm space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/80 pb-3 dark:border-amber-800/80">
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center rounded-full bg-amber-200/80 px-2.5 py-0.5 text-xs font-bold text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
+                                    Pending Verification
+                                </span>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                                    Verifikasi Bukti Transfer Manual Deposit ({formatMoney(rental.deposit_amount)})
+                                </h3>
+                            </div>
+                            {rental.deposit_proof_uploaded_at && (
+                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                    Diunggah: {formatDateTimeDmYHi(rental.deposit_proof_uploaded_at)}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                                <div>
+                                    <span className="font-semibold text-gray-500">Rekening Tujuan:</span>{' '}
+                                    <span className="font-bold text-gray-900 dark:text-white">
+                                        {rental.depositCompanyBankAccount
+                                            ? `${rental.depositCompanyBankAccount.bank_name || ''} ${rental.depositCompanyBankAccount.name} (${rental.depositCompanyBankAccount.account_number || ''})`
+                                            : 'Transfer Bank'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="font-semibold text-gray-500">Jumlah Deposit:</span>{' '}
+                                    <span className="font-bold text-teal-700 dark:text-teal-400 text-sm">
+                                        {formatMoney(rental.deposit_amount)}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="font-semibold text-gray-500">Metode:</span> Transfer Bank Manual
+                                </div>
+                            </div>
+
+                            {depositProofUrl && (
+                                <div className="space-y-1">
+                                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 block">Pratinjau Bukti Transfer:</span>
+                                    <a
+                                        href={depositProofUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-block overflow-hidden rounded-lg border border-gray-200 shadow-sm transition hover:opacity-90 dark:border-gray-700"
+                                    >
+                                        <img
+                                            src={depositProofUrl}
+                                            alt="Bukti Transfer Deposit"
+                                            className="h-32 w-auto object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLElement).style.display = 'none';
+                                            }}
+                                        />
+                                        <span className="block p-1 text-center text-[11px] font-bold text-indigo-600 underline dark:text-indigo-400">
+                                            Buka Dokumen Bukti Transfer ↗
+                                        </span>
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-amber-200/80 dark:border-amber-800/80">
+                            <DangerButton type="button" onClick={() => setShowRejectProofModal(true)}>
+                                Tolak Bukti Transfer
+                            </DangerButton>
+                            <PrimaryButton
+                                type="button"
+                                onClick={() => setShowApproveProofModal(true)}
+                                className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+                            >
+                                Setujui & Konfirmasi Deposit ({formatMoney(rental.deposit_amount)})
+                            </PrimaryButton>
+                        </div>
                     </div>
                 )}
 
@@ -1644,6 +1737,147 @@ export default function Show({
                     </div>
                 </form>
             </Modal>
+
+            {showApproveProofModal && (
+                <Modal show onClose={() => setShowApproveProofModal(false)} maxWidth="md">
+                    <div className="p-6 space-y-5">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                                    Konfirmasi Persetujuan Bukti Transfer
+                                </h2>
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                                    Apakah Anda yakin ingin menyetujui pembayaran deposit ini?
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Detail Ringkasan Transfer */}
+                        <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-800/80 space-y-2 text-xs">
+                            <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
+                                <span className="text-gray-500">Kode Reservasi:</span>
+                                <span className="font-mono font-bold text-gray-900 dark:text-white">{rental.code}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-500">Pemesan:</span>
+                                <span className="font-semibold text-gray-900 dark:text-white">{rental.partner?.name || '—'}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-500">Nominal Deposit:</span>
+                                <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm">{formatMoney(rental.deposit_amount)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-500">Rekening Tujuan:</span>
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                    {rental.depositCompanyBankAccount
+                                        ? `${rental.depositCompanyBankAccount.bank_name || ''} - ${rental.depositCompanyBankAccount.account_number || ''}`
+                                        : 'Transfer Bank'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* List Dampak Aksi */}
+                        <div className="rounded-xl bg-emerald-50/70 p-3.5 border border-emerald-200/80 dark:bg-emerald-950/30 dark:border-emerald-800/50 space-y-1.5 text-xs text-emerald-900 dark:text-emerald-200">
+                            <p className="font-bold mb-1">Dampak setelah bukti transfer disetujui:</p>
+                            <div className="flex items-center gap-2">
+                                <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>Status bukti transfer diubah menjadi <b>Disetujui (Approved)</b></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>Pembayaran deposit otomatis dicatat ke sistem akuntansi</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>Status reservasi otomatis berubah menjadi <b>Dikonfirmasi (Confirmed)</b></span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <SecondaryButton type="button" onClick={() => setShowApproveProofModal(false)}>
+                                Batal
+                            </SecondaryButton>
+                            <PrimaryButton
+                                type="button"
+                                disabled={approvingProof}
+                                onClick={() => {
+                                    setApprovingProof(true);
+                                    router.post(prefixedRoute('rental.approve_deposit_proof', rental.id), {}, {
+                                        onFinish: () => {
+                                            setApprovingProof(false);
+                                            setShowApproveProofModal(false);
+                                        },
+                                    });
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
+                            >
+                                {approvingProof ? 'Memproses...' : 'Ya, Setujui & Konfirmasi Deposit'}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {showRejectProofModal && (
+                <Modal show onClose={() => setShowRejectProofModal(false)} maxWidth="md">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            rejectProofForm.post(prefixedRoute('rental.reject_deposit_proof', rental.id), {
+                                onSuccess: () => setShowRejectProofModal(false),
+                            });
+                        }}
+                        className="p-6 space-y-4"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400">
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                                    Tolak Bukti Transfer Deposit
+                                </h2>
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                                    Masukkan alasan penolakan agar pemesan dapat mengunggah kembali bukti transfer yang valid.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <InputLabel value="Alasan Penolakan *" />
+                            <TextInput
+                                className="mt-1 block w-full"
+                                value={rejectProofForm.data.rejected_reason}
+                                onChange={(e) => rejectProofForm.setData('rejected_reason', e.target.value)}
+                                placeholder="Contoh: Bukti transfer tidak terbaca / nominal tidak sesuai"
+                                required
+                            />
+                            <InputError message={rejectProofForm.errors.rejected_reason} className="mt-1" />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <SecondaryButton type="button" onClick={() => setShowRejectProofModal(false)}>
+                                Batal
+                            </SecondaryButton>
+                            <DangerButton type="submit" disabled={rejectProofForm.processing}>
+                                {rejectProofForm.processing ? 'Menolak...' : 'Tolak Bukti Transfer'}
+                            </DangerButton>
+                        </div>
+                    </form>
+                </Modal>
+            )}
         </DynamicLayout>
     );
 }

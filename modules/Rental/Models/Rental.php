@@ -103,6 +103,12 @@ class Rental extends Model
         'deposit_received_at',
         'deposit_payment_method',
         'deposit_company_bank_account_id',
+        'deposit_proof_path',
+        'deposit_proof_uploaded_at',
+        'deposit_proof_status',
+        'deposit_proof_approved_by',
+        'deposit_proof_approved_at',
+        'deposit_proof_rejected_reason',
         'total_amount',
         'notes',
         'passenger_ktp_path',
@@ -167,6 +173,9 @@ class Rental extends Model
             'completed_at' => 'datetime',
             'deposit_settled_at' => 'datetime',
             'deposit_received_at' => 'datetime',
+            'deposit_proof_uploaded_at' => 'datetime',
+            'deposit_proof_approved_at' => 'datetime',
+            'deposit_proof_approved_by' => 'integer',
             'deposit_company_bank_account_id' => 'integer',
             'pickup_location_id' => 'integer',
             'return_location_id' => 'integer',
@@ -228,6 +237,12 @@ class Rental extends Model
     public function confirmedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
+    /** @return BelongsTo<\Modules\Accounting\Models\CompanyBankAccount, $this> */
+    public function depositCompanyBankAccount(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Accounting\Models\CompanyBankAccount::class, 'deposit_company_bank_account_id');
     }
 
     /** @return HasMany<RentalExtension, $this> */

@@ -8,6 +8,14 @@ interface Brand {
     support_phone: string | null;
 }
 
+interface CompanyBankAccount {
+    id: number;
+    name: string;
+    bank_name: string | null;
+    account_number: string | null;
+    account_holder: string | null;
+}
+
 interface Booking {
     code: string;
     public_token: string;
@@ -57,12 +65,21 @@ interface Booking {
         ktp_url: string | null;
         sim_url: string | null;
     };
+    deposit_proof?: {
+        path: string | null;
+        url: string | null;
+        status: string | null;
+        uploaded_at: string | null;
+        rejected_reason: string | null;
+        bank_account_id: number | null;
+    };
 }
 
 interface Props {
     brand: Brand;
     booking: Booking;
     gateway_available: boolean;
+    company_bank_accounts?: CompanyBankAccount[];
 }
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
@@ -81,7 +98,7 @@ const statusBadgeConfig: Record<string, { label: string; color: string; bg: stri
     cancelled_paid: { label: 'Dibatalkan', color: 'text-red-700', bg: 'bg-red-100 border-red-300' },
 };
 
-export default function BookingView({ brand, booking, gateway_available }: Props) {
+export default function BookingView({ brand, booking, gateway_available, company_bank_accounts = [] }: Props) {
     const { flash } = usePage().props as {
         flash?: { success?: string; error?: string };
     };
@@ -92,6 +109,8 @@ export default function BookingView({ brand, booking, gateway_available }: Props
     const [showDocs, setShowDocs] = useState(false);
     const [payingInvoiceId, setPayingInvoiceId] = useState<number | null>(null);
     const [timeLeft, setTimeLeft] = useState<string | null>(null);
+    const [depositTab, setDepositTab] = useState<'transfer' | 'online'>('transfer');
+    const [copiedAccount, setCopiedAccount] = useState<boolean>(false);
 
     // Timer calculation for reserved_until
     useEffect(() => {
@@ -126,6 +145,18 @@ export default function BookingView({ brand, booking, gateway_available }: Props
     const payForm = useForm({
         booker_phone: booking.booker_phone ?? '',
         otp_code: '',
+    });
+
+    const proofForm = useForm<{
+        booker_phone: string;
+        otp_code: string;
+        company_bank_account_id: string;
+        deposit_proof: File | null;
+    }>({
+        booker_phone: booking.booker_phone ?? '',
+        otp_code: '',
+        company_bank_account_id: company_bank_accounts.length > 0 ? String(company_bank_accounts[0].id) : '',
+        deposit_proof: null,
     });
 
     const cancelForm = useForm({
@@ -165,8 +196,19 @@ export default function BookingView({ brand, booking, gateway_available }: Props
             return;
         }
         try {
-            const { data } = await axios.post(route('book.rental.otp'), { booker_phone: phone });
+            const url = typeof route === 'function' && route().has('book.rental.otp')
+                ? route('book.rental.otp')
+                : '/book/rental/otp';
+            const { data } = await axios.post(url, { booker_phone: phone });
             setOtpHint(data.debug_code ? `Kode OTP (Dev): ${data.debug_code}` : (data.message || 'OTP berhasil dikirim'));
+            if (data.debug_code) {
+                payForm.setData('otp_code', String(data.debug_code));
+                proofForm.setData('otp_code', String(data.debug_code));
+                cancelForm.setData('otp_code', String(data.debug_code));
+                extendForm.setData('otp_code', String(data.debug_code));
+                docsForm.setData('otp_code', String(data.debug_code));
+                invoiceForm.setData('otp_code', String(data.debug_code));
+            }
         } catch (err: any) {
             setOtpHint(err.response?.data?.message || 'Gagal mengirim OTP');
         }
@@ -174,7 +216,38 @@ export default function BookingView({ brand, booking, gateway_available }: Props
 
     const pay = (e: FormEvent) => {
         e.preventDefault();
-        payForm.post(route('book.rental.booking.pay_deposit', booking.public_token));
+        const url = typeof route === 'function' && route().has('book.rental.booking.pay_deposit')
+            ? route('book.rental.booking.pay_deposit', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/pay-deposit`;
+        payForm.post(url);
+    };
+
+    const submitProof = (e: FormEvent) => {
+        e.preventDefault();
+        proofForm.clearErrors();
+
+        if (!proofForm.data.deposit_proof) {
+            proofForm.setError('deposit_proof', 'Pilih file bukti transfer (Foto/PDF) terlebih dahulu');
+            return;
+        }
+
+        if (!proofForm.data.booker_phone) {
+            proofForm.setError('booker_phone', 'Nomor telepon pemesan wajib diisi');
+            return;
+        }
+
+        if (!proofForm.data.otp_code || proofForm.data.otp_code.length !== 6) {
+            proofForm.setError('otp_code', 'Kode OTP 6 digit wajib diisi. Klik tombol "OTP" untuk menerima kode');
+            return;
+        }
+
+        const url = typeof route === 'function' && route().has('book.rental.booking.upload_deposit_proof')
+            ? route('book.rental.booking.upload_deposit_proof', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/deposit-proof`;
+
+        proofForm.post(url, {
+            forceFormData: true,
+        });
     };
 
     const cancel = (e: FormEvent) => {
@@ -182,19 +255,28 @@ export default function BookingView({ brand, booking, gateway_available }: Props
         if (!confirm('Batalkan reservasi ini? Unit akan dilepas ke sistem.')) {
             return;
         }
-        cancelForm.post(route('book.rental.booking.cancel', booking.public_token));
+        const url = typeof route === 'function' && route().has('book.rental.booking.cancel')
+            ? route('book.rental.booking.cancel', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/cancel`;
+        cancelForm.post(url);
     };
 
     const requestExtend = (e: FormEvent) => {
         e.preventDefault();
-        extendForm.post(route('book.rental.booking.extend_request', booking.public_token), {
+        const url = typeof route === 'function' && route().has('book.rental.booking.extend_request')
+            ? route('book.rental.booking.extend_request', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/extend-request`;
+        extendForm.post(url, {
             onSuccess: () => setShowExtend(false),
         });
     };
 
     const uploadDocuments = (e: FormEvent) => {
         e.preventDefault();
-        docsForm.post(route('book.rental.booking.documents', booking.public_token), {
+        const url = typeof route === 'function' && route().has('book.rental.booking.documents')
+            ? route('book.rental.booking.documents', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/documents`;
+        docsForm.post(url, {
             forceFormData: true,
             onSuccess: () => setShowDocs(false),
         });
@@ -206,7 +288,10 @@ export default function BookingView({ brand, booking, gateway_available }: Props
             return;
         }
         invoiceForm.setData('invoice_id', payingInvoiceId);
-        invoiceForm.post(route('book.rental.booking.pay_invoice', booking.public_token));
+        const url = typeof route === 'function' && route().has('book.rental.booking.pay_invoice')
+            ? route('book.rental.booking.pay_invoice', booking.public_token)
+            : `/book/rental/booking/${booking.public_token}/pay-invoice`;
+        invoiceForm.post(url);
     };
 
     const statusBadge = statusBadgeConfig[booking.status] || {
@@ -355,61 +440,288 @@ export default function BookingView({ brand, booking, gateway_available }: Props
                     </div>
                 </div>
 
-                {/* Deposit Payment Box */}
-                {booking.can_pay_deposit && (
-                    <div className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-slate-200/80 space-y-4">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 border-b pb-2 border-slate-100">
-                            Bayar Deposit Untuk Mengunci Unit
-                        </h3>
+                {/* Deposit Proof Pending / Rejected Status Banner */}
+                {booking.deposit_proof?.status === 'pending' && (
+                    <div className="rounded-2xl bg-amber-50 p-5 ring-1 ring-amber-300 space-y-3">
+                        <div className="flex items-center gap-2.5">
+                            <span className="flex h-3 w-3 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                            </span>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                                Bukti Transfer Berhasil Diunggah — Menunggu Approval Admin
+                            </h3>
+                        </div>
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                            Bukti pembayaran transfer manual Anda telah kami terima dan sedang diverifikasi oleh admin. Unit Anda tetap terikat selama proses konfirmasi.
+                        </p>
+                        {booking.deposit_proof.url && (
+                            <div className="pt-1">
+                                <a
+                                    href={booking.deposit_proof.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 underline hover:text-amber-950"
+                                >
+                                    Lihat Bukti Transfer Uploaded ↗
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                        <form onSubmit={pay} className="space-y-3">
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {booking.deposit_proof?.status === 'rejected' && (
+                    <div className="rounded-2xl bg-red-50 p-5 ring-1 ring-red-300 space-y-2 text-xs">
+                        <h3 className="font-bold text-red-900 uppercase tracking-wider">
+                            Bukti Transfer Ditolak
+                        </h3>
+                        <p className="text-red-800">
+                            Alasan: <b>{booking.deposit_proof.rejected_reason || 'Bukti transfer tidak dapat diverifikasi'}</b>
+                        </p>
+                        <p className="text-red-700">Silakan unggah kembali bukti transfer yang valid di bawah ini.</p>
+                    </div>
+                )}
+
+                {/* Deposit Payment Box */}
+                {booking.can_pay_deposit && booking.deposit_proof?.status !== 'pending' && (
+                    <div className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-slate-200/80 space-y-4">
+                        <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                Pembayaran Deposit ({money(booking.deposit_amount)})
+                            </h3>
+                            <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[11px] font-bold">
+                                <button
+                                    type="button"
+                                    onClick={() => setDepositTab('transfer')}
+                                    className={`rounded-lg px-2.5 py-1 transition ${depositTab === 'transfer' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                >
+                                    Transfer Bank Manual
+                                </button>
+                                {gateway_available && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setDepositTab('online')}
+                                        className={`rounded-lg px-2.5 py-1 transition ${depositTab === 'online' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                    >
+                                        Gateway Online (Midtrans)
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {depositTab === 'transfer' && (
+                            <form onSubmit={submitProof} className="space-y-4" noValidate>
+                                {/* Form Errors Summary */}
+                                {Object.keys(proofForm.errors).length > 0 && (
+                                    <div className="rounded-xl bg-red-50 p-3 text-xs font-medium text-red-800 border border-red-200">
+                                        <p className="font-bold">Gagal mengunggah bukti transfer:</p>
+                                        <ul className="list-disc list-inside mt-1 space-y-0.5">
+                                            {Object.values(proofForm.errors).map((err, idx) => (
+                                                <li key={idx}>{err}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Bank Account Selection & Card */}
                                 <div>
-                                    <label className="text-xs font-semibold text-slate-700">No. Telepon WhatsApp</label>
-                                    <input
-                                        type="tel"
-                                        className={fieldClassName}
-                                        value={payForm.data.booker_phone}
-                                        onChange={(e) => payForm.setData('booker_phone', e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold text-slate-700">Kode OTP</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
+                                    <label className="text-xs font-semibold text-slate-700 block mb-1.5">Pilih Rekening Tujuan Transfer</label>
+                                    {company_bank_accounts.length > 0 ? (
+                                        <select
                                             className={fieldClassName}
-                                            placeholder="000000"
-                                            maxLength={6}
-                                            value={payForm.data.otp_code}
-                                            onChange={(e) => payForm.setData('otp_code', e.target.value)}
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => void sendOtp(payForm.data.booker_phone)}
-                                            className="mt-1 rounded-xl bg-slate-800 px-3 text-xs font-bold text-white transition hover:bg-slate-700"
+                                            value={proofForm.data.company_bank_account_id}
+                                            onChange={(e) => proofForm.setData('company_bank_account_id', e.target.value)}
                                         >
-                                            OTP
-                                        </button>
+                                            <option value="">-- Pilih Rekening Bank Tujuan --</option>
+                                            {company_bank_accounts.map((acc) => (
+                                                <option key={acc.id} value={acc.id}>
+                                                    {acc.bank_name ? `${acc.bank_name} - ${acc.name}` : acc.name} ({acc.account_number ?? '—'})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <p className="text-xs text-slate-500 bg-slate-100 p-2.5 rounded-xl">
+                                            Transfer ke rekening bank resmi perusahaan lalu unggah bukti transfer di bawah.
+                                        </p>
+                                    )}
+                                    {proofForm.errors.company_bank_account_id && (
+                                        <p className="text-xs text-red-600 mt-1">{proofForm.errors.company_bank_account_id}</p>
+                                    )}
+                                </div>
+
+                                {/* Active Bank Detail Card */}
+                                {(() => {
+                                    const selectedBank = company_bank_accounts.find(
+                                        (a) => String(a.id) === proofForm.data.company_bank_account_id
+                                    ) || company_bank_accounts[0];
+
+                                    if (!selectedBank) return null;
+
+                                    return (
+                                        <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 p-4 border border-teal-200/80 space-y-2">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="font-bold uppercase tracking-wider text-teal-800 text-[11px]">
+                                                    {selectedBank.bank_name || 'Bank Transfer'}
+                                                </span>
+                                                <span className="text-[11px] text-teal-700 font-medium">a.n. {selectedBank.account_holder || selectedBank.name}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-mono text-base font-extrabold text-teal-950 tracking-wider">
+                                                    {selectedBank.account_number || '—'}
+                                                </span>
+                                                {selectedBank.account_number && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(selectedBank.account_number || '');
+                                                            setCopiedAccount(true);
+                                                            setTimeout(() => setCopiedAccount(false), 2000);
+                                                        }}
+                                                        className="rounded-lg bg-teal-600/10 px-2.5 py-1 text-[11px] font-bold text-teal-800 hover:bg-teal-600/20"
+                                                    >
+                                                        {copiedAccount ? 'Tersalin ✓' : 'Salin Rekening'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-teal-700">
+                                                Silakan transfer tepat sejumlah <b className="text-teal-900">{money(booking.deposit_amount)}</b> lalu unggah bukti transfer di bawah.
+                                            </p>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* File Upload Input */}
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-700 block">
+                                        File Bukti Transfer (Foto / PDF, Maks 5MB) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        onChange={(e) => proofForm.setData('deposit_proof', e.target.files?.[0] ?? null)}
+                                        className="mt-1 text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                                    />
+                                    {proofForm.errors.deposit_proof && (
+                                        <p className="text-xs text-red-600 mt-1">{proofForm.errors.deposit_proof}</p>
+                                    )}
+                                </div>
+
+                                {/* Phone & OTP inputs */}
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-700">No. Telepon Pemesan</label>
+                                        <input
+                                            type="tel"
+                                            className={fieldClassName}
+                                            value={proofForm.data.booker_phone}
+                                            onChange={(e) => proofForm.setData('booker_phone', e.target.value)}
+                                        />
+                                        {proofForm.errors.booker_phone && (
+                                            <p className="text-xs text-red-600 mt-1">{proofForm.errors.booker_phone}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-700">Kode OTP</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                className={fieldClassName}
+                                                placeholder="000000"
+                                                maxLength={6}
+                                                value={proofForm.data.otp_code}
+                                                onChange={(e) => proofForm.setData('otp_code', e.target.value)}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => void sendOtp(proofForm.data.booker_phone)}
+                                                className="mt-1 rounded-xl bg-slate-800 px-3 text-xs font-bold text-white transition hover:bg-slate-700"
+                                            >
+                                                OTP
+                                            </button>
+                                        </div>
+                                        {proofForm.errors.otp_code && (
+                                            <p className="text-xs text-red-600 mt-1">{proofForm.errors.otp_code}</p>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
 
-                            {otpHint && <p className="text-xs font-medium text-teal-700 bg-teal-50 p-2 rounded-lg">{otpHint}</p>}
+                                {otpHint && <p className="text-xs font-medium text-teal-700 bg-teal-50 p-2 rounded-lg">{otpHint}</p>}
 
-                            <button
-                                type="submit"
-                                disabled={payForm.processing}
-                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-600/30 transition hover:bg-teal-700 disabled:opacity-50"
-                            >
-                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                Bayar Deposit ({money(booking.deposit_amount)})
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    disabled={proofForm.processing}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-600/30 transition hover:bg-teal-700 disabled:opacity-50"
+                                >
+                                    {proofForm.processing ? (
+                                        <>
+                                            <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            Mengunggah Bukti Transfer...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            Unggah Bukti Transfer Manual ({money(booking.deposit_amount)})
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        )}
+
+                        {depositTab === 'online' && (
+                            <form onSubmit={pay} className="space-y-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-700">No. Telepon WhatsApp</label>
+                                        <input
+                                            type="tel"
+                                            className={fieldClassName}
+                                            value={payForm.data.booker_phone}
+                                            onChange={(e) => payForm.setData('booker_phone', e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-700">Kode OTP</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                className={fieldClassName}
+                                                placeholder="000000"
+                                                maxLength={6}
+                                                value={payForm.data.otp_code}
+                                                onChange={(e) => payForm.setData('otp_code', e.target.value)}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => void sendOtp(payForm.data.booker_phone)}
+                                                className="mt-1 rounded-xl bg-slate-800 px-3 text-xs font-bold text-white transition hover:bg-slate-700"
+                                            >
+                                                OTP
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {otpHint && <p className="text-xs font-medium text-teal-700 bg-teal-50 p-2 rounded-lg">{otpHint}</p>}
+
+                                <button
+                                    type="submit"
+                                    disabled={payForm.processing}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-600/30 transition hover:bg-teal-700 disabled:opacity-50"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    Bayar Deposit Online ({money(booking.deposit_amount)})
+                                </button>
+                            </form>
+                        )}
                     </div>
                 )}
 

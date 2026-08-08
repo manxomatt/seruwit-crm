@@ -74,6 +74,7 @@ Route::middleware('throttle:30,1')->prefix('book/rental')->name('book.rental.')-
         ->name('otp');
     Route::get('/booking/{token}', [PublicRentalBookingController::class, 'show'])->name('booking.show');
     Route::post('/booking/{token}/pay-deposit', [PublicRentalBookingController::class, 'payDeposit'])->name('booking.pay_deposit');
+    Route::post('/booking/{token}/deposit-proof', [PublicRentalBookingController::class, 'uploadDepositProof'])->name('booking.upload_deposit_proof');
     Route::post('/booking/{token}/pay-invoice', [PublicRentalBookingController::class, 'payInvoice'])->name('booking.pay_invoice');
     Route::post('/booking/{token}/cancel', [PublicRentalBookingController::class, 'cancel'])->name('booking.cancel');
     Route::post('/booking/{token}/extend-request', [PublicRentalBookingController::class, 'requestExtend'])->name('booking.extend_request');

@@ -27,6 +27,11 @@ class RentalPassengerDocMedia
         return $path;
     }
 
+    public function storeDepositProof(UploadedFile $file, int $rentalId): string
+    {
+        return $this->storeUpload($file, $rentalId, 'deposit-proof');
+    }
+
     public function publicUrl(?string $path): ?string
     {
         return $this->handover->publicUrl($path);
