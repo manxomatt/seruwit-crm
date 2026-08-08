@@ -315,7 +315,8 @@ class PublicRentalBookingController extends Controller
             return $guardResponse;
         }
 
-        if ($rental->isDepositReceived()) {
+        $isAlreadyPaid = (float) $rental->deposit_amount > 0 ? $rental->isDepositReceived() : $rental->status === Rental::STATUS_CONFIRMED;
+        if ($isAlreadyPaid) {
             return back()->with('error', __('rental.public.deposit_already_received'));
         }
 
@@ -729,6 +730,11 @@ class PublicRentalBookingController extends Controller
      */
     private function bookingPayload(Rental $rental): array
     {
+        $paymentPayload = $this->paymentPayload($rental);
+        $upfrontPaid = (float) $rental->deposit_amount > 0
+            ? $rental->isDepositReceived()
+            : ($rental->deposit_proof_status === Rental::PROOF_APPROVED || ($paymentPayload['balance_due'] <= 0 && ! in_array($paymentPayload['status'], ['unpaid', 'partial', 'draft'], true)));
+
         return [
             'code' => $rental->code,
             'public_token' => $rental->public_token,
@@ -759,8 +765,7 @@ class PublicRentalBookingController extends Controller
                 'name' => $rental->insurancePackage->name,
                 'amount' => (float) $rental->insurancePackage->amount,
             ] : null,
-            'can_pay_deposit' => ! $rental->isDepositReceived()
-                && (float) $rental->deposit_amount > 0
+            'can_pay_deposit' => ((float) $rental->deposit_amount > 0 ? ! $rental->isDepositReceived() : $rental->status !== Rental::STATUS_CONFIRMED)
                 && in_array($rental->status, [
                     Rental::STATUS_DRAFT,
                     Rental::STATUS_PENDING,
@@ -768,7 +773,7 @@ class PublicRentalBookingController extends Controller
                     Rental::STATUS_CONFIRMED,
                 ], true),
             'cancel' => app(RentalBookingPolicy::class)->passengerCancelAssessment($rental),
-            'payment' => $this->paymentPayload($rental),
+            'payment' => $paymentPayload,
             'can_request_extend' => $rental->status === Rental::STATUS_ACTIVE,
             'extend_request' => $this->pendingExtendRequestPayload($rental),
             'documents' => [

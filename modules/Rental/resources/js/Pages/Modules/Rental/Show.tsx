@@ -360,7 +360,10 @@ export default function Show({
     const is = (s: string) => rental.status === s;
     const isLiveTracking = trackingEnabled && is('active');
     const depositHeld = rental.deposit_status !== 'settled' && Number(rental.deposit_amount) > 0;
-    const upfrontPaymentPending = is('confirmed') && Number(rental.deposit_amount) <= 0 && (payment.balance_due > 0 || payment.status === 'unpaid' || payment.status === 'partial' || payment.status === 'draft');
+    const upfrontPaymentPending = is('confirmed')
+        && Number(rental.deposit_amount) <= 0
+        && rental.deposit_proof_status !== 'approved'
+        && (payment.balance_due > 0 || payment.status === 'unpaid' || payment.status === 'partial' || payment.status === 'draft');
     const canReceiveDeposit = depositHeld && !rental.deposit_received_at && (is('pending') || is('pending_reserved') || is('confirmed') || is('active') || is('returned'));
     const canSettleDeposit = depositHeld && !!rental.deposit_received_at && (is('returned') || is('completed'));
     const depositBlocksCheckout = is('confirmed') && ((depositHeld && !rental.deposit_received_at) || upfrontPaymentPending);
@@ -368,7 +371,7 @@ export default function Show({
         ? 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.'
         : t('rental.errors.checkout_deposit_required');
     const canPrintContract = is('confirmed') || is('active') || is('returned') || is('completed');
-    const canConfirm = is('draft') || is('pending') || is('pending_reserved');
+    const canConfirm = (is('draft') || is('pending') || is('pending_reserved')) && rental.deposit_proof_status !== 'pending';
     const canCancel = is('draft') || is('pending') || is('pending_reserved') || is('confirmed');
     const canMarkFeePaid = is('cancelled') || is('no_show');
     const canPrintHandover = is('active') || is('returned') || is('completed');
@@ -731,7 +734,9 @@ export default function Show({
                                     Pending Verification
                                 </span>
                                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                                    Verifikasi Bukti Transfer Manual Deposit ({formatMoney(rental.deposit_amount)})
+                                    {Number(rental.deposit_amount) > 0
+                                        ? `Verifikasi Bukti Transfer Manual Deposit (${formatMoney(rental.deposit_amount)})`
+                                        : `Verifikasi Bukti Transfer Pembayaran Sewa (${formatMoney(rental.total_amount)})`}
                                 </h3>
                             </div>
                             {rental.deposit_proof_uploaded_at && (
@@ -752,9 +757,11 @@ export default function Show({
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="font-semibold text-gray-500">Jumlah Deposit:</span>{' '}
+                                    <span className="font-semibold text-gray-500">
+                                        {Number(rental.deposit_amount) > 0 ? 'Jumlah Deposit:' : 'Jumlah Pembayaran Sewa:'}
+                                    </span>{' '}
                                     <span className="font-bold text-teal-700 dark:text-teal-400 text-sm">
-                                        {formatMoney(rental.deposit_amount)}
+                                        {formatMoney(Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount)}
                                     </span>
                                 </div>
                                 <div>
@@ -796,7 +803,9 @@ export default function Show({
                                 onClick={() => setShowApproveProofModal(true)}
                                 className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
                             >
-                                Setujui & Konfirmasi Deposit ({formatMoney(rental.deposit_amount)})
+                                {Number(rental.deposit_amount) > 0
+                                    ? 'Setujui & Konfirmasi Deposit'
+                                    : 'Setujui & Konfirmasi Pembayaran'}
                             </PrimaryButton>
                         </div>
                     </div>
@@ -836,7 +845,7 @@ export default function Show({
                                 <div>
                                     <span className="font-semibold text-gray-500">Status Pembayaran Deposit:</span>{' '}
                                     <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                                        Lunas ({formatMoney(rental.deposit_amount)})
+                                        {Number(rental.deposit_amount) > 0 ? `Lunas (${formatMoney(rental.deposit_amount)})` : '-'}
                                     </span>
                                 </div>
                             </div>
@@ -1873,7 +1882,7 @@ export default function Show({
                                     Konfirmasi Persetujuan Bukti Transfer
                                 </h2>
                                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
-                                    Apakah Anda yakin ingin menyetujui pembayaran deposit ini?
+                                    Apakah Anda yakin ingin menyetujui {Number(rental.deposit_amount) > 0 ? 'pembayaran deposit ini?' : 'pembayaran sewa ini?'}
                                 </p>
                             </div>
                         </div>
@@ -1889,8 +1898,8 @@ export default function Show({
                                 <span className="font-semibold text-gray-900 dark:text-white">{rental.partner?.name || '—'}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-500">Nominal Deposit:</span>
-                                <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm">{formatMoney(rental.deposit_amount)}</span>
+                                <span className="text-gray-500">{Number(rental.deposit_amount) > 0 ? 'Nominal Deposit:' : 'Nominal Pembayaran Sewa:'}</span>
+                                <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm">{formatMoney(Number(rental.deposit_amount) > 0 ? rental.deposit_amount : rental.total_amount)}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-500">Rekening Tujuan:</span>
@@ -1915,7 +1924,7 @@ export default function Show({
                                 <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                 </svg>
-                                <span>Pembayaran deposit otomatis dicatat ke sistem akuntansi</span>
+                                <span>{Number(rental.deposit_amount) > 0 ? 'Pembayaran deposit otomatis dicatat ke sistem akuntansi' : 'Pembayaran sewa otomatis dicatat ke sistem akuntansi'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <svg className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -1943,7 +1952,7 @@ export default function Show({
                                 }}
                                 className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
                             >
-                                {approvingProof ? 'Memproses...' : 'Ya, Setujui & Konfirmasi Deposit'}
+                                {approvingProof ? 'Memproses...' : (Number(rental.deposit_amount) > 0 ? 'Ya, Setujui & Konfirmasi Deposit' : 'Ya, Setujui & Konfirmasi Pembayaran')}
                             </PrimaryButton>
                         </div>
                     </div>

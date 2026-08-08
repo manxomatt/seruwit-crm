@@ -113,7 +113,7 @@ class RentalActionController extends Controller
             ]);
         }
 
-        if ((float) $rental->deposit_amount <= 0) {
+        if ((float) $rental->deposit_amount <= 0 && $rental->deposit_proof_status !== Rental::PROOF_APPROVED) {
             $paymentSummary = $this->invoices->paymentSummary($rental);
             if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
                 throw ValidationException::withMessages([
@@ -698,7 +698,11 @@ class RentalActionController extends Controller
             $this->confirmation->confirmAfterPaymentIfPending($rental->fresh());
         }
 
-        return back()->with('success', 'Bukti transfer deposit disetujui. Deposit berhasil diterima & reservasi dikonfirmasi.');
+        if ((float) $rental->deposit_amount <= 0) {
+            $this->accounting->payRentalInvoicesFromProof($rental->fresh());
+        }
+
+        return back()->with('success', 'Bukti transfer disetujui. Pembayaran berhasil dicatat & reservasi dikonfirmasi.');
     }
 
     /**

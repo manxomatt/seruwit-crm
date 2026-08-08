@@ -51,6 +51,12 @@ class Rental extends Model
 
     public const DEPOSIT_SETTLED = 'settled';
 
+    public const PROOF_PENDING = 'pending';
+
+    public const PROOF_APPROVED = 'approved';
+
+    public const PROOF_REJECTED = 'rejected';
+
     protected static function newFactory(): Factory
     {
         return RentalFactory::new();

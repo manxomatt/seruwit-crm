@@ -193,13 +193,6 @@ class MobileRentalBookingService
                 ]);
             }
 
-            if ((float) $rental->deposit_amount <= 0) {
-                // Zero deposit: promote immediately to Open (nothing to wait for).
-                return $this->confirmation->confirm($rental->fresh(), [
-                    'confirmed_by' => null,
-                ]);
-            }
-
             return $rental->fresh(['vehicle', 'partner', 'insurancePackage', 'pickupLocation', 'returnLocation']);
         });
 

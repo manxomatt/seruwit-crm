@@ -128,6 +128,58 @@ class RentalAccountingService
     }
 
     /**
+     * Pay issued invoices from approved manual transfer proof for zero-deposit rentals.
+     */
+    public function payRentalInvoicesFromProof(Rental $rental): void
+    {
+        if (! $this->invoices->isAvailable()) {
+            return;
+        }
+
+        $this->issueDraftInvoices($rental->fresh());
+
+        $invoices = $this->invoices->invoicesFor($rental->fresh());
+
+        foreach ($invoices as $invoice) {
+            if (in_array($invoice->status, [Invoice::STATUS_PAID, Invoice::STATUS_VOID], true)) {
+                continue;
+            }
+
+            $balance = $invoice->balanceDue();
+            if ($balance <= 0.005) {
+                continue;
+            }
+
+            if (class_exists(PaymentRecorder::class)) {
+                try {
+                    PaymentRecorder::record([
+                        'partner_id' => $rental->partner_id,
+                        'payment_date' => now()->toDateString(),
+                        'amount' => $balance,
+                        'type' => Payment::TYPE_FULL,
+                        'method' => $rental->deposit_payment_method ?? Payment::METHOD_TRANSFER,
+                        'company_bank_account_id' => $rental->deposit_company_bank_account_id,
+                        'notes' => "Pelunasan bukti transfer sewa {$rental->code}",
+                        'allocations' => [
+                            ['invoice_id' => $invoice->id, 'amount' => $balance],
+                        ],
+                    ]);
+                } catch (\Throwable) {
+                    $invoice->update([
+                        'status' => Invoice::STATUS_PAID,
+                        'amount_paid' => $invoice->total,
+                    ]);
+                }
+            } else {
+                $invoice->update([
+                    'status' => Invoice::STATUS_PAID,
+                    'amount_paid' => $invoice->total,
+                ]);
+            }
+        }
+    }
+
+    /**
      * Settle deposit: issue open invoices, apply to AR, refund remainder, post GL.
      *
      * @param  array{deposit_applied_amount: float|int|string, deposit_refunded_amount: float|int|string}  $amounts

@@ -1,6 +1,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { FormEvent, useEffect, useState } from 'react';
+import Modal from '@/Components/Modal';
 
 interface Brand {
     name: string;
@@ -91,6 +92,19 @@ interface Props {
 }
 
 const money = (v: number) => 'Rp ' + Number(v).toLocaleString('id-ID');
+
+const formatDeadlineTime = (isoString?: string | null) => {
+    if (!isoString) return '—';
+    try {
+        const d = new Date(isoString);
+        if (isNaN(d.getTime())) return isoString;
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes} WIB`;
+    } catch {
+        return isoString;
+    }
+};
 
 const fieldClassName =
     'mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-800 transition focus:border-teal-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20';
@@ -208,6 +222,7 @@ export default function BookingView({ brand, booking, gateway_available, company
 
     const [otpHint, setOtpHint] = useState<string | null>(null);
     const [showCancel, setShowCancel] = useState(false);
+    const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
     const [showExtend, setShowExtend] = useState(false);
     const [showDocs, setShowDocs] = useState(false);
     const [payingInvoiceId, setPayingInvoiceId] = useState<number | null>(null);
@@ -287,6 +302,12 @@ export default function BookingView({ brand, booking, gateway_available, company
         sim: null,
     });
 
+    useEffect(() => {
+        if (!proofForm.data.company_bank_account_id && company_bank_accounts.length > 0) {
+            proofForm.setData('company_bank_account_id', String(company_bank_accounts[0].id));
+        }
+    }, [company_bank_accounts]);
+
     const invoiceForm = useForm({
         booker_phone: booking.booker_phone ?? '',
         otp_code: '',
@@ -362,15 +383,18 @@ export default function BookingView({ brand, booking, gateway_available, company
         });
     };
 
-    const cancel = (e: FormEvent) => {
+    const handleOpenCancelModal = (e: FormEvent) => {
         e.preventDefault();
-        if (!confirm('Batalkan reservasi ini? Unit akan dilepas ke sistem.')) {
-            return;
-        }
+        setShowConfirmCancelModal(true);
+    };
+
+    const executeCancel = () => {
         const url = typeof route === 'function' && route().has('book.rental.booking.cancel')
             ? route('book.rental.booking.cancel', booking.public_token)
             : `/book/rental/booking/${booking.public_token}/cancel`;
-        cancelForm.post(url);
+        cancelForm.post(url, {
+            onFinish: () => setShowConfirmCancelModal(false),
+        });
     };
 
     const requestExtend = (e: FormEvent) => {
@@ -420,11 +444,24 @@ export default function BookingView({ brand, booking, gateway_available, company
         invoiceForm.post(url);
     };
 
-    const statusBadge = statusBadgeConfig[booking.status] || {
-        label: booking.status,
-        color: 'text-slate-700',
-        bg: 'bg-slate-100 border-slate-300',
+    const getStatusBadge = () => {
+        if (booking.deposit_proof?.status === 'pending') {
+            return { label: 'Menunggu Verifikasi Pembayaran', color: 'text-amber-700', bg: 'bg-amber-100 border-amber-300' };
+        }
+        if (booking.status === 'pending_reserved') {
+            if (Number(booking.deposit_amount) <= 0) {
+                return { label: 'Menunggu Pelunasan', color: 'text-amber-700', bg: 'bg-amber-100 border-amber-300' };
+            }
+            return { label: 'Menunggu Deposit', color: 'text-amber-700', bg: 'bg-amber-100 border-amber-300' };
+        }
+        return statusBadgeConfig[booking.status] || {
+            label: booking.status,
+            color: 'text-slate-700',
+            bg: 'bg-slate-100 border-slate-300',
+        };
     };
+
+    const statusBadge = getStatusBadge();
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans antialiased pb-20">
@@ -471,7 +508,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                 )}
 
                 {/* Countdown Hold Banner */}
-                {booking.status === 'pending_reserved' && (
+                {booking.status === 'pending_reserved' && booking.deposit_proof?.status !== 'pending' && (
                     <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 p-5 text-white shadow-xl">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -481,13 +518,15 @@ export default function BookingView({ brand, booking, gateway_available, company
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold">Menunggu Pembayaran Deposit</h3>
-                                    <p className="text-xs text-amber-100">Unit ditahan sementara hingga waktu batas.</p>
+                                    <h3 className="text-sm font-bold">
+                                        {Number(booking.deposit_amount) <= 0 ? 'Menunggu Pelunasan' : 'Menunggu Pembayaran Deposit'}
+                                    </h3>
+                                    <p className="text-xs text-amber-100">Batas waktu pelunasan</p>
                                 </div>
                             </div>
-                            {timeLeft && (
+                            {booking.reserved_until && (
                                 <div className="text-right font-mono text-base font-extrabold tracking-wider bg-black/20 px-3 py-1.5 rounded-xl border border-white/20">
-                                    {timeLeft}
+                                    {formatDeadlineTime(booking.reserved_until)}
                                 </div>
                             )}
                         </div>
@@ -547,12 +586,16 @@ export default function BookingView({ brand, booking, gateway_available, company
 
                         <div className="flex justify-between text-slate-600">
                             <span>Wajib Deposit</span>
-                            <span className="font-semibold text-slate-900">{money(booking.deposit_amount)}</span>
+                            <span className="font-semibold text-slate-900">
+                                {Number(booking.deposit_amount) > 0 ? money(booking.deposit_amount) : 'Tanpa Deposit (Rp 0)'}
+                            </span>
                         </div>
 
                         <div className="flex justify-between items-center text-slate-600 pt-1">
                             <span>Status Deposit</span>
-                            {booking.deposit_received ? (
+                            {Number(booking.deposit_amount) <= 0 ? (
+                                <span className="font-semibold text-slate-700">-</span>
+                            ) : booking.deposit_received ? (
                                 <span className="rounded-md bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700">Lunas / Diterima</span>
                             ) : (
                                 <span className="rounded-md bg-amber-100 px-2 py-0.5 font-bold text-amber-700">Belum Dibayar</span>
@@ -608,12 +651,155 @@ export default function BookingView({ brand, booking, gateway_available, company
                     </div>
                 )}
 
+                {/* Additional Actions: Documents Upload */}
+                <div className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-slate-200/80 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Dokumen Verifikasi (KTP & SIM)</h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowDocs(!showDocs)}
+                            className="text-xs font-bold text-teal-600 underline"
+                        >
+                            {showDocs ? 'Sembunyikan' : 'Kelola Dokumen'}
+                        </button>
+                    </div>
+
+                    <div className="flex gap-2 text-xs">
+                        <span className={`rounded-lg px-2.5 py-1 font-semibold ${booking.documents?.ktp_uploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                            KTP: {booking.documents?.ktp_uploaded ? 'Sudah Diunggah' : 'Belum'}
+                        </span>
+                        <span className={`rounded-lg px-2.5 py-1 font-semibold ${booking.documents?.sim_uploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                            SIM: {booking.documents?.sim_uploaded ? 'Sudah Diunggah' : 'Belum'}
+                        </span>
+                    </div>
+
+                    {showDocs && (
+                        <form onSubmit={uploadDocuments} className="mt-3 pt-3 border-t border-slate-100 space-y-3" noValidate>
+                            {Object.keys(docsForm.errors).length > 0 && (
+                                <div className="rounded-xl bg-red-50 p-3 text-xs font-medium text-red-800 border border-red-200">
+                                    <p className="font-bold">Gagal mengunggah dokumen:</p>
+                                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                                        {Object.values(docsForm.errors).map((err, idx) => (
+                                            <li key={idx}>{err}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold text-slate-700 block">
+                                            Upload KTP (Foto / PDF)
+                                        </label>
+                                        {booking.documents?.ktp_uploaded && booking.documents?.ktp_url && (
+                                            <a
+                                                href={booking.documents.ktp_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-[11px] font-bold text-teal-600 underline hover:text-teal-800"
+                                            >
+                                                Lihat File ↗
+                                            </a>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        onChange={(e) => docsForm.setData('ktp', e.target.files?.[0] ?? null)}
+                                        className="mt-1 text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                                    />
+                                    {docsForm.errors.ktp && (
+                                        <p className="text-xs text-red-600 mt-1">{docsForm.errors.ktp}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold text-slate-700 block">
+                                            Upload SIM A (Foto / PDF)
+                                        </label>
+                                        {booking.documents?.sim_uploaded && booking.documents?.sim_url && (
+                                            <a
+                                                href={booking.documents.sim_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-[11px] font-bold text-teal-600 underline hover:text-teal-800"
+                                            >
+                                                Lihat File ↗
+                                            </a>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        onChange={(e) => docsForm.setData('sim', e.target.files?.[0] ?? null)}
+                                        className="mt-1 text-xs text-slate-600 block w-full file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                                    />
+                                    {docsForm.errors.sim && (
+                                        <p className="text-xs text-red-600 mt-1">{docsForm.errors.sim}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-700 block">No. Telepon Pemesan</label>
+                                    <input
+                                        type="tel"
+                                        placeholder="0812xxxxxxxx"
+                                        className={fieldClassName}
+                                        value={docsForm.data.booker_phone}
+                                        onChange={(e) => docsForm.setData('booker_phone', e.target.value)}
+                                        required
+                                    />
+                                    {docsForm.errors.booker_phone && (
+                                        <p className="text-xs text-red-600 mt-1">{docsForm.errors.booker_phone}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-700 block">Kode OTP</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="000000"
+                                            className={fieldClassName}
+                                            maxLength={6}
+                                            value={docsForm.data.otp_code}
+                                            onChange={(e) => docsForm.setData('otp_code', e.target.value)}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => void sendOtp(docsForm.data.booker_phone)}
+                                            className="mt-1 rounded-xl bg-slate-800 px-3 text-xs font-bold text-white transition hover:bg-slate-700"
+                                        >
+                                            OTP
+                                        </button>
+                                    </div>
+                                    {docsForm.errors.otp_code && (
+                                        <p className="text-xs text-red-600 mt-1">{docsForm.errors.otp_code}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={docsForm.processing}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white shadow-lg shadow-teal-600/30 transition hover:bg-teal-700 disabled:opacity-50"
+                            >
+                                {docsForm.processing ? 'Mengunggah Dokumen...' : 'Unggah Dokumen Verifikasi'}
+                            </button>
+                        </form>
+                    )}
+                </div>
+
                 {/* Deposit Payment Box */}
                 {booking.can_pay_deposit && booking.deposit_proof?.status !== 'pending' && (
                     <div className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-slate-200/80 space-y-4">
                         <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                Pembayaran Deposit ({money(booking.deposit_amount)})
+                                Pembayaran {Number(booking.deposit_amount) > 0 ? `Deposit (${money(booking.deposit_amount)})` : `Sewa (${money(booking.total_amount)})`}
                             </h3>
                             <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[11px] font-bold">
                                 <button
@@ -661,7 +847,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                             <option value="">-- Pilih Rekening Bank Tujuan --</option>
                                             {company_bank_accounts.map((acc) => (
                                                 <option key={acc.id} value={acc.id}>
-                                                    {acc.bank_name ? `${acc.bank_name} - ${acc.name}` : acc.name} ({acc.account_number ?? '—'})
+                                                    {acc.bank_name ? `${acc.bank_name} - ` : ''}{acc.account_number ? `${acc.account_number} ` : ''}(a.n. {acc.account_holder || acc.name})
                                                 </option>
                                             ))}
                                         </select>
@@ -710,7 +896,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                                 )}
                                             </div>
                                             <p className="text-[11px] text-teal-700">
-                                                Silakan transfer tepat sejumlah <b className="text-teal-900">{money(booking.deposit_amount)}</b> lalu unggah bukti transfer di bawah.
+                                                Silakan transfer tepat sejumlah <b className="text-teal-900">{money(Number(booking.deposit_amount) > 0 ? booking.deposit_amount : booking.total_amount)}</b> lalu unggah bukti transfer di bawah.
                                             </p>
                                         </div>
                                     );
@@ -791,7 +977,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                             </svg>
-                                            Unggah Bukti Transfer Manual ({money(booking.deposit_amount)})
+                                            Unggah Bukti Transfer Manual
                                         </>
                                     )}
                                 </button>
@@ -888,8 +1074,8 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 <span>Verifikasi SIM A Penyewa: <b>{booking.documents?.sim_uploaded ? 'Sudah Diunggah' : 'Belum diunggah (Wajib di depot)'}</b></span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className={`h-2 w-2 rounded-full ${Number(booking.deposit_amount) > 0 ? (booking.deposit_received ? 'bg-emerald-500' : 'bg-amber-500') : (payment.balance_due <= 0 ? 'bg-emerald-500' : 'bg-amber-500')}`} />
-                                <span>Status Deposit / Pembayaran: <b>{Number(booking.deposit_amount) > 0 ? (booking.deposit_received ? `Deposit Lunas (${money(booking.deposit_amount)})` : `Deposit Belum Lunas (${money(booking.deposit_amount)})`) : (payment.balance_due <= 0 ? 'Tanpa Deposit - Tagihan Lunas' : `Tanpa Deposit - Tagihan Belum Lunas (${money(payment.balance_due)})`)}</b></span>
+                                <span className={`h-2 w-2 rounded-full ${Number(booking.deposit_amount) > 0 ? (booking.deposit_received ? 'bg-emerald-500' : 'bg-amber-500') : 'bg-slate-400'}`} />
+                                <span>Status Deposit: <b>{Number(booking.deposit_amount) > 0 ? (booking.deposit_received ? `Deposit Lunas (${money(booking.deposit_amount)})` : `Deposit Belum Lunas (${money(booking.deposit_amount)})`) : '-'}</b></span>
                             </div>
                         </div>
 
@@ -916,6 +1102,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                                         </div>
                                     </div>
                                 )}
+                            </div>
                         ) : !booking.pickup_request?.can_request ? (
                             <div className="rounded-xl bg-amber-50 p-3.5 border border-amber-200 text-xs text-amber-900 space-y-1">
                                 <p className="font-bold text-sm">
@@ -1017,90 +1204,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                     </div>
                 )}
 
-                {/* Additional Actions: Documents Upload */}
-                <div className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-slate-200/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Dokumen Verifikasi (KTP & SIM)</h3>
-                        <button
-                            type="button"
-                            onClick={() => setShowDocs(!showDocs)}
-                            className="text-xs font-bold text-teal-600 underline"
-                        >
-                            {showDocs ? 'Sembunyikan' : 'Kelola Dokumen'}
-                        </button>
-                    </div>
 
-                    <div className="flex gap-2 text-xs">
-                        <span className={`rounded-lg px-2.5 py-1 font-semibold ${booking.documents?.ktp_uploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
-                            KTP: {booking.documents?.ktp_uploaded ? 'Sudah Diunggah' : 'Belum'}
-                        </span>
-                        <span className={`rounded-lg px-2.5 py-1 font-semibold ${booking.documents?.sim_uploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
-                            SIM: {booking.documents?.sim_uploaded ? 'Sudah Diunggah' : 'Belum'}
-                        </span>
-                    </div>
-
-                    {showDocs && (
-                        <form onSubmit={uploadDocuments} className="mt-3 pt-3 border-t border-slate-100 space-y-3">
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div>
-                                    <label className="text-xs font-semibold text-slate-700 block">Upload KTP</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*,.pdf"
-                                        onChange={(e) => docsForm.setData('ktp', e.target.files?.[0] ?? null)}
-                                        className="mt-1 text-xs text-slate-600"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold text-slate-700 block">Upload SIM</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*,.pdf"
-                                        onChange={(e) => docsForm.setData('sim', e.target.files?.[0] ?? null)}
-                                        className="mt-1 text-xs text-slate-600"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <input
-                                    type="tel"
-                                    placeholder="No. HP"
-                                    className={fieldClassName}
-                                    value={docsForm.data.booker_phone}
-                                    onChange={(e) => docsForm.setData('booker_phone', e.target.value)}
-                                    required
-                                />
-                                <div className="flex gap-1">
-                                    <input
-                                        type="text"
-                                        placeholder="OTP"
-                                        className={fieldClassName}
-                                        maxLength={6}
-                                        value={docsForm.data.otp_code}
-                                        onChange={(e) => docsForm.setData('otp_code', e.target.value)}
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => void sendOtp(docsForm.data.booker_phone)}
-                                        className="mt-1 rounded-xl bg-slate-800 px-2.5 text-xs font-bold text-white"
-                                    >
-                                        OTP
-                                    </button>
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={docsForm.processing}
-                                className="w-full rounded-xl bg-slate-800 py-2.5 text-xs font-bold text-white transition hover:bg-slate-700"
-                            >
-                                Unggah Dokumen
-                            </button>
-                        </form>
-                    )}
-                </div>
 
                 {/* Additional Actions: Request Extend */}
                 {booking.can_request_extend && (
@@ -1191,7 +1295,7 @@ export default function BookingView({ brand, booking, gateway_available, company
                         </div>
 
                         {showCancel && (
-                            <form onSubmit={cancel} className="mt-3 pt-3 border-t border-slate-100 space-y-3">
+                            <form onSubmit={handleOpenCancelModal} className="mt-3 pt-3 border-t border-slate-100 space-y-3">
                                 <div>
                                     <label className="text-xs font-semibold text-slate-700">Alasan Pembatalan</label>
                                     <input
@@ -1244,6 +1348,72 @@ export default function BookingView({ brand, booking, gateway_available, company
                     </div>
                 )}
             </div>
+
+            {/* Cancel Reservation Confirmation Modal */}
+            <Modal show={showConfirmCancelModal} onClose={() => setShowConfirmCancelModal(false)} maxWidth="md">
+                <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="text-base font-bold text-slate-900">Konfirmasi Pembatalan Reservasi</h3>
+                            <p className="text-xs text-slate-500">Apakah Anda yakin ingin membatalkan sewa kendaraan ini?</p>
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-3.5 text-xs space-y-2 text-slate-700">
+                        <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+                            <span className="text-slate-500">Kode Booking:</span>
+                            <span className="font-mono font-bold text-slate-900">{booking.code}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+                            <span className="text-slate-500">Kendaraan:</span>
+                            <span className="font-semibold text-slate-900">{booking.vehicle?.name || '-'}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+                            <span className="text-slate-500">No. Telepon:</span>
+                            <span className="font-semibold text-slate-900">{cancelForm.data.booker_phone || booking.booker_phone || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Alasan:</span>
+                            <span className="font-medium text-slate-800 text-right max-w-[200px] truncate">{cancelForm.data.cancelled_reason || '-'}</span>
+                        </div>
+                    </div>
+
+                    {booking.cancel?.charge_fee && (
+                        <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-800 space-y-1">
+                            <p className="font-bold">Biaya Pembatalan Dikenakan</p>
+                            <p>Pembatalan ini akan dikenakan biaya denda sebesar <b>{money(booking.cancel.fee_amount)}</b>.</p>
+                        </div>
+                    )}
+
+                    <p className="text-xs text-slate-500 italic">
+                        Catatan: Setelah dikonfirmasi, reservasi akan langsung dibatalkan dan unit kendaraan akan tersedia kembali di sistem.
+                    </p>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button
+                            type="button"
+                            disabled={cancelForm.processing}
+                            onClick={() => setShowConfirmCancelModal(false)}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                            Batal / Kembali
+                        </button>
+                        <button
+                            type="button"
+                            disabled={cancelForm.processing}
+                            onClick={executeCancel}
+                            className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-red-600/30 transition hover:bg-red-700 disabled:opacity-50"
+                        >
+                            {cancelForm.processing ? 'Memproses Pembatalan...' : 'Ya, Batalkan Reservasi'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

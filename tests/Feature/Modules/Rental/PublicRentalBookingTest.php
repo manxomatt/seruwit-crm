@@ -738,6 +738,7 @@ class PublicRentalBookingTest extends TestCase
             'channel' => Rental::CHANNEL_WEB,
             'booker_phone' => '628123456789',
             'public_token' => 'tokenpickup'.str_repeat('a', 24),
+            'deposit_received_at' => now(),
         ]);
 
         $phone = '08123456789';
