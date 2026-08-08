@@ -372,4 +372,46 @@ class PageTest extends TestCase
         $response->assertOk();
         $response->assertSee('Custom Homepage');
     }
+
+    public function test_user_can_copy_own_page(): void
+    {
+        $user = User::factory()->admin()->create();
+        $page = Page::factory()->published()->create([
+            'user_id' => $user->id,
+            'title' => 'Original Page',
+            'slug' => 'original-page',
+            'html' => '<div class="original">Content</div>',
+            'css' => '.original { color: red; }',
+            'is_homepage' => true,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->post("/module/pages/{$page->id}/copy");
+
+        $response->assertRedirect('/module/pages');
+
+        $this->assertDatabaseHas('pages', [
+            'user_id' => $user->id,
+            'title' => 'Original Page (Copy)',
+            'slug' => 'original-page-copy',
+            'html' => '<div class="original">Content</div>',
+            'css' => '.original { color: red; }',
+            'is_published' => false,
+            'is_homepage' => false,
+        ]);
+    }
+
+    public function test_user_cannot_copy_other_users_page(): void
+    {
+        $user = User::factory()->admin()->create();
+        $otherUser = User::factory()->admin()->create();
+        $page = Page::factory()->create(['user_id' => $otherUser->id]);
+
+        $response = $this
+            ->actingAs($user)
+            ->post("/module/pages/{$page->id}/copy");
+
+        $response->assertForbidden();
+    }
 }

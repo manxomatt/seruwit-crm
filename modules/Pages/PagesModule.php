@@ -99,6 +99,7 @@ class PagesModule implements ModuleContract
         Route::patch('/pages/{page}', [PageController::class, 'update'])->middleware('permission:pages,update')->name('pages.update');
         Route::patch('/pages/{page}/save-content', [PageController::class, 'saveContent'])->middleware('permission:pages,update')->name('pages.save-content');
         Route::patch('/pages/{page}/set-homepage', [PageController::class, 'setHomepage'])->middleware('permission:pages,update')->name('pages.set-homepage');
+        Route::post('/pages/{page}/copy', [PageController::class, 'copy'])->middleware('permission:pages,create')->name('pages.copy');
         Route::delete('/pages/{page}', [PageController::class, 'destroy'])->middleware('permission:pages,delete')->name('pages.destroy');
     }
 }

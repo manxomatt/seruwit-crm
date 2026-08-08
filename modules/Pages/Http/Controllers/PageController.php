@@ -150,4 +150,38 @@ class PageController extends Controller
 
         return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', __('pages.messages.homepage_set'));
     }
+
+    /**
+     * Duplicate (copy) an existing page.
+     */
+    public function copy(Page $page): RedirectResponse
+    {
+        if ($page->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $baseTitle = $page->title;
+        $title = $baseTitle.' (Copy)';
+        $baseSlug = $page->slug.'-copy';
+        $slug = $baseSlug;
+
+        $count = 1;
+        while (Page::where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.$count;
+            $title = $baseTitle.' (Copy '.$count.')';
+            $count++;
+        }
+
+        Auth::user()->pages()->create([
+            'title' => $title,
+            'slug' => $slug,
+            'html' => $page->html,
+            'css' => $page->css,
+            'gjs_data' => $page->gjs_data,
+            'is_published' => false,
+            'is_homepage' => false,
+        ]);
+
+        return redirect()->route($this->getRoutePrefix().'.pages.index')->with('success', __('pages.messages.copied'));
+    }
 }

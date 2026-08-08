@@ -21,6 +21,7 @@ return [
         ],
         'homepage' => 'Homepage',
         'preview' => 'Preview',
+        'copy' => 'Copy Page',
         'set_homepage' => 'Set as Homepage',
         'set_homepage_confirm' => 'Set this page as the homepage? This will replace the current homepage.',
         'delete_title' => 'Delete Page',
@@ -66,5 +67,6 @@ return [
         'updated' => 'Page updated successfully.',
         'deleted' => 'Page deleted successfully.',
         'homepage_set' => 'Homepage set successfully.',
+        'copied' => 'Page copied successfully.',
     ],
 ];

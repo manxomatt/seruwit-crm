@@ -21,6 +21,7 @@ return [
         ],
         'homepage' => 'Homepage',
         'preview' => 'Pratinjau',
+        'copy' => 'Salin Halaman',
         'set_homepage' => 'Jadikan Homepage',
         'set_homepage_confirm' => 'Jadikan halaman ini sebagai homepage? Homepage saat ini akan diganti.',
         'delete_title' => 'Hapus Halaman',
@@ -66,5 +67,6 @@ return [
         'updated' => 'Halaman berhasil diperbarui.',
         'deleted' => 'Halaman berhasil dihapus.',
         'homepage_set' => 'Homepage berhasil diatur.',
+        'copied' => 'Halaman berhasil disalin.',
     ],
 ];
