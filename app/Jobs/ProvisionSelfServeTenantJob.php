@@ -59,6 +59,11 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                 $installer->installPack($tenant, $packKey, withDemoSeeders: false);
             }
 
+            $tenant->run(function () use ($session): void {
+                $vertical = $session->verticals[0] ?? 'rental';
+                app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical);
+            });
+
             $session->update([
                 'status' => OnboardingSession::STATUS_READY,
                 'error_message' => null,

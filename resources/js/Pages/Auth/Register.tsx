@@ -16,6 +16,7 @@ export default function Register({ settings }: Props) {
         email: string;
         password: string;
         password_confirmation: string;
+        terms: boolean;
     }
 
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
@@ -23,6 +24,7 @@ export default function Register({ settings }: Props) {
         email: '',
         password: '',
         password_confirmation: '',
+        terms: false,
     });
 
     const submit = (e: React.FormEvent) => {
@@ -207,6 +209,41 @@ export default function Register({ settings }: Props) {
                                         />
                                     </div>
                                     <InputError message={errors.password_confirmation} className="mt-2" />
+                                </div>
+
+                                <div className="pt-2">
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input
+                                            id="terms"
+                                            type="checkbox"
+                                            name="terms"
+                                            checked={data.terms}
+                                            required
+                                            onChange={(e) => setData('terms', e.target.checked)}
+                                            className="mt-1 h-4 w-4 rounded border-white/20 bg-white/10 text-cyan-500 focus:ring-cyan-500/50 focus:ring-offset-slate-900"
+                                        />
+                                        <span className="text-sm text-white/80 leading-relaxed">
+                                            Saya menyetujui{' '}
+                                            <a
+                                                href="/terms"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-medium text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+                                            >
+                                                Syarat & Ketentuan
+                                            </a>{' '}
+                                            dan{' '}
+                                            <a
+                                                href="/privacy"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-medium text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+                                            >
+                                                Kebijakan Privasi
+                                            </a>
+                                        </span>
+                                    </label>
+                                    <InputError message={errors.terms} className="mt-2" />
                                 </div>
 
                                 <button

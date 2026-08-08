@@ -47,6 +47,8 @@ class CreateTenantAction
             }
 
             $user->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
+
+            app(\Database\Seeders\TenantDefaultPageSeeder::class)->run('rental');
         });
 
         return $tenant;

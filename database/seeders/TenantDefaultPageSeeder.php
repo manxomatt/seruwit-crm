@@ -17,7 +17,7 @@ class TenantDefaultPageSeeder extends Seeder
      */
     public function run(?string $vertical = 'rental'): void
     {
-        if (! class_exists(Page::class)) {
+        if (! class_exists(Page::class) || ! \Illuminate\Support\Facades\Schema::hasTable('pages')) {
             return;
         }
 

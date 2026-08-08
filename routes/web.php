@@ -66,6 +66,23 @@ Route::domain($centralDomain)
             });
         });
 
+        // Public legal pages (Terms & Conditions, Privacy Policy)
+        Route::get('/terms', function () {
+            $settings = \App\Models\Setting::getPublic()
+                ->mapWithKeys(fn (\App\Models\Setting $s) => [$s->key => $s->value])
+                ->toArray();
+
+            return \Inertia\Inertia::render('Legal/Terms', ['settings' => $settings]);
+        })->name('terms');
+
+        Route::get('/privacy', function () {
+            $settings = \App\Models\Setting::getPublic()
+                ->mapWithKeys(fn (\App\Models\Setting $s) => [$s->key => $s->value])
+                ->toArray();
+
+            return \Inertia\Inertia::render('Legal/Privacy', ['settings' => $settings]);
+        })->name('privacy');
+
         // Invitation acceptance (guest-accessible; account may not exist yet)
         Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
         Route::post('/invitations/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
