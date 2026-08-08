@@ -154,10 +154,28 @@ export default function Index({ pages }: Props): JSX.Element {
         });
     };
 
-    const setAsHomepage = (page: Page) => {
-        if (confirm(t('pages.index.set_homepage_confirm'))) {
-            router.patch(prefixedRoute('pages.set-homepage', page.id));
-        }
+    const [showHomepageModal, setShowHomepageModal] = useState(false);
+    const [pageToSetHomepage, setPageToSetHomepage] = useState<Page | null>(null);
+    const [settingHomepage, setSettingHomepage] = useState(false);
+
+    const openHomepageModal = (page: Page) => {
+        setPageToSetHomepage(page);
+        setShowHomepageModal(true);
+    };
+
+    const closeHomepageModal = () => {
+        setShowHomepageModal(false);
+        setPageToSetHomepage(null);
+    };
+
+    const confirmSetHomepage = () => {
+        if (!pageToSetHomepage) return;
+
+        setSettingHomepage(true);
+        router.patch(prefixedRoute('pages.set-homepage', pageToSetHomepage.id), {
+            onSuccess: () => closeHomepageModal(),
+            onFinish: () => setSettingHomepage(false),
+        });
     };
 
     const duplicatePage = (page: Page) => {
@@ -292,7 +310,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                             </button>
                                             {!page.is_homepage && (
                                                 <button
-                                                    onClick={() => setAsHomepage(page)}
+                                                    onClick={() => openHomepageModal(page)}
                                                     className="text-blue-600 hover:text-blue-900"
                                                     title={t('pages.index.set_homepage')}
                                                 >
@@ -363,6 +381,43 @@ export default function Index({ pages }: Props): JSX.Element {
                         </PrimaryButton>
                     </div>
                 </form>
+            </Modal>
+
+            <Modal show={showHomepageModal} onClose={closeHomepageModal} maxWidth="md">
+                <div className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                            <HomeIcon />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">
+                                {t('pages.index.set_homepage_title')}
+                            </h2>
+                            <p className="text-sm text-gray-500">
+                                {t('pages.index.set_homepage')}
+                            </p>
+                        </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                        {pageToSetHomepage
+                            ? t('pages.index.set_homepage_confirm', { title: pageToSetHomepage.title })
+                            : t('pages.index.set_homepage_confirm_generic')}
+                    </p>
+
+                    <div className="flex justify-end gap-3">
+                        <SecondaryButton onClick={closeHomepageModal} type="button">
+                            {t('common.cancel')}
+                        </SecondaryButton>
+                        <PrimaryButton
+                            onClick={confirmSetHomepage}
+                            disabled={settingHomepage}
+                            className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                        >
+                            {settingHomepage ? t('common.processing') : t('pages.index.set_homepage')}
+                        </PrimaryButton>
+                    </div>
+                </div>
             </Modal>
 
             <ConfirmDeleteDialog
