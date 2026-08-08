@@ -22,6 +22,7 @@ class TenantDatabaseSeeder extends Seeder
             RoleSeeder::class,
             MenuSeeder::class,
             SettingSeeder::class,
+            TenantDefaultPageSeeder::class,
         ]);
     }
 }

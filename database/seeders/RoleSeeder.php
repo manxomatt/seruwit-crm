@@ -60,15 +60,18 @@ class RoleSeeder extends Seeder
 
         // Reseller: can manage their own tenant portfolio from the central domain.
         // No module-level permissions — access is gated by the manage-tenants gate.
-        Role::query()->firstOrCreate(
-            ['slug' => 'reseller'],
-            [
-                'name' => 'Reseller',
-                'description' => 'Can manage tenants they own on the central control plane',
-                'is_system' => true,
-                'dashboard_path' => '/module/tenants',
-            ]
-        );
+        // This role exists exclusively on central domain control plane, not inside tenant schemas.
+        if (! tenancy()->initialized) {
+            Role::query()->firstOrCreate(
+                ['slug' => 'reseller'],
+                [
+                    'name' => 'Reseller',
+                    'description' => 'Can manage tenants they own on the central control plane',
+                    'is_system' => true,
+                    'dashboard_path' => '/module/tenants',
+                ]
+            );
+        }
 
         // Warehouse head: full site ops, restricted to exactly one assigned warehouse/store.
         Role::query()->firstOrCreate(
