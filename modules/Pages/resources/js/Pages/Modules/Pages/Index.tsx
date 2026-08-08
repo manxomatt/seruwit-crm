@@ -2,8 +2,14 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
 
 interface Page {
     id: number;
@@ -56,6 +62,12 @@ const CopyIcon = () => (
     </svg>
 );
 
+const RenameIcon = () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+    </svg>
+);
+
 const DocumentIcon = () => (
     <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -69,6 +81,52 @@ export default function Index({ pages }: Props): JSX.Element {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<Page | null>(null);
     const [processing, setProcessing] = useState(false);
+
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const [pageToRename, setPageToRename] = useState<Page | null>(null);
+
+    const renameForm = useForm({
+        title: '',
+        slug: '',
+    });
+
+    const openRenameModal = (page: Page) => {
+        setPageToRename(page);
+        renameForm.setData({
+            title: page.title,
+            slug: page.slug,
+        });
+        renameForm.clearErrors();
+        setShowRenameModal(true);
+    };
+
+    const closeRenameModal = () => {
+        setShowRenameModal(false);
+        setPageToRename(null);
+        renameForm.reset();
+        renameForm.clearErrors();
+    };
+
+    const handleRenameTitleChange = (val: string) => {
+        const generatedSlug = val
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+
+        renameForm.setData({
+            title: val,
+            slug: generatedSlug,
+        });
+    };
+
+    const submitRename: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (!pageToRename) return;
+
+        renameForm.patch(prefixedRoute('pages.update', pageToRename.id), {
+            onSuccess: () => closeRenameModal(),
+        });
+    };
 
     const openDeleteDialog = (page: Page) => {
         setPageToDelete(page);
@@ -219,6 +277,13 @@ export default function Index({ pages }: Props): JSX.Element {
                                                 <PencilIcon />
                                             </Link>
                                             <button
+                                                onClick={() => openRenameModal(page)}
+                                                className="text-amber-600 hover:text-amber-900"
+                                                title={t('pages.index.rename')}
+                                            >
+                                                <RenameIcon />
+                                            </button>
+                                            <button
                                                 onClick={() => duplicatePage(page)}
                                                 className="text-emerald-600 hover:text-emerald-900"
                                                 title={t('pages.index.copy')}
@@ -249,6 +314,56 @@ export default function Index({ pages }: Props): JSX.Element {
                     </table>
                 </div>
             )}
+
+            <Modal show={showRenameModal} onClose={closeRenameModal} maxWidth="md">
+                <form onSubmit={submitRename} className="p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">
+                        {t('pages.rename.title')}
+                    </h2>
+
+                    <div className="space-y-4">
+                        <div>
+                            <InputLabel htmlFor="rename-title" value={t('pages.rename.page_title')} />
+                            <TextInput
+                                id="rename-title"
+                                type="text"
+                                value={renameForm.data.title}
+                                className="mt-1 block w-full"
+                                autoFocus
+                                onChange={(e) => handleRenameTitleChange(e.target.value)}
+                            />
+                            <InputError message={renameForm.errors.title} className="mt-2" />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="rename-slug" value={t('pages.rename.slug')} />
+                            <div className="mt-1 flex rounded-md shadow-sm">
+                                <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
+                                    /p/
+                                </span>
+                                <TextInput
+                                    id="rename-slug"
+                                    type="text"
+                                    value={renameForm.data.slug}
+                                    className="block w-full rounded-l-none"
+                                    onChange={(e) => renameForm.setData('slug', e.target.value)}
+                                />
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">{t('pages.rename.slug_hint')}</p>
+                            <InputError message={renameForm.errors.slug} className="mt-2" />
+                        </div>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton onClick={closeRenameModal} type="button">
+                            {t('common.cancel')}
+                        </SecondaryButton>
+                        <PrimaryButton disabled={renameForm.processing} type="submit">
+                            {t('pages.rename.submit')}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
 
             <ConfirmDeleteDialog
                 show={showDeleteDialog}

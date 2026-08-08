@@ -22,11 +22,20 @@ return [
         'homepage' => 'Homepage',
         'preview' => 'Preview',
         'copy' => 'Copy Page',
+        'rename' => 'Rename',
         'set_homepage' => 'Set as Homepage',
         'set_homepage_confirm' => 'Set this page as the homepage? This will replace the current homepage.',
         'delete_title' => 'Delete Page',
         'delete_confirm' => 'Are you sure you want to delete the page ":title"? This cannot be undone.',
         'delete_confirm_generic' => 'Are you sure you want to delete this page?',
+    ],
+
+    'rename' => [
+        'title' => 'Rename Page',
+        'page_title' => 'Page Title',
+        'slug' => 'URL Slug',
+        'slug_hint' => 'The URL path for this page.',
+        'submit' => 'Save Changes',
     ],
 
     'create' => [

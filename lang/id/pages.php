@@ -22,11 +22,20 @@ return [
         'homepage' => 'Homepage',
         'preview' => 'Pratinjau',
         'copy' => 'Salin Halaman',
+        'rename' => 'Ubah Nama',
         'set_homepage' => 'Jadikan Homepage',
         'set_homepage_confirm' => 'Jadikan halaman ini sebagai homepage? Homepage saat ini akan diganti.',
         'delete_title' => 'Hapus Halaman',
         'delete_confirm' => 'Yakin ingin menghapus halaman ":title"? Tindakan ini tidak dapat dibatalkan.',
         'delete_confirm_generic' => 'Yakin ingin menghapus halaman ini?',
+    ],
+
+    'rename' => [
+        'title' => 'Ubah Nama Halaman',
+        'page_title' => 'Judul Halaman',
+        'slug' => 'URL Slug',
+        'slug_hint' => 'Path URL halaman ini.',
+        'submit' => 'Simpan Perubahan',
     ],
 
     'create' => [
