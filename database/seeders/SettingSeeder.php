@@ -389,7 +389,7 @@ class SettingSeeder extends Seeder
             [
                 'key' => 'ecommerce.tax_enabled',
                 'group' => 'ecommerce',
-                'value' => '1',
+                'value' => '0',
                 'type' => 'boolean',
                 'label' => 'Enable Tax',
                 'description' => 'Enable tax calculation on orders.',

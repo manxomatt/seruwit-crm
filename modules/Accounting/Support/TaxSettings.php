@@ -25,7 +25,7 @@ class TaxSettings
     public static function snapshot(?string $preferCode = null, ?int $taxCodeId = null, ?string $channel = null): array
     {
         // Legacy force-off still honored during gradual migration from ecommerce.tax_*.
-        if (Setting::getValue('ecommerce.tax_enabled', '1') !== '1') {
+        if (Setting::getValue('ecommerce.tax_enabled', '0') !== '1') {
             return [
                 'enabled' => false,
                 'rate' => 0.0,
@@ -84,7 +84,7 @@ class TaxSettings
             }
         }
 
-        $enabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+        $enabled = Setting::getValue('ecommerce.tax_enabled', '0') === '1';
         $rate = (float) Setting::getValue('ecommerce.tax_rate', '11');
 
         return [

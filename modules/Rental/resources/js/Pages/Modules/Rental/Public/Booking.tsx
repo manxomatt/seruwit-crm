@@ -888,8 +888,8 @@ export default function BookingView({ brand, booking, gateway_available, company
                                 <span>Verifikasi SIM A Penyewa: <b>{booking.documents?.sim_uploaded ? 'Sudah Diunggah' : 'Belum diunggah (Wajib di depot)'}</b></span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                <span>Status Pembayaran Deposit: <b>Lunas / Terverifikasi ({money(booking.deposit_amount)})</b></span>
+                                <span className={`h-2 w-2 rounded-full ${Number(booking.deposit_amount) > 0 ? (booking.deposit_received ? 'bg-emerald-500' : 'bg-amber-500') : (payment.balance_due <= 0 ? 'bg-emerald-500' : 'bg-amber-500')}`} />
+                                <span>Status Deposit / Pembayaran: <b>{Number(booking.deposit_amount) > 0 ? (booking.deposit_received ? `Deposit Lunas (${money(booking.deposit_amount)})` : `Deposit Belum Lunas (${money(booking.deposit_amount)})`) : (payment.balance_due <= 0 ? 'Tanpa Deposit - Tagihan Lunas' : `Tanpa Deposit - Tagihan Belum Lunas (${money(payment.balance_due)})`)}</b></span>
                             </div>
                         </div>
 
@@ -916,6 +916,18 @@ export default function BookingView({ brand, booking, gateway_available, company
                                         </div>
                                     </div>
                                 )}
+                        ) : !booking.pickup_request?.can_request ? (
+                            <div className="rounded-xl bg-amber-50 p-3.5 border border-amber-200 text-xs text-amber-900 space-y-1">
+                                <p className="font-bold text-sm">
+                                    {Number(booking.deposit_amount) > 0
+                                        ? 'Penahanan Deposit Belum Selesai'
+                                        : 'Pelunasan Tagihan Pembayaran Di Muka Belum Selesai'}
+                                </p>
+                                <p>
+                                    {Number(booking.deposit_amount) > 0
+                                        ? 'Silakan selesaikan pembayaran deposit terlebih dahulu sebelum mengajukan permohonan pickup.'
+                                        : 'Kendaraan ini disewa tanpa deposit. Silakan selesaikan pelunasan tagihan pembayaran sewa di atas sebelum mengajukan permohonan pickup.'}
+                                </p>
                             </div>
                         ) : (
                             <form onSubmit={submitPickupRequest} className="space-y-4 pt-1" noValidate>

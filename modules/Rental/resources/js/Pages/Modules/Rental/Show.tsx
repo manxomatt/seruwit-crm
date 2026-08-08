@@ -360,9 +360,13 @@ export default function Show({
     const is = (s: string) => rental.status === s;
     const isLiveTracking = trackingEnabled && is('active');
     const depositHeld = rental.deposit_status !== 'settled' && Number(rental.deposit_amount) > 0;
+    const upfrontPaymentPending = is('confirmed') && Number(rental.deposit_amount) <= 0 && (payment.balance_due > 0 || payment.status === 'unpaid' || payment.status === 'partial' || payment.status === 'draft');
     const canReceiveDeposit = depositHeld && !rental.deposit_received_at && (is('pending') || is('pending_reserved') || is('confirmed') || is('active') || is('returned'));
     const canSettleDeposit = depositHeld && !!rental.deposit_received_at && (is('returned') || is('completed'));
-    const depositBlocksCheckout = is('confirmed') && depositHeld && !rental.deposit_received_at;
+    const depositBlocksCheckout = is('confirmed') && ((depositHeld && !rental.deposit_received_at) || upfrontPaymentPending);
+    const checkoutBlockedReason = upfrontPaymentPending
+        ? 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.'
+        : t('rental.errors.checkout_deposit_required');
     const canPrintContract = is('confirmed') || is('active') || is('returned') || is('completed');
     const canConfirm = is('draft') || is('pending') || is('pending_reserved');
     const canCancel = is('draft') || is('pending') || is('pending_reserved') || is('confirmed');
@@ -583,7 +587,7 @@ export default function Show({
                                         className={`shrink-0${depositBlocksCheckout ? ' opacity-50' : ''}`}
                                         onClick={() => setModal('checkout')}
                                         disabled={depositBlocksCheckout}
-                                        title={depositBlocksCheckout ? t('rental.errors.checkout_deposit_required') : undefined}
+                                        title={depositBlocksCheckout ? checkoutBlockedReason : undefined}
                                     >
                                         {t('rental.actions.checkout')}
                                     </PrimaryButton>
@@ -702,13 +706,19 @@ export default function Show({
 
                 {depositBlocksCheckout && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
-                        <p className="font-medium">{t('rental.errors.checkout_deposit_required')}</p>
-                        <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
-                            {t('rental.modals.confirm_deposit_body', {
-                                code: rental.code,
-                                amount: formatMoney(rental.deposit_amount),
-                            })}
-                        </p>
+                        <p className="font-medium">{checkoutBlockedReason}</p>
+                        {Number(rental.deposit_amount) > 0 ? (
+                            <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
+                                {t('rental.modals.confirm_deposit_body', {
+                                    code: rental.code,
+                                    amount: formatMoney(rental.deposit_amount),
+                                })}
+                            </p>
+                        ) : (
+                            <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
+                                Selesaikan pelunasan tagihan pembayaran di muka di bawah ini agar proses checkout dapat dilakukan.
+                            </p>
+                        )}
                     </div>
                 )}
 

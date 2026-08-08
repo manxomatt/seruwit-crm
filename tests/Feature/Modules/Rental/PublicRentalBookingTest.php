@@ -763,4 +763,55 @@ class PublicRentalBookingTest extends TestCase
         $this->assertSame('Tiba di depot pukul 10:00', $rental->pickup_notes);
         $this->assertNotNull($rental->pickup_customer_signature_path);
     }
+
+    public function test_customer_cannot_submit_pickup_request_when_no_deposit_and_upfront_payment_pending(): void
+    {
+        Storage::fake('public');
+
+        $rental = Rental::factory()->create([
+            'status' => Rental::STATUS_CONFIRMED,
+            'channel' => Rental::CHANNEL_WEB,
+            'booker_phone' => '628123456789',
+            'public_token' => 'tokennodeposit'.str_repeat('a', 21),
+            'deposit_amount' => 0,
+            'base_amount' => 500_000,
+        ]);
+
+        $charge = RentalCharge::create([
+            'rental_id' => $rental->id,
+            'kind' => RentalCharge::KIND_BASE,
+            'amount' => 500_000,
+            'description' => 'Base rental charge',
+        ]);
+
+        Invoice::create([
+            'code' => Invoice::nextCode(),
+            'partner_id' => $rental->partner_id,
+            'status' => Invoice::STATUS_ISSUED,
+            'issue_date' => now()->toDateString(),
+            'due_date' => now()->toDateString(),
+            'tax_enabled' => false,
+            'tax_rate' => 0,
+            'subtotal' => 500_000,
+            'tax_amount' => 0,
+            'total' => 500_000,
+            'amount_paid' => 0,
+        ]);
+
+        $phone = '08123456789';
+        $otp = app(PassengerOtpService::class)->send($phone);
+        $fakeSignature = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+        $this->from(route('book.rental.booking.show', $rental->public_token))
+            ->post(route('book.rental.booking.request_pickup', $rental->public_token), [
+                'booker_phone' => $phone,
+                'otp_code' => $otp,
+                'terms_agreed' => true,
+                'customer_signature' => $fakeSignature,
+            ])
+            ->assertRedirect(route('book.rental.booking.show', $rental->public_token))
+            ->assertSessionHas('error');
+
+        $this->assertNull($rental->fresh()->pickup_requested_at);
+    }
 }

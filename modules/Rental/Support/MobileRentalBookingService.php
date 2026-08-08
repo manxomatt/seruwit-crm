@@ -76,7 +76,11 @@ class MobileRentalBookingService
         }
 
         $ratePerPeriod = $rate ? (float) $rate->rate_per_period : null;
-        $deposit = $rate ? (float) ($rate->deposit_amount ?? 0) : null;
+        $withDeposit = filter_var($input['with_deposit'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $deposit = ($rate && $withDeposit) ? (float) ($rate->deposit_amount ?? 0) : 0.0;
+        if (array_key_exists('deposit_amount', $input) && $input['deposit_amount'] !== null) {
+            $deposit = (float) $input['deposit_amount'];
+        }
         $base = $ratePerPeriod !== null ? round($ratePerPeriod * $periods, 2) : null;
         $oneWay = isset($hydrated['one_way_fee_amount']) ? (float) $hydrated['one_way_fee_amount'] : null;
         $total = $base !== null
@@ -159,7 +163,7 @@ class MobileRentalBookingService
                 'km_limit_per_period' => $rate->km_limit_per_period,
                 'excess_km_rate' => $rate->excess_km_rate,
                 'late_fee_per_day' => $rate->late_fee_per_day,
-                'deposit_amount' => (float) ($rate->deposit_amount ?? 0),
+                'deposit_amount' => (float) ($quote['deposit_amount'] ?? 0),
                 'deposit_status' => Rental::DEPOSIT_HELD,
                 'total_periods' => $periods,
                 'base_amount' => $baseAmount,

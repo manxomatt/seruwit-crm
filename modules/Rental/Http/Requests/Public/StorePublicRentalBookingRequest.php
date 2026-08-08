@@ -31,6 +31,8 @@ class StorePublicRentalBookingRequest extends FormRequest
             'pickup_fleet_base_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
             'return_fleet_base_id' => app(\Modules\Rental\Support\RentalLocationHydrator::class)->depotIdRules(),
             'insurance_package_id' => ['nullable', 'integer', 'exists:rental_insurance_packages,id'],
+            'with_deposit' => ['nullable', 'boolean'],
+            'deposit_amount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'idempotency_key' => ['nullable', 'uuid'],
         ];

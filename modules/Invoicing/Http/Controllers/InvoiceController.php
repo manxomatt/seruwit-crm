@@ -87,7 +87,7 @@ class InvoiceController extends Controller
                 \Modules\Accounting\Support\TaxChannels::INVOICING_MANUAL,
             );
         } else {
-            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '0') === '1';
             $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
             $taxAttrs = [
                 'tax_enabled' => $taxEnabled,

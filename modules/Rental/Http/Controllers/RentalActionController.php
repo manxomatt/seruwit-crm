@@ -113,6 +113,15 @@ class RentalActionController extends Controller
             ]);
         }
 
+        if ((float) $rental->deposit_amount <= 0) {
+            $paymentSummary = $this->invoices->paymentSummary($rental);
+            if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Pelunasan tagihan pembayaran di muka harus diselesaikan sebelum checkout kendaraan.',
+                ]);
+            }
+        }
+
         $hasCustomerSignature = filled($rental->pickup_customer_signature_path) || filled($rental->checkout_signature_path);
 
         $request->validate([

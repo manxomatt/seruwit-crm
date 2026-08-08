@@ -94,7 +94,7 @@ class PromoAwardSettlementService
                 \Modules\Accounting\Support\TaxChannels::PROMOTIONS_SETTLEMENT,
             );
         } else {
-            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '1') === '1';
+            $taxEnabled = Setting::getValue('ecommerce.tax_enabled', '0') === '1';
             $taxRate = (float) Setting::getValue('ecommerce.tax_rate', '11');
         }
         $amount = -1 * round((float) $award->amount, 2);

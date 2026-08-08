@@ -559,6 +559,64 @@ class RentalCrudTest extends TestCase
         $this->assertSame(Rental::STATUS_CONFIRMED, $rental->fresh()->status);
     }
 
+    public function test_checkout_requires_upfront_payment_when_no_deposit(): void
+    {
+        $rental = Rental::factory()->confirmed()->create([
+            'deposit_amount' => 0,
+            'deposit_received_at' => null,
+            'deposit_payment_method' => null,
+            'base_amount' => 500_000,
+        ]);
+
+        $charge = RentalCharge::create([
+            'rental_id' => $rental->id,
+            'kind' => RentalCharge::KIND_BASE,
+            'amount' => 500_000,
+            'description' => 'Base rental charge',
+        ]);
+
+        $invoice = \Modules\Invoicing\Models\Invoice::create([
+            'code' => \Modules\Invoicing\Models\Invoice::nextCode(),
+            'partner_id' => $rental->partner_id,
+            'status' => \Modules\Invoicing\Models\Invoice::STATUS_ISSUED,
+            'issue_date' => now()->toDateString(),
+            'due_date' => now()->toDateString(),
+            'tax_enabled' => false,
+            'tax_rate' => 0,
+            'subtotal' => 500_000,
+            'tax_amount' => 0,
+            'total' => 500_000,
+            'amount_paid' => 0,
+        ]);
+
+        \Modules\Invoicing\Models\InvoiceLine::create([
+            'invoice_id' => $invoice->id,
+            'description' => $charge->description,
+            'amount' => $charge->amount,
+            'source_type' => $charge->getMorphClass(),
+            'source_id' => $charge->id,
+        ]);
+
+        // 1. Unpaid -> checkout blocked
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.checkout', $rental), $this->rentalCheckoutPayload())
+            ->assertSessionHasErrors('payment');
+
+        $this->assertSame(Rental::STATUS_CONFIRMED, $rental->fresh()->status);
+
+        // 2. Mark invoice paid -> checkout allowed
+        $invoice->update([
+            'status' => \Modules\Invoicing\Models\Invoice::STATUS_PAID,
+            'amount_paid' => 500_000,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.checkout', $rental), $this->rentalCheckoutPayload())
+            ->assertRedirect();
+
+        $this->assertSame(Rental::STATUS_ACTIVE, $rental->fresh()->status);
+    }
+
     public function test_return_transitions_active_to_returned_with_excess_km(): void
     {
         $rental = Rental::factory()->active()->create([

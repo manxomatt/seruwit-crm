@@ -82,7 +82,7 @@ class TerminalController extends Controller
                 }
 
                 return [
-                    'enabled' => Setting::getValue('ecommerce.tax_enabled', '1') === '1',
+                    'enabled' => Setting::getValue('ecommerce.tax_enabled', '0') === '1',
                     'rate' => (float) Setting::getValue('ecommerce.tax_rate', '11'),
                     'inclusive' => true,
                 ];

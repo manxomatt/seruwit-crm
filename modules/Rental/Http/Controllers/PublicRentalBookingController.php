@@ -498,6 +498,17 @@ class PublicRentalBookingController extends Controller
             'Permohonan pickup hanya dapat dilakukan untuk reservasi yang sudah dikonfirmasi.'
         );
 
+        if ((float) $rental->deposit_amount > 0 && ! $rental->isDepositReceived()) {
+            return back()->with('error', 'Penahanan deposit belum diselesaikan. Silakan lunasi deposit sebelum melakukan permohonan pickup.');
+        }
+
+        if ((float) $rental->deposit_amount <= 0) {
+            $paymentSummary = app(RentalInvoiceService::class)->paymentSummary($rental);
+            if ($paymentSummary['balance_due'] > 0 || in_array($paymentSummary['status'], ['unpaid', 'partial', 'draft'], true)) {
+                return back()->with('error', 'Pelunasan tagihan pembayaran di muka harus diselesaikan terlebih dahulu sebelum melakukan pickup kendaraan.');
+            }
+        }
+
         $data = $request->validate([
             'booker_phone' => ['required', 'string', 'max:32'],
             'otp_code' => ['required', 'string', 'size:6'],
@@ -780,7 +791,7 @@ class PublicRentalBookingController extends Controller
                 'customer_signature_url' => app(RentalPassengerDocMedia::class)->publicUrl($rental->pickup_customer_signature_path),
                 'terms_agreed' => (bool) $rental->pickup_terms_agreed,
                 'notes' => $rental->pickup_notes,
-                'can_request' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at),
+                'can_request' => $rental->status === Rental::STATUS_CONFIRMED && empty($rental->pickup_requested_at) && $upfrontPaid,
             ],
         ];
     }

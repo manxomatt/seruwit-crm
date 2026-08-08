@@ -194,6 +194,7 @@ function RateForm({
                         onChange={(value) => form.setData('deposit_amount', value)}
                         className="mt-1 w-full"
                     />
+                    <p className="mt-1 text-xs text-gray-500">Set ke Rp 0 jika tarif ini tanpa deposit.</p>
                 </div>
                 <div>
                     <InputLabel htmlFor="vehicle_id" value={labels.specificVehicle} />
@@ -520,7 +521,17 @@ export default function RatesIndex({ rates, vehicles, rentalClasses }: Props): J
                                 <td className="px-4 py-3 tabular-nums text-gray-600">
                                     {rate.km_limit_per_period ? t('rental.rates.km', { km: rate.km_limit_per_period }) : '—'}
                                 </td>
-                                <td className="px-4 py-3 tabular-nums text-gray-600">{formatMoney(rate.deposit_amount)}</td>
+                                <td className="px-4 py-3 tabular-nums text-gray-600">
+                                    {Number(rate.deposit_amount) > 0 ? (
+                                        <span className="inline-flex items-center rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
+                                            {formatMoney(rate.deposit_amount)}
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                            Tanpa Deposit
+                                        </span>
+                                    )}
+                                </td>
                                 <td className="px-4 py-3">
                                     <span
                                         className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
