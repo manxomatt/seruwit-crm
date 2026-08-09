@@ -8,6 +8,7 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
@@ -81,6 +82,22 @@ const DocumentIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
     </svg>
 );
+
+const EllipsisVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+        />
+    </svg>
+);
+
+const menuItemClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+
+const menuItemDangerClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
 
 export default function Index({ pages }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -287,52 +304,93 @@ export default function Index({ pages }: Props): JSX.Element {
                                         {new Date(page.updated_at).toLocaleDateString(localeTag)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <Link
-                                                href={prefixedRoute('pages.show', page.id)}
-                                                className="text-gray-600 hover:text-gray-900"
-                                                title={t('pages.index.preview')}
+                                        <Menu as="div" className="relative inline-block text-left">
+                                            <MenuButton
+                                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                                                title={t('common.actions')}
+                                                aria-label={t('common.actions')}
                                             >
-                                                <EyeIcon />
-                                            </Link>
-                                            <Link
-                                                href={prefixedRoute('pages.edit', page.id)}
-                                                className="text-indigo-600 hover:text-indigo-900"
-                                                title={t('pages.index.open_editor')}
+                                                <EllipsisVerticalIcon />
+                                            </MenuButton>
+
+                                            <MenuItems
+                                                transition
+                                                anchor="bottom end"
+                                                className="z-50 w-56 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
                                             >
-                                                <EditorIcon />
-                                            </Link>
-                                            <button
-                                                onClick={() => openRenameModal(page)}
-                                                className="text-amber-600 hover:text-amber-900"
-                                                title={t('pages.index.rename')}
-                                            >
-                                                <RenameIcon />
-                                            </button>
-                                            <button
-                                                onClick={() => duplicatePage(page)}
-                                                className="text-emerald-600 hover:text-emerald-900"
-                                                title={t('pages.index.copy')}
-                                            >
-                                                <CopyIcon />
-                                            </button>
-                                            {!page.is_homepage && (
-                                                <button
-                                                    onClick={() => openHomepageModal(page)}
-                                                    className="text-blue-600 hover:text-blue-900"
-                                                    title={t('pages.index.set_homepage')}
-                                                >
-                                                    <HomeIcon />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => openDeleteDialog(page)}
-                                                className="text-red-600 hover:text-red-900"
-                                                title={t('common.delete')}
-                                            >
-                                                <TrashIcon />
-                                            </button>
-                                        </div>
+                                                <MenuItem>
+                                                    <Link
+                                                        href={prefixedRoute('pages.show', page.id)}
+                                                        className={menuItemClassName}
+                                                    >
+                                                        <span className="text-gray-500">
+                                                            <EyeIcon />
+                                                        </span>
+                                                        {t('pages.index.preview')}
+                                                    </Link>
+                                                </MenuItem>
+                                                <MenuItem>
+                                                    <Link
+                                                        href={prefixedRoute('pages.edit', page.id)}
+                                                        className={menuItemClassName}
+                                                    >
+                                                        <span className="text-indigo-600">
+                                                            <EditorIcon />
+                                                        </span>
+                                                        {t('pages.index.open_editor')}
+                                                    </Link>
+                                                </MenuItem>
+                                                <MenuItem>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openRenameModal(page)}
+                                                        className={menuItemClassName}
+                                                    >
+                                                        <span className="text-amber-600">
+                                                            <RenameIcon />
+                                                        </span>
+                                                        {t('pages.index.rename')}
+                                                    </button>
+                                                </MenuItem>
+                                                <MenuItem>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => duplicatePage(page)}
+                                                        className={menuItemClassName}
+                                                    >
+                                                        <span className="text-emerald-600">
+                                                            <CopyIcon />
+                                                        </span>
+                                                        {t('pages.index.copy')}
+                                                    </button>
+                                                </MenuItem>
+                                                {!page.is_homepage && (
+                                                    <MenuItem>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openHomepageModal(page)}
+                                                            className={menuItemClassName}
+                                                        >
+                                                            <span className="text-blue-600">
+                                                                <HomeIcon />
+                                                            </span>
+                                                            {t('pages.index.set_homepage')}
+                                                        </button>
+                                                    </MenuItem>
+                                                )}
+                                                <div className="my-1 border-t border-gray-100" />
+                                                <MenuItem>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openDeleteDialog(page)}
+                                                        className={menuItemDangerClassName}
+                                                    >
+                                                        <TrashIcon />
+                                                        {t('common.delete')}
+                                                    </button>
+                                                </MenuItem>
+                                            </MenuItems>
+                                        </Menu>
                                     </td>
                                 </tr>
                             ))}
