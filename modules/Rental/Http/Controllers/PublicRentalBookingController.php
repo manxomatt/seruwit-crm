@@ -220,14 +220,20 @@ class PublicRentalBookingController extends Controller
 
         if ($request->wantsJson()) {
             $payload = ['ok' => true, 'message' => __('rental.public.otp_sent')];
-            if (! app()->environment('production')) {
+            if (\App\Support\SystemMode::shouldExposeDebugOtp()) {
                 $payload['debug_code'] = $code;
             }
 
             return response()->json($payload);
         }
 
-        return back()->with('success', __('rental.public.otp_sent'));
+        $redirect = back()->with('success', __('rental.public.otp_sent'));
+
+        if (\App\Support\SystemMode::shouldExposeDebugOtp()) {
+            $redirect->with('debug_otp', $code);
+        }
+
+        return $redirect;
     }
 
     public function show(string $token): Response

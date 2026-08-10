@@ -27,7 +27,7 @@ class AuthController extends Controller
             'expires_in' => 300,
         ];
 
-        if (! app()->environment('production')) {
+        if (\App\Support\SystemMode::shouldExposeDebugOtp()) {
             $payload['debug_code'] = $code;
         }
 

@@ -8,7 +8,8 @@ use Illuminate\Support\Str;
 
 /**
  * Phone OTP for passenger self-booking. Codes live in cache (no SMS provider
- * required for MVP — logged in non-production for local testing).
+ * required for MVP). In system development mode the code is returned to the
+ * client and logged for local testing.
  */
 class PassengerOtpService
 {
@@ -21,7 +22,7 @@ class PassengerOtpService
 
         Cache::put($this->cacheKey($phone), $code, self::TTL_SECONDS);
 
-        if (! app()->environment('production')) {
+        if (\App\Support\SystemMode::shouldExposeDebugOtp()) {
             Log::info('Shuttle passenger OTP', ['phone' => $phone, 'code' => $code]);
         }
 

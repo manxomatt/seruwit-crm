@@ -86,6 +86,16 @@ class SettingSeeder extends Seeder
                 'is_public' => false,
                 'sort_order' => 7,
             ],
+            [
+                'key' => 'general.system_mode',
+                'group' => 'general',
+                'value' => app()->environment('production') ? 'production' : 'development',
+                'type' => 'select',
+                'label' => 'System Mode',
+                'description' => 'Development disables outbound email and shows verification links / phone OTP on screen. Production sends email and OTP normally.',
+                'is_public' => false,
+                'sort_order' => 8,
+            ],
 
             // ==========================================
             // SITE GROUP
@@ -674,6 +684,11 @@ class SettingSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
+            // Platform-wide mode lives only on the central connection.
+            if (tenancy()->initialized && $setting['key'] === 'general.system_mode') {
+                continue;
+            }
+
             Setting::updateOrCreate(
                 ['key' => $setting['key']],
                 $setting

@@ -5,11 +5,13 @@ namespace App\Providers;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\UserRepository;
+use App\Support\EmailVerificationUrl;
+use App\Support\SystemMode;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         Vite::prefetch(concurrency: 3);
 
         $this->configureEmailVerificationUrls();
+        $this->configureDevelopmentMailGate();
 
         Gate::define('manage-tenants', fn (User $user): bool => $user->isAdmin() || $user->hasRole('reseller'));
 
@@ -58,24 +61,28 @@ class AppServiceProvider extends ServiceProvider
     private function configureEmailVerificationUrls(): void
     {
         VerifyEmail::createUrlUsing(function (object $notifiable): string {
-            $route = Route::has('central.verification.verify')
-                ? 'central.verification.verify'
-                : 'verification.verify';
-
-            $url = URL::temporarySignedRoute(
-                $route,
-                now()->addMinutes((int) config('auth.verification.expire', 60)),
-                [
-                    'id' => $notifiable->getKey(),
-                    'hash' => sha1($notifiable->getEmailForVerification()),
-                ],
-            );
+            $url = EmailVerificationUrl::for($notifiable);
 
             if (config('mail.default') === 'log') {
                 Log::info('Email verification URL (copy-paste as-is): '.$url);
             }
 
             return $url;
+        });
+    }
+
+    /**
+     * System mode "development" blocks every outbound mail message (transaction
+     * notifications, invitations, password resets, etc.).
+     */
+    private function configureDevelopmentMailGate(): void
+    {
+        Event::listen(MessageSending::class, function (): ?bool {
+            if (SystemMode::shouldSendMail()) {
+                return null;
+            }
+
+            return false;
         });
     }
 }

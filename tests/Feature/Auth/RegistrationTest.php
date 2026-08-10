@@ -29,11 +29,24 @@ class RegistrationTest extends TestCase
     {
         Notification::fake();
 
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => \App\Support\SystemMode::KEY],
+            [
+                'group' => 'general',
+                'value' => \App\Support\SystemMode::PRODUCTION,
+                'type' => 'select',
+                'label' => 'System Mode',
+                'is_public' => false,
+                'sort_order' => 8,
+            ],
+        );
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'terms' => '1',
         ]);
 
         $this->assertAuthenticated();
@@ -64,6 +77,7 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'terms' => '1',
         ]);
 
         $response->assertSessionHasNoErrors();

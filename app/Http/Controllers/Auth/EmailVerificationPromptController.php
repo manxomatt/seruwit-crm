@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Actions\Auth\ResolvePostAuthDestination;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Support\SystemMode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,6 +33,9 @@ class EmailVerificationPromptController extends Controller
         return Inertia::render('Auth/VerifyEmail', [
             'status' => session('status'),
             'settings' => $settings,
+            'verificationUrl' => SystemMode::isDevelopment()
+                ? session('dev_verification_url')
+                : null,
         ]);
     }
 }

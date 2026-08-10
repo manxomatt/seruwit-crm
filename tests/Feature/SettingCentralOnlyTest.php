@@ -131,6 +131,36 @@ class SettingCentralOnlyTest extends TestCase
         $this->actingAs($admin)->get($centralUrl.'/create')->assertOk();
     }
 
+    public function test_system_mode_is_hidden_from_tenant_settings_group(): void
+    {
+        $tenant = $this->provisionTenant('Mode Co', 'mode-co', 'owner@mode.test');
+        $owner = $this->ownerOf($tenant, 'owner@mode.test');
+
+        $tenant->run(function (): void {
+            Setting::query()->updateOrCreate(
+                ['key' => 'general.system_mode'],
+                [
+                    'group' => 'general',
+                    'value' => 'development',
+                    'type' => 'select',
+                    'label' => 'System Mode',
+                    'is_public' => false,
+                    'sort_order' => 8,
+                ],
+            );
+        });
+        tenancy()->end();
+
+        $this->actingAs($owner)->get('http://mode-co.localhost/module/settings/general')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Settings/Group')
+                ->where('groupSettings', fn ($settings) => collect($settings)->every(
+                    fn ($setting) => $setting['key'] !== 'general.system_mode'
+                ))
+            );
+    }
+
     public function test_creating_a_setting_centrally_propagates_it_to_every_tenant(): void
     {
         $admin = $this->makeCentralAdmin();

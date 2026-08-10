@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\EmailVerificationUrl;
+use App\Support\SystemMode;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -105,6 +108,21 @@ class User extends Authenticatable implements MustVerifyEmail, Syncable
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * In development system mode, skip outbound mail and flash the signed URL
+     * so the verify-email screen can show a clickable link.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        if (SystemMode::isDevelopment()) {
+            session()->flash('dev_verification_url', EmailVerificationUrl::for($this));
+
+            return;
+        }
+
+        $this->notify(new VerifyEmail);
     }
 
     /**

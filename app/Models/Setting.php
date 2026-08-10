@@ -59,6 +59,18 @@ class Setting extends Model
     }
 
     /**
+     * Keys that exist only on the central domain (platform-wide toggles).
+     *
+     * @return list<string>
+     */
+    public static function centralOnlyKeys(): array
+    {
+        return [
+            'general.system_mode',
+        ];
+    }
+
+    /**
      * Groups used as private storage for module UIs (not listed in Modules/Settings).
      *
      * @return list<string>
@@ -78,9 +90,15 @@ class Setting extends Model
      */
     public function scopeVisibleInSettingsUi(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $query
+        $query
             ->whereNotIn('key', static::moduleManagedKeys())
             ->whereNotIn('group', static::moduleManagedGroups());
+
+        if (tenancy()->initialized) {
+            $query->whereNotIn('key', static::centralOnlyKeys());
+        }
+
+        return $query;
     }
 
     /**

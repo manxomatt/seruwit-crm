@@ -6,9 +6,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 interface Props {
     status?: string;
     settings?: Record<string, string>;
+    verificationUrl?: string | null;
 }
 
-export default function VerifyEmail({ status, settings }: Props) {
+export default function VerifyEmail({ status, settings, verificationUrl }: Props) {
     const { t } = useTrans();
     const { post, processing } = useForm<Record<string, never>>({});
 
@@ -95,14 +96,33 @@ export default function VerifyEmail({ status, settings }: Props) {
                         <div className="rounded-3xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
                             <div className="mb-8 text-center">
                                 <h2 className="text-3xl font-bold text-white">{t('auth_ui.verify_title')}</h2>
-                                <p className="mt-2 text-white/60">{t('auth_ui.verify_message')}</p>
+                                <p className="mt-2 text-white/60">
+                                    {verificationUrl ? t('auth_ui.verify_message_dev') : t('auth_ui.verify_message')}
+                                </p>
                             </div>
+
+                            {verificationUrl && (
+                                <div className="mb-6 space-y-3 rounded-xl border border-amber-400/30 bg-amber-500/15 p-4 backdrop-blur-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-amber-300">developer_mode</span>
+                                        <span className="text-sm font-medium text-amber-200">{t('auth_ui.verify_dev_banner')}</span>
+                                    </div>
+                                    <a
+                                        href={verificationUrl}
+                                        className="block break-all text-sm font-medium text-cyan-300 underline decoration-cyan-400/40 underline-offset-2 transition-colors hover:text-cyan-200"
+                                    >
+                                        {verificationUrl}
+                                    </a>
+                                </div>
+                            )}
 
                             {linkSent && (
                                 <div className="mb-6 rounded-xl border border-green-400/30 bg-green-500/20 p-4 backdrop-blur-sm">
                                     <div className="flex items-center gap-2">
                                         <span className="material-symbols-outlined text-green-400">check_circle</span>
-                                        <span className="text-sm font-medium text-green-300">{t('auth_ui.verify_sent')}</span>
+                                        <span className="text-sm font-medium text-green-300">
+                                            {verificationUrl ? t('auth_ui.verify_sent_dev') : t('auth_ui.verify_sent')}
+                                        </span>
                                     </div>
                                 </div>
                             )}
@@ -113,7 +133,11 @@ export default function VerifyEmail({ status, settings }: Props) {
                                     disabled={processing}
                                     className="w-full transform rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-cyan-500/30 transition-all duration-200 hover:scale-[1.02] hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:ring-offset-2 focus:ring-offset-slate-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    {processing ? t('auth_ui.verify_resending') : t('auth_ui.resend_verification')}
+                                    {processing
+                                        ? t('auth_ui.verify_resending')
+                                        : verificationUrl
+                                          ? t('auth_ui.regenerate_verification')
+                                          : t('auth_ui.resend_verification')}
                                 </button>
                             </form>
 

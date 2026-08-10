@@ -8,9 +8,11 @@ use App\Http\Requests\UpdateSettingRequest;
 use App\Models\MailConfig;
 use App\Models\Setting;
 use App\Models\Tenant;
+use App\Support\SystemMode;
 use App\Support\TenantMailConfigBootstrapper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -116,9 +118,11 @@ class SettingController extends Controller
         $data = $request->validated();
         $setting = Setting::create($data);
 
-        Tenant::query()->get()->each(function (Tenant $tenant) use ($data) {
-            $tenant->run(fn () => Setting::firstOrCreate(['key' => $data['key']], $data));
-        });
+        if (! in_array($data['key'], Setting::centralOnlyKeys(), true)) {
+            Tenant::query()->get()->each(function (Tenant $tenant) use ($data) {
+                $tenant->run(fn () => Setting::firstOrCreate(['key' => $data['key']], $data));
+            });
+        }
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $setting->group)
             ->with('success', __('settings.messages.created'));
@@ -176,8 +180,22 @@ class SettingController extends Controller
             'settings.*.value' => ['nullable', 'string'],
         ]);
 
-        foreach ($data['settings'] as $settingData) {
-            Setting::where('id', $settingData['id'])->update(['value' => $settingData['value']]);
+        foreach ($data['settings'] as $index => $settingData) {
+            $setting = Setting::query()->findOrFail($settingData['id']);
+
+            if (tenancy()->initialized && in_array($setting->key, Setting::centralOnlyKeys(), true)) {
+                continue;
+            }
+
+            $value = $settingData['value'];
+
+            if ($setting->key === SystemMode::KEY) {
+                request()->validate([
+                    "settings.{$index}.value" => ['required', Rule::in(SystemMode::values())],
+                ]);
+            }
+
+            $setting->update(['value' => $value]);
         }
 
         if (tenancy()->initialized && $data['group'] === 'email') {

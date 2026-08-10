@@ -6,6 +6,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -43,6 +44,13 @@ interface Props {
     mailConfig?: MailConfig | null;
     mailConfigUpdateUrl?: string | null;
 }
+
+const SELECT_OPTIONS: Record<string, { value: string; label: string }[]> = {
+    'general.system_mode': [
+        { value: 'development', label: 'Development' },
+        { value: 'production', label: 'Production' },
+    ],
+};
 
 const formatGroupLabel = (group: string): string => group.charAt(0).toUpperCase() + group.slice(1);
 
@@ -224,6 +232,10 @@ export default function Group({
         if (setting.type === 'boolean') {
             return setting.value === '1' ? t('settings.value_display.yes') : t('settings.value_display.no');
         }
+        if (setting.type === 'select' && setting.key in SELECT_OPTIONS) {
+            const option = SELECT_OPTIONS[setting.key].find((item) => item.value === setting.value);
+            return option?.label ?? setting.value ?? t('settings.value_display.empty');
+        }
         return setting.value || t('settings.value_display.empty');
     };
 
@@ -367,6 +379,14 @@ export default function Group({
                                                         />
                                                         <span className="ml-2 text-sm text-gray-600">{t('settings.pages.group.enabled_label')}</span>
                                                     </label>
+                                                ) : setting.type === 'select' && setting.key in SELECT_OPTIONS ? (
+                                                    <Select
+                                                        id={`value-${setting.id}`}
+                                                        className="w-full"
+                                                        value={data.settings[index].value}
+                                                        onChange={(value) => updateValue(index, value)}
+                                                        options={SELECT_OPTIONS[setting.key]}
+                                                    />
                                                 ) : setting.type === 'color' ? (
                                                     <div className="flex items-center gap-3">
                                                         <input
