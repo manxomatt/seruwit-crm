@@ -6,6 +6,7 @@ return [
     'nav' => [
         'dashboard' => 'Dasbor',
         'orders' => 'Orders',
+        'settings' => 'Pengaturan',
     ],
 
     'dashboard' => [
@@ -294,5 +295,20 @@ return [
         'batch_assigned' => ':count order ditugaskan ke trip :code.',
         'batch_orders_missing' => 'Beberapa delivery order tidak ditemukan.',
         'batch_orders_confirmed_only' => 'Hanya order confirmed yang bisa di-batch assign (:code).',
+        'settings_updated' => 'Pengaturan orders disimpan.',
+    ],
+
+    'settings' => [
+        'head' => 'Pengaturan Orders',
+        'save' => 'Simpan pengaturan',
+        'section' => 'Perilaku pengiriman',
+        'section_hint' => 'Cara DO dikonfirmasi dari GIN dan apakah POD wajib sebelum trip selesai.',
+        'auto_confirm_do_from_gin' => 'Auto-konfirmasi DO dari GIN',
+        'auto_confirm_do_from_gin_hint' => 'Jika aktif, membuat DO dari GIN confirmed langsung mengonfirmasinya (siap di-assign ke trip).',
+        'require_pod_before_trip_complete' => 'Wajibkan POD sebelum trip selesai',
+        'require_pod_hint' => 'Mengatur apakah POD yang belum ada memblokir penyelesaian trip.',
+        'require_pod_off' => 'Nonaktif (peringatan saja)',
+        'require_pod_from_gin' => 'Hanya order terkait GIN',
+        'require_pod_all' => 'Semua delivery order',
     ],
 ];

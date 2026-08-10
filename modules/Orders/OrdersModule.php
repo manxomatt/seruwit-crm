@@ -9,6 +9,7 @@ use Modules\Orders\Http\Controllers\DeliveryOrderController;
 use Modules\Orders\Http\Controllers\DriverPortalController;
 use Modules\Orders\Http\Controllers\OrderItemController;
 use Modules\Orders\Http\Controllers\OrdersDashboardController;
+use Modules\Orders\Http\Controllers\OrdersSettingsController;
 use Modules\Orders\Http\Controllers\PodController;
 use Modules\Orders\Http\Controllers\SuratJalanController;
 use Modules\Orders\Models\DeliveryOrder;
@@ -109,6 +110,8 @@ class OrdersModule implements ModuleContract
     public function routes(): void
     {
         Route::get('/orders', [OrdersDashboardController::class, 'index'])->middleware('permission:orders,view')->name('orders.dashboard');
+        Route::get('/orders/settings', [OrdersSettingsController::class, 'edit'])->middleware('permission:orders,update')->name('orders.settings.edit');
+        Route::patch('/orders/settings', [OrdersSettingsController::class, 'update'])->middleware('permission:orders,update')->name('orders.settings.update');
         Route::get('/orders/list', [DeliveryOrderController::class, 'index'])->middleware('permission:orders,view')->name('orders.index');
         Route::get('/orders/create', [DeliveryOrderController::class, 'create'])->middleware('permission:orders,create')->name('orders.create');
         Route::post('/orders', [DeliveryOrderController::class, 'store'])->middleware('permission:orders,create')->name('orders.store');

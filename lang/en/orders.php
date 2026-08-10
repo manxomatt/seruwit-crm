@@ -6,6 +6,7 @@ return [
     'nav' => [
         'dashboard' => 'Dashboard',
         'orders' => 'Orders',
+        'settings' => 'Settings',
     ],
 
     'dashboard' => [
@@ -294,5 +295,20 @@ return [
         'batch_assigned' => ':count orders assigned to trip :code.',
         'batch_orders_missing' => 'One or more delivery orders were not found.',
         'batch_orders_confirmed_only' => 'Only confirmed orders can be batch-assigned (:code).',
+        'settings_updated' => 'Orders settings saved.',
+    ],
+
+    'settings' => [
+        'head' => 'Orders Settings',
+        'save' => 'Save settings',
+        'section' => 'Delivery behaviour',
+        'section_hint' => 'How delivery orders are confirmed from GIN and whether POD is required before trip complete.',
+        'auto_confirm_do_from_gin' => 'Auto-confirm DO from GIN',
+        'auto_confirm_do_from_gin_hint' => 'When enabled, creating a delivery order from a confirmed GIN immediately confirms it (ready to assign to a trip).',
+        'require_pod_before_trip_complete' => 'Require POD before trip complete',
+        'require_pod_hint' => 'Controls whether missing POD blocks trip completion.',
+        'require_pod_off' => 'Off (warning only)',
+        'require_pod_from_gin' => 'GIN-linked orders only',
+        'require_pod_all' => 'All delivery orders',
     ],
 ];

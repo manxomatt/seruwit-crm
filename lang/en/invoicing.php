@@ -6,6 +6,7 @@ return [
     'nav' => [
         'dashboard' => 'Dashboard',
         'invoices' => 'Invoices',
+        'settings' => 'Settings',
     ],
 
     'dashboard' => [
@@ -149,5 +150,15 @@ return [
         'void_payments_first' => 'Void payments first before voiding a partially paid invoice.',
         'lines_draft_only' => 'Lines can only be changed on a draft invoice.',
         'print_issued_only' => 'Only an issued or paid invoice can be printed.',
+        'settings_updated' => 'Invoicing settings saved.',
+    ],
+
+    'settings' => [
+        'head' => 'Invoicing Settings',
+        'save' => 'Save settings',
+        'section' => 'Payment terms',
+        'section_hint' => 'Default due date offset for new invoices. Partner payment terms still override when set.',
+        'default_payment_term_days' => 'Default payment term (days)',
+        'default_payment_term_days_hint' => '0 = due on issue date (COD).',
     ],
 ];

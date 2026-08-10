@@ -6,6 +6,7 @@ import { Link } from '@inertiajs/react';
 const TABS = [
     { labelKey: 'invoicing.nav.dashboard', route: 'invoicing.dashboard', pattern: 'invoicing.dashboard' },
     { labelKey: 'invoicing.nav.invoices', route: 'invoicing.invoices.index', pattern: 'invoicing.invoices.*' },
+    { labelKey: 'invoicing.nav.settings', route: 'invoicing.settings.edit', pattern: 'invoicing.settings.*' },
 ] as const;
 
 export default function InvoicingNav(): JSX.Element {

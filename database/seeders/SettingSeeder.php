@@ -378,23 +378,23 @@ class SettingSeeder extends Seeder
             // ==========================================
             [
                 'key' => 'ecommerce.currency',
-                'group' => 'ecommerce',
+                'group' => 'general',
                 'value' => 'IDR',
                 'type' => 'text',
                 'label' => 'Currency Code',
                 'description' => 'Default currency code (e.g., IDR, USD, EUR).',
                 'is_public' => true,
-                'sort_order' => 1,
+                'sort_order' => 9,
             ],
             [
                 'key' => 'ecommerce.currency_symbol',
-                'group' => 'ecommerce',
+                'group' => 'general',
                 'value' => 'Rp',
                 'type' => 'text',
                 'label' => 'Currency Symbol',
                 'description' => 'Currency symbol displayed before prices.',
                 'is_public' => true,
-                'sort_order' => 2,
+                'sort_order' => 10,
             ],
             [
                 'key' => 'ecommerce.tax_enabled',
@@ -402,7 +402,7 @@ class SettingSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'label' => 'Enable Tax',
-                'description' => 'Enable tax calculation on orders.',
+                'description' => 'Enable tax calculation on orders. Managed outside general Settings.',
                 'is_public' => false,
                 'sort_order' => 3,
             ],
@@ -422,7 +422,7 @@ class SettingSeeder extends Seeder
                 'value' => '0',
                 'type' => 'number',
                 'label' => 'Default Payment Term (Days)',
-                'description' => 'Days until invoice due date. 0 = due on issue date (COD). Partner override wins when set.',
+                'description' => 'Managed via Invoicing → Settings. Days until invoice due date. 0 = due on issue date (COD). Partner override wins when set.',
                 'is_public' => false,
                 'sort_order' => 1,
             ],
@@ -458,7 +458,7 @@ class SettingSeeder extends Seeder
             ],
 
             // ==========================================
-            // ORDERS / LOGISTICS GROUP
+            // ORDERS / LOGISTICS GROUP (Orders → Settings)
             // ==========================================
             [
                 'key' => 'orders.auto_confirm_do_from_gin',
@@ -466,7 +466,7 @@ class SettingSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'label' => 'Auto-confirm DO from GIN',
-                'description' => 'When enabled, creating a delivery order from a confirmed GIN immediately confirms it (ready to assign to a trip).',
+                'description' => 'Managed via Orders → Settings. When enabled, creating a delivery order from a confirmed GIN immediately confirms it (ready to assign to a trip).',
                 'is_public' => false,
                 'sort_order' => 1,
             ],
@@ -476,7 +476,7 @@ class SettingSeeder extends Seeder
                 'value' => 'off',
                 'type' => 'text',
                 'label' => 'Require POD before trip complete',
-                'description' => 'off = warning only; from_gin = block if GIN-linked DOs lack POD; all = block if any DO lacks POD.',
+                'description' => 'Managed via Orders → Settings. off = warning only; from_gin = block if GIN-linked DOs lack POD; all = block if any DO lacks POD.',
                 'is_public' => false,
                 'sort_order' => 2,
             ],
@@ -629,7 +629,7 @@ class SettingSeeder extends Seeder
             ],
 
             // ==========================================
-            // MAINTENANCE GROUP
+            // MAINTENANCE GROUP (Maintenance → Settings)
             // ==========================================
             [
                 'key' => 'maintenance.alert_km_before',
@@ -637,7 +637,7 @@ class SettingSeeder extends Seeder
                 'value' => '500',
                 'type' => 'number',
                 'label' => 'Alert km before service',
-                'description' => 'Notify when vehicle odometer is within this many km of the next mileage-based service.',
+                'description' => 'Managed via Maintenance → Settings. Notify when vehicle odometer is within this many km of the next mileage-based service.',
                 'is_public' => false,
                 'sort_order' => 1,
             ],
@@ -647,7 +647,7 @@ class SettingSeeder extends Seeder
                 'value' => '14',
                 'type' => 'number',
                 'label' => 'Alert days before service',
-                'description' => 'Notify when a calendar-based service is due within this many days.',
+                'description' => 'Managed via Maintenance → Settings. Notify when a calendar-based service is due within this many days.',
                 'is_public' => false,
                 'sort_order' => 2,
             ],
@@ -657,7 +657,7 @@ class SettingSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'label' => 'Auto-create draft work order',
-                'description' => 'When enabled, overdue schedules automatically open a draft preventive work order (deduped per vehicle + category).',
+                'description' => 'Managed via Maintenance → Settings. When enabled, overdue schedules automatically open a draft preventive work order (deduped per vehicle + category).',
                 'is_public' => false,
                 'sort_order' => 3,
             ],
@@ -667,7 +667,7 @@ class SettingSeeder extends Seeder
                 'value' => '1',
                 'type' => 'boolean',
                 'label' => 'One in-progress WO per vehicle',
-                'description' => 'Prevent starting a second in-progress work order on the same vehicle.',
+                'description' => 'Managed via Maintenance → Settings. Prevent starting a second in-progress work order on the same vehicle.',
                 'is_public' => false,
                 'sort_order' => 4,
             ],
@@ -677,7 +677,7 @@ class SettingSeeder extends Seeder
                 'value' => '1',
                 'type' => 'boolean',
                 'label' => 'One in-progress WO per bay',
-                'description' => 'Prevent starting a second in-progress work order on the same workshop bay.',
+                'description' => 'Managed via Maintenance → Settings. Prevent starting a second in-progress work order on the same workshop bay.',
                 'is_public' => false,
                 'sort_order' => 5,
             ],

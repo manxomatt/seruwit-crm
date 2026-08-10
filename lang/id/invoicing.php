@@ -6,6 +6,7 @@ return [
     'nav' => [
         'dashboard' => 'Dasbor',
         'invoices' => 'Invoice',
+        'settings' => 'Pengaturan',
     ],
 
     'dashboard' => [
@@ -149,5 +150,15 @@ return [
         'void_payments_first' => 'Void pembayaran dulu sebelum void invoice yang sebagian dibayar.',
         'lines_draft_only' => 'Baris hanya bisa diubah pada draft invoice.',
         'print_issued_only' => 'Hanya invoice issued atau paid yang bisa dicetak.',
+        'settings_updated' => 'Pengaturan invoicing disimpan.',
+    ],
+
+    'settings' => [
+        'head' => 'Pengaturan Invoicing',
+        'save' => 'Simpan pengaturan',
+        'section' => 'Syarat pembayaran',
+        'section_hint' => 'Offset jatuh tempo default untuk invoice baru. Syarat pembayaran partner tetap menang jika diisi.',
+        'default_payment_term_days' => 'Syarat pembayaran default (hari)',
+        'default_payment_term_days_hint' => '0 = jatuh tempo pada tanggal terbit (COD).',
     ],
 ];

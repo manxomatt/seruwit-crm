@@ -12,6 +12,7 @@ return [
         'schedules' => 'Jadwal',
         'categories' => 'Kategori',
         'analytics' => 'Analitik',
+        'settings' => 'Pengaturan',
     ],
 
     'status' => [
@@ -347,5 +348,23 @@ return [
         'schedule_created' => 'Jadwal perawatan berhasil ditambahkan.',
         'schedule_updated' => 'Jadwal perawatan berhasil diperbarui.',
         'schedule_deleted' => 'Jadwal perawatan berhasil dihapus.',
+        'settings_updated' => 'Pengaturan maintenance disimpan.',
+    ],
+
+    'settings' => [
+        'head' => 'Pengaturan Maintenance',
+        'save' => 'Simpan pengaturan',
+        'alerts_section' => 'Peringatan servis',
+        'alerts_section_hint' => 'Seberapa jauh sebelumnya sistem memperingatkan sebelum servis berbasis km atau kalender jatuh tempo.',
+        'alert_km_before' => 'Alert km sebelum servis',
+        'alert_days_before' => 'Alert hari sebelum servis',
+        'workflow_section' => 'Aturan work order',
+        'workflow_section_hint' => 'Otomasi dan batas konkurensi di workshop.',
+        'auto_create_wo' => 'Buat draft work order otomatis',
+        'auto_create_wo_hint' => 'Saat jadwal overdue, buka draft work order preventif (diduplikasi per kendaraan + kategori).',
+        'single_active_wo_per_vehicle' => 'Satu WO in-progress per kendaraan',
+        'single_active_wo_per_vehicle_hint' => 'Cegah memulai work order in-progress kedua pada kendaraan yang sama.',
+        'single_active_wo_per_bay' => 'Satu WO in-progress per bay',
+        'single_active_wo_per_bay_hint' => 'Cegah memulai work order in-progress kedua pada bay yang sama.',
     ],
 ];

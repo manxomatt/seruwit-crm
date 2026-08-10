@@ -9,6 +9,7 @@ const TABS = [
         route: 'orders.index',
         patterns: ['orders.index', 'orders.create', 'orders.show', 'orders.edit', 'orders.items.*', 'orders.surat-jalan', 'orders.confirm', 'orders.cancel', 'orders.assign-trip', 'orders.batch-assign-trip', 'orders.unassign-trip'],
     },
+    { labelKey: 'orders.nav.settings', route: 'orders.settings.edit', patterns: ['orders.settings.*'] },
 ] as const;
 
 export default function OrdersNav(): JSX.Element {

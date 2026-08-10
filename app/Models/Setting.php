@@ -54,7 +54,19 @@ class Setting extends Model
             'rental.cancellation_fee_amount',
             'rental.no_show_fee_type',
             'rental.no_show_fee_amount',
+            'rental.passenger_free_cancel_hours',
+            'rental.public_mask_plates',
             'rental.calendar_click_to_book',
+            'maintenance.alert_km_before',
+            'maintenance.alert_days_before',
+            'maintenance.auto_create_wo',
+            'maintenance.single_active_wo_per_vehicle',
+            'maintenance.single_active_wo_per_bay',
+            'orders.auto_confirm_do_from_gin',
+            'orders.require_pod_before_trip_complete',
+            'invoicing.default_payment_term_days',
+            'payables.match_tolerance_amount',
+            'payables.match_tolerance_percent',
         ];
     }
 
@@ -79,6 +91,11 @@ class Setting extends Model
     {
         return [
             'rental_internal',
+            'maintenance',
+            'orders',
+            'invoicing',
+            'ecommerce',
+            'payables',
         ];
     }
 

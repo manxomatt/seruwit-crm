@@ -13,6 +13,7 @@ use Modules\Maintenance\Http\Controllers\MaintenanceBayController;
 use Modules\Maintenance\Http\Controllers\MaintenanceCategoryController;
 use Modules\Maintenance\Http\Controllers\MaintenanceController;
 use Modules\Maintenance\Http\Controllers\MaintenanceScheduleController;
+use Modules\Maintenance\Http\Controllers\MaintenanceSettingsController;
 use Modules\Maintenance\Http\Controllers\WipBoardController;
 use Modules\Maintenance\Http\Controllers\WorkOrderChecklistController;
 use Modules\Maintenance\Http\Controllers\WorkOrderController;
@@ -105,6 +106,14 @@ class MaintenanceModule implements ModuleContract
         Route::get('/maintenance/analytics', [MaintenanceAnalyticsController::class, 'index'])
             ->middleware('permission:maintenance,view')
             ->name('maintenance.analytics.index');
+
+        Route::get('/maintenance/settings', [MaintenanceSettingsController::class, 'edit'])
+            ->middleware('permission:maintenance,update')
+            ->name('maintenance.settings.edit');
+
+        Route::patch('/maintenance/settings', [MaintenanceSettingsController::class, 'update'])
+            ->middleware('permission:maintenance,update')
+            ->name('maintenance.settings.update');
 
         // Work Orders
         Route::get('/maintenance/work-orders', [WorkOrderController::class, 'index'])

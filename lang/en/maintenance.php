@@ -12,6 +12,7 @@ return [
         'schedules' => 'Schedules',
         'categories' => 'Categories',
         'analytics' => 'Analytics',
+        'settings' => 'Settings',
     ],
 
     'status' => [
@@ -347,5 +348,23 @@ return [
         'schedule_created' => 'Maintenance schedule added.',
         'schedule_updated' => 'Maintenance schedule updated.',
         'schedule_deleted' => 'Maintenance schedule deleted.',
+        'settings_updated' => 'Maintenance settings saved.',
+    ],
+
+    'settings' => [
+        'head' => 'Maintenance Settings',
+        'save' => 'Save settings',
+        'alerts_section' => 'Service alerts',
+        'alerts_section_hint' => 'How far ahead to warn before mileage or calendar-based services are due.',
+        'alert_km_before' => 'Alert km before service',
+        'alert_days_before' => 'Alert days before service',
+        'workflow_section' => 'Work order rules',
+        'workflow_section_hint' => 'Automation and concurrency limits for the shop floor.',
+        'auto_create_wo' => 'Auto-create draft work order',
+        'auto_create_wo_hint' => 'When a schedule is overdue, open a draft preventive work order (deduped per vehicle + category).',
+        'single_active_wo_per_vehicle' => 'One in-progress WO per vehicle',
+        'single_active_wo_per_vehicle_hint' => 'Block starting a second in-progress work order on the same vehicle.',
+        'single_active_wo_per_bay' => 'One in-progress WO per bay',
+        'single_active_wo_per_bay_hint' => 'Block starting a second in-progress work order on the same workshop bay.',
     ],
 ];
