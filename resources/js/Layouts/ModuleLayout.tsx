@@ -310,7 +310,7 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'sales_commercial', modules: ['pos', 'canvassing', 'shuttle', 'promotions'] },
     { titleKey: 'content', tier: 'content', also: ['media'] },
     { titleKey: 'insights', modules: ['analytics', 'live-updates'] },
-    { titleKey: 'administration', modules: ['users', 'roles', 'settings', 'modules'] },
+    { titleKey: 'administration', modules: ['roles', 'users', 'modules', 'settings'] },
     { titleKey: 'platform', modules: ['tenants', 'plans', 'module-registry'] },
 ];
 

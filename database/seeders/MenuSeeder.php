@@ -53,20 +53,20 @@ class MenuSeeder extends Seeder
                 'sort_order' => 12,
             ],
             [
-                'name' => 'Users',
-                'slug' => 'users',
-                'icon' => 'users',
-                'route_name' => 'users.index',
-                'permission_module' => 'users',
-                'permission_action' => 'view',
-                'sort_order' => 6,
-            ],
-            [
                 'name' => 'Roles',
                 'slug' => 'roles',
                 'icon' => 'roles',
                 'route_name' => 'roles.index',
                 'permission_module' => 'roles',
+                'permission_action' => 'view',
+                'sort_order' => 6,
+            ],
+            [
+                'name' => 'Users',
+                'slug' => 'users',
+                'icon' => 'users',
+                'route_name' => 'users.index',
+                'permission_module' => 'users',
                 'permission_action' => 'view',
                 'sort_order' => 8,
             ],
@@ -92,7 +92,8 @@ class MenuSeeder extends Seeder
 
         // The module catalog is deliberately absent: like "Kelola Tenant", it is
         // gated by an ability rather than a permission, so ModuleLayout injects it
-        // client-side from auth.user.is_admin.
+        // client-side from auth.user.is_admin. Administration order in the
+        // sidebar is Roles → Users → Modules → Settings (see ModuleLayout).
 
         foreach ($menus as $menuData) {
             Menu::updateOrCreate(
