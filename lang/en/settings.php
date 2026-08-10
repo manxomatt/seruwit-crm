@@ -27,9 +27,11 @@ return [
     'groups' => [
         'general' => 'General',
         'site' => 'Site',
+        'seo' => 'SEO',
+        'appearance' => 'Appearance',
         'email' => 'Email',
         'social' => 'Social',
-        'seo' => 'SEO',
+        'units' => 'Units',
         'maintenance' => 'Maintenance',
     ],
 

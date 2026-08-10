@@ -52,7 +52,11 @@ const SELECT_OPTIONS: Record<string, { value: string; label: string }[]> = {
     ],
 };
 
-const formatGroupLabel = (group: string): string => group.charAt(0).toUpperCase() + group.slice(1);
+const formatGroupLabel = (group: string, t: (key: string) => string): string => {
+    const key = `settings.groups.${group}`;
+    const translated = t(key);
+    return translated === key ? group.charAt(0).toUpperCase() + group.slice(1) : translated;
+};
 
 const PencilIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -286,7 +290,7 @@ export default function Group({
         <DynamicLayout
             header={<PageHeader title={t('settings.pages.index.head')} />}
         >
-            <Head title={t('settings.pages.group.title', { group: formatGroupLabel(currentGroup) })} />
+            <Head title={t('settings.pages.group.title', { group: formatGroupLabel(currentGroup, t) })} />
 
             <div className="mb-6 flex items-center justify-between border-b border-gray-200">
                 <nav className="-mb-px flex flex-wrap gap-6">
@@ -300,7 +304,7 @@ export default function Group({
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                         >
-                            {formatGroupLabel(g)}
+                            {formatGroupLabel(g, t)}
                         </Link>
                     ))}
                 </nav>
@@ -314,7 +318,7 @@ export default function Group({
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6">
                     <div className="mb-6 flex items-center justify-between">
-                        <h3 className="text-lg font-medium text-gray-900">{formatGroupLabel(currentGroup)}</h3>
+                        <h3 className="text-lg font-medium text-gray-900">{formatGroupLabel(currentGroup, t)}</h3>
                         {canManageStructure && (
                             <Link href={`${prefixedRoute('settings.create')}?group=${currentGroup}`}>
                                 <PrimaryButton type="button">{t('settings.pages.group.add_setting')}</PrimaryButton>

@@ -32,10 +32,7 @@ class SettingController extends Controller
      */
     public function index(): RedirectResponse
     {
-        $firstGroup = Setting::query()
-            ->visibleInSettingsUi()
-            ->orderBy('group')
-            ->value('group') ?? 'general';
+        $firstGroup = Setting::orderedVisibleGroups()[0] ?? 'general';
 
         return redirect()->route($this->getRoutePrefix().'.settings.group', $firstGroup);
     }
@@ -53,12 +50,7 @@ class SettingController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $groups = Setting::query()
-            ->visibleInSettingsUi()
-            ->select('group')
-            ->distinct()
-            ->orderBy('group')
-            ->pluck('group');
+        $groups = Setting::orderedVisibleGroups();
 
         $user = Auth::user();
         $canEditValues = $user->hasPermissionFor('settings', 'update');

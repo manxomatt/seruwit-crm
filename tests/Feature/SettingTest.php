@@ -35,14 +35,34 @@ class SettingTest extends TestCase
         $this->actingAs($user)->get(route('module.settings.group', 'general'))->assertForbidden();
     }
 
-    public function test_index_redirects_to_the_first_group_alphabetically(): void
+    public function test_index_redirects_to_the_first_ui_group(): void
     {
         $user = $this->createAdminUser();
         Setting::factory()->group('site')->create();
         Setting::factory()->group('general')->create();
+        Setting::factory()->group('email')->create();
 
         $this->actingAs($user)->get(route('module.settings.index'))
             ->assertRedirect(route('module.settings.group', 'general'));
+    }
+
+    public function test_settings_tabs_follow_canonical_ui_order(): void
+    {
+        $user = $this->createAdminUser();
+        Setting::factory()->group('units')->create();
+        Setting::factory()->group('email')->create();
+        Setting::factory()->group('general')->create();
+        Setting::factory()->group('social')->create();
+        Setting::factory()->group('appearance')->create();
+        Setting::factory()->group('seo')->create();
+        Setting::factory()->group('site')->create();
+
+        $this->actingAs($user)->get(route('module.settings.group', 'general'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Settings/Group')
+                ->where('groups', ['general', 'site', 'seo', 'appearance', 'email', 'social', 'units'])
+            );
     }
 
     public function test_a_group_page_only_returns_that_groups_settings_in_sort_order(): void

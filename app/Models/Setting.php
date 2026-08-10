@@ -100,6 +100,52 @@ class Setting extends Model
     }
 
     /**
+     * Preferred tab order on Modules/Settings. Unknown groups append alphabetically.
+     *
+     * @return list<string>
+     */
+    public static function uiGroupOrder(): array
+    {
+        return [
+            'general',
+            'site',
+            'seo',
+            'appearance',
+            'email',
+            'social',
+            'units',
+        ];
+    }
+
+    /**
+     * Distinct visible setting groups in UI tab order.
+     *
+     * @return list<string>
+     */
+    public static function orderedVisibleGroups(): array
+    {
+        $existing = static::query()
+            ->visibleInSettingsUi()
+            ->select('group')
+            ->distinct()
+            ->pluck('group')
+            ->all();
+
+        $preferred = array_values(array_filter(
+            static::uiGroupOrder(),
+            fn (string $group): bool => in_array($group, $existing, true),
+        ));
+
+        $remainder = collect($existing)
+            ->reject(fn (string $group): bool => in_array($group, $preferred, true))
+            ->sort()
+            ->values()
+            ->all();
+
+        return [...$preferred, ...$remainder];
+    }
+
+    /**
      * Exclude settings that have a dedicated module settings UI.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<static>  $query

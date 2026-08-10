@@ -27,9 +27,11 @@ return [
     'groups' => [
         'general' => 'Umum',
         'site' => 'Situs',
+        'seo' => 'SEO',
+        'appearance' => 'Tampilan',
         'email' => 'Email',
         'social' => 'Sosial',
-        'seo' => 'SEO',
+        'units' => 'Satuan',
         'maintenance' => 'Maintenance',
     ],
 
