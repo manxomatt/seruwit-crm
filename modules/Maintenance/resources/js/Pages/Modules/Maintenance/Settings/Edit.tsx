@@ -9,7 +9,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import MaintenanceNav from '../../../MaintenanceNav';
+import MaintenanceNav from '../../../../MaintenanceNav';
 
 interface Settings {
     alert_km_before: string;

@@ -8,7 +8,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import InvoicingNav from '../../../InvoicingNav';
+import InvoicingNav from '../../../../InvoicingNav';
 
 interface Settings {
     default_payment_term_days: string;

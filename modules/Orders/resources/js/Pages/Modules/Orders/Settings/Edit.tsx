@@ -9,7 +9,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import OrdersNav from '../../../OrdersNav';
+import OrdersNav from '../../../../OrdersNav';
 
 interface Settings {
     auto_confirm_do_from_gin: boolean;
