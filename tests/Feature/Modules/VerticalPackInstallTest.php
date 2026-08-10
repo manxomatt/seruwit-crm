@@ -36,7 +36,10 @@ class VerticalPackInstallTest extends TestCase
     {
         $tenant = $this->provisionTenant('Pack Co', 'pack-co', 'owner@pack.test');
         $owner = $this->ownerOf($tenant, 'owner@pack.test');
-        $tenant->update(['plan' => 'pro']);
+        $tenant->update([
+            'plan' => 'pro',
+            'can_install_demo_data' => false,
+        ]);
         tenancy()->end();
 
         $this->actingAs($owner)->get('http://pack-co.localhost/module/modules')

@@ -92,7 +92,7 @@ class SettingSeeder extends Seeder
                 'value' => app()->environment('production') ? 'production' : 'development',
                 'type' => 'select',
                 'label' => 'System Mode',
-                'description' => 'Development disables outbound email and shows verification links / phone OTP on screen. Production sends email and OTP normally.',
+                'description' => 'Development disables outbound email, shows verification links / phone OTP on screen, and grants new workspaces Allow demo data install. Production sends email and OTP normally.',
                 'is_public' => false,
                 'sort_order' => 8,
             ],

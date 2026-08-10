@@ -6,6 +6,7 @@ use App\Models\CentralUser;
 use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\SystemMode;
 
 class CreateTenantAction
 {
@@ -25,6 +26,9 @@ class CreateTenantAction
         $tenant = Tenant::create([
             'name' => $companyName,
             'reseller_global_id' => $resellerGlobalId,
+            // Sandbox workspaces in development may install sample datasets
+            // from Modules without a central admin toggling the flag first.
+            'can_install_demo_data' => SystemMode::isDevelopment(),
         ]);
 
         // Domain first: Tenant::create can leave an orphan row if a later step

@@ -40,6 +40,7 @@ class DemoDataInstallTest extends TestCase
     {
         $tenant = $this->provisionTenant('No Demo Co', 'no-demo-co', 'owner@no-demo.test');
         $owner = $this->ownerOf($tenant, 'owner@no-demo.test');
+        $tenant->update(['can_install_demo_data' => false]);
         tenancy()->end();
 
         $this->actingAs($owner)
@@ -50,6 +51,44 @@ class DemoDataInstallTest extends TestCase
             0,
             Partner::query()->where('notes', 'like', '%'.TenantPartnerDemoSeeder::TAG.'%')->count(),
         ));
+    }
+
+    public function test_development_system_mode_grants_demo_data_on_new_tenants(): void
+    {
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => \App\Support\SystemMode::KEY],
+            [
+                'group' => 'general',
+                'value' => \App\Support\SystemMode::DEVELOPMENT,
+                'type' => 'select',
+                'label' => 'System Mode',
+                'is_public' => false,
+                'sort_order' => 8,
+            ],
+        );
+
+        $tenant = $this->provisionTenant('Dev Demo Co', 'dev-demo-co', 'owner@dev-demo.test');
+
+        $this->assertTrue($tenant->fresh()->canInstallDemoData());
+    }
+
+    public function test_production_system_mode_does_not_grant_demo_data_on_new_tenants(): void
+    {
+        \App\Models\Setting::query()->updateOrCreate(
+            ['key' => \App\Support\SystemMode::KEY],
+            [
+                'group' => 'general',
+                'value' => \App\Support\SystemMode::PRODUCTION,
+                'type' => 'select',
+                'label' => 'System Mode',
+                'is_public' => false,
+                'sort_order' => 8,
+            ],
+        );
+
+        $tenant = $this->provisionTenant('Prod Demo Co', 'prod-demo-co', 'owner@prod-demo.test');
+
+        $this->assertFalse($tenant->fresh()->canInstallDemoData());
     }
 
     public function test_workspace_admin_can_install_and_uninstall_partners_demo(): void

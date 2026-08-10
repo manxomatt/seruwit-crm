@@ -55,6 +55,7 @@ class ModuleCatalogUiTest extends TestCase
     {
         $tenant = $this->provisionTenant('Cat Co', 'cat-co', 'owner@cat.test');
         $owner = $this->ownerOf($tenant, 'owner@cat.test');
+        $tenant->update(['can_install_demo_data' => false]);
 
         $this->actingAs($owner)->get('http://cat-co.localhost/module/modules')
             ->assertOk()

@@ -9,8 +9,9 @@ use Throwable;
  * Platform-wide development vs production behaviour.
  *
  * Stored only in the central settings table so tenant context (OTP, mail) always
- * reads the same toggle. Development disables outbound mail and surfaces OTP /
- * email-verification secrets on screen for local testing.
+ * reads the same toggle. Development disables outbound mail, surfaces OTP /
+ * email-verification secrets on screen, and auto-allows demo data install on
+ * newly provisioned workspaces.
  */
 final class SystemMode
 {
