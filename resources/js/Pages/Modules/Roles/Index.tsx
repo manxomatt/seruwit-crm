@@ -4,6 +4,7 @@ import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, FormEventHandler } from 'react';
 import PageHeader from '@/Components/PageHeader';
@@ -50,6 +51,44 @@ export default function Index({ roles, filters }: Props): JSX.Element {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
     const [processing, setProcessing] = useState(false);
+
+    const EyeIcon = () => (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+    );
+
+    const PencilIcon = () => (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+    );
+
+    const TrashIcon = () => (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+    );
+
+    const EllipsisVerticalIcon = () => (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+            />
+        </svg>
+    );
+
+    const menuItemClassName =
+        'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+
+    const menuItemDangerClassName =
+        'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
+
+    const menuItemDangerDisabledClassName =
+        'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-300 cursor-not-allowed';
 
     const handleSearch: FormEventHandler = (e) => {
         e.preventDefault();
@@ -189,14 +228,13 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {roles.data.map((role) => (
-                                            <tr key={role.id} className="hover:bg-gray-50">
+                                            <tr key={role.id} className="group hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center">
                                                         <div className="h-10 w-10 flex-shrink-0">
-                                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                                                                role.slug === 'admin' ? 'bg-red-600' : 
+                                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${role.slug === 'admin' ? 'bg-red-600' :
                                                                 role.slug === 'user' ? 'bg-blue-600' : 'bg-green-600'
-                                                            }`}>
+                                                                }`}>
                                                                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                                                 </svg>
@@ -242,39 +280,65 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                     {formatDate(role.created_at)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Link
-                                                            href={prefixedRoute('roles.show', role.id)}
-                                                            className="text-gray-600 hover:text-gray-900"
-                                                            title={t('roles.actions.view')}
+                                                    <Menu as="div" className="relative inline-block text-right">
+                                                        <MenuButton
+                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                            title={t('common.actions')}
+                                                            aria-label={t('common.actions')}
                                                         >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                            </svg>
-                                                        </Link>
-                                                        <Link
-                                                            href={prefixedRoute('roles.edit', role.id)}
-                                                            className="text-indigo-600 hover:text-indigo-900"
-                                                            title={t('common.edit')}
+                                                            <EllipsisVerticalIcon />
+                                                        </MenuButton>
+
+                                                        <MenuItems
+                                                            transition
+                                                            anchor="bottom end"
+                                                            className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
                                                         >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                            </svg>
-                                                        </Link>
-                                                        {!role.is_system && (
-                                                            <button
-                                                                onClick={() => openDeleteDialog(role)}
-                                                                className="text-red-600 hover:text-red-900"
-                                                                title={t('common.delete')}
-                                                                disabled={role.users_count > 0}
-                                                            >
-                                                                <svg className={`w-5 h-5 ${role.users_count > 0 ? 'opacity-50 cursor-not-allowed' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                            <MenuItem>
+                                                                <Link
+                                                                    href={prefixedRoute('roles.show', role.id)}
+                                                                    className={menuItemClassName}
+                                                                    title={t('roles.actions.view')}
+                                                                >
+                                                                    <span className="text-gray-500">
+                                                                        <EyeIcon />
+                                                                    </span>
+                                                                    {t('roles.actions.view')}
+                                                                </Link>
+                                                            </MenuItem>
+                                                            <MenuItem>
+                                                                <Link
+                                                                    href={prefixedRoute('roles.edit', role.id)}
+                                                                    className={menuItemClassName}
+                                                                    title={t('common.edit')}
+                                                                >
+                                                                    <span className="text-indigo-600">
+                                                                        <PencilIcon />
+                                                                    </span>
+                                                                    {t('common.edit')}
+                                                                </Link>
+                                                            </MenuItem>
+                                                            <div className="my-1 border-t border-gray-100" />
+                                                            {!role.is_system ? (
+                                                                <MenuItem disabled={role.users_count > 0}>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => openDeleteDialog(role)}
+                                                                        className={
+                                                                            role.users_count > 0
+                                                                                ? menuItemDangerDisabledClassName
+                                                                                : menuItemDangerClassName
+                                                                        }
+                                                                        disabled={role.users_count > 0}
+                                                                        title={t('common.delete')}
+                                                                    >
+                                                                        <TrashIcon />
+                                                                        {t('common.delete')}
+                                                                    </button>
+                                                                </MenuItem>
+                                                            ) : null}
+                                                        </MenuItems>
+                                                    </Menu>
                                                 </td>
                                             </tr>
                                         ))}
@@ -298,13 +362,12 @@ export default function Index({ roles, filters }: Props): JSX.Element {
                                                 key={index}
                                                 onClick={() => link.url && router.get(link.url)}
                                                 disabled={!link.url}
-                                                className={`px-3 py-1 text-sm rounded ${
-                                                    link.active
-                                                        ? 'bg-indigo-600 text-white'
-                                                        : link.url
+                                                className={`px-3 py-1 text-sm rounded ${link.active
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : link.url
                                                         ? 'bg-white text-gray-700 hover:bg-gray-50 border'
                                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                }`}
+                                                    }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
                                         ))}

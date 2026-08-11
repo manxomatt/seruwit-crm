@@ -197,7 +197,7 @@ export default function Index({ pages }: Props): JSX.Element {
         if (!pageToSetHomepage) return;
 
         setSettingHomepage(true);
-        router.patch(prefixedRoute('pages.set-homepage', pageToSetHomepage.id), {
+        router.patch(prefixedRoute('pages.set-homepage', pageToSetHomepage.id), {}, {
             onSuccess: () => closeHomepageModal(),
             onFinish: () => setSettingHomepage(false),
         });
@@ -269,7 +269,7 @@ export default function Index({ pages }: Props): JSX.Element {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {pages.map((page) => (
-                                <tr key={page.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={page.id} className="group hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-medium text-gray-900">
@@ -291,11 +291,10 @@ export default function Index({ pages }: Props): JSX.Element {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <button
                                             onClick={() => togglePublish(page)}
-                                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                                                page.is_published
-                                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                    : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                            }`}
+                                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${page.is_published
+                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                                }`}
                                         >
                                             {page.is_published ? t('pages.status.published') : t('pages.status.draft')}
                                         </button>
@@ -306,7 +305,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
                                         <Menu as="div" className="relative inline-block text-left">
                                             <MenuButton
-                                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                                                 title={t('common.actions')}
                                                 aria-label={t('common.actions')}
                                             >

@@ -2,6 +2,7 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -50,6 +51,22 @@ const DocumentIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
     </svg>
 );
+
+const EllipsisVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+        />
+    </svg>
+);
+
+const menuItemClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+
+const menuItemDangerClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
 
 export default function Index({ posts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -154,7 +171,7 @@ export default function Index({ posts }: Props): JSX.Element {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {posts.map((post) => (
-                                <tr key={post.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={post.id} className="group hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
                                             <span className="text-sm font-medium text-gray-900">
@@ -175,11 +192,10 @@ export default function Index({ posts }: Props): JSX.Element {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <button
                                             onClick={() => togglePublish(post)}
-                                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                                                post.is_published
-                                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                    : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                            }`}
+                                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${post.is_published
+                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                                }`}
                                         >
                                             {post.is_published ? t('posts.status.published') : t('posts.status.draft')}
                                         </button>
@@ -188,29 +204,58 @@ export default function Index({ posts }: Props): JSX.Element {
                                         {formatDate(post.published_at)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <Link
-                                                href={prefixedRoute('posts.show', post.id)}
-                                                className="text-gray-600 hover:text-gray-900"
-                                                title={t('posts.index.preview')}
+                                        <Menu as="div" className="relative inline-block text-right">
+                                            <MenuButton
+                                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                title={t('common.actions')}
+                                                aria-label={t('common.actions')}
                                             >
-                                                <EyeIcon />
-                                            </Link>
-                                            <Link
-                                                href={prefixedRoute('posts.edit', post.id)}
-                                                className="text-indigo-600 hover:text-indigo-900"
-                                                title={t('common.edit')}
+                                                <EllipsisVerticalIcon />
+                                            </MenuButton>
+
+                                            <MenuItems
+                                                transition
+                                                anchor="bottom end"
+                                                className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
                                             >
-                                                <PencilIcon />
-                                            </Link>
-                                            <button
-                                                onClick={() => openDeleteDialog(post)}
-                                                className="text-red-600 hover:text-red-900"
-                                                title={t('common.delete')}
-                                            >
-                                                <TrashIcon />
-                                            </button>
-                                        </div>
+                                                <MenuItem>
+                                                    <Link
+                                                        href={prefixedRoute('posts.show', post.id)}
+                                                        className={menuItemClassName}
+                                                        title={t('posts.index.preview')}
+                                                    >
+                                                        <span className="text-gray-500">
+                                                            <EyeIcon />
+                                                        </span>
+                                                        {t('posts.index.preview')}
+                                                    </Link>
+                                                </MenuItem>
+                                                <MenuItem>
+                                                    <Link
+                                                        href={prefixedRoute('posts.edit', post.id)}
+                                                        className={menuItemClassName}
+                                                        title={t('common.edit')}
+                                                    >
+                                                        <span className="text-indigo-600">
+                                                            <PencilIcon />
+                                                        </span>
+                                                        {t('common.edit')}
+                                                    </Link>
+                                                </MenuItem>
+                                                <div className="my-1 border-t border-gray-100" />
+                                                <MenuItem>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openDeleteDialog(post)}
+                                                        className={menuItemDangerClassName}
+                                                        title={t('common.delete')}
+                                                    >
+                                                        <TrashIcon />
+                                                        {t('common.delete')}
+                                                    </button>
+                                                </MenuItem>
+                                            </MenuItems>
+                                        </Menu>
                                     </td>
                                 </tr>
                             ))}
