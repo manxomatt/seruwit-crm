@@ -7,6 +7,7 @@ import Modal from '@/Components/Modal';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import TextInput from '@/Components/TextInput';
 import PageHeader from '@/Components/PageHeader';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
@@ -43,6 +44,25 @@ const TrashIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
 );
+
+const EllipsisVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+        />
+    </svg>
+);
+
+const menuItemClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+
+const menuItemDangerClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
+
+const menuItemDangerDisabledClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-300 cursor-not-allowed';
 
 export default function Index({ bays, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -154,29 +174,56 @@ export default function Index({ bays, can }: Props): JSX.Element {
                                         <td className="px-6 py-4 text-sm tabular-nums text-gray-700">{bay.active_work_orders_count}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                             {can.manage && (
-                                                <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openEdit(bay)}
-                                                        className="text-indigo-600 hover:text-indigo-900"
-                                                        title={t('common.edit')}
+                                                <Menu as="div" className="relative inline-block text-right">
+                                                    <MenuButton
+                                                        className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                        title={t('common.actions')}
+                                                        aria-label={t('common.actions')}
                                                     >
-                                                        <PencilIcon />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setDeleting(bay)}
-                                                        className="text-red-600 hover:text-red-900 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:text-gray-300"
-                                                        disabled={bay.active_work_orders_count > 0}
-                                                        title={
-                                                            bay.active_work_orders_count > 0
-                                                                ? t('maintenance.messages.bay_in_use')
-                                                                : t('common.delete')
-                                                        }
+                                                        <EllipsisVerticalIcon />
+                                                    </MenuButton>
+
+                                                    <MenuItems
+                                                        transition
+                                                        anchor="bottom end"
+                                                        className="z-50 w-48 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
                                                     >
-                                                        <TrashIcon />
-                                                    </button>
-                                                </div>
+                                                        <MenuItem>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openEdit(bay)}
+                                                                className={menuItemClassName}
+                                                                title={t('common.edit')}
+                                                            >
+                                                                <span className="text-indigo-600">
+                                                                    <PencilIcon />
+                                                                </span>
+                                                                {t('common.edit')}
+                                                            </button>
+                                                        </MenuItem>
+                                                        <div className="my-1 border-t border-gray-100" />
+                                                        <MenuItem disabled={bay.active_work_orders_count > 0}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDeleting(bay)}
+                                                                className={
+                                                                    bay.active_work_orders_count > 0
+                                                                        ? menuItemDangerDisabledClassName
+                                                                        : menuItemDangerClassName
+                                                                }
+                                                                disabled={bay.active_work_orders_count > 0}
+                                                                title={
+                                                                    bay.active_work_orders_count > 0
+                                                                        ? t('maintenance.messages.bay_in_use')
+                                                                        : t('common.delete')
+                                                                }
+                                                            >
+                                                                <TrashIcon />
+                                                                {t('common.delete')}
+                                                            </button>
+                                                        </MenuItem>
+                                                    </MenuItems>
+                                                </Menu>
                                             )}
                                         </td>
                                     </tr>
