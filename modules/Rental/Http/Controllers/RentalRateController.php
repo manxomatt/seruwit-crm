@@ -3,9 +3,11 @@
 namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Http\Requests\StoreRentalRateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRateRequest;
@@ -21,7 +23,7 @@ class RentalRateController extends Controller
 
     public function index(): RedirectResponse
     {
-        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates']);
+        return redirect()->route($this->getRoutePrefix() . '.rental.settings.index', ['tab' => 'rates']);
     }
 
     public function suggest(Request $request, RentalRateResolver $resolver): JsonResponse
@@ -56,6 +58,78 @@ class RentalRateController extends Controller
         return back()->with('success', __('rental.messages.rate_created'));
     }
 
+    /**
+     * Aktifkan / Nonaktifkan banyak tarif sekaligus.
+     */
+    public function batchUpdateStatus(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:rental_rates,id'],
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $validated['ids']);
+        $isActive = (bool) $validated['is_active'];
+
+        $updated = RentalRate::query()
+            ->whereIn('id', $ids)
+            ->update(['is_active' => $isActive]);
+
+        $label = $isActive ? 'Aktif' : 'Non Aktif';
+
+        return back()->with('success', __('rental.messages.rate_batch_status_updated', [
+            'count' => $updated,
+            'status' => $label,
+        ]));
+    }
+
+    /**
+     * Hapus banyak tarif sekaligus, lewati yang terhalang constraint.
+     */
+    public function batchDestroy(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:rental_rates,id'],
+        ]);
+
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $validated['ids']);
+
+        $deleted = 0;
+        $blocked = 0;
+
+        $rates = RentalRate::query()->whereIn('id', $ids)->get();
+
+        foreach ($rates as $rate) {
+            try {
+                DB::transaction(fn() => $rate->delete());
+                $deleted++;
+            } catch (QueryException) {
+                $blocked++;
+            }
+        }
+
+        if ($deleted === 0 && $blocked > 0) {
+            return back()->with('error', __('rental.messages.rate_batch_delete_blocked', [
+                'blocked' => $blocked,
+            ]));
+        }
+
+        if ($blocked > 0) {
+            return back()->with('warning', __('rental.messages.rate_batch_delete_partial', [
+                'deleted' => $deleted,
+                'blocked' => $blocked,
+            ]));
+        }
+
+        return back()->with('success', __('rental.messages.rate_batch_deleted', [
+            'count' => $deleted,
+        ]));
+    }
+
     public function update(UpdateRentalRateRequest $request, RentalRate $rate): RedirectResponse
     {
         $data = $request->validated();
@@ -69,7 +143,11 @@ class RentalRateController extends Controller
 
     public function destroy(RentalRate $rate): RedirectResponse
     {
-        $rate->delete();
+        try {
+            DB::transaction(fn() => $rate->delete());
+        } catch (QueryException) {
+            return back()->with('error', __('rental.messages.rate_delete_referenced'));
+        }
 
         return back()->with('success', __('rental.messages.rate_deleted'));
     }

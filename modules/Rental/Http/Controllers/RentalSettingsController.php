@@ -40,8 +40,11 @@ class RentalSettingsController extends Controller
             'rates' => RentalRate::query()
                 ->with('vehicle:id,name,plate_number,type')
                 ->orderBy('period_type')
+                ->orderByDesc('priority')
                 ->orderBy('name')
-                ->get(),
+                ->paginate(15)
+                ->withQueryString()
+                ->appends(['tab' => 'rates']),
             'vehicles' => Vehicle::query()
                 ->where('status', Vehicle::STATUS_ACTIVE)
                 ->orderBy('name')

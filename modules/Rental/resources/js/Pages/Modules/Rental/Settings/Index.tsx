@@ -54,10 +54,25 @@ interface GeneralSettings {
     calendar_click_to_book: boolean;
 }
 
+interface PaginatedLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface Paginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: PaginatedLink[];
+}
+
 interface Props {
     tab: 'general' | 'rates';
     general?: GeneralSettings;
-    rates?: Rate[];
+    rates?: Paginated<Rate>;
     vehicles?: Vehicle[];
     rentalClasses?: Array<{ value: string; label: string }>;
 }
@@ -361,10 +376,19 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
     );
 }
 
+const DEFAULT_RATES_PAGINATED: Paginated<Rate> = {
+    data: [],
+    current_page: 1,
+    last_page: 1,
+    per_page: 15,
+    total: 0,
+    links: [{ url: null, label: '&laquo; Previous', active: false }, { url: '#', label: '1', active: true }, { url: null, label: 'Next &raquo;', active: false }],
+};
+
 export default function Index({
     tab,
     general = DEFAULT_GENERAL,
-    rates = [],
+    rates = DEFAULT_RATES_PAGINATED,
     vehicles = [],
     rentalClasses = [],
 }: Props): JSX.Element {
@@ -387,11 +411,10 @@ export default function Index({
                         <Link
                             key={item.key}
                             href={prefixedRoute('rental.settings.index', { tab: item.key })}
-                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
-                                tab === item.key
+                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors ${tab === item.key
                                     ? 'border-indigo-600 text-indigo-600'
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                            }`}
+                                }`}
                         >
                             {item.label}
                         </Link>

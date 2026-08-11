@@ -648,6 +648,11 @@ return [
         'rate_created' => 'Tarif dibuat.',
         'rate_updated' => 'Tarif diperbarui.',
         'rate_deleted' => 'Tarif dihapus.',
+        'rate_delete_referenced' => 'Tarif tidak dapat dihapus: masih direferensikan oleh data aktif.',
+        'rate_batch_status_updated' => 'Status :count tarif diperbarui menjadi :status.',
+        'rate_batch_deleted' => ':count tarif dihapus.',
+        'rate_batch_delete_partial' => ':deleted tarif dihapus; :blocked tidak dapat dihapus karena masih digunakan.',
+        'rate_batch_delete_blocked' => ':blocked tarif tidak dapat dihapus karena masih digunakan.',
     ],
 
     'errors' => [

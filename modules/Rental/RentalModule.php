@@ -119,6 +119,8 @@ class RentalModule implements ModuleContract
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');
         Route::get('/rental/rates/suggest', [RentalRateController::class, 'suggest'])->middleware('permission:rental,create')->name('rental.rates.suggest');
         Route::post('/rental/rates', [RentalRateController::class, 'store'])->middleware('permission:rental,create')->name('rental.rates.store');
+        Route::patch('/rental/rates/batch-status', [RentalRateController::class, 'batchUpdateStatus'])->middleware('permission:rental,update')->name('rental.rates.batch-status');
+        Route::post('/rental/rates/batch-destroy', [RentalRateController::class, 'batchDestroy'])->middleware('permission:rental,delete')->name('rental.rates.batch-destroy');
         Route::patch('/rental/rates/{rate}', [RentalRateController::class, 'update'])->middleware('permission:rental,update')->name('rental.rates.update');
         Route::delete('/rental/rates/{rate}', [RentalRateController::class, 'destroy'])->middleware('permission:rental,delete')->name('rental.rates.destroy');
 

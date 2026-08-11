@@ -648,6 +648,11 @@ return [
         'rate_created' => 'Rate created.',
         'rate_updated' => 'Rate updated.',
         'rate_deleted' => 'Rate deleted.',
+        'rate_delete_referenced' => 'Rate cannot be deleted: it is currently referenced by one or more active records.',
+        'rate_batch_status_updated' => ':count rate(s) status updated to :status.',
+        'rate_batch_deleted' => ':count rate(s) deleted.',
+        'rate_batch_delete_partial' => ':deleted rate(s) deleted; :blocked could not be deleted because they are in use.',
+        'rate_batch_delete_blocked' => ':blocked rate(s) could not be deleted because they are currently in use.',
     ],
 
     'errors' => [
