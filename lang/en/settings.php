@@ -45,6 +45,7 @@ return [
         'select' => 'Select',
         'json' => 'JSON',
         'color' => 'Color',
+        'image' => 'Image',
     ],
 
     'boolean_options' => [

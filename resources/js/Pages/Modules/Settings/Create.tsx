@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import ImageUploader from '@/Components/ImageUploader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import PageHeader from '@/Components/PageHeader';
@@ -47,6 +48,7 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
         { value: 'select', label: t('settings.types.select') },
         { value: 'json', label: t('settings.types.json') },
         { value: 'color', label: t('settings.types.color') },
+        { value: 'image', label: t('settings.types.image') },
     ];
 
     return (
@@ -182,6 +184,12 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                         onChange={(e) => setData('value', e.target.value)}
                                     />
                                 </div>
+                            ) : data.type === 'image' ? (
+                                <ImageUploader
+                                    value={data.value}
+                                    onChange={(value) => setData('value', value)}
+                                    className="mt-1"
+                                />
                             ) : (
                                 <TextInput
                                     id="value"

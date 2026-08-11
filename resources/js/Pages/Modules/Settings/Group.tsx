@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import ImageUploader from '@/Components/ImageUploader';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import PageHeader from '@/Components/PageHeader';
@@ -298,11 +299,10 @@ export default function Group({
                         <Link
                             key={g}
                             href={prefixedRoute('settings.group', g)}
-                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${
-                                g === currentGroup
-                                    ? 'border-indigo-500 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                            }`}
+                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${g === currentGroup
+                                ? 'border-indigo-500 text-indigo-600'
+                                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                }`}
                         >
                             {formatGroupLabel(g, t)}
                         </Link>
@@ -347,6 +347,17 @@ export default function Group({
                                             />
                                             <span className="font-mono uppercase">{setting.value}</span>
                                         </p>
+                                    ) : (setting.type === 'image' || setting.key === 'site.logo' || setting.key === 'site.favicon') && setting.value ? (
+                                        <div className="mt-2">
+                                            <img
+                                                src={setting.value}
+                                                alt={setting.label}
+                                                className="max-h-24 rounded-lg border border-gray-200 object-contain"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
                                     ) : (
                                         <p className="mt-2 text-sm text-gray-900">{formatDisplayValue(setting)}</p>
                                     )}
@@ -407,6 +418,11 @@ export default function Group({
                                                             onChange={(e) => updateValue(index, e.target.value)}
                                                         />
                                                     </div>
+                                                ) : setting.type === 'image' || setting.key === 'site.logo' || setting.key === 'site.favicon' ? (
+                                                    <ImageUploader
+                                                        value={data.settings[index].value}
+                                                        onChange={(value) => updateValue(index, value)}
+                                                    />
                                                 ) : (
                                                     <TextInput
                                                         id={`value-${setting.id}`}

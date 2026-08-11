@@ -32,7 +32,7 @@ class UpdateSettingRequest extends FormRequest
             ],
             'group' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9_]+$/'],
             'value' => ['nullable', 'string'],
-            'type' => ['required', 'string', 'in:text,textarea,boolean,number,email,url,select,json,color'],
+            'type' => ['required', 'string', 'in:text,textarea,boolean,number,email,url,select,json,color,image'],
             'label' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'is_public' => ['boolean'],

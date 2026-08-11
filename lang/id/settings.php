@@ -45,6 +45,7 @@ return [
         'select' => 'Pilihan',
         'json' => 'JSON',
         'color' => 'Warna',
+        'image' => 'Gambar',
     ],
 
     'boolean_options' => [
