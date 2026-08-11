@@ -39,6 +39,7 @@ class PartnerController extends Controller
 
     public function index(): Response
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $partners = $this->filteredPartnersQuery()
@@ -285,6 +286,7 @@ class PartnerController extends Controller
 
     public function show(Partner $partner): Response
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $partner->load([
