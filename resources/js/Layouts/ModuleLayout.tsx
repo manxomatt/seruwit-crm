@@ -300,12 +300,21 @@ type MenuGroup =
     | { titleKey: string; modules: string[] };
 
 const MENU_GROUPS: MenuGroup[] = [
+    {
+        titleKey: 'car_rental',
+        modules: [
+            'rental-dashboard',
+            'rental-reservation',
+            'rental-availability',
+            'rental-calendar',
+            'rental-settings',
+        ],
+    },
     { titleKey: 'intelligence', modules: ['bi', 'approvals'] },
     { titleKey: 'master_data', modules: ['partners', 'products'] },
     { titleKey: 'finance', modules: ['accounting', 'invoicing', 'receivables', 'payables', 'billing'] },
     { titleKey: 'procurement_warehouse', modules: ['purchasing', 'sales', 'inventory'] },
     { titleKey: 'fleet_compliance', modules: ['fleet', 'document', 'maintenance', 'tracking', 'scoring'] },
-    { titleKey: 'car_rental', modules: ['rental-dashboard', 'rental-reservation', 'rental-availability', 'rental-calendar', 'rental-settings'] },
     { titleKey: 'distribution_logistics', modules: ['transportation', 'orders', 'outbound', 'routing'] },
     { titleKey: 'sales_commercial', modules: ['pos', 'canvassing', 'shuttle', 'promotions'] },
     { titleKey: 'content', tier: 'content', also: ['media'] },

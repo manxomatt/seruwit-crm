@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Schema;
 use Modules\Partners\Models\Partner;
 use Modules\Partners\Models\PartnerIndustry;
 use Modules\Partners\Models\PartnerTag;
+use Modules\Partners\Models\PartnerTitle;
+use Modules\Partners\Models\PartnerType;
 
 /**
  * Seeds 20 demo partners: customers, suppliers, and dual-role partners.
@@ -27,6 +29,8 @@ class TenantPartnerDemoSeeder extends Seeder
 
         $industries = $this->seedIndustries();
         $tags = $this->seedTags();
+        $titles = $this->seedTitles();
+        $typeIdsByCode = $this->ensurePartnerTypeDefaults();
 
         $partners = [
             // Customers (8)
@@ -76,6 +80,7 @@ class TenantPartnerDemoSeeder extends Seeder
                 'phone' => '0318765432',
                 'mobile' => '081234567803',
                 'account_type' => 'individual',
+                'title' => 'Pak',
                 'customer_rank' => 1,
                 'supplier_rank' => 0,
                 'credit_limit' => 15000000,
@@ -169,9 +174,10 @@ class TenantPartnerDemoSeeder extends Seeder
                 'code' => 'PART-C-000008',
                 'name' => 'Budi Santoso',
                 'email' => 'budi.santoso@email.com',
-                'phone' => '081298765432',
+                'phone' => '0721550011',
                 'mobile' => '081298765432',
                 'account_type' => 'individual',
+                'title' => 'Pak',
                 'job_title' => 'Pemilik Toko',
                 'customer_rank' => 1,
                 'supplier_rank' => 0,
@@ -423,8 +429,9 @@ class TenantPartnerDemoSeeder extends Seeder
             $industryName = $data['industry'] ?? null;
             $tagNames = $data['tags'] ?? [];
             $address = $data['address'] ?? null;
+            $titleName = $data['title'] ?? null;
 
-            unset($data['industry'], $data['tags'], $data['address']);
+            unset($data['industry'], $data['tags'], $data['address'], $data['title']);
 
             $data['account_type'] ??= 'company';
             $data['sub_type'] = match (true) {
@@ -434,9 +441,14 @@ class TenantPartnerDemoSeeder extends Seeder
             };
             $data['status'] = 'active';
             $data['industry_id'] = $industryName ? ($industries[$industryName]?->id) : null;
-            $data['notes'] = trim(($data['notes'] ?? '').' '.self::TAG.' Demo partner.');
+            $data['title_id'] = $titleName ? ($titles[$titleName]?->id) : null;
+            $data['notes'] = trim(
+                (string) ($data['notes'] ?? '')
+                    .' '
+                    .self::TAG
+                    .' Demo partner.'
+            ) ?: null;
 
-            // Soft-deleted demo rows still occupy partners_code_unique; restore them.
             $partner = Partner::withTrashed()->updateOrCreate(
                 ['code' => $data['code']],
                 $data
@@ -444,6 +456,22 @@ class TenantPartnerDemoSeeder extends Seeder
 
             if ($partner->trashed()) {
                 $partner->restore();
+            }
+
+            if (Schema::hasTable('partner_partner_type') && $typeIdsByCode !== []) {
+                $typeAttach = [];
+                if ($partner->customer_rank > 0 && isset($typeIdsByCode['customer'])) {
+                    $typeAttach[] = $typeIdsByCode['customer'];
+                }
+                if ($partner->supplier_rank > 0 && isset($typeIdsByCode['supplier'])) {
+                    $typeAttach[] = $typeIdsByCode['supplier'];
+                }
+                if ($typeAttach === [] && isset($typeIdsByCode['other'])) {
+                    $typeAttach[] = $typeIdsByCode['other'];
+                }
+                if ($typeAttach !== []) {
+                    $partner->types()->sync($typeAttach);
+                }
             }
 
             if ($tagNames !== [] && Schema::hasTable('partner_partner_tag')) {
@@ -636,5 +664,109 @@ class TenantPartnerDemoSeeder extends Seeder
         }
 
         return $tags;
+    }
+
+    /** @return array<string, PartnerTitle> */
+    private function seedTitles(): array
+    {
+        if (! Schema::hasTable('partner_titles')) {
+            return [];
+        }
+
+        $definitions = [
+            'Pak' => ['name' => 'Bapak', 'short_name' => 'Pak'],
+            'Bu' => ['name' => 'Ibu',   'short_name' => 'Bu'],
+            'Drs' => ['name' => 'Doktorandus', 'short_name' => 'Drs'],
+            'Dr' => ['name' => 'Dokter', 'short_name' => 'Dr'],
+            'Ir' => ['name' => 'Insinyur', 'short_name' => 'Ir'],
+            'Hj' => ['name' => 'Hajjah', 'short_name' => 'Hj'],
+            'H' => ['name' => 'Haji',  'short_name' => 'H'],
+            'Sdt' => ['name' => 'Saudara', 'short_name' => 'Sdt'],
+        ];
+
+        $titles = [];
+
+        foreach ($definitions as $shortKey => $row) {
+            $titles[$shortKey] = PartnerTitle::query()->firstOrCreate(
+                ['short_name' => $row['short_name']],
+                ['name' => $row['name']]
+            );
+        }
+
+        return $titles;
+    }
+
+    /**
+     * Ensure the three default partner type rows (customer/supplier/other) exist.
+     *
+     * Migration 2026_08_05_120000 seeds these, but on older schemas or when the
+     * seeder runs before the migration they may be missing.  Re-create them
+     * with the same payload the migration uses, then return id map by code.
+     *
+     * @return array<string, int> map of code => type id
+     */
+    private function ensurePartnerTypeDefaults(): array
+    {
+        if (! Schema::hasTable('partner_types')) {
+            return [];
+        }
+
+        $nameIsJson = Schema::hasColumn('partner_types', 'code');
+
+        $catalog = [
+            'customer' => [
+                'name' => ['id' => 'Customer', 'en' => 'Customer'],
+                'description' => [
+                    'id' => 'Pihak yang membeli atau menyewa dari kita.',
+                    'en' => 'Party that buys or rents from us.',
+                ],
+                'affects_customer_rank' => true,
+                'affects_supplier_rank' => false,
+            ],
+            'supplier' => [
+                'name' => ['id' => 'Supplier', 'en' => 'Supplier'],
+                'description' => [
+                    'id' => 'Pihak yang memasok atau menjual kepada kita.',
+                    'en' => 'Party that supplies or sells to us.',
+                ],
+                'affects_customer_rank' => false,
+                'affects_supplier_rank' => true,
+            ],
+            'other' => [
+                'name' => ['id' => 'Lainnya', 'en' => 'Other'],
+                'description' => [
+                    'id' => 'Pihak ketiga lainnya (bukan customer / supplier).',
+                    'en' => 'Other third party (neither customer nor supplier).',
+                ],
+                'affects_customer_rank' => false,
+                'affects_supplier_rank' => false,
+            ],
+        ];
+
+        foreach ($catalog as $code => $row) {
+            $payload = [
+                'name' => $nameIsJson ? $row['name'] : ($row['name']['id'] ?? $code),
+                'description' => $nameIsJson
+                    ? $row['description']
+                    : ($row['description']['id'] ?? null),
+                'affects_customer_rank' => $row['affects_customer_rank'],
+                'affects_supplier_rank' => $row['affects_supplier_rank'],
+                'is_active' => true,
+            ];
+
+            if ($nameIsJson) {
+                $payload['code'] = $code;
+            }
+
+            PartnerType::query()->firstOrCreate(
+                $nameIsJson ? ['code' => $code] : ['name' => $payload['name']],
+                $payload
+            );
+        }
+
+        return PartnerType::query()
+            ->whereIn('code', array_keys($catalog))
+            ->pluck('id', 'code')
+            ->all();
     }
 }
