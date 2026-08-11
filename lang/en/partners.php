@@ -66,6 +66,7 @@ return [
     'fields' => [
         'account_type' => 'Account Type',
         'name' => 'Name',
+        'picture' => 'Picture / Avatar',
         'title' => 'Title',
         'job_title' => 'Job Title',
         'parent_company' => 'Parent Company',

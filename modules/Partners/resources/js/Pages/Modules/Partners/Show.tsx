@@ -91,6 +91,7 @@ interface Partner {
     account_type: string;
     sub_type: string | null;
     name: string;
+    picture_url: string | null;
     email: string | null;
     phone: string | null;
     mobile: string | null;
@@ -173,8 +174,8 @@ function StatCard({
         tone === 'success'
             ? 'text-emerald-700'
             : tone === 'warning'
-              ? 'text-amber-700'
-              : 'text-gray-900';
+                ? 'text-amber-700'
+                : 'text-gray-900';
 
     return (
         <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
@@ -452,12 +453,12 @@ export default function Show({ partner, can }: Props): JSX.Element {
 
     const addressDeleteDetail = addressToDelete
         ? [
-              t(`partners.address_type.${addressToDelete.type}`, undefined, addressToDelete.type),
-              addressToDelete.label,
-              addressToDelete.street,
-          ]
-              .filter(Boolean)
-              .join(' — ')
+            t(`partners.address_type.${addressToDelete.type}`, undefined, addressToDelete.type),
+            addressToDelete.label,
+            addressToDelete.street,
+        ]
+            .filter(Boolean)
+            .join(' — ')
         : '';
 
     const bankAccountLastDigits = bankAccountToDelete ? bankAccountToDelete.account_number.slice(-4) : '';
@@ -465,38 +466,38 @@ export default function Show({ partner, can }: Props): JSX.Element {
     const typeBadges =
         partner.types?.length > 0
             ? partner.types.map((type, index) => ({
-                  key: type.code,
-                  label: type.label || type.code,
-                  className: typeBadgeColors[index % typeBadgeColors.length],
-              }))
+                key: type.code,
+                label: type.label || type.code,
+                className: typeBadgeColors[index % typeBadgeColors.length],
+            }))
             : [];
 
     const roleBadges: Array<{ key: string; label: string; className: string }> =
         typeBadges.length > 0
             ? typeBadges
             : (() => {
-                  const badges: Array<{ key: string; label: string; className: string }> = [];
-                  if (partner.customer_rank > 0) {
-                      badges.push({
-                          key: 'customer',
-                          label: t('partners.role.customer'),
-                          className: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-600/20',
-                      });
-                  }
-                  if (partner.supplier_rank > 0) {
-                      badges.push({
-                          key: 'supplier',
-                          label: t('partners.role.supplier'),
-                          className: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-600/20',
-                      });
-                  }
-                  return badges;
-              })();
+                const badges: Array<{ key: string; label: string; className: string }> = [];
+                if (partner.customer_rank > 0) {
+                    badges.push({
+                        key: 'customer',
+                        label: t('partners.role.customer'),
+                        className: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-600/20',
+                    });
+                }
+                if (partner.supplier_rank > 0) {
+                    badges.push({
+                        key: 'supplier',
+                        label: t('partners.role.supplier'),
+                        className: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-600/20',
+                    });
+                }
+                return badges;
+            })();
 
     const creditLimitFormatted = partner.credit_limit
         ? new Intl.NumberFormat(localeTag, { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(
-              Number(partner.credit_limit),
-          )
+            Number(partner.credit_limit),
+        )
         : null;
 
     const primaryPhone = partner.mobile || partner.phone;
@@ -537,9 +538,25 @@ export default function Show({ partner, can }: Props): JSX.Element {
             <div className="space-y-6">
                 <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                     <div className="flex flex-col gap-5 border-b border-gray-100 p-6 sm:flex-row sm:items-start">
-                        <div className="shrink-0">
+                        <div className="relative shrink-0">
+                            {partner.picture_url ? (
+                                <img
+                                    src={partner.picture_url}
+                                    alt={partner.name}
+                                    className={`h-28 w-28 rounded-2xl object-cover border-2 ${avatarTone}`}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null;
+                                        if (fallback) {
+                                            fallback.style.display = 'flex';
+                                        }
+                                    }}
+                                />
+                            ) : null}
                             <div
-                                className={`flex h-28 w-28 flex-col items-center justify-center rounded-2xl border-2 px-2 text-center ${avatarTone}`}
+                                className={`h-28 w-28 flex-col items-center justify-center rounded-2xl border-2 px-2 text-center ${avatarTone} ${partner.picture_url ? 'absolute inset-0 hidden' : 'flex'
+                                    }`}
+                                style={partner.picture_url ? { display: 'none' } : {}}
                             >
                                 <span className="text-2xl font-semibold">{initials(partner.name) || '—'}</span>
                                 <p className="mt-1 text-[10px] font-medium uppercase leading-tight tracking-wide opacity-80">

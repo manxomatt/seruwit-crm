@@ -31,6 +31,7 @@ class Partner extends Model
         'account_type',
         'sub_type',
         'name',
+        'picture_url',
         'email',
         'phone',
         'mobile',

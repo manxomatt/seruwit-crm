@@ -3,6 +3,7 @@ import ColumnVisibilityMenu, {
     buildColumnVisibility,
     type ColumnDef,
 } from '@/Components/ColumnVisibilityMenu';
+import Dropdown from '@/Components/Dropdown';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
@@ -45,6 +46,7 @@ interface Partner {
     id: number;
     code: string;
     name: string;
+    picture_url: string | null;
     account_type: string;
     email: string | null;
     phone: string | null;
@@ -103,6 +105,28 @@ const getStatusBadgeColor = (status: string) => {
         : 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20';
 };
 
+const getInitials = (name: string): string => {
+    const words = name.split(/\s+/).filter(Boolean).slice(0, 2);
+    if (words.length === 0) return '?';
+    return words.map((w) => w.charAt(0).toUpperCase()).join('');
+};
+
+const AVATAR_COLORS = [
+    'bg-rose-100 text-rose-700',
+    'bg-sky-100 text-sky-700',
+    'bg-emerald-100 text-emerald-700',
+    'bg-amber-100 text-amber-700',
+    'bg-violet-100 text-violet-700',
+    'bg-indigo-100 text-indigo-700',
+    'bg-fuchsia-100 text-fuchsia-700',
+    'bg-teal-100 text-teal-700',
+];
+
+const getAvatarColor = (id: number, name: string): string => {
+    const source = name.length > 0 ? name.charCodeAt(0) + id : id;
+    return AVATAR_COLORS[source % AVATAR_COLORS.length];
+};
+
 const SearchIcon = () => (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -131,6 +155,12 @@ const TrashIcon = () => (
 const CloseIcon = () => (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+);
+
+const DotsVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M10 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM10 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM10 18a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" />
     </svg>
 );
 
@@ -504,11 +534,10 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             key={`status-${pill.value || 'all'}`}
                                             type="button"
                                             onClick={() => applyFilters({ status: pill.value || null })}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                                                active
-                                                    ? 'bg-gray-900 text-white'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                                            }`}
+                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
+                                                ? 'bg-gray-900 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                                }`}
                                         >
                                             {pill.label}
                                         </button>
@@ -523,11 +552,10 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             key={`account-${pill.value || 'all'}`}
                                             type="button"
                                             onClick={() => applyFilters({ account_type: pill.value || null })}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                                                active
-                                                    ? 'bg-indigo-600 text-white'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                                            }`}
+                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                                }`}
                                         >
                                             {pill.label}
                                         </button>
@@ -542,11 +570,10 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             key={`role-${pill.value || 'all'}`}
                                             type="button"
                                             onClick={() => applyFilters({ role: pill.value || null })}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                                                active
-                                                    ? 'bg-sky-700 text-white'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                                            }`}
+                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
+                                                ? 'bg-sky-700 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                                }`}
                                         >
                                             {pill.label}
                                         </button>
@@ -667,14 +694,41 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                 )}
                                                 {visibleColumns.name && (
                                                     <td className="whitespace-nowrap px-3 py-2.5">
-                                                        <Link
-                                                            href={prefixedRoute('partners.show', partner.id)}
-                                                            className="text-sm font-medium text-gray-900 hover:text-indigo-700"
-                                                        >
-                                                            {partner.name}
-                                                        </Link>
-                                                        <div className="text-xs text-gray-500">
-                                                            {t(`partners.account_type.${partner.account_type}`)}
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="relative shrink-0">
+                                                                {partner.picture_url ? (
+                                                                    <img
+                                                                        src={partner.picture_url}
+                                                                        alt={partner.name}
+                                                                        className="h-10 w-10 rounded-full object-cover ring-1 ring-gray-200"
+                                                                        onError={(e) => {
+                                                                            (e.target as HTMLImageElement).style.display = 'none';
+                                                                            const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null;
+                                                                            if (fallback) {
+                                                                                fallback.style.display = 'flex';
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                ) : null}
+                                                                <div
+                                                                    className={`h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ring-1 ring-gray-200 ${partner.picture_url ? 'absolute inset-0 hidden' : `inline-flex ${getAvatarColor(partner.id, partner.name)}`
+                                                                        }`}
+                                                                    style={partner.picture_url ? { display: 'none' } : {}}
+                                                                >
+                                                                    {getInitials(partner.name)}
+                                                                </div>
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <Link
+                                                                    href={prefixedRoute('partners.show', partner.id)}
+                                                                    className="block truncate text-sm font-medium text-gray-900 hover:text-indigo-700"
+                                                                >
+                                                                    {partner.name}
+                                                                </Link>
+                                                                <div className="text-xs text-gray-500">
+                                                                    {t(`partners.account_type.${partner.account_type}`)}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                 )}
@@ -720,32 +774,61 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                     </td>
                                                 )}
                                                 <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                                                    <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-                                                        <Link
-                                                            href={prefixedRoute('partners.show', partner.id)}
-                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                                                            title={t('common.view', undefined, 'View')}
-                                                        >
-                                                            <EyeIcon />
-                                                        </Link>
-                                                        {can.update && (
-                                                            <Link
-                                                                href={prefixedRoute('partners.edit', partner.id)}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-indigo-600 hover:bg-indigo-50"
-                                                                title={t('common.edit')}
-                                                            >
-                                                                <PencilIcon />
-                                                            </Link>
+                                                    <div className="flex items-center justify-end">
+                                                        {(can.update || can.delete) && (
+                                                            <Dropdown>
+                                                                <Dropdown.Trigger>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-opacity hover:bg-gray-100 hover:text-gray-900 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                                        title={t('common.actions')}
+                                                                    >
+                                                                        <DotsVerticalIcon />
+                                                                    </button>
+                                                                </Dropdown.Trigger>
+                                                                <Dropdown.Content align="right" width="48">
+                                                                    <Dropdown.Link
+                                                                        href={prefixedRoute('partners.show', partner.id)}
+                                                                    >
+                                                                        <span className="flex items-center gap-2">
+                                                                            <EyeIcon />
+                                                                            <span>{t('common.view', undefined, 'View')}</span>
+                                                                        </span>
+                                                                    </Dropdown.Link>
+                                                                    {can.update && (
+                                                                        <Dropdown.Link
+                                                                            href={prefixedRoute('partners.edit', partner.id)}
+                                                                            className="text-indigo-700 hover:text-indigo-900"
+                                                                        >
+                                                                            <span className="flex items-center gap-2">
+                                                                                <PencilIcon />
+                                                                                <span>{t('common.edit')}</span>
+                                                                            </span>
+                                                                        </Dropdown.Link>
+                                                                    )}
+                                                                    {can.delete && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => openDeleteDialog(partner)}
+                                                                            className="block w-full px-4 py-2 text-start text-sm leading-5 text-rose-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                                                                        >
+                                                                            <span className="flex items-center gap-2">
+                                                                                <TrashIcon />
+                                                                                <span>{t('common.delete')}</span>
+                                                                            </span>
+                                                                        </button>
+                                                                    )}
+                                                                </Dropdown.Content>
+                                                            </Dropdown>
                                                         )}
-                                                        {can.delete && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openDeleteDialog(partner)}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50"
-                                                                title={t('common.delete')}
+                                                        {!(can.update || can.delete) && (
+                                                            <Link
+                                                                href={prefixedRoute('partners.show', partner.id)}
+                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                                                                title={t('common.view', undefined, 'View')}
                                                             >
-                                                                <TrashIcon />
-                                                            </button>
+                                                                <EyeIcon />
+                                                            </Link>
                                                         )}
                                                     </div>
                                                 </td>
@@ -772,13 +855,12 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             type="button"
                                             onClick={() => link.url && router.get(link.url)}
                                             disabled={!link.url}
-                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                                                link.active
-                                                    ? 'bg-gray-900 text-white'
-                                                    : link.url
-                                                      ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                      : 'cursor-not-allowed text-gray-300'
-                                            }`}
+                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${link.active
+                                                ? 'bg-gray-900 text-white'
+                                                : link.url
+                                                    ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                                    : 'cursor-not-allowed text-gray-300'
+                                                }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
                                     ))}

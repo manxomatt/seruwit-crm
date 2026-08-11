@@ -19,6 +19,7 @@ class StorePartnerRequest extends FormRequest
         return [
             'account_type' => ['required', 'string', 'in:company,individual'],
             'name' => ['required', 'string', 'max:255'],
+            'picture_url' => ['nullable', 'string', 'max:2048'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'mobile' => ['nullable', 'string', 'max:30'],

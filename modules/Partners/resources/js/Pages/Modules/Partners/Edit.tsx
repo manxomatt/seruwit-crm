@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
+import ImageUploader from '@/Components/ImageUploader';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import MoneyInput from '@/Components/MoneyInput';
@@ -56,6 +57,7 @@ interface PartnerData {
     sub_type: string | null;
     types?: PartnerTypeRef[];
     name: string;
+    picture_url: string | null;
     email: string | null;
     phone: string | null;
     mobile: string | null;
@@ -144,11 +146,10 @@ function ChoiceChip({
         <button
             type="button"
             onClick={onClick}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                active
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${active
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
         >
             {children}
         </button>
@@ -170,6 +171,7 @@ export default function Edit({
     const { data, setData, patch, processing, errors } = useForm({
         account_type: partner.account_type,
         name: partner.name,
+        picture_url: partner.picture_url || '',
         email: partner.email || '',
         phone: partner.phone || '',
         mobile: partner.mobile || '',
@@ -256,19 +258,36 @@ export default function Edit({
             <form id="partner-edit-form" onSubmit={submit} className="space-y-6">
                 <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                     <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
-                        <div
-                            className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-2xl border-2 ${avatarTone}`}
-                        >
-                            <span className="text-xl font-semibold">{initials(data.name || partner.name) || '—'}</span>
+                        <div className="relative shrink-0">
+                            {data.picture_url ? (
+                                <img
+                                    src={data.picture_url}
+                                    alt={data.name || partner.name}
+                                    className={`h-20 w-20 rounded-2xl object-cover border-2 ${avatarTone}`}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null;
+                                        if (fallback) {
+                                            fallback.style.display = 'flex';
+                                        }
+                                    }}
+                                />
+                            ) : null}
+                            <div
+                                className={`h-20 w-20 flex-col items-center justify-center rounded-2xl border-2 ${avatarTone} ${data.picture_url ? 'absolute inset-0 hidden' : 'flex'
+                                    }`}
+                                style={data.picture_url ? { display: 'none' } : {}}
+                            >
+                                <span className="text-xl font-semibold">{initials(data.name || partner.name) || '—'}</span>
+                            </div>
                         </div>
                         <div className="min-w-0 flex-1 space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
                                 <span
-                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                        data.status === 'active'
-                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20'
-                                            : 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20'
-                                    }`}
+                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${data.status === 'active'
+                                        ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20'
+                                        : 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20'
+                                        }`}
                                 >
                                     {t(`partners.status.${data.status}`)}
                                 </span>
@@ -310,11 +329,10 @@ export default function Edit({
                                                 key={type}
                                                 type="button"
                                                 onClick={() => setData('account_type', type)}
-                                                className={`rounded-xl border px-4 py-3 text-left transition ${
-                                                    active
-                                                        ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200'
-                                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                                                }`}
+                                                className={`rounded-xl border px-4 py-3 text-left transition ${active
+                                                    ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200'
+                                                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                                                    }`}
                                             >
                                                 <p className={`text-sm font-semibold ${active ? 'text-indigo-900' : 'text-gray-900'}`}>
                                                     {t(`partners.account_type.${type}`)}
@@ -411,6 +429,15 @@ export default function Edit({
                                         autoFocus
                                     />
                                     <InputError message={errors.name} className="mt-2" />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <InputLabel value={t('partners.fields.picture')} />
+                                    <ImageUploader
+                                        value={data.picture_url}
+                                        onChange={(value) => setData('picture_url', value)}
+                                        className="mt-1"
+                                    />
+                                    <InputError message={errors.picture_url} className="mt-2" />
                                 </div>
                                 {isIndividual && (
                                     <div>
@@ -656,11 +683,10 @@ export default function Edit({
                             subtitle={t('partners.edit.sections.risk_hint')}
                         >
                             <label
-                                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
-                                    data.is_blacklisted
-                                        ? 'border-rose-200 bg-rose-50'
-                                        : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                                }`}
+                                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${data.is_blacklisted
+                                    ? 'border-rose-200 bg-rose-50'
+                                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                                    }`}
                             >
                                 <input
                                     type="checkbox"

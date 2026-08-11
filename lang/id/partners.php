@@ -66,6 +66,7 @@ return [
     'fields' => [
         'account_type' => 'Tipe Akun',
         'name' => 'Nama',
+        'picture' => 'Foto / Avatar',
         'title' => 'Gelar',
         'job_title' => 'Jabatan',
         'parent_company' => 'Perusahaan Induk',
