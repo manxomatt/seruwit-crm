@@ -3,7 +3,6 @@ import ColumnVisibilityMenu, {
     buildColumnVisibility,
     type ColumnDef,
 } from '@/Components/ColumnVisibilityMenu';
-import Dropdown from '@/Components/Dropdown';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
@@ -12,6 +11,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState, FormEventHandler } from 'react';
 import PartnersNav from '../../../PartnersNav';
@@ -158,11 +158,21 @@ const CloseIcon = () => (
     </svg>
 );
 
-const DotsVerticalIcon = () => (
-    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M10 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM10 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM10 18a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" />
+const EllipsisVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+        />
     </svg>
 );
+
+const menuItemClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+
+const menuItemDangerClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
 
 function readStoredColumns(): Partial<Record<PartnerColumn, boolean>> | null {
     try {
@@ -774,63 +784,61 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                     </td>
                                                 )}
                                                 <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                                                    <div className="flex items-center justify-end">
-                                                        {(can.update || can.delete) && (
-                                                            <Dropdown>
-                                                                <Dropdown.Trigger>
+                                                    <Menu as="div" className="relative inline-block text-right">
+                                                        <MenuButton
+                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                            title={t('common.actions')}
+                                                            aria-label={t('common.actions')}
+                                                        >
+                                                            <EllipsisVerticalIcon />
+                                                        </MenuButton>
+
+                                                        <MenuItems
+                                                            transition
+                                                            anchor="bottom end"
+                                                            className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                                        >
+                                                            <MenuItem>
+                                                                <Link
+                                                                    href={prefixedRoute('partners.show', partner.id)}
+                                                                    className={menuItemClassName}
+                                                                >
+                                                                    <span className="text-gray-500">
+                                                                        <EyeIcon />
+                                                                    </span>
+                                                                    {t('common.view', undefined, 'View')}
+                                                                </Link>
+                                                            </MenuItem>
+                                                            {can.update && (
+                                                                <MenuItem>
+                                                                    <Link
+                                                                        href={prefixedRoute('partners.edit', partner.id)}
+                                                                        className={menuItemClassName}
+                                                                    >
+                                                                        <span className="text-indigo-600">
+                                                                            <PencilIcon />
+                                                                        </span>
+                                                                        {t('common.edit')}
+                                                                    </Link>
+                                                                </MenuItem>
+                                                            )}
+                                                            {(can.update || can.delete) && (
+                                                                <div className="my-1 border-t border-gray-100" />
+                                                            )}
+                                                            {can.delete && (
+                                                                <MenuItem>
                                                                     <button
                                                                         type="button"
-                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-opacity hover:bg-gray-100 hover:text-gray-900 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                                        title={t('common.actions')}
+                                                                        onClick={() => openDeleteDialog(partner)}
+                                                                        className={menuItemDangerClassName}
                                                                     >
-                                                                        <DotsVerticalIcon />
+                                                                        <TrashIcon />
+                                                                        {t('common.delete')}
                                                                     </button>
-                                                                </Dropdown.Trigger>
-                                                                <Dropdown.Content align="right" width="48">
-                                                                    <Dropdown.Link
-                                                                        href={prefixedRoute('partners.show', partner.id)}
-                                                                    >
-                                                                        <span className="flex items-center gap-2">
-                                                                            <EyeIcon />
-                                                                            <span>{t('common.view', undefined, 'View')}</span>
-                                                                        </span>
-                                                                    </Dropdown.Link>
-                                                                    {can.update && (
-                                                                        <Dropdown.Link
-                                                                            href={prefixedRoute('partners.edit', partner.id)}
-                                                                            className="text-indigo-700 hover:text-indigo-900"
-                                                                        >
-                                                                            <span className="flex items-center gap-2">
-                                                                                <PencilIcon />
-                                                                                <span>{t('common.edit')}</span>
-                                                                            </span>
-                                                                        </Dropdown.Link>
-                                                                    )}
-                                                                    {can.delete && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => openDeleteDialog(partner)}
-                                                                            className="block w-full px-4 py-2 text-start text-sm leading-5 text-rose-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                                                                        >
-                                                                            <span className="flex items-center gap-2">
-                                                                                <TrashIcon />
-                                                                                <span>{t('common.delete')}</span>
-                                                                            </span>
-                                                                        </button>
-                                                                    )}
-                                                                </Dropdown.Content>
-                                                            </Dropdown>
-                                                        )}
-                                                        {!(can.update || can.delete) && (
-                                                            <Link
-                                                                href={prefixedRoute('partners.show', partner.id)}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                                                                title={t('common.view', undefined, 'View')}
-                                                            >
-                                                                <EyeIcon />
-                                                            </Link>
-                                                        )}
-                                                    </div>
+                                                                </MenuItem>
+                                                            )}
+                                                        </MenuItems>
+                                                    </Menu>
                                                 </td>
                                             </tr>
                                         );
