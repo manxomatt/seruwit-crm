@@ -10,6 +10,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { formatDate } from '@/utils/date';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState, FormEventHandler } from 'react';
 import FleetNav from '../../../../FleetNav';
@@ -160,6 +161,22 @@ const CloseIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
 );
+
+const EllipsisVerticalIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+        />
+    </svg>
+);
+
+const menuItemClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+
+const menuItemDangerClassName =
+    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
 
 function readStoredColumns(): Partial<Record<DriverColumn, boolean>> | null {
     try {
@@ -460,11 +477,10 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                             key={pill.value || 'all'}
                                             type="button"
                                             onClick={() => handleStatusFilter(pill.value)}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                                                active
-                                                    ? 'bg-gray-900 text-white'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                                            }`}
+                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
+                                                ? 'bg-gray-900 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                                }`}
                                         >
                                             {pill.label}
                                         </button>
@@ -653,11 +669,10 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                 {visibleColumns.login && (
                                                     <td className="whitespace-nowrap px-3 py-2.5">
                                                         <span
-                                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                                driver.user_id
-                                                                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20'
-                                                                    : 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20'
-                                                            }`}
+                                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${driver.user_id
+                                                                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20'
+                                                                : 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/20'
+                                                                }`}
                                                         >
                                                             {driver.user_id
                                                                 ? t('fleet.drivers.has_login')
@@ -673,34 +688,61 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                                     </td>
                                                 )}
                                                 <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                                                    <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-                                                        <Link
-                                                            href={prefixedRoute('fleet.drivers.show', driver.id)}
-                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                                                            title={t('common.view', undefined, 'View')}
+                                                    <Menu as="div" className="relative inline-block text-right">
+                                                        <MenuButton
+                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                            title={t('common.actions')}
+                                                            aria-label={t('common.actions')}
                                                         >
-                                                            <EyeIcon />
-                                                        </Link>
-                                                        {can.update && (
-                                                            <Link
-                                                                href={prefixedRoute('fleet.drivers.edit', driver.id)}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-indigo-600 hover:bg-indigo-50"
-                                                                title={t('common.edit')}
-                                                            >
-                                                                <PencilIcon />
-                                                            </Link>
-                                                        )}
-                                                        {can.delete && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openDeleteDialog(driver)}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50"
-                                                                title={t('common.delete')}
-                                                            >
-                                                                <TrashIcon />
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                            <EllipsisVerticalIcon />
+                                                        </MenuButton>
+
+                                                        <MenuItems
+                                                            transition
+                                                            anchor="bottom end"
+                                                            className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                                        >
+                                                            <MenuItem>
+                                                                <Link
+                                                                    href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                                                    className={menuItemClassName}
+                                                                >
+                                                                    <span className="text-gray-500">
+                                                                        <EyeIcon />
+                                                                    </span>
+                                                                    {t('common.view', undefined, 'View')}
+                                                                </Link>
+                                                            </MenuItem>
+                                                            {can.update && (
+                                                                <MenuItem>
+                                                                    <Link
+                                                                        href={prefixedRoute('fleet.drivers.edit', driver.id)}
+                                                                        className={menuItemClassName}
+                                                                    >
+                                                                        <span className="text-indigo-600">
+                                                                            <PencilIcon />
+                                                                        </span>
+                                                                        {t('common.edit')}
+                                                                    </Link>
+                                                                </MenuItem>
+                                                            )}
+                                                            {(can.update || can.delete) && (
+                                                                <div className="my-1 border-t border-gray-100" />
+                                                            )}
+                                                            {can.delete && (
+                                                                <MenuItem>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => openDeleteDialog(driver)}
+                                                                        className={menuItemDangerClassName}
+                                                                    >
+                                                                        <TrashIcon />
+                                                                        {t('common.delete')}
+                                                                    </button>
+                                                                </MenuItem>
+                                                            )}
+                                                        </MenuItems>
+                                                    </Menu>
                                                 </td>
                                             </tr>
                                         );
@@ -725,13 +767,12 @@ export default function Index({ drivers, filters, can }: Props): JSX.Element {
                                             type="button"
                                             onClick={() => link.url && router.get(link.url)}
                                             disabled={!link.url}
-                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                                                link.active
-                                                    ? 'bg-gray-900 text-white'
-                                                    : link.url
-                                                      ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                      : 'cursor-not-allowed text-gray-300'
-                                            }`}
+                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${link.active
+                                                ? 'bg-gray-900 text-white'
+                                                : link.url
+                                                    ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                                    : 'cursor-not-allowed text-gray-300'
+                                                }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
                                     ))}
