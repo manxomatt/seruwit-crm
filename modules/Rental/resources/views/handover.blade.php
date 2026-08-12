@@ -150,7 +150,7 @@
             <tr>
                 <td>
                     @php($staffSig = $rental->checkout_signature_path)
-                    @if ($staffSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($staffSig))
+                    @if ($staffSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($staffSig) && @getimagesize(\Illuminate\Support\Facades\Storage::disk('public')->path($staffSig)))
                         <div class="space"><img src="data:image/png;base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($staffSig)) }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
                     @else
                         <div class="space"></div>
@@ -159,7 +159,7 @@
                 </td>
                 <td>
                     @php($customerSig = $rental->return_signature_path ?: $rental->checkout_signature_path)
-                    @if ($customerSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($customerSig))
+                    @if ($customerSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($customerSig) && @getimagesize(\Illuminate\Support\Facades\Storage::disk('public')->path($customerSig)))
                         <div class="space"><img src="data:image/png;base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($customerSig)) }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
                     @else
                         <div class="space"></div>

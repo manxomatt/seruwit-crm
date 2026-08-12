@@ -701,6 +701,7 @@ return [
         'settings_updated' => 'Pengaturan rental disimpan.',
         'document_template_updated' => 'Template dokumen disimpan.',
         'document_template_reset' => 'Template dokumen dikembalikan ke default.',
+        'document_template_preview_no_data' => 'Belum ada data dokumen untuk preview. Buat atau gunakan dokumen nyata terlebih dahulu.',
         'rate_created' => 'Tarif dibuat.',
         'rate_updated' => 'Tarif diperbarui.',
         'rate_deleted' => 'Tarif dihapus.',

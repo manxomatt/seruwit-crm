@@ -123,6 +123,10 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
         }
     };
 
+    const previewTemplate = () => {
+        window.open(prefixedRoute('rental.settings.documents.preview', { code: activeCode }), '_blank');
+    };
+
     const updateOption = (key: string, value: boolean) => {
         setData(key as keyof typeof data, value);
     };
@@ -164,6 +168,9 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                 Edit Template — {DOCUMENT_LIST.find((d) => d.code === activeCode)?.label}
                             </h3>
                             <div className="flex gap-2">
+                                <PrimaryButton type="button" onClick={previewTemplate} className="text-xs">
+                                    Preview
+                                </PrimaryButton>
                                 <PrimaryButton type="submit" disabled={processing} className="text-xs">
                                     {processing ? 'Menyimpan...' : 'Simpan'}
                                 </PrimaryButton>
@@ -177,7 +184,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                             <p className="text-sm text-emerald-600 mb-4">Template dokumen disimpan.</p>
                         )}
 
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-4">
                             <div>
                                 <InputLabel htmlFor="template_name" value="Nama template" />
                                 <TextInput
@@ -185,7 +192,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     maxLength={500}
-                                    className="mt-1"
+                                    className="mt-1 w-full"
                                 />
                                 <InputError message={errors.name as string} className="mt-1" />
                             </div>
@@ -196,7 +203,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                     options={LAYOUT_OPTIONS}
                                     value={data.layout_preset}
                                     onChange={(value) => setData('layout_preset', value)}
-                                    className="mt-1"
+                                    className="mt-1 w-full"
                                 />
                                 <InputError message={errors.layout_preset as string} className="mt-1" />
                             </div>
@@ -215,7 +222,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                     value={data.content_title}
                                     onChange={(e) => updateContent('content_title', e.target.value)}
                                     maxLength={500}
-                                    className="mt-1"
+                                    className="mt-1 w-full"
                                 />
                                 <InputError message={errors.content_title as string} className="mt-1" />
                             </div>
@@ -226,7 +233,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                     value={data.content_subtitle}
                                     onChange={(e) => updateContent('content_subtitle', e.target.value)}
                                     maxLength={1000}
-                                    className="mt-1"
+                                    className="mt-1 w-full"
                                 />
                                 <InputError message={errors.content_subtitle as string} className="mt-1" />
                             </div>
@@ -258,7 +265,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                             id="content_checkout_label"
                                             value={data.content_checkout_label}
                                             onChange={(e) => updateContent('content_checkout_label', e.target.value)}
-                                            className="mt-1"
+                                            className="mt-1 w-full"
                                         />
                                     </div>
                                     <div>
@@ -267,7 +274,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                             id="content_return_label"
                                             value={data.content_return_label}
                                             onChange={(e) => updateContent('content_return_label', e.target.value)}
-                                            className="mt-1"
+                                            className="mt-1 w-full"
                                         />
                                     </div>
                                 </div>
@@ -279,7 +286,7 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                                         id="content_bill_to_label"
                                         value={data.content_bill_to_label}
                                         onChange={(e) => updateContent('content_bill_to_label', e.target.value)}
-                                        className="mt-1"
+                                        className="mt-1 w-full"
                                     />
                                 </div>
                             )}

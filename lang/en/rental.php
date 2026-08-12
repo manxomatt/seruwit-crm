@@ -701,6 +701,7 @@ return [
         'settings_updated' => 'Rental settings saved.',
         'document_template_updated' => 'Document template saved.',
         'document_template_reset' => 'Document template reset to default.',
+        'document_template_preview_no_data' => 'No sample document data available for preview. Create or use a real document first.',
         'rate_created' => 'Rate created.',
         'rate_updated' => 'Rate updated.',
         'rate_deleted' => 'Rate deleted.',

@@ -3,17 +3,23 @@
 namespace Modules\Rental\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
+use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\UpdateDocumentTemplateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalGeneralSettingsRequest;
+use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\DocumentTemplateManager;
 use Modules\Rental\Support\RentalGeneralSettings;
+use Modules\Rental\Support\RentalHandoverChecklist;
 
 class RentalSettingsController extends Controller
 {
@@ -95,5 +101,124 @@ class RentalSettingsController extends Controller
         DocumentTemplateManager::reset($code);
 
         return back()->with('success', __('rental.messages.document_template_reset'));
+    }
+
+    public function previewDocument(Request $request, string $code): Response|RedirectResponse
+    {
+        if (! in_array($code, DocumentTemplateManager::VALID_CODES, true)) {
+            return back()->with('error', __('rental.errors.document_template_invalid_code'));
+        }
+
+        $template = DocumentTemplateManager::get($code);
+
+        if ($code === DocumentTemplateManager::CODE_INVOICE) {
+            $invoice = Invoice::query()
+                ->whereIn('status', [Invoice::STATUS_ISSUED, Invoice::STATUS_PAID])
+                ->latest('issue_date')
+                ->first();
+
+            if (! $invoice) {
+                return back()->with('error', __('rental.messages.document_template_preview_no_data'));
+            }
+
+            $invoice->load(['partner:id,code,name', 'lines']);
+
+            $resolved = DocumentTemplateManager::resolveForPdf($code, [
+                'invoice' => $invoice,
+                'partner' => $invoice->partner,
+                'company' => $this->company(),
+            ]);
+
+            return Pdf::loadView('invoicing::invoice', [
+                'invoice' => $invoice,
+                'company' => $this->company(),
+                'currencySymbol' => Setting::getValue('ecommerce.currency_symbol', 'Rp'),
+                'template' => $resolved,
+            ])->stream("preview-{$code}.pdf");
+        }
+
+        $statuses = match ($code) {
+            DocumentTemplateManager::CODE_CONTRACT => [
+                Rental::STATUS_CONFIRMED,
+                Rental::STATUS_ACTIVE,
+                Rental::STATUS_RETURNED,
+                Rental::STATUS_COMPLETED,
+            ],
+            DocumentTemplateManager::CODE_HANDOVER => [
+                Rental::STATUS_ACTIVE,
+                Rental::STATUS_RETURNED,
+                Rental::STATUS_COMPLETED,
+            ],
+            default => [],
+        };
+
+        $rental = Rental::query()
+            ->whereIn('status', $statuses)
+            ->latest('created_at')
+            ->first();
+
+        if (! $rental) {
+            return back()->with('error', __('rental.messages.document_template_preview_no_data'));
+        }
+
+        $rental->load([
+            'vehicle:id,name,plate_number,type',
+            'partner',
+            'driver:id,name,phone',
+            'insurancePackage',
+            'charges' => fn ($query) => $query->where('kind', \Modules\Rental\Models\RentalCharge::KIND_ADDON)->orderBy('id'),
+            'damages',
+        ]);
+
+        $context = [
+            'rental' => $rental,
+            'partner' => $rental->partner,
+            'vehicle' => $rental->vehicle,
+            'company' => $this->company(),
+            'checkout' => [
+                'time' => $rental->checked_out_at,
+            ],
+            'return' => [
+                'time' => $rental->returned_at,
+            ],
+        ];
+
+        $resolved = DocumentTemplateManager::resolveForPdf($code, $context);
+
+        if ($code === DocumentTemplateManager::CODE_CONTRACT) {
+            return Pdf::loadView('rental::contract', [
+                'rental' => $rental,
+                'company' => $this->company(),
+                'checklistLabels' => $this->checklistLabels(),
+                'template' => $resolved,
+            ])->stream("preview-{$code}.pdf");
+        }
+
+        return Pdf::loadView('rental::handover', [
+            'rental' => $rental,
+            'company' => $this->company(),
+            'checklistLabels' => $this->checklistLabels(),
+            'template' => $resolved,
+        ])->stream("preview-{$code}.pdf");
+    }
+
+    private function company(): array
+    {
+        return [
+            'name' => Setting::getValue('general.site_name', config('app.name')),
+            'address' => Setting::getValue('site.address', ''),
+            'phone' => Setting::getValue('site.phone', ''),
+        ];
+    }
+
+    private function checklistLabels(): array
+    {
+        $labels = [];
+
+        foreach (RentalHandoverChecklist::itemKeys() as $key) {
+            $labels[$key] = __('rental.checklist.items.'.$key);
+        }
+
+        return $labels;
     }
 }

@@ -36,12 +36,6 @@ interface DocumentTemplate {
     options: Record<string, boolean>;
 }
 
-interface PaginatedLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
 interface Props {
     tab: 'general' | 'rates' | 'documents';
     general?: GeneralSettings;
@@ -65,6 +59,15 @@ const DEFAULT_GENERAL: GeneralSettings = {
 };
 
 const DEFAULT_DOCUMENTS: Record<string, DocumentTemplate> = {};
+
+const DEFAULT_RATES_PAGINATED: Paginated<Rate> = {
+    data: [],
+    current_page: 1,
+    last_page: 1,
+    per_page: 15,
+    total: 0,
+    links: [{ url: null, label: '&laquo; Previous', active: false }, { url: '#', label: '1', active: true }, { url: null, label: 'Next &raquo;', active: false }],
+};
 
 function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
     const { t } = useTrans();
@@ -351,15 +354,6 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
         </form>
     );
 }
-
-const DEFAULT_RATES_PAGINATED: Paginated<Rate> = {
-    data: [],
-    current_page: 1,
-    last_page: 1,
-    per_page: 15,
-    total: 0,
-    links: [{ url: null, label: '&laquo; Previous', active: false }, { url: '#', label: '1', active: true }, { url: null, label: 'Next &raquo;', active: false }],
-};
 
 export default function Index({
     tab,
