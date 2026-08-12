@@ -76,6 +76,8 @@ const STATUSES = [
     'cancelled_paid',
     'no_show',
     'no_show_paid',
+    'overdue',
+    'inactive',
 ] as const;
 
 function statusBadgeClass(status: string): string {
@@ -100,6 +102,10 @@ function statusBadgeClass(status: string): string {
         case 'no_show':
         case 'no_show_paid':
             return 'bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-600/20';
+        case 'overdue':
+            return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20';
+        case 'inactive':
+            return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-500/20';
         default:
             return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-500/20';
     }
