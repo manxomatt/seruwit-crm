@@ -6,24 +6,26 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Fleet\Support\VehicleRentalClass;
+use Modules\Rental\Http\Requests\UpdateDocumentTemplateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalGeneralSettingsRequest;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Support\DocumentTemplateManager;
 use Modules\Rental\Support\RentalGeneralSettings;
 
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['general', 'rates'];
+    public const TABS = ['general', 'rates', 'documents'];
 
     protected function getRoutePrefix(): string
     {
         return 'module';
     }
 
-    public function index(Request $request): Response|RedirectResponse
+    public function index(Request $request): InertiaResponse|RedirectResponse
     {
         if (! $request->has('tab')) {
             return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'general']);
@@ -56,6 +58,7 @@ class RentalSettingsController extends Controller
                 ])
                 ->values()
                 ->all(),
+            'documents' => DocumentTemplateManager::all(),
         ]);
     }
 
@@ -68,5 +71,29 @@ class RentalSettingsController extends Controller
         RentalGeneralSettings::update($data);
 
         return back()->with('success', __('rental.messages.settings_updated'));
+    }
+
+    public function updateDocument(UpdateDocumentTemplateRequest $request, string $code): RedirectResponse
+    {
+        if (! in_array($code, DocumentTemplateManager::VALID_CODES, true)) {
+            return back()->with('error', __('rental.errors.document_template_invalid_code'));
+        }
+
+        $data = $request->validated();
+
+        DocumentTemplateManager::update($code, $data);
+
+        return back()->with('success', __('rental.messages.document_template_updated'));
+    }
+
+    public function resetDocument(Request $request, string $code): RedirectResponse
+    {
+        if (! in_array($code, DocumentTemplateManager::VALID_CODES, true)) {
+            return back()->with('error', __('rental.errors.document_template_invalid_code'));
+        }
+
+        DocumentTemplateManager::reset($code);
+
+        return back()->with('success', __('rental.messages.document_template_reset'));
     }
 }

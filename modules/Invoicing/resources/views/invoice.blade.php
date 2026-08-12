@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Invoice {{ $invoice->code }}</title>
+    <title>{{ $template['content']['title'] ?? 'Invoice' }} {{ $invoice->code }}</title>
     <style>
         @page { margin: 28px 36px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; }
@@ -38,18 +38,24 @@
     <table class="header">
         <tr>
             <td>
-                <div class="company-name">{{ $company['name'] }}</div>
-                <div class="company-meta">{{ $company['address'] }}</div>
-                <div class="company-meta">{{ $company['phone'] }}</div>
+                @if(($template['options']['show_company_info'] ?? true) || ($template['options']['show_logo'] ?? true) || ($template['options']['show_address'] ?? true) || ($template['options']['show_phone'] ?? true))
+                    <div class="company-name">{{ $company['name'] }}</div>
+                    @if (($template['options']['show_address'] ?? true) && $company['address'])
+                        <div class="company-meta">{{ $company['address'] }}</div>
+                    @endif
+                    @if (($template['options']['show_phone'] ?? true) && $company['phone'])
+                        <div class="company-meta">{{ $company['phone'] }}</div>
+                    @endif
+                @endif
             </td>
             <td>
-                <div class="doc-title">Invoice</div>
+                <div class="doc-title">{{ $template['content']['title'] ?? 'Invoice' }}</div>
                 <div class="doc-meta">{{ $invoice->code }}</div>
                 <div class="doc-meta">Tanggal: {{ $invoice->issue_date?->format('d/m/Y') }}</div>
                 @if ($invoice->due_date)
                     <div class="doc-meta">Jatuh tempo: {{ $invoice->due_date->format('d/m/Y') }}</div>
                 @endif
-                @if ($invoice->status === \Modules\Invoicing\Models\Invoice::STATUS_PAID)
+                @if (($template['options']['show_paid_stamp'] ?? true) && $invoice->status === \Modules\Invoicing\Models\Invoice::STATUS_PAID)
                     <div style="text-align: right;"><span class="stamp">LUNAS</span></div>
                 @endif
             </td>
@@ -58,7 +64,7 @@
 
     <table class="billto">
         <tr>
-            <td class="label">Ditagihkan kepada</td>
+            <td class="label">{{ $template['content']['bill_to_label'] ?? 'Ditagihkan kepada' }}</td>
             <td>: {{ $invoice->partner?->name }} ({{ $invoice->partner?->code }})</td>
         </tr>
     </table>
@@ -67,9 +73,6 @@
         <thead>
             <tr>
                 <th class="num">No</th>
-                {{-- The line's own description, not the order behind it: an issued
-                     invoice must keep saying what it said when it was issued, and
-                     the module that raised the line may not even be installed. --}}
                 <th>Keterangan</th>
                 <th class="amount">Jumlah</th>
             </tr>
@@ -102,23 +105,27 @@
         </tr>
     </table>
 
-    @if ($invoice->notes)
+    @if ($invoice->notes && !empty($template['content']['notes_label']))
+        <p class="notes"><strong>{{ $template['content']['notes_label'] }}:</strong> {{ $invoice->notes }}</p>
+    @elseif ($invoice->notes)
         <p class="notes"><strong>Catatan:</strong> {{ $invoice->notes }}</p>
     @endif
 
-    <table class="sign">
-        <tr>
-            <td></td>
-            <td class="box">Hormat kami,</td>
-        </tr>
-        <tr>
-            <td></td>
-            <td class="box space"></td>
-        </tr>
-        <tr>
-            <td></td>
-            <td class="box"><div class="name">{{ $company['name'] }}</div></td>
-        </tr>
-    </table>
+    @if (($template['options']['show_signature'] ?? true))
+        <table class="sign">
+            <tr>
+                <td></td>
+                <td class="box">Hormat kami,</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="box space"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="box"><div class="name">{{ $company['name'] }}</div></td>
+            </tr>
+        </table>
+    @endif
 </body>
 </html>

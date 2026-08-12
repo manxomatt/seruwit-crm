@@ -114,6 +114,12 @@ class RentalModule implements ModuleContract
         Route::patch('/rental/settings/general', [RentalSettingsController::class, 'updateGeneral'])
             ->middleware('permission:rental,update')
             ->name('rental.settings.general.update');
+        Route::patch('/rental/settings/documents/{code}', [RentalSettingsController::class, 'updateDocument'])
+            ->middleware('permission:rental,update')
+            ->name('rental.settings.documents.update');
+        Route::post('/rental/settings/documents/{code}/reset', [RentalSettingsController::class, 'resetDocument'])
+            ->middleware('permission:rental,update')
+            ->name('rental.settings.documents.reset');
 
         // Tariff rates (CRUD; index redirects to settings?tab=rates)
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');

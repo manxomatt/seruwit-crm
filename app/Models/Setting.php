@@ -57,6 +57,7 @@ class Setting extends Model
             'rental.passenger_free_cancel_hours',
             'rental.public_mask_plates',
             'rental.calendar_click_to_book',
+            'rental.document_templates',
             'maintenance.alert_km_before',
             'maintenance.alert_days_before',
             'maintenance.auto_create_wo',

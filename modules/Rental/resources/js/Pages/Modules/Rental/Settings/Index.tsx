@@ -13,33 +13,8 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import RentalNav from '../../../../RentalNav';
 import RatesPanel from '../Rates/RatesPanel';
-
-interface Vehicle {
-    id: number;
-    name: string;
-    plate_number: string;
-    type: string;
-}
-
-interface Rate {
-    id: number;
-    name: string;
-    period_type: string;
-    rate_per_period: string;
-    km_limit_per_period: number | null;
-    excess_km_rate: string | null;
-    late_fee_per_day: string | null;
-    deposit_amount: string;
-    is_active: boolean;
-    notes: string | null;
-    vehicle: Vehicle | null;
-    vehicle_type: string | null;
-    rental_class: string | null;
-    valid_from: string | null;
-    valid_to: string | null;
-    min_periods: number | null;
-    priority: number;
-}
+import DocumentsPanel from './DocumentsPanel';
+import { Paginated, Rate, Vehicle } from '../Rates/shared';
 
 interface GeneralSettings {
     default_one_way_fee: string;
@@ -54,27 +29,26 @@ interface GeneralSettings {
     calendar_click_to_book: boolean;
 }
 
+interface DocumentTemplate {
+    name: string;
+    layout_preset: string;
+    content: Record<string, string>;
+    options: Record<string, boolean>;
+}
+
 interface PaginatedLink {
     url: string | null;
     label: string;
     active: boolean;
 }
 
-interface Paginated<T> {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    links: PaginatedLink[];
-}
-
 interface Props {
-    tab: 'general' | 'rates';
+    tab: 'general' | 'rates' | 'documents';
     general?: GeneralSettings;
     rates?: Paginated<Rate>;
     vehicles?: Vehicle[];
     rentalClasses?: Array<{ value: string; label: string }>;
+    documents?: Record<string, DocumentTemplate>;
 }
 
 const DEFAULT_GENERAL: GeneralSettings = {
@@ -89,6 +63,8 @@ const DEFAULT_GENERAL: GeneralSettings = {
     public_mask_plates: true,
     calendar_click_to_book: true,
 };
+
+const DEFAULT_DOCUMENTS: Record<string, DocumentTemplate> = {};
 
 function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
     const { t } = useTrans();
@@ -391,6 +367,7 @@ export default function Index({
     rates = DEFAULT_RATES_PAGINATED,
     vehicles = [],
     rentalClasses = [],
+    documents = DEFAULT_DOCUMENTS,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -398,6 +375,7 @@ export default function Index({
     const tabs = [
         { key: 'general' as const, label: t('rental.settings.tab_general') },
         { key: 'rates' as const, label: t('rental.settings.tab_rates') },
+        { key: 'documents' as const, label: t('rental.settings.tab_documents') },
     ];
 
     return (
@@ -426,6 +404,10 @@ export default function Index({
 
             {tab === 'rates' && (
                 <RatesPanel rates={rates} vehicles={vehicles} rentalClasses={rentalClasses} />
+            )}
+
+            {tab === 'documents' && (
+                <DocumentsPanel documents={documents} prefixedRoute={prefixedRoute} />
             )}
         </DynamicLayout>
     );

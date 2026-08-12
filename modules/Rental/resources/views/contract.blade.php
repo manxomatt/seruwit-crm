@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Perjanjian Sewa {{ $rental->code }}</title>
+    <title>{{ $template['content']['title'] ?? 'Perjanjian Sewa' }} {{ $rental->code }}</title>
     <style>
         @page { margin: 28px 36px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; line-height: 1.45; }
@@ -25,14 +25,16 @@
     </style>
 </head>
 <body>
-    <div class="company">
-        <strong>{{ $company['name'] }}</strong>
-        @if ($company['address'])<br>{{ $company['address'] }}@endif
-        @if ($company['phone'])<br>{{ $company['phone'] }}@endif
-    </div>
+    @if(($template['options']['show_company_info'] ?? true) || ($template['options']['show_logo'] ?? true) || ($template['options']['show_address'] ?? true) || ($template['options']['show_phone'] ?? true))
+        <div class="company">
+            <strong>{{ $company['name'] }}</strong>
+            @if (($template['options']['show_address'] ?? true) && $company['address'])<br>{{ $company['address'] }}@endif
+            @if (($template['options']['show_phone'] ?? true) && $company['phone'])<br>{{ $company['phone'] }}@endif
+        </div>
+    @endif
 
-    <h1>Perjanjian Sewa Kendaraan</h1>
-    <p class="subtitle">{{ $rental->code }} &mdash; {{ now()->format('d/m/Y') }}</p>
+    <h1>{{ $template['content']['title'] ?? 'Perjanjian Sewa Kendaraan' }}</h1>
+    <p class="subtitle">{{ $template['content']['subtitle'] ?? ($rental->code.' &mdash; '.now()->format('d/m/Y')) }}</p>
 
     <table class="meta">
         <tr>
@@ -140,32 +142,39 @@
         </table>
     </div>
 
-    <div class="terms">
-        <strong>Ketentuan singkat:</strong>
-        <ol>
-            <li>Penyewa bertanggung jawab atas kondisi kendaraan selama masa sewa.</li>
-            <li>Kerusakan, kehilangan, dan kelebihan kilometer ditagihkan sesuai tarif yang berlaku.</li>
-            <li>Deposit dapat dipotong untuk biaya kerusakan / tagihan tertunggak, sisanya dikembalikan setelah settlement.</li>
-            <li>Kendaraan dikembalikan sesuai tanggal perjanjian kecuali diperpanjang secara tertulis.</li>
-            <li>Serah terima dicatat pada berita acara checkout / return.</li>
-        </ol>
-    </div>
+    @if (!empty($template['content']['intro_html']))
+        <div class="terms">{!! $template['content']['intro_html'] !!}</div>
+    @endif
 
-    @if ($rental->notes)
+    @if (!empty($template['content']['terms_html']))
+        <div class="terms">
+            {!! $template['content']['terms_html'] !!}
+        </div>
+    @endif
+
+    @if ($rental->notes && !empty($template['content']['notes_label']))
+        <p><strong>{{ $template['content']['notes_label'] }}:</strong> {{ $rental->notes }}</p>
+    @elseif ($rental->notes)
         <p><strong>Catatan:</strong> {{ $rental->notes }}</p>
     @endif
 
-    <table class="sign">
-        <tr>
-            <td>
-                <div class="space"></div>
-                <div class="name">{{ $company['name'] }}<br><span style="font-size:10px;color:#666;">Pihak Penyedia</span></div>
-            </td>
-            <td>
-                <div class="space"></div>
-                <div class="name">{{ $rental->partner?->name }}<br><span style="font-size:10px;color:#666;">Penyewa</span></div>
-            </td>
-        </tr>
-    </table>
+    @if (($template['options']['show_signature'] ?? true))
+        <table class="sign">
+            <tr>
+                <td>
+                    <div class="space"></div>
+                    <div class="name">{{ $company['name'] }}<br><span style="font-size:10px;color:#666;">Pihak Penyedia</span></div>
+                </td>
+                <td>
+                    <div class="space"></div>
+                    <div class="name">{{ $rental->partner?->name }}<br><span style="font-size:10px;color:#666;">Penyewa</span></div>
+                </td>
+            </tr>
+        </table>
+    @endif
+
+    @if (!empty($template['content']['footer_html']))
+        <div style="margin-top: 12px;">{!! $template['content']['footer_html'] !!}</div>
+    @endif
 </body>
 </html>

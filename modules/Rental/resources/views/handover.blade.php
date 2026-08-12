@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Berita Acara Serah Terima {{ $rental->code }}</title>
+    <title>{{ $template['content']['title'] ?? 'Berita Acara Serah Terima' }} {{ $rental->code }}</title>
     <style>
         @page { margin: 28px 36px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; }
@@ -26,13 +26,15 @@
     </style>
 </head>
 <body>
-    <div class="company">
-        <strong>{{ $company['name'] }}</strong>
-        @if ($company['address'])<br>{{ $company['address'] }}@endif
-    </div>
+    @if(($template['options']['show_company_info'] ?? true) || ($template['options']['show_logo'] ?? true) || ($template['options']['show_address'] ?? true) || ($template['options']['show_phone'] ?? true))
+        <div class="company">
+            <strong>{{ $company['name'] }}</strong>
+            @if (($template['options']['show_address'] ?? true) && $company['address'])<br>{{ $company['address'] }}@endif
+        </div>
+    @endif
 
-    <h1>Berita Acara Serah Terima</h1>
-    <p class="subtitle">{{ $rental->code }} &mdash; {{ $rental->vehicle?->name }} ({{ $rental->vehicle?->plate_number }})</p>
+    <h1>{{ $template['content']['title'] ?? 'Berita Acara Serah Terima' }}</h1>
+    <p class="subtitle">{{ $template['content']['subtitle'] ?? ($rental->code.' &mdash; '.$rental->vehicle?->name.' ('.$rental->vehicle?->plate_number.')') }}</p>
 
     <table class="meta">
         <tr>
@@ -49,7 +51,7 @@
         </tr>
     </table>
 
-    <h2>Checkout (Serah ke Penyewa)</h2>
+    <h2>{{ $template['content']['checkout_label'] ?? 'Checkout (Serah ke Penyewa)' }}</h2>
     <table class="meta">
         <tr>
             <td class="label">Waktu</td><td class="sep">:</td>
@@ -85,7 +87,7 @@
     @endif
 
     @if ($rental->returned_at)
-        <h2>Return (Kembali dari Penyewa)</h2>
+        <h2>{{ $template['content']['return_label'] ?? 'Return (Kembali dari Penyewa)' }}</h2>
         <table class="meta">
             <tr>
                 <td class="label">Waktu</td><td class="sep">:</td>
@@ -123,7 +125,7 @@
         @endif
     @endif
 
-    @if ($rental->damages->isNotEmpty())
+    @if (($template['options']['show_damage_section'] ?? true) && $rental->damages->isNotEmpty())
         <h2>Damage</h2>
         <table class="check">
             <thead>
@@ -143,27 +145,33 @@
         </table>
     @endif
 
-    <table class="sign">
-        <tr>
-            <td>
-                @php($staffSig = $rental->checkout_signature_path)
-                @if ($staffSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($staffSig))
-                    <div class="space"><img src="data:image/png;base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($staffSig)) }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
-                @else
-                    <div class="space"></div>
-                @endif
-                <div class="name">{{ $company['name'] }}<br><span style="font-size:10px;color:#666;">Petugas</span></div>
-            </td>
-            <td>
-                @php($customerSig = $rental->return_signature_path ?: $rental->checkout_signature_path)
-                @if ($customerSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($customerSig))
-                    <div class="space"><img src="data:image/png;base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($customerSig)) }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
-                @else
-                    <div class="space"></div>
-                @endif
-                <div class="name">{{ $rental->partner?->name }}<br><span style="font-size:10px;color:#666;">Penyewa</span></div>
-            </td>
-        </tr>
-    </table>
+    @if (($template['options']['show_signature'] ?? true))
+        <table class="sign">
+            <tr>
+                <td>
+                    @php($staffSig = $rental->checkout_signature_path)
+                    @if ($staffSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($staffSig))
+                        <div class="space"><img src="data:image/png;base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($staffSig)) }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
+                    @else
+                        <div class="space"></div>
+                    @endif
+                    <div class="name">{{ $company['name'] }}<br><span style="font-size:10px;color:#666;">Petugas</span></div>
+                </td>
+                <td>
+                    @php($customerSig = $rental->return_signature_path ?: $rental->checkout_signature_path)
+                    @if ($customerSig && \Illuminate\Support\Facades\Storage::disk('public')->exists($customerSig))
+                        <div class="space"><img src="data:image/png;base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($customerSig)) }}" style="max-height:56px;max-width:180px;" alt="Signature"></div>
+                    @else
+                        <div class="space"></div>
+                    @endif
+                    <div class="name">{{ $rental->partner?->name }}<br><span style="font-size:10px;color:#666;">Penyewa</span></div>
+                </td>
+            </tr>
+        </table>
+    @endif
+
+    @if (!empty($template['content']['footer_html']))
+        <div style="margin-top: 12px;">{!! $template['content']['footer_html'] !!}</div>
+    @endif
 </body>
 </html>
