@@ -3,7 +3,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import WizardStepper from './WizardStepper';
 import StepConfirm from './steps/StepConfirm';
 import StepCustomer from './steps/StepCustomer';
@@ -40,6 +40,8 @@ interface Props {
     excludeRentalId?: number | null;
     /** When true (e.g. Availability prefill), skip restoring a previous draft. */
     skipDraftRestore?: boolean;
+    /** Step to start on (e.g. 3 when coming from the Availability board with a pre-filled vehicle). */
+    initialStep?: WizardStep;
 }
 
 export default function ReservationForm({
@@ -57,6 +59,7 @@ export default function ReservationForm({
     cancelUrl,
     excludeRentalId = null,
     skipDraftRestore = false,
+    initialStep = 1,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -69,7 +72,7 @@ export default function ReservationForm({
         [],
     );
 
-    const [step, setStep] = useState<WizardStep>(restored?.step ?? 1);
+    const [step, setStep] = useState<WizardStep>(restored?.step ?? initialStep);
     const [partners, setPartners] = useState(initialPartners);
     const [available, setAvailable] = useState<AvailableVehicle[]>([]);
     const [vehiclesMeta, setVehiclesMeta] = useState<AvailableVehiclesMeta | null>(null);
@@ -132,6 +135,23 @@ export default function ReservationForm({
         }));
     };
 
+    const selectVehicle = useCallback((vehicle: AvailableVehicle): void => {
+        setSelectedVehicle(vehicle);
+        if (! vehicle.rate) {
+            return;
+        }
+
+        setData((current) => ({
+            ...current,
+            vehicle_id: String(vehicle.id),
+            rate_per_period: String(vehicle.rate!.rate_per_period),
+            km_limit_per_period: vehicle.rate!.km_limit_per_period?.toString() ?? '',
+            excess_km_rate: vehicle.rate!.excess_km_rate?.toString() ?? '',
+            late_fee_per_day: vehicle.rate!.late_fee_per_day?.toString() ?? '',
+            deposit_amount: String(vehicle.rate!.deposit_amount),
+        }));
+    }, [setData]);
+
     const clearVehicleSelection = useCallback((): void => {
         setSelectedVehicle(null);
         setData((current) => ({
@@ -192,11 +212,23 @@ export default function ReservationForm({
         t,
     ]);
 
+    const vehicleDatesRef = useRef<string | null>(null);
+
     useEffect(() => {
-        if (step === 2) {
-            void loadAvailableVehicles();
+        if (step < 2) {
+            vehicleDatesRef.current = null;
+
+            return;
         }
-    }, [step, loadAvailableVehicles]);
+
+        const datesKey = `${data.start_date}|${data.end_date}|${data.period_type}`;
+        if (datesKey === vehicleDatesRef.current) {
+            return;
+        }
+
+        vehicleDatesRef.current = datesKey;
+        void loadAvailableVehicles();
+    }, [step, loadAvailableVehicles, data.start_date, data.end_date, data.period_type]);
 
     // Keep selection in sync with the loaded list without re-fetching on every pick.
     useEffect(() => {
@@ -207,12 +239,18 @@ export default function ReservationForm({
         }
 
         const match = available.find((vehicle) => String(vehicle.id) === data.vehicle_id) ?? null;
-        setSelectedVehicle(match);
+
+        if (match && ! data.rate_per_period && match.rate) {
+            // Auto-populate rate fields for pre-filled vehicle (e.g. from Availability board).
+            selectVehicle(match);
+        } else {
+            setSelectedVehicle(match);
+        }
 
         if (available.length > 0 && ! match) {
             clearVehicleSelection();
         }
-    }, [available, clearVehicleSelection, data.vehicle_id]);
+    }, [available, clearVehicleSelection, data.vehicle_id, data.rate_per_period, selectVehicle]);
 
     const loadQuote = useCallback(async (): Promise<void> => {
         if (!data.vehicle_id || !data.start_date || !data.end_date || !data.period_type) {
@@ -293,23 +331,6 @@ export default function ReservationForm({
 
         return !quoteLoading && quote?.available === true;
     }, [data.end_date, data.partner_id, data.period_type, data.rate_per_period, data.start_date, data.vehicle_id, quote, quoteLoading, step]);
-
-    const selectVehicle = (vehicle: AvailableVehicle): void => {
-        setSelectedVehicle(vehicle);
-        if (! vehicle.rate) {
-            return;
-        }
-
-        setData((current) => ({
-            ...current,
-            vehicle_id: String(vehicle.id),
-            rate_per_period: String(vehicle.rate!.rate_per_period),
-            km_limit_per_period: vehicle.rate!.km_limit_per_period?.toString() ?? '',
-            excess_km_rate: vehicle.rate!.excess_km_rate?.toString() ?? '',
-            late_fee_per_day: vehicle.rate!.late_fee_per_day?.toString() ?? '',
-            deposit_amount: String(vehicle.rate!.deposit_amount),
-        }));
-    };
 
     const goNext = (): void => {
         if (step < 5 && canNext) {

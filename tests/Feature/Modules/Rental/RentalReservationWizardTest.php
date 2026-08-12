@@ -4,7 +4,9 @@ namespace Tests\Feature\Modules\Rental;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Fleet\Models\FleetBase;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\FleetBaseKind;
 use Modules\Partners\Models\Partner;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
@@ -236,6 +238,55 @@ class RentalReservationWizardTest extends TestCase
                 ->has('partners.0.mobile')
                 ->has('partners.0.account_type')
                 ->has('partners.0.license_expires_at'));
+    }
+
+    public function test_create_page_prefills_availability_board_reservation(): void
+    {
+        $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
+        $depot = FleetBase::factory()->create([
+            'kind' => FleetBaseKind::Depot->value,
+            'status' => FleetBase::STATUS_ACTIVE,
+            'name' => 'Bintaro Junction',
+            'address' => 'Jl. Palem',
+            'city' => 'Depok',
+        ]);
+        FleetBase::factory()->create([
+            'kind' => FleetBaseKind::Depot->value,
+            'status' => FleetBase::STATUS_INACTIVE,
+        ]);
+
+        $tomorrow = now()->addDay()->toDateString();
+
+        $this->actingAs($this->user)
+            ->get(route('module.rental.create', [
+                'vehicle_id' => $vehicle->id,
+                'start_date' => $tomorrow,
+                'end_date' => $tomorrow,
+                'start_step' => 3,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Create')
+                ->where('prefill.vehicle_id', $vehicle->id)
+                ->where('prefill.start_date', $tomorrow)
+                ->where('prefill.end_date', $tomorrow)
+                ->where('prefill.start_step', 3)
+                ->where('prefill.pickup_location_id', $depot->id)
+                ->where('prefill.return_location_id', $depot->id)
+                ->where('prefill.pickup_location', $depot->displayAddress())
+                ->where('prefill.return_location', $depot->displayAddress()));
+    }
+
+    public function test_create_page_without_start_step_does_not_prefill_depot(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('module.rental.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Create')
+                ->where('prefill.start_step', null)
+                ->where('prefill.pickup_location_id', null)
+                ->where('prefill.return_location_id', null));
     }
 
     public function test_edit_page_exposes_wizard_urls(): void

@@ -27,6 +27,11 @@ interface Props {
         vehicle_id?: number | null;
         start_date?: string | null;
         end_date?: string | null;
+        start_step?: number | null;
+        pickup_location_id?: number | null;
+        return_location_id?: number | null;
+        pickup_location?: string | null;
+        return_location?: string | null;
     };
 }
 
@@ -57,10 +62,10 @@ export default function Create({
         excess_km_rate: '',
         late_fee_per_day: '',
         deposit_amount: '',
-        pickup_location_id: '',
-        return_location_id: '',
-        pickup_location: '',
-        return_location: '',
+        pickup_location_id: prefill.pickup_location_id ? String(prefill.pickup_location_id) : '',
+        return_location_id: prefill.return_location_id ? String(prefill.return_location_id) : '',
+        pickup_location: prefill.pickup_location ?? '',
+        return_location: prefill.return_location ?? '',
         one_way_fee_amount: '',
         insurance_package_id: '',
         fuel_policy_notes: '',
@@ -68,6 +73,7 @@ export default function Create({
     };
 
     const hasPrefill = Boolean(prefill.vehicle_id || prefill.start_date || prefill.end_date);
+    const initialStep = prefill.start_step === 3 ? 3 : 1;
 
     return (
         <DynamicLayout header={<PageHeader title={t('rental.pages.create.title')} />}>
@@ -76,6 +82,7 @@ export default function Create({
             <ReservationForm
                 mode="create"
                 initial={initial}
+                initialStep={initialStep}
                 partners={partners}
                 drivers={drivers}
                 locations={locations}

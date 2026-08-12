@@ -105,6 +105,16 @@ export default function Index({ board, filters }: Props): JSX.Element {
     const [filter, setFilter] = useState<AvailabilityFilter>('all');
     const [query, setQuery] = useState('');
 
+    const tomorrow = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    }, []);
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         router.get(prefixedRoute('rental.availability.index'), { from, to }, { preserveState: true });
@@ -133,8 +143,9 @@ export default function Index({ board, filters }: Props): JSX.Element {
     const bookUrl = (vehicleId: number): string =>
         prefixedRoute('rental.create', {
             vehicle_id: vehicleId,
-            start_date: filters.from,
-            end_date: filters.to,
+            start_date: tomorrow,
+            end_date: tomorrow,
+            start_step: 3,
         });
 
     return (

@@ -65,6 +65,32 @@ class RentalController extends Controller
         $prefillVehicleId = request()->integer('vehicle_id') ?: null;
         $prefillStartDate = filled(request('start_date')) ? (string) request('start_date') : null;
         $prefillEndDate = filled(request('end_date')) ? (string) request('end_date') : null;
+        $startStep = request()->integer('start_step') ?: null;
+
+        $prefill = [
+            'vehicle_id' => $prefillVehicleId,
+            'start_date' => $prefillStartDate,
+            'end_date' => $prefillEndDate,
+            'start_step' => $startStep,
+        ];
+
+        // When pre-filling from the availability board, default both
+        // pickup and return to the first active depot.
+        if ($startStep !== null && $prefillVehicleId !== null) {
+            $depots = app(RentalLocationHydrator::class)->depotOptions();
+            if ($depots !== []) {
+                $defaultDepot = $depots[0];
+                $depotAddress = implode(', ', array_filter([
+                    $defaultDepot['address'],
+                    $defaultDepot['city'],
+                ])) ?: $defaultDepot['name'];
+
+                $prefill['pickup_location_id'] = $defaultDepot['id'];
+                $prefill['return_location_id'] = $defaultDepot['id'];
+                $prefill['pickup_location'] = $depotAddress;
+                $prefill['return_location'] = $depotAddress;
+            }
+        }
 
         return Inertia::render('Modules/Rental/Create', [
             'vehicles' => Vehicle::query()
@@ -77,11 +103,7 @@ class RentalController extends Controller
                 ->get(['id', 'name', 'phone']),
             'partners' => $this->partnerOptions(),
             'selectedPartnerId' => $selectedPartnerId,
-            'prefill' => [
-                'vehicle_id' => $prefillVehicleId,
-                'start_date' => $prefillStartDate,
-                'end_date' => $prefillEndDate,
-            ],
+            'prefill' => $prefill,
             'rates' => RentalRate::query()
                 ->where('is_active', true)
                 ->orderBy('name')
