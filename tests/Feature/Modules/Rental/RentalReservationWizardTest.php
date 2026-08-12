@@ -285,8 +285,8 @@ class RentalReservationWizardTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Rental/Create')
                 ->where('prefill.start_step', null)
-                ->where('prefill.pickup_location_id', null)
-                ->where('prefill.return_location_id', null));
+                ->missing('prefill.pickup_location_id')
+                ->missing('prefill.return_location_id'));
     }
 
     public function test_edit_page_exposes_wizard_urls(): void

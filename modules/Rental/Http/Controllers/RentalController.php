@@ -83,7 +83,9 @@ class RentalController extends Controller
                 $depotAddress = implode(', ', array_filter([
                     $defaultDepot['address'],
                     $defaultDepot['city'],
-                ])) ?: $defaultDepot['name'];
+                    $defaultDepot['province'],
+                    $defaultDepot['zip'],
+                ], fn ($part) => filled($part))) ?: $defaultDepot['name'];
 
                 $prefill['pickup_location_id'] = $defaultDepot['id'];
                 $prefill['return_location_id'] = $defaultDepot['id'];

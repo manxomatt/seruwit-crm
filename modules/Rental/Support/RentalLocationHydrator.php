@@ -87,7 +87,7 @@ class RentalLocationHydrator
     /**
      * Active depot bases for pickup / return branch selects.
      *
-     * @return list<array{id: int, code: string, name: string, address: string|null, city: string|null, latitude: string|null, longitude: string|null}>
+     * @return list<array{id: int, code: string, name: string, address: string|null, city: string|null, province: string|null, zip: string|null, latitude: string|null, longitude: string|null}>
      */
     public function depotOptions(): array
     {
@@ -99,13 +99,15 @@ class RentalLocationHydrator
             ->active()
             ->ofKind(FleetBaseKind::Depot)
             ->orderBy('name')
-            ->get(['id', 'code', 'name', 'address', 'city', 'latitude', 'longitude'])
+            ->get(['id', 'code', 'name', 'address', 'city', 'province', 'zip', 'latitude', 'longitude'])
             ->map(fn (FleetBase $base): array => [
                 'id' => $base->id,
                 'code' => $base->code,
                 'name' => $base->name,
                 'address' => $base->address,
                 'city' => $base->city,
+                'province' => $base->province,
+                'zip' => $base->zip,
                 'latitude' => $base->latitude !== null ? (string) $base->latitude : null,
                 'longitude' => $base->longitude !== null ? (string) $base->longitude : null,
             ])

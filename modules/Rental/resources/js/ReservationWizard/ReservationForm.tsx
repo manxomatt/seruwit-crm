@@ -104,7 +104,7 @@ export default function ReservationForm({
     const applyLocation = (field: 'pickup' | 'return', locationId: string): void => {
         const location = locations.find((item) => String(item.id) === locationId);
         const address = location
-            ? [location.address, location.city].filter(Boolean).join(', ') || location.name
+            ? [location.address, location.city, location.province, location.zip].filter(Boolean).join(', ') || location.name
             : '';
 
         if (field === 'pickup') {

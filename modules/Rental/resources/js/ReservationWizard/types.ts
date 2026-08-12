@@ -55,6 +55,8 @@ export type LocationOption = {
     name: string;
     address: string | null;
     city: string | null;
+    province: string | null;
+    zip: string | null;
 };
 
 export type InsurancePackage = {
@@ -119,11 +121,39 @@ export type ServerQuote = {
 
 export const PERIOD_TYPES = ['daily', 'weekly', 'monthly'] as const;
 
-export const WIZARD_STEPS = [1, 2, 3, 4, 5] as const;
+export const WIZARD_STEPS = [1, 2, 3, 4, 5, 6] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
 
+export function formatDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+
+    return `${y}-${m}-${d}`;
+}
+
+export function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+
+    return result;
+}
+
+export function addMonths(date: Date, months: number): Date {
+    const result = new Date(date);
+    result.setMonth(result.getMonth() + months);
+
+    return result;
+}
+
+export function todayKey(): string {
+    return formatDate(new Date());
+}
+
 export function locationLabel(location: LocationOption): string {
-    const address = [location.address, location.city].filter(Boolean).join(', ');
+    const address = [location.address, location.city, location.province, location.zip]
+        .filter(Boolean)
+        .join(', ');
     return address ? `${location.name} — ${address}` : `${location.name} (${location.code})`;
 }
 

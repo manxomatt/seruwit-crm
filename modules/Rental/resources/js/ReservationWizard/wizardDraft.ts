@@ -36,7 +36,7 @@ export function wizardStorageKey(mode: 'create' | 'edit', rentalId?: number | nu
 }
 
 function isWizardStep(value: unknown): value is WizardStep {
-    return value === 1 || value === 2 || value === 3 || value === 4 || value === 5;
+    return value === 1 || value === 2 || value === 3 || value === 4 || value === 5 || value === 6;
 }
 
 function normalizeFormData(raw: unknown, fallback: ReservationFormData): ReservationFormData | null {
