@@ -1,7 +1,9 @@
 import Checkbox from '@/Components/Checkbox';
+import DangerButton from '@/Components/DangerButton';
 import HtmlEditor from '@/Components/HtmlEditor';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
@@ -68,6 +70,7 @@ const PLACEHOLDERS: Record<string, string[]> = {
 
 export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPanelProps): JSX.Element {
     const [activeCode, setActiveCode] = React.useState<string>('rental_contract');
+    const [confirmReset, setConfirmReset] = React.useState(false);
     const template = documents[activeCode] || {
         name: '',
         layout_preset: 'classic',
@@ -115,12 +118,15 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
     };
 
     const resetTemplate = () => {
-        if (window.confirm('Reset template ini ke default sistem?')) {
-            post(prefixedRoute('rental.settings.documents.reset', { code: activeCode }), {
-                preserveScroll: true,
-                onSuccess: () => reset(),
-            });
-        }
+        setConfirmReset(true);
+    };
+
+    const confirmResetTemplate = () => {
+        setConfirmReset(false);
+        post(prefixedRoute('rental.settings.documents.reset', { code: activeCode }), {
+            preserveScroll: true,
+            onSuccess: () => reset(),
+        });
     };
 
     const previewTemplate = () => {
@@ -357,6 +363,32 @@ export default function DocumentsPanel({ documents, prefixedRoute }: DocumentsPa
                     </div>
                 </div>
             </div>
+
+            <Modal show={confirmReset} onClose={() => setConfirmReset(false)} maxWidth="md">
+                <div className="p-6">
+                    <div className="flex items-center">
+                        <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        <div className="ml-4">
+                            <h3 className="text-lg font-medium leading-6 text-gray-900">Reset template ke default?</h3>
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <p className="text-sm text-gray-500">
+                            Semua perubahan yang belum disimpan pada template ini akan hilang dan dikembalikan ke default sistem.
+                        </p>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton onClick={() => setConfirmReset(false)} disabled={processing}>Batal</SecondaryButton>
+                        <DangerButton onClick={confirmResetTemplate} disabled={processing}>Reset ke default</DangerButton>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
