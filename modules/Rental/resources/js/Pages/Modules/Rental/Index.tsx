@@ -111,8 +111,8 @@ const periodUnit = (periodType: string): string =>
     periodType === 'daily' ? 'day' : periodType === 'weekly' ? 'week' : 'month';
 
 const SearchIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 010 14z" />
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
     </svg>
 );
 
@@ -196,16 +196,16 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                     <p className="text-sm text-gray-600">{t('rental.pages.index.total', { count: rentals.total })}</p>
 
                     <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
-                        <div className="relative min-w-[260px] flex-1">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex h-full w-10 items-center justify-center text-gray-400">
+                        <div className="relative min-w-[200px] flex-1">
+                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
                                 <SearchIcon />
-                            </div>
+                            </span>
                             <TextInput
-                                type="text"
+                                type="search"
                                 placeholder={t('rental.placeholders.search')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-10 text-sm"
+                                className="w-full !py-2 pl-10 text-sm"
                             />
                         </div>
                         <div className="w-52 shrink-0 sm:w-56">
