@@ -40,7 +40,7 @@ export default function WizardStepper({ step, onStepClick }: Props): JSX.Element
                             </span>
                             {t(`rental.wizard.steps.${n}`, undefined, String(n))}
                         </button>
-                        {n < 5 && <span className="hidden text-gray-300 sm:inline">→</span>}
+                        {n < 6 && <span className="hidden text-gray-300 sm:inline">→</span>}
                     </li>
                 );
             })}

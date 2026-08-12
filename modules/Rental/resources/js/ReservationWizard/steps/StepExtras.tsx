@@ -51,7 +51,7 @@ export default function StepExtras({
     return (
         <div className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                {t('rental.wizard.steps.3')}
+                {t('rental.wizard.steps.4')}
             </h2>
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">

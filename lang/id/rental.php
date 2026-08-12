@@ -5,11 +5,12 @@ return [
 
     'wizard' => [
         'steps' => [
-            '1' => 'Dates',
-            '2' => 'Vehicles',
-            '3' => 'Extras',
-            '4' => 'Customer',
-            '5' => 'Confirm',
+            '1' => 'Tanggal',
+            '2' => 'Kendaraan',
+            '3' => 'Pickup & Return',
+            '4' => 'Extras',
+            '5' => 'Pelanggan',
+            '6' => 'Konfirmasi',
         ],
         'next' => 'Lanjut',
         'back' => 'Kembali',
@@ -23,6 +24,9 @@ return [
         'quote_failed' => 'Gagal memuat penawaran harga.',
         'quote_unavailable' => 'Reservasi ini tidak lagi tersedia.',
         'walk_in_failed' => 'Gagal menyimpan pelanggan walk-in.',
+        'dates_auto_hint' => 'Tanggal mulai default ke hari ini; tanggal selesai dihitung dari tipe periode.',
+        'dates_manual_hint' => 'Anda bisa mengubah rentang tanggal secara manual.',
+        'one_way_fee_applied' => 'Biaya one-way akan dikenakan karena cabang jemput dan kembali berbeda.',
         'customer' => [
             'selected_hint' => 'Detail pelanggan yang dipilih untuk reservasi ini',
             'no_details' => 'Belum ada detail kontak tambahan untuk pelanggan ini.',

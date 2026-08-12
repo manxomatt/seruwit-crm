@@ -73,7 +73,7 @@ export default function Create({
     };
 
     const hasPrefill = Boolean(prefill.vehicle_id || prefill.start_date || prefill.end_date);
-    const initialStep = prefill.start_step === 3 ? 3 : 1;
+    const initialStep = prefill.start_step === 4 ? 4 : 1;
 
     return (
         <DynamicLayout header={<PageHeader title={t('rental.pages.create.title')} />}>

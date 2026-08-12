@@ -7,9 +7,10 @@ return [
         'steps' => [
             '1' => 'Dates',
             '2' => 'Vehicles',
-            '3' => 'Extras',
-            '4' => 'Customer',
-            '5' => 'Confirm',
+            '3' => 'Pickup & Return',
+            '4' => 'Extras',
+            '5' => 'Customer',
+            '6' => 'Confirm',
         ],
         'next' => 'Next',
         'back' => 'Back',
@@ -23,6 +24,9 @@ return [
         'quote_failed' => 'Could not load price quote.',
         'quote_unavailable' => 'This reservation is no longer available.',
         'walk_in_failed' => 'Could not save walk-in customer.',
+        'dates_auto_hint' => 'Start date defaults to today; end date is calculated from the period type.',
+        'dates_manual_hint' => 'You can manually adjust the range.',
+        'one_way_fee_applied' => 'One-way fee will be applied because pickup and return depots differ.',
         'customer' => [
             'selected_hint' => 'Selected customer details for this reservation',
             'no_details' => 'No additional contact details on file for this customer.',

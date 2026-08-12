@@ -48,7 +48,7 @@ export default function StepConfirm({
         <div className="space-y-5">
             <div>
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                    {t('rental.wizard.steps.5')}
+                    {t('rental.wizard.steps.6')}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">{t('rental.wizard.confirm.subtitle')}</p>
             </div>

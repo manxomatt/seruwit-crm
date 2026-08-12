@@ -8,6 +8,7 @@ import WizardStepper from './WizardStepper';
 import StepConfirm from './steps/StepConfirm';
 import StepCustomer from './steps/StepCustomer';
 import StepDates from './steps/StepDates';
+import StepDepot from './steps/StepDepot';
 import StepExtras from './steps/StepExtras';
 import StepVehicles from './steps/StepVehicles';
 import type {
@@ -21,7 +22,7 @@ import type {
     ServerQuote,
     WizardStep,
 } from './types';
-import { csrfToken } from './types';
+import { addDays, addMonths, csrfToken, formatDate, todayKey } from './types';
 import { clearWizardDraft, readWizardDraft, wizardStorageKey, writeWizardDraft } from './wizardDraft';
 
 interface Props {
@@ -86,6 +87,37 @@ export default function ReservationForm({
     const { data, setData, post, patch, processing, errors, transform } = useForm<ReservationFormData>(
         restored?.data ?? initial,
     );
+
+    const prevPeriodTypeRef = useRef(data.period_type);
+    useEffect(() => {
+        const current = data.period_type;
+        if (!current) {
+            return;
+        }
+
+        const changed = current !== prevPeriodTypeRef.current;
+        const datesMissing = !data.start_date || !data.end_date;
+
+        if (changed || datesMissing) {
+            const today = todayKey();
+            const start = new Date();
+            let end: Date;
+            if (current === 'daily') {
+                end = addDays(start, 0);
+            } else if (current === 'weekly') {
+                end = addDays(start, 7);
+            } else {
+                end = addMonths(start, 1);
+            }
+
+            setData((prev) => ({
+                ...prev,
+                start_date: today,
+                end_date: formatDate(end),
+            }));
+            prevPeriodTypeRef.current = current;
+        }
+    }, [data.period_type, data.start_date, data.end_date, setData]);
 
     useEffect(() => {
         writeWizardDraft(storageKey, { step, data });
@@ -310,7 +342,7 @@ export default function ReservationForm({
     ]);
 
     useEffect(() => {
-        if (step === 5) {
+        if (step === 6) {
             void loadQuote();
         }
     }, [step, loadQuote]);
@@ -323,19 +355,32 @@ export default function ReservationForm({
             return Boolean(data.vehicle_id && data.rate_per_period);
         }
         if (step === 3) {
-            return true;
+            return Boolean(data.pickup_location_id);
         }
         if (step === 4) {
+            return true;
+        }
+        if (step === 5) {
             return Boolean(data.partner_id);
         }
 
         return !quoteLoading && quote?.available === true;
-    }, [data.end_date, data.partner_id, data.period_type, data.rate_per_period, data.start_date, data.vehicle_id, quote, quoteLoading, step]);
+    }, [
+        data.end_date,
+        data.partner_id,
+        data.period_type,
+        data.pickup_location_id,
+        data.rate_per_period,
+        data.start_date,
+        data.vehicle_id,
+        quote,
+        quoteLoading,
+        step,
+    ]);
 
     const goNext = (): void => {
-        if (step < 5 && canNext) {
+        if (step < 6 && canNext) {
             if (step === 1) {
-                // Changing dates invalidates vehicle until Step 2 reloads.
                 setAvailable([]);
             }
             setStep((s) => (s + 1) as WizardStep);
@@ -349,19 +394,23 @@ export default function ReservationForm({
     };
 
     const fieldStep = (field: string): WizardStep => {
-        if (['start_date', 'end_date', 'period_type', 'pickup_location_id', 'return_location_id', 'pickup_location', 'return_location'].includes(field)) {
+        if (['start_date', 'end_date', 'period_type'].includes(field)) {
             return 1;
         }
         if (['vehicle_id', 'rate_per_period', 'deposit_amount'].includes(field)) {
             return 2;
         }
-        if (['driver_id', 'insurance_package_id', 'one_way_fee_amount', 'fuel_policy_notes', 'notes'].includes(field)) {
+        if (['pickup_location_id', 'return_location_id', 'pickup_location', 'return_location'].includes(field)) {
             return 3;
         }
-        if (field === 'partner_id') {
+        if (['driver_id', 'insurance_package_id', 'one_way_fee_amount', 'fuel_policy_notes', 'notes'].includes(field)) {
             return 4;
         }
-        return 5;
+        if (field === 'partner_id') {
+            return 5;
+        }
+
+        return 6;
     };
 
     useEffect(() => {
@@ -374,7 +423,7 @@ export default function ReservationForm({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        if (step !== 5 || !canNext) {
+        if (step !== 6 || !canNext) {
             return;
         }
 
@@ -410,64 +459,71 @@ export default function ReservationForm({
             <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                 <WizardStepper step={step} onStepClick={setStep} />
 
-                {step === 1 && (
-                    <StepDates
-                        data={data}
-                        setData={setData}
-                        errors={errors}
-                        locations={locations}
-                        defaultOneWayFee={defaultOneWayFee}
-                        onApplyLocation={applyLocation}
-                    />
-                )}
-                {step === 2 && (
-                    <StepVehicles
-                        data={data}
-                        errors={errors}
-                        vehicles={available}
-                        meta={vehiclesMeta}
-                        loading={vehiclesLoading}
-                        loadError={vehiclesError}
-                        onSelect={selectVehicle}
-                    />
-                )}
-                {step === 3 && (
-                    <StepExtras
-                        data={data}
-                        setData={setData}
-                        errors={errors}
-                        drivers={drivers}
-                        insurancePackages={insurancePackages}
-                        isOneWay={isOneWay}
-                        selectedVehicle={selectedVehicle}
-                    />
-                )}
-                {step === 4 && (
-                    <StepCustomer
-                        data={data}
-                        setData={setData}
-                        errors={errors}
-                        partners={partners}
-                        setPartners={setPartners}
-                        walkInUrl={walkInUrl}
-                        selectedVehicle={selectedVehicle}
-                        drivers={drivers}
-                        insurancePackages={insurancePackages}
-                        isOneWay={isOneWay}
-                    />
-                )}
-                {step === 5 && (
-                    <StepConfirm
-                        data={data}
-                        quote={quote}
-                        quoteLoading={quoteLoading}
-                        quoteError={quoteError}
-                        selectedVehicle={selectedVehicle}
-                        partners={partners}
-                        drivers={drivers}
-                        insurancePackages={insurancePackages}
-                    />
-                )}
+                 {step === 1 && (
+                     <StepDates
+                         data={data}
+                         setData={setData}
+                         errors={errors}
+                     />
+                 )}
+                 {step === 2 && (
+                     <StepVehicles
+                         data={data}
+                         errors={errors}
+                         vehicles={available}
+                         meta={vehiclesMeta}
+                         loading={vehiclesLoading}
+                         loadError={vehiclesError}
+                         onSelect={selectVehicle}
+                     />
+                 )}
+                 {step === 3 && (
+                     <StepDepot
+                         data={data}
+                         setData={setData}
+                         errors={errors}
+                         locations={locations}
+                         defaultOneWayFee={defaultOneWayFee}
+                         onApplyLocation={applyLocation}
+                     />
+                 )}
+                 {step === 4 && (
+                     <StepExtras
+                         data={data}
+                         setData={setData}
+                         errors={errors}
+                         drivers={drivers}
+                         insurancePackages={insurancePackages}
+                         isOneWay={isOneWay}
+                         selectedVehicle={selectedVehicle}
+                     />
+                 )}
+                 {step === 5 && (
+                     <StepCustomer
+                         data={data}
+                         setData={setData}
+                         errors={errors}
+                         partners={partners}
+                         setPartners={setPartners}
+                         walkInUrl={walkInUrl}
+                         selectedVehicle={selectedVehicle}
+                         drivers={drivers}
+                         insurancePackages={insurancePackages}
+                         isOneWay={isOneWay}
+                     />
+                 )}
+                 {step === 6 && (
+                     <StepConfirm
+                         data={data}
+                         quote={quote}
+                         quoteLoading={quoteLoading}
+                         quoteError={quoteError}
+                         selectedVehicle={selectedVehicle}
+                         partners={partners}
+                         drivers={drivers}
+                         insurancePackages={insurancePackages}
+                     />
+                 )}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -483,7 +539,7 @@ export default function ReservationForm({
                     )}
                 </div>
                 <div className="flex gap-3">
-                    {step < 5 ? (
+                    {step < 6 ? (
                         <PrimaryButton type="button" onClick={goNext} disabled={!canNext}>
                             {t('rental.wizard.next')}
                         </PrimaryButton>

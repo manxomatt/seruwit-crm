@@ -145,7 +145,7 @@ export default function Index({ board, filters }: Props): JSX.Element {
             vehicle_id: vehicleId,
             start_date: tomorrow,
             end_date: tomorrow,
-            start_step: 3,
+            start_step: 4,
         });
 
     return (

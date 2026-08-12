@@ -215,7 +215,7 @@ export default function StepCustomer({
                 <div className="space-y-4 lg:col-span-2">
                     <div className="flex items-center justify-between gap-2">
                         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                            {t('rental.wizard.steps.4')}
+                            {t('rental.wizard.steps.5')}
                         </h2>
                         <button
                             type="button"
