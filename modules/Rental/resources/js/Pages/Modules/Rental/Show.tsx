@@ -15,7 +15,7 @@ import SignaturePad from '@/Components/SignaturePad';
 import MoneyInput from '@/Components/MoneyInput';
 import Select from '@/Components/Select';
 import { formatMoney } from '@/utils/money';
-import { formatDateTimeDmYHi } from '@/utils/date';
+import { formatDateTimeDmYHi, formatDateDmY } from '@/utils/date';
 import { formatSpeedKph, toLatLng } from '@/utils/geo';
 import { Head, Link, router, useForm, usePage, usePoll } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
@@ -138,6 +138,25 @@ interface Rental {
     pickup_customer_signature_path?: string | null;
     pickup_terms_agreed?: boolean;
     pickup_notes?: string | null;
+    applied_period_tier_id?: number | null;
+    applied_loyalty_tier_id?: number | null;
+    applied_period_tier?: {
+        id: number; tier_type: 'period_volume' | 'loyalty_count';
+        min_threshold: string | null; max_threshold: string | null;
+        rate_per_period: string | null; discount_percent: string | null; discount_flat: string | null;
+        priority: number | string; is_active: boolean;
+    } | null;
+    applied_loyalty_tier?: {
+        id: number; tier_type: 'period_volume' | 'loyalty_count';
+        min_threshold: string | null; max_threshold: string | null;
+        rate_per_period: string | null; discount_percent: string | null; discount_flat: string | null;
+        priority: number | string; is_active: boolean;
+    } | null;
+    period_pricing_snapshot?: Array<{
+        period: number; from_date: string; to_date: string;
+        rate_applied: number; tier_label?: string | null;
+    }> | null;
+    tier_discount_amount?: string | null;
     vehicle: { id: number; name: string; plate_number: string; type: string; status: string; photo_url: string | null; };
     partner: { id: number; name: string; code: string; phone: string | null; };
     driver: { id: number; name: string; phone: string | null; } | null;
@@ -259,7 +278,7 @@ export default function Show({
     }, [postConfirm.visible, postConfirm.current_step]);
 
     useEffect(() => {
-        if (! showConfirmPayment) {
+        if (!showConfirmPayment) {
             return;
         }
 
@@ -631,8 +650,8 @@ export default function Show({
                                 Number(rental.deposit_amount) <= 0
                                     ? t('rental.deposit.none')
                                     : rental.deposit_received_at
-                                      ? t('rental.deposit.received')
-                                      : t('rental.deposit.not_received')
+                                        ? t('rental.deposit.received')
+                                        : t('rental.deposit.not_received')
                             }
                             tone={
                                 Number(rental.deposit_amount) <= 0 || rental.deposit_received_at
@@ -949,8 +968,8 @@ export default function Show({
                                 {!trackingEnabled
                                     ? t('rental.tracking.unavailable')
                                     : !hasGpsDevice
-                                      ? t('rental.tracking.no_device')
-                                      : t('rental.tracking.no_fix')}
+                                        ? t('rental.tracking.no_device')
+                                        : t('rental.tracking.no_fix')}
                             </EmptyBlock>
                         )}
                     </SectionCard>
@@ -1005,9 +1024,47 @@ export default function Show({
                         <SectionCard title={t('rental.sections.pricing_snapshot')}>
                             <dl>
                                 <DetailRow label={t('rental.fields.rate')}>
-                                    <span className="tabular-nums">
-                                        {formatMoney(rental.rate_per_period)} / {periodLabel}
-                                    </span>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="tabular-nums">
+                                            {formatMoney(rental.rate_per_period)} / {periodLabel}
+                                        </span>
+                                        {(() => {
+                                            const pTier = rental.applied_period_tier;
+                                            const lTier = rental.applied_loyalty_tier;
+                                            if (!pTier && !lTier) return null;
+                                            const tierLabel = (t: NonNullable<typeof pTier>) => {
+                                                const max = t.max_threshold ? `-${t.max_threshold}` : '+';
+                                                const range = `${t.min_threshold ?? 0}${max}`;
+                                                let mod = '';
+                                                if (String(t.rate_per_period ?? '').trim() !== '') mod = `Fixed ${Number(t.rate_per_period).toLocaleString('id-ID')}`;
+                                                else if (String(t.discount_percent ?? '').trim() !== '') mod = `-${t.discount_percent}%`;
+                                                else if (String(t.discount_flat ?? '').trim() !== '') mod = `-Rp ${Number(t.discount_flat).toLocaleString('id-ID')}`;
+                                                return `${range}${mod ? ' · ' + mod : ''}`;
+                                            };
+                                            return (
+                                                <div className="flex flex-wrap items-center gap-1">
+                                                    {pTier && (
+                                                        <span
+                                                            className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 ring-1 ring-inset ring-sky-100"
+                                                            title={`Tier Periode Sewa: ${tierLabel(pTier)}`}
+                                                        >
+                                                            <span>📅</span>
+                                                            <span>{tierLabel(pTier)}</span>
+                                                        </span>
+                                                    )}
+                                                    {lTier && (
+                                                        <span
+                                                            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-100"
+                                                            title={`Tier Loyalty: ${tierLabel(lTier)}`}
+                                                        >
+                                                            <span>⭐</span>
+                                                            <span>{tierLabel(lTier)}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                 </DetailRow>
                                 {rental.km_limit_per_period && (
                                     <DetailRow label={t('rental.fields.km_limit')}>
@@ -1040,6 +1097,11 @@ export default function Show({
                                         </DetailRow>
                                     </>
                                 )}
+                                {rental.tier_discount_amount && Number(rental.tier_discount_amount) > 0 && (
+                                    <DetailRow label={t('rental.fields.tier_discount', undefined, 'Potongan Tier Harga')}>
+                                        <span className="tabular-nums text-emerald-600">− {formatMoney(rental.tier_discount_amount)}</span>
+                                    </DetailRow>
+                                )}
                                 <DetailRow label={t('rental.fields.base_amount')}>
                                     <span className="tabular-nums">{formatMoney(rental.base_amount)}</span>
                                 </DetailRow>
@@ -1057,6 +1119,85 @@ export default function Show({
                                     <span className="text-base font-semibold tabular-nums">{formatMoney(rental.total_amount)}</span>
                                 </DetailRow>
                             </dl>
+
+                            {rental.period_pricing_snapshot && rental.period_pricing_snapshot.length > 0 && (
+                                <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50/60">
+                                    <details className="group" open>
+                                        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-600 hover:bg-gray-100/50">
+                                            <div className="flex items-center gap-2">
+                                                <svg className="h-4 w-4 text-gray-500 transition group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M9 18l6-6-6-6" />
+                                                </svg>
+                                                <span>
+                                                    {t('rental.sections.period_breakdown', undefined, 'Rincian Periode & Rate Terpakai')}
+                                                </span>
+                                                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-gray-500 ring-1 ring-inset ring-gray-200">
+                                                    {rental.period_pricing_snapshot.length} periode
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] font-medium text-gray-400">Klik untuk expand</span>
+                                        </summary>
+                                        <div className="border-t border-gray-100">
+                                            <div className="overflow-hidden">
+                                                <table className="min-w-full divide-y divide-gray-100">
+                                                    <thead className="bg-white/60">
+                                                        <tr>
+                                                            <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">#</th>
+                                                            <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                                {t('rental.fields.date_range', undefined, 'Tanggal')}
+                                                            </th>
+                                                            <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                                {t('rental.fields.rate_applied', undefined, 'Rate Terpakai')}
+                                                            </th>
+                                                            <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                                {t('rental.fields.tier_applied', undefined, 'Keterangan Tier')}
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                                        {rental.period_pricing_snapshot.map((row) => (
+                                                            <tr key={row.period} className="hover:bg-indigo-50/30">
+                                                                <td className="whitespace-nowrap px-3 py-2 text-xs">
+                                                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-gray-900 text-[10px] font-bold text-white">
+                                                                        {row.period}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="whitespace-nowrap px-3 py-2 text-xs text-gray-700">
+                                                                    <div className="font-medium tabular-nums">{formatDateDmY(row.from_date)}</div>
+                                                                    <div className="text-[11px] text-gray-400">s/d {formatDateDmY(row.to_date)}</div>
+                                                                </td>
+                                                                <td className="whitespace-nowrap px-3 py-2 text-right text-xs font-semibold tabular-nums text-gray-900">
+                                                                    {formatMoney(row.rate_applied)}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-xs text-gray-600">
+                                                                    {row.tier_label ? (
+                                                                        <code className="rounded bg-sky-50 px-1.5 py-0.5 text-[11px] text-sky-700 ring-1 ring-inset ring-sky-100">
+                                                                            {row.tier_label}
+                                                                        </code>
+                                                                    ) : (
+                                                                        <span className="text-gray-400">— (Base Rate)</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                    <tfoot className="bg-gray-50/80">
+                                                        <tr>
+                                                            <td colSpan={2} className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                                                {t('rental.fields.base_amount')}
+                                                            </td>
+                                                            <td className="px-3 py-2 text-right text-sm font-bold tabular-nums text-gray-900">
+                                                                {formatMoney(rental.base_amount)}
+                                                            </td>
+                                                            <td />
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
+                            )}
                         </SectionCard>
 
                         {invoicingEnabled && (
@@ -1368,9 +1509,8 @@ export default function Show({
                                 {timelineSteps.map((step, i) => (
                                     <li key={i} className="relative mb-5 ml-4 last:mb-0">
                                         <div
-                                            className={`absolute -left-[1.4rem] mt-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-gray-800 ${
-                                                step.done ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
-                                            }`}
+                                            className={`absolute -left-[1.4rem] mt-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-gray-800 ${step.done ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                                                }`}
                                         />
                                         <p className={`text-sm font-medium ${step.done ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
                                             {step.label}
@@ -1475,11 +1615,6 @@ export default function Show({
             <Modal show={modal === 'checkout'} onClose={() => setModal(null)}>
                 <form onSubmit={submitCheckout} className="flex max-h-[90vh] flex-col p-6">
                     <h2 className="mb-4 shrink-0 text-lg font-semibold text-gray-900 dark:text-white">{t('rental.modals.checkout')}</h2>
-                    {checkoutForm.errors.deposit && (
-                        <div className="mb-4 shrink-0 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                            {checkoutForm.errors.deposit}
-                        </div>
-                    )}
                     {depositBlocksCheckout && (
                         <div className="mb-4 shrink-0 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                             {t('rental.errors.checkout_deposit_required')}

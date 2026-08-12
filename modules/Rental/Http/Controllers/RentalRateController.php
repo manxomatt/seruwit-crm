@@ -8,10 +8,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 use Modules\Fleet\Models\Vehicle;
+use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Rental\Http\Requests\StoreRentalRateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRateRequest;
 use Modules\Rental\Models\RentalRate;
+use Modules\Rental\Models\RentalRateTier;
 use Modules\Rental\Support\RentalRateResolver;
 
 class RentalRateController extends Controller
@@ -23,7 +27,47 @@ class RentalRateController extends Controller
 
     public function index(): RedirectResponse
     {
-        return redirect()->route($this->getRoutePrefix() . '.rental.settings.index', ['tab' => 'rates']);
+        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates']);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Modules/Rental/Rates/Form', [
+            'rate' => null,
+            'vehicles' => Vehicle::query()
+                ->where('status', Vehicle::STATUS_ACTIVE)
+                ->orderBy('name')
+                ->get(['id', 'name', 'plate_number', 'type']),
+            'rentalClasses' => collect(VehicleRentalClass::values())
+                ->map(fn (string $value): array => [
+                    'value' => $value,
+                    'label' => VehicleRentalClass::label($value),
+                ])
+                ->values()
+                ->all(),
+            'mode' => 'create',
+        ]);
+    }
+
+    public function edit(RentalRate $rate): Response
+    {
+        $rate->load(['tiers', 'vehicle:id,name,plate_number,type']);
+
+        return Inertia::render('Modules/Rental/Rates/Form', [
+            'rate' => $rate,
+            'vehicles' => Vehicle::query()
+                ->where('status', Vehicle::STATUS_ACTIVE)
+                ->orderBy('name')
+                ->get(['id', 'name', 'plate_number', 'type']),
+            'rentalClasses' => collect(VehicleRentalClass::values())
+                ->map(fn (string $value): array => [
+                    'value' => $value,
+                    'label' => VehicleRentalClass::label($value),
+                ])
+                ->values()
+                ->all(),
+            'mode' => 'edit',
+        ]);
     }
 
     public function suggest(Request $request, RentalRateResolver $resolver): JsonResponse
@@ -53,9 +97,14 @@ class RentalRateController extends Controller
         $data['deposit_amount'] = $data['deposit_amount'] ?? 0;
         $data['priority'] = $data['priority'] ?? 0;
 
-        RentalRate::create($data);
+        DB::transaction(function () use ($data): void {
+            /** @var RentalRate $rate */
+            $rate = RentalRate::create($data);
+            $this->syncTiers($rate, $data['tiers'] ?? [], $data['tiers_to_delete'] ?? []);
+        });
 
-        return back()->with('success', __('rental.messages.rate_created'));
+        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates'])
+            ->with('success', __('rental.messages.rate_created'));
     }
 
     /**
@@ -105,7 +154,7 @@ class RentalRateController extends Controller
 
         foreach ($rates as $rate) {
             try {
-                DB::transaction(fn() => $rate->delete());
+                DB::transaction(fn () => $rate->delete());
                 $deleted++;
             } catch (QueryException) {
                 $blocked++;
@@ -136,19 +185,61 @@ class RentalRateController extends Controller
         $data['deposit_amount'] = $data['deposit_amount'] ?? 0;
         $data['priority'] = $data['priority'] ?? 0;
 
-        $rate->update($data);
+        DB::transaction(function () use ($rate, $data): void {
+            $rate->update($data);
+            $this->syncTiers($rate, $data['tiers'] ?? [], $data['tiers_to_delete'] ?? []);
+        });
 
-        return back()->with('success', __('rental.messages.rate_updated'));
+        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates'])
+            ->with('success', __('rental.messages.rate_updated'));
     }
 
     public function destroy(RentalRate $rate): RedirectResponse
     {
         try {
-            DB::transaction(fn() => $rate->delete());
+            DB::transaction(fn () => $rate->delete());
         } catch (QueryException) {
             return back()->with('error', __('rental.messages.rate_delete_referenced'));
         }
 
         return back()->with('success', __('rental.messages.rate_deleted'));
+    }
+
+    /**
+     * Sync tier rows: create baru, update existing, hapus ids yang masuk delete list.
+     *
+     * @param  list<array<string, mixed>>  $tiers
+     * @param  list<int>  $toDeleteIds
+     */
+    protected function syncTiers(RentalRate $rate, array $tiers, array $toDeleteIds = []): void
+    {
+        if ($toDeleteIds !== []) {
+            $idsToDelete = array_map('intval', $toDeleteIds);
+            RentalRateTier::query()
+                ->where('rental_rate_id', $rate->id)
+                ->whereIn('id', $idsToDelete)
+                ->delete();
+        }
+
+        foreach ($tiers as $tier) {
+            $attrs = [
+                'tier_type' => $tier['tier_type'],
+                'min_threshold' => (int) $tier['min_threshold'],
+                'max_threshold' => isset($tier['max_threshold']) && filled($tier['max_threshold']) ? (int) $tier['max_threshold'] : null,
+                'rate_per_period' => filled($tier['rate_per_period'] ?? null) ? (float) $tier['rate_per_period'] : null,
+                'discount_percent' => filled($tier['discount_percent'] ?? null) ? (float) $tier['discount_percent'] : null,
+                'discount_flat' => filled($tier['discount_flat'] ?? null) ? (float) $tier['discount_flat'] : null,
+                'priority' => (int) ($tier['priority'] ?? 0),
+                'is_active' => (bool) ($tier['is_active'] ?? true),
+            ];
+
+            if (isset($tier['id']) && filled($tier['id'])) {
+                $rate->tiers()
+                    ->where('id', (int) $tier['id'])
+                    ->update($attrs);
+            } else {
+                $rate->tiers()->create($attrs);
+            }
+        }
     }
 }

@@ -38,7 +38,7 @@ class RentalSettingsController extends Controller
             'tab' => $tab,
             'general' => RentalGeneralSettings::all(),
             'rates' => RentalRate::query()
-                ->with('vehicle:id,name,plate_number,type')
+                ->with(['vehicle:id,name,plate_number,type', 'tiers'])
                 ->orderBy('period_type')
                 ->orderByDesc('priority')
                 ->orderBy('name')

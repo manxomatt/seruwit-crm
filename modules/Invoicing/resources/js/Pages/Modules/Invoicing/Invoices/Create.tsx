@@ -55,11 +55,11 @@ export default function Create({ partners, selectedPartnerId }: Props): JSX.Elem
                 <div className="p-6">
                     <form onSubmit={submit} className="max-w-3xl space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                            <div>
+                            <div className="sm:col-span-3">
                                 <InputLabel htmlFor="partner_id" value={t('invoicing.create.partner')} />
                                 <Select
                                     id="partner_id"
-                                    className="mt-1"
+                                    className="mt-1 block w-full"
                                     value={data.partner_id}
                                     onChange={(value) => setData('partner_id', value)}
                                     placeholder={t('invoicing.create.select_partner')}
@@ -70,12 +70,12 @@ export default function Create({ partners, selectedPartnerId }: Props): JSX.Elem
                                 />
                                 <InputError message={errors.partner_id} className="mt-2" />
                             </div>
-                            <div>
+                            <div className="sm:col-span-1">
                                 <InputLabel htmlFor="issue_date" value={t('invoicing.create.issue_date')} />
                                 <TextInput id="issue_date" type="date" className="mt-1 block w-full" value={data.issue_date} onChange={(e) => setData('issue_date', e.target.value)} />
                                 <InputError message={errors.issue_date} className="mt-2" />
                             </div>
-                            <div>
+                            <div className="sm:col-span-1">
                                 <InputLabel htmlFor="due_date" value={t('invoicing.create.due_date')} />
                                 <TextInput id="due_date" type="date" className="mt-1 block w-full" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
                                 <InputError message={errors.due_date} className="mt-2" />

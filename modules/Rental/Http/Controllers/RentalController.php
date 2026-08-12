@@ -24,7 +24,7 @@ use Modules\Rental\Support\RentalHandoverMedia;
 use Modules\Rental\Support\RentalInvoiceService;
 use Modules\Rental\Support\RentalLocationHydrator;
 use Modules\Rental\Support\RentalPostConfirmProgress;
-use Modules\Rental\Support\RentalRateResolver;
+use Modules\Rental\Support\RentalPriceEngine;
 use Modules\Rental\Support\WalkInCustomerCreator;
 
 class RentalController extends Controller
@@ -137,21 +137,23 @@ class RentalController extends Controller
             ->with('success', $message);
     }
 
-    public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator, RentalRateResolver $rates): RedirectResponse
+    public function store(StoreRentalRequest $request, RentalLocationHydrator $hydrator, RentalPriceEngine $priceEngine): RedirectResponse
     {
         $validated = $hydrator->hydrate($request->validated());
-        $validated = $this->applyResolvedRatePricing($validated, $rates);
-        $totalPeriods = Rental::computePeriods($validated['start_date'], $validated['end_date'], $validated['period_type']);
-        $rate = (float) $validated['rate_per_period'];
+        $pricing = $this->applyResolvedRatePricing($validated, $priceEngine);
+        $validated = $pricing['validated'];
 
         $rental = Rental::create(array_merge($validated, [
             'code' => Rental::nextCode(),
-            'total_periods' => $totalPeriods,
-            'base_amount' => $rate * $totalPeriods,
+            'total_periods' => $pricing['total_periods'],
+            'base_amount' => $pricing['base_amount'],
             'excess_amount' => 0,
-            'deposit_amount' => $validated['deposit_amount'] ?? 0,
-            'total_amount' => $rate * $totalPeriods,
+            'total_amount' => $pricing['base_amount'],
             'status' => Rental::STATUS_DRAFT,
+            'applied_period_tier_id' => $pricing['period_tier_id'],
+            'applied_loyalty_tier_id' => $pricing['loyalty_tier_id'],
+            'period_pricing_snapshot' => $pricing['period_breakdown'],
+            'tier_discount_amount' => $pricing['discount_amount'],
         ]));
 
         return redirect()->route($this->getRoutePrefix().'.rental.show', $rental)
@@ -165,6 +167,8 @@ class RentalController extends Controller
             'driver:id,name,phone',
             'partner:id,name,code,phone',
             'confirmedBy:id,name',
+            'appliedPeriodTier:id,tier_type,min_threshold,max_threshold,rate_per_period,discount_percent,discount_flat,priority,is_active',
+            'appliedLoyaltyTier:id,tier_type,min_threshold,max_threshold,rate_per_period,discount_percent,discount_flat,priority,is_active',
             'extensions',
             'extensionRequests' => fn ($query) => $query
                 ->where('status', \Modules\Rental\Models\RentalExtensionRequest::STATUS_PENDING)
@@ -204,8 +208,10 @@ class RentalController extends Controller
                 ];
             }
 
-            if (class_exists(\Modules\Tracking\Models\VehiclePosition::class)
-                && class_exists(\Modules\Tracking\Support\PositionTrail::class)) {
+            if (
+                class_exists(\Modules\Tracking\Models\VehiclePosition::class)
+                && class_exists(\Modules\Tracking\Support\PositionTrail::class)
+            ) {
                 $from = $rental->checked_out_at ?? $rental->start_date;
                 $to = $rental->returned_at ?? now();
 
@@ -336,7 +342,7 @@ class RentalController extends Controller
         ]);
     }
 
-    public function update(UpdateRentalRequest $request, Rental $rental, RentalLocationHydrator $hydrator, RentalRateResolver $rates): RedirectResponse
+    public function update(UpdateRentalRequest $request, Rental $rental, RentalLocationHydrator $hydrator, RentalPriceEngine $priceEngine): RedirectResponse
     {
         abort_if(
             ! in_array($rental->status, Rental::editableStatuses(), true),
@@ -345,14 +351,16 @@ class RentalController extends Controller
         );
 
         $validated = $hydrator->hydrate($request->validated());
-        $validated = $this->applyResolvedRatePricing($validated, $rates);
-        $totalPeriods = Rental::computePeriods($validated['start_date'], $validated['end_date'], $validated['period_type']);
-        $rate = (float) $validated['rate_per_period'];
+        $pricing = $this->applyResolvedRatePricing($validated, $priceEngine, $rental);
+        $validated = $pricing['validated'];
 
         $rental->update(array_merge($validated, [
-            'total_periods' => $totalPeriods,
-            'base_amount' => $rate * $totalPeriods,
-            'deposit_amount' => $validated['deposit_amount'] ?? 0,
+            'total_periods' => $pricing['total_periods'],
+            'base_amount' => $pricing['base_amount'],
+            'applied_period_tier_id' => $pricing['period_tier_id'],
+            'applied_loyalty_tier_id' => $pricing['loyalty_tier_id'],
+            'period_pricing_snapshot' => $pricing['period_breakdown'],
+            'tier_discount_amount' => $pricing['discount_amount'],
         ]));
 
         $rental->recalculateTotalAmount();
@@ -478,29 +486,55 @@ class RentalController extends Controller
     }
 
     /**
-     * Pricing always comes from the active tariff scheme — never from free-form input.
+     * Pricing always comes from the active tariff scheme + tier engine
+     * — never from free-form input.
      *
      * @param  array<string, mixed>  $validated
-     * @return array<string, mixed>
+     * @return array{
+     *   validated: array<string, mixed>,
+     *   total_periods: int,
+     *   base_amount: float,
+     *   period_tier_id: ?int,
+     *   loyalty_tier_id: ?int,
+     *   period_breakdown: ?array<int, array<string, mixed>>,
+     *   discount_amount: float,
+     * }
      */
-    private function applyResolvedRatePricing(array $validated, RentalRateResolver $rates): array
+    private function applyResolvedRatePricing(array $validated, RentalPriceEngine $priceEngine, ?Rental $rental = null): array
     {
         $vehicle = Vehicle::query()->findOrFail((int) $validated['vehicle_id']);
-        $rate = $rates->suggest(
-            $vehicle,
-            (string) $validated['start_date'],
-            (string) $validated['end_date'],
-            (string) $validated['period_type'],
-        );
+        $partner = isset($validated['partner_id'])
+            ? Partner::query()->find((int) $validated['partner_id'])
+            : ($rental?->partner ?? null);
 
-        abort_if($rate === null, 422, __('rental.validation.rate_required'));
+        try {
+            $pricing = $priceEngine->calculate(
+                $vehicle,
+                (string) $validated['start_date'],
+                (string) $validated['end_date'],
+                (string) $validated['period_type'],
+                $partner,
+            );
+        } catch (\RuntimeException) {
+            abort(422, __('rental.validation.rate_required'));
+        }
 
-        $validated['rate_per_period'] = (float) $rate->rate_per_period;
+        $rate = $pricing['base_rate'];
+
+        $validated['rate_per_period'] = $pricing['effective_rate_per_period'];
         $validated['km_limit_per_period'] = $rate->km_limit_per_period;
         $validated['excess_km_rate'] = $rate->excess_km_rate;
         $validated['late_fee_per_day'] = $rate->late_fee_per_day;
         $validated['deposit_amount'] = (float) ($rate->deposit_amount ?? 0);
 
-        return $validated;
+        return [
+            'validated' => $validated,
+            'total_periods' => $pricing['total_periods'],
+            'base_amount' => $pricing['base_amount'],
+            'period_tier_id' => $pricing['period_tier_applied']?->id,
+            'loyalty_tier_id' => $pricing['loyalty_tier_applied']?->id,
+            'period_breakdown' => $pricing['period_breakdown'],
+            'discount_amount' => $pricing['discount_amount'],
+        ];
     }
 }

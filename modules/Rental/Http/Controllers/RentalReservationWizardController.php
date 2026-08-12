@@ -10,6 +10,7 @@ use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Models\Rental;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\MobileRentalBookingService;
+use Modules\Rental\Support\RentalPriceEngine;
 use Modules\Rental\Support\RentalRateResolver;
 
 /**
@@ -25,7 +26,7 @@ class RentalReservationWizardController extends Controller
     /**
      * Vehicles available for a date range, with suggested rates.
      */
-    public function availableVehicles(Request $request, RentalRateResolver $rates): JsonResponse
+    public function availableVehicles(Request $request, RentalRateResolver $rates, RentalPriceEngine $priceEngine): JsonResponse
     {
         $data = $request->validate([
             'start_date' => ['required', 'date'],
@@ -88,7 +89,14 @@ class RentalReservationWizardController extends Controller
                 continue;
             }
 
-            $ratePerPeriod = (float) $rate->rate_per_period;
+            try {
+                $pricing = $priceEngine->calculate($vehicle, $start, $end, $periodType);
+                $ratePerPeriod = $pricing['effective_rate_per_period'];
+                $baseAmount = $pricing['base_amount'];
+            } catch (\RuntimeException) {
+                $ratePerPeriod = (float) $rate->rate_per_period;
+                $baseAmount = round($ratePerPeriod * $periods, 2);
+            }
 
             $rows[] = [
                 'id' => $vehicle->id,
@@ -109,7 +117,7 @@ class RentalReservationWizardController extends Controller
                     'min_periods' => $rate->min_periods !== null ? (int) $rate->min_periods : null,
                 ],
                 'total_periods' => $periods,
-                'base_amount' => round($ratePerPeriod * $periods, 2),
+                'base_amount' => $baseAmount,
             ];
         }
 

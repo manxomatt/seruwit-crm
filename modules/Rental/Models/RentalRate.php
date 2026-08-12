@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Rental\Database\Factories\RentalRateFactory;
 
@@ -66,5 +67,15 @@ class RentalRate extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    /** @return HasMany<int, RentalRateTier> */
+    public function tiers(): HasMany
+    {
+        return $this->hasMany(RentalRateTier::class)
+            ->where('is_active', true)
+            ->orderBy('tier_type')
+            ->orderBy('min_threshold')
+            ->orderByDesc('priority');
     }
 }

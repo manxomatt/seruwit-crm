@@ -41,4 +41,22 @@ class RentalRateFactory extends Factory
     {
         return $this->state(fn (array $a): array => ['is_active' => false]);
     }
+
+    public function general(): static
+    {
+        return $this->state(fn (): array => [
+            'vehicle_id' => null,
+            'vehicle_type' => null,
+            'rental_class' => null,
+        ]);
+    }
+
+    public function forRentalClass(string $class): static
+    {
+        return $this->state(fn (): array => [
+            'vehicle_id' => null,
+            'vehicle_type' => null,
+            'rental_class' => $class,
+        ]);
+    }
 }

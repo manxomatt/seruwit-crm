@@ -20,6 +20,7 @@ class MobileRentalBookingService
 {
     public function __construct(
         private readonly RentalRateResolver $rates,
+        private readonly RentalPriceEngine $priceEngine,
         private readonly RentalLocationHydrator $hydrator,
         private readonly RentalEligibility $eligibility,
         private readonly MobilePassengerPartnerResolver $partners,
@@ -54,6 +55,15 @@ class MobileRentalBookingService
         $rate = $this->rates->suggest($vehicle, $start, $end, $periodType);
         $periods = Rental::computePeriods($start, $end, $periodType);
 
+        $pricing = null;
+        if ($rate !== null) {
+            try {
+                $pricing = $this->priceEngine->calculate($vehicle, $start, $end, $periodType);
+            } catch (\RuntimeException) {
+                $pricing = null;
+            }
+        }
+
         if ($rate !== null && $rate->min_periods !== null && $periods < (int) $rate->min_periods) {
             $reasons[] = __('rental.validation.min_periods', [
                 'rate' => $rate->name,
@@ -75,16 +85,18 @@ class MobileRentalBookingService
             $insuranceAmount = $package ? (float) $package->amount : null;
         }
 
-        $ratePerPeriod = $rate ? (float) $rate->rate_per_period : null;
+        $ratePerPeriod = $pricing !== null
+            ? $pricing['effective_rate_per_period']
+            : ($rate ? (float) $rate->rate_per_period : null);
+        $baseAmount = $pricing !== null ? $pricing['base_amount'] : null;
         $withDeposit = filter_var($input['with_deposit'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $deposit = ($rate && $withDeposit) ? (float) ($rate->deposit_amount ?? 0) : 0.0;
         if (array_key_exists('deposit_amount', $input) && $input['deposit_amount'] !== null) {
             $deposit = (float) $input['deposit_amount'];
         }
-        $base = $ratePerPeriod !== null ? round($ratePerPeriod * $periods, 2) : null;
         $oneWay = isset($hydrated['one_way_fee_amount']) ? (float) $hydrated['one_way_fee_amount'] : null;
-        $total = $base !== null
-            ? round($base + ($oneWay ?? 0) + ($insuranceAmount ?? 0), 2)
+        $total = $baseAmount !== null
+            ? round($baseAmount + ($oneWay ?? 0) + ($insuranceAmount ?? 0), 2)
             : null;
 
         return [
@@ -94,11 +106,12 @@ class MobileRentalBookingService
             'rate' => $rate,
             'rate_per_period' => $ratePerPeriod,
             'deposit_amount' => $deposit,
-            'base_amount' => $base,
+            'base_amount' => $baseAmount,
             'one_way_fee_amount' => $oneWay,
             'insurance_amount' => $insuranceAmount,
             'total_amount' => $total,
             'min_periods' => $rate?->min_periods !== null ? (int) $rate->min_periods : null,
+            'pricing' => $pricing,
         ];
     }
 
@@ -142,11 +155,16 @@ class MobileRentalBookingService
         ]);
 
         $periods = $quote['total_periods'];
-        $ratePerPeriod = (float) $rate->rate_per_period;
-        $baseAmount = round($ratePerPeriod * $periods, 2);
+        $ratePerPeriod = (float) $quote['rate_per_period'];
+        $baseAmount = (float) $quote['base_amount'];
         $reservedUntil = $this->policy->reservedUntilTimestamp();
 
-        $created = DB::transaction(function () use ($input, $vehicle, $partner, $bookerPhone, $rate, $hydrated, $periods, $ratePerPeriod, $baseAmount, $reservedUntil, $channel): Rental {
+        $periodTier = $quote['pricing']['period_tier_applied'] ?? null;
+        $loyaltyTier = $quote['pricing']['loyalty_tier_applied'] ?? null;
+        $periodSnapshot = $quote['pricing']['period_breakdown'] ?? null;
+        $discountAmount = $quote['pricing']['discount_amount'] ?? 0;
+
+        $created = DB::transaction(function () use ($input, $vehicle, $partner, $bookerPhone, $rate, $hydrated, $periods, $ratePerPeriod, $baseAmount, $reservedUntil, $channel, $quote, $periodTier, $loyaltyTier, $periodSnapshot, $discountAmount): Rental {
             $rental = Rental::query()->create([
                 'code' => Rental::nextCode(),
                 'channel' => $channel,
@@ -168,6 +186,10 @@ class MobileRentalBookingService
                 'total_periods' => $periods,
                 'base_amount' => $baseAmount,
                 'total_amount' => $baseAmount,
+                'applied_period_tier_id' => $periodTier?->id,
+                'applied_loyalty_tier_id' => $loyaltyTier?->id,
+                'period_pricing_snapshot' => $periodSnapshot,
+                'tier_discount_amount' => $discountAmount,
                 'pickup_location_id' => $hydrated['pickup_location_id'] ?? null,
                 'return_location_id' => $hydrated['return_location_id'] ?? null,
                 'pickup_fleet_base_id' => $hydrated['pickup_fleet_base_id'] ?? null,

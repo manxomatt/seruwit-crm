@@ -143,6 +143,10 @@ class Rental extends Model
         'checked_out_at',
         'returned_at',
         'completed_at',
+        'applied_period_tier_id',
+        'applied_loyalty_tier_id',
+        'period_pricing_snapshot',
+        'tier_discount_amount',
     ];
 
     /** @return array<string, string> */
@@ -196,6 +200,10 @@ class Rental extends Model
             'pickup_fleet_base_id' => 'integer',
             'return_fleet_base_id' => 'integer',
             'insurance_package_id' => 'integer',
+            'applied_period_tier_id' => 'integer',
+            'applied_loyalty_tier_id' => 'integer',
+            'period_pricing_snapshot' => 'array',
+            'tier_discount_amount' => 'decimal:2',
         ];
     }
 
@@ -203,6 +211,18 @@ class Rental extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    /** @return BelongsTo<RentalRateTier, $this> */
+    public function appliedPeriodTier(): BelongsTo
+    {
+        return $this->belongsTo(RentalRateTier::class, 'applied_period_tier_id');
+    }
+
+    /** @return BelongsTo<RentalRateTier, $this> */
+    public function appliedLoyaltyTier(): BelongsTo
+    {
+        return $this->belongsTo(RentalRateTier::class, 'applied_loyalty_tier_id');
     }
 
     /** @return BelongsTo<\Modules\Partners\Models\Location, $this> */
@@ -308,10 +328,10 @@ class Rental extends Model
         $this->update([
             'total_amount' => round(
                 (float) $this->base_amount
-                + (float) $this->excess_amount
-                + (float) $this->late_fee_amount
-                + $damagesTotal
-                + $addonsTotal,
+                    + (float) $this->excess_amount
+                    + (float) $this->late_fee_amount
+                    + $damagesTotal
+                    + $addonsTotal,
                 2
             ),
         ]);
