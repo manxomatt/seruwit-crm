@@ -1,6 +1,7 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/hooks/useTrans';
 import { Transition } from '@headlessui/react';
@@ -17,12 +18,17 @@ interface Props {
     className?: string;
 }
 
+const LOCALE_FLAGS: Record<string, string> = {
+    en: '🇬🇧',
+    id: '🇮🇩',
+};
+
 export default function UpdateProfileInformation({
     mustVerifyEmail,
     status,
     className = '',
 }: Props) {
-    const page = usePage().props as {
+    const page = usePage().props as unknown as {
         auth: { user: { name: string; email: string; locale?: string; email_verified_at?: string | null } };
         availableLocales?: AvailableLocale[];
     };
@@ -35,6 +41,11 @@ export default function UpdateProfileInformation({
         email: string;
         locale: string;
     }
+
+    const localeOptions = availableLocales.map((item) => ({
+        value: item.code,
+        label: `${LOCALE_FLAGS[item.code] ?? '🌐'}  ${item.label}`,
+    }));
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm<ProfileForm>({
@@ -87,18 +98,14 @@ export default function UpdateProfileInformation({
 
                 <div>
                     <InputLabel htmlFor="locale" value={t('profile.language')} />
-                    <select
+                    <Select
                         id="locale"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="mt-1 block w-full"
                         value={data.locale}
-                        onChange={(e) => setData('locale', e.target.value)}
-                    >
-                        {availableLocales.map((item) => (
-                            <option key={item.code} value={item.code}>
-                                {item.label}
-                            </option>
-                        ))}
-                    </select>
+                        onChange={(value) => setData('locale', value)}
+                        placeholder={t('profile.select_language', undefined, 'Pilih bahasa')}
+                        options={localeOptions}
+                    />
                     <p className="mt-1 text-sm text-gray-500">{t('profile.language_help')}</p>
                     <InputError className="mt-2" message={errors.locale} />
                 </div>

@@ -6,7 +6,8 @@ return [
     'name' => 'Name',
     'email' => 'Email',
     'language' => 'Language',
-    'language_help' => 'Choose the language used across the application.',
+    'select_language' => 'Select a language for this account',
+    'language_help' => 'This language preference applies across all application pages while you are signed into this tenant.',
     'save' => 'Save',
     'saved' => 'Saved.',
 

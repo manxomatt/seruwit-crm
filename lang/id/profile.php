@@ -6,7 +6,8 @@ return [
     'name' => 'Nama',
     'email' => 'Email',
     'language' => 'Bahasa',
-    'language_help' => 'Pilih bahasa yang digunakan di seluruh aplikasi.',
+    'select_language' => 'Pilih bahasa untuk akun ini',
+    'language_help' => 'Pilihan bahasa ini akan diterapkan ke seluruh halaman aplikasi ketika Anda masuk ke tenant ini.',
     'save' => 'Simpan',
     'saved' => 'Tersimpan.',
 
