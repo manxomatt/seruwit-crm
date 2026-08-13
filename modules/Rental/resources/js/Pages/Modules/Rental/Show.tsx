@@ -255,7 +255,7 @@ export default function Show({
     const { t } = useTrans();
     const page = usePage();
     const confirmErrors = (page.props.errors ?? {}) as Partial<
-        Record<'payment_method' | 'company_bank_account_id' | 'deposit', string>
+        Record<'payment_method' | 'company_bank_account_id' | 'deposit' | 'vehicle_id', string>
     >;
     const [modal, setModal] = useState<'cancel' | 'no_show' | 'checkout' | 'return' | 'extend' | 'damage' | 'addon' | 'deposit' | 'swap' | null>(null);
     const [confirming, setConfirming] = useState(false);
@@ -349,6 +349,9 @@ export default function Show({
             preserveScroll: true,
             onFinish: () => setConfirming(false),
             onSuccess: () => setShowConfirmPayment(false),
+            onError: () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
         });
     };
 

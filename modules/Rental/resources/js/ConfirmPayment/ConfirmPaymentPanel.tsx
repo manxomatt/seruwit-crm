@@ -24,7 +24,7 @@ interface Props {
     paymentMethod: DepositPaymentMethod;
     companyBankAccountId: string;
     companyBankAccounts: CompanyBankAccountOption[];
-    errors?: Partial<Record<'payment_method' | 'company_bank_account_id' | 'deposit', string>>;
+    errors?: Partial<Record<'payment_method' | 'company_bank_account_id' | 'deposit' | 'vehicle_id', string>>;
     onPaymentMethodChange: (method: DepositPaymentMethod) => void;
     onCompanyBankAccountChange: (id: string) => void;
     onConfirmWithDeposit: () => void;
@@ -104,6 +104,12 @@ export default function ConfirmPaymentPanel({
                           })
                         : t('rental.confirm_payment.subtitle_no_deposit', { code: rentalCode })}
                 </p>
+
+                {errors.vehicle_id && (
+                    <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200">
+                        {errors.vehicle_id}
+                    </div>
+                )}
 
                 {needsDeposit ? (
                     <div className="mt-4 space-y-4">
