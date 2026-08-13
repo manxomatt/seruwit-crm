@@ -18,6 +18,7 @@ interface SessionPayload {
 interface Props {
     session: SessionPayload;
     enterUrl: string | null;
+    trialEndsAt?: string | null;
     centralHost?: string;
     queueConnection?: string;
     settings?: Record<string, string>;
@@ -26,6 +27,7 @@ interface Props {
 export default function OnboardingStatus({
     session,
     enterUrl,
+    trialEndsAt,
     centralHost = 'localhost',
     queueConnection = 'database',
     settings,
@@ -180,6 +182,23 @@ export default function OnboardingStatus({
                                             </p>
                                         </div>
                                     </div>
+
+                                    {trialEndsAt && (
+                                        <div className="rounded-xl border border-cyan-400/30 bg-cyan-500/15 p-4 backdrop-blur-sm">
+                                            <div className="flex items-start gap-3">
+                                                <span className="material-symbols-outlined text-cyan-400">new_releases</span>
+                                                <div>
+                                                    <p className="text-sm font-medium text-cyan-100">
+                                                        {t('central.trial.trial_info')}
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-cyan-200/80">
+                                                        {t('central.trial.days_left', { days: '7' })} —{' '}
+                                                        {new Date(trialEndsAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <button
                                         type="button"

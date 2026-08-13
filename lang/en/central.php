@@ -22,6 +22,37 @@ return [
         'back_workspaces' => 'Back to workspaces',
     ],
 
+    'trial' => [
+        'expired_title' => 'Trial period ended',
+        'expired_headline' => 'Your free trial has ended',
+        'status_badge' => 'Trial expired',
+        'message' => 'The 7-day free trial for :name has ended on :date.',
+        'message_generic' => 'Your 7-day free trial has ended.',
+        'hint' => 'Activate a monthly subscription to continue using the workspace.',
+        'activate_button' => 'Activate Subscription',
+        'days_left' => ':days days left in trial',
+        'trial_info' => 'You are on a 7-day free trial. After the trial ends, you must activate a subscription to continue.',
+        'enter_workspace' => 'Enter workspace',
+    ],
+
+    'subscription' => [
+        'title' => 'Activate Subscription',
+        'headline' => 'Activate your subscription',
+        'subtitle' => 'Choose a plan to continue using :name',
+        'trial_info' => 'Your trial ends in :days days on :date.',
+        'trial_expired' => 'Your trial has ended. Choose a plan to reactivate your workspace.',
+        'select_plan' => 'Select a plan',
+        'current_plan' => 'Current plan',
+        'activate_button' => 'Activate Plan',
+        'activating' => 'Activating…',
+        'success' => 'Subscription activated successfully!',
+        'month' => '/month',
+        'features' => 'Features',
+        'modules_included' => ':count modules',
+        'support' => 'Support',
+        'back_workspaces' => 'Back to workspaces',
+    ],
+
     'onboarding' => [
         'title' => 'Set up your workspace',
         'welcome' => 'Almost there',

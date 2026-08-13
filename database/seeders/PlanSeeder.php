@@ -27,6 +27,11 @@ class PlanSeeder extends Seeder
                 'modules' => Plan::trialModuleKeys(),
                 'sort_order' => 0,
                 'is_default' => false,
+                'price' => 0,
+                'currency' => 'IDR',
+                'interval' => 'month',
+                'trial_days' => 7,
+                'is_trial' => true,
             ],
             [
                 'key' => 'free',
@@ -35,6 +40,11 @@ class PlanSeeder extends Seeder
                 'modules' => [],
                 'sort_order' => 1,
                 'is_default' => false,
+                'price' => 0,
+                'currency' => 'IDR',
+                'interval' => 'month',
+                'trial_days' => 0,
+                'is_trial' => false,
             ],
             [
                 'key' => 'basic',
@@ -45,6 +55,11 @@ class PlanSeeder extends Seeder
                 'modules' => ['carousels', 'pages', 'posts'],
                 'sort_order' => 2,
                 'is_default' => true,
+                'price' => 500000,
+                'currency' => 'IDR',
+                'interval' => 'month',
+                'trial_days' => 0,
+                'is_trial' => false,
             ],
             [
                 'key' => 'pro',
@@ -84,6 +99,11 @@ class PlanSeeder extends Seeder
                 ],
                 'sort_order' => 3,
                 'is_default' => false,
+                'price' => 1500000,
+                'currency' => 'IDR',
+                'interval' => 'month',
+                'trial_days' => 0,
+                'is_trial' => false,
             ],
         ];
 

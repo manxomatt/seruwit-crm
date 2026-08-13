@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Modules\PlanRepository;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
@@ -28,6 +29,14 @@ use Stancl\Tenancy\Database\Models\TenantPivot;
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
+
+    protected function casts(): array
+    {
+        return [
+            'trial_ends_at' => 'datetime',
+            'is_trial_expired' => 'boolean',
+        ];
+    }
 
     /**
      * The subscription plan this tenant is on.
@@ -95,6 +104,27 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             ->withTimestamps();
     }
 
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
+    public function getIsOnTrialAttribute(): bool
+    {
+        return $this->trial_ends_at !== null && $this->trial_ends_at->isFuture();
+    }
+
+    public function scopeOnTrial($query)
+    {
+        return $query->where('trial_ends_at', '>', now());
+    }
+
+    public function scopeTrialExpired($query)
+    {
+        return $query->where('trial_ends_at', '<=', now())
+            ->where('is_trial_expired', false);
+    }
+
     /**
      * Attributes stored as real columns; everything else goes into the data JSON column.
      *
@@ -107,6 +137,8 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'name',
             'status',
             'reseller_global_id',
+            'trial_ends_at',
+            'is_trial_expired',
         ];
     }
 }

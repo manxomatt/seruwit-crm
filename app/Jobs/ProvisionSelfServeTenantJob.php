@@ -8,6 +8,7 @@ use App\Models\OnboardingSession;
 use App\Models\Plan;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleInstaller;
+use App\Modules\PlanRepository;
 use App\Support\Onboarding\SelfServeProvisioningPlan;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -100,6 +101,12 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                     $tenant->update(['plan' => Plan::KEY_TRIAL]);
                 }
 
+                $tenant->update([
+                    'trial_ends_at' => now()->addDays(7),
+                    'is_trial_expired' => false,
+                    'status' => 'active',
+                ]);
+
                 return $tenant;
             } else {
                 // Domain row would block CreateTenantAction for the same subdomain.
@@ -114,7 +121,15 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             owner: $owner,
         );
 
-        $tenant->update(['plan' => Plan::KEY_TRIAL]);
+        $plan = app(PlanRepository::class)->find(Plan::KEY_TRIAL);
+
+        $tenant->update([
+            'plan' => Plan::KEY_TRIAL,
+            'trial_ends_at' => $plan ? now()->addDays($plan->trial_days) : now()->addDays(7),
+            'is_trial_expired' => false,
+            'status' => 'active',
+        ]);
+
         $session->update(['tenant_id' => $tenant->getTenantKey()]);
 
         return $tenant;

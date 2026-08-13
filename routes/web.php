@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\OnboardingController;
+use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PlanController;
@@ -152,4 +153,17 @@ Route::domain($centralDomain)
     ->group(function () {
         Route::get('/registry', [ModuleRegistryController::class, 'index'])->name('registry.index');
         Route::patch('/registry/{key}/status', [ModuleRegistryController::class, 'toggleStatus'])->name('registry.toggle-status');
+    });
+
+/*
+| Subscription activation for trial tenants.
+| Accessible by the tenant owner (auth only, ownership checked in controller).
+*/
+Route::domain($centralDomain)
+    ->middleware('auth')
+    ->prefix('subscription')
+    ->name('central.subscription.')
+    ->group(function () {
+        Route::get('/activate/{tenant}', [SubscriptionController::class, 'show'])->name('show');
+        Route::post('/activate/{tenant}', [SubscriptionController::class, 'activate'])->name('activate');
     });

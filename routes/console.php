@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Tenant;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -64,3 +65,35 @@ Schedule::command('shuttle:release-expired-holds')
     ->withoutOverlapping(5)
     ->onOneServer()
     ->runInBackground();
+
+// Suspend tenants whose trial period has expired.
+Schedule::command('subscription:expire-trials')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// Notify tenants whose trial expires in 3 days.
+Schedule::call(function () {
+    Tenant::query()
+        ->onTrial()
+        ->whereDate('trial_ends_at', now()->addDays(3))
+        ->each(function ($tenant) {
+            $owner = $tenant->users()->first();
+            if ($owner) {
+                $owner->notify(new \App\Notifications\TrialExpiringNotification($tenant, 3));
+            }
+        });
+})->name('trial:notify-3days')->dailyAt('08:00')->onOneServer();
+
+// Notify tenants whose trial expires in 1 day.
+Schedule::call(function () {
+    Tenant::query()
+        ->onTrial()
+        ->whereDate('trial_ends_at', now()->addDay())
+        ->each(function ($tenant) {
+            $owner = $tenant->users()->first();
+            if ($owner) {
+                $owner->notify(new \App\Notifications\TrialExpiringNotification($tenant, 1));
+            }
+        });
+})->name('trial:notify-1day')->dailyAt('08:00')->onOneServer();

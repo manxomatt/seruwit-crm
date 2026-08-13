@@ -30,6 +30,8 @@ class WorkspaceController extends Controller
                 'name' => $tenant->name,
                 'status' => $tenant->status,
                 'domain' => $tenant->domains->first()?->domain,
+                'trial_ends_at' => $tenant->trial_ends_at?->toIso8601String(),
+                'is_on_trial' => $tenant->isOnTrial ?? false,
             ]);
 
         return Inertia::render('Central/Workspaces', [
@@ -51,6 +53,18 @@ class WorkspaceController extends Controller
                 $request,
                 $tenant->name,
                 $tenant->domains->first()?->domain,
+                $tenant->id,
+                $tenant->is_trial_expired ?? false,
+            );
+        }
+
+        if (isset($tenant->is_trial_expired) && $tenant->is_trial_expired) {
+            return WorkspaceSuspendedPage::toResponse(
+                $request,
+                $tenant->name,
+                $tenant->domains->first()?->domain,
+                $tenant->id,
+                true,
             );
         }
 

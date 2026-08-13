@@ -22,6 +22,37 @@ return [
         'back_workspaces' => 'Kembali ke daftar workspace',
     ],
 
+    'trial' => [
+        'expired_title' => 'Masa trial berakhir',
+        'expired_headline' => 'Masa trial gratis Anda telah berakhir',
+        'status_badge' => 'Trial berakhir',
+        'message' => 'Masa trial gratis 7 hari untuk :name telah berakhir pada :date.',
+        'message_generic' => 'Masa trial gratis 7 hari Anda telah berakhir.',
+        'hint' => 'Aktifkan paket berlangganan bulanan untuk melanjutkan menggunakan workspace.',
+        'activate_button' => 'Aktivasi Paket',
+        'days_left' => ':days hari tersisa di trial',
+        'trial_info' => 'Anda sedang dalam masa trial gratis 7 hari. Setelah trial berakhir, Anda harus mengaktivasi paket untuk melanjutkan.',
+        'enter_workspace' => 'Masuk workspace',
+    ],
+
+    'subscription' => [
+        'title' => 'Aktivasi Paket Berlangganan',
+        'headline' => 'Aktivasi paket Anda',
+        'subtitle' => 'Pilih paket untuk melanjutkan menggunakan :name',
+        'trial_info' => 'Trial Anda berakhir dalam :days hari pada :date.',
+        'trial_expired' => 'Trial Anda telah berakhir. Pilih paket untuk mengaktifkan kembali workspace.',
+        'select_plan' => 'Pilih paket',
+        'current_plan' => 'Paket saat ini',
+        'activate_button' => 'Aktivasi Paket',
+        'activating' => 'Mengaktivasi…',
+        'success' => 'Paket berhasil diaktifkan!',
+        'month' => '/bulan',
+        'features' => 'Fitur',
+        'modules_included' => ':count modul',
+        'support' => 'Dukungan',
+        'back_workspaces' => 'Kembali ke daftar workspace',
+    ],
+
     'onboarding' => [
         'title' => 'Siapkan workspace Anda',
         'welcome' => 'Hampir selesai',

@@ -144,6 +144,7 @@ class OnboardingController extends Controller
             'enterUrl' => $session->status === OnboardingSession::STATUS_READY && $session->tenant_id
                 ? route('central.workspaces.enter', $session->tenant_id)
                 : null,
+            'trialEndsAt' => $session->tenant?->trial_ends_at?->toIso8601String(),
             'centralHost' => (string) (config('tenancy.tenant_base_domain') ?: 'localhost'),
             'queueConnection' => config('queue.default'),
             'settings' => Setting::getPublic()

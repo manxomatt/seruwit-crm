@@ -12,6 +12,7 @@ use App\Http\Controllers\Module\MediaController as ModuleMediaController;
 use App\Http\Controllers\Module\ModuleController as ModuleCatalogController;
 use App\Http\Controllers\Module\RoleController as ModuleRoleController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
+use App\Http\Controllers\Module\SubscriptionController as ModuleSubscriptionController;
 use App\Http\Controllers\Module\UserController as ModuleUserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
@@ -139,6 +140,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/appearance/reset', [ModuleSettingController::class, 'resetAppearance'])->middleware('permission:settings,update')->name('settings.appearance.reset');
         Route::patch('/settings/mail', [ModuleMailConfigController::class, 'update'])->middleware('permission:settings,update')->name('settings.mail.update');
         Route::get('/settings/{group}', [ModuleSettingController::class, 'group'])->middleware('permission:settings,view')->name('settings.group');
+
+        // Subscription activation — available even during trial/suspended state.
+        Route::get('/subscription', [ModuleSubscriptionController::class, 'index'])->middleware('permission:subscription,view')->name('subscription.index');
+        Route::post('/subscription/activate', [ModuleSubscriptionController::class, 'activate'])->middleware('permission:subscription,update')->name('subscription.activate');
 
         // Module User Management Routes
         Route::post('/users/invite', [\App\Http\Controllers\Module\UserInvitationController::class, 'store'])->middleware('permission:users,create')->name('users.invite');

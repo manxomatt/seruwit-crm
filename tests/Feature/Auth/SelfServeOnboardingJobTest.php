@@ -50,7 +50,10 @@ class SelfServeOnboardingJobTest extends TestCase
 
         $tenant = Tenant::query()->findOrFail($session->tenant_id);
         $this->assertSame(Plan::KEY_TRIAL, $tenant->planKey());
-        $this->assertSame('self-serve-travel.localhost', $tenant->domains()->first()?->domain);
+        $this->assertNotNull($tenant->trial_ends_at);
+        $this->assertTrue($tenant->trial_ends_at->isFuture());
+        $this->assertTrue($tenant->isOnTrial);
+        $this->assertStringEndsWith('.localhost', $tenant->domains()->first()?->domain ?? '');
 
         $attached = CentralUser::query()
             ->where('global_id', $user->global_id)

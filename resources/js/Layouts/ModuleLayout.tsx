@@ -227,6 +227,12 @@ const PayablesIcon = () => (
     </svg>
 );
 
+const SubscriptionIcon = () => (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3m-3 3h3m-3 3h3m-9-9.75h.375c.621 0 1.125.504 1.125 1.125v.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375m-9-9.75v.375c0 .621.504 1.125 1.125 1.125h.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375M7.5 21h9a2.25 2.25 0 002.25-2.25V5.25A2.25 2.25 0 0016.5 3h-9a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21z" />
+    </svg>
+);
+
 const OrdersIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
@@ -319,7 +325,7 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'sales_commercial', modules: ['pos', 'canvassing', 'shuttle', 'promotions'] },
     { titleKey: 'content', tier: 'content', also: ['media'] },
     { titleKey: 'insights', modules: ['analytics', 'live-updates'] },
-    { titleKey: 'administration', modules: ['roles', 'users', 'modules', 'settings'] },
+    { titleKey: 'administration', modules: ['roles', 'users', 'modules', 'settings', 'subscription'] },
     { titleKey: 'platform', modules: ['tenants', 'plans', 'module-registry'] },
 ];
 
@@ -357,6 +363,7 @@ const moduleRouteMap: Record<string, { route: string; routePattern: string }> = 
     'canvassing': { route: 'module.canvassing.index', routePattern: 'module.canvassing.*' },
     'analytics': { route: 'module.analytics.index', routePattern: 'module.analytics.*' },
     'settings': { route: 'module.settings.index', routePattern: 'module.settings.*' },
+    'subscription': { route: 'module.subscription.index', routePattern: 'module.subscription.*' },
     'users': { route: 'module.users.index', routePattern: 'module.users.*' },
     'roles': { route: 'module.roles.index', routePattern: 'module.roles.*' },
     'live-updates': { route: 'module.live-updates.index', routePattern: 'module.live-updates.*' },
@@ -463,6 +470,7 @@ const moduleIconMap: Record<string, ReactNode> = {
     'canvassing': <CanvassingIcon />,
     'analytics': <AnalyticsIcon />,
     'settings': <SettingsIcon />,
+    'subscription': <SubscriptionIcon />,
     'users': <UsersIcon />,
     'roles': <RolesIcon />,
     'live-updates': <LiveUpdatesIcon />,

@@ -42,6 +42,7 @@ class Permission extends Model
         'analytics' => 'Analytics',
         'partners' => 'Contacts',
         'accounting' => 'Accounting',
+        'subscription' => 'Subscription',
     ];
 
     /**

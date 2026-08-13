@@ -5,16 +5,19 @@ import { Head, Link, usePage } from '@inertiajs/react';
 
 interface Props {
     workspace: {
+        id?: string;
         name: string;
         domain: string | null;
     };
     workspacesUrl: string;
+    isTrialExpired?: boolean;
     settings?: Record<string, string>;
 }
 
 export default function WorkspaceSuspended({
     workspace,
     workspacesUrl,
+    isTrialExpired = false,
     settings,
 }: Props): JSX.Element {
     const { t } = useTrans();
@@ -27,6 +30,8 @@ export default function WorkspaceSuspended({
     const siteName = pageSettings?.['general.site_name'] || DEFAULT_SITE_NAME;
     const siteLogo = pageSettings?.['site.logo'];
     const workspaceLabel = workspace.name || workspace.domain || siteName;
+
+    const isTrialSuspended = isTrialExpired || workspace.name === 'Trial Expired';
 
     return (
         <div className="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
@@ -79,22 +84,28 @@ export default function WorkspaceSuspended({
                         <div className="flex flex-col items-center text-center">
                             <div className="relative mb-6">
                                 <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-100 to-orange-50 text-amber-600 shadow-inner ring-1 ring-amber-200/80">
-                                    <span className="material-symbols-outlined text-5xl">pause_circle</span>
+                                    <span className="material-symbols-outlined text-5xl">
+                                        {isTrialSuspended ? 'new_releases' : 'pause_circle'}
+                                    </span>
                                 </span>
                                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
                                     <span className="material-symbols-outlined text-[16px] text-amber-600">
-                                        lock
+                                        {isTrialSuspended ? 'lock' : 'pause'}
                                     </span>
                                 </span>
                             </div>
 
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">
                                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                                {t('central.suspended.status_badge')}
+                                {isTrialSuspended
+                                    ? t('central.trial.status_badge')
+                                    : t('central.suspended.status_badge')}
                             </span>
 
                             <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                                {t('central.suspended.headline')}
+                                {isTrialSuspended
+                                    ? t('central.trial.expired_headline')
+                                    : t('central.suspended.headline')}
                             </h1>
 
                             <p className="mt-2 text-base font-semibold text-slate-800">{workspaceLabel}</p>
@@ -104,13 +115,17 @@ export default function WorkspaceSuspended({
                             ) : null}
 
                             <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-600">
-                                {workspace.name
-                                    ? t('central.suspended.message', { name: workspace.name })
-                                    : t('central.suspended.message_generic')}
+                                {isTrialSuspended
+                                    ? t('central.trial.message', { name: workspace.name })
+                                    : workspace.name
+                                      ? t('central.suspended.message', { name: workspace.name })
+                                      : t('central.suspended.message_generic')}
                             </p>
 
                             <p className="mt-3 max-w-sm text-xs leading-relaxed text-slate-400">
-                                {t('central.suspended.hint')}
+                                {isTrialSuspended
+                                    ? t('central.trial.hint')
+                                    : t('central.suspended.hint')}
                             </p>
                         </div>
 
@@ -122,6 +137,16 @@ export default function WorkspaceSuspended({
                                 <span className="material-symbols-outlined text-[18px]">grid_view</span>
                                 {t('central.suspended.back_workspaces')}
                             </a>
+
+                            {isTrialSuspended && workspace.id && (
+                                <a
+                                    href={route('central.subscription.show', workspace.id)}
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-700 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-amber-700/25 transition hover:bg-amber-800"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">new_releases</span>
+                                    {t('central.trial.activate_button')}
+                                </a>
+                            )}
 
                             {page.auth?.user?.email ? (
                                 <p className="text-center text-xs text-slate-400">

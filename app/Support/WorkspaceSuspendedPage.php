@@ -15,13 +15,17 @@ class WorkspaceSuspendedPage
         Request $request,
         ?string $workspaceName = null,
         ?string $domain = null,
+        ?string $tenantId = null,
+        ?bool $isTrialExpired = false,
     ): Response {
         return Inertia::render('Errors/WorkspaceSuspended', [
             'workspace' => [
+                'id' => $tenantId,
                 'name' => $workspaceName ?? (string) (tenant('name') ?: ''),
                 'domain' => $domain ?? $request->getHost(),
             ],
             'workspacesUrl' => route('central.workspaces.index'),
+            'isTrialExpired' => $isTrialExpired,
         ])->toResponse($request)->setStatusCode(403);
     }
 }

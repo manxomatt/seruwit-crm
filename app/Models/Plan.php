@@ -69,6 +69,11 @@ class Plan extends Model
         'modules',
         'sort_order',
         'is_default',
+        'price',
+        'currency',
+        'interval',
+        'trial_days',
+        'is_trial',
     ];
 
     /**
@@ -80,6 +85,9 @@ class Plan extends Model
             'modules' => 'array',
             'sort_order' => 'integer',
             'is_default' => 'boolean',
+            'price' => 'decimal:2',
+            'trial_days' => 'integer',
+            'is_trial' => 'boolean',
         ];
     }
 
