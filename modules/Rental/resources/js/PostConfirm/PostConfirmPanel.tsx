@@ -52,6 +52,7 @@ interface Props {
         notes: string | null;
         allocations: Array<{ invoice_id: number; amount: number }>;
     }) => void;
+    payInvoicesProcessing?: boolean;
 }
 
 export default function PostConfirmPanel({
@@ -73,6 +74,7 @@ export default function PostConfirmPanel({
     companyBankAccounts,
     onAction,
     onPayInvoices,
+    payInvoicesProcessing = false,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -253,10 +255,9 @@ export default function PostConfirmPanel({
                 companyBankAccounts={companyBankAccounts}
                 onClose={() => setShowPayInvoices(false)}
                 onSubmit={(data) => {
-                    setShowPayInvoices(false);
                     onPayInvoices?.(data);
                 }}
-                processing={false}
+                processing={payInvoicesProcessing}
                 errors={{}}
             />
         </section>

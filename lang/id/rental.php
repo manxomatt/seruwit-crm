@@ -79,19 +79,20 @@ return [
         'payment_modal' => [
             'subtitle' => 'Pilih invoice dan alokasikan pembayaran untuk :code.',
         ],
-        'invoices' => [
-            'code' => 'Kode',
-            'due_date' => 'Jatuh Tempo',
-            'balance' => 'Saldo',
-            'allocate' => 'Alokasi',
-            'full' => 'Penuh',
-            'total_allocated' => 'Total dialokasikan: :amount',
-            'match_amount' => 'Samakan dengan Total',
-            'no_open_invoices' => 'Tidak ada invoice terbuka.',
-            'payment_type' => 'Tipe Pembayaran',
-            'reference_number' => 'No. Referensi',
-            'notes' => 'Catatan',
-        ],
+    ],
+
+    'invoices' => [
+        'code' => 'Kode',
+        'due_date' => 'Jatuh Tempo',
+        'balance' => 'Saldo',
+        'allocate' => 'Alokasi',
+        'full' => 'Penuh',
+        'total_allocated' => 'Total dialokasikan: :amount',
+        'match_amount' => 'Samakan dengan Total',
+        'no_open_invoices' => 'Tidak ada invoice terbuka.',
+        'payment_type' => 'Tipe Pembayaran',
+        'reference_number' => 'No. Referensi',
+        'notes' => 'Catatan',
     ],
 
     'settings' => [

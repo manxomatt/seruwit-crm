@@ -265,6 +265,7 @@ export default function Show({
     const [approvingProof, setApprovingProof] = useState(false);
     const [showRejectProofModal, setShowRejectProofModal] = useState(false);
     const [showPayInvoicesModal, setShowPayInvoicesModal] = useState(false);
+    const [payingInvoices, setPayingInvoices] = useState(false);
     const [confirmPaymentMethod, setConfirmPaymentMethod] = useState<DepositPaymentMethod>('cash');
     const [confirmBankAccountId, setConfirmBankAccountId] = useState('');
     const [lifecycleStep, setLifecycleStep] = useState<PostConfirmStepId>(
@@ -455,12 +456,15 @@ export default function Show({
         notes: string | null;
         allocations: Array<{ invoice_id: number; amount: number }>;
     }) => {
+        setPayingInvoices(true);
         router.post(prefixedRoute('rental.invoices.pay', rental.id), data, {
             preserveScroll: true,
             onSuccess: () => {
                 setShowPayInvoicesModal(false);
+                setPayingInvoices(false);
             },
             onError: () => {
+                setPayingInvoices(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
         });
@@ -752,6 +756,7 @@ export default function Show({
                             companyBankAccounts={companyBankAccounts}
                             onAction={handlePostConfirmAction}
                             onPayInvoices={handlePayInvoices}
+                            payInvoicesProcessing={payingInvoices}
                         />
                     </div>
                 )}
