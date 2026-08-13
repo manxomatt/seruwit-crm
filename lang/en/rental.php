@@ -387,6 +387,9 @@ return [
         'search_placeholder' => 'Name, plate, or type…',
         'empty_hint' => 'Try another date range or clear the search filter.',
         'no_photo' => 'No photo',
+        'showing' => 'Showing :from to :to of :total vehicles',
+        'previous' => 'Previous',
+        'next' => 'Next',
     ],
 
     'calendar' => [

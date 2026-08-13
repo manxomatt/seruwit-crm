@@ -387,6 +387,9 @@ return [
         'search_placeholder' => 'Nama, plat, atau tipe…',
         'empty_hint' => 'Coba rentang tanggal lain atau hapus filter pencarian.',
         'no_photo' => 'Tanpa foto',
+        'showing' => 'Menampilkan :from–:to dari :total kendaraan',
+        'previous' => 'Sebelumnya',
+        'next' => 'Berikutnya',
     ],
 
     'calendar' => [

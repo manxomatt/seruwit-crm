@@ -7,7 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
-import { FormEventHandler, useMemo, useState } from 'react';
+import { FormEventHandler, useMemo, useEffect, useState } from 'react';
 import RentalNav from '../../../../RentalNav';
 
 interface Booking {
@@ -123,7 +123,7 @@ export default function Index({ board, filters }: Props): JSX.Element {
         router.get(prefixedRoute('rental.availability.index'), { from, to }, { preserveState: true });
     };
 
-    const vehicles = useMemo(() => {
+    const filteredVehicles = useMemo(() => {
         const q = query.trim().toLowerCase();
 
         return board.vehicles.filter((vehicle) => {
@@ -142,6 +142,19 @@ export default function Index({ board, filters }: Props): JSX.Element {
             );
         });
     }, [board.vehicles, filter, query]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [filteredVehicles.length, filter, query]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / PER_PAGE));
+    const paginatedVehicles = filteredVehicles.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+    useEffect(() => {
+        if (page > totalPages) {
+            setPage(totalPages);
+        }
+    }, [page, totalPages]);
 
     const bookUrl = (vehicleId: number): string =>
         prefixedRoute('rental.create', {
@@ -234,7 +247,7 @@ export default function Index({ board, filters }: Props): JSX.Element {
                     />
                 </div>
 
-                {vehicles.length === 0 ? (
+                {filteredVehicles.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-6 py-14 text-center dark:border-gray-600 dark:bg-gray-900/40">
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
                             {t('rental.pages.availability.empty')}
@@ -245,7 +258,7 @@ export default function Index({ board, filters }: Props): JSX.Element {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {vehicles.map((vehicle) => (
+                        {paginatedVehicles.map((vehicle) => (
                             <article
                                 key={vehicle.id}
                                 className={`overflow-hidden rounded-xl border border-gray-200 border-l-4 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 ${AVAIL_ACCENT[vehicle.availability]}`}
@@ -353,6 +366,39 @@ export default function Index({ board, filters }: Props): JSX.Element {
                                 </div>
                             </article>
                         ))}
+
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {t('rental.availability.showing', {
+                                        from: (page - 1) * PER_PAGE + 1,
+                                        to: Math.min(page * PER_PAGE, filteredVehicles.length),
+                                        total: filteredVehicles.length,
+                                    })}
+                                </p>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                        {t('rental.availability.previous')}
+                                    </button>
+                                    <span className="flex items-center px-3 text-sm text-gray-600 dark:text-gray-400">
+                                        {page} / {totalPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                        disabled={page === totalPages}
+                                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                        {t('rental.availability.next')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
