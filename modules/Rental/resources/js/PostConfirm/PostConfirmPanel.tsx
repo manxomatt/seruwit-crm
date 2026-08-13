@@ -131,11 +131,6 @@ export default function PostConfirmPanel({
                             {t('rental.actions.checkout')}
                         </PrimaryButton>
                     )}
-                    {depositBlocksCheckout && (
-                        <SecondaryButton type="button" onClick={() => onAction('receive_deposit')}>
-                            {t('rental.actions.receive_deposit')}
-                        </SecondaryButton>
-                    )}
                     {!isConfirmed && (
                         <p className="text-sm text-indigo-800/80 dark:text-indigo-200/80">
                             {t('rental.post_confirm.pickup_done')}
