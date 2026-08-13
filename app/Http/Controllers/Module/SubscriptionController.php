@@ -15,9 +15,14 @@ class SubscriptionController extends Controller
 {
     public function __construct(private readonly SubscriptionService $service) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        if (! tenancy()->initialized) {
+            return redirect()->route('central.workspaces.index');
+        }
+
         $tenant = tenant();
+        abort_unless($tenant instanceof Tenant, 404);
 
         $plans = Plan::query()
             ->where(function ($query): void {
@@ -27,7 +32,7 @@ class SubscriptionController extends Controller
             ->ordered()
             ->get();
 
-        $subscription = $tenant->subscription;
+        $subscription = $tenant->relationLoaded('subscription') ? $tenant->subscription : $tenant->loadMissing('subscription')->subscription;
 
         return Inertia::render('Modules/Subscription/Activate', [
             'tenant' => [
