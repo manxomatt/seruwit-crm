@@ -3,13 +3,21 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
+import { useState } from 'react';
 import type { PostConfirmAction, PostConfirmStepId } from './types';
+import PayInvoicesModal from './PayInvoicesModal';
 
 interface PaymentSummary {
     status: string;
     total_invoiced: number;
     total_paid: number;
     balance_due: number;
+    invoices?: Array<{
+        id: number;
+        code: string;
+        due_date: string | null;
+        balance: number;
+    }>;
 }
 
 interface Props {
@@ -26,7 +34,24 @@ interface Props {
     payment: PaymentSummary;
     invoicingEnabled: boolean;
     rentalId: number;
+    rentalCode: string;
+    partnerId: number;
+    companyBankAccounts: Array<{
+        id: number;
+        name: string;
+        kind?: string | null;
+    }>;
     onAction: (action: PostConfirmAction) => void;
+    onPayInvoices?: (data: {
+        payment_date: string;
+        amount: number;
+        type: string;
+        method: string;
+        company_bank_account_id: number | null;
+        reference_number: string | null;
+        notes: string | null;
+        allocations: Array<{ invoice_id: number; amount: number }>;
+    }) => void;
 }
 
 export default function PostConfirmPanel({
@@ -43,13 +68,21 @@ export default function PostConfirmPanel({
     payment,
     invoicingEnabled,
     rentalId,
+    rentalCode,
+    partnerId,
+    companyBankAccounts,
     onAction,
+    onPayInvoices,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
     const isActive = rentalStatus === 'active';
     const isReturned = rentalStatus === 'returned';
     const isConfirmed = rentalStatus === 'confirmed';
+    const [showPayInvoices, setShowPayInvoices] = useState(false);
+
+    const balanceDue = payment.balance_due ?? 0;
+    const hasOpenInvoices = (payment.invoices ?? []).some((inv) => inv.balance > 0.009);
 
     return (
         <section className="overflow-hidden rounded-xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50 via-white to-sky-50 dark:border-indigo-900 dark:from-indigo-950/60 dark:via-gray-800 dark:to-gray-800">
@@ -112,6 +145,11 @@ export default function PostConfirmPanel({
                         {canSettleDeposit && (
                             <SecondaryButton type="button" onClick={() => onAction('settle_deposit')}>
                                 {t('rental.actions.settle_deposit')}
+                            </SecondaryButton>
+                        )}
+                        {invoicingEnabled && balanceDue > 0.009 && hasOpenInvoices && (
+                            <SecondaryButton type="button" onClick={() => setShowPayInvoices(true)}>
+                                {t('rental.actions.pay_invoices')}
                             </SecondaryButton>
                         )}
                     </div>
@@ -206,6 +244,21 @@ export default function PostConfirmPanel({
                 </div>
             )}
             </div>
+
+            <PayInvoicesModal
+                show={showPayInvoices}
+                rentalCode={rentalCode}
+                invoices={payment.invoices ?? []}
+                partnerId={partnerId}
+                companyBankAccounts={companyBankAccounts}
+                onClose={() => setShowPayInvoices(false)}
+                onSubmit={(data) => {
+                    setShowPayInvoices(false);
+                    onPayInvoices?.(data);
+                }}
+                processing={false}
+                errors={{}}
+            />
         </section>
     );
 }

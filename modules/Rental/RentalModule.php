@@ -182,6 +182,7 @@ class RentalModule implements ModuleContract
         Route::post('/rental/{rental}/deposit-receive', [RentalActionController::class, 'receiveDeposit'])->middleware('permission:rental,update')->name('rental.deposit.receive');
         Route::post('/rental/{rental}/deposit-pay-online', [RentalActionController::class, 'payDepositOnline'])->middleware('permission:rental,update')->name('rental.deposit.pay_online');
         Route::post('/rental/{rental}/deposit-settle', [RentalActionController::class, 'settleDeposit'])->middleware('permission:rental,update')->name('rental.deposit.settle');
+        Route::post('/rental/{rental}/pay-invoices', [RentalActionController::class, 'payInvoices'])->middleware('permission:rental,update')->name('rental.invoices.pay');
         Route::post('/rental/{rental}/approve-deposit-proof', [RentalActionController::class, 'approveDepositProof'])->middleware('permission:rental,approve')->name('rental.approve_deposit_proof');
         Route::post('/rental/{rental}/reject-deposit-proof', [RentalActionController::class, 'rejectDepositProof'])->middleware('permission:rental,approve')->name('rental.reject_deposit_proof');
         Route::post('/rental/{rental}/damages', [RentalActionController::class, 'storeDamage'])->middleware('permission:rental,update')->name('rental.damages.store');

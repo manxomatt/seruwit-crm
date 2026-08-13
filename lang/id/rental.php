@@ -76,6 +76,22 @@ return [
         'return_done' => 'Return untuk reservasi ini sudah selesai.',
         'changes_closed' => 'Extend, swap, dan add-on tersedia saat rental aktif.',
         'current_step' => 'Langkah saat ini',
+        'payment_modal' => [
+            'subtitle' => 'Pilih invoice dan alokasikan pembayaran untuk :code.',
+        ],
+        'invoices' => [
+            'code' => 'Kode',
+            'due_date' => 'Jatuh Tempo',
+            'balance' => 'Saldo',
+            'allocate' => 'Alokasi',
+            'full' => 'Penuh',
+            'total_allocated' => 'Total dialokasikan: :amount',
+            'match_amount' => 'Samakan dengan Total',
+            'no_open_invoices' => 'Tidak ada invoice terbuka.',
+            'payment_type' => 'Tipe Pembayaran',
+            'reference_number' => 'No. Referensi',
+            'notes' => 'Catatan',
+        ],
     ],
 
     'settings' => [
@@ -347,6 +363,7 @@ return [
         'print_handover' => 'Cetak BA serah terima',
         'approve' => 'Setujui',
         'reject' => 'Tolak',
+        'pay_invoices' => 'Bayar Invoice',
     ],
 
     'sections' => [
@@ -705,6 +722,7 @@ return [
         'addon_removed' => 'Biaya tambahan dihapus.',
         'deposit_received' => 'Penerimaan deposit dicatat.',
         'deposit_settled' => 'Deposit sudah di-settle.',
+        'invoices_paid' => 'Pembayaran invoice berhasil dicatat.',
         'settings_updated' => 'Pengaturan rental disimpan.',
         'document_template_updated' => 'Template dokumen disimpan.',
         'document_template_reset' => 'Template dokumen dikembalikan ke default.',
@@ -747,6 +765,7 @@ return [
         'deposit_already_received' => 'Penerimaan deposit sudah dicatat.',
         'settle_deposit_returned_only' => 'Deposit hanya dapat di-settle pada rental yang sudah dikembalikan atau selesai.',
         'deposit_already_settled' => 'Deposit sudah di-settle.',
+        'invoicing_unavailable' => 'Module invoicing tidak tersedia.',
         'pdf_contract_confirmed_only' => 'Cetak kontrak setelah rental dikonfirmasi.',
         'pdf_handover_checked_out_only' => 'Cetak BA serah terima setelah kendaraan di-check out.',
         'partner_inactive' => 'Pelanggan ini tidak aktif dan tidak dapat menyewa.',
@@ -824,6 +843,8 @@ return [
         'vehicle_kir_expired' => 'Kendaraan :name memiliki KIR kedaluwarsa.',
         'vehicle_trip_conflict' => 'Kendaraan :name sudah memiliki trip pada :date.',
         'deposit_settlement_sum' => 'Jumlah dipakai + dikembalikan harus sama dengan deposit (:deposit).',
+        'payment_amount_mismatch' => 'Total alokasi (:allocated) tidak sama dengan jumlah pembayaran (:amount).',
+        'payment_allocations_invalid' => 'Alokasi invoice tidak valid.',
         'addon_code_required' => 'Pilih jenis biaya.',
         'addon_code_invalid' => 'Jenis biaya tidak valid.',
         'addon_amount_required' => 'Masukkan jumlah.',

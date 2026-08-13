@@ -18,6 +18,7 @@ export type PostConfirmAction =
     | 'receive_deposit'
     | 'pay_deposit_online'
     | 'settle_deposit'
+    | 'pay_invoices'
     | 'checkout'
     | 'return'
     | 'complete'

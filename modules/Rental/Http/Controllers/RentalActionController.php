@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Modules\Fleet\Models\Vehicle;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Rental\Http\Requests\PayRentalInvoicesRequest;
 use Modules\Rental\Http\Requests\ReceiveRentalDepositRequest;
 use Modules\Rental\Http\Requests\SettleRentalDepositRequest;
 use Modules\Rental\Http\Requests\StoreRentalAddonChargeRequest;
@@ -312,6 +313,33 @@ class RentalActionController extends Controller
         $this->accounting->settleDeposit($rental, $request->validated());
 
         return back()->with('success', __('rental.messages.deposit_settled'));
+    }
+
+    public function payInvoices(PayRentalInvoicesRequest $request, Rental $rental): RedirectResponse
+    {
+        if (! class_exists(\Modules\Receivables\Support\PaymentRecorder::class)) {
+            return back()->with('error', __('rental.errors.invoicing_unavailable'));
+        }
+
+        $data = $request->validated();
+        $allocations = collect($data['allocations'])->map(fn (array $row): array => [
+            'invoice_id' => (int) $row['invoice_id'],
+            'amount' => round((float) $row['amount'], 2),
+        ])->all();
+
+        \Modules\Receivables\Support\PaymentRecorder::record([
+            'partner_id' => $rental->partner_id,
+            'payment_date' => $data['payment_date'],
+            'amount' => round((float) $data['amount'], 2),
+            'type' => $data['type'] ?? \Modules\Receivables\Models\Payment::TYPE_SETTLEMENT,
+            'method' => $data['method'] ?? \Modules\Receivables\Models\Payment::METHOD_TRANSFER,
+            'company_bank_account_id' => $data['company_bank_account_id'] ?? null,
+            'reference_number' => $data['reference_number'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'allocations' => $allocations,
+        ]);
+
+        return back()->with('success', __('rental.messages.invoices_paid'));
     }
 
     /**

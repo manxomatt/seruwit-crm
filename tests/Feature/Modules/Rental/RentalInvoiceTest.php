@@ -375,4 +375,58 @@ class RentalInvoiceTest extends TestCase
                 ->where('payment.invoices.0.due_date', fn ($v) => is_string($v) && $v !== '')
                 ->where('payment.total_invoiced', fn ($v) => (float) $v > 0));
     }
+
+    public function test_can_pay_invoices_from_rental_show(): void
+    {
+        $partner = \Modules\Partners\Models\Partner::factory()->create([
+            'payment_term_days' => 7,
+        ]);
+
+        $rental = Rental::factory()->create([
+            'partner_id' => $partner->id,
+            'status' => Rental::STATUS_DRAFT,
+            'base_amount' => 1500000,
+            'total_amount' => 1500000,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.confirm', $rental), ['deposit_collected' => true, 'payment_method' => 'cash'])
+            ->assertRedirect();
+
+        $charge = RentalCharge::query()
+            ->where('rental_id', $rental->id)
+            ->where('kind', RentalCharge::KIND_BASE)
+            ->first();
+
+        $invoiceLine = InvoiceLine::query()
+            ->where('source_type', $charge->getMorphClass())
+            ->where('source_id', $charge->id)
+            ->first();
+
+        $invoice = $invoiceLine->invoice;
+        $invoice->update([
+            'status' => Invoice::STATUS_ISSUED,
+            'amount_paid' => 0,
+        ]);
+
+        $this->actingAs($this->createAdminUser())
+            ->post(route('module.rental.invoices.pay', $rental), [
+                'payment_date' => now()->toDateString(),
+                'amount' => 1500000,
+                'type' => 'settlement',
+                'method' => 'transfer',
+                'company_bank_account_id' => null,
+                'reference_number' => 'TRF-TEST',
+                'notes' => 'Pelunasan sewa',
+                'allocations' => [
+                    ['invoice_id' => $invoice->id, 'amount' => 1500000],
+                ],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $invoice->refresh();
+        $this->assertSame(Invoice::STATUS_PAID, $invoice->status);
+        $this->assertEquals(1500000, (float) $invoice->amount_paid);
+    }
 }

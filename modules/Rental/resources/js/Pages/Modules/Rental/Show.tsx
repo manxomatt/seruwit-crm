@@ -26,6 +26,7 @@ import ConfirmPaymentPanel, {
 import HandoverPhotoPicker from '../../../HandoverPhotoPicker';
 import PostConfirmPanel from '../../../PostConfirm/PostConfirmPanel';
 import PostConfirmStepper from '../../../PostConfirm/PostConfirmStepper';
+import PayInvoicesModal from '../../../PostConfirm/PayInvoicesModal';
 import type { PostConfirmAction, PostConfirmProgress, PostConfirmStepId } from '../../../PostConfirm/types';
 import { POST_CONFIRM_STEPS } from '../../../PostConfirm/types';
 import RentalNav from '../../../RentalNav';
@@ -263,6 +264,7 @@ export default function Show({
     const [showApproveProofModal, setShowApproveProofModal] = useState(false);
     const [approvingProof, setApprovingProof] = useState(false);
     const [showRejectProofModal, setShowRejectProofModal] = useState(false);
+    const [showPayInvoicesModal, setShowPayInvoicesModal] = useState(false);
     const [confirmPaymentMethod, setConfirmPaymentMethod] = useState<DepositPaymentMethod>('cash');
     const [confirmBankAccountId, setConfirmBankAccountId] = useState('');
     const [lifecycleStep, setLifecycleStep] = useState<PostConfirmStepId>(
@@ -441,6 +443,27 @@ export default function Show({
             default:
                 break;
         }
+    };
+
+    const handlePayInvoices = (data: {
+        payment_date: string;
+        amount: number;
+        type: string;
+        method: string;
+        company_bank_account_id: number | null;
+        reference_number: string | null;
+        notes: string | null;
+        allocations: Array<{ invoice_id: number; amount: number }>;
+    }) => {
+        router.post(prefixedRoute('rental.invoices.pay', rental.id), data, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowPayInvoicesModal(false);
+            },
+            onError: () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+        });
     };
 
     const timelineSteps = [
@@ -724,7 +747,11 @@ export default function Show({
                             payment={payment}
                             invoicingEnabled={invoicingEnabled}
                             rentalId={rental.id}
+                            rentalCode={rental.code}
+                            partnerId={rental.partner?.id ?? 0}
+                            companyBankAccounts={companyBankAccounts}
                             onAction={handlePostConfirmAction}
+                            onPayInvoices={handlePayInvoices}
                         />
                     </div>
                 )}
@@ -2145,6 +2172,20 @@ export default function Show({
                         </div>
                     </form>
                 </Modal>
+            )}
+
+            {showPayInvoicesModal && (
+                <PayInvoicesModal
+                    show={showPayInvoicesModal}
+                    rentalCode={rental.code}
+                    invoices={payment.invoices ?? []}
+                    partnerId={rental.partner?.id ?? 0}
+                    companyBankAccounts={companyBankAccounts}
+                    onClose={() => setShowPayInvoicesModal(false)}
+                    onSubmit={handlePayInvoices}
+                    processing={false}
+                    errors={confirmErrors}
+                />
             )}
         </DynamicLayout>
     );

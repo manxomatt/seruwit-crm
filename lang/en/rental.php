@@ -76,6 +76,22 @@ return [
         'return_done' => 'Return is complete for this reservation.',
         'changes_closed' => 'Extend, swap, and add-ons are available while the rental is active.',
         'current_step' => 'Current step',
+        'payment_modal' => [
+            'subtitle' => 'Select invoices and allocate payment for :code.',
+        ],
+        'invoices' => [
+            'code' => 'Code',
+            'due_date' => 'Due',
+            'balance' => 'Balance',
+            'allocate' => 'Allocate',
+            'full' => 'Full',
+            'total_allocated' => 'Total allocated: :amount',
+            'match_amount' => 'Match Amount',
+            'no_open_invoices' => 'No open invoices.',
+            'payment_type' => 'Payment Type',
+            'reference_number' => 'Reference No.',
+            'notes' => 'Notes',
+        ],
     ],
 
     'settings' => [
@@ -347,6 +363,7 @@ return [
         'print_handover' => 'Print handover',
         'approve' => 'Approve',
         'reject' => 'Reject',
+        'pay_invoices' => 'Pay Invoices',
     ],
 
     'sections' => [
@@ -705,6 +722,7 @@ return [
         'addon_removed' => 'Extra charge removed.',
         'deposit_received' => 'Deposit cash recorded.',
         'deposit_settled' => 'Deposit settled.',
+        'invoices_paid' => 'Invoice payment recorded successfully.',
         'settings_updated' => 'Rental settings saved.',
         'document_template_updated' => 'Document template saved.',
         'document_template_reset' => 'Document template reset to default.',
@@ -747,6 +765,7 @@ return [
         'deposit_already_received' => 'Deposit cash has already been recorded.',
         'settle_deposit_returned_only' => 'Deposit can only be settled on returned or completed rentals.',
         'deposit_already_settled' => 'Deposit has already been settled.',
+        'invoicing_unavailable' => 'Invoicing module is not available.',
         'pdf_contract_confirmed_only' => 'Print the contract after the rental is confirmed.',
         'pdf_handover_checked_out_only' => 'Print the handover after the vehicle is checked out.',
         'partner_inactive' => 'This customer is inactive and cannot rent.',
@@ -824,6 +843,8 @@ return [
         'vehicle_kir_expired' => 'Vehicle :name has an expired KIR.',
         'vehicle_trip_conflict' => 'Vehicle :name already has a trip on :date.',
         'deposit_settlement_sum' => 'Applied + refunded must equal the deposit (:deposit).',
+        'payment_amount_mismatch' => 'Total allocation (:allocated) does not match payment amount (:amount).',
+        'payment_allocations_invalid' => 'Invalid invoice allocations.',
         'addon_code_required' => 'Choose a charge type.',
         'addon_code_invalid' => 'Invalid charge type.',
         'addon_amount_required' => 'Enter an amount.',
