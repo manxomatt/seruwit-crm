@@ -89,8 +89,18 @@ export default function PostConfirmPanel({
                         )}
                     </dl>
                     <div className="flex flex-wrap gap-2">
-                        {canReceiveDeposit && (
-                            <PrimaryButton type="button" onClick={() => onAction('receive_deposit')}>
+                        {Number(depositAmount) > 0 && (
+                            <PrimaryButton
+                                type="button"
+                                onClick={() => onAction('receive_deposit')}
+                                disabled={!canReceiveDeposit}
+                                title={!canReceiveDeposit ? t('rental.deposit.not_received') : undefined}
+                            >
+                                {t('rental.actions.receive_deposit')}
+                            </PrimaryButton>
+                        )}
+                        {Number(depositAmount) <= 0 && (
+                            <PrimaryButton type="button" disabled>
                                 {t('rental.actions.receive_deposit')}
                             </PrimaryButton>
                         )}
