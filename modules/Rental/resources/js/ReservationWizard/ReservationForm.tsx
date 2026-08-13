@@ -247,7 +247,7 @@ export default function ReservationForm({
     const vehicleDatesRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (step < 2) {
+        if (step < 2 || (step === 3 && !data.vehicle_id)) {
             vehicleDatesRef.current = null;
 
             return;
@@ -260,7 +260,7 @@ export default function ReservationForm({
 
         vehicleDatesRef.current = datesKey;
         void loadAvailableVehicles();
-    }, [step, loadAvailableVehicles, data.start_date, data.end_date, data.period_type]);
+    }, [step, loadAvailableVehicles, data.start_date, data.end_date, data.period_type, data.vehicle_id]);
 
     // Keep selection in sync with the loaded list without re-fetching on every pick.
     useEffect(() => {
