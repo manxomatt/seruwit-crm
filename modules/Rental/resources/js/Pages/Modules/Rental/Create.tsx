@@ -27,6 +27,7 @@ interface Props {
         vehicle_id?: number | null;
         start_date?: string | null;
         end_date?: string | null;
+        period_type?: string | null;
         start_step?: number | null;
         pickup_location_id?: number | null;
         return_location_id?: number | null;
@@ -56,7 +57,7 @@ export default function Create({
         partner_id: selectedPartnerId ? String(selectedPartnerId) : '',
         start_date: prefill.start_date ?? '',
         end_date: prefill.end_date ?? '',
-        period_type: 'daily',
+        period_type: prefill.period_type ?? 'daily',
         rate_per_period: '',
         km_limit_per_period: '',
         excess_km_rate: '',
@@ -73,7 +74,7 @@ export default function Create({
     };
 
     const hasPrefill = Boolean(prefill.vehicle_id || prefill.start_date || prefill.end_date);
-    const initialStep = prefill.start_step === 4 ? 4 : 1;
+    const initialStep = prefill.start_step === 3 || prefill.start_step === 4 ? prefill.start_step : 1;
 
     return (
         <DynamicLayout header={<PageHeader title={t('rental.pages.create.title')} />}>

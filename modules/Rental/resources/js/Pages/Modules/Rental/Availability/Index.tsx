@@ -104,6 +104,9 @@ export default function Index({ board, filters }: Props): JSX.Element {
     const [to, setTo] = useState(filters.to);
     const [filter, setFilter] = useState<AvailabilityFilter>('all');
     const [query, setQuery] = useState('');
+    const [page, setPage] = useState(1);
+
+    const PER_PAGE = 10;
 
     const tomorrow = useMemo(() => {
         const d = new Date();
@@ -145,7 +148,8 @@ export default function Index({ board, filters }: Props): JSX.Element {
             vehicle_id: vehicleId,
             start_date: tomorrow,
             end_date: tomorrow,
-            start_step: 4,
+            period_type: 'daily',
+            start_step: 3,
         });
 
     return (

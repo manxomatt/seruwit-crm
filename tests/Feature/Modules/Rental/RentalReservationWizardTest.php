@@ -262,7 +262,8 @@ class RentalReservationWizardTest extends TestCase
                 'vehicle_id' => $vehicle->id,
                 'start_date' => $tomorrow,
                 'end_date' => $tomorrow,
-                'start_step' => 4,
+                'period_type' => 'daily',
+                'start_step' => 3,
             ]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -270,7 +271,8 @@ class RentalReservationWizardTest extends TestCase
                 ->where('prefill.vehicle_id', $vehicle->id)
                 ->where('prefill.start_date', $tomorrow)
                 ->where('prefill.end_date', $tomorrow)
-                ->where('prefill.start_step', 4)
+                ->where('prefill.period_type', 'daily')
+                ->where('prefill.start_step', 3)
                 ->where('prefill.pickup_location_id', $depot->id)
                 ->where('prefill.return_location_id', $depot->id)
                 ->where('prefill.pickup_location', $depot->displayAddress())

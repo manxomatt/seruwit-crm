@@ -65,12 +65,14 @@ class RentalController extends Controller
         $prefillVehicleId = request()->integer('vehicle_id') ?: null;
         $prefillStartDate = filled(request('start_date')) ? (string) request('start_date') : null;
         $prefillEndDate = filled(request('end_date')) ? (string) request('end_date') : null;
+        $prefillPeriodType = filled(request('period_type')) ? (string) request('period_type') : null;
         $startStep = request()->integer('start_step') ?: null;
 
         $prefill = [
             'vehicle_id' => $prefillVehicleId,
             'start_date' => $prefillStartDate,
             'end_date' => $prefillEndDate,
+            'period_type' => $prefillPeriodType,
             'start_step' => $startStep,
         ];
 
