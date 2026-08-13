@@ -47,7 +47,7 @@ class RentalPostConfirmStepperTest extends TestCase
         $this->assertFalse(collect($progress['steps'])->firstWhere('id', 7)['available']);
     }
 
-    public function test_confirmed_with_deposit_received_starts_at_pickup(): void
+    public function test_confirmed_with_deposit_received_starts_at_payments(): void
     {
         $rental = Rental::factory()->confirmed()->create([
             'deposit_amount' => 500000,
@@ -58,7 +58,7 @@ class RentalPostConfirmStepperTest extends TestCase
         $progress = app(RentalPostConfirmProgress::class)->for($rental);
 
         $this->assertTrue($progress['visible']);
-        $this->assertSame(RentalPostConfirmProgress::STEP_PICKUP, $progress['current_step']);
+        $this->assertSame(RentalPostConfirmProgress::STEP_PAYMENTS, $progress['current_step']);
         $this->assertTrue(collect($progress['steps'])->firstWhere('id', 6)['done']);
         $this->assertTrue(collect($progress['steps'])->firstWhere('id', 7)['available']);
     }
@@ -89,7 +89,7 @@ class RentalPostConfirmStepperTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Rental/Show')
                 ->where('postConfirm.visible', true)
-                ->where('postConfirm.current_step', RentalPostConfirmProgress::STEP_PICKUP)
+                ->where('postConfirm.current_step', RentalPostConfirmProgress::STEP_PAYMENTS)
                 ->has('postConfirm.steps', 5)
             );
     }

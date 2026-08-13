@@ -148,6 +148,10 @@ class RentalPostConfirmProgress
             return self::STEP_CHANGES;
         }
 
+        if ($rental->status === Rental::STATUS_CONFIRMED) {
+            return self::STEP_PAYMENTS;
+        }
+
         foreach (self::STEPS as $id) {
             if (! $done[$id]) {
                 return $id;
