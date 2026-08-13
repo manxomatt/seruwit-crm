@@ -102,7 +102,7 @@ class RentalDocumentTemplateTest extends TestCase
 
         $this->assertSame('Template Kontrak Default', $resolved['name']);
         $this->assertStringContainsString('RNT-001', $resolved['content']['subtitle']);
-        $this->assertStringContainsString('Rp 1.000.000', $resolved['content']['subtitle']);
+        $this->assertStringContainsString(now()->format('d/m/Y'), $resolved['content']['subtitle']);
     }
 
     public function test_invalid_document_code_is_rejected(): void

@@ -231,6 +231,10 @@ class DocumentTemplateManager
 
         $today = now()->format('d/m/Y');
 
+        $invoice = $context['invoice'] ?? [];
+        $checkout = $context['checkout'] ?? [];
+        $return = $context['return'] ?? [];
+
         $values = [
             'rental.code' => $context['rental']['code'] ?? '',
             'rental.start_date' => $context['rental']['start_date']?->format('d/m/Y') ?? '',
@@ -244,12 +248,12 @@ class DocumentTemplateManager
             'vehicle.plate_number' => $context['vehicle']['plate_number'] ?? '',
             'company.name' => $context['company']['name'] ?? '',
             'today' => $today,
-            'invoice.code' => $context['invoice']['code'] ?? '',
-            'invoice.issue_date' => $context['invoice']['issue_date']?->format('d/m/Y') ?? '',
-            'invoice.due_date' => $context['invoice']['due_date']?->format('d/m/Y') ?? '',
-            'invoice.total' => self::formatMoney($context['invoice']['total'] ?? 0),
-            'checkout.time' => $context['checkout']['time']?->format('d/m/Y H:i') ?? '',
-            'return.time' => $context['return']['time']?->format('d/m/Y H:i') ?? '',
+            'invoice.code' => $invoice['code'] ?? '',
+            'invoice.issue_date' => ($invoice['issue_date'] ?? null)?->format('d/m/Y') ?? '',
+            'invoice.due_date' => ($invoice['due_date'] ?? null)?->format('d/m/Y') ?? '',
+            'invoice.total' => self::formatMoney($invoice['total'] ?? 0),
+            'checkout.time' => ($checkout['time'] ?? null)?->format('d/m/Y H:i') ?? '',
+            'return.time' => ($return['time'] ?? null)?->format('d/m/Y H:i') ?? '',
         ];
 
         foreach ($values as $placeholder => $value) {
