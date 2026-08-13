@@ -14,7 +14,6 @@ interface Props {
     setData: SetData;
     errors: Partial<Record<keyof ReservationFormData, string>>;
     locations: LocationOption[];
-    defaultOneWayFee: number;
     onApplyLocation: (field: 'pickup' | 'return', locationId: string) => void;
 }
 

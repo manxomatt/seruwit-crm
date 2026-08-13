@@ -483,7 +483,6 @@ export default function ReservationForm({
                          setData={setData}
                          errors={errors}
                          locations={locations}
-                         defaultOneWayFee={defaultOneWayFee}
                          onApplyLocation={applyLocation}
                      />
                  )}
