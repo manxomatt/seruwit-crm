@@ -213,6 +213,9 @@ export default function ReservationForm({
         if (excludeRentalId) {
             params.set('exclude_rental_id', String(excludeRentalId));
         }
+        if (data.vehicle_id) {
+            params.set('vehicle_id', data.vehicle_id);
+        }
 
         try {
             const response = await fetch(`${availableVehiclesUrl}?${params.toString()}`, {

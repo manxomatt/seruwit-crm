@@ -33,9 +33,11 @@ class RentalReservationWizardController extends Controller
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'period_type' => ['required', 'in:daily,weekly,monthly'],
             'exclude_rental_id' => ['nullable', 'integer', 'exists:rentals,id'],
+            'vehicle_id' => ['nullable', 'integer', 'exists:vehicles,id'],
         ]);
 
         $excludeId = isset($data['exclude_rental_id']) ? (int) $data['exclude_rental_id'] : null;
+        $prefillVehicleId = isset($data['vehicle_id']) ? (int) $data['vehicle_id'] : null;
         $start = $data['start_date'];
         $end = $data['end_date'];
         $periodType = $data['period_type'];
@@ -51,6 +53,8 @@ class RentalReservationWizardController extends Controller
         $skippedUnavailable = 0;
 
         foreach ($vehicles as $vehicle) {
+            $isPrefillVehicle = $prefillVehicleId !== null && $vehicle->id === $prefillVehicleId;
+
             $reasons = Rental::vehicleAvailabilityReasons($vehicle, $start, $end, $excludeId);
 
             if (Modules::available('transportation')) {
@@ -69,7 +73,7 @@ class RentalReservationWizardController extends Controller
                 }
             }
 
-            if ($reasons !== []) {
+            if ($reasons !== [] && ! $isPrefillVehicle) {
                 $skippedUnavailable++;
 
                 continue;
@@ -77,25 +81,30 @@ class RentalReservationWizardController extends Controller
 
             $rate = $rates->suggest($vehicle, $start, $end, $periodType);
 
-            if ($rate === null) {
+            if ($rate === null && ! $isPrefillVehicle) {
                 $skippedNoRate++;
 
                 continue;
             }
 
-            if ($rate->min_periods !== null && $periods < (int) $rate->min_periods) {
+            if ($rate !== null && $rate->min_periods !== null && $periods < (int) $rate->min_periods && ! $isPrefillVehicle) {
                 $skippedUnavailable++;
 
                 continue;
             }
 
-            try {
-                $pricing = $priceEngine->calculate($vehicle, $start, $end, $periodType);
-                $ratePerPeriod = $pricing['effective_rate_per_period'];
-                $baseAmount = $pricing['base_amount'];
-            } catch (\RuntimeException) {
-                $ratePerPeriod = (float) $rate->rate_per_period;
-                $baseAmount = round($ratePerPeriod * $periods, 2);
+            if ($rate !== null) {
+                try {
+                    $pricing = $priceEngine->calculate($vehicle, $start, $end, $periodType);
+                    $ratePerPeriod = $pricing['effective_rate_per_period'];
+                    $baseAmount = $pricing['base_amount'];
+                } catch (\RuntimeException) {
+                    $ratePerPeriod = (float) $rate->rate_per_period;
+                    $baseAmount = round($ratePerPeriod * $periods, 2);
+                }
+            } else {
+                $ratePerPeriod = 0;
+                $baseAmount = null;
             }
 
             $rows[] = [
@@ -105,7 +114,7 @@ class RentalReservationWizardController extends Controller
                 'type' => $vehicle->type,
                 'rental_class' => $vehicle->rental_class,
                 'photo_url' => $vehicle->photo_url,
-                'rate' => [
+                'rate' => $rate ? [
                     'id' => $rate->id,
                     'name' => $rate->name,
                     'period_type' => $rate->period_type,
@@ -115,7 +124,7 @@ class RentalReservationWizardController extends Controller
                     'late_fee_per_day' => $rate->late_fee_per_day !== null ? (float) $rate->late_fee_per_day : null,
                     'deposit_amount' => (float) ($rate->deposit_amount ?? 0),
                     'min_periods' => $rate->min_periods !== null ? (int) $rate->min_periods : null,
-                ],
+                ] : null,
                 'total_periods' => $periods,
                 'base_amount' => $baseAmount,
             ];

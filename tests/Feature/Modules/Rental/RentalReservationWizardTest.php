@@ -62,6 +62,42 @@ class RentalReservationWizardTest extends TestCase
         $this->assertNotNull($response->json('vehicles.0.rate'));
     }
 
+    public function test_available_vehicles_includes_prefilled_vehicle_without_rate(): void
+    {
+        $withRate = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'name' => 'Priced Car']);
+        $withoutRate = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE, 'name' => 'No Rate Car']);
+
+        RentalRate::factory()->daily()->create([
+            'vehicle_id' => $withRate->id,
+            'vehicle_type' => null,
+            'rental_class' => null,
+            'rate_per_period' => 300000,
+            'deposit_amount' => 500000,
+            'is_active' => true,
+            'min_periods' => 1,
+        ]);
+
+        $start = now()->addDays(2)->toDateString();
+        $end = now()->addDays(4)->toDateString();
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('module.rental.reservations.available_vehicles', [
+                'start_date' => $start,
+                'end_date' => $end,
+                'period_type' => 'daily',
+                'vehicle_id' => $withoutRate->id,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.skipped_no_rate', 0);
+
+        $ids = collect($response->json('vehicles'))->pluck('id')->all();
+        $this->assertContains($withRate->id, $ids);
+        $this->assertContains($withoutRate->id, $ids);
+
+        $withoutRateRow = collect($response->json('vehicles'))->firstWhere('id', $withoutRate->id);
+        $this->assertNull($withoutRateRow['rate']);
+    }
+
     public function test_quote_rejects_vehicle_without_tariff(): void
     {
         $vehicle = Vehicle::factory()->create(['status' => Vehicle::STATUS_ACTIVE]);
