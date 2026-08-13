@@ -77,7 +77,15 @@ class RentalRateResolver
         }
 
         if (filled($rate->rental_class)) {
-            if (! $vehicle || $vehicle->rental_class !== $rate->rental_class) {
+            if (! $vehicle) {
+                return -1;
+            }
+
+            $haystack = strtolower(trim((string) $rate->rental_class));
+            $class = strtolower(trim((string) ($vehicle->rental_class ?? '')));
+            $type = strtolower(trim((string) $vehicle->type));
+
+            if ($haystack !== $class && $haystack !== $type) {
                 return -1;
             }
 

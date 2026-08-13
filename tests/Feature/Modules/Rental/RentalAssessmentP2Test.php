@@ -60,6 +60,35 @@ class RentalAssessmentP2Test extends TestCase
         $this->assertSame($classRate->id, $suggested->id);
     }
 
+    public function test_rate_resolver_matches_rental_class_to_vehicle_type_when_class_is_null(): void
+    {
+        $vehicle = Vehicle::factory()->create([
+            'status' => Vehicle::STATUS_ACTIVE,
+            'type' => 'suv',
+            'rental_class' => null,
+        ]);
+
+        $classRate = RentalRate::factory()->daily()->create([
+            'name' => 'SUV daily',
+            'rate_per_period' => 750000,
+            'vehicle_id' => null,
+            'vehicle_type' => null,
+            'rental_class' => 'suv',
+            'priority' => 5,
+            'min_periods' => 1,
+        ]);
+
+        $suggested = app(RentalRateResolver::class)->suggest(
+            $vehicle,
+            now()->toDateString(),
+            now()->addDays(3)->toDateString(),
+            'daily',
+        );
+
+        $this->assertNotNull($suggested);
+        $this->assertSame($classRate->id, $suggested->id);
+    }
+
     public function test_suggest_endpoint_returns_best_rate(): void
     {
         $vehicle = Vehicle::factory()->create([
