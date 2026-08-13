@@ -43,8 +43,8 @@ class RentalPostConfirmStepperTest extends TestCase
 
         $this->assertTrue($progress['visible']);
         $this->assertSame(RentalPostConfirmProgress::STEP_PAYMENTS, $progress['current_step']);
-        $this->assertFalse(collect($progress['steps'])->firstWhere('id', 6)['done']);
-        $this->assertFalse(collect($progress['steps'])->firstWhere('id', 7)['available']);
+        $this->assertFalse(collect($progress['steps'])->firstWhere('id', 7)['done']);
+        $this->assertFalse(collect($progress['steps'])->firstWhere('id', 8)['available']);
     }
 
     public function test_confirmed_with_deposit_received_starts_at_payments(): void
@@ -59,8 +59,8 @@ class RentalPostConfirmStepperTest extends TestCase
 
         $this->assertTrue($progress['visible']);
         $this->assertSame(RentalPostConfirmProgress::STEP_PAYMENTS, $progress['current_step']);
-        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 6)['done']);
-        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 7)['available']);
+        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 7)['done']);
+        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 8)['available']);
     }
 
     public function test_active_rental_defaults_to_changes_step(): void
@@ -71,9 +71,9 @@ class RentalPostConfirmStepperTest extends TestCase
 
         $this->assertTrue($progress['visible']);
         $this->assertSame(RentalPostConfirmProgress::STEP_CHANGES, $progress['current_step']);
-        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 7)['done']);
-        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 10)['available']);
-        $this->assertFalse(collect($progress['steps'])->firstWhere('id', 10)['done']);
+        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 8)['done']);
+        $this->assertTrue(collect($progress['steps'])->firstWhere('id', 11)['available']);
+        $this->assertFalse(collect($progress['steps'])->firstWhere('id', 11)['done']);
     }
 
     public function test_show_page_includes_post_confirm_prop(): void

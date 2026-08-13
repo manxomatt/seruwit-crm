@@ -268,7 +268,7 @@ export default function Show({
     const [lifecycleStep, setLifecycleStep] = useState<PostConfirmStepId>(
         postConfirm.current_step && POST_CONFIRM_STEPS.includes(postConfirm.current_step)
             ? postConfirm.current_step
-            : 6,
+            : 7,
     );
 
     useEffect(() => {

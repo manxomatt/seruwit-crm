@@ -11,15 +11,15 @@ use Modules\Rental\Models\Rental;
  */
 class RentalPostConfirmProgress
 {
-    public const STEP_PAYMENTS = 6;
+    public const STEP_PAYMENTS = 7;
 
-    public const STEP_PICKUP = 7;
+    public const STEP_PICKUP = 8;
 
-    public const STEP_CONTRACT = 8;
+    public const STEP_CONTRACT = 9;
 
-    public const STEP_RETURN = 9;
+    public const STEP_RETURN = 10;
 
-    public const STEP_CHANGES = 10;
+    public const STEP_CHANGES = 11;
 
     /** @var list<int> */
     public const STEPS = [

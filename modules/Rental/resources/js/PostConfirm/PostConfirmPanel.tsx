@@ -68,7 +68,7 @@ export default function PostConfirmPanel({
                     {t(`rental.post_confirm.hints.${step}`)}
                 </p>
 
-            {step === 6 && (
+            {step === 7 && (
                 <div className="mt-4 space-y-3">
                     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
                         <dt className="text-gray-500 dark:text-gray-400">{t('rental.fields.deposit')}</dt>
@@ -108,7 +108,7 @@ export default function PostConfirmPanel({
                 </div>
             )}
 
-            {step === 7 && (
+            {step === 8 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                     {isConfirmed && (
                         <PrimaryButton
@@ -134,7 +134,7 @@ export default function PostConfirmPanel({
                 </div>
             )}
 
-            {step === 8 && (
+            {step === 9 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                     {canPrintContract && (
                         <a href={prefixedRoute('rental.pdf.contract', rentalId)} target="_blank" rel="noreferrer">
@@ -149,7 +149,7 @@ export default function PostConfirmPanel({
                 </div>
             )}
 
-            {step === 9 && (
+            {step === 10 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                     {isActive && (
                         <PrimaryButton type="button" onClick={() => onAction('return')}>
@@ -176,7 +176,7 @@ export default function PostConfirmPanel({
                 </div>
             )}
 
-            {step === 10 && (
+            {step === 11 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                     {isActive ? (
                         <>

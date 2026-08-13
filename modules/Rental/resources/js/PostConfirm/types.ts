@@ -1,4 +1,4 @@
-export const POST_CONFIRM_STEPS = [6, 7, 8, 9, 10] as const;
+export const POST_CONFIRM_STEPS = [7, 8, 9, 10, 11] as const;
 
 export type PostConfirmStepId = (typeof POST_CONFIRM_STEPS)[number];
 
