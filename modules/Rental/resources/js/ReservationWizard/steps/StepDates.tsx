@@ -32,7 +32,7 @@ export default function StepDates({
             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
                 {t('rental.wizard.steps.1')}
             </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
                 <div>
                     <InputLabel htmlFor="period_type" value={`${t('rental.fields.period_type')} *`} />
                     <Select
@@ -46,28 +46,30 @@ export default function StepDates({
                     <InputError message={errors.period_type} className="mt-1" />
                     <p className="mt-1 text-xs text-gray-500">{t('rental.wizard.dates_auto_hint')}</p>
                 </div>
-                <div>
-                    <InputLabel htmlFor="start_date" value={`${t('rental.fields.start_date')} *`} />
-                    <TextInput
-                        id="start_date"
-                        type="date"
-                        value={data.start_date}
-                        onChange={(e) => setData('start_date', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                    <InputError message={errors.start_date} className="mt-1" />
-                </div>
-                <div>
-                    <InputLabel htmlFor="end_date" value={`${t('rental.fields.end_date')} *`} />
-                    <TextInput
-                        id="end_date"
-                        type="date"
-                        value={data.end_date}
-                        onChange={(e) => setData('end_date', e.target.value)}
-                        className="mt-1 w-full"
-                    />
-                    <InputError message={errors.end_date} className="mt-1" />
-                    <p className="mt-1 text-xs text-gray-500">{t('rental.wizard.dates_manual_hint')}</p>
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <InputLabel htmlFor="start_date" value={`${t('rental.fields.start_date')} *`} />
+                        <TextInput
+                            id="start_date"
+                            type="date"
+                            value={data.start_date}
+                            onChange={(e) => setData('start_date', e.target.value)}
+                            className="mt-1 w-full"
+                        />
+                        <InputError message={errors.start_date} className="mt-1" />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="end_date" value={`${t('rental.fields.end_date')} *`} />
+                        <TextInput
+                            id="end_date"
+                            type="date"
+                            value={data.end_date}
+                            onChange={(e) => setData('end_date', e.target.value)}
+                            className="mt-1 w-full"
+                        />
+                        <InputError message={errors.end_date} className="mt-1" />
+                        <p className="mt-1 text-xs text-gray-500">{t('rental.wizard.dates_manual_hint')}</p>
+                    </div>
                 </div>
             </div>
         </div>
