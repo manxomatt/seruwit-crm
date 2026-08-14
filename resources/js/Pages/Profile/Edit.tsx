@@ -74,7 +74,9 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
         auth: { user: { id: number; name: string; email: string; locale?: string; email_verified_at?: string | null } };
         availableLocales?: AvailableLocale[];
         flash?: { success?: string | null; error?: string | null; warning?: string | null };
+        currentTenant?: { id: string } | null;
     };
+    const isCentral = !pageProps.currentTenant;
     const user = pageProps.auth.user;
     const availableLocales = pageProps.availableLocales ?? [];
     const flash = pageProps.flash;
@@ -112,7 +114,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
 
     const submitProfile: FormEventHandler = (e) => {
         e.preventDefault();
-        profileForm.patch(route('profile.update'));
+        profileForm.patch(route('module.profile.update'));
     };
 
     const submitPassword: FormEventHandler = (e) => {
@@ -124,7 +126,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
 
     const deleteUser: FormEventHandler = (e) => {
         e.preventDefault();
-        deleteForm.delete(route('profile.destroy'));
+        deleteForm.delete(route('module.profile.destroy'));
     };
 
     const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -141,7 +143,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
             const formData = new FormData();
             formData.append('avatar', file);
 
-            router.post(route('profile.avatar.update'), formData, {
+            router.post(route('module.profile.avatar.update'), formData, {
                 forceFormData: true,
                 onSuccess: () => {
                     avatarForm.reset();
@@ -155,7 +157,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
     };
 
     const removeAvatar = () => {
-        router.delete(route('profile.avatar.destroy'), {
+        router.delete(route('module.profile.avatar.destroy'), {
             onSuccess: () => {
                 setAvatarPreview(null);
             },
@@ -169,7 +171,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
     const tabs = [
         { id: 'profile' as const, name: t('profile.tabs.profile'), icon: <UserIcon /> },
         { id: 'password' as const, name: t('profile.tabs.password'), icon: <LockIcon /> },
-        { id: 'subscription' as const, name: 'Subscription', icon: <SubscriptionIcon /> },
+        ...(!isCentral ? [{ id: 'subscription' as const, name: 'Subscription', icon: <SubscriptionIcon /> }] : []),
         { id: 'delete' as const, name: t('profile.tabs.delete'), icon: <TrashIcon /> },
     ];
 

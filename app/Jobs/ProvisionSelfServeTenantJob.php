@@ -6,6 +6,7 @@ use App\Actions\Tenancy\CreateTenantAction;
 use App\Models\CentralUser;
 use App\Models\OnboardingSession;
 use App\Models\Plan;
+use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleInstaller;
 use App\Support\Onboarding\SelfServeProvisioningPlan;
@@ -20,9 +21,6 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
 
     public int $tries = 1;
 
-    /**
-     * Tenant DDL + pack installs routinely exceed the default 60s worker timeout.
-     */
     public int $timeout = 300;
 
     public function __construct(public int $onboardingSessionId) {}
@@ -45,29 +43,19 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             ->firstOrFail();
 
         try {
-            $tenant = $this->resolveTenant($session, $owner, $createTenant);
+            [$tenant, $isExisting] = $this->resolveTenant($session, $owner, $createTenant);
 
-            foreach (SelfServeProvisioningPlan::defaultContentModules() as $moduleKey) {
-                $module = Modules::find($moduleKey);
-                if ($module === null) {
-                    continue;
-                }
-                $installer->install($tenant, $module);
+            if ($isExisting) {
+                // Schema already present: install modules and packs inline, then mark ready.
+                $this->installModulesAndPacks($tenant, $session, $installer);
+
+                $session->update([
+                    'status' => OnboardingSession::STATUS_READY,
+                    'error_message' => null,
+                ]);
             }
-
-            foreach (SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []) as $packKey) {
-                $installer->installPack($tenant, $packKey, withDemoSeeders: false);
-            }
-
-            $tenant->run(function () use ($session): void {
-                $vertical = $session->verticals[0] ?? 'rental';
-                app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical);
-            });
-
-            $session->update([
-                'status' => OnboardingSession::STATUS_READY,
-                'error_message' => null,
-            ]);
+            // For new tenants, FinalizeTenantSetupJob is queued in the pipeline and
+            // will mark the session READY (or FAILED) once it completes.
         } catch (Throwable $e) {
             Log::error('Self-serve tenant provisioning failed.', [
                 'onboarding_session_id' => $session->id,
@@ -84,12 +72,14 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
     /**
      * Reuse a half-provisioned tenant when its database still exists; otherwise
      * discard the orphan row and create a fresh workspace for the same subdomain.
+     *
+     * @return array{0: Tenant, 1: bool} Tenant + whether the schema already existed.
      */
     private function resolveTenant(
         OnboardingSession $session,
         CentralUser $owner,
         CreateTenantAction $createTenant,
-    ): \App\Models\Tenant {
+    ): array {
         if ($session->tenant_id) {
             $tenant = $session->tenant;
 
@@ -103,7 +93,7 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                     'status' => 'active',
                 ]);
 
-                return $tenant;
+                return [$tenant, true];
             } else {
                 // Domain row would block CreateTenantAction for the same subdomain.
                 $tenant->delete();
@@ -111,10 +101,18 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             }
         }
 
+        $vertical = $session->verticals[0] ?? 'rental';
+
         $tenant = $createTenant->execute(
             companyName: $session->company_name,
             subdomain: $session->subdomain,
             owner: $owner,
+            setup: [
+                'session_id' => $session->id,
+                'vertical' => $vertical,
+                'module_keys' => SelfServeProvisioningPlan::defaultContentModules(),
+                'pack_keys' => SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []),
+            ],
         );
 
         $tenant->update([
@@ -126,6 +124,24 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
 
         $session->update(['tenant_id' => $tenant->getTenantKey()]);
 
-        return $tenant;
+        return [$tenant, false];
+    }
+
+    private function installModulesAndPacks(Tenant $tenant, OnboardingSession $session, ModuleInstaller $installer): void
+    {
+        foreach (SelfServeProvisioningPlan::defaultContentModules() as $moduleKey) {
+            $module = Modules::find($moduleKey);
+            if ($module === null) {
+                continue;
+            }
+            $installer->install($tenant, $module);
+        }
+
+        foreach (SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []) as $packKey) {
+            $installer->installPack($tenant, $packKey, withDemoSeeders: false);
+        }
+
+        $vertical = $session->verticals[0] ?? 'rental';
+        $tenant->run(fn () => app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical));
     }
 }

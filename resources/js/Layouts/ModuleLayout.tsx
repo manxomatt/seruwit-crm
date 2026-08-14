@@ -6,6 +6,7 @@ import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import SidebarNavScroll from '@/Components/SidebarNavScroll';
 import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useTrans } from '@/hooks/useTrans';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Link, usePage, usePoll } from '@inertiajs/react';
 import { ReactNode, useMemo, useState } from 'react';
 
@@ -559,6 +560,7 @@ export default function ModuleLayout({ header, children }: Props) {
     } | null;
     // Each registered module's declared tier, ordered by its menu sort_order.
     const moduleTiers = (pageProps.moduleTiers ?? []) as { key: string; tier: ModuleTier }[];
+    const subscriptionSummary = pageProps.subscriptionSummary as { plan_name: string | null; status: string } | null;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Keep the bell fresh without a full navigation. Only the notifications
@@ -848,7 +850,7 @@ export default function ModuleLayout({ header, children }: Props) {
                         </SidebarNavScroll>
                         {/* Mobile sidebar user section */}
                         <div className={`shrink-0 border-t ${theme.border} p-4`}>
-                            <Link href={route('profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
+                            <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
                                 <UserAvatar user={user} size="md" />
                                 <div className="ml-3">
                                     <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
@@ -878,7 +880,7 @@ export default function ModuleLayout({ header, children }: Props) {
                     </SidebarNavScroll>
                     {/* Desktop sidebar user section (kiri bawah) */}
                     <div className={`shrink-0 border-t ${theme.border} p-4`}>
-                        <Link href={route('profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
+                        <Link href={route('module.profile.edit')} className="flex items-center hover:opacity-80 transition-opacity">
                             <UserAvatar user={user} size="md" />
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
@@ -972,39 +974,89 @@ export default function ModuleLayout({ header, children }: Props) {
                             <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
 
                             {/* Profile dropdown (kanan atas) */}
-                            <Dropdown>
-                                <Dropdown.Trigger>
-                                    <button type="button" className="-m-1.5 flex items-center p-1.5">
-                                        <UserAvatar user={user} size="sm" />
-                                        <span className="hidden lg:flex lg:items-center">
-                                            <span className="ml-4 text-sm font-semibold leading-6 text-gray-900">
-                                                {user?.name || t('shell.user')}
+                            <Menu as="div" className="relative">
+                                <MenuButton className="-m-1.5 flex items-center rounded-lg p-1.5 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                                    <UserAvatar user={user} size="sm" />
+                                    <span className="hidden lg:flex lg:items-center">
+                                        <span className="ml-3 text-sm font-semibold leading-6 text-gray-900">
+                                            {user?.name || t('shell.user')}
+                                        </span>
+                                        <svg className="ml-2 h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                                        </svg>
+                                    </span>
+                                </MenuButton>
+
+                                <MenuItems
+                                    transition
+                                    anchor="bottom end"
+                                    className="z-50 mt-2 w-64 origin-top-right rounded-xl border border-gray-100 bg-white p-1.5 shadow-xl outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                >
+                                    {/* Identity header */}
+                                    <div className="px-3 py-3">
+                                        <p className="truncate text-sm font-semibold text-gray-900">{user?.name || t('shell.user')}</p>
+                                        <p className="truncate text-xs text-gray-500">{user?.email || ''}</p>
+                                    </div>
+
+                                    <div className="my-1 h-px bg-gray-100" />
+
+                                    {/* Profile */}
+                                    <MenuItem>
+                                        <Link
+                                            href={route('module.profile.edit')}
+                                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900"
+                                        >
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500">
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                                </svg>
                                             </span>
-                                            <svg className="ml-2 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                                            </svg>
-                                        </span>
-                                    </button>
-                                </Dropdown.Trigger>
-                                <Dropdown.Content>
-                                    <Dropdown.Link href={route('profile.edit')}>
-                                        <span className="flex items-center">
-                                            <svg className="mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
-                                            {t('shell.profile')}
-                                        </span>
-                                    </Dropdown.Link>
-                                    <Dropdown.Link href={route('logout')} method="post" as="button">
-                                        <span className="flex items-center">
-                                            <svg className="mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                            </svg>
-                                            {t('shell.log_out')}
-                                        </span>
-                                    </Dropdown.Link>
-                                </Dropdown.Content>
-                            </Dropdown>
+                                            <span>{t('shell.profile')}</span>
+                                        </Link>
+                                    </MenuItem>
+
+                                    {/* Subscription — tenant only */}
+                                    {!isCentral && routeExists('module.subscription.index') && (
+                                        <MenuItem>
+                                            <Link
+                                                href={route('module.subscription.index')}
+                                                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900"
+                                            >
+                                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-600">
+                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                                                    </svg>
+                                                </span>
+                                                <span className="flex-1">Langganan</span>
+                                                {subscriptionSummary?.plan_name && (
+                                                    <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold text-teal-700">
+                                                        {subscriptionSummary.plan_name}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        </MenuItem>
+                                    )}
+
+                                    <div className="my-1 h-px bg-gray-100" />
+
+                                    {/* Logout */}
+                                    <MenuItem>
+                                        <Link
+                                            href={route('logout')}
+                                            method="post"
+                                            as="button"
+                                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700"
+                                        >
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-red-50 text-red-500">
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                                                </svg>
+                                            </span>
+                                            <span>{t('shell.log_out')}</span>
+                                        </Link>
+                                    </MenuItem>
+                                </MenuItems>
+                            </Menu>
                         </div>
                     </div>
                 </div>

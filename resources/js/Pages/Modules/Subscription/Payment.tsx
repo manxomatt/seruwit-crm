@@ -1,8 +1,9 @@
+import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useState } from 'react';
 
 interface OrderProps {
     id: number;
@@ -37,10 +38,18 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
     const { t } = useTrans();
     const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
 
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+
     const { data, setData, post, processing, errors, reset } = useForm({
         proof: null as File | null,
         transfer_note: '',
     });
+
+    const cancelOrder = () => {
+        post(route('module.subscription.cancel', order.id), {
+            onFinish: () => setShowCancelDialog(false),
+        });
+    };
 
     const expiryDate = order.expires_at ? new Date(order.expires_at) : null;
     const isExpired = expiryDate ? expiryDate.getTime() < Date.now() : false;
@@ -56,13 +65,6 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
         post(route('module.subscription.proof', order.id), {
             onSuccess: () => reset('proof', 'transfer_note'),
         });
-    };
-
-    const statusConfig = {
-        [order.status]: {
-            badge: '',
-            description: '',
-        },
     };
 
     const renderStatus = (): JSX.Element => {
@@ -163,7 +165,7 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
                             </p>
                             {Number(order.unique_code) > 0 && (
                                 <p className="text-sm text-amber-700">
-                                    Rp {formatPrice(order.amount)} + kode unik {order.unique_code}
+                                    {formatPrice(order.amount)} + kode unik {order.unique_code}
                                 </p>
                             )}
                         </div>
@@ -219,11 +221,7 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
                                 {canCancel && (
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            if (confirm('Batalkan pesanan pembayaran ini?')) {
-                                                post(route('module.subscription.cancel', order.id));
-                                            }
-                                        }}
+                                        onClick={() => setShowCancelDialog(true)}
                                         className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
                                     >
                                         Batalkan
@@ -259,6 +257,18 @@ export default function SubscriptionPayment({ order, plan }: Props): JSX.Element
                     </div>
                 )}
             </div>
+
+            <ConfirmDeleteDialog
+                show={showCancelDialog}
+                onClose={() => setShowCancelDialog(false)}
+                onConfirm={cancelOrder}
+                processing={processing}
+                title="Batalkan pesanan pembayaran?"
+                message="Pesanan ini akan dibatalkan dan tidak bisa diaktifkan kembali. Anda bisa membuat pesanan baru kapan saja dari halaman langganan."
+                confirmText="Ya, batalkan pesanan"
+                cancelText="Kembali"
+                processingText="Membatalkan…"
+            />
         </DynamicLayout>
     );
 }

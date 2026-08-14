@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Jobs\PostSaasRevenueJob;
 use App\Models\PaymentOrder;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\PaymentOrderConfirmedNotification;
 use App\Notifications\PaymentOrderCreatedNotification;
+use App\Notifications\PaymentOrderRejectedNotification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -33,15 +36,17 @@ class PaymentOrderService
         return is_string($identifier) ? $identifier : (string) $identifier;
     }
 
-    public function createOrder(Tenant $tenant, Plan $plan, string $type = 'activate'): PaymentOrder
+    public function createOrder(Tenant $tenant, Plan $plan, string $type = 'activate', string $billingInterval = 'month'): PaymentOrder
     {
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
         $instructions = Config::get('payment.manual_transfer', []);
 
-        return DB::connection($central)->transaction(function () use ($central, $tenant, $plan, $type, $tenantId, $instructions) {
+        return DB::connection($central)->transaction(function () use ($central, $tenant, $plan, $type, $billingInterval, $tenantId, $instructions) {
             $uniqueCode = PaymentOrder::generateUniqueCode();
-            $amount = (float) ($plan->price ?? 0);
+            $amount = $billingInterval === 'annual' && $plan->annual_price
+                ? (float) $plan->annual_price
+                : (float) ($plan->price ?? 0);
             $totalAmount = $amount + $uniqueCode;
 
             $order = new PaymentOrder;
@@ -49,6 +54,7 @@ class PaymentOrderService
             $order->tenant_id = $tenantId;
             $order->plan_id = $plan->id;
             $order->type = $type;
+            $order->billing_interval = $billingInterval;
             $order->payment_method = Config::get('payment.driver', 'manual_transfer');
             $order->status = PaymentOrder::STATUS_PENDING;
             $order->amount = $amount;
@@ -105,7 +111,7 @@ class PaymentOrderService
     {
         $central = $this->centralConnection();
 
-        return DB::connection($central)->transaction(function () use ($central, $order, $admin) {
+        $subscription = DB::connection($central)->transaction(function () use ($central, $order, $admin) {
             if (! $order->isAwaitingConfirmation() && ! $order->isPending()) {
                 throw new \RuntimeException('Cannot confirm order in status: '.$order->status);
             }
@@ -120,7 +126,7 @@ class PaymentOrderService
             $plan = Plan::on($central)->findOrFail($order->plan_id);
 
             $subscriptionService = app(SubscriptionService::class);
-            $subscription = $subscriptionService->activate($tenant, $plan, $order->type === 'renew');
+            $subscription = $subscriptionService->activate($tenant, $plan, $order->type === 'renew', $order->billing_interval ?? 'month');
 
             $order->subscription_id = $subscription->id;
             $order->save();
@@ -132,6 +138,10 @@ class PaymentOrderService
 
             return $subscription;
         });
+
+        PostSaasRevenueJob::dispatch($order->id);
+
+        return $subscription;
     }
 
     public function reject(PaymentOrder $order, User $admin, string $reason): void

@@ -57,7 +57,7 @@ export default function UpdateProfileInformation({
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        patch(route('profile.update'));
+        patch(route('module.profile.update'));
     };
 
     return (

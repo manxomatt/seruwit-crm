@@ -37,7 +37,7 @@ class TenantController extends Controller
         Gate::authorize('manage-tenants');
 
         $tenants = $this->scopedQuery($request)
-            ->with('domains')
+            ->with(['domains', 'subscription.plan:id,name'])
             ->withCount('users')
             ->latest()
             ->get()
@@ -48,6 +48,8 @@ class TenantController extends Controller
                 'domain' => $tenant->domains->first()?->domain,
                 'members' => $tenant->users_count,
                 'created_at' => $tenant->created_at?->toDateString(),
+                'subscription_plan' => $tenant->subscription?->plan?->name,
+                'subscription_status' => $tenant->subscription?->status,
             ]);
 
         return Inertia::render('Module/Tenants/Index', [
@@ -61,6 +63,10 @@ class TenantController extends Controller
     public function store(Request $request): RedirectResponse
     {
         Gate::authorize('manage-tenants');
+
+        // Tenant provisioning (schema creation + ~100 migrations) routinely takes
+        // 60–120 s. Match the timeout used by ProvisionSelfServeTenantJob.
+        set_time_limit(300);
 
         $request->validate([
             'company_name' => 'required|string|max:255',

@@ -29,6 +29,11 @@ class StorePlanRequest extends FormRequest
             'modules.*' => ['string', Rule::in(array_keys(Modules::all()))],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_default' => ['boolean'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'original_price' => ['nullable', 'numeric', 'min:0'],
+            'annual_price' => ['nullable', 'numeric', 'min:0'],
+            'annual_original_price' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'size:3'],
         ];
     }
 

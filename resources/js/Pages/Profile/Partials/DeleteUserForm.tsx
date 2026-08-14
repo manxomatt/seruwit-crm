@@ -15,7 +15,7 @@ export default function DeleteUserForm() {
     const deleteUser = (e: React.FormEvent) => {
         e.preventDefault();
 
-        destroy(route('profile.destroy'));
+        destroy(route('module.profile.destroy'));
     };
 
     return (

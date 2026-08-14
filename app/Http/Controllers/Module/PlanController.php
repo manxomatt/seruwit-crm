@@ -40,6 +40,11 @@ class PlanController extends Controller
                     'modules' => $plan->modules ?? [],
                     'sort_order' => $plan->sort_order,
                     'is_default' => $plan->is_default,
+                    'price' => $plan->price,
+                    'original_price' => $plan->original_price,
+                    'annual_price' => $plan->annual_price,
+                    'annual_original_price' => $plan->annual_original_price,
+                    'currency' => $plan->currency ?? 'IDR',
                     'tenants' => $plan->tenantCount(),
                 ])
                 ->all(),

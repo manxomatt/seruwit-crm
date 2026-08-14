@@ -30,6 +30,7 @@ class PaymentOrder extends Model
         'tenant_id',
         'plan_id',
         'type',
+        'billing_interval',
         'payment_method',
         'status',
         'amount',

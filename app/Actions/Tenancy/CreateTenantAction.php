@@ -3,9 +3,7 @@
 namespace App\Actions\Tenancy;
 
 use App\Models\CentralUser;
-use App\Models\Role;
 use App\Models\Tenant;
-use App\Models\User;
 use App\Support\SystemMode;
 
 class CreateTenantAction
@@ -13,22 +11,25 @@ class CreateTenantAction
     /**
      * Provision a new tenant owned by the given central user.
      *
-     * When a reseller creates the tenant, $resellerGlobalId is stored so the
-     * tenant is permanently scoped to that reseller's management portal.
+     * Fires TenantCreated which queues the database pipeline:
+     * CreateDatabase → MigrateDatabase → SeedDatabase → FinalizeTenantSetupJob.
+     * The $setup array is stored in the tenant's data JSON so FinalizeTenantSetupJob
+     * can assign roles, seed pages, and install modules once the schema is ready.
      *
      * Note: intentionally not wrapped in a transaction — the pipeline runs
      * DDL on a separate connection that cannot see uncommitted changes.
+     *
+     * @param  array<string, mixed>  $setup
      */
-    public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null): Tenant
+    public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null, array $setup = []): Tenant
     {
         $fullDomain = self::fullDomain($subdomain);
 
         $tenant = Tenant::create([
             'name' => $companyName,
             'reseller_global_id' => $resellerGlobalId,
-            // Sandbox workspaces in development may install sample datasets
-            // from Modules without a central admin toggling the flag first.
             'can_install_demo_data' => SystemMode::isDevelopment(),
+            '_setup' => array_merge(['owner_global_id' => $owner->global_id], $setup),
         ]);
 
         // Domain first: Tenant::create can leave an orphan row if a later step
@@ -36,24 +37,6 @@ class CreateTenantAction
         $tenant->domains()->firstOrCreate(['domain' => $fullDomain]);
 
         $owner->tenants()->syncWithoutDetaching([$tenant->getTenantKey()]);
-
-        $tenant->run(function () use ($owner, $tenant): void {
-            $user = User::query()->firstWhere('global_id', $owner->global_id);
-
-            if ($user === null) {
-                throw new \RuntimeException(
-                    "Owner [{$owner->email}] was not synced into tenant [{$tenant->getTenantKey()}].",
-                );
-            }
-
-            if ($user->email_verified_at === null) {
-                $user->forceFill(['email_verified_at' => now()])->save();
-            }
-
-            $user->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
-
-            app(\Database\Seeders\TenantDefaultPageSeeder::class)->run('rental');
-        });
 
         return $tenant;
     }

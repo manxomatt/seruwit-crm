@@ -10,11 +10,27 @@ interface TenantRow {
     domain: string | null;
     members: number;
     created_at: string | null;
+    subscription_plan: string | null;
+    subscription_status: string | null;
 }
 
 interface Props {
     tenants: TenantRow[];
 }
+
+const PLAN_COLORS: Record<string, string> = {
+    trial:   'bg-slate-100 text-slate-600',
+    free:    'bg-sky-100 text-sky-700',
+    basic:   'bg-violet-100 text-violet-700',
+    pro:     'bg-amber-100 text-amber-700',
+};
+
+const planBadgeClass = (planName: string, status: string | null): string => {
+    if (status !== 'active') {
+        return 'bg-gray-100 text-gray-400 line-through';
+    }
+    return PLAN_COLORS[planName.toLowerCase()] ?? 'bg-teal-100 text-teal-700';
+};
 
 const PlusIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -162,6 +178,7 @@ export default function Index({ tenants }: Props): JSX.Element {
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.name')}</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.domain')}</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.members')}</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Langganan</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.status')}</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.created_at')}</th>
                                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('tenants.pages.index.columns.actions')}</th>
@@ -182,6 +199,15 @@ export default function Index({ tenants }: Props): JSX.Element {
                                         <code className="rounded bg-gray-100 px-2 py-1 text-sm text-gray-500">{tenant.domain ?? '—'}</code>
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{tenant.members}</td>
+                                    <td className="whitespace-nowrap px-6 py-4">
+                                        {tenant.subscription_plan ? (
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${planBadgeClass(tenant.subscription_plan, tenant.subscription_status)}`}>
+                                                {tenant.subscription_plan}
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm text-gray-400">—</span>
+                                        )}
+                                    </td>
                                     <td className="whitespace-nowrap px-6 py-4">
                                         <span
                                             className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${

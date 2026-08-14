@@ -54,7 +54,19 @@ class SubscriptionController extends Controller
                 'trial_ends_at' => $tenant->trial_ends_at?->toIso8601String(),
                 'is_on_trial' => $tenant->isOnTrial ?? false,
             ],
-            'plans' => $plans,
+            'plans' => $plans->map(fn (Plan $plan): array => [
+                'id' => $plan->id,
+                'key' => $plan->key,
+                'name' => $plan->name,
+                'description' => $plan->description,
+                'price' => $plan->price,
+                'original_price' => $plan->original_price,
+                'annual_price' => $plan->annual_price,
+                'annual_original_price' => $plan->annual_original_price,
+                'currency' => $plan->currency ?? 'IDR',
+                'interval' => $plan->interval,
+                'modules' => $plan->modules ?? [],
+            ])->values()->all(),
             'subscription' => $subscription ? [
                 'id' => $subscription->id,
                 'status' => $subscription->status,
@@ -82,6 +94,7 @@ class SubscriptionController extends Controller
         $request->validate([
             'plan_id' => ['required', 'integer'],
             'type' => ['required', 'in:activate,renew'],
+            'billing_interval' => ['nullable', 'in:month,annual'],
         ]);
 
         $plan = Plan::on('central')->findOrFail($request->input('plan_id'));
@@ -91,12 +104,13 @@ class SubscriptionController extends Controller
         }
 
         $type = $request->input('type', 'activate');
+        $billingInterval = $request->input('billing_interval', 'month');
 
         if ($type === 'renew' && ! $tenant->subscription) {
             $type = 'activate';
         }
 
-        $order = $this->paymentOrderService->createOrder($tenant, $plan, $type);
+        $order = $this->paymentOrderService->createOrder($tenant, $plan, $type, $billingInterval);
 
         return redirect()->route('module.subscription.payment', $order);
     }

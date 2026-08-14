@@ -106,6 +106,7 @@ class HandleInertiaRequests extends Middleware
                 'id' => tenant('id'),
                 'name' => tenant('name'),
             ] : null,
+            'subscriptionSummary' => fn () => $this->resolveSubscriptionSummary(),
         ];
     }
 
@@ -167,6 +168,32 @@ class HandleInertiaRequests extends Middleware
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * Return the active subscription's plan name for the current tenant, or null.
+     *
+     * @return array{plan_name: string|null, status: string}|null
+     */
+    private function resolveSubscriptionSummary(): ?array
+    {
+        if (! tenancy()->initialized) {
+            return null;
+        }
+
+        $subscription = \App\Models\Subscription::with('plan:id,name')
+            ->where('tenant_id', tenant('id'))
+            ->where('status', \App\Models\Subscription::STATUS_ACTIVE)
+            ->first(['id', 'plan_id', 'status']);
+
+        if (! $subscription) {
+            return null;
+        }
+
+        return [
+            'plan_name' => $subscription->plan?->name,
+            'status' => $subscription->status,
+        ];
     }
 
     /**

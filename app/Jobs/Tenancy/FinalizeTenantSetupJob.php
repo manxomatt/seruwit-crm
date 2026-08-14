@@ -1,0 +1,102 @@
+<?php
+
+namespace App\Jobs\Tenancy;
+
+use App\Models\OnboardingSession;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Modules\Facades\Modules;
+use App\Modules\ModuleInstaller;
+use Database\Seeders\TenantDefaultPageSeeder;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+class FinalizeTenantSetupJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $timeout = 300;
+
+    public int $tries = 1;
+
+    protected Tenant $tenant;
+
+    public function __construct(Tenant $tenant)
+    {
+        $this->tenant = $tenant;
+    }
+
+    public function handle(ModuleInstaller $installer): void
+    {
+        /** @var array{owner_global_id?: string, vertical?: string, module_keys?: list<string>, pack_keys?: list<string>, session_id?: int|null} $setup */
+        $setup = $this->tenant->data['_setup'] ?? [];
+        $ownerGlobalId = $setup['owner_global_id'] ?? null;
+        $vertical = $setup['vertical'] ?? 'rental';
+        $moduleKeys = $setup['module_keys'] ?? [];
+        $packKeys = $setup['pack_keys'] ?? [];
+        $sessionId = $setup['session_id'] ?? null;
+
+        $this->tenant->run(function () use ($ownerGlobalId, $vertical): void {
+            if ($ownerGlobalId !== null) {
+                $user = User::query()->firstWhere('global_id', $ownerGlobalId);
+
+                if ($user === null) {
+                    throw new \RuntimeException(
+                        "Owner [{$ownerGlobalId}] was not synced into tenant [{$this->tenant->getTenantKey()}].",
+                    );
+                }
+
+                if ($user->email_verified_at === null) {
+                    $user->forceFill(['email_verified_at' => now()])->save();
+                }
+
+                $user->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
+            }
+
+            app(TenantDefaultPageSeeder::class)->run($vertical);
+        });
+
+        foreach ($moduleKeys as $moduleKey) {
+            $module = Modules::find($moduleKey);
+            if ($module === null) {
+                continue;
+            }
+            $installer->install($this->tenant, $module);
+        }
+
+        foreach ($packKeys as $packKey) {
+            $installer->installPack($this->tenant, $packKey, withDemoSeeders: false);
+        }
+
+        if ($sessionId !== null) {
+            OnboardingSession::query()->find($sessionId)?->update([
+                'status' => OnboardingSession::STATUS_READY,
+                'error_message' => null,
+            ]);
+        }
+    }
+
+    public function failed(Throwable $e): void
+    {
+        Log::error('FinalizeTenantSetupJob failed.', [
+            'tenant_id' => $this->tenant->getTenantKey(),
+            'exception' => $e->getMessage(),
+        ]);
+
+        $setup = $this->tenant->data['_setup'] ?? [];
+        $sessionId = $setup['session_id'] ?? null;
+
+        if ($sessionId !== null) {
+            OnboardingSession::query()->find($sessionId)?->update([
+                'status' => OnboardingSession::STATUS_FAILED,
+                'error_message' => $e->getMessage(),
+            ]);
+        }
+    }
+}

@@ -49,7 +49,7 @@ class ProfileController extends Controller
             app(\App\Support\LocaleResolver::class)->persist($request, $data['locale']);
         }
 
-        return Redirect::route('profile.edit')->with('success', __('profile.saved_success'));
+        return Redirect::route('module.profile.edit')->with('success', __('profile.saved_success'));
     }
 
     /**
@@ -81,7 +81,7 @@ class ProfileController extends Controller
             ['avatar_url' => $avatarUrl]
         );
 
-        return Redirect::route('profile.edit')
+        return Redirect::route('module.profile.edit')
             ->with('status', 'avatar-updated')
             ->with('success', __('profile.avatar.updated'));
     }
@@ -104,7 +104,7 @@ class ProfileController extends Controller
             $user->profile->update(['avatar_url' => null]);
         }
 
-        return Redirect::route('profile.edit')
+        return Redirect::route('module.profile.edit')
             ->with('status', 'avatar-removed')
             ->with('success', __('profile.avatar.removed'));
     }
