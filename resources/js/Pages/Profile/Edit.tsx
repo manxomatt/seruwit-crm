@@ -54,6 +54,12 @@ const TrashIcon = () => (
     </svg>
 );
 
+const SubscriptionIcon = () => (
+    <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3m-3 3h3m-3 3h3m-9-9.75h.375c.621 0 1.125.504 1.125 1.125v.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375m-9-9.75v.375c0 .621.504 1.125 1.125 1.125h.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375M7.5 21h9a2.25 2.25 0 002.25-2.25V5.25A2.25 2.25 0 0016.5 3h-9a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21z" />
+    </svg>
+);
+
 const CameraIcon = () => (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
@@ -72,7 +78,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
     const user = pageProps.auth.user;
     const availableLocales = pageProps.availableLocales ?? [];
     const flash = pageProps.flash;
-    const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'delete'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'subscription' | 'delete'>('profile');
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,6 +169,7 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
     const tabs = [
         { id: 'profile' as const, name: t('profile.tabs.profile'), icon: <UserIcon /> },
         { id: 'password' as const, name: t('profile.tabs.password'), icon: <LockIcon /> },
+        { id: 'subscription' as const, name: 'Subscription', icon: <SubscriptionIcon /> },
         { id: 'delete' as const, name: t('profile.tabs.delete'), icon: <TrashIcon /> },
     ];
 
@@ -456,6 +463,39 @@ export default function Edit({ mustVerifyEmail, status, profile }: Props): JSX.E
                                         </PrimaryButton>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Subscription Tab */}
+                    {activeTab === 'subscription' && (
+                        <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
+                            <div className="border-b border-gray-100 px-6 py-4">
+                                <div className="flex items-center">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg shadow-teal-500/30">
+                                        <SubscriptionIcon />
+                                    </div>
+                                    <div className="ml-4">
+                                        <h2 className="text-lg font-semibold text-gray-900">Subscription</h2>
+                                        <p className="text-sm text-gray-500">Manage your subscription plan</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <div className="max-w-xl">
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        Manage your workspace subscription and billing from the subscription page.
+                                    </p>
+                                    <Link
+                                        href={route('module.subscription.index')}
+                                        className="inline-flex items-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-teal-700/25 transition hover:bg-teal-800"
+                                    >
+                                        <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3m-3 3h3m-3 3h3m-9-9.75h.375c.621 0 1.125.504 1.125 1.125v.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375m-9-9.75v.375c0 .621.504 1.125 1.125 1.125h.375m0 0h5.25m-5.25 0v.375c0 .621.504 1.125 1.125 1.125h.375M7.5 21h9a2.25 2.25 0 002.25-2.25V5.25A2.25 2.25 0 0016.5 3h-9a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21z" />
+                                        </svg>
+                                        Go to Subscription
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     )}

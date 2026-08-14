@@ -13,6 +13,11 @@ class Subscription extends Model
 
     const STATUS_EXPIRED = 'expired';
 
+    public function getConnectionName(): ?string
+    {
+        return config('tenancy.database.central_connection');
+    }
+
     protected $fillable = [
         'tenant_id',
         'plan_id',

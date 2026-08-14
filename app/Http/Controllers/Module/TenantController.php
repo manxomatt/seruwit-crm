@@ -14,6 +14,7 @@ use App\Rules\ValidSubdomain;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -174,13 +175,16 @@ class TenantController extends Controller
         $tenant->update([
             'name' => $validated['name'],
             'status' => $validated['status'],
-            'plan' => $validated['plan'],
             'can_install_demo_data' => $request->boolean('can_install_demo_data'),
             'billing_email' => $validated['billing_email'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'tax_id' => $validated['tax_id'] ?? null,
             'notes' => $validated['notes'] ?? null,
+        ]);
+
+        DB::table('tenants')->where('id', $tenant->id)->update([
+            'data' => DB::raw("jsonb_set(COALESCE(data, '{}'::jsonb), '{plan}', '\"{$validated['plan']}\"')"),
         ]);
 
         $newDomain = CreateTenantAction::fullDomain($request->string('subdomain')->value());

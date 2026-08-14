@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\SubscriptionService;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,7 @@ class SubscriptionController extends Controller
         $tenant = tenant();
         abort_unless($tenant instanceof Tenant, 404);
 
-        $plans = Plan::query()
+        $plans = Plan::on('central')
             ->where(function ($query): void {
                 $query->where('is_trial', false)
                     ->where('key', '!=', Plan::KEY_TRIAL);
@@ -32,11 +33,12 @@ class SubscriptionController extends Controller
             ->ordered()
             ->get();
 
-        $subscription = $tenant->relationLoaded('subscription') ? $tenant->subscription : $tenant->loadMissing('subscription')->subscription;
+        $tenantId = (string) $tenant->getKey();
+        $subscription = Subscription::on('central')->where('tenant_id', $tenantId)->first();
 
         return Inertia::render('Modules/Subscription/Activate', [
             'tenant' => [
-                'id' => $tenant->id,
+                'id' => $tenantId,
                 'name' => $tenant->name,
                 'status' => $tenant->status,
                 'trial_ends_at' => $tenant->trial_ends_at?->toIso8601String(),
@@ -53,13 +55,16 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    public function activate(Request $request, Tenant $tenant): RedirectResponse
+    public function activate(Request $request): RedirectResponse
     {
+        $tenant = tenant();
+        abort_unless($tenant instanceof Tenant, 404);
+
         $request->validate([
-            'plan_id' => 'required|exists:plans,id',
+            'plan_id' => ['required', 'integer'],
         ]);
 
-        $plan = Plan::query()->findOrFail($request->input('plan_id'));
+        $plan = Plan::on('central')->findOrFail($request->input('plan_id'));
 
         if ($plan->is_trial) {
             return back()->withErrors(['plan_id' => 'Invalid plan selected.']);
