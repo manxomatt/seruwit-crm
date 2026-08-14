@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\OnboardingController;
-use App\Http\Controllers\Central\SubscriptionController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
+use App\Http\Controllers\Module\PaymentOrderController;
 use App\Http\Controllers\Module\PlanController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\TenantController;
@@ -122,6 +122,11 @@ Route::domain($centralDomain)
         Route::post('/tenants/{tenant}/modules/{module}', [TenantController::class, 'installModule'])->name('tenants.modules.install');
         Route::delete('/tenants/{tenant}/modules/{module}', [TenantController::class, 'uninstallModule'])->name('tenants.modules.uninstall');
         Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
+
+        Route::get('/payment-orders', [PaymentOrderController::class, 'index'])->name('payment-orders.index');
+        Route::get('/payment-orders/{paymentOrder}', [PaymentOrderController::class, 'show'])->name('payment-orders.show');
+        Route::post('/payment-orders/{paymentOrder}/confirm', [PaymentOrderController::class, 'confirm'])->name('payment-orders.confirm');
+        Route::post('/payment-orders/{paymentOrder}/reject', [PaymentOrderController::class, 'reject'])->name('payment-orders.reject');
     });
 
 /*
@@ -153,17 +158,4 @@ Route::domain($centralDomain)
     ->group(function () {
         Route::get('/registry', [ModuleRegistryController::class, 'index'])->name('registry.index');
         Route::patch('/registry/{key}/status', [ModuleRegistryController::class, 'toggleStatus'])->name('registry.toggle-status');
-    });
-
-/*
-| Subscription activation for trial tenants.
-| Accessible by the tenant owner (auth only, ownership checked in controller).
-*/
-Route::domain($centralDomain)
-    ->middleware('auth')
-    ->prefix('subscription')
-    ->name('central.subscription.')
-    ->group(function () {
-        Route::get('/activate/{tenant}', [SubscriptionController::class, 'show'])->name('show');
-        Route::post('/activate/{tenant}', [SubscriptionController::class, 'activate'])->name('activate');
     });

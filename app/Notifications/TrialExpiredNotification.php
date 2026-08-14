@@ -26,7 +26,7 @@ class TrialExpiredNotification extends Notification implements ShouldQueue
             ->greeting('Halo,')
             ->line('Masa trial workspace **'.$this->tenant->name.'** Anda telah berakhir pada **'.$this->tenant->trial_ends_at->format('d F Y').'**.')
             ->line('Workspace telah ditangguhkan. Untuk melanjutkan menggunakan aplikasi, aktifkan paket berlangganan bulanan.')
-            ->action('Aktivasi Paket Sekarang', route('central.subscription.show', $this->tenant))
+            ->action('Aktivasi Paket Sekarang', 'https://'.($this->tenant->domains()->first()?->domain ?? '').'/module/subscription')
             ->line('Hubungi kami jika ada pertanyaan.');
     }
 
@@ -37,7 +37,7 @@ class TrialExpiredNotification extends Notification implements ShouldQueue
             'tenant_id' => $this->tenant->id,
             'tenant_name' => $this->tenant->name,
             'trial_ends_at' => $this->tenant->trial_ends_at,
-            'url' => route('central.subscription.show', $this->tenant),
+            'url' => 'https://'.($this->tenant->domains()->first()?->domain ?? '').'/module/subscription',
         ];
     }
 }

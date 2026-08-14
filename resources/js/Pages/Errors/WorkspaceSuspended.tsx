@@ -138,9 +138,9 @@ export default function WorkspaceSuspended({
                                 {t('central.suspended.back_workspaces')}
                             </a>
 
-                            {isTrialSuspended && workspace.id && (
+                            {isTrialSuspended && (
                                 <a
-                                    href={route('central.subscription.show', workspace.id)}
+                                    href="/module/subscription"
                                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-700 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-amber-700/25 transition hover:bg-amber-800"
                                 >
                                     <span className="material-symbols-outlined text-[18px]">new_releases</span>

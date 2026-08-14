@@ -72,6 +72,12 @@ Schedule::command('subscription:expire-trials')
     ->withoutOverlapping()
     ->onOneServer();
 
+// Expire payment orders that have passed their 48-hour deadline.
+Schedule::command('subscription:expire-payment-orders')
+    ->dailyAt('01:00')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Notify tenants whose trial expires in 3 days.
 Schedule::call(function () {
     Tenant::query()

@@ -26,7 +26,7 @@ class TrialSuspendedNotification extends Notification implements ShouldQueue
             ->greeting('Halo,')
             ->line('Workspace **'.$this->tenant->name.'** Anda telah ditangguhkan karena masa trial berakhir tanpa aktivasi paket.')
             ->line('Akses ke workspace saat ini diblokir.')
-            ->action('Aktivasi Paket Sekarang', route('central.subscription.show', $this->tenant))
+            ->action('Aktivasi Paket Sekarang', 'https://'.($this->tenant->domains()->first()?->domain ?? '').'/module/subscription')
             ->line('Segera aktifkan paket untuk mengembalikan akses.');
     }
 
@@ -36,7 +36,7 @@ class TrialSuspendedNotification extends Notification implements ShouldQueue
             'type' => 'trial_suspended',
             'tenant_id' => $this->tenant->id,
             'tenant_name' => $this->tenant->name,
-            'url' => route('central.subscription.show', $this->tenant),
+            'url' => 'https://'.($this->tenant->domains()->first()?->domain ?? '').'/module/subscription',
         ];
     }
 }

@@ -30,7 +30,7 @@ class TrialExpiringNotification extends Notification implements ShouldQueue
             ->line('Workspace **'.$this->tenant->name.'** Anda masih dalam masa trial gratis.')
             ->line('Trial akan berakhir pada **'.$this->tenant->trial_ends_at->format('d F Y').'**.')
             ->line('Setelah trial berakhir, workspace akan ditangguhkan sampai Anda mengaktivasi paket berlangganan bulanan.')
-            ->action('Aktivasi Paket Sekarang', route('central.subscription.show', $this->tenant))
+            ->action('Aktivasi Paket Sekarang', 'https://'.($this->tenant->domains()->first()?->domain ?? '').'/module/subscription')
             ->line('Terima kasih telah menggunakan Seruwit CRM.');
     }
 
@@ -42,7 +42,7 @@ class TrialExpiringNotification extends Notification implements ShouldQueue
             'tenant_name' => $this->tenant->name,
             'days_left' => $this->daysLeft,
             'trial_ends_at' => $this->tenant->trial_ends_at,
-            'url' => route('central.subscription.show', $this->tenant),
+            'url' => 'https://'.($this->tenant->domains()->first()?->domain ?? '').'/module/subscription',
         ];
     }
 }

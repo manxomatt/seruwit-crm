@@ -118,12 +118,6 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                                                             {t('central.trial.days_left', { days: '7' })}
                                                         </span>
                                                         <a
-                                                            href={route('central.subscription.show', workspace.id)}
-                                                            className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-cyan-700/25 transition hover:bg-cyan-800"
-                                                        >
-                                                            {t('central.trial.activate_button')}
-                                                        </a>
-                                                        <a
                                                             href={route('central.workspaces.enter', workspace.id)}
                                                             className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-teal-700/25 transition hover:bg-teal-800"
                                                         >
@@ -181,12 +175,6 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                                                         <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
                                                             {t('central.workspaces.suspended')}
                                                         </span>
-                                                        <a
-                                                            href={route('central.subscription.show', workspace.id)}
-                                                            className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-amber-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-amber-700/25 transition hover:bg-amber-800"
-                                                        >
-                                                            {t('central.trial.activate_button')}
-                                                        </a>
                                                     </div>
                                                 </div>
                                             </div>

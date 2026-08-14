@@ -29,13 +29,42 @@ class SubscriptionService
         return is_string($identifier) ? $identifier : (string) $identifier;
     }
 
-    public function activate(Tenant $tenant, Plan $plan): Subscription
+    public function activate(Tenant $tenant, Plan $plan, bool $renewal = false): Subscription
     {
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
 
-        return DB::connection($central)->transaction(function () use ($tenant, $plan, $central, $tenantId) {
+        return DB::connection($central)->transaction(function () use ($tenant, $plan, $central, $tenantId, $renewal) {
             $now = now();
+
+            if ($renewal) {
+                $subscription = Subscription::on($central)
+                    ->where('tenant_id', $tenantId)
+                    ->first();
+
+                if ($subscription) {
+                    $endsAt = $subscription->ends_at
+                        ? max($now, $subscription->ends_at)
+                        : $now;
+
+                    $subscription->update([
+                        'plan_id' => $plan->id,
+                        'ends_at' => $plan->interval === 'year' ? $endsAt->copy()->addYear() : $endsAt->copy()->addMonth(),
+                        'status' => Subscription::STATUS_ACTIVE,
+                        'cancelled_at' => null,
+                        'ended_at' => null,
+                    ]);
+
+                    $tenant->update([
+                        'plan' => $plan->key,
+                        'trial_ends_at' => null,
+                        'is_trial_expired' => false,
+                        'status' => 'active',
+                    ]);
+
+                    return $subscription->fresh();
+                }
+            }
 
             $subscription = Subscription::on($central)->updateOrCreate(
                 ['tenant_id' => $tenantId],
