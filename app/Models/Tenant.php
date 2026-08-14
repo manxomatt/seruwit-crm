@@ -35,60 +35,8 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return [
             'trial_ends_at' => 'datetime',
             'is_trial_expired' => 'boolean',
+            'can_install_demo_data' => 'boolean',
         ];
-    }
-
-    public function setPlanAttribute(?string $value): void
-    {
-        $this->mergeDataIntoJson('plan', $value);
-    }
-
-    public function getPlanAttribute(): ?string
-    {
-        return data_get($this->data, 'plan');
-    }
-
-    public function getBillingEmailAttribute(): ?string
-    {
-        return data_get($this->data, 'billing_email');
-    }
-
-    public function getPhoneAttribute(): ?string
-    {
-        return data_get($this->data, 'phone');
-    }
-
-    public function getAddressAttribute(): ?string
-    {
-        return data_get($this->data, 'address');
-    }
-
-    public function getTaxIdAttribute(): ?string
-    {
-        return data_get($this->data, 'tax_id');
-    }
-
-    public function getNotesAttribute(): ?string
-    {
-        return data_get($this->data, 'notes');
-    }
-
-    public function getCanInstallDemoDataAttribute(): ?bool
-    {
-        return data_get($this->data, 'can_install_demo_data', false);
-    }
-
-    private function mergeDataIntoJson(string $key, mixed $value): void
-    {
-        $data = $this->data ?? [];
-
-        if ($value === null) {
-            unset($data[$key]);
-        } else {
-            $data[$key] = $value;
-        }
-
-        $this->data = $data;
     }
 
     /**

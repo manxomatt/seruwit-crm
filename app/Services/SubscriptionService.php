@@ -34,7 +34,7 @@ class SubscriptionService
         $central = $this->centralConnection();
         $tenantId = $this->tenantId($tenant);
 
-        return DB::connection($central)->transaction(function () use ($plan, $central, $tenantId) {
+        return DB::connection($central)->transaction(function () use ($tenant, $plan, $central, $tenantId) {
             $now = now();
 
             $subscription = Subscription::on($central)->updateOrCreate(
@@ -49,8 +49,8 @@ class SubscriptionService
                 ]
             );
 
-            DB::connection($central)->table('tenants')->where('id', $tenantId)->update([
-                'data' => DB::raw("jsonb_set(COALESCE(data, '{}'::jsonb), '{plan}', '\"{$plan->key}\"')"),
+            $tenant->update([
+                'plan' => $plan->key,
                 'trial_ends_at' => null,
                 'is_trial_expired' => false,
                 'status' => 'active',

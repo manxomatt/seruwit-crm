@@ -8,7 +8,6 @@ use App\Models\OnboardingSession;
 use App\Models\Plan;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleInstaller;
-use App\Modules\PlanRepository;
 use App\Support\Onboarding\SelfServeProvisioningPlan;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -97,13 +96,8 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             if ($tenant === null) {
                 $session->update(['tenant_id' => null]);
             } elseif ($tenant->database()->manager()->databaseExists($tenant->database()->getName())) {
-                if ($tenant->planKey() !== Plan::KEY_TRIAL) {
-                    \Illuminate\Support\Facades\DB::table('tenants')->where('id', $session->tenant_id)->update([
-                        'data' => \Illuminate\Support\Facades\DB::raw("jsonb_set(COALESCE(data, '{}'::jsonb), '{plan}', '\"trial\"')"),
-                    ]);
-                }
-
-                \App\Models\Tenant::query()->whereKey($session->tenant_id)->update([
+                $tenant->update([
+                    'plan' => Plan::KEY_TRIAL,
                     'trial_ends_at' => now()->addDays(7),
                     'is_trial_expired' => false,
                     'status' => 'active',
@@ -123,16 +117,11 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             owner: $owner,
         );
 
-        $plan = app(PlanRepository::class)->find(Plan::KEY_TRIAL);
-
-        \App\Models\Tenant::query()->whereKey($session->tenant_id)->update([
+        $tenant->update([
+            'plan' => Plan::KEY_TRIAL,
             'trial_ends_at' => now()->addDays(7),
             'is_trial_expired' => false,
             'status' => 'active',
-        ]);
-
-        \Illuminate\Support\Facades\DB::table('tenants')->where('id', $session->tenant_id)->update([
-            'data' => \Illuminate\Support\Facades\DB::raw("jsonb_set(COALESCE(data, '{}'::jsonb), '{plan}', '\"trial\"')"),
         ]);
 
         $session->update(['tenant_id' => $tenant->getTenantKey()]);
