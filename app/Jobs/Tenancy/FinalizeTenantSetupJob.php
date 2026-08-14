@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Tenancy;
 
+use App\Models\CentralUser;
 use App\Models\OnboardingSession;
 use App\Models\Role;
 use App\Models\Tenant;
@@ -35,12 +36,20 @@ class FinalizeTenantSetupJob implements ShouldQueue
     public function handle(ModuleInstaller $installer): void
     {
         /** @var array{owner_global_id?: string, vertical?: string, module_keys?: list<string>, pack_keys?: list<string>, session_id?: int|null} $setup */
-        $setup = $this->tenant->data['_setup'] ?? [];
+        $setup = $this->tenant->data['provision'] ?? [];
         $ownerGlobalId = $setup['owner_global_id'] ?? null;
         $vertical = $setup['vertical'] ?? 'rental';
         $moduleKeys = $setup['module_keys'] ?? [];
         $packKeys = $setup['pack_keys'] ?? [];
         $sessionId = $setup['session_id'] ?? null;
+
+        // Attach owner to the tenant (fires SyncedResourceSaved → UpdateSyncedResource,
+        // which creates the user row in the tenant schema). Must happen before
+        // $tenant->run() so the user exists when we assign the admin role.
+        if ($ownerGlobalId !== null) {
+            $owner = CentralUser::query()->where('global_id', $ownerGlobalId)->firstOrFail();
+            $owner->tenants()->syncWithoutDetaching([$this->tenant->getTenantKey()]);
+        }
 
         $this->tenant->run(function () use ($ownerGlobalId, $vertical): void {
             if ($ownerGlobalId !== null) {
@@ -89,7 +98,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             'exception' => $e->getMessage(),
         ]);
 
-        $setup = $this->tenant->data['_setup'] ?? [];
+        $setup = $this->tenant->data['provision'] ?? [];
         $sessionId = $setup['session_id'] ?? null;
 
         if ($sessionId !== null) {

@@ -195,6 +195,13 @@ return [
     'routes' => true,
 
     /**
+     * Whether to dispatch the tenant database pipeline via the queue.
+     * Set to true in production so tenant provisioning is non-blocking.
+     * Keep false (the default) in development/testing for synchronous execution.
+     */
+    'queue_pipeline' => env('TENANCY_QUEUE_PIPELINE', false),
+
+    /**
      * Parameters used by the tenants:migrate command.
      */
     'migration_parameters' => [

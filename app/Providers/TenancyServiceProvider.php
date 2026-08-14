@@ -31,7 +31,7 @@ class TenancyServiceProvider extends ServiceProvider
                     \App\Jobs\Tenancy\FinalizeTenantSetupJob::class,
                 ])->send(function (Events\TenantCreated $event) {
                     return $event->tenant;
-                })->shouldBeQueued(true),
+                })->shouldBeQueued((bool) config('tenancy.queue_pipeline', false)),
             ],
             Events\SavingTenant::class => [],
             Events\TenantSaved::class => [],
@@ -43,7 +43,7 @@ class TenancyServiceProvider extends ServiceProvider
                     Jobs\DeleteDatabase::class,
                 ])->send(function (Events\TenantDeleted $event) {
                     return $event->tenant;
-                })->shouldBeQueued(false), // `false` by default, but you probably want to make this `true` for production.
+                })->shouldBeQueued((bool) config('tenancy.queue_pipeline', false)),
             ],
 
             // Domain events

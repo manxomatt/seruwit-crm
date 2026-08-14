@@ -29,14 +29,16 @@ class CreateTenantAction
             'name' => $companyName,
             'reseller_global_id' => $resellerGlobalId,
             'can_install_demo_data' => SystemMode::isDevelopment(),
-            '_setup' => array_merge(['owner_global_id' => $owner->global_id], $setup),
+            'provision' => array_merge(['owner_global_id' => $owner->global_id], $setup),
         ]);
 
         // Domain first: Tenant::create can leave an orphan row if a later step
         // fails, and admin update previously could not create a missing domain.
         $tenant->domains()->firstOrCreate(['domain' => $fullDomain]);
 
-        $owner->tenants()->syncWithoutDetaching([$tenant->getTenantKey()]);
+        // Owner sync is deferred to FinalizeTenantSetupJob, which runs after the
+        // schema is created (end of the pipeline). This ensures the tenant schema
+        // exists when UpdateSyncedResource tries to copy the user row into it.
 
         return $tenant;
     }

@@ -64,10 +64,6 @@ class TenantController extends Controller
     {
         Gate::authorize('manage-tenants');
 
-        // Tenant provisioning (schema creation + ~100 migrations) routinely takes
-        // 60–120 s. Match the timeout used by ProvisionSelfServeTenantJob.
-        set_time_limit(300);
-
         $request->validate([
             'company_name' => 'required|string|max:255',
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain],
