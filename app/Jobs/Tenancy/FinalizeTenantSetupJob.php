@@ -36,13 +36,21 @@ class FinalizeTenantSetupJob implements ShouldQueue
 
     public function handle(ModuleInstaller $installer): void
     {
-        /** @var array{owner_global_id?: string, vertical?: string, module_keys?: list<string>, pack_keys?: list<string>, session_id?: int|null} $setup */
+        /** @var array{owner_global_id?: string, vertical?: string, plan_key?: string, module_keys?: list<string>, pack_keys?: list<string>, session_id?: int|null} $setup */
         $setup = $this->tenant->provision ?? [];
         $ownerGlobalId = $setup['owner_global_id'] ?? null;
         $vertical = $setup['vertical'] ?? 'rental';
+        $planKey = $setup['plan_key'] ?? null;
         $moduleKeys = $setup['module_keys'] ?? [];
         $packKeys = $setup['pack_keys'] ?? [];
         $sessionId = $setup['session_id'] ?? null;
+
+        // Ensure the plan is set before module/pack installation so entitlement
+        // checks use the correct plan regardless of external update timing.
+        if ($planKey !== null && $this->tenant->plan !== $planKey) {
+            $this->tenant->update(['plan' => $planKey]);
+            $this->tenant = $this->tenant->fresh();
+        }
 
         // Attach owner to the tenant (fires SyncedResourceSaved → UpdateSyncedResource,
         // which creates the user row in the tenant schema). Must happen before

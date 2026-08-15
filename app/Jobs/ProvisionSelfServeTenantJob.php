@@ -111,6 +111,7 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             setup: [
                 'session_id' => $session->id,
                 'vertical' => $vertical,
+                'plan_key' => Plan::KEY_TRIAL,
                 'module_keys' => SelfServeProvisioningPlan::defaultContentModules(),
                 'pack_keys' => SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []),
             ],
