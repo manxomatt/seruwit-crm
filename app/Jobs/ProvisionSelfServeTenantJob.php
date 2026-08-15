@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleInstaller;
 use App\Support\Onboarding\SelfServeProvisioningPlan;
+use Database\Seeders\CreateBintangKejoraAlternativePagesSeeder;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -142,6 +143,9 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
         }
 
         $vertical = $session->verticals[0] ?? 'rental';
-        $tenant->run(fn () => app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical));
+        $tenant->run(function () use ($vertical): void {
+            app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical);
+            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
+        });
     }
 }

@@ -32,6 +32,7 @@ class TenantManagementTest extends TestCase
         // inside RefreshDatabase's transaction (which would deadlock).
         $this->tenant = Tenant::withoutEvents(function (): Tenant {
             return Tenant::create([
+                'id' => fake()->uuid(),
                 'name' => 'Test Company',
                 'provision' => ['owner_global_id' => fake()->uuid(), 'vertical' => 'crm'],
             ]);
@@ -70,7 +71,7 @@ class TenantManagementTest extends TestCase
     {
         Queue::fake();
 
-        $noProvisionTenant = Tenant::withoutEvents(fn (): Tenant => Tenant::create(['name' => 'No Provision']));
+        $noProvisionTenant = Tenant::withoutEvents(fn (): Tenant => Tenant::create(['id' => fake()->uuid(), 'name' => 'No Provision']));
 
         $this->actingAs($this->admin)
             ->post(route('module.tenants.retry-setup', $noProvisionTenant->id))

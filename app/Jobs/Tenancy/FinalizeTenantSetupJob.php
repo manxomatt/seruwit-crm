@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleInstaller;
+use Database\Seeders\CreateBintangKejoraAlternativePagesSeeder;
 use Database\Seeders\TenantDefaultPageSeeder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,7 +27,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
 
     public int $tries = 1;
 
-    protected Tenant $tenant;
+    public Tenant $tenant;
 
     public function __construct(Tenant $tenant)
     {
@@ -69,6 +70,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             }
 
             app(TenantDefaultPageSeeder::class)->run($vertical);
+            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
         });
 
         foreach ($moduleKeys as $moduleKey) {
