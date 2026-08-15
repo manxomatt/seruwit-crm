@@ -91,6 +91,12 @@ class TenantController extends Controller
             }
         }
 
+        // Guard: users seeded before the global_id hook was in place may have null.
+        if (blank($owner->global_id)) {
+            $owner->forceFill(['global_id' => (string) \Illuminate\Support\Str::uuid()])->save();
+            $owner->refresh();
+        }
+
         $user = $request->user();
         $resellerGlobalId = ($user && ! $user->isAdmin() && $user->hasRole('reseller'))
             ? $user->global_id

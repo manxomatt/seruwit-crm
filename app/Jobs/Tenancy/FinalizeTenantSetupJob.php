@@ -36,7 +36,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
     public function handle(ModuleInstaller $installer): void
     {
         /** @var array{owner_global_id?: string, vertical?: string, module_keys?: list<string>, pack_keys?: list<string>, session_id?: int|null} $setup */
-        $setup = $this->tenant->data['provision'] ?? [];
+        $setup = $this->tenant->provision ?? [];
         $ownerGlobalId = $setup['owner_global_id'] ?? null;
         $vertical = $setup['vertical'] ?? 'rental';
         $moduleKeys = $setup['module_keys'] ?? [];
@@ -98,7 +98,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             'exception' => $e->getMessage(),
         ]);
 
-        $setup = $this->tenant->data['provision'] ?? [];
+        $setup = $this->tenant->provision ?? [];
         $sessionId = $setup['session_id'] ?? null;
 
         if ($sessionId !== null) {
