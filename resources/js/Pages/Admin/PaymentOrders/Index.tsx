@@ -3,8 +3,9 @@ import PageHeader from '@/Components/PageHeader';
 import Select, { SelectOption } from '@/Components/Select';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, FormEventHandler } from 'react';
+import { useState, FormEventHandler, useMemo } from 'react';
 
 interface PaymentOrder {
     id: number;
@@ -41,17 +42,14 @@ interface Props {
     filters: Filters;
 }
 
-const STATUS_CONFIG: Record<string, { dot: string; badge: string; label: string }> = {
-    pending:               { dot: 'bg-slate-400',             badge: 'bg-slate-100 text-slate-700 ring-slate-200',  label: 'Pending' },
-    awaiting_confirmation: { dot: 'bg-amber-500 animate-pulse', badge: 'bg-amber-100 text-amber-800 ring-amber-200',  label: 'Menunggu Konfirmasi' },
-    confirmed:             { dot: 'bg-emerald-500',            badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', label: 'Dikonfirmasi' },
-    rejected:              { dot: 'bg-red-500',                badge: 'bg-red-100 text-red-800 ring-red-200',        label: 'Ditolak' },
-    expired:               { dot: 'bg-slate-300',              badge: 'bg-slate-100 text-slate-500 ring-slate-200',  label: 'Kedaluwarsa' },
-    cancelled:             { dot: 'bg-slate-300',              badge: 'bg-slate-100 text-slate-500 ring-slate-200',  label: 'Dibatalkan' },
+const STATUS_STYLES: Record<string, { dot: string; badge: string }> = {
+    pending:               { dot: 'bg-slate-400',              badge: 'bg-slate-100 text-slate-700 ring-slate-200' },
+    awaiting_confirmation: { dot: 'bg-amber-500 animate-pulse', badge: 'bg-amber-100 text-amber-800 ring-amber-200' },
+    confirmed:             { dot: 'bg-emerald-500',             badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200' },
+    rejected:              { dot: 'bg-red-500',                 badge: 'bg-red-100 text-red-800 ring-red-200' },
+    expired:               { dot: 'bg-slate-300',               badge: 'bg-slate-100 text-slate-500 ring-slate-200' },
+    cancelled:             { dot: 'bg-slate-300',               badge: 'bg-slate-100 text-slate-500 ring-slate-200' },
 };
-
-const fmt = (price: string) => 'Rp ' + Number(price).toLocaleString('id-ID');
-
 
 const EyeIcon = () => (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -69,44 +67,39 @@ const EllipsisVerticalIcon = () => (
 const menuItemClassName =
     'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
 
-const STATUS_OPTIONS: SelectOption[] = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'awaiting_confirmation', label: 'Menunggu Konfirmasi' },
-    { value: 'confirmed', label: 'Dikonfirmasi' },
-    { value: 'rejected', label: 'Ditolak' },
-    { value: 'expired', label: 'Kedaluwarsa' },
-    { value: 'cancelled', label: 'Dibatalkan' },
-];
-
 function StatusBadge({ status }: { status: string }) {
-    const cfg = STATUS_CONFIG[status] ?? { dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-700 ring-slate-200', label: status };
+    const { t } = useTrans();
+    const styles = STATUS_STYLES[status] ?? { dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-700 ring-slate-200' };
     return (
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${cfg.badge}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-            {cfg.label}
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${styles.badge}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
+            {t(`payment_orders.statuses.${status}`, {}, status)}
         </span>
     );
 }
 
 function Pagination({ links, total, from, to }: { links: PaginatedPaymentOrders['links']; total: number; from: number | null; to: number | null }) {
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
+
     if (links.length <= 3) return null;
 
     const prev = links[0];
     const next = links[links.length - 1];
     const pages = links.slice(1, -1);
 
+    const countLabel = from && to
+        ? t('payment_orders.index.showing')
+            .replace(':from', String(from))
+            .replace(':to', String(to))
+            .replace(':total', total.toLocaleString(localeTag))
+        : t('payment_orders.index.showing_count').replace(':total', total.toLocaleString(localeTag));
+
     return (
         <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row">
-            <p className="text-sm text-slate-500">
-                {from && to ? (
-                    <>Menampilkan <span className="font-medium text-slate-700">{from}–{to}</span> dari <span className="font-medium text-slate-700">{total.toLocaleString('id-ID')}</span> pesanan</>
-                ) : (
-                    <>{total.toLocaleString('id-ID')} pesanan</>
-                )}
-            </p>
+            <p className="text-sm text-slate-500">{countLabel}</p>
 
             <div className="flex items-center gap-1">
-                {/* Previous */}
                 {prev.url ? (
                     <Link
                         href={prev.url}
@@ -125,7 +118,6 @@ function Pagination({ links, total, from, to }: { links: PaginatedPaymentOrders[
                     </span>
                 )}
 
-                {/* Page numbers */}
                 {pages.map((link, i) => (
                     link.url ? (
                         <Link
@@ -146,7 +138,6 @@ function Pagination({ links, total, from, to }: { links: PaginatedPaymentOrders[
                     )
                 ))}
 
-                {/* Next */}
                 {next.url ? (
                     <Link
                         href={next.url}
@@ -170,9 +161,20 @@ function Pagination({ links, total, from, to }: { links: PaginatedPaymentOrders[
 }
 
 export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): JSX.Element {
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const { prefixedRoute } = useRoutePrefix();
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
+
+    const statusOptions: SelectOption[] = useMemo(() => [
+        { value: 'pending',               label: t('payment_orders.statuses.pending') },
+        { value: 'awaiting_confirmation', label: t('payment_orders.statuses.awaiting_confirmation') },
+        { value: 'confirmed',             label: t('payment_orders.statuses.confirmed') },
+        { value: 'rejected',              label: t('payment_orders.statuses.rejected') },
+        { value: 'expired',               label: t('payment_orders.statuses.expired') },
+        { value: 'cancelled',             label: t('payment_orders.statuses.cancelled') },
+    ], [t]);
 
     const applyFilters = (overrides: { search?: string; status?: string } = {}) => {
         const s = overrides.search !== undefined ? overrides.search : search;
@@ -205,12 +207,12 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
         <DynamicLayout
             header={
                 <PageHeader
-                    title="Pesanan Pembayaran"
-                    description="Kelola verifikasi pembayaran langganan tenant"
+                    title={t('payment_orders.title')}
+                    description={t('payment_orders.description')}
                 />
             }
         >
-            <Head title="Pesanan Pembayaran" />
+            <Head title={t('payment_orders.title')} />
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
@@ -225,14 +227,14 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                             </span>
                             <input
                                 type="text"
-                                placeholder="Cari nama tenant…"
+                                placeholder={t('payment_orders.index.search_placeholder')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="block w-full rounded-xl border-slate-200 py-2 pl-9 pr-3 text-sm shadow-none focus:border-teal-400 focus:ring-teal-400"
                             />
                         </div>
                         <button type="submit" className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                            Cari
+                            {t('payment_orders.index.search_button')}
                         </button>
                     </form>
 
@@ -240,8 +242,8 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                         <Select
                             value={status}
                             onChange={handleStatusChange}
-                            options={STATUS_OPTIONS}
-                            placeholder="Semua Status"
+                            options={statusOptions}
+                            placeholder={t('payment_orders.index.status_all')}
                             searchable={false}
                             className="min-w-[220px]"
                         />
@@ -255,7 +257,7 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                                 <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                                 </svg>
-                                Reset
+                                {t('payment_orders.index.reset')}
                             </button>
                         )}
                     </div>
@@ -270,11 +272,11 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                             </svg>
                         </span>
                         <p className="mt-3 text-sm font-medium text-slate-600">
-                            {hasFilters ? 'Tidak ada pesanan yang sesuai filter' : 'Belum ada pesanan pembayaran'}
+                            {hasFilters ? t('payment_orders.index.empty_filtered') : t('payment_orders.index.empty_all')}
                         </p>
                         {hasFilters && (
                             <button onClick={clearFilters} className="mt-2 text-sm text-teal-600 hover:text-teal-800">
-                                Hapus filter
+                                {t('payment_orders.index.clear_filter')}
                             </button>
                         )}
                     </div>
@@ -283,12 +285,12 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                         <table className="min-w-full">
                             <thead>
                                 <tr className="border-b border-slate-100 bg-slate-50/60">
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">#</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Tenant</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Paket</th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Tanggal</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.index.columns.number')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.index.columns.tenant')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.index.columns.plan')}</th>
+                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.index.columns.total')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.index.columns.status')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.index.columns.date')}</th>
                                     <th className="w-12 px-4 py-3" />
                                 </tr>
                             </thead>
@@ -300,11 +302,15 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                                         </td>
                                         <td className="px-6 py-3.5">
                                             <div className="text-sm font-medium text-slate-800">{order.tenant.name}</div>
-                                            <div className="text-xs text-slate-400 capitalize">{order.type === 'renew' ? 'Perpanjangan' : 'Aktivasi'}</div>
+                                            <div className="text-xs text-slate-400 capitalize">
+                                                {t(`payment_orders.types.${order.type}`, {}, order.type)}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-3.5 text-sm text-slate-600">{order.plan.name}</td>
                                         <td className="px-6 py-3.5 text-right">
-                                            <div className="font-mono text-sm font-semibold tabular-nums text-slate-800">{fmt(order.total_amount)}</div>
+                                            <div className="font-mono text-sm font-semibold tabular-nums text-slate-800">
+                                                {'Rp ' + Number(order.total_amount).toLocaleString('id-ID')}
+                                            </div>
                                             {Number(order.unique_code) > 0 && (
                                                 <div className="font-mono text-xs text-slate-400">+{order.unique_code}</div>
                                             )}
@@ -313,14 +319,14 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                                             <StatusBadge status={order.status} />
                                         </td>
                                         <td className="px-6 py-3.5 text-sm text-slate-400">
-                                            {new Date(order.created_at).toLocaleDateString('id-ID', { dateStyle: 'medium' })}
+                                            {new Date(order.created_at).toLocaleDateString(localeTag, { dateStyle: 'medium' })}
                                         </td>
                                         <td className="whitespace-nowrap px-3 py-2.5 text-right">
                                             <Menu as="div" className="relative inline-block text-right">
                                                 <MenuButton
                                                     className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                    title="Tindakan"
-                                                    aria-label="Tindakan"
+                                                    title={t('payment_orders.index.actions_menu')}
+                                                    aria-label={t('payment_orders.index.actions_menu')}
                                                 >
                                                     <EllipsisVerticalIcon />
                                                 </MenuButton>
@@ -338,7 +344,7 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                                                             <span className="text-gray-500">
                                                                 <EyeIcon />
                                                             </span>
-                                                            Lihat Detail
+                                                            {t('payment_orders.index.view_detail')}
                                                         </Link>
                                                     </MenuItem>
                                                 </MenuItems>
@@ -351,7 +357,6 @@ export default function PaymentOrdersIndex({ paymentOrders, filters }: Props): J
                     </div>
                 )}
 
-                {/* Pagination */}
                 {paymentOrders.data.length > 0 && (
                     <Pagination
                         links={paymentOrders.links}

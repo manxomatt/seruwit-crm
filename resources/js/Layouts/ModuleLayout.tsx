@@ -685,7 +685,7 @@ export default function ModuleLayout({ header, children }: Props) {
         // Payment order verification for manual transfers.
         if (isCentral && isAdmin && routeExists('module.payment-orders.index')) {
             items.push({
-                name: 'Pembayaran',
+                name: t('shell.payment_orders'),
                 href: route(resolveNamedRoute('module.payment-orders.index')),
                 icon: <PaymentOrdersIcon />,
                 current:

@@ -1,9 +1,10 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
-import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { useRoutePrefix } from '@/hooks/useRoutePrefix';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface PaymentOrder {
     id: number;
@@ -49,44 +50,44 @@ interface Props {
     paymentOrder: PaymentOrder;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string; border: string; bg: string }> = {
+const STATUS_STYLES: Record<string, { label_key: string; dot: string; badge: string; border: string; bg: string }> = {
     pending: {
-        label: 'Menunggu Pembayaran',
+        label_key: 'pending',
         dot: 'bg-slate-400',
         badge: 'bg-slate-100 text-slate-700 ring-slate-200',
         border: 'border-slate-200',
         bg: 'bg-slate-50',
     },
     awaiting_confirmation: {
-        label: 'Menunggu Konfirmasi',
+        label_key: 'awaiting_confirmation',
         dot: 'bg-amber-500 animate-pulse',
         badge: 'bg-amber-100 text-amber-800 ring-amber-200',
         border: 'border-amber-200',
         bg: 'bg-amber-50',
     },
     confirmed: {
-        label: 'Dikonfirmasi',
+        label_key: 'confirmed',
         dot: 'bg-emerald-500',
         badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
         border: 'border-emerald-200',
         bg: 'bg-emerald-50',
     },
     rejected: {
-        label: 'Ditolak',
+        label_key: 'rejected',
         dot: 'bg-red-500',
         badge: 'bg-red-100 text-red-800 ring-red-200',
         border: 'border-red-200',
         bg: 'bg-red-50',
     },
     expired: {
-        label: 'Kedaluwarsa',
+        label_key: 'expired',
         dot: 'bg-slate-400',
         badge: 'bg-slate-100 text-slate-600 ring-slate-200',
         border: 'border-slate-200',
         bg: 'bg-slate-50',
     },
     cancelled: {
-        label: 'Dibatalkan',
+        label_key: 'cancelled',
         dot: 'bg-slate-400',
         badge: 'bg-slate-100 text-slate-600 ring-slate-200',
         border: 'border-slate-200',
@@ -94,11 +95,7 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string;
     },
 };
 
-const fmt = (price: string): string => 'Rp ' + Number(price).toLocaleString('id-ID');
-const fmtDate = (iso: string): string => new Date(iso).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-const fmtDateShort = (iso: string): string => new Date(iso).toLocaleDateString('id-ID', { dateStyle: 'medium' });
-
-function CopyButton({ value }: { value: string }) {
+function CopyButton({ value, copyLabel }: { value: string; copyLabel: string }) {
     const [copied, setCopied] = useState(false);
     const copy = () => {
         navigator.clipboard.writeText(value).then(() => {
@@ -110,7 +107,7 @@ function CopyButton({ value }: { value: string }) {
         <button
             type="button"
             onClick={copy}
-            title="Salin"
+            title={copyLabel}
             className="ml-1.5 inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
         >
             {copied ? (
@@ -127,19 +124,21 @@ function CopyButton({ value }: { value: string }) {
     );
 }
 
-function Row({ label, value, copyValue }: { label: string; value: React.ReactNode; copyValue?: string }) {
+function Row({ label, value, copyValue, copyLabel }: { label: string; value: React.ReactNode; copyValue?: string; copyLabel?: string }) {
     return (
-        <div className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-100 last:border-0">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-400 shrink-0 pt-0.5">{label}</span>
-            <span className="text-sm font-medium text-slate-800 text-right flex items-center gap-0.5">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0">
+            <span className="shrink-0 pt-0.5 text-xs font-medium uppercase tracking-wide text-slate-400">{label}</span>
+            <span className="flex items-center gap-0.5 text-right text-sm font-medium text-slate-800">
                 {value}
-                {copyValue && <CopyButton value={copyValue} />}
+                {copyValue && copyLabel && <CopyButton value={copyValue} copyLabel={copyLabel} />}
             </span>
         </div>
     );
 }
 
 export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element {
+    const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const { prefixedRoute } = useRoutePrefix();
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
@@ -147,10 +146,14 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
     const [processing, setProcessing] = useState(false);
     const [proofExpanded, setProofExpanded] = useState(false);
 
-    const cfg = STATUS_CONFIG[paymentOrder.status] ?? STATUS_CONFIG['pending'];
+    const cfg = STATUS_STYLES[paymentOrder.status] ?? STATUS_STYLES['pending'];
     const canConfirm = paymentOrder.status === 'pending' || paymentOrder.status === 'awaiting_confirmation';
     const canReject = paymentOrder.status === 'pending' || paymentOrder.status === 'awaiting_confirmation';
     const isActionable = canConfirm || canReject;
+
+    const fmt = (price: string): string => 'Rp ' + Number(price).toLocaleString('id-ID');
+    const fmtDate = (iso: string): string => new Date(iso).toLocaleString(localeTag, { dateStyle: 'medium', timeStyle: 'short' });
+    const fmtDateShort = (iso: string): string => new Date(iso).toLocaleDateString(localeTag, { dateStyle: 'medium' });
 
     const handleConfirm = () => {
         setProcessing(true);
@@ -174,13 +177,15 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
         return /\.(jpe?g|png|gif|webp|bmp)(\?|$)/i.test(url);
     };
 
+    const pageTitle = t('payment_orders.show.page_title').replace(':id', String(paymentOrder.id));
+
     return (
         <DynamicLayout>
-            <Head title={`Pesanan #${paymentOrder.id}`} />
+            <Head title={pageTitle} />
 
             <div className="mx-auto max-w-5xl space-y-5">
 
-                {/* Back + breadcrumb */}
+                {/* Back */}
                 <div>
                     <Link
                         href={prefixedRoute('payment-orders.index')}
@@ -189,26 +194,25 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                         <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
                         </svg>
-                        Kembali ke daftar
+                        {t('payment_orders.show.back')}
                     </Link>
                 </div>
 
                 {/* ── Hero card ── */}
                 <div className={`relative overflow-hidden rounded-2xl border ${cfg.border} bg-white shadow-sm`}>
-                    {/* accent strip */}
                     <div className={`absolute inset-y-0 left-0 w-1 ${cfg.dot.replace('animate-pulse', '')}`} />
 
                     <div className="flex flex-col gap-5 px-7 py-6 sm:flex-row sm:items-start sm:justify-between">
                         {/* Left: identity */}
                         <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2.5">
-                                <h1 className="text-xl font-bold text-slate-900">Pesanan #{paymentOrder.id}</h1>
+                                <h1 className="text-xl font-bold text-slate-900">{pageTitle}</h1>
                                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${cfg.badge}`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                                    {cfg.label}
+                                    {t(`payment_orders.statuses.${paymentOrder.status}`, {}, paymentOrder.status)}
                                 </span>
                                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                                    {paymentOrder.type === 'renew' ? 'Perpanjangan' : 'Aktivasi'}
+                                    {t(`payment_orders.types.${paymentOrder.type}`, {}, paymentOrder.type)}
                                 </span>
                             </div>
 
@@ -234,9 +238,9 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                             </div>
 
                             <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-400">
-                                <span>Dibuat {fmtDate(paymentOrder.created_at)}</span>
+                                <span>{t('payment_orders.show.created_at').replace(':date', fmtDate(paymentOrder.created_at))}</span>
                                 {paymentOrder.expires_at && (
-                                    <span>· Kedaluwarsa {fmtDate(paymentOrder.expires_at)}</span>
+                                    <span>{t('payment_orders.show.expires_at').replace(':date', fmtDate(paymentOrder.expires_at))}</span>
                                 )}
                             </div>
                         </div>
@@ -244,7 +248,7 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                         {/* Right: amount + actions */}
                         <div className="flex shrink-0 flex-col items-end gap-3">
                             <div className="text-right">
-                                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Total Transfer</p>
+                                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{t('payment_orders.show.total_transfer_label')}</p>
                                 <p className="mt-0.5 text-3xl font-extrabold tabular-nums tracking-tight text-slate-900">
                                     {fmt(paymentOrder.total_amount)}
                                 </p>
@@ -258,7 +262,7 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                         <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                                         </svg>
-                                        Tolak
+                                        {t('payment_orders.show.actions.reject')}
                                     </button>
                                     <button
                                         onClick={() => setShowConfirmModal(true)}
@@ -267,7 +271,7 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                         <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
                                         </svg>
-                                        Konfirmasi
+                                        {t('payment_orders.show.actions.confirm')}
                                     </button>
                                 </div>
                             )}
@@ -283,25 +287,25 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
 
                         {/* Amount breakdown */}
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Rincian Nominal</p>
+                            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.breakdown.title')}</p>
                             <div className="space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-500">Harga paket</span>
+                                    <span className="text-sm text-slate-500">{t('payment_orders.show.breakdown.plan_price')}</span>
                                     <span className="font-mono text-sm font-medium text-slate-700">{fmt(paymentOrder.amount)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-slate-500">
-                                        Kode unik
+                                        {t('payment_orders.show.breakdown.unique_code')}
                                         <span className="ml-1.5 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">+{paymentOrder.unique_code}</span>
                                     </span>
-                                    <span className="font-mono text-sm font-medium text-slate-700">Rp {paymentOrder.unique_code.toLocaleString('id-ID')}</span>
+                                    <span className="font-mono text-sm font-medium text-slate-700">Rp {paymentOrder.unique_code.toLocaleString('id-ID')}</span>
                                 </div>
                                 <div className="my-2 border-t border-dashed border-slate-200" />
                                 <div className="flex items-center justify-between">
-                                    <span className="font-semibold text-slate-800">Total transfer</span>
+                                    <span className="font-semibold text-slate-800">{t('payment_orders.show.breakdown.total')}</span>
                                     <div className="flex items-center gap-1.5">
                                         <span className="font-mono text-base font-bold text-slate-900">{fmt(paymentOrder.total_amount)}</span>
-                                        <CopyButton value={String(Number(paymentOrder.total_amount))} />
+                                        <CopyButton value={String(Number(paymentOrder.total_amount))} copyLabel={t('payment_orders.show.copy')} />
                                     </div>
                                 </div>
                             </div>
@@ -310,31 +314,32 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                         {/* Bank transfer instructions */}
                         {(paymentOrder.bank_name || paymentOrder.bank_account_number) && (
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Instruksi Transfer</p>
+                                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.bank.title')}</p>
                                 <div>
                                     {paymentOrder.bank_name && (
-                                        <Row label="Bank" value={paymentOrder.bank_name} />
+                                        <Row label={t('payment_orders.show.bank.name')} value={paymentOrder.bank_name} />
                                     )}
                                     {paymentOrder.bank_account_number && (
                                         <Row
-                                            label="No. Rekening"
+                                            label={t('payment_orders.show.bank.account_number')}
                                             value={<span className="font-mono">{paymentOrder.bank_account_number}</span>}
                                             copyValue={paymentOrder.bank_account_number}
+                                            copyLabel={t('payment_orders.show.copy')}
                                         />
                                     )}
                                     {paymentOrder.bank_account_name && (
-                                        <Row label="Atas Nama" value={paymentOrder.bank_account_name} />
+                                        <Row label={t('payment_orders.show.bank.account_name')} value={paymentOrder.bank_account_name} />
                                     )}
                                 </div>
                             </div>
                         )}
 
-                        {/* Tenant + plan detail */}
+                        {/* Workspace detail */}
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Detail Workspace</p>
+                            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.workspace.title')}</p>
                             <div>
                                 <Row
-                                    label="Tenant"
+                                    label={t('payment_orders.show.workspace.tenant')}
                                     value={
                                         <Link
                                             href={prefixedRoute('tenants.show', paymentOrder.tenant.id)}
@@ -344,19 +349,22 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                         </Link>
                                     }
                                 />
-                                <Row label="Status tenant" value={
+                                <Row label={t('payment_orders.show.workspace.tenant_status')} value={
                                     <span className="capitalize">{paymentOrder.tenant.status}</span>
                                 } />
                                 {paymentOrder.tenant.trial_ends_at && (
-                                    <Row label="Trial berakhir" value={fmtDateShort(paymentOrder.tenant.trial_ends_at)} />
+                                    <Row label={t('payment_orders.show.workspace.trial_ends')} value={fmtDateShort(paymentOrder.tenant.trial_ends_at)} />
                                 )}
-                                <Row label="Paket" value={paymentOrder.plan.name} />
-                                <Row label="Interval" value={<span className="capitalize">{paymentOrder.plan.interval}</span>} />
-                                <Row label="Tipe pesanan" value={paymentOrder.type === 'renew' ? 'Perpanjangan' : 'Aktivasi baru'} />
+                                <Row label={t('payment_orders.show.workspace.plan')} value={paymentOrder.plan.name} />
+                                <Row label={t('payment_orders.show.workspace.interval')} value={<span className="capitalize">{paymentOrder.plan.interval}</span>} />
+                                <Row
+                                    label={t('payment_orders.show.workspace.order_type')}
+                                    value={t(`payment_orders.types.${paymentOrder.type === 'renew' ? 'renew' : 'activate_new'}`, {}, paymentOrder.type)}
+                                />
                             </div>
                         </div>
 
-                        {/* Status result: confirmed / rejected */}
+                        {/* Confirmed block */}
                         {paymentOrder.confirmed_at && (
                             <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
                                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -365,13 +373,17 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                     </svg>
                                 </span>
                                 <div>
-                                    <p className="text-sm font-semibold text-emerald-900">Pembayaran dikonfirmasi</p>
+                                    <p className="text-sm font-semibold text-emerald-900">{t('payment_orders.show.confirmed_block.title')}</p>
                                     <p className="mt-0.5 text-sm text-emerald-700">
-                                        Oleh <span className="font-medium">{paymentOrder.confirmedBy?.name}</span> · {fmtDate(paymentOrder.confirmed_at)}
+                                        {t('payment_orders.show.confirmed_block.by')
+                                            .replace(':name', paymentOrder.confirmedBy?.name ?? '')
+                                            .replace(':date', fmtDate(paymentOrder.confirmed_at))}
                                     </p>
                                 </div>
                             </div>
                         )}
+
+                        {/* Rejected block */}
                         {paymentOrder.rejected_at && (
                             <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5">
                                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
@@ -380,9 +392,11 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                     </svg>
                                 </span>
                                 <div>
-                                    <p className="text-sm font-semibold text-red-900">Pembayaran ditolak</p>
+                                    <p className="text-sm font-semibold text-red-900">{t('payment_orders.show.rejected_block.title')}</p>
                                     <p className="mt-0.5 text-sm text-red-700">
-                                        Oleh <span className="font-medium">{paymentOrder.rejectedBy?.name}</span> · {fmtDate(paymentOrder.rejected_at)}
+                                        {t('payment_orders.show.rejected_block.by')
+                                            .replace(':name', paymentOrder.rejectedBy?.name ?? '')
+                                            .replace(':date', fmtDate(paymentOrder.rejected_at))}
                                     </p>
                                     {paymentOrder.rejection_reason && (
                                         <p className="mt-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-800">
@@ -398,9 +412,9 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                     <div className="space-y-5 lg:col-span-2">
 
                         {/* Proof of transfer */}
-                        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                             <div className="px-5 pt-5">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Bukti Transfer</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.proof.title')}</p>
                             </div>
                             {paymentOrder.proof_url ? (
                                 <>
@@ -408,13 +422,13 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                         <div className="relative mt-3 cursor-zoom-in" onClick={() => setProofExpanded(true)}>
                                             <img
                                                 src={paymentOrder.proof_url}
-                                                alt="Bukti transfer"
+                                                alt={t('payment_orders.show.proof.title')}
                                                 className="w-full object-cover"
                                                 style={{ maxHeight: '300px', objectFit: 'cover', objectPosition: 'top' }}
                                             />
                                             <div className="absolute inset-0 flex items-end justify-end bg-gradient-to-t from-black/30 to-transparent opacity-0 transition hover:opacity-100">
                                                 <span className="m-3 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
-                                                    Perbesar ↗
+                                                    {t('payment_orders.show.proof.expand')}
                                                 </span>
                                             </div>
                                         </div>
@@ -430,14 +444,14 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                                     <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
                                                     <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
                                                 </svg>
-                                                Unduh bukti transfer
+                                                {t('payment_orders.show.proof.download')}
                                             </a>
                                         </div>
                                     )}
                                     {paymentOrder.transfer_note && (
                                         <div className="px-5 pb-5 pt-3">
-                                            <p className="text-xs font-medium text-slate-400">Catatan dari tenant</p>
-                                            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 italic">
+                                            <p className="text-xs font-medium text-slate-400">{t('payment_orders.show.proof.tenant_note')}</p>
+                                            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-sm italic text-slate-700">
                                                 "{paymentOrder.transfer_note}"
                                             </p>
                                         </div>
@@ -451,8 +465,8 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                                         </svg>
                                     </span>
-                                    <p className="mt-3 text-sm font-medium text-slate-500">Belum ada bukti transfer</p>
-                                    <p className="mt-1 text-xs text-slate-400">Tenant belum mengunggah bukti pembayaran</p>
+                                    <p className="mt-3 text-sm font-medium text-slate-500">{t('payment_orders.show.proof.empty_title')}</p>
+                                    <p className="mt-1 text-xs text-slate-400">{t('payment_orders.show.proof.empty_hint')}</p>
                                 </div>
                             )}
                         </div>
@@ -460,12 +474,12 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                         {/* Subscription info */}
                         {paymentOrder.subscription && (
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Langganan Terkait</p>
+                                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.subscription.title')}</p>
                                 <div>
-                                    <Row label="ID Langganan" value={`#${paymentOrder.subscription.id}`} />
-                                    <Row label="Status" value={<span className="capitalize">{paymentOrder.subscription.status}</span>} />
+                                    <Row label={t('payment_orders.show.subscription.id')} value={`#${paymentOrder.subscription.id}`} />
+                                    <Row label={t('payment_orders.show.subscription.status')} value={<span className="capitalize">{paymentOrder.subscription.status}</span>} />
                                     {paymentOrder.subscription.ends_at && (
-                                        <Row label="Berakhir" value={fmtDateShort(paymentOrder.subscription.ends_at)} />
+                                        <Row label={t('payment_orders.show.subscription.ends_at')} value={fmtDateShort(paymentOrder.subscription.ends_at)} />
                                     )}
                                 </div>
                             </div>
@@ -482,7 +496,7 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                 >
                     <img
                         src={paymentOrder.proof_url}
-                        alt="Bukti transfer"
+                        alt={t('payment_orders.show.proof.title')}
                         className="max-h-full max-w-full rounded-xl object-contain shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     />
@@ -505,7 +519,7 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                             <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clipRule="evenodd" />
                             <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clipRule="evenodd" />
                         </svg>
-                        Buka di tab baru
+                        {t('payment_orders.show.proof.open_tab')}
                     </a>
                 </div>
             )}
@@ -520,22 +534,26 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                             </svg>
                         </span>
                         <div>
-                            <h3 className="text-base font-semibold text-gray-900">Konfirmasi Pembayaran</h3>
-                            <p className="text-sm text-gray-500">Tindakan ini tidak dapat dibatalkan</p>
+                            <h3 className="text-base font-semibold text-gray-900">{t('payment_orders.show.confirm_modal.title')}</h3>
+                            <p className="text-sm text-gray-500">{t('payment_orders.show.confirm_modal.subtitle')}</p>
                         </div>
                     </div>
                     <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                        Anda akan mengkonfirmasi transfer sebesar <strong>{fmt(paymentOrder.total_amount)}</strong> dari <strong>{paymentOrder.tenant.name}</strong>.
-                        Langganan paket <strong>{paymentOrder.plan.name}</strong> akan langsung diaktifkan.
+                        {t('payment_orders.show.confirm_modal.body')
+                            .replace(':amount', fmt(paymentOrder.total_amount))
+                            .replace(':tenant', paymentOrder.tenant.name)
+                            .replace(':plan', paymentOrder.plan.name)}
                     </div>
                     <div className="mt-5 flex justify-end gap-3">
-                        <SecondaryButton onClick={() => setShowConfirmModal(false)} disabled={processing}>Batal</SecondaryButton>
+                        <SecondaryButton onClick={() => setShowConfirmModal(false)} disabled={processing}>
+                            {t('payment_orders.show.confirm_modal.cancel')}
+                        </SecondaryButton>
                         <button
                             onClick={handleConfirm}
                             disabled={processing}
                             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
                         >
-                            {processing ? 'Menyimpan...' : 'Ya, Konfirmasi'}
+                            {processing ? t('payment_orders.show.confirm_modal.saving') : t('payment_orders.show.confirm_modal.submit')}
                         </button>
                     </div>
                 </div>
@@ -551,8 +569,8 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                             </svg>
                         </span>
                         <div>
-                            <h3 className="text-base font-semibold text-gray-900">Tolak Pembayaran</h3>
-                            <p className="text-sm text-gray-500">Alasan akan dikirimkan ke tenant</p>
+                            <h3 className="text-base font-semibold text-gray-900">{t('payment_orders.show.reject_modal.title')}</h3>
+                            <p className="text-sm text-gray-500">{t('payment_orders.show.reject_modal.subtitle')}</p>
                         </div>
                     </div>
                     <textarea
@@ -560,16 +578,18 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                         onChange={(e) => setRejectionReason(e.target.value)}
                         rows={4}
                         className="mt-4 block w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-red-400 focus:ring-red-400"
-                        placeholder="Contoh: Nominal transfer tidak sesuai, harap transfer persis Rp 500.123..."
+                        placeholder={t('payment_orders.show.reject_modal.placeholder')}
                     />
                     <div className="mt-5 flex justify-end gap-3">
-                        <SecondaryButton onClick={() => setShowRejectModal(false)} disabled={processing}>Batal</SecondaryButton>
+                        <SecondaryButton onClick={() => setShowRejectModal(false)} disabled={processing}>
+                            {t('payment_orders.show.reject_modal.cancel')}
+                        </SecondaryButton>
                         <button
                             onClick={handleReject}
                             disabled={processing || !rejectionReason.trim()}
                             className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
                         >
-                            {processing ? 'Menyimpan...' : 'Tolak Pembayaran'}
+                            {processing ? t('payment_orders.show.reject_modal.saving') : t('payment_orders.show.reject_modal.submit')}
                         </button>
                     </div>
                 </div>

@@ -13,6 +13,7 @@ return [
     'no_results' => 'Tidak ada hasil untuk ":query"',
     'manage_tenants' => 'Kelola Tenant',
     'plans' => 'Paket',
+    'payment_orders' => 'Pesanan Pembayaran',
     'platform_modules' => 'Modul Platform',
     'modules' => 'Modul',
     'user' => 'Pengguna',

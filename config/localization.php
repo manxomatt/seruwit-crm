@@ -91,6 +91,7 @@ return [
         'tracking',
         'transportation',
         'users',
+        'payment_orders',
     ],
 
 ];
