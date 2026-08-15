@@ -52,7 +52,7 @@ class FinalizeTenantSetupJob implements ShouldQueue
             $owner->tenants()->syncWithoutDetaching([$this->tenant->getTenantKey()]);
         }
 
-        $this->tenant->run(function () use ($ownerGlobalId, $vertical): void {
+        $this->tenant->run(function () use ($ownerGlobalId): void {
             if ($ownerGlobalId !== null) {
                 $user = User::query()->firstWhere('global_id', $ownerGlobalId);
 
@@ -68,9 +68,6 @@ class FinalizeTenantSetupJob implements ShouldQueue
 
                 $user->assignRole(Role::query()->where('slug', 'admin')->firstOrFail());
             }
-
-            app(TenantDefaultPageSeeder::class)->run($vertical);
-            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
         });
 
         foreach ($moduleKeys as $moduleKey) {
@@ -84,6 +81,12 @@ class FinalizeTenantSetupJob implements ShouldQueue
         foreach ($packKeys as $packKey) {
             $installer->installPack($this->tenant, $packKey, withDemoSeeders: false);
         }
+
+        // Run page seeders after modules are installed so the pages table exists.
+        $this->tenant->run(function () use ($vertical): void {
+            app(TenantDefaultPageSeeder::class)->run($vertical);
+            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
+        });
 
         if ($sessionId !== null) {
             OnboardingSession::query()->find($sessionId)?->update([
