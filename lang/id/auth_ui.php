@@ -51,7 +51,16 @@ return [
     'reset_message_dev' => 'System mode Development — email tidak dikirim. Gunakan tautan reset di bawah.',
 
     'reset_title' => 'Reset Kata Sandi',
-    'reset_submit' => 'Reset Kata Sandi',
+    'reset_subtitle' => 'Masukkan kata sandi baru Anda di bawah untuk melanjutkan.',
+    'reset_feature_secure' => 'Kata sandi baru terenkripsi aman',
+    'reset_feature_immediate' => 'Berlaku langsung setelah disimpan',
+    'reset_feature_access' => 'Masuk dengan kata sandi baru Anda',
+    'new_password_label' => 'Kata Sandi Baru',
+    'new_password_placeholder' => 'Masukkan kata sandi baru',
+    'confirm_password_label' => 'Konfirmasi Kata Sandi Baru',
+    'confirm_password_placeholder' => 'Ulangi kata sandi baru',
+    'resetting' => 'Menyimpan...',
+    'reset_submit' => 'Simpan Kata Sandi Baru',
 
     'verify_title' => 'Verifikasi Email',
     'verify_welcome' => 'Cek kotak masuk Anda',
