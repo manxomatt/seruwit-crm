@@ -47,6 +47,8 @@ return [
     'sending' => 'Mengirim...',
     'send_reset_link' => 'Kirim Link Reset',
     'back_to_login' => 'Kembali ke Halaman Masuk',
+    'reset_dev_banner' => 'Tautan reset kata sandi (Development)',
+    'reset_message_dev' => 'System mode Development — email tidak dikirim. Gunakan tautan reset di bawah.',
 
     'reset_title' => 'Reset Kata Sandi',
     'reset_submit' => 'Reset Kata Sandi',

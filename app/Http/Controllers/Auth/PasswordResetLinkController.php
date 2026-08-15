@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\User;
+use App\Support\SystemMode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -25,6 +27,7 @@ class PasswordResetLinkController extends Controller
         return Inertia::render('Auth/ForgotPassword', [
             'status' => session('status'),
             'settings' => $settings,
+            'resetUrl' => SystemMode::isDevelopment() ? session('dev_reset_url') : null,
         ]);
     }
 
@@ -39,12 +42,11 @@ class PasswordResetLinkController extends Controller
             'email' => 'required|email',
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        if (SystemMode::isDevelopment()) {
+            return $this->storeForDevelopment($request);
+        }
+
+        $status = Password::sendResetLink($request->only('email'));
 
         if ($status == Password::RESET_LINK_SENT) {
             return back()->with('status', __($status));
@@ -53,5 +55,25 @@ class PasswordResetLinkController extends Controller
         throw ValidationException::withMessages([
             'email' => [trans($status)],
         ]);
+    }
+
+    private function storeForDevelopment(Request $request): RedirectResponse
+    {
+        $user = User::query()->where('email', $request->email)->first();
+
+        if ($user === null) {
+            throw ValidationException::withMessages([
+                'email' => [trans(Password::INVALID_USER)],
+            ]);
+        }
+
+        $token = Password::broker()->createToken($user);
+
+        $resetUrl = route('password.reset', [
+            'token' => $token,
+            'email' => $user->email,
+        ]);
+
+        return back()->with('dev_reset_url', $resetUrl);
     }
 }

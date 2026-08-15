@@ -6,9 +6,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 interface Props {
     status?: string;
     settings?: Record<string, string>;
+    resetUrl?: string | null;
 }
 
-export default function ForgotPassword({ status, settings }: Props) {
+export default function ForgotPassword({ status, settings, resetUrl }: Props) {
     const { t } = useTrans();
 
     interface ForgotForm {
@@ -146,6 +147,23 @@ export default function ForgotPassword({ status, settings }: Props) {
                                         </span>
                                         <span className="text-sm font-medium text-green-300">{status}</span>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Dev Mode: Reset URL */}
+                            {resetUrl && (
+                                <div className="mb-6 space-y-3 rounded-xl border border-amber-400/30 bg-amber-500/15 p-4 backdrop-blur-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-amber-300">developer_mode</span>
+                                        <span className="text-sm font-medium text-amber-200">{t('auth_ui.reset_dev_banner')}</span>
+                                    </div>
+                                    <p className="text-xs text-amber-300/70">{t('auth_ui.reset_message_dev')}</p>
+                                    <a
+                                        href={resetUrl}
+                                        className="block break-all text-sm font-medium text-cyan-300 underline decoration-cyan-400/40 underline-offset-2 transition-colors hover:text-cyan-200"
+                                    >
+                                        {resetUrl}
+                                    </a>
                                 </div>
                             )}
 
