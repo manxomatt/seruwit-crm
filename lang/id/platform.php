@@ -4,6 +4,9 @@ return [
     'registry' => [
         'title' => 'Modul Platform',
         'description' => 'Menonaktifkan modul di sini memutus akses semua tenant ke modul tersebut seketika, terlepas dari paket langganan atau status pasangnya masing-masing. Data tenant tidak tersentuh — mengaktifkan kembali langsung memulihkan semuanya, persis seperti menurunkan lalu menaikkan paket.',
+        'search_placeholder' => 'Cari modul…',
+        'empty_search' => 'Tidak ada modul yang cocok dengan pencarian.',
+        'showing' => 'Menampilkan :from–:to dari :total modul',
         'status' => [
             'active' => 'Aktif',
             'disabled' => 'Dinonaktifkan',

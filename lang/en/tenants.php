@@ -29,6 +29,7 @@ return [
     ],
 
     'status' => [
+        'all' => 'All',
         'active' => 'Active',
         'suspended' => 'Suspended',
     ],
@@ -42,6 +43,11 @@ return [
             'submit' => 'Create Tenant',
             'empty_title' => 'No tenants yet',
             'empty_hint' => 'Get started by creating your first customer workspace.',
+            'search_placeholder' => 'Search by name or domain…',
+            'batch_selected' => 'selected',
+            'batch_status_placeholder' => 'Choose status…',
+            'batch_apply' => 'Apply',
+            'batch_clear' => 'Clear selection',
             'columns' => [
                 'name' => 'Name',
                 'domain' => 'Domain',
@@ -50,6 +56,17 @@ return [
                 'created_at' => 'Created',
                 'actions' => 'Actions',
             ],
+        ],
+
+        'create' => [
+            'head' => 'Create Tenant',
+            'title' => 'Create New Tenant',
+            'workspace_section' => 'Workspace Information',
+            'workspace_hint' => 'Company name and a unique subdomain for this workspace.',
+            'owner_section' => 'Owner Information',
+            'owner_hint' => 'This account will be the first admin in the workspace.',
+            'submit' => 'Create Tenant',
+            'async_note' => 'The workspace will be provisioned automatically in the background.',
         ],
 
         'show' => [
@@ -93,6 +110,8 @@ return [
         'uninstall' => 'Uninstall',
         'save_changes' => 'Save Changes',
         'delete_permanently' => 'Permanently Delete Tenant',
+        'enter_workspace' => 'Enter Workspace',
+        'retry_setup' => 'Retry Setup',
     ],
 
     'validation' => [
@@ -103,11 +122,34 @@ return [
 
     'messages' => [
         'created' => 'Tenant created successfully.',
+        'batch_status_updated' => 'Tenant status updated successfully.',
         'updated' => 'Tenant details updated.',
         'status_updated' => 'Tenant status updated.',
         'deleted' => 'Tenant and all its data have been deleted.',
         'confirm_name_mismatch' => 'The confirmation name does not match the tenant name.',
         'module_installed' => 'Module :module installed for :tenant.',
         'module_uninstalled' => 'Module :module uninstalled from :tenant. Its data is retained for :days days.',
+        'setup_retried' => 'Setup re-queued. The workspace will be ready shortly.',
+        'setup_retry_no_provision' => 'No provisioning data found for this tenant.',
+    ],
+
+    'activity' => [
+        'title' => 'Activity Log',
+        'empty' => 'No activity recorded yet.',
+        'actions' => [
+            'created' => 'Tenant created',
+            'updated' => 'Details updated',
+            'status_changed' => 'Status changed',
+            'module_installed' => 'Module installed',
+            'module_uninstalled' => 'Module uninstalled',
+            'setup_retried' => 'Setup retried',
+        ],
+    ],
+
+    'setup' => [
+        'title' => 'Provisioning',
+        'hint' => 'If the workspace is inaccessible or there was an issue during initial setup, you can retry the provisioning process.',
+        'retry_hint' => 'Retrying ensures the owner is registered in the workspace and selected modules are installed.',
+        'retry_button' => 'Retry Setup',
     ],
 ];

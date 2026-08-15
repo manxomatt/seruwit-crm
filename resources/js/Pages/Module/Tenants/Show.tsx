@@ -31,6 +31,15 @@ interface Plan {
     modules: string[];
 }
 
+interface ActivityLogEntry {
+    id: number;
+    action: string;
+    description: string;
+    actor_name: string | null;
+    created_at: string | null;
+    meta: Record<string, unknown> | null;
+}
+
 const STATE_BADGE_CLASS: Record<ModuleState, string> = {
     installed: 'bg-green-100 text-green-800',
     available: 'bg-sky-100 text-sky-800',
@@ -39,6 +48,15 @@ const STATE_BADGE_CLASS: Record<ModuleState, string> = {
     locked_with_data: 'bg-gray-100 text-gray-600',
     disabled: 'bg-red-100 text-red-800',
     disabled_with_data: 'bg-red-100 text-red-800',
+};
+
+const ACTION_COLOR: Record<string, string> = {
+    created: 'bg-indigo-100 text-indigo-600',
+    updated: 'bg-blue-100 text-blue-600',
+    status_changed: 'bg-amber-100 text-amber-600',
+    module_installed: 'bg-green-100 text-green-600',
+    module_uninstalled: 'bg-orange-100 text-orange-600',
+    setup_retried: 'bg-purple-100 text-purple-600',
 };
 
 const isDisabled = (state: ModuleState): boolean => state === 'disabled' || state === 'disabled_with_data';
@@ -66,6 +84,8 @@ interface Props {
     modules: ModuleEntry[];
     plans: Plan[];
     graceDays: number;
+    activityLogs: ActivityLogEntry[];
+    canRetrySetup: boolean;
 }
 
 const ArrowLeftIcon = () => (
@@ -74,7 +94,63 @@ const ArrowLeftIcon = () => (
     </svg>
 );
 
-export default function Show({ tenant, members, modules, plans, graceDays }: Props): JSX.Element {
+const ExternalLinkIcon = () => (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+    </svg>
+);
+
+const ActivityIcon = ({ action }: { action: string }) => {
+    if (action === 'created') return (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+    );
+    if (action === 'status_changed') return (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+        </svg>
+    );
+    if (action === 'module_installed') return (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    );
+    if (action === 'module_uninstalled') return (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    );
+    if (action === 'setup_retried') return (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg>
+    );
+    return (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+        </svg>
+    );
+};
+
+const formatActivityTime = (isoString: string | null): string => {
+    if (!isoString) return '—';
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Baru saja';
+    if (diffMins < 60) return `${diffMins} menit lalu`;
+    if (diffHours < 24) return `${diffHours} jam lalu`;
+    if (diffDays < 7) return `${diffDays} hari lalu`;
+
+    return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+export default function Show({ tenant, members, modules, plans, graceDays, activityLogs, canRetrySetup }: Props): JSX.Element {
     const { t } = useTrans();
     const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
 
@@ -111,6 +187,10 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
         deleteForm.delete(route('module.tenants.destroy', tenant.id));
     };
 
+    const retrySetup = (): void => {
+        router.post(route('module.tenants.retry-setup', tenant.id), {}, { preserveScroll: true });
+    };
+
     const inputClass =
         'mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500';
 
@@ -119,17 +199,35 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
     const statusLabel = (status: string): string =>
         status === 'active' ? t('tenants.status.active') : t('tenants.status.suspended');
 
+    const enterWorkspaceUrl = tenant.domain
+        ? route('central.workspaces.enter', { tenant: tenant.id })
+        : null;
+
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center gap-3">
-                    <Link href={route('module.tenants.index')} className="text-gray-400 hover:text-gray-600">
-                        <ArrowLeftIcon />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{tenant.name}</h1>
-                        {tenant.domain && <p className="text-sm text-gray-500">{tenant.domain}</p>}
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <Link href={route('module.tenants.index')} className="text-gray-400 hover:text-gray-600">
+                            <ArrowLeftIcon />
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">{tenant.name}</h1>
+                            {tenant.domain && <p className="text-sm text-gray-500">{tenant.domain}</p>}
+                        </div>
                     </div>
+
+                    {enterWorkspaceUrl && (
+                        <a
+                            href={enterWorkspaceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            <ExternalLinkIcon />
+                            {t('tenants.actions.enter_workspace')}
+                        </a>
+                    )}
                 </div>
             }
         >
@@ -161,6 +259,39 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                             <p className="mt-1 text-sm font-semibold text-gray-900">{item.value}</p>
                         </div>
                     ))}
+                </div>
+
+                {/* Activity Log */}
+                <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
+                    <div className="border-b border-gray-100 px-6 py-4">
+                        <h2 className="text-lg font-semibold text-gray-900">{t('tenants.activity.title')}</h2>
+                    </div>
+
+                    {activityLogs.length === 0 ? (
+                        <p className="px-6 py-10 text-center text-sm text-gray-400">{t('tenants.activity.empty')}</p>
+                    ) : (
+                        <ul className="divide-y divide-gray-50 px-6">
+                            {activityLogs.map((log) => {
+                                const colorClass = ACTION_COLOR[log.action] ?? 'bg-gray-100 text-gray-500';
+                                const actionLabel = t(`tenants.activity.actions.${log.action}`, undefined, log.action);
+
+                                return (
+                                    <li key={log.id} className="flex items-start gap-4 py-4">
+                                        <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${colorClass}`}>
+                                            <ActivityIcon action={log.action} />
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-medium text-gray-900">{actionLabel}</p>
+                                            <p className="mt-0.5 text-sm text-gray-500">{log.description}</p>
+                                            <p className="mt-1 text-xs text-gray-400">
+                                                {log.actor_name ?? 'System'} · {formatActivityTime(log.created_at)}
+                                            </p>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </div>
 
                 {/* Members */}
@@ -388,6 +519,29 @@ export default function Show({ tenant, members, modules, plans, graceDays }: Pro
                         </ul>
                     )}
                 </div>
+
+                {/* Retry Setup */}
+                {canRetrySetup && (
+                    <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 className="text-lg font-semibold text-gray-900">{t('tenants.setup.title')}</h2>
+                                <p className="mt-1 text-sm text-gray-600">{t('tenants.setup.hint')}</p>
+                                <p className="mt-1 text-xs text-gray-400">{t('tenants.setup.retry_hint')}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={retrySetup}
+                                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-purple-300 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 shadow-sm transition-colors hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                </svg>
+                                {t('tenants.setup.retry_button')}
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Danger zone */}
                 <form onSubmit={destroy} className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-red-200">

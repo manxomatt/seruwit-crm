@@ -115,10 +115,13 @@ Route::domain($centralDomain)
     ->name('module.')
     ->group(function () {
         Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/create', [TenantController::class, 'create'])->name('tenants.create');
         Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
+        Route::patch('/tenants/batch-status', [TenantController::class, 'batchStatus'])->name('tenants.batch-status');
         Route::get('/tenants/{tenant}', [TenantController::class, 'show'])->name('tenants.show');
         Route::patch('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
         Route::patch('/tenants/{tenant}/status', [TenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+        Route::post('/tenants/{tenant}/retry-setup', [TenantController::class, 'retrySetup'])->name('tenants.retry-setup');
         Route::post('/tenants/{tenant}/modules/{module}', [TenantController::class, 'installModule'])->name('tenants.modules.install');
         Route::delete('/tenants/{tenant}/modules/{module}', [TenantController::class, 'uninstallModule'])->name('tenants.modules.uninstall');
         Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');

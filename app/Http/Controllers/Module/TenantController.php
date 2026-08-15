@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Module;
 
 use App\Actions\Tenancy\CreateTenantAction;
 use App\Http\Controllers\Controller;
+use App\Jobs\Tenancy\FinalizeTenantSetupJob;
 use App\Models\CentralUser;
 use App\Models\Tenant;
+use App\Models\TenantActivityLog;
 use App\Models\User;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleCatalog;
 use App\Modules\ModuleInstaller;
 use App\Rules\ValidSubdomain;
+use App\Services\TenantActivityLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,24 +39,53 @@ class TenantController extends Controller
     {
         Gate::authorize('manage-tenants');
 
-        $tenants = $this->scopedQuery($request)
+        $search = $request->string('search')->trim()->value();
+        $status = $request->input('status');
+
+        $query = $this->scopedQuery($request)
             ->with(['domains', 'subscription.plan:id,name'])
             ->withCount('users')
-            ->latest()
-            ->get()
-            ->map(fn (Tenant $tenant): array => [
-                'id' => $tenant->id,
-                'name' => $tenant->name,
-                'status' => $tenant->status,
-                'domain' => $tenant->domains->first()?->domain,
-                'members' => $tenant->users_count,
-                'created_at' => $tenant->created_at?->toDateString(),
-                'subscription_plan' => $tenant->subscription?->plan?->name,
-                'subscription_status' => $tenant->subscription?->status,
-            ]);
+            ->latest();
+
+        if ($search !== '') {
+            $query->where(function (Builder $q) use ($search): void {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhereHas('domains', fn (Builder $d) => $d->where('domain', 'ilike', "%{$search}%"));
+            });
+        }
+
+        if (in_array($status, ['active', 'suspended'], true)) {
+            $query->where('status', $status);
+        }
+
+        $paginated = $query->paginate(10)->withQueryString();
+
+        $tenants = $paginated->through(fn (Tenant $tenant): array => [
+            'id' => $tenant->id,
+            'name' => $tenant->name,
+            'status' => $tenant->status,
+            'domain' => $tenant->domains->first()?->domain,
+            'members' => $tenant->users_count,
+            'created_at' => $tenant->created_at?->toDateString(),
+            'subscription_plan' => $tenant->subscription?->plan?->name,
+            'subscription_status' => $tenant->subscription?->status,
+        ]);
 
         return Inertia::render('Module/Tenants/Index', [
             'tenants' => $tenants,
+            'filters' => [
+                'search' => $search ?: null,
+                'status' => in_array($status, ['active', 'suspended'], true) ? $status : null,
+            ],
+        ]);
+    }
+
+    public function create(): Response
+    {
+        Gate::authorize('manage-tenants');
+
+        return Inertia::render('Module/Tenants/Create', [
+            'tenantBaseDomain' => config('tenancy.tenant_base_domain') ?: 'localhost',
         ]);
     }
 
@@ -102,14 +134,24 @@ class TenantController extends Controller
             ? $user->global_id
             : null;
 
-        $this->createTenant->execute(
+        $tenant = $this->createTenant->execute(
             companyName: $request->string('company_name')->value(),
             subdomain: $request->string('subdomain')->value(),
             owner: $owner,
             resellerGlobalId: $resellerGlobalId,
         );
 
-        return back()->with('success', __('tenants.messages.created'));
+        TenantActivityLogger::log(
+            $tenant,
+            'created',
+            'Tenant dibuat oleh admin.',
+            $request->user(),
+            ['owner_email' => $owner->email],
+        );
+
+        return redirect()
+            ->route('module.tenants.index')
+            ->with('success', __('tenants.messages.created'));
     }
 
     /**
@@ -133,6 +175,24 @@ class TenantController extends Controller
             ])
             ->all());
 
+        $activityLogs = TenantActivityLog::query()
+            ->where('tenant_id', $tenant->id)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get()
+            ->map(fn (TenantActivityLog $log): array => [
+                'id' => $log->id,
+                'action' => $log->action,
+                'description' => $log->description,
+                'actor_name' => $log->actor_name,
+                'created_at' => $log->created_at?->toIso8601String(),
+                'meta' => $log->meta,
+            ])
+            ->all();
+
+        $provision = $tenant->provision ?? [];
+        $canRetrySetup = ! empty($provision['owner_global_id'] ?? null);
+
         return Inertia::render('Module/Tenants/Show', [
             'tenant' => [
                 'id' => $tenant->id,
@@ -154,6 +214,8 @@ class TenantController extends Controller
             'modules' => $this->catalog->forTenant($tenant),
             'plans' => $this->catalog->allPlans(),
             'graceDays' => config('modules.purge_after_days'),
+            'activityLogs' => $activityLogs,
+            'canRetrySetup' => $canRetrySetup,
         ]);
     }
 
@@ -179,6 +241,9 @@ class TenantController extends Controller
             'notes' => 'nullable|string|max:2000',
         ]);
 
+        $oldStatus = $tenant->status;
+        $oldPlan = $tenant->plan;
+
         $tenant->update([
             'name' => $validated['name'],
             'status' => $validated['status'],
@@ -199,6 +264,19 @@ class TenantController extends Controller
             $currentDomain->update(['domain' => $newDomain]);
         }
 
+        $changes = array_filter([
+            'status' => $oldStatus !== $validated['status'] ? ['from' => $oldStatus, 'to' => $validated['status']] : null,
+            'plan' => $oldPlan !== $validated['plan'] ? ['from' => $oldPlan, 'to' => $validated['plan']] : null,
+        ], fn ($v) => $v !== null);
+
+        TenantActivityLogger::log(
+            $tenant,
+            'updated',
+            'Detail tenant diperbarui.',
+            $request->user(),
+            $changes,
+        );
+
         return back()->with('success', __('tenants.messages.updated'));
     }
 
@@ -209,9 +287,18 @@ class TenantController extends Controller
     {
         $this->authorizeOwnership($request, $tenant);
 
-        $tenant->update([
-            'status' => $tenant->status === 'active' ? 'suspended' : 'active',
-        ]);
+        $oldStatus = $tenant->status;
+        $newStatus = $oldStatus === 'active' ? 'suspended' : 'active';
+
+        $tenant->update(['status' => $newStatus]);
+
+        TenantActivityLogger::log(
+            $tenant,
+            'status_changed',
+            "Status diubah dari {$oldStatus} ke {$newStatus}.",
+            $request->user(),
+            ['from' => $oldStatus, 'to' => $newStatus],
+        );
 
         return back()->with('success', __('tenants.messages.status_updated'));
     }
@@ -259,6 +346,14 @@ class TenantController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
+        TenantActivityLogger::log(
+            $tenant,
+            'module_installed',
+            "Modul {$registered->label()} dipasang.",
+            $request->user(),
+            ['module' => $module],
+        );
+
         return back()->with('success', __('tenants.messages.module_installed', [
             'module' => $registered->label(),
             'tenant' => $tenant->name,
@@ -283,11 +378,65 @@ class TenantController extends Controller
 
         $days = config('modules.purge_after_days');
 
+        TenantActivityLogger::log(
+            $tenant,
+            'module_uninstalled',
+            "Modul {$registered->label()} dicopot.",
+            $request->user(),
+            ['module' => $module],
+        );
+
         return back()->with('success', __('tenants.messages.module_uninstalled', [
             'module' => $registered->label(),
             'tenant' => $tenant->name,
             'days' => $days,
         ]));
+    }
+
+    /**
+     * Re-dispatch FinalizeTenantSetupJob to retry a failed or incomplete provisioning.
+     */
+    public function retrySetup(Request $request, Tenant $tenant): RedirectResponse
+    {
+        $this->authorizeOwnership($request, $tenant);
+
+        $provision = $tenant->provision ?? [];
+
+        if (empty($provision['owner_global_id'] ?? null)) {
+            return back()->with('error', __('tenants.messages.setup_retry_no_provision'));
+        }
+
+        FinalizeTenantSetupJob::dispatch($tenant);
+
+        TenantActivityLogger::log(
+            $tenant,
+            'setup_retried',
+            'Setup tenant diulang.',
+            $request->user(),
+        );
+
+        return back()->with('success', __('tenants.messages.setup_retried'));
+    }
+
+    /**
+     * Batch-update the status (active / suspended) for multiple tenants.
+     */
+    public function batchStatus(Request $request): RedirectResponse
+    {
+        Gate::authorize('manage-tenants');
+
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'string',
+            'status' => 'required|in:active,suspended',
+        ]);
+
+        $this->scopedQuery($request)
+            ->whereIn('id', $request->input('ids'))
+            ->get()
+            ->each(fn (Tenant $tenant) => $tenant->update(['status' => $request->input('status')]));
+
+        return back()->with('success', __('tenants.messages.batch_status_updated'));
     }
 
     /**

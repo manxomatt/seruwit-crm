@@ -29,6 +29,7 @@ return [
     ],
 
     'status' => [
+        'all' => 'Semua',
         'active' => 'Aktif',
         'suspended' => 'Ditangguhkan',
     ],
@@ -42,6 +43,11 @@ return [
             'submit' => 'Buat Tenant',
             'empty_title' => 'Belum ada tenant',
             'empty_hint' => 'Mulai dengan membuat workspace pertama untuk pelanggan.',
+            'search_placeholder' => 'Cari nama atau domain…',
+            'batch_selected' => 'dipilih',
+            'batch_status_placeholder' => 'Pilih status…',
+            'batch_apply' => 'Terapkan',
+            'batch_clear' => 'Batal pilih',
             'columns' => [
                 'name' => 'Nama',
                 'domain' => 'Domain',
@@ -50,6 +56,17 @@ return [
                 'created_at' => 'Dibuat',
                 'actions' => 'Aksi',
             ],
+        ],
+
+        'create' => [
+            'head' => 'Buat Tenant',
+            'title' => 'Buat Tenant Baru',
+            'workspace_section' => 'Informasi Workspace',
+            'workspace_hint' => 'Nama perusahaan dan subdomain unik untuk workspace ini.',
+            'owner_section' => 'Informasi Pemilik',
+            'owner_hint' => 'Akun ini akan menjadi admin pertama di workspace.',
+            'submit' => 'Buat Tenant',
+            'async_note' => 'Workspace akan dipersiapkan secara otomatis di latar belakang.',
         ],
 
         'show' => [
@@ -93,6 +110,8 @@ return [
         'uninstall' => 'Copot',
         'save_changes' => 'Simpan Perubahan',
         'delete_permanently' => 'Hapus Tenant Permanen',
+        'enter_workspace' => 'Masuk ke Workspace',
+        'retry_setup' => 'Ulangi Setup',
     ],
 
     'validation' => [
@@ -103,11 +122,34 @@ return [
 
     'messages' => [
         'created' => 'Tenant berhasil dibuat.',
+        'batch_status_updated' => 'Status tenant berhasil diperbarui.',
         'updated' => 'Detail tenant diperbarui.',
         'status_updated' => 'Status tenant diperbarui.',
         'deleted' => 'Tenant beserta seluruh datanya telah dihapus.',
         'confirm_name_mismatch' => 'Nama konfirmasi tidak cocok dengan nama tenant.',
         'module_installed' => 'Modul :module dipasang untuk :tenant.',
         'module_uninstalled' => 'Modul :module dicopot dari :tenant. Datanya disimpan :days hari.',
+        'setup_retried' => 'Setup dijadwalkan ulang. Workspace akan siap dalam beberapa saat.',
+        'setup_retry_no_provision' => 'Tidak ada data provisioning untuk tenant ini.',
+    ],
+
+    'activity' => [
+        'title' => 'Riwayat Aktivitas',
+        'empty' => 'Belum ada riwayat aktivitas.',
+        'actions' => [
+            'created' => 'Tenant dibuat',
+            'updated' => 'Detail diperbarui',
+            'status_changed' => 'Status diubah',
+            'module_installed' => 'Modul dipasang',
+            'module_uninstalled' => 'Modul dicopot',
+            'setup_retried' => 'Setup diulang',
+        ],
+    ],
+
+    'setup' => [
+        'title' => 'Provisioning',
+        'hint' => 'Jika workspace tidak dapat diakses atau ada masalah saat setup awal, Anda bisa mengulang proses provisioningnya.',
+        'retry_hint' => 'Mengulang akan memastikan owner terdaftar di workspace dan modul yang dipilih sudah terpasang.',
+        'retry_button' => 'Ulangi Setup',
     ],
 ];

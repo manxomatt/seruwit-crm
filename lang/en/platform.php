@@ -4,6 +4,9 @@ return [
     'registry' => [
         'title' => 'Platform Modules',
         'description' => 'Disabling a module here instantly cuts off access for every tenant, regardless of their subscription plan or install state. Tenant data is untouched — re-enabling immediately restores everything, exactly like downgrading and then upgrading a plan.',
+        'search_placeholder' => 'Search modules…',
+        'empty_search' => 'No modules match your search.',
+        'showing' => 'Showing :from–:to of :total modules',
         'status' => [
             'active' => 'Active',
             'disabled' => 'Disabled',
