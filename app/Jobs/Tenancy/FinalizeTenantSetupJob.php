@@ -78,15 +78,25 @@ class FinalizeTenantSetupJob implements ShouldQueue
             $installer->install($this->tenant, $module);
         }
 
-        foreach ($packKeys as $packKey) {
-            $installer->installPack($this->tenant, $packKey, withDemoSeeders: false);
-        }
-
-        // Run page seeders after modules are installed so the pages table exists.
+        // Seed default pages immediately after content modules are installed
+        // (pages table now exists). Runs before packs so a failing pack cannot
+        // prevent the homepage from being seeded.
         $this->tenant->run(function () use ($vertical): void {
             app(TenantDefaultPageSeeder::class)->run($vertical);
             app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
         });
+
+        foreach ($packKeys as $packKey) {
+            try {
+                $installer->installPack($this->tenant, $packKey, withDemoSeeders: false);
+            } catch (Throwable $e) {
+                Log::warning('FinalizeTenantSetupJob: pack installation skipped.', [
+                    'tenant_id' => $this->tenant->getTenantKey(),
+                    'pack' => $packKey,
+                    'reason' => $e->getMessage(),
+                ]);
+            }
+        }
 
         if ($sessionId !== null) {
             OnboardingSession::query()->find($sessionId)?->update([
