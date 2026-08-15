@@ -67,7 +67,7 @@ class TenantController extends Controller
             'domain' => $tenant->domains->first()?->domain,
             'members' => $tenant->users_count,
             'created_at' => $tenant->created_at?->toDateString(),
-            'subscription_plan' => $tenant->subscription?->plan?->name,
+            'subscription_plan' => $tenant->subscription?->plan?->name ?? $tenant->planModel()?->name,
             'subscription_status' => $tenant->subscription?->status,
         ]);
 
