@@ -70,7 +70,24 @@ class FinalizeTenantSetupJob implements ShouldQueue
             }
         });
 
+        // Install pages first — it is the core content module. Its table must
+        // exist before the page seeders run, and it must be ready before any
+        // vertical pack is installed.
+        $pagesModule = Modules::find('pages');
+        if ($pagesModule !== null) {
+            $installer->install($this->tenant, $pagesModule);
+        }
+
+        $this->tenant->run(function () use ($vertical): void {
+            app(TenantDefaultPageSeeder::class)->run($vertical);
+            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
+        });
+
+        // Install remaining content modules (pages already handled above).
         foreach ($moduleKeys as $moduleKey) {
+            if ($moduleKey === 'pages') {
+                continue;
+            }
             $module = Modules::find($moduleKey);
             if ($module === null) {
                 continue;
@@ -78,14 +95,8 @@ class FinalizeTenantSetupJob implements ShouldQueue
             $installer->install($this->tenant, $module);
         }
 
-        // Seed default pages immediately after content modules are installed
-        // (pages table now exists). Runs before packs so a failing pack cannot
-        // prevent the homepage from being seeded.
-        $this->tenant->run(function () use ($vertical): void {
-            app(TenantDefaultPageSeeder::class)->run($vertical);
-            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
-        });
-
+        // Install vertical packs last. A failing pack (e.g. plan does not cover
+        // a pack module) is logged and skipped so core content is never blocked.
         foreach ($packKeys as $packKey) {
             try {
                 $installer->installPack($this->tenant, $packKey, withDemoSeeders: false);

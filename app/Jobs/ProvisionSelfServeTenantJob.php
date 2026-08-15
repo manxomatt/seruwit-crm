@@ -130,7 +130,24 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
 
     private function installModulesAndPacks(Tenant $tenant, OnboardingSession $session, ModuleInstaller $installer): void
     {
+        $vertical = $session->verticals[0] ?? 'rental';
+
+        // Install pages first — core content module, must exist before seeding.
+        $pagesModule = Modules::find('pages');
+        if ($pagesModule !== null) {
+            $installer->install($tenant, $pagesModule);
+        }
+
+        $tenant->run(function () use ($vertical): void {
+            app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical);
+            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
+        });
+
+        // Install remaining content modules (pages already handled above).
         foreach (SelfServeProvisioningPlan::defaultContentModules() as $moduleKey) {
+            if ($moduleKey === 'pages') {
+                continue;
+            }
             $module = Modules::find($moduleKey);
             if ($module === null) {
                 continue;
@@ -141,11 +158,5 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
         foreach (SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []) as $packKey) {
             $installer->installPack($tenant, $packKey, withDemoSeeders: false);
         }
-
-        $vertical = $session->verticals[0] ?? 'rental';
-        $tenant->run(function () use ($vertical): void {
-            app(\Database\Seeders\TenantDefaultPageSeeder::class)->run($vertical);
-            app(CreateBintangKejoraAlternativePagesSeeder::class)->run();
-        });
     }
 }
