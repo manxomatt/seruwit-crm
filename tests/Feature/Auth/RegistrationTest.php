@@ -44,8 +44,8 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'password1',
+            'password_confirmation' => 'password1',
             'terms' => '1',
         ]);
 
@@ -68,6 +68,20 @@ class RegistrationTest extends TestCase
         $response->assertRedirect(route($notice, absolute: false));
     }
 
+    public function test_password_must_contain_letters_and_numbers(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => '12345678',
+            'password_confirmation' => '12345678',
+            'terms' => '1',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
+    }
+
     public function test_registration_does_not_require_company_fields(): void
     {
         Notification::fake();
@@ -75,8 +89,8 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'password1',
+            'password_confirmation' => 'password1',
             'terms' => '1',
         ]);
 

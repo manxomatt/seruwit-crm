@@ -39,8 +39,8 @@ class DevelopmentVerificationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Dev User',
             'email' => 'dev@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'password1',
+            'password_confirmation' => 'password1',
             'terms' => '1',
         ]);
 
@@ -71,8 +71,8 @@ class DevelopmentVerificationTest extends TestCase
         $this->post('/register', [
             'name' => 'Prod User',
             'email' => 'prod@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'password1',
+            'password_confirmation' => 'password1',
             'terms' => '1',
         ]);
 

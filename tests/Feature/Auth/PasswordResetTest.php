@@ -110,8 +110,8 @@ class PasswordResetTest extends TestCase
             $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
-                'password' => 'password',
-                'password_confirmation' => 'password',
+                'password' => 'password1',
+                'password_confirmation' => 'password1',
             ])
                 ->assertSessionHasNoErrors()
                 ->assertRedirect(route('login'));

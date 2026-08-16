@@ -35,6 +35,11 @@ return [
     'register_submit' => 'Buat akun',
     'register_submitting' => 'Sedang membuat akun…',
 
+    'password_hint_title' => 'Kata sandi harus memenuhi:',
+    'password_hint_length' => 'Minimal 8 karakter',
+    'password_hint_letters' => 'Mengandung huruf (a-z)',
+    'password_hint_numbers' => 'Mengandung angka (0-9)',
+
     'forgot_title' => 'Lupa Kata Sandi?',
     'forgot_subtitle' => 'Jangan khawatir! Kami akan membantu Anda mengatur ulang kata sandi dengan mudah.',
     'forgot_feature_email' => 'Kirim link reset via email',

@@ -182,6 +182,22 @@ export default function Register({ settings }: Props) {
                                             placeholder="••••••••"
                                         />
                                     </div>
+                                    {data.password.length > 0 && (
+                                        <div className="mt-2 space-y-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                                            {[
+                                                { ok: data.password.length >= 8, label: t('auth_ui.password_hint_length') },
+                                                { ok: /[a-zA-Z]/.test(data.password), label: t('auth_ui.password_hint_letters') },
+                                                { ok: /[0-9]/.test(data.password), label: t('auth_ui.password_hint_numbers') },
+                                            ].map(({ ok, label }) => (
+                                                <div key={label} className="flex items-center gap-2">
+                                                    <span className={`material-symbols-outlined text-sm ${ok ? 'text-emerald-400' : 'text-white/30'}`}>
+                                                        {ok ? 'check_circle' : 'radio_button_unchecked'}
+                                                    </span>
+                                                    <span className={`text-xs ${ok ? 'text-emerald-300' : 'text-white/50'}`}>{label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                     <InputError message={errors.password} className="mt-2" />
                                 </div>
 

@@ -65,8 +65,8 @@ class UserGlobalIdTest extends TestCase
         $this->post('/register', [
             'name' => 'Global Id User',
             'email' => 'global-id@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'password1',
+            'password_confirmation' => 'password1',
         ])->assertRedirect();
 
         $user = User::query()->firstWhere('email', 'global-id@example.com');
