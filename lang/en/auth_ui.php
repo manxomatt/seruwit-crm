@@ -35,6 +35,11 @@ return [
     'register_submit' => 'Create account',
     'register_submitting' => 'Creating account…',
 
+    'password_hint_title' => 'Password must include:',
+    'password_hint_length' => 'At least 8 characters',
+    'password_hint_letters' => 'Contains a letter (a-z)',
+    'password_hint_numbers' => 'Contains a number (0-9)',
+
     'forgot_title' => 'Forgot Password?',
     'forgot_subtitle' => "Don't worry! We'll help you reset your password easily.",
     'forgot_feature_email' => 'Send reset link via email',
