@@ -50,7 +50,7 @@ class SelfServeOnboardingRetryTest extends TestCase
             ->post(route('central.onboarding.store'), [
                 'company_name' => 'Retry Co',
                 'subdomain' => 'retry-co',
-                'verticals' => ['rental', 'travel'],
+                'verticals' => ['rental'],
             ])
             ->assertRedirect(route('central.onboarding.status', absolute: false));
 
@@ -60,7 +60,7 @@ class SelfServeOnboardingRetryTest extends TestCase
 
         $this->assertSame(OnboardingSession::STATUS_PENDING, $session->status);
         $this->assertSame($tenant->getTenantKey(), $session->tenant_id);
-        $this->assertSame(['rental', 'travel'], $session->verticals);
+        $this->assertSame(['rental'], $session->verticals);
         $this->assertNull($session->error_message);
 
         Bus::assertDispatched(
@@ -89,7 +89,7 @@ class SelfServeOnboardingRetryTest extends TestCase
             ->post(route('central.onboarding.store'), [
                 'company_name' => 'New Co',
                 'subdomain' => 'new-co',
-                'verticals' => ['travel'],
+                'verticals' => ['rental'],
             ])
             ->assertRedirect(route('central.onboarding.status', absolute: false));
 

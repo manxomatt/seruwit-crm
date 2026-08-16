@@ -72,6 +72,7 @@ return [
             'rental_hint' => 'Fleet, bookings, deposits, and rental invoices.',
             'travel' => 'Travel / shuttle',
             'travel_hint' => 'Corridors, departures, passenger booking, and travel revenue.',
+            'coming_soon' => 'Coming soon',
         ],
         'preview_title' => 'Modules that will be activated',
         'preview_core' => 'Accounting & partners (always on)',
@@ -97,7 +98,8 @@ return [
             'polling' => 'This usually takes under a minute once the worker picks up the job.',
         ],
         'validation' => [
-            'verticals_required' => 'Select at least one product: rental or travel.',
+            'verticals_required' => 'Select at least one product.',
+            'vertical_unavailable' => 'That product is not available yet.',
         ],
     ],
 

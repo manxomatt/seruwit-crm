@@ -29,10 +29,7 @@ class StoreOnboardingRequest extends FormRequest
             'verticals.*' => [
                 'required',
                 'string',
-                Rule::in([
-                    SelfServeProvisioningPlan::VERTICAL_RENTAL,
-                    SelfServeProvisioningPlan::VERTICAL_TRAVEL,
-                ]),
+                Rule::in(SelfServeProvisioningPlan::selectableVerticals()),
             ],
         ];
     }
@@ -45,6 +42,7 @@ class StoreOnboardingRequest extends FormRequest
         return [
             'verticals.required' => __('central.onboarding.validation.verticals_required'),
             'verticals.min' => __('central.onboarding.validation.verticals_required'),
+            'verticals.*.in' => __('central.onboarding.validation.vertical_unavailable'),
         ];
     }
 

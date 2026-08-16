@@ -14,6 +14,32 @@ class SelfServeProvisioningPlan
     public const VERTICAL_TRAVEL = 'travel';
 
     /**
+     * Every vertical shown on the onboarding form, selectable or not.
+     *
+     * @return list<string>
+     */
+    public static function verticals(): array
+    {
+        return [self::VERTICAL_RENTAL, self::VERTICAL_TRAVEL];
+    }
+
+    /**
+     * Verticals a self-serve signup may actually pick today. Travel stays
+     * visible on the form but cannot be chosen yet.
+     *
+     * @return list<string>
+     */
+    public static function selectableVerticals(): array
+    {
+        return [self::VERTICAL_RENTAL];
+    }
+
+    public static function isSelectableVertical(string $vertical): bool
+    {
+        return in_array($vertical, self::selectableVerticals(), true);
+    }
+
+    /**
      * Content modules always installed for self-serve workspaces.
      *
      * @return list<string>

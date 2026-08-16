@@ -30,8 +30,51 @@ class SelfServeOnboardingProvisionTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Central/Onboarding')
                 ->has('verticalOptions', 2)
+                ->where('verticalOptions.0.key', SelfServeProvisioningPlan::VERTICAL_RENTAL)
+                ->where('verticalOptions.0.available', true)
+                ->where('verticalOptions.1.key', SelfServeProvisioningPlan::VERTICAL_TRAVEL)
+                ->where('verticalOptions.1.available', false)
                 ->has('settings')
                 ->where('user.email', $user->email));
+    }
+
+    public function test_travel_vertical_cannot_be_selected_yet(): void
+    {
+        Bus::fake();
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('central.onboarding.store'), [
+                'company_name' => 'Travel Co',
+                'subdomain' => 'travel-co',
+                'verticals' => ['travel'],
+            ])
+            ->assertSessionHasErrors('verticals.0');
+
+        $this->assertDatabaseCount('onboarding_sessions', 0);
+        Bus::assertNothingDispatched();
+    }
+
+    public function test_failed_session_does_not_prefill_unavailable_verticals(): void
+    {
+        $user = User::factory()->create();
+
+        OnboardingSession::query()->create([
+            'global_user_id' => $user->global_id,
+            'company_name' => 'Legacy Co',
+            'subdomain' => 'legacy-co',
+            'verticals' => ['rental', 'travel'],
+            'status' => OnboardingSession::STATUS_FAILED,
+            'error_message' => 'Boom',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('central.onboarding.show'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Central/Onboarding')
+                ->where('failedSession.verticals', ['rental']));
     }
 
     public function test_onboarding_requires_at_least_one_vertical(): void
@@ -55,9 +98,9 @@ class SelfServeOnboardingProvisionTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('central.onboarding.store'), [
-                'company_name' => 'Rental Travel Co',
-                'subdomain' => 'rental-travel-co',
-                'verticals' => ['rental', 'travel'],
+                'company_name' => 'Rental Co',
+                'subdomain' => 'rental-co',
+                'verticals' => ['rental'],
             ])
             ->assertRedirect(route('central.onboarding.status', absolute: false));
 
@@ -66,9 +109,9 @@ class SelfServeOnboardingProvisionTest extends TestCase
             ->first();
 
         $this->assertNotNull($session);
-        $this->assertSame('Rental Travel Co', $session->company_name);
-        $this->assertSame('rental-travel-co', $session->subdomain);
-        $this->assertSame(['rental', 'travel'], $session->verticals);
+        $this->assertSame('Rental Co', $session->company_name);
+        $this->assertSame('rental-co', $session->subdomain);
+        $this->assertSame(['rental'], $session->verticals);
         $this->assertSame(OnboardingSession::STATUS_PENDING, $session->status);
 
         Bus::assertDispatched(

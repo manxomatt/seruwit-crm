@@ -72,6 +72,7 @@ return [
             'rental_hint' => 'Armada, booking, deposit, dan invoice rental.',
             'travel' => 'Travel / shuttle',
             'travel_hint' => 'Koridor, keberangkatan, booking penumpang, dan pendapatan travel.',
+            'coming_soon' => 'Segera hadir',
         ],
         'preview_title' => 'Modul yang akan diaktifkan',
         'preview_core' => 'Accounting & partners (selalu aktif)',
@@ -97,7 +98,8 @@ return [
             'polling' => 'Biasanya selesai dalam kurang dari satu menit setelah worker mengambil job.',
         ],
         'validation' => [
-            'verticals_required' => 'Pilih minimal satu produk: rental atau travel.',
+            'verticals_required' => 'Pilih minimal satu produk.',
+            'vertical_unavailable' => 'Produk tersebut belum tersedia.',
         ],
     ],
 

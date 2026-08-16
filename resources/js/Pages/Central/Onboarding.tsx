@@ -9,6 +9,7 @@ interface VerticalOption {
     key: string;
     label: string;
     description: string;
+    available: boolean;
 }
 
 interface FailedSession {
@@ -42,6 +43,10 @@ export default function Onboarding({
     });
 
     const toggleVertical = (key: string): void => {
+        if (!verticalOptions.some((option) => option.key === key && option.available)) {
+            return;
+        }
+
         if (data.verticals.includes(key)) {
             setData(
                 'verticals',
@@ -247,20 +252,25 @@ export default function Onboarding({
                                     <div className="space-y-2">
                                         {verticalOptions.map((option) => {
                                             const checked = data.verticals.includes(option.key);
+                                            const disabled = !option.available;
 
                                             return (
                                                 <label
                                                     key={option.key}
-                                                    className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition-colors ${
-                                                        checked
-                                                            ? 'border-cyan-400/50 bg-cyan-500/15'
-                                                            : 'border-white/10 bg-white/5 hover:border-white/20'
+                                                    aria-disabled={disabled}
+                                                    className={`flex gap-3 rounded-xl border p-3 transition-colors ${
+                                                        disabled
+                                                            ? 'cursor-not-allowed border-white/10 bg-white/5 opacity-50'
+                                                            : checked
+                                                              ? 'cursor-pointer border-cyan-400/50 bg-cyan-500/15'
+                                                              : 'cursor-pointer border-white/10 bg-white/5 hover:border-white/20'
                                                     }`}
                                                 >
                                                     <input
                                                         type="checkbox"
-                                                        className="mt-1 rounded border-white/20 bg-white/10 text-cyan-500 focus:ring-cyan-500/50 focus:ring-offset-0"
+                                                        className="mt-1 rounded border-white/20 bg-white/10 text-cyan-500 focus:ring-cyan-500/50 focus:ring-offset-0 disabled:cursor-not-allowed"
                                                         checked={checked}
+                                                        disabled={disabled}
                                                         onChange={() => toggleVertical(option.key)}
                                                     />
                                                     <span className="flex min-w-0 items-start gap-3">
@@ -270,8 +280,13 @@ export default function Onboarding({
                                                             </span>
                                                         </span>
                                                         <span>
-                                                            <span className="block text-sm font-medium text-white">
+                                                            <span className="flex flex-wrap items-center gap-2 text-sm font-medium text-white">
                                                                 {option.label}
+                                                                {disabled && (
+                                                                    <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/60">
+                                                                        {t('central.onboarding.verticals.coming_soon')}
+                                                                    </span>
+                                                                )}
                                                             </span>
                                                             <span className="block text-xs text-white/50">
                                                                 {option.description}

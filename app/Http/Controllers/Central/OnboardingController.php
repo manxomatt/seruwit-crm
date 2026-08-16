@@ -49,23 +49,22 @@ class OnboardingController extends Controller
             'settings' => Setting::getPublic()
                 ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
                 ->toArray(),
-            'verticalOptions' => [
-                [
-                    'key' => SelfServeProvisioningPlan::VERTICAL_RENTAL,
-                    'label' => __('central.onboarding.verticals.rental'),
-                    'description' => __('central.onboarding.verticals.rental_hint'),
-                ],
-                [
-                    'key' => SelfServeProvisioningPlan::VERTICAL_TRAVEL,
-                    'label' => __('central.onboarding.verticals.travel'),
-                    'description' => __('central.onboarding.verticals.travel_hint'),
-                ],
-            ],
+            'verticalOptions' => collect(SelfServeProvisioningPlan::verticals())
+                ->map(fn (string $vertical): array => [
+                    'key' => $vertical,
+                    'label' => __("central.onboarding.verticals.{$vertical}"),
+                    'description' => __("central.onboarding.verticals.{$vertical}_hint"),
+                    'available' => SelfServeProvisioningPlan::isSelectableVertical($vertical),
+                ])
+                ->all(),
             'failedSession' => $session?->status === OnboardingSession::STATUS_FAILED
                 ? [
                     'company_name' => $session->company_name,
                     'subdomain' => $session->subdomain,
-                    'verticals' => $session->verticals,
+                    'verticals' => array_values(array_filter(
+                        $session->verticals ?? [],
+                        SelfServeProvisioningPlan::isSelectableVertical(...),
+                    )),
                     'error_message' => $session->error_message,
                 ]
                 : null,
