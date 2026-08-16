@@ -3,8 +3,10 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\Role;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class RoleBasedRedirectTest extends TestCase
@@ -90,7 +92,7 @@ class RoleBasedRedirectTest extends TestCase
         $response->assertRedirect('/editor/dashboard');
     }
 
-    public function test_user_with_no_roles_is_redirected_to_dashboard(): void
+    public function test_user_with_no_roles_is_redirected_to_onboarding(): void
     {
         $user = User::factory()->create();
 
@@ -100,7 +102,7 @@ class RoleBasedRedirectTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/module/dashboard');
+        $response->assertRedirect(route('central.onboarding.show', absolute: false));
     }
 
     public function test_user_with_multiple_roles_is_redirected_based_on_priority(): void
@@ -115,6 +117,44 @@ class RoleBasedRedirectTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect('/module/dashboard');
+    }
+
+    public function test_authenticated_tenant_user_visiting_login_redirects_to_workspace(): void
+    {
+        $user = User::factory()->create();
+        $tenantId = fake()->uuid();
+
+        Tenant::withoutEvents(fn () => Tenant::create(['id' => $tenantId, 'name' => 'Test Workspace']));
+
+        DB::table('tenant_users')->insert([
+            'tenant_id' => $tenantId,
+            'global_user_id' => $user->global_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get('/login');
+
+        $response->assertRedirect(route('central.workspaces.index', absolute: false));
+    }
+
+    public function test_authenticated_tenant_user_visiting_register_redirects_to_workspace(): void
+    {
+        $user = User::factory()->create();
+        $tenantId = fake()->uuid();
+
+        Tenant::withoutEvents(fn () => Tenant::create(['id' => $tenantId, 'name' => 'Test Workspace']));
+
+        DB::table('tenant_users')->insert([
+            'tenant_id' => $tenantId,
+            'global_user_id' => $user->global_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get('/register');
+
+        $response->assertRedirect(route('central.workspaces.index', absolute: false));
     }
 
     public function test_dashboard_page_can_be_rendered(): void

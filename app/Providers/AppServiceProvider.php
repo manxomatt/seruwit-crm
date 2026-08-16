@@ -2,12 +2,15 @@
 
 namespace App\Providers;
 
+use App\Actions\Auth\ResolvePostAuthDestination;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\UserRepository;
 use App\Support\EmailVerificationUrl;
 use App\Support\SystemMode;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -35,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
 
         Password::defaults(fn () => Password::min(8)->letters()->numbers());
 
+        $this->configureGuestRedirect();
         $this->configureEmailVerificationUrls();
         $this->configureDevelopmentMailGate();
 
@@ -55,6 +59,25 @@ class AppServiceProvider extends ServiceProvider
         // Settings are a platform-wide definition, edited by platform staff only —
         // a tenant may still view them, but not add or change them.
         Gate::define('manage-settings', fn (User $user): bool => $user->isAdmin());
+    }
+
+    /**
+     * When an authenticated user hits a guest-only route (e.g. /login, /register),
+     * send them to the correct destination instead of the default /dashboard.
+     * Tenant users with no workspace chosen go to /workspace; platform staff go
+     * to their role dashboard; everyone else falls through ResolvePostAuthDestination.
+     */
+    private function configureGuestRedirect(): void
+    {
+        RedirectIfAuthenticated::redirectUsing(function (Request $request): string {
+            $user = $request->user();
+
+            if ($user === null) {
+                return '/';
+            }
+
+            return app(ResolvePostAuthDestination::class)->url($user);
+        });
     }
 
     /**
