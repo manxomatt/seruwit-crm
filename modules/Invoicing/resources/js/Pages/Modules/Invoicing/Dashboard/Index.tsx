@@ -54,55 +54,49 @@ type StatTone = 'emerald' | 'sky' | 'violet' | 'amber' | 'slate' | 'rose';
 
 const STAT_TONES: Record<
     StatTone,
-    { card: string; icon: string; value: string; bar: string; track: string; accent: string }
+    { card: string; icon: string; value: string; bar: string; track: string }
 > = {
     emerald: {
-        card: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-teal-50',
-        icon: 'bg-emerald-500 text-white shadow-emerald-500/30',
-        value: 'text-emerald-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400',
+        value: 'text-emerald-600 dark:text-emerald-400',
         bar: 'bg-emerald-500',
-        track: 'bg-emerald-100',
-        accent: 'bg-emerald-500',
+        track: 'bg-emerald-100 dark:bg-emerald-950/60',
     },
     sky: {
-        card: 'border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-cyan-50',
-        icon: 'bg-sky-500 text-white shadow-sky-500/30',
-        value: 'text-sky-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400',
+        value: 'text-slate-900 dark:text-white',
         bar: 'bg-sky-500',
-        track: 'bg-sky-100',
-        accent: 'bg-sky-500',
+        track: 'bg-sky-100 dark:bg-sky-950/60',
     },
     violet: {
-        card: 'border-violet-200/80 bg-gradient-to-br from-violet-50 via-white to-indigo-50',
-        icon: 'bg-violet-500 text-white shadow-violet-500/30',
-        value: 'text-violet-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400',
+        value: 'text-violet-600 dark:text-violet-400',
         bar: 'bg-violet-500',
-        track: 'bg-violet-100',
-        accent: 'bg-violet-500',
+        track: 'bg-violet-100 dark:bg-violet-950/60',
     },
     amber: {
-        card: 'border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-orange-50',
-        icon: 'bg-amber-500 text-white shadow-amber-500/30',
-        value: 'text-amber-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400',
+        value: 'text-amber-600 dark:text-amber-400',
         bar: 'bg-amber-500',
-        track: 'bg-amber-100',
-        accent: 'bg-amber-500',
+        track: 'bg-amber-100 dark:bg-amber-950/60',
     },
     slate: {
-        card: 'border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-gray-100',
-        icon: 'bg-slate-500 text-white shadow-slate-500/30',
-        value: 'text-slate-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
+        value: 'text-slate-900 dark:text-white',
         bar: 'bg-slate-500',
-        track: 'bg-slate-200',
-        accent: 'bg-slate-500',
+        track: 'bg-slate-200 dark:bg-slate-800',
     },
     rose: {
-        card: 'border-rose-200/80 bg-gradient-to-br from-rose-50 via-white to-red-50',
-        icon: 'bg-rose-500 text-white shadow-rose-500/30',
-        value: 'text-rose-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400',
+        value: 'text-rose-600 dark:text-rose-400',
         bar: 'bg-rose-500',
-        track: 'bg-rose-100',
-        accent: 'bg-rose-500',
+        track: 'bg-rose-100 dark:bg-rose-950/60',
     },
 };
 
@@ -164,19 +158,39 @@ function IconInbox(): JSX.Element {
     );
 }
 
-function statusBadgeClass(status: string): string {
-    switch (status) {
-        case 'draft':
-            return 'bg-gray-100 text-gray-800';
-        case 'issued':
-            return 'bg-blue-100 text-blue-800';
-        case 'partially_paid':
-            return 'bg-amber-100 text-amber-800';
-        case 'paid':
-            return 'bg-emerald-100 text-emerald-800';
-        default:
-            return 'bg-rose-100 text-rose-800';
-    }
+function IconArrow(): JSX.Element {
+    return (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+    );
+}
+
+function StatusBadge({ status }: { status: string }) {
+    const { t } = useTrans();
+    const isPaid = status === 'paid';
+    const isIssued = status === 'issued';
+    const isPartial = status === 'partially_paid';
+    const isDraft = status === 'draft';
+
+    const style = isPaid
+        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50'
+        : isIssued
+        ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/50'
+        : isPartial
+        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/50'
+        : isDraft
+        ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+        : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/50';
+
+    const dot = isPaid ? 'bg-emerald-500' : isIssued ? 'bg-sky-500' : isPartial ? 'bg-amber-500' : isDraft ? 'bg-slate-400' : 'bg-rose-500';
+
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${style}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+            {t(`invoicing.status.${status}`, undefined, status)}
+        </span>
+    );
 }
 
 function StatCard({
@@ -203,66 +217,71 @@ function StatCard({
     const styles = STAT_TONES[tone];
     const clampedProgress = progress === undefined ? undefined : Math.max(0, Math.min(100, progress));
     const body = (
-        <>
-            <span className={`absolute inset-y-0 left-0 w-1 ${styles.accent}`} aria-hidden />
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
-                    <p className={`mt-2 text-2xl font-bold tabular-nums sm:text-3xl ${styles.value}`}>{value}</p>
-                    {hint && <p className="mt-1 text-xs text-gray-600">{hint}</p>}
-                </div>
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-lg ${styles.icon}`}>{icon}</div>
+        <div className="flex items-center gap-3">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg font-bold ${styles.icon}`}>
+                {icon}
             </div>
-            {clampedProgress !== undefined && (
-                <div className="mt-4">
-                    <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-medium text-gray-500">
-                        <span className="truncate">{progressLabel}</span>
-                        <span className="tabular-nums">{clampedProgress}%</span>
-                    </div>
-                    <div className={`h-1.5 w-full overflow-hidden rounded-full ${styles.track}`}>
-                        <div className={`h-full rounded-full transition-all duration-500 ${styles.bar}`} style={{ width: `${clampedProgress}%` }} />
-                    </div>
-                </div>
-            )}
-            {meta && meta.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                    {meta.map((item) => (
-                        <span
-                            key={item.label}
-                            className="inline-flex items-center gap-1 rounded-md bg-white/70 px-2 py-1 text-[11px] font-medium text-gray-600 ring-1 ring-black/5"
-                        >
-                            <span className="tabular-nums text-gray-900">{item.value}</span>
-                            <span>{item.label}</span>
-                        </span>
-                    ))}
-                </div>
-            )}
-        </>
-    );
+            <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+                <p className={`text-xl font-extrabold truncate ${styles.value}`}>{value}</p>
+                {hint && <p className="mt-0.5 text-[11px] text-slate-400 truncate">{hint}</p>}
 
-    const className = `relative overflow-hidden rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md ${styles.card} ${
-        href ? 'block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500' : ''
-    }`;
+                {clampedProgress !== undefined && (
+                    <div className="mt-3">
+                        <div className="mb-1 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            <span className="truncate">{progressLabel}</span>
+                            <span className="tabular-nums font-mono">{clampedProgress}%</span>
+                        </div>
+                        <div className={`h-1.5 w-full overflow-hidden rounded-full ${styles.track}`}>
+                            <div className={`h-full rounded-full transition-all duration-500 ${styles.bar}`} style={{ width: `${clampedProgress}%` }} />
+                        </div>
+                    </div>
+                )}
+
+                {meta && meta.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {meta.map((item) => (
+                            <span
+                                key={item.label}
+                                className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300"
+                            >
+                                <span className="tabular-nums font-mono text-slate-900 dark:text-white">{item.value}</span>
+                                <span>{item.label}</span>
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 
     if (href) {
         return (
-            <Link href={href} className={className}>
+            <Link
+                href={href}
+                className={`block rounded-3xl border p-5 shadow-sm transition hover:shadow-md ${styles.card}`}
+            >
                 {body}
             </Link>
         );
     }
 
-    return <div className={className}>{body}</div>;
+    return <div className={`rounded-3xl border p-5 shadow-sm ${styles.card}`}>{body}</div>;
 }
 
 function QuickAction({ href, title, description }: { href: string; title: string; description: string }): JSX.Element {
     return (
         <Link
             href={href}
-            className="group rounded-lg border border-gray-200 bg-white px-3 py-3 transition hover:border-indigo-300 hover:bg-indigo-50/40"
+            className="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
         >
-            <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-700">{title}</p>
-            <p className="mt-0.5 text-xs text-gray-500">{description}</p>
+            <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">{title}</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">{description}</p>
+            </div>
+            <span className="mt-0.5 text-slate-400 transition group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                <IconArrow />
+            </span>
         </Link>
     );
 }
@@ -279,10 +298,11 @@ export default function Index({ board, can }: Props): JSX.Element {
             header={
                 <PageHeader
                     title={t('invoicing.title')}
+                    description={t('invoicing.dashboard.subtitle')}
                     actions={
                         can.create ? (
                             <Link href={prefixedRoute('invoicing.invoices.create')}>
-                                <PrimaryButton>{t('invoicing.index.new')}</PrimaryButton>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('invoicing.index.new')}</PrimaryButton>
                             </Link>
                         ) : undefined
                     }
@@ -293,8 +313,7 @@ export default function Index({ board, can }: Props): JSX.Element {
 
             <InvoicingNav />
 
-            <p className="mb-6 text-sm text-gray-600">{t('invoicing.dashboard.subtitle')}</p>
-
+            {/* Stat Cards Grid */}
             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                     label={t('invoicing.dashboard.outstanding')}
@@ -336,41 +355,44 @@ export default function Index({ board, can }: Props): JSX.Element {
                 />
             </div>
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        {t('invoicing.dashboard.aging_current')}
+            {/* Aging Breakdown Row */}
+            <div className="mb-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        ⏳ {t('invoicing.dashboard.aging_current')}
                     </p>
-                    <p className="mt-2 text-xl font-bold tabular-nums text-gray-900">{formatMoney(aging.current_amount)}</p>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white">{formatMoney(aging.current_amount)}</p>
+                    <p className="mt-1 text-xs text-slate-400">
                         {aging.current_count} · {t('invoicing.dashboard.aging_current_hint')}
                     </p>
                 </div>
-                <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">
-                        {t('invoicing.dashboard.aging_overdue')}
+                <div className="rounded-3xl border border-rose-200/60 dark:border-rose-800/50 bg-rose-50/60 dark:bg-rose-950/30 p-5 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                        ⚠️ {t('invoicing.dashboard.aging_overdue')}
                     </p>
-                    <p className="mt-2 text-xl font-bold tabular-nums text-rose-900">{formatMoney(aging.overdue_amount)}</p>
-                    <p className="mt-1 text-xs text-rose-700/80">
+                    <p className="mt-2 text-2xl font-extrabold text-rose-700 dark:text-rose-300">{formatMoney(aging.overdue_amount)}</p>
+                    <p className="mt-1 text-xs text-rose-600/80 dark:text-rose-400/80">
                         {aging.overdue_count} · {t('invoicing.dashboard.aging_overdue_hint')}
                     </p>
                 </div>
             </div>
 
-            <div className="mb-6 grid gap-4 lg:grid-cols-3">
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div className="mb-3">
-                        <h3 className="text-sm font-semibold text-gray-900">{t('invoicing.dashboard.by_status')}</h3>
-                        <p className="mt-0.5 text-xs text-gray-500">{t('invoicing.dashboard.by_status_help')}</p>
+            {/* Main Section: By Status & Recent Invoices */}
+            <div className="mb-6 grid gap-6 lg:grid-cols-3">
+                {/* Left Column: Status Distribution */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <div className="mb-4">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">📊 {t('invoicing.dashboard.by_status')}</h3>
+                        <p className="mt-0.5 text-xs text-slate-400">{t('invoicing.dashboard.by_status_help')}</p>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {STATUS_KEYS.map((key) => (
                             <div key={key}>
-                                <div className="mb-1 flex items-center justify-between gap-2 text-xs text-gray-600">
-                                    <span className="font-medium text-gray-800">{t(`invoicing.status.${key}`)}</span>
-                                    <span className="tabular-nums">{by_status[key]}</span>
+                                <div className="mb-1 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    <span>{t(`invoicing.status.${key}`)}</span>
+                                    <span className="font-mono text-slate-900 dark:text-white">{by_status[key]}</span>
                                 </div>
-                                <div className="h-1.5 overflow-hidden rounded-full bg-indigo-100">
+                                <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                     <div
                                         className="h-full rounded-full bg-indigo-500"
                                         style={{
@@ -383,77 +405,64 @@ export default function Index({ board, can }: Props): JSX.Element {
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
-                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                {/* Right Column: Recent Invoices Table */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden lg:col-span-2">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 px-6 py-4">
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">{t('invoicing.dashboard.recent')}</h3>
-                            <p className="mt-0.5 text-xs text-gray-500">{t('invoicing.dashboard.recent_help')}</p>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">📑 {t('invoicing.dashboard.recent')}</h3>
+                            <p className="mt-0.5 text-xs text-slate-400">{t('invoicing.dashboard.recent_help')}</p>
                         </div>
                         <Link
                             href={prefixedRoute('invoicing.invoices.index')}
-                            className="text-sm font-medium text-indigo-600 hover:underline"
+                            className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
-                            {t('invoicing.dashboard.view_invoices')}
+                            {t('invoicing.dashboard.view_invoices')} →
                         </Link>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('invoicing.dashboard.col_code')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('invoicing.dashboard.col_partner')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('invoicing.dashboard.col_due')}
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
-                                        {t('invoicing.dashboard.col_balance')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('invoicing.dashboard.col_status')}
-                                    </th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('invoicing.dashboard.col_code')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('invoicing.dashboard.col_partner')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('invoicing.dashboard.col_due')}</th>
+                                    <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">{t('invoicing.dashboard.col_balance')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('invoicing.dashboard.col_status')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                                 {recent.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
                                             {t('invoicing.dashboard.empty_open')}
                                         </td>
                                     </tr>
                                 ) : (
                                     recent.map((invoice) => (
-                                        <tr key={invoice.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3">
+                                        <tr key={invoice.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <Link
                                                     href={prefixedRoute('invoicing.invoices.show', invoice.id)}
-                                                    className="font-mono text-xs font-medium text-indigo-600 hover:underline"
+                                                    className="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                                 >
                                                     {invoice.code}
                                                 </Link>
-                                                <p className="text-xs text-gray-500">{invoice.issue_date ?? '—'}</p>
+                                                <p className="mt-0.5 font-mono text-[10px] text-slate-400">{invoice.issue_date ?? '—'}</p>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-700">{invoice.partner?.name ?? '—'}</td>
-                                            <td className="px-4 py-3 text-xs text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900 dark:text-white">{invoice.partner?.name ?? '—'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-[11px] text-slate-500 dark:text-slate-400">
                                                 {invoice.due_date ?? '—'}
                                                 {invoice.is_overdue && (
-                                                    <span className="ml-2 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium text-rose-700">
-                                                        {t('invoicing.dashboard.overdue_badge')}
+                                                    <span className="ml-2 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-800/50 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
+                                                        ⚠️ {t('invoicing.dashboard.overdue_badge')}
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-right tabular-nums font-medium text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-slate-900 dark:text-white">
                                                 {formatMoney(invoice.balance)}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <span
-                                                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(invoice.status)}`}
-                                                >
-                                                    {t(`invoicing.status.${invoice.status}`, undefined, invoice.status)}
-                                                </span>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <StatusBadge status={invoice.status} />
                                             </td>
                                         </tr>
                                     ))
@@ -464,8 +473,9 @@ export default function Index({ board, can }: Props): JSX.Element {
                 </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('invoicing.dashboard.quick_actions')}</h3>
+            {/* Quick Actions Grid */}
+            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400">⚡ {t('invoicing.dashboard.quick_actions')}</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <QuickAction
                         href={prefixedRoute('invoicing.invoices.index')}

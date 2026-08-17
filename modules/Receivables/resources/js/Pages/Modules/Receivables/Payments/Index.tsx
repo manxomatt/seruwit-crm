@@ -38,7 +38,7 @@ interface Props {
 }
 
 const EyeIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         <path
             strokeLinecap="round"
@@ -48,6 +48,24 @@ const EyeIcon = () => (
         />
     </svg>
 );
+
+function StatusBadge({ status }: { status: string }) {
+    const { t } = useTrans();
+    const isPosted = status === 'posted';
+
+    const style = isPosted
+        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50'
+        : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/50';
+
+    const dot = isPosted ? 'bg-emerald-500' : 'bg-rose-500';
+
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${style}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+            {t(`receivables.status.${status}`, undefined, status)}
+        </span>
+    );
+}
 
 export default function Index({ payments, alerts, summary, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -78,7 +96,7 @@ export default function Index({ payments, alerts, summary, filters, can }: Props
                     title={t('receivables.payments.index.title')}
                     actions={can.create && (
                         <Link href={prefixedRoute('receivables.payments.create')}>
-                            <PrimaryButton>{t('receivables.payments.index.record')}</PrimaryButton>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('receivables.payments.index.record')}</PrimaryButton>
                         </Link>
                     )}
                 />
@@ -90,132 +108,120 @@ export default function Index({ payments, alerts, summary, filters, can }: Props
 
             <div className="space-y-6">
                 {alerts.overdue_count > 0 && (
-                    <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                        {t('receivables.payments.index.overdue_alert', {
-                            count: alerts.overdue_count,
-                            amount: formatMoney(alerts.overdue_amount),
-                        })}{' '}
-                        <Link href={prefixedRoute('receivables.aging.index')} className="font-medium underline">
-                            {t('receivables.payments.index.view_aging')}
+                    <div className="rounded-3xl border border-amber-200/60 dark:border-amber-800/50 bg-amber-50/70 dark:bg-amber-950/40 p-4 text-xs font-bold text-amber-950 dark:text-amber-200 shadow-sm flex items-center justify-between gap-3">
+                        <span>
+                            ⚠️ {t('receivables.payments.index.overdue_alert', {
+                                count: alerts.overdue_count,
+                                amount: formatMoney(alerts.overdue_amount),
+                            })}
+                        </span>
+                        <Link href={prefixedRoute('receivables.aging.index')} className="text-indigo-600 dark:text-indigo-400 underline shrink-0">
+                            {t('receivables.payments.index.view_aging')} →
                         </Link>
                     </div>
                 )}
 
+                {/* Summary Cards */}
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-lg bg-white p-4 shadow-sm">
-                        <p className="text-xs uppercase tracking-wider text-gray-500">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             {t('receivables.payments.index.open_ar')}
                         </p>
-                        <p className="mt-1 text-2xl font-semibold tabular-nums text-gray-900">
+                        <p className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white">
                             {formatMoney(summary.open_ar)}
                         </p>
                     </div>
-                    <div className="rounded-lg bg-white p-4 shadow-sm">
-                        <p className="text-xs uppercase tracking-wider text-gray-500">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             {t('receivables.payments.index.received_this_month')}
                         </p>
-                        <p className="mt-1 text-2xl font-semibold tabular-nums text-gray-900">
+                        <p className="mt-2 text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
                             {formatMoney(summary.posted_this_month)}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-end gap-3">
-                    <form onSubmit={submitSearch} className="flex flex-1 flex-wrap gap-2">
-                        <TextInput
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder={t('receivables.placeholders.search')}
-                            className="min-w-[200px] max-w-sm flex-1"
+                {/* Filter Bar */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <form onSubmit={submitSearch} className="flex flex-1 flex-wrap gap-2">
+                            <TextInput
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder={t('receivables.placeholders.search')}
+                                className="min-w-[200px] flex-1 !rounded-2xl text-xs bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800"
+                            />
+                            <PrimaryButton type="submit" className="!rounded-xl text-xs shadow-sm">{t('receivables.actions.search')}</PrimaryButton>
+                        </form>
+                        <Select
+                            className="w-44"
+                            value={filters.status ?? ''}
+                            onChange={(value) => applyFilters({ search, status: value })}
+                            placeholder={t('receivables.payments.index.all_statuses')}
+                            options={[
+                                { value: '', label: t('receivables.payments.index.all_statuses') },
+                                { value: 'posted', label: t('receivables.status.posted') },
+                                { value: 'voided', label: t('receivables.status.voided') },
+                            ]}
                         />
-                        <PrimaryButton type="submit">{t('receivables.actions.search')}</PrimaryButton>
-                    </form>
-                    <Select
-                        className="w-44"
-                        value={filters.status ?? ''}
-                        onChange={(value) => applyFilters({ search, status: value })}
-                        placeholder={t('receivables.payments.index.all_statuses')}
-                        options={[
-                            { value: '', label: t('receivables.payments.index.all_statuses') },
-                            { value: 'posted', label: t('receivables.status.posted') },
-                            { value: 'voided', label: t('receivables.status.voided') },
-                        ]}
-                    />
+                    </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+                {/* Payments Table */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('receivables.fields.code')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('receivables.fields.partner')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('receivables.fields.type')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('receivables.fields.method')}
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('receivables.fields.amount')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('receivables.fields.date')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('receivables.fields.status')}
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        {t('common.actions')}
-                                    </th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.code')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.partner')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.type')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.method')}</th>
+                                    <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.amount')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.date')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.status')}</th>
+                                    <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">{t('common.actions')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                                 {payments.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                                            {t('receivables.payments.index.empty')}
+                                        <td colSpan={8} className="px-6 py-16 text-center">
+                                            <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 dark:bg-slate-800 text-2xl mb-2">
+                                                💳
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-400">{t('receivables.payments.index.empty')}</p>
                                         </td>
                                     </tr>
                                 ) : (
                                     payments.data.map((payment) => (
-                                        <tr key={payment.id} className="hover:bg-gray-50">
-                                            <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
-                                                {payment.code}
+                                        <tr key={payment.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                                                <Link href={prefixedRoute('receivables.payments.show', payment.id)} className="hover:underline">
+                                                    {payment.code}
+                                                </Link>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-700">{payment.partner.name}</td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900 dark:text-white">{payment.partner.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                                 {t(`receivables.types.${payment.type}`, undefined, payment.type)}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                                 {t(`receivables.methods.${payment.method}`, undefined, payment.method)}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-slate-900 dark:text-white">
                                                 {formatMoney(payment.amount)}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-[11px] text-slate-500 dark:text-slate-400">
                                                 {new Date(payment.payment_date).toLocaleDateString(localeTag)}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3">
-                                                <span
-                                                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                        payment.status === 'posted'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-gray-100 text-gray-600'
-                                                    }`}
-                                                >
-                                                    {t(`receivables.status.${payment.status}`, undefined, payment.status)}
-                                                </span>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <StatusBadge status={payment.status} />
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-right">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
                                                         href={prefixedRoute('receivables.payments.show', payment.id)}
-                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                                                         title={t('common.view')}
                                                     >
                                                         <EyeIcon />
@@ -230,19 +236,19 @@ export default function Index({ payments, alerts, summary, filters, can }: Props
                     </div>
 
                     {payments.links.length > 3 && (
-                        <div className="flex flex-wrap gap-1 border-t border-gray-200 px-4 py-3">
+                        <div className="flex items-center justify-end gap-1 border-t border-slate-100 dark:border-slate-800/60 px-6 py-4">
                             {payments.links.map((link, index) => (
                                 <button
                                     key={index}
                                     type="button"
                                     onClick={() => link.url && router.get(link.url)}
                                     disabled={!link.url}
-                                    className={`rounded px-3 py-1 text-sm ${
+                                    className={`flex h-8 min-w-[2rem] items-center justify-center rounded-xl px-1 text-xs font-bold transition ${
                                         link.active
-                                            ? 'bg-indigo-600 text-white'
+                                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
                                             : link.url
-                                              ? 'border bg-white text-gray-700 hover:bg-gray-50'
-                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                              ? 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                              : 'cursor-not-allowed text-slate-300 dark:text-slate-700'
                                     }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />

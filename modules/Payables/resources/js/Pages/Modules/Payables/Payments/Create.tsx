@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import PageHeader from '@/Components/PageHeader';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect } from 'react';
 import PayablesNav from '../../../../PayablesNav';
@@ -113,22 +114,22 @@ export default function Create({
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('payables.payments.create')}
-                    </h2>
-                    <Link href={prefixedRoute('payables.payments.index')}>
-                        <SecondaryButton type="button">{t('common.back')}</SecondaryButton>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={t('payables.payments.create')}
+                    actions={
+                        <Link href={prefixedRoute('payables.payments.index')}>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.back')}</SecondaryButton>
+                        </Link>
+                    }
+                />
             }
         >
             <Head title={t('payables.payments.create')} />
             <PayablesNav />
 
-            <form onSubmit={submit} className="max-w-2xl space-y-4 overflow-visible rounded-lg bg-white p-6 shadow-sm">
+            <form onSubmit={submit} className="max-w-2xl space-y-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <div>
-                    <InputLabel htmlFor="partner_id" value={t('payables.fields.supplier')} />
+                    <InputLabel htmlFor="partner_id" value={`${t('payables.fields.supplier')} *`} />
                     <Select
                         id="partner_id"
                         className="mt-1"
@@ -149,18 +150,18 @@ export default function Create({
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <InputLabel htmlFor="payment_date" value={t('payables.fields.payment_date')} />
+                        <InputLabel htmlFor="payment_date" value={`${t('payables.fields.payment_date')} *`} />
                         <TextInput
                             id="payment_date"
                             type="date"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                             value={form.data.payment_date}
                             onChange={(e) => form.setData('payment_date', e.target.value)}
                         />
                         <InputError message={form.errors.payment_date} className="mt-1" />
                     </div>
                     <div>
-                        <InputLabel htmlFor="method" value={t('payables.fields.method')} />
+                        <InputLabel htmlFor="method" value={`${t('payables.fields.method')} *`} />
                         <Select
                             id="method"
                             className="mt-1"
@@ -175,7 +176,7 @@ export default function Create({
                         <InputError message={form.errors.method} className="mt-1" />
                     </div>
                     {companyBankAccounts.length > 0 && (
-                        <div>
+                        <div className="sm:col-span-2">
                             <InputLabel
                                 htmlFor="company_bank_account_id"
                                 value={t('accounting.bank.posts_to')}
@@ -209,44 +210,46 @@ export default function Create({
                 </div>
 
                 {form.data.partner_id && openBills.length === 0 && (
-                    <p className="text-sm text-gray-500">{t('payables.payments.no_open_bills')}</p>
+                    <p className="text-xs font-bold text-slate-400">{t('payables.payments.no_open_bills')}</p>
                 )}
 
                 {openBills.length > 0 && (
                     <div className="space-y-2">
                         <InputLabel value={t('payables.payments.open_bills')} />
-                        {openBills.map((bill) => {
-                            const selected = selectedAllocationId === String(bill.id);
+                        <div className="space-y-2">
+                            {openBills.map((bill) => {
+                                const selected = selectedAllocationId === String(bill.id);
 
-                            return (
-                                <button
-                                    key={bill.id}
-                                    type="button"
-                                    onClick={() => selectBill(bill)}
-                                    className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition ${
-                                        selected
-                                            ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200'
-                                            : 'border-gray-200 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    <span className="font-medium text-gray-900">{bill.code}</span>
-                                    <span className="tabular-nums text-gray-700">
-                                        {Number(bill.balance).toLocaleString()}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                return (
+                                    <button
+                                        key={bill.id}
+                                        type="button"
+                                        onClick={() => selectBill(bill)}
+                                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-xs transition ${
+                                            selected
+                                                ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 shadow-sm'
+                                                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                        }`}
+                                    >
+                                        <span className="font-mono font-bold">{bill.code}</span>
+                                        <span className="font-mono font-bold tabular-nums">
+                                            {Number(bill.balance).toLocaleString()}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                         <InputError message={form.errors.allocations} className="mt-1" />
                     </div>
                 )}
 
                 <div>
-                    <InputLabel htmlFor="amount" value={t('payables.fields.amount')} />
+                    <InputLabel htmlFor="amount" value={`${t('payables.fields.amount')} *`} />
                     <TextInput
                         id="amount"
                         type="number"
                         step="0.01"
-                        className="mt-1 block w-full"
+                        className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                         value={form.data.amount}
                         onChange={(e) => form.setData('amount', e.target.value)}
                     />
@@ -290,17 +293,19 @@ export default function Create({
                                 id="wht_amount"
                                 type="number"
                                 step="0.01"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                                 value={form.data.wht_amount}
                                 onChange={(e) => form.setData('wht_amount', e.target.value)}
                             />
                             <InputError message={form.errors.wht_amount} className="mt-1" />
                             {Number(form.data.wht_amount || 0) > 0 && (
-                                <p className="mt-1 text-xs text-gray-500">
+                                <p className="mt-1 text-[11px] font-mono text-slate-400">
                                     {t('payables.payments.cash_out')}:{' '}
-                                    {(
-                                        Number(form.data.amount || 0) - Number(form.data.wht_amount || 0)
-                                    ).toLocaleString()}
+                                    <span className="font-bold text-slate-900 dark:text-white">
+                                        {(
+                                            Number(form.data.amount || 0) - Number(form.data.wht_amount || 0)
+                                        ).toLocaleString()}
+                                    </span>
                                 </p>
                             )}
                         </div>
@@ -311,7 +316,7 @@ export default function Create({
                     <InputLabel htmlFor="reference_number" value={t('payables.fields.reference')} />
                     <TextInput
                         id="reference_number"
-                        className="mt-1 block w-full"
+                        className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                         value={form.data.reference_number}
                         onChange={(e) => form.setData('reference_number', e.target.value)}
                     />
@@ -322,7 +327,7 @@ export default function Create({
                     <InputLabel htmlFor="notes" value={t('payables.fields.notes')} />
                     <TextInput
                         id="notes"
-                        className="mt-1 block w-full"
+                        className="mt-1 block w-full !rounded-2xl text-xs"
                         value={form.data.notes}
                         onChange={(e) => form.setData('notes', e.target.value)}
                     />
@@ -331,9 +336,9 @@ export default function Create({
 
                 <div className="flex justify-end gap-3 pt-2">
                     <Link href={prefixedRoute('payables.payments.index')}>
-                        <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                        <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
                     </Link>
-                    <PrimaryButton disabled={form.processing}>{t('payables.payments.create')}</PrimaryButton>
+                    <PrimaryButton disabled={form.processing} className="!rounded-xl text-xs shadow-sm">💾 {t('payables.payments.create')}</PrimaryButton>
                 </div>
             </form>
         </DynamicLayout>

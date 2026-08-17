@@ -36,11 +36,11 @@ export default function Edit({ settings }: Props): JSX.Element {
             <InvoicingNav />
 
             <form onSubmit={submit} className="max-w-2xl space-y-6">
-                <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-sm font-semibold text-gray-900">{t('invoicing.settings.section')}</h2>
-                    <p className="mt-1 text-sm text-gray-500">{t('invoicing.settings.section_hint')}</p>
+                <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">⚙️ {t('invoicing.settings.section')}</h2>
+                    <p className="mt-0.5 text-xs text-slate-400">{t('invoicing.settings.section_hint')}</p>
 
-                    <div className="mt-4 max-w-xs">
+                    <div className="mt-5 max-w-xs">
                         <InputLabel
                             htmlFor="default_payment_term_days"
                             value={t('invoicing.settings.default_payment_term_days')}
@@ -49,19 +49,23 @@ export default function Edit({ settings }: Props): JSX.Element {
                             id="default_payment_term_days"
                             type="number"
                             min={0}
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                             value={data.default_payment_term_days}
                             onChange={(e) => setData('default_payment_term_days', e.target.value)}
                         />
-                        <p className="mt-1 text-xs text-gray-500">{t('invoicing.settings.default_payment_term_days_hint')}</p>
+                        <p className="mt-1 text-[11px] text-slate-400">{t('invoicing.settings.default_payment_term_days_hint')}</p>
                         <InputError message={errors.default_payment_term_days} className="mt-1" />
                     </div>
                 </section>
 
                 <div className="flex items-center gap-3">
-                    <PrimaryButton disabled={processing}>{t('invoicing.settings.save')}</PrimaryButton>
+                    <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
+                        💾 {t('invoicing.settings.save')}
+                    </PrimaryButton>
                     {recentlySuccessful && (
-                        <span className="text-sm text-green-600">{t('invoicing.messages.settings_updated')}</span>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            ✓ {t('invoicing.messages.settings_updated')}
+                        </span>
                     )}
                 </div>
             </form>

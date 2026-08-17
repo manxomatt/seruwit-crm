@@ -1,4 +1,3 @@
-import FinanceNav from '@/Components/FinanceNav';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
@@ -14,29 +13,26 @@ export default function PayablesNav(): JSX.Element {
     const { t } = useTrans();
 
     return (
-        <>
-            <FinanceNav />
-            <div className="mb-6 border-b border-gray-200">
-                <nav className="-mb-px flex gap-6">
-                    {TABS.map((tab) => {
-                        const active = isCurrentRoute(tab.pattern);
+        <div className="mb-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+            <nav className="flex flex-wrap items-center gap-1.5" aria-label={t('payables.title')}>
+                {TABS.map((tab) => {
+                    const active = isCurrentRoute(tab.pattern);
 
-                        return (
-                            <Link
-                                key={tab.route}
-                                href={prefixedRoute(tab.route)}
-                                className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${
-                                    active
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                                }`}
-                            >
-                                {t(tab.labelKey)}
-                            </Link>
-                        );
-                    })}
-                </nav>
-            </div>
-        </>
+                    return (
+                        <Link
+                            key={tab.route}
+                            href={prefixedRoute(tab.route)}
+                            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                                active
+                                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            {t(tab.labelKey)}
+                        </Link>
+                    );
+                })}
+            </nav>
+        </div>
     );
 }

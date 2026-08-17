@@ -106,7 +106,7 @@ export default function Index({ pages }: Props): JSX.Element {
         e.preventDefault();
         if (!pageToRename) return;
 
-        renameForm.patch(prefixedRoute('pages.rename', pageToRename.id), {
+        renameForm.patch(prefixedRoute('pages.update', pageToRename.id), {
             onSuccess: () => closeRenameModal(),
         });
     };
@@ -131,7 +131,9 @@ export default function Index({ pages }: Props): JSX.Element {
     };
 
     const togglePublish = (page: Page) => {
-        router.patch(prefixedRoute('pages.toggle-publish', page.id));
+        router.patch(prefixedRoute('pages.update', page.id), {
+            is_published: !page.is_published,
+        });
     };
 
     const setHomepage = (page: Page) => {
@@ -139,7 +141,7 @@ export default function Index({ pages }: Props): JSX.Element {
     };
 
     const duplicatePage = (page: Page) => {
-        router.post(prefixedRoute('pages.duplicate', page.id));
+        router.post(prefixedRoute('pages.copy', page.id));
     };
 
     const menuItemClassName =
@@ -346,7 +348,7 @@ export default function Index({ pages }: Props): JSX.Element {
                                                     >
                                                         <MenuItem>
                                                             <Link
-                                                                href={prefixedRoute('pages.editor', page.id)}
+                                                                href={prefixedRoute('pages.edit', page.id)}
                                                                 className={menuItemClassName}
                                                             >
                                                                 🎨 {t('pages.index.open_editor')}

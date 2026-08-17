@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { DEFAULT_SITE_NAME } from '@/constants/brand';
 import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -33,134 +34,131 @@ export default function ForgotPassword({ status, settings, resetUrl }: Props) {
         <>
             <Head title={t('auth_ui.forgot_title')} />
 
-            <div className="min-h-screen flex bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
-                {/* Background decorative elements */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
-                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-                    <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-blue-400/5 rounded-full blur-2xl" />
-                    <div className="absolute bottom-1/3 right-1/3 w-48 h-48 bg-cyan-400/5 rounded-full blur-2xl" />
+            <div className="relative flex min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/60 to-indigo-50/80 text-slate-800 selection:bg-indigo-500 selection:text-white">
+                {/* Ambient fresh glow effects */}
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                    <div className="absolute -left-20 -top-20 h-[450px] w-[450px] rounded-full bg-sky-300/30 blur-[130px]" />
+                    <div className="absolute -right-20 -bottom-20 h-[450px] w-[450px] rounded-full bg-indigo-300/30 blur-[130px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-emerald-300/20 blur-[150px]" />
+                </div>
+
+                {/* Top-Right Language Switcher */}
+                <div className="absolute right-6 top-6 z-20">
+                    <LanguageSwitcher compact className="bg-white/80 border border-slate-200/80 backdrop-blur-md text-xs font-bold shadow-sm [&_button]:text-slate-600 [&_button.bg-white]:bg-indigo-600 [&_button.bg-white]:text-white" />
                 </div>
 
                 {/* Left Side - Branding/Illustration */}
-                <div className="hidden lg:flex lg:w-1/2 relative">
-                    <div className="relative z-10 flex flex-col justify-center items-center w-full px-12 text-white">
-                        {/* Logo/Icon */}
-                        <div className="mb-8">
-                            {siteLogo ? (
-                                <div className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 p-3">
-                                    <img
-                                        src={siteLogo}
-                                        alt={siteName}
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
-                                    <span className="material-symbols-outlined text-5xl text-cyan-400">
-                                        location_on
-                                    </span>
-                                </div>
-                            )}
+                <div className="relative hidden lg:flex lg:w-1/2 border-r border-slate-200/60 bg-white/40 backdrop-blur-md">
+                    <div className="relative z-10 flex w-full flex-col justify-between p-12 lg:p-16">
+                        {/* Top System Status Pill */}
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-sm backdrop-blur-md">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                Account Recovery • SSL 256-bit
+                            </span>
                         </div>
-                        
-                        <h1 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
-                            {t('auth_ui.forgot_title')}
-                        </h1>
-                        <p className="text-lg text-white/70 text-center max-w-md">
-                            {t('auth_ui.forgot_subtitle')}
-                        </p>
-                        
-                        {/* Feature highlights */}
-                        <div className="mt-12 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
-                                    <span className="material-symbols-outlined text-cyan-400">
-                                        mail
-                                    </span>
-                                </div>
-                                <span className="text-white/80">{t('auth_ui.forgot_feature_email')}</span>
+
+                        {/* Middle Hero Content */}
+                        <div className="max-w-lg">
+                            <div className="mb-6 inline-flex">
+                                {siteLogo ? (
+                                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-3 shadow-lg shadow-slate-200/50 backdrop-blur-xl">
+                                        <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
+                                    </div>
+                                ) : (
+                                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-indigo-100 bg-indigo-500/10 shadow-lg shadow-indigo-500/10 backdrop-blur-xl">
+                                        <span className="material-symbols-outlined text-4xl text-indigo-600">lock_reset</span>
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
-                                    <span className="material-symbols-outlined text-cyan-400">
-                                        timer
-                                    </span>
+
+                            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight">
+                                {t('auth_ui.forgot_title')}
+                            </h1>
+                            <p className="mt-4 text-base font-medium text-slate-600 leading-relaxed">
+                                {t('auth_ui.forgot_subtitle')}
+                            </p>
+
+                            {/* Feature highlights */}
+                            <div className="mt-10 space-y-3.5">
+                                <div className="flex items-center gap-3.5 rounded-2xl border border-white/90 bg-white/70 p-3.5 shadow-sm backdrop-blur-md">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600">
+                                        <span className="material-symbols-outlined text-xl">mail</span>
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-700">{t('auth_ui.forgot_feature_email')}</span>
                                 </div>
-                                <span className="text-white/80">{t('auth_ui.forgot_feature_fast')}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
-                                    <span className="material-symbols-outlined text-cyan-400">
-                                        lock_reset
-                                    </span>
+                                <div className="flex items-center gap-3.5 rounded-2xl border border-white/90 bg-white/70 p-3.5 shadow-sm backdrop-blur-md">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sky-100 bg-sky-50 text-sky-600">
+                                        <span className="material-symbols-outlined text-xl">timer</span>
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-700">{t('auth_ui.forgot_feature_fast')}</span>
                                 </div>
-                                <span className="text-white/80">{t('auth_ui.forgot_feature_new_password')}</span>
+                                <div className="flex items-center gap-3.5 rounded-2xl border border-white/90 bg-white/70 p-3.5 shadow-sm backdrop-blur-md">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-100 bg-violet-50 text-violet-600">
+                                        <span className="material-symbols-outlined text-xl">lock_reset</span>
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-700">{t('auth_ui.forgot_feature_new_password')}</span>
+                                </div>
                             </div>
+                        </div>
+
+                        {/* Footer Tagline */}
+                        <div className="text-xs font-medium text-slate-400">
+                            &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
                         </div>
                     </div>
                 </div>
 
                 {/* Right Side - Forgot Password Form */}
-                <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative z-10">
+                <div className="relative z-10 flex w-full items-center justify-center p-6 sm:p-12 lg:w-1/2">
                     <div className="w-full max-w-md">
                         {/* Mobile Logo */}
-                        <div className="lg:hidden flex justify-center mb-8">
+                        <div className="mb-8 flex justify-center lg:hidden">
                             {siteLogo ? (
-                                <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 p-2">
-                                    <img
-                                        src={siteLogo}
-                                        alt={siteName}
-                                        className="w-full h-full object-contain"
-                                    />
+                                <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-3 shadow-lg shadow-slate-200/50 backdrop-blur-xl">
+                                    <img src={siteLogo} alt={siteName} className="h-full w-full object-contain" />
                                 </div>
                             ) : (
-                                <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
-                                    <span className="material-symbols-outlined text-4xl text-cyan-400">
-                                        location_on
-                                    </span>
+                                <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-indigo-100 bg-indigo-500/10 shadow-lg shadow-indigo-500/10 backdrop-blur-xl">
+                                    <span className="material-symbols-outlined text-4xl text-indigo-600">lock_reset</span>
                                 </div>
                             )}
                         </div>
 
                         {/* Glassmorphism Card */}
-                        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
+                        <div className="rounded-3xl border border-white/90 bg-white/85 p-8 sm:p-10 shadow-2xl shadow-slate-200/70 backdrop-blur-2xl">
                             {/* Header */}
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="material-symbols-outlined text-3xl text-cyan-400">
-                                        lock_reset
-                                    </span>
+                            <div className="mb-8 text-center">
+                                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-md">
+                                    <span className="material-symbols-outlined text-3xl">lock_reset</span>
                                 </div>
-                                <h2 className="text-3xl font-bold text-white">{t('auth_ui.reset_password_heading')}</h2>
-                                <p className="mt-2 text-white/60">
+                                <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{t('auth_ui.reset_password_heading')}</h2>
+                                <p className="mt-2 text-xs font-medium text-slate-500">
                                     {t('auth_ui.reset_password_subtitle')}
                                 </p>
                             </div>
 
                             {/* Status Message */}
                             {status && (
-                                <div className="mb-6 p-4 bg-green-500/20 border border-green-400/30 rounded-xl backdrop-blur-sm">
-                                    <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-green-400">
-                                            check_circle
-                                        </span>
-                                        <span className="text-sm font-medium text-green-300">{status}</span>
+                                <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 backdrop-blur-md">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
+                                        <span className="text-xs font-bold text-emerald-800">{status}</span>
                                     </div>
                                 </div>
                             )}
 
                             {/* Dev Mode: Reset URL */}
                             {resetUrl && (
-                                <div className="mb-6 space-y-3 rounded-xl border border-amber-400/30 bg-amber-500/15 p-4 backdrop-blur-sm">
+                                <div className="mb-6 space-y-2 rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 text-xs">
                                     <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-amber-300">developer_mode</span>
-                                        <span className="text-sm font-medium text-amber-200">{t('auth_ui.reset_dev_banner')}</span>
+                                        <span className="material-symbols-outlined text-amber-600 text-base">developer_mode</span>
+                                        <span className="font-bold text-amber-900">{t('auth_ui.reset_dev_banner')}</span>
                                     </div>
-                                    <p className="text-xs text-amber-300/70">{t('auth_ui.reset_message_dev')}</p>
+                                    <p className="text-amber-800">{t('auth_ui.reset_message_dev')}</p>
                                     <a
                                         href={resetUrl}
-                                        className="block break-all text-sm font-medium text-cyan-300 underline decoration-cyan-400/40 underline-offset-2 transition-colors hover:text-cyan-200"
+                                        className="block break-all font-mono font-bold text-indigo-600 underline hover:text-indigo-700"
                                     >
                                         {resetUrl}
                                     </a>
@@ -168,17 +166,14 @@ export default function ForgotPassword({ status, settings, resetUrl }: Props) {
                             )}
 
                             {/* Forgot Password Form */}
-                            <form onSubmit={submit} className="space-y-6">
-                                {/* Email Field */}
+                            <form onSubmit={submit} className="space-y-5">
                                 <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+                                    <label htmlFor="email" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">
                                         {t('auth_ui.email_label')}
                                     </label>
                                     <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <span className="material-symbols-outlined text-white/40">
-                                                mail
-                                            </span>
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                                            <span className="material-symbols-outlined text-xl">mail</span>
                                         </div>
                                         <input
                                             id="email"
@@ -188,7 +183,7 @@ export default function ForgotPassword({ status, settings, resetUrl }: Props) {
                                             autoComplete="email"
                                             autoFocus
                                             onChange={(e) => setData('email', e.target.value)}
-                                            className="block w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200"
+                                            className="block w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-xs font-mono text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                             placeholder={t('auth_ui.email_placeholder')}
                                         />
                                     </div>
@@ -199,44 +194,40 @@ export default function ForgotPassword({ status, settings, resetUrl }: Props) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full py-3.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 active:from-indigo-700 active:to-sky-700 py-3.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
                                 >
                                     {processing ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                        <>
+                                            <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                             </svg>
-                                            {t('auth_ui.sending')}
-                                        </span>
+                                            <span>{t('auth_ui.sending')}</span>
+                                        </>
                                     ) : (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="material-symbols-outlined">
-                                                send
-                                            </span>
-                                            {t('auth_ui.send_reset_link')}
-                                        </span>
+                                        <>
+                                            <span>{t('auth_ui.send_reset_link')}</span>
+                                            <span className="material-symbols-outlined text-base">send</span>
+                                        </>
                                     )}
                                 </button>
                             </form>
 
                             {/* Back to Login Link */}
-                            <div className="mt-6 text-center">
+                            <div className="mt-8 text-center">
                                 <Link
                                     href={route('login')}
-                                    className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white/80 transition-colors"
+                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-800"
                                 >
-                                    <span className="material-symbols-outlined text-lg">
-                                        arrow_back
-                                    </span>
+                                    <span className="material-symbols-outlined text-base">arrow_back</span>
                                     {t('auth_ui.back_to_login')}
                                 </Link>
                             </div>
                         </div>
 
-                        {/* App Name */}
+                        {/* Footer Branding */}
                         <div className="mt-8 text-center">
-                            <p className="text-white/40 text-sm">
+                            <p className="text-xs font-medium text-slate-400">
                                 {t('auth_ui.tagline', { name: siteName })}
                             </p>
                         </div>

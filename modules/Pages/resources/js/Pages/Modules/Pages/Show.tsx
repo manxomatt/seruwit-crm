@@ -32,7 +32,7 @@ export default function Show({ page }: Props): JSX.Element {
                     title={page.title}
                     actions={
                         <div className="flex gap-2">
-                            <Link href={prefixedRoute('pages.editor', page.id)}>
+                            <Link href={prefixedRoute('pages.edit', page.id)}>
                                 <PrimaryButton className="!rounded-xl text-xs shadow-sm">
                                     🎨 {t('pages.show.open_editor')}
                                 </PrimaryButton>

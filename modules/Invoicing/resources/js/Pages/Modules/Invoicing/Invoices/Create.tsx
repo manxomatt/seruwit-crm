@@ -7,10 +7,10 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import PageHeader from '@/Components/PageHeader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import InvoicingNav from '../../../../InvoicingNav';
-import PageHeader from '@/Components/PageHeader';
 
 interface Partner {
     id: number;
@@ -51,51 +51,57 @@ export default function Create({ partners, selectedPartnerId }: Props): JSX.Elem
 
             <InvoicingNav />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-6">
-                    <form onSubmit={submit} className="max-w-3xl space-y-6">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                            <div className="sm:col-span-3">
-                                <InputLabel htmlFor="partner_id" value={t('invoicing.create.partner')} />
-                                <Select
-                                    id="partner_id"
-                                    className="mt-1 block w-full"
-                                    value={data.partner_id}
-                                    onChange={(value) => setData('partner_id', value)}
-                                    placeholder={t('invoicing.create.select_partner')}
-                                    options={partners.map((partner) => ({
-                                        value: String(partner.id),
-                                        label: `${partner.name} (${partner.code})`,
-                                    }))}
-                                />
-                                <InputError message={errors.partner_id} className="mt-2" />
-                            </div>
-                            <div className="sm:col-span-1">
-                                <InputLabel htmlFor="issue_date" value={t('invoicing.create.issue_date')} />
-                                <TextInput id="issue_date" type="date" className="mt-1 block w-full" value={data.issue_date} onChange={(e) => setData('issue_date', e.target.value)} />
-                                <InputError message={errors.issue_date} className="mt-2" />
-                            </div>
-                            <div className="sm:col-span-1">
-                                <InputLabel htmlFor="due_date" value={t('invoicing.create.due_date')} />
-                                <TextInput id="due_date" type="date" className="mt-1 block w-full" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
-                                <InputError message={errors.due_date} className="mt-2" />
-                            </div>
+            <div className="max-w-3xl rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <form onSubmit={submit} className="space-y-6">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                        <div className="sm:col-span-3">
+                            <InputLabel htmlFor="partner_id" value={t('invoicing.create.partner')} />
+                            <Select
+                                id="partner_id"
+                                className="mt-1 block w-full"
+                                value={data.partner_id}
+                                onChange={(value) => setData('partner_id', value)}
+                                placeholder={t('invoicing.create.select_partner')}
+                                options={partners.map((partner) => ({
+                                    value: String(partner.id),
+                                    label: `${partner.name} (${partner.code})`,
+                                }))}
+                            />
+                            <InputError message={errors.partner_id} className="mt-2" />
                         </div>
+                        <div className="sm:col-span-1">
+                            <InputLabel htmlFor="issue_date" value={t('invoicing.create.issue_date')} />
+                            <TextInput id="issue_date" type="date" className="mt-1 block w-full !rounded-2xl text-xs font-mono" value={data.issue_date} onChange={(e) => setData('issue_date', e.target.value)} />
+                            <InputError message={errors.issue_date} className="mt-2" />
+                        </div>
+                        <div className="sm:col-span-1">
+                            <InputLabel htmlFor="due_date" value={t('invoicing.create.due_date')} />
+                            <TextInput id="due_date" type="date" className="mt-1 block w-full !rounded-2xl text-xs font-mono" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
+                            <InputError message={errors.due_date} className="mt-2" />
+                        </div>
+                    </div>
 
-                        <div>
-                            <InputLabel htmlFor="notes" value={t('invoicing.create.notes')} />
-                            <textarea id="notes" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
-                            <InputError message={errors.notes} className="mt-2" />
-                        </div>
+                    <div>
+                        <InputLabel htmlFor="notes" value={t('invoicing.create.notes')} />
+                        <textarea
+                            id="notes"
+                            rows={3}
+                            className="mt-1 block w-full rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            value={data.notes}
+                            onChange={(e) => setData('notes', e.target.value)}
+                        />
+                        <InputError message={errors.notes} className="mt-2" />
+                    </div>
 
-                        <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing || !data.partner_id}>{t('invoicing.create.submit')}</PrimaryButton>
-                            <Link href={prefixedRoute('invoicing.invoices.index')}>
-                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
-                            </Link>
-                        </div>
-                    </form>
-                </div>
+                    <div className="flex items-center gap-3 pt-2">
+                        <PrimaryButton disabled={processing || !data.partner_id} className="!rounded-xl text-xs shadow-sm">
+                            💾 {t('invoicing.create.submit')}
+                        </PrimaryButton>
+                        <Link href={prefixedRoute('invoicing.invoices.index')}>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
+                        </Link>
+                    </div>
+                </form>
             </div>
         </DynamicLayout>
     );

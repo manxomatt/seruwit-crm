@@ -59,55 +59,49 @@ type StatTone = 'emerald' | 'sky' | 'violet' | 'amber' | 'slate' | 'rose';
 
 const STAT_TONES: Record<
     StatTone,
-    { card: string; icon: string; value: string; bar: string; track: string; accent: string }
+    { card: string; icon: string; value: string; bar: string; track: string }
 > = {
     emerald: {
-        card: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-teal-50',
-        icon: 'bg-emerald-500 text-white shadow-emerald-500/30',
-        value: 'text-emerald-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400',
+        value: 'text-emerald-600 dark:text-emerald-400',
         bar: 'bg-emerald-500',
-        track: 'bg-emerald-100',
-        accent: 'bg-emerald-500',
+        track: 'bg-emerald-100 dark:bg-emerald-950/60',
     },
     sky: {
-        card: 'border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-cyan-50',
-        icon: 'bg-sky-500 text-white shadow-sky-500/30',
-        value: 'text-sky-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400',
+        value: 'text-slate-900 dark:text-white',
         bar: 'bg-sky-500',
-        track: 'bg-sky-100',
-        accent: 'bg-sky-500',
+        track: 'bg-sky-100 dark:bg-sky-950/60',
     },
     violet: {
-        card: 'border-violet-200/80 bg-gradient-to-br from-violet-50 via-white to-indigo-50',
-        icon: 'bg-violet-500 text-white shadow-violet-500/30',
-        value: 'text-violet-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400',
+        value: 'text-violet-600 dark:text-violet-400',
         bar: 'bg-violet-500',
-        track: 'bg-violet-100',
-        accent: 'bg-violet-500',
+        track: 'bg-violet-100 dark:bg-violet-950/60',
     },
     amber: {
-        card: 'border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-orange-50',
-        icon: 'bg-amber-500 text-white shadow-amber-500/30',
-        value: 'text-amber-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400',
+        value: 'text-amber-600 dark:text-amber-400',
         bar: 'bg-amber-500',
-        track: 'bg-amber-100',
-        accent: 'bg-amber-500',
+        track: 'bg-amber-100 dark:bg-amber-950/60',
     },
     slate: {
-        card: 'border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-gray-100',
-        icon: 'bg-slate-500 text-white shadow-slate-500/30',
-        value: 'text-slate-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
+        value: 'text-slate-900 dark:text-white',
         bar: 'bg-slate-500',
-        track: 'bg-slate-200',
-        accent: 'bg-slate-500',
+        track: 'bg-slate-200 dark:bg-slate-800',
     },
     rose: {
-        card: 'border-rose-200/80 bg-gradient-to-br from-rose-50 via-white to-red-50',
-        icon: 'bg-rose-500 text-white shadow-rose-500/30',
-        value: 'text-rose-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
+        icon: 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400',
+        value: 'text-rose-600 dark:text-rose-400',
         bar: 'bg-rose-500',
-        track: 'bg-rose-100',
-        accent: 'bg-rose-500',
+        track: 'bg-rose-100 dark:bg-rose-950/60',
     },
 };
 
@@ -169,6 +163,32 @@ function IconUsers(): JSX.Element {
     );
 }
 
+function IconArrow(): JSX.Element {
+    return (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+    );
+}
+
+function StatusBadge({ status }: { status: string }) {
+    const { t } = useTrans();
+    const isPosted = status === 'posted';
+
+    const style = isPosted
+        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50'
+        : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/50';
+
+    const dot = isPosted ? 'bg-emerald-500' : 'bg-rose-500';
+
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${style}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+            {t(`receivables.status.${status}`, undefined, status)}
+        </span>
+    );
+}
+
 function StatCard({
     label,
     value,
@@ -193,66 +213,71 @@ function StatCard({
     const styles = STAT_TONES[tone];
     const clampedProgress = progress === undefined ? undefined : Math.max(0, Math.min(100, progress));
     const body = (
-        <>
-            <span className={`absolute inset-y-0 left-0 w-1 ${styles.accent}`} aria-hidden />
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
-                    <p className={`mt-2 text-2xl font-bold tabular-nums sm:text-3xl ${styles.value}`}>{value}</p>
-                    {hint && <p className="mt-1 text-xs text-gray-600">{hint}</p>}
-                </div>
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-lg ${styles.icon}`}>{icon}</div>
+        <div className="flex items-center gap-3">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg font-bold ${styles.icon}`}>
+                {icon}
             </div>
-            {clampedProgress !== undefined && (
-                <div className="mt-4">
-                    <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-medium text-gray-500">
-                        <span className="truncate">{progressLabel}</span>
-                        <span className="tabular-nums">{clampedProgress}%</span>
-                    </div>
-                    <div className={`h-1.5 w-full overflow-hidden rounded-full ${styles.track}`}>
-                        <div className={`h-full rounded-full transition-all duration-500 ${styles.bar}`} style={{ width: `${clampedProgress}%` }} />
-                    </div>
-                </div>
-            )}
-            {meta && meta.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                    {meta.map((item) => (
-                        <span
-                            key={item.label}
-                            className="inline-flex items-center gap-1 rounded-md bg-white/70 px-2 py-1 text-[11px] font-medium text-gray-600 ring-1 ring-black/5"
-                        >
-                            <span className="tabular-nums text-gray-900">{item.value}</span>
-                            <span>{item.label}</span>
-                        </span>
-                    ))}
-                </div>
-            )}
-        </>
-    );
+            <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+                <p className={`text-xl font-extrabold truncate ${styles.value}`}>{value}</p>
+                {hint && <p className="mt-0.5 text-[11px] text-slate-400 truncate">{hint}</p>}
 
-    const className = `relative overflow-hidden rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md ${styles.card} ${
-        href ? 'block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500' : ''
-    }`;
+                {clampedProgress !== undefined && (
+                    <div className="mt-3">
+                        <div className="mb-1 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            <span className="truncate">{progressLabel}</span>
+                            <span className="tabular-nums font-mono">{clampedProgress}%</span>
+                        </div>
+                        <div className={`h-1.5 w-full overflow-hidden rounded-full ${styles.track}`}>
+                            <div className={`h-full rounded-full transition-all duration-500 ${styles.bar}`} style={{ width: `${clampedProgress}%` }} />
+                        </div>
+                    </div>
+                )}
+
+                {meta && meta.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {meta.map((item) => (
+                            <span
+                                key={item.label}
+                                className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300"
+                            >
+                                <span className="tabular-nums font-mono text-slate-900 dark:text-white">{item.value}</span>
+                                <span>{item.label}</span>
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 
     if (href) {
         return (
-            <Link href={href} className={className}>
+            <Link
+                href={href}
+                className={`block rounded-3xl border p-5 shadow-sm transition hover:shadow-md ${styles.card}`}
+            >
                 {body}
             </Link>
         );
     }
 
-    return <div className={className}>{body}</div>;
+    return <div className={`rounded-3xl border p-5 shadow-sm ${styles.card}`}>{body}</div>;
 }
 
 function QuickAction({ href, title, description }: { href: string; title: string; description: string }): JSX.Element {
     return (
         <Link
             href={href}
-            className="group rounded-lg border border-gray-200 bg-white px-3 py-3 transition hover:border-indigo-300 hover:bg-indigo-50/40"
+            className="group flex items-start justify-between gap-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
         >
-            <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-700">{title}</p>
-            <p className="mt-0.5 text-xs text-gray-500">{description}</p>
+            <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">{title}</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">{description}</p>
+            </div>
+            <span className="mt-0.5 text-slate-400 transition group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                <IconArrow />
+            </span>
         </Link>
     );
 }
@@ -269,10 +294,11 @@ export default function Index({ board, can }: Props): JSX.Element {
             header={
                 <PageHeader
                     title={t('receivables.title')}
+                    description={t('receivables.dashboard.subtitle')}
                     actions={
                         can.create ? (
                             <Link href={prefixedRoute('receivables.payments.create')}>
-                                <PrimaryButton>{t('receivables.payments.index.record')}</PrimaryButton>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">➕ {t('receivables.payments.index.record')}</PrimaryButton>
                             </Link>
                         ) : undefined
                     }
@@ -283,8 +309,7 @@ export default function Index({ board, can }: Props): JSX.Element {
 
             <ReceivablesNav />
 
-            <p className="mb-6 text-sm text-gray-600">{t('receivables.dashboard.subtitle')}</p>
-
+            {/* Stat Overview Cards Grid */}
             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                     label={t('receivables.payments.index.open_ar')}
@@ -326,56 +351,59 @@ export default function Index({ board, can }: Props): JSX.Element {
                 />
             </div>
 
+            {/* Aging Buckets Overview */}
             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 {BUCKET_KEYS.map((key) => (
-                    <div key={key} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    <div key={key} className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             {t(`receivables.buckets.${key}`)}
                         </p>
-                        <p className="mt-2 text-xl font-bold tabular-nums text-gray-900">{formatMoney(aging.buckets[key])}</p>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-2 text-xl font-extrabold text-slate-900 dark:text-white">{formatMoney(aging.buckets[key])}</p>
+                        <p className="mt-1 text-xs text-slate-400">
                             {sharePercent(aging.buckets[key], summary.open_ar)}% {t('receivables.dashboard.of_open_ar')}
                         </p>
                     </div>
                 ))}
             </div>
 
-            <div className="mb-6 grid gap-4 lg:grid-cols-3">
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+            {/* Main Section: Top Partners & Recent Payments */}
+            <div className="mb-6 grid gap-6 lg:grid-cols-3">
+                {/* Left Column: Top Partners */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <div className="mb-4 flex items-center justify-between gap-3">
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">{t('receivables.dashboard.top_partners')}</h3>
-                            <p className="mt-0.5 text-xs text-gray-500">{t('receivables.dashboard.top_partners_help')}</p>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">🏢 {t('receivables.dashboard.top_partners')}</h3>
+                            <p className="mt-0.5 text-xs text-slate-400">{t('receivables.dashboard.top_partners_help')}</p>
                         </div>
                         <Link
                             href={prefixedRoute('receivables.credit.index')}
-                            className="text-xs font-medium text-indigo-600 hover:underline"
+                            className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
-                            {t('receivables.dashboard.view_credit')}
+                            {t('receivables.dashboard.view_credit')} →
                         </Link>
                     </div>
                     {top_partners.length === 0 ? (
-                        <p className="text-sm text-gray-500">{t('receivables.aging.index.empty')}</p>
+                        <p className="text-xs font-bold text-slate-400">{t('receivables.aging.index.empty')}</p>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {top_partners.map((row) => (
                                 <div key={row.partner_id}>
-                                    <div className="mb-1 flex items-center justify-between gap-2 text-xs text-gray-600">
-                                        <span className="truncate font-medium text-gray-800">
+                                    <div className="mb-1 flex items-center justify-between gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+                                        <span className="truncate">
                                             {row.name}
                                             {row.code ? ` (${row.code})` : ''}
                                         </span>
-                                        <span className="shrink-0 tabular-nums">{formatMoney(row.outstanding)}</span>
+                                        <span className="shrink-0 font-mono text-slate-900 dark:text-white">{formatMoney(row.outstanding)}</span>
                                     </div>
-                                    <div className="h-1.5 overflow-hidden rounded-full bg-indigo-100">
+                                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                         <div
                                             className="h-full rounded-full bg-indigo-500"
                                             style={{ width: `${Math.max(8, (row.outstanding / partnerMax) * 100)}%` }}
                                         />
                                     </div>
                                     {row.overdue > 0 && (
-                                        <p className="mt-1 text-[11px] font-medium text-rose-600">
-                                            {t('receivables.dashboard.partner_overdue', {
+                                        <p className="mt-1 text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                                            ⚠️ {t('receivables.dashboard.partner_overdue', {
                                                 amount: formatMoney(row.overdue),
                                             })}
                                         </p>
@@ -386,78 +414,61 @@ export default function Index({ board, can }: Props): JSX.Element {
                     )}
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
-                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                {/* Right Column: Recent Payments Table */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden lg:col-span-2">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 px-6 py-4">
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">{t('receivables.dashboard.recent')}</h3>
-                            <p className="mt-0.5 text-xs text-gray-500">{t('receivables.dashboard.recent_help')}</p>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">💳 {t('receivables.dashboard.recent')}</h3>
+                            <p className="mt-0.5 text-xs text-slate-400">{t('receivables.dashboard.recent_help')}</p>
                         </div>
                         <Link
                             href={prefixedRoute('receivables.payments.index')}
-                            className="text-sm font-medium text-indigo-600 hover:underline"
+                            className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
-                            {t('receivables.dashboard.view_payments')}
+                            {t('receivables.dashboard.view_payments')} →
                         </Link>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('receivables.fields.code')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('receivables.fields.partner')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('receivables.fields.type_method')}
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
-                                        {t('receivables.fields.amount')}
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        {t('receivables.fields.status')}
-                                    </th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.code')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.partner')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.type_method')}</th>
+                                    <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.amount')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('receivables.fields.status')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                                 {recent.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-bold">
                                             {t('receivables.payments.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (
                                     recent.map((payment) => (
-                                        <tr key={payment.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3">
+                                        <tr key={payment.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <Link
                                                     href={prefixedRoute('receivables.payments.show', payment.id)}
-                                                    className="font-mono text-xs font-medium text-indigo-600 hover:underline"
+                                                    className="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                                 >
                                                     {payment.code}
                                                 </Link>
-                                                <p className="text-xs text-gray-500">{payment.payment_date ?? '—'}</p>
+                                                <p className="mt-0.5 font-mono text-[10px] text-slate-400">{payment.payment_date ?? '—'}</p>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-700">{payment.partner?.name ?? '—'}</td>
-                                            <td className="px-4 py-3 text-xs text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900 dark:text-white">{payment.partner?.name ?? '—'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                                 {t(`receivables.types.${payment.type}`, undefined, payment.type)}
                                                 {' · '}
                                                 {t(`receivables.methods.${payment.method}`, undefined, payment.method)}
                                             </td>
-                                            <td className="px-4 py-3 text-right tabular-nums font-medium text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-slate-900 dark:text-white">
                                                 {formatMoney(payment.amount)}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <span
-                                                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                        payment.status === 'posted'
-                                                            ? 'bg-emerald-100 text-emerald-800'
-                                                            : 'bg-gray-100 text-gray-700'
-                                                    }`}
-                                                >
-                                                    {t(`receivables.status.${payment.status}`, undefined, payment.status)}
-                                                </span>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <StatusBadge status={payment.status} />
                                             </td>
                                         </tr>
                                     ))
@@ -468,8 +479,9 @@ export default function Index({ board, can }: Props): JSX.Element {
                 </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('receivables.dashboard.quick_actions')}</h3>
+            {/* Quick Actions Grid */}
+            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400">⚡ {t('receivables.dashboard.quick_actions')}</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <QuickAction
                         href={prefixedRoute('receivables.payments.index')}

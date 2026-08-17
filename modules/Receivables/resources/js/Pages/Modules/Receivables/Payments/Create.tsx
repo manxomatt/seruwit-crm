@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
+import PageHeader from '@/Components/PageHeader';
 import { formatMoney } from '@/utils/money';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useMemo } from 'react';
@@ -151,22 +152,22 @@ export default function Create({
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('receivables.payments.create.title')}
-                    </h2>
-                    <Link href={prefixedRoute('receivables.payments.index')}>
-                        <SecondaryButton type="button">{t('common.back')}</SecondaryButton>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={t('receivables.payments.create.title')}
+                    actions={
+                        <Link href={prefixedRoute('receivables.payments.index')}>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.back')}</SecondaryButton>
+                        </Link>
+                    }
+                />
             }
         >
             <Head title={t('receivables.payments.create.title')} />
 
             <ReceivablesNav />
 
-            <form onSubmit={submit} className="max-w-4xl space-y-6 overflow-visible rounded-lg bg-white p-6 shadow-sm">
-                <div className="grid gap-4 sm:grid-cols-2">
+            <form onSubmit={submit} className="max-w-4xl space-y-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <div className="grid gap-6 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                         <InputLabel htmlFor="partner_id" value={`${t('receivables.fields.partner_customer')} *`} />
                         <Select
@@ -192,7 +193,7 @@ export default function Create({
                         <TextInput
                             id="payment_date"
                             type="date"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                             value={data.payment_date}
                             onChange={(e) => setData('payment_date', e.target.value)}
                         />
@@ -258,16 +259,16 @@ export default function Create({
                             type="number"
                             step="0.01"
                             min="0"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                             value={data.amount}
                             onChange={(e) => setData('amount', e.target.value)}
                         />
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-[11px] text-slate-400">
                             {t('receivables.payments.create.allocation_hint', { amount: formatMoney(allocatedTotal) })}
                             {allocatedTotal > 0 && (
                                 <button
                                     type="button"
-                                    className="ml-2 text-indigo-600 hover:underline"
+                                    className="ml-2 font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                     onClick={() => setData('amount', allocatedTotal.toFixed(2))}
                                 >
                                     {t('receivables.actions.match_amount')}
@@ -281,7 +282,7 @@ export default function Create({
                         <InputLabel htmlFor="reference_number" value={t('receivables.fields.reference_number')} />
                         <TextInput
                             id="reference_number"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-2xl text-xs font-mono"
                             value={data.reference_number}
                             onChange={(e) => setData('reference_number', e.target.value)}
                             placeholder={t('receivables.placeholders.reference')}
@@ -293,7 +294,7 @@ export default function Create({
                         <InputLabel htmlFor="notes" value={t('receivables.fields.notes')} />
                         <textarea
                             id="notes"
-                            className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="mt-1 w-full rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             rows={2}
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
@@ -301,66 +302,66 @@ export default function Create({
                     </div>
                 </div>
 
-                <div>
-                    <h3 className="text-sm font-semibold text-gray-900">
-                        {t('receivables.payments.create.allocation_section')}
+                <div className="border-t border-slate-100 dark:border-slate-800/60 pt-6">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                        📑 {t('receivables.payments.create.allocation_section')}
                     </h3>
                     <InputError message={errors.allocations} className="mt-1" />
                     {!data.partner_id ? (
-                        <p className="mt-2 text-sm text-gray-500">
+                        <p className="mt-2 text-xs text-slate-400">
                             {t('receivables.payments.create.select_partner_hint')}
                         </p>
                     ) : openInvoices.length === 0 ? (
-                        <p className="mt-2 text-sm text-gray-500">
+                        <p className="mt-2 text-xs text-slate-400">
                             {t('receivables.payments.create.no_open_invoices')}
                         </p>
                     ) : (
-                        <div className="mt-3 overflow-x-auto rounded-md border border-gray-200">
-                            <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                <thead className="bg-gray-50">
+                        <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800/60">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                                <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                        <th className="px-4 py-3 text-left font-bold uppercase tracking-wider text-slate-400">
                                             {t('receivables.fields.invoice')}
                                         </th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                        <th className="px-4 py-3 text-left font-bold uppercase tracking-wider text-slate-400">
                                             {t('receivables.fields.due')}
                                         </th>
-                                        <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">
+                                        <th className="px-4 py-3 text-right font-bold uppercase tracking-wider text-slate-400">
                                             {t('receivables.fields.balance')}
                                         </th>
-                                        <th className="px-3 py-2 text-right text-xs font-medium uppercase text-gray-500">
+                                        <th className="px-4 py-3 text-right font-bold uppercase tracking-wider text-slate-400">
                                             {t('receivables.fields.allocation')}
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                                     {openInvoices.map((invoice) => {
                                         const row = data.allocations.find((a) => a.invoice_id === invoice.id);
 
                                         return (
-                                            <tr key={invoice.id}>
-                                                <td className="px-3 py-2 font-medium">{invoice.code}</td>
-                                                <td className="px-3 py-2 text-gray-600">
+                                            <tr key={invoice.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                                                <td className="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">{invoice.code}</td>
+                                                <td className="px-4 py-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
                                                     {invoice.due_date
                                                         ? new Date(invoice.due_date).toLocaleDateString(localeTag)
                                                         : '—'}
                                                 </td>
-                                                <td className="px-3 py-2 text-right tabular-nums">
+                                                <td className="px-4 py-3 text-right font-mono font-bold text-slate-900 dark:text-white">
                                                     {formatMoney(invoice.balance)}
                                                     <button
                                                         type="button"
-                                                        className="ml-2 text-xs text-indigo-600 hover:underline"
+                                                        className="ml-2 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                                         onClick={() => setAllocation(invoice.id, String(invoice.balance))}
                                                     >
                                                         {t('receivables.actions.full')}
                                                     </button>
                                                 </td>
-                                                <td className="px-3 py-2 text-right">
+                                                <td className="px-4 py-3 text-right">
                                                     <TextInput
                                                         type="number"
                                                         step="0.01"
                                                         min="0"
-                                                        className="ml-auto block w-36 text-right"
+                                                        className="ml-auto block w-36 text-right !rounded-xl text-xs font-mono"
                                                         value={row?.amount ?? ''}
                                                         onChange={(e) => setAllocation(invoice.id, e.target.value)}
                                                     />
@@ -376,9 +377,9 @@ export default function Create({
 
                 <div className="flex justify-end gap-3 pt-2">
                     <Link href={prefixedRoute('receivables.payments.index')}>
-                        <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                        <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
                     </Link>
-                    <PrimaryButton disabled={processing}>{t('receivables.payments.create.submit')}</PrimaryButton>
+                    <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">💾 {t('receivables.payments.create.submit')}</PrimaryButton>
                 </div>
             </form>
         </DynamicLayout>

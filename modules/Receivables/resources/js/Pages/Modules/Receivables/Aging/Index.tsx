@@ -2,9 +2,9 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { formatMoney } from '@/utils/money';
+import PageHeader from '@/Components/PageHeader';
 import { Head, Link } from '@inertiajs/react';
 import ReceivablesNav from '../../../../ReceivablesNav';
-import PageHeader from '@/Components/PageHeader';
 
 interface AgingRow {
     invoice_id: number;
@@ -28,7 +28,7 @@ interface Props {
 }
 
 const BanknotesIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -39,7 +39,7 @@ const BanknotesIcon = () => (
 );
 
 const EyeIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         <path
             strokeLinecap="round"
@@ -65,95 +65,99 @@ export default function Index({ buckets, overdue_count, overdue_amount, rows }: 
 
             <div className="space-y-6">
                 {overdue_count > 0 && (
-                    <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                        {t('receivables.aging.index.alert', {
+                    <div className="rounded-3xl border border-rose-200/60 dark:border-rose-800/50 bg-rose-50/70 dark:bg-rose-950/40 p-4 text-xs font-bold text-rose-900 dark:text-rose-200 shadow-sm">
+                        ⚠️ {t('receivables.aging.index.alert', {
                             count: overdue_count,
                             amount: formatMoney(overdue_amount),
                         })}
                     </div>
                 )}
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                {/* Aging Buckets Grid */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     {Object.entries(buckets).map(([key, value]) => (
-                        <div key={key} className="rounded-lg bg-white p-4 shadow-sm">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">
+                        <div key={key} className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                 {t(`receivables.buckets.${key}`, undefined, key)}
                             </p>
-                            <p className="mt-1 text-lg font-semibold tabular-nums text-gray-900">
+                            <p className="mt-2 text-xl font-extrabold text-slate-900 dark:text-white">
                                 {formatMoney(value)}
                             </p>
                         </div>
                     ))}
                 </div>
 
-                <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+                {/* Aging Rows Table */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                         {t('receivables.fields.invoice')}
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                         {t('receivables.fields.partner')}
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                         {t('receivables.fields.due')}
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
                                         {t('receivables.fields.balance')}
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
                                         {t('receivables.fields.days_past_due')}
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                         {t('receivables.fields.bucket')}
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
                                         {t('common.actions')}
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                                 {rows.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                                        <td colSpan={7} className="px-6 py-16 text-center text-slate-400 font-bold">
                                             {t('receivables.aging.index.empty')}
                                         </td>
                                     </tr>
                                 ) : (
                                     rows.map((row) => (
-                                        <tr key={row.invoice_id} className={row.is_overdue ? 'bg-red-50/40' : 'hover:bg-gray-50'}>
-                                            <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
+                                        <tr key={row.invoice_id} className={`group transition ${row.is_overdue ? 'bg-rose-50/40 dark:bg-rose-950/20 hover:bg-rose-50/80 dark:hover:bg-rose-950/40' : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/30'}`}>
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono font-bold text-slate-900 dark:text-white">
                                                 {row.code}
                                             </td>
-                                            <td className="px-4 py-3 text-gray-700">{row.partner.name}</td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900 dark:text-white">{row.partner.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-[11px] text-slate-500 dark:text-slate-400">
                                                 {row.due_date
                                                     ? new Date(row.due_date).toLocaleDateString(localeTag)
                                                     : '—'}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-slate-900 dark:text-white">
                                                 {formatMoney(row.balance)}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-slate-900 dark:text-white">
                                                 {row.days_past_due}
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3">
-                                                {t(`receivables.buckets.${row.bucket}`, undefined, row.bucket)}
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                                                    {t(`receivables.buckets.${row.bucket}`, undefined, row.bucket)}
+                                                </span>
                                             </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-right">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
                                                         href={prefixedRoute('invoicing.invoices.show', row.invoice_id)}
-                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                                                         title={t('common.view')}
                                                     >
                                                         <EyeIcon />
                                                     </Link>
                                                     <Link
                                                         href={`${prefixedRoute('receivables.payments.create')}?partner_id=${row.partner.id}&invoice_id=${row.invoice_id}`}
-                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition"
                                                         title={t('receivables.actions.pay')}
                                                     >
                                                         <BanknotesIcon />
