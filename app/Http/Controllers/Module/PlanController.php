@@ -62,6 +62,23 @@ class PlanController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('Module/Plans/Create', [
+            'nextSortOrder' => Plan::query()->max('sort_order') + 1,
+            'availableModules' => collect(Modules::all())
+                ->map(fn (ModuleContract $module): array => [
+                    'key' => $module->key(),
+                    'label' => $module->label(),
+                    'description' => $module->description(),
+                    'tier' => $module->tier()->value,
+                    'is_enabled' => Modules::platformEnabled($module->key()),
+                ])
+                ->values()
+                ->all(),
+        ]);
+    }
+
     public function store(StorePlanRequest $request): RedirectResponse
     {
         $plan = DB::transaction(function () use ($request): Plan {
@@ -75,7 +92,38 @@ class PlanController extends Controller
             return $plan;
         });
 
-        return back()->with('success', __('plans.messages.created', ['name' => $plan->name]));
+        return redirect()->route('module.plans.index')->with('success', __('plans.messages.created', ['name' => $plan->name]));
+    }
+
+    public function edit(Plan $plan): Response
+    {
+        return Inertia::render('Module/Plans/Edit', [
+            'plan' => [
+                'id' => $plan->id,
+                'key' => $plan->key,
+                'name' => $plan->name,
+                'description' => $plan->description,
+                'modules' => $plan->modules ?? [],
+                'sort_order' => $plan->sort_order,
+                'is_default' => $plan->is_default,
+                'price' => $plan->price,
+                'original_price' => $plan->original_price,
+                'annual_price' => $plan->annual_price,
+                'annual_original_price' => $plan->annual_original_price,
+                'currency' => $plan->currency ?? 'IDR',
+                'tenants' => $plan->tenantCount(),
+            ],
+            'availableModules' => collect(Modules::all())
+                ->map(fn (ModuleContract $module): array => [
+                    'key' => $module->key(),
+                    'label' => $module->label(),
+                    'description' => $module->description(),
+                    'tier' => $module->tier()->value,
+                    'is_enabled' => Modules::platformEnabled($module->key()),
+                ])
+                ->values()
+                ->all(),
+        ]);
     }
 
     public function update(UpdatePlanRequest $request, Plan $plan): RedirectResponse
@@ -89,7 +137,7 @@ class PlanController extends Controller
             $this->settleDefault($plan);
         });
 
-        return back()->with('success', __('plans.messages.updated', ['name' => $plan->name]));
+        return redirect()->route('module.plans.index')->with('success', __('plans.messages.updated', ['name' => $plan->name]));
     }
 
     public function destroy(Plan $plan): RedirectResponse
