@@ -333,7 +333,8 @@ const MENU_GROUPS: MenuGroup[] = [
 const CENTRAL_MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'finance', modules: ['accounting', 'payment-orders'] },
     { titleKey: 'content', modules: ['pages', 'posts', 'carousels', 'document', 'media'] },
-    { titleKey: 'platform', modules: ['tenants', 'plans', 'module-registry', 'settings', 'users', 'roles'] },
+    { titleKey: 'administration', modules: ['users', 'roles', 'settings'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'module-registry'] },
 ];
 
 const CENTRAL_ALLOWED_MODULES = [
