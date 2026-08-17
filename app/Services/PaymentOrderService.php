@@ -76,7 +76,7 @@ class PaymentOrderService
         });
     }
 
-    public function submitProof(PaymentOrder $order, UploadedFile $proof, ?string $note): void
+    public function submitProof(PaymentOrder $order, UploadedFile $proof, ?string $note = null): void
     {
         $central = $this->centralConnection();
 
