@@ -362,8 +362,8 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
 
             <FleetNav />
 
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <div className="border-b border-gray-100 px-4 py-3 sm:px-5">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                <div className="border-b border-slate-100 dark:border-slate-800 px-4 py-3 sm:px-5">
                     {selectionMode ? (
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white">

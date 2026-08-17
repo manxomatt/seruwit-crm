@@ -81,31 +81,37 @@ interface Props {
 const PERIOD_KEYS = ['month', 'quarter', 'year'] as const;
 
 function costDelta(
-    t: (key: string, params?: Record<string, string | number>) => string,
+    t: (key: string, replace?: Record<string, string | number>, fallback?: string) => string,
     current: number,
     previous: number,
 ): string {
-    if (previous === 0) {
-        return current === 0 ? t('fleet.analytics.same_previous') : t('fleet.analytics.no_baseline');
+    if (!previous || previous <= 0) {
+        return t('fleet.analytics.no_previous_cost', undefined, 'No previous period comparison');
     }
-    const pct = Math.round(((current - previous) / previous) * 1000) / 10;
-    const sign = pct > 0 ? '+' : '';
-    return t('fleet.analytics.vs_previous', { pct: `${sign}${pct}%` });
+    const diff = current - previous;
+    const pct = Math.round((diff / previous) * 100);
+    if (diff > 0) {
+        return t('fleet.analytics.cost_increased', { pct }, `+${pct}% vs previous period`);
+    }
+    if (diff < 0) {
+        return t('fleet.analytics.cost_decreased', { pct: Math.abs(pct) }, `${pct}% vs previous period`);
+    }
+    return t('fleet.analytics.cost_same', undefined, 'Same as previous period');
 }
 
 function BarChart({ points }: { points: MonthPoint[] }): JSX.Element {
     const max = Math.max(...points.map((p) => p.cost), 1);
 
     return (
-        <div className="flex h-40 items-end gap-1.5">
+        <div className="flex h-44 items-end gap-2 pt-4">
             {points.map((point) => (
-                <div key={point.month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                <div key={point.month} className="flex min-w-0 flex-1 flex-col items-center gap-1.5 h-full justify-end">
                     <div
-                        className="w-full rounded-t bg-sky-500/80 transition-all"
-                        style={{ height: `${Math.max(4, (point.cost / max) * 100)}%` }}
+                        className="w-full rounded-t-xl bg-gradient-to-t from-sky-600 to-cyan-400 dark:from-sky-500 dark:to-cyan-300 transition-all hover:opacity-90 shadow-sm"
+                        style={{ height: `${Math.max(6, (point.cost / max) * 100)}%` }}
                         title={`${point.label}: ${formatMoney(point.cost)}`}
                     />
-                    <span className="truncate text-[10px] text-gray-500">{point.label.split(' ')[0]}</span>
+                    <span className="truncate text-[10px] font-bold text-slate-400">{point.label.split(' ')[0]}</span>
                 </div>
             ))}
         </div>
@@ -119,9 +125,9 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
     const maxKm = Math.max(...efficiency_trend.map((p) => p.km_per_liter ?? 0), 1);
 
     const periodLabels: Record<(typeof PERIOD_KEYS)[number], string> = {
-        month: t('fleet.analytics.period_month'),
-        quarter: t('fleet.analytics.period_quarter'),
-        year: t('fleet.analytics.period_year'),
+        month: t('fleet.analytics.period_month', undefined, 'Month'),
+        quarter: t('fleet.analytics.period_quarter', undefined, 'Quarter'),
+        year: t('fleet.analytics.period_year', undefined, 'Year'),
     };
 
     const reload = (patch: Record<string, string | number | undefined>) => {
@@ -138,303 +144,214 @@ export default function Analytics({ analytics, vehicles, filters }: Props): JSX.
 
     return (
         <DynamicLayout
-            header={<PageHeader title={t('fleet.title')} />}
+            header={<PageHeader title={t('fleet.title', undefined, 'Fleet Management')} subtitle={t('fleet.analytics.subtitle', undefined, 'Fuel cost analysis, efficiency trends, and driver benchmarks')} />}
         >
-            <Head title={t('fleet.analytics.title')} />
+            <Head title={t('fleet.analytics.title', undefined, 'Fuel Analytics')} />
 
             <FleetNav />
 
             <div className="space-y-6">
-                    <p className="text-sm text-gray-600">{t('fleet.analytics.subtitle')}</p>
-
-                    <div className="flex flex-wrap items-end gap-3">
-                        <div>
-                            <label className="block text-xs text-gray-500">{t('fleet.analytics.vehicle')}</label>
+                {/* Control Filters */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <div className="min-w-[16rem]">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                {t('fleet.analytics.vehicle', undefined, 'Vehicle')}
+                            </label>
                             <Select
-                                className="mt-0.5 min-w-[14rem]"
+                                className="w-full text-xs !rounded-2xl border-slate-200 dark:border-slate-800"
                                 value={filters.vehicle_id ? String(filters.vehicle_id) : ''}
                                 onChange={(value) => reload({ vehicle_id: value || undefined })}
-                                placeholder={t('fleet.analytics.all_vehicles')}
+                                placeholder={t('fleet.analytics.all_vehicles', undefined, 'All Vehicles')}
                                 options={vehicles.map((v) => ({
                                     value: String(v.id),
                                     label: `${v.name} (${v.plate_number})`,
                                 }))}
                             />
                         </div>
-                        <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+
+                        <div className="flex items-center gap-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 p-1 mt-4 sm:mt-0">
                             {PERIOD_KEYS.map((key) => (
                                 <button
                                     key={key}
                                     type="button"
                                     onClick={() => reload({ period: key })}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                                         filters.period === key
-                                            ? 'bg-white text-gray-900 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900'
+                                            ? 'bg-slate-900 text-white dark:bg-indigo-600 shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                                     }`}
                                 >
                                     {periodLabels[key]}
                                 </button>
                             ))}
                         </div>
-                        <Link href={prefixedRoute('fleet.fuel.index')} className="pb-2 text-sm text-indigo-600 hover:underline">
-                            {t('fleet.analytics.fuel_history')}
-                        </Link>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.fuel_cost')}</p>
-                            <p className="mt-2 text-2xl font-semibold tabular-nums">{formatMoney(summary.total_cost)}</p>
-                            <p className="mt-1 text-xs text-gray-500">{costDelta(t, summary.total_cost, summary.previous_total_cost)}</p>
+                    <Link
+                        href={prefixedRoute('fleet.fuel.index')}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                        {t('fleet.analytics.fuel_history', undefined, 'View Fuel Registry')} ➔
+                    </Link>
+                </div>
+
+                {/* Top Summary Cards */}
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                                {t('fleet.analytics.fuel_cost', undefined, 'Total Fuel Cost')}
+                            </span>
+                            <span className="text-lg">💰</span>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.liters')}</p>
-                            <p className="mt-2 text-2xl font-semibold tabular-nums">
-                                {summary.total_liters.toLocaleString('id-ID')} L
-                            </p>
-                            <p className="mt-1 text-xs text-gray-500">
-                                {summary.fill_count} {t('fleet.analytics.fills')}
-                            </p>
-                        </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.avg_kml')}</p>
-                            <p className="mt-2 text-2xl font-semibold tabular-nums">
-                                {summary.avg_km_per_liter !== null ? summary.avg_km_per_liter : '—'}
-                            </p>
-                        </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-4">
-                            <p className="text-xs uppercase tracking-wider text-gray-500">{t('fleet.analytics.anomaly')}</p>
-                            <p className="mt-2 text-2xl font-semibold tabular-nums text-amber-700">{summary.anomaly_count}</p>
-                        </div>
+                        <p className="text-2xl font-black tracking-tight text-slate-900 dark:text-white tabular-nums">
+                            {formatMoney(summary.total_cost)}
+                        </p>
+                        <p className="mt-1.5 text-xs font-semibold text-slate-500">
+                            {costDelta(t, summary.total_cost, summary.previous_total_cost)}
+                        </p>
                     </div>
 
-                    <div className="grid gap-6 lg:grid-cols-2">
-                        <section className="rounded-lg border border-gray-200 bg-white p-5">
-                            <h3 className="mb-4 text-sm font-semibold text-gray-800">{t('fleet.analytics.cost_12m')}</h3>
-                            <BarChart points={monthly_costs} />
-                        </section>
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                                {t('fleet.analytics.liters', undefined, 'Liters Filled')}
+                            </span>
+                            <span className="text-lg">⛽</span>
+                        </div>
+                        <p className="text-2xl font-black tracking-tight text-slate-900 dark:text-white tabular-nums">
+                            {summary.total_liters.toLocaleString('id-ID')} L
+                        </p>
+                        <p className="mt-1.5 text-xs font-semibold text-slate-500">
+                            {summary.fill_count} {t('fleet.analytics.fills', undefined, 'Refuel Entries')}
+                        </p>
+                    </div>
 
-                        <section className="rounded-lg border border-gray-200 bg-white p-5">
-                            <h3 className="mb-4 text-sm font-semibold text-gray-800">{t('fleet.analytics.trend_kml')}</h3>
-                            {efficiency_trend.length === 0 ? (
-                                <p className="text-sm text-gray-500">{t('fleet.analytics.no_kml')}</p>
-                            ) : (
-                                <div className="space-y-2">
-                                    {efficiency_trend.map((point, index) => (
-                                        <div key={`${point.filled_at}-${index}`}>
-                                            <div className="mb-0.5 flex justify-between text-xs text-gray-600">
-                                                <span>
-                                                    {point.filled_at
-                                                        ? new Date(point.filled_at).toLocaleDateString('id-ID')
-                                                        : '—'}
-                                                    <span className="text-gray-400"> · {point.plate_number}</span>
-                                                </span>
-                                                <span className="font-medium tabular-nums">
-                                                    {point.km_per_liter !== null ? `${point.km_per_liter} km/L` : '—'}
-                                                </span>
-                                            </div>
-                                            <div className="h-2 overflow-hidden rounded bg-gray-100">
-                                                <div
-                                                    className="h-full rounded bg-indigo-500"
-                                                    style={{
-                                                        width: `${((point.km_per_liter ?? 0) / maxKm) * 100}%`,
-                                                    }}
-                                                />
-                                            </div>
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                                {t('fleet.analytics.avg_kml', undefined, 'Fleet Avg km/L')}
+                            </span>
+                            <span className="text-lg">📊</span>
+                        </div>
+                        <p className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+                            {summary.avg_km_per_liter !== null ? `${summary.avg_km_per_liter} km/L` : '—'}
+                        </p>
+                        <p className="mt-1.5 text-xs font-semibold text-slate-500">Overall fuel efficiency</p>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                                {t('fleet.analytics.anomaly', undefined, 'Anomalies Flagged')}
+                            </span>
+                            <span className="text-lg">⚠️</span>
+                        </div>
+                        <p className="text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
+                            {summary.anomaly_count}
+                        </p>
+                        <p className="mt-1.5 text-xs font-semibold text-slate-500">Suspicious refuel entries</p>
+                    </div>
+                </div>
+
+                {/* Charts Grid */}
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <h3 className="mb-4 text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>📈</span> {t('fleet.analytics.cost_12m', undefined, 'Monthly Fuel Spend (12 Months)')}
+                        </h3>
+                        <BarChart points={monthly_costs} />
+                    </section>
+
+                    <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <h3 className="mb-4 text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>⚡</span> {t('fleet.analytics.trend_kml', undefined, 'Recent Efficiency Trend (km/L)')}
+                        </h3>
+                        {efficiency_trend.length === 0 ? (
+                            <p className="text-xs font-semibold text-slate-400 py-10 text-center">{t('fleet.analytics.no_kml', undefined, 'No efficiency trend data available.')}</p>
+                        ) : (
+                            <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                                {efficiency_trend.map((point, index) => (
+                                    <div key={`${point.filled_at}-${index}`}>
+                                        <div className="mb-1 flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                                            <span>
+                                                {point.filled_at ? new Date(point.filled_at).toLocaleDateString('id-ID') : '—'}
+                                                <span className="font-normal text-slate-400"> · {point.plate_number}</span>
+                                            </span>
+                                            <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                                                {point.km_per_liter !== null ? `${point.km_per_liter} km/L` : '—'}
+                                            </span>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
+                                        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                            <div
+                                                className="h-full rounded-full bg-indigo-500 dark:bg-indigo-400 transition-all duration-500"
+                                                style={{
+                                                    width: `${((point.km_per_liter ?? 0) / maxKm) * 100}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </div>
+
+                {/* Fleet Ranking Table */}
+                <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                    <div className="border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>🏆</span> {t('fleet.analytics.ranking', undefined, 'Vehicle Fuel Efficiency Ranking')}
+                        </h3>
                     </div>
-
-                    <section className="rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b border-gray-100 px-5 py-3">
-                            <h3 className="text-sm font-semibold text-gray-800">{t('fleet.analytics.ranking')}</h3>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                <thead className="bg-gray-50">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-400 font-bold uppercase tracking-wider">
+                                <tr>
+                                    <th className="px-5 py-3 text-left">#</th>
+                                    <th className="px-5 py-3 text-left">Vehicle</th>
+                                    <th className="px-5 py-3 text-right">Avg km/L</th>
+                                    <th className="px-5 py-3 text-right">Fills</th>
+                                    <th className="px-5 py-3 text-right">vs Expected</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+                                {fleet_ranking.length === 0 ? (
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">#</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.vehicle')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.avg_kml')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.vs_expected')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.fills')}</th>
+                                        <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
+                                            No ranking data available.
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {fleet_ranking.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                                {t('fleet.analytics.no_ranking')}
+                                ) : (
+                                    fleet_ranking.map((row, idx) => (
+                                        <tr key={row.vehicle_id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                            <td className="px-5 py-3.5 font-bold text-slate-400">#{idx + 1}</td>
+                                            <td className="px-5 py-3.5 font-bold text-slate-900 dark:text-white">
+                                                {row.name} <span className="font-mono text-slate-400">({row.plate_number})</span>
+                                            </td>
+                                            <td className="px-5 py-3.5 text-right font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                                                {row.avg_km_per_liter} km/L
+                                            </td>
+                                            <td className="px-5 py-3.5 text-right font-bold text-slate-700 dark:text-slate-300">
+                                                {row.fill_count}
+                                            </td>
+                                            <td className="px-5 py-3.5 text-right font-bold">
+                                                {row.vs_expected_pct !== null ? (
+                                                    <span className={row.vs_expected_pct >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                                                        {row.vs_expected_pct >= 0 ? `+${row.vs_expected_pct}%` : `${row.vs_expected_pct}%`}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-400">—</span>
+                                                )}
                                             </td>
                                         </tr>
-                                    ) : (
-                                        fleet_ranking.map((row, index) => (
-                                            <tr key={row.vehicle_id}>
-                                                <td className="px-4 py-3 tabular-nums text-gray-500">{index + 1}</td>
-                                                <td className="px-4 py-3">
-                                                    <Link
-                                                        href={prefixedRoute('fleet.vehicles.show', row.vehicle_id)}
-                                                        className="font-medium text-indigo-600 hover:underline"
-                                                    >
-                                                        {row.name}
-                                                    </Link>
-                                                    <div className="text-xs text-gray-500">{row.plate_number}</div>
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-medium tabular-nums">
-                                                    {row.avg_km_per_liter}
-                                                </td>
-                                                <td
-                                                    className={`px-4 py-3 text-right tabular-nums ${
-                                                        row.vs_expected_pct === null
-                                                            ? 'text-gray-400'
-                                                            : row.vs_expected_pct >= 0
-                                                              ? 'text-green-700'
-                                                              : 'text-red-700'
-                                                    }`}
-                                                >
-                                                    {row.vs_expected_pct === null
-                                                        ? '—'
-                                                        : `${row.vs_expected_pct > 0 ? '+' : ''}${row.vs_expected_pct}%`}
-                                                </td>
-                                                <td className="px-4 py-3 text-right tabular-nums">{row.fill_count}</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section className="rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b border-gray-100 px-5 py-3">
-                            <h3 className="text-sm font-semibold text-gray-800">{t('fleet.analytics.driver_perf')}</h3>
-                            <p className="text-xs text-gray-500">{t('fleet.analytics.driver_perf_help')}</p>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.driver')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.avg_kml')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.baseline')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.delta')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.fills')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {driver_performance.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                                {t('fleet.analytics.no_driver_perf')}
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        driver_performance.map((row) => (
-                                            <tr key={row.driver_id}>
-                                                <td className="px-4 py-3">
-                                                    <Link
-                                                        href={prefixedRoute('fleet.drivers.show', row.driver_id)}
-                                                        className="font-medium text-indigo-600 hover:underline"
-                                                    >
-                                                        {row.driver_name}
-                                                    </Link>
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-medium tabular-nums">
-                                                    {row.avg_km_per_liter}
-                                                </td>
-                                                <td className="px-4 py-3 text-right tabular-nums text-gray-600">
-                                                    {row.vehicle_baseline ?? '—'}
-                                                </td>
-                                                <td
-                                                    className={`px-4 py-3 text-right tabular-nums ${
-                                                        row.delta_pct === null
-                                                            ? 'text-gray-400'
-                                                            : row.delta_pct >= 0
-                                                              ? 'text-green-700'
-                                                              : 'text-red-700'
-                                                    }`}
-                                                >
-                                                    {row.delta_pct === null
-                                                        ? '—'
-                                                        : `${row.delta_pct > 0 ? '+' : ''}${row.delta_pct}%`}
-                                                </td>
-                                                <td className="px-4 py-3 text-right tabular-nums">{row.fill_count}</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section className="rounded-lg border border-gray-200 bg-white">
-                        <div className="border-b border-gray-100 px-5 py-3">
-                            <h3 className="text-sm font-semibold text-gray-800">{t('fleet.analytics.anomaly_history')}</h3>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.date')}</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.vehicle')}</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.driver')}</th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.liters')}</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('fleet.analytics.flags')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {anomalies.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                                                {t('fleet.analytics.no_anomalies')}
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        anomalies.map((row) => (
-                                            <tr key={row.id} className="bg-amber-50/40">
-                                                <td className="px-4 py-3">
-                                                    {row.filled_at
-                                                        ? new Date(row.filled_at).toLocaleDateString('id-ID')
-                                                        : '—'}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {row.vehicle ? (
-                                                        <Link
-                                                            href={prefixedRoute('fleet.vehicles.show', row.vehicle.id)}
-                                                            className="text-indigo-600 hover:underline"
-                                                        >
-                                                            {row.vehicle.plate_number}
-                                                        </Link>
-                                                    ) : (
-                                                        '—'
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-600">{row.driver?.name ?? '—'}</td>
-                                                <td className="px-4 py-3 text-right tabular-nums">{row.liters}</td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {row.anomaly_flags.map((flag) => (
-                                                            <span
-                                                                key={flag.code}
-                                                                title={flag.message}
-                                                                className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900"
-                                                            >
-                                                                {flag.code.replaceAll('_', ' ')}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
         </DynamicLayout>
     );
