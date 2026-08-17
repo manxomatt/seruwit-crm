@@ -42,7 +42,17 @@ class PostSaasRevenueJob implements ShouldQueue
     {
         $operatorTenantId = config('saas.operator_tenant_id');
 
-        if (! $operatorTenantId) {
+        $order = PaymentOrder::with(['plan:id,name', 'tenant:id,name'])
+            ->find($this->paymentOrderId);
+
+        if (! $order || $order->status !== PaymentOrder::STATUS_CONFIRMED) {
+            return;
+        }
+
+        if (! $operatorTenantId || $operatorTenantId === 'central') {
+            // Post directly to Central Admin Accounting
+            $this->postEntry($order);
+
             return;
         }
 
@@ -53,13 +63,6 @@ class PostSaasRevenueJob implements ShouldQueue
                 'operator_tenant_id' => $operatorTenantId,
             ]);
 
-            return;
-        }
-
-        $order = PaymentOrder::with(['plan:id,name', 'tenant:id,name'])
-            ->find($this->paymentOrderId);
-
-        if (! $order || $order->status !== PaymentOrder::STATUS_CONFIRMED) {
             return;
         }
 

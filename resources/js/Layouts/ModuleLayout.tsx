@@ -330,6 +330,18 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'platform', modules: ['tenants', 'plans', 'payment-orders', 'module-registry'] },
 ];
 
+const CENTRAL_MENU_GROUPS: MenuGroup[] = [
+    { titleKey: 'finance', modules: ['accounting', 'payment-orders'] },
+    { titleKey: 'content', modules: ['pages', 'posts', 'carousels', 'document', 'media'] },
+    { titleKey: 'platform', modules: ['tenants', 'plans', 'module-registry', 'settings', 'users', 'roles'] },
+];
+
+const CENTRAL_ALLOWED_MODULES = [
+    'bi', 'accounting', 'payment-orders', 'pages', 'posts',
+    'carousels', 'document', 'media', 'tenants', 'plans',
+    'module-registry', 'settings', 'users', 'roles',
+];
+
 // Module to route mapping - use module routes
 const moduleRouteMap: Record<string, { route: string; routePattern: string }> = {
     'pages': { route: 'module.pages.index', routePattern: 'module.pages.*' },
@@ -610,9 +622,8 @@ export default function ModuleLayout({ header, children }: Props) {
                 return;
             }
 
-            // Subscription is a tenant self-service page; central admins manage
-            // billing via the payment-orders menu instead.
-            if (isCentral && module === 'subscription') {
+            // Central Admin only allows Central modules (Dashboard, Finance, Contents, Platform)
+            if (isCentral && !CENTRAL_ALLOWED_MODULES.includes(module)) {
                 return;
             }
 
@@ -735,6 +746,8 @@ export default function ModuleLayout({ header, children }: Props) {
     // groups, preserving the module order defined in MENU_GROUPS.
     const dashboardItem = navigation.find((item) => item.module === 'dashboard');
     const menuGroups = useMemo(() => {
+        const groupsToUse = isCentral ? CENTRAL_MENU_GROUPS : MENU_GROUPS;
+
         // Tier-derived groups take their members — and their order — from what the
         // modules themselves declare on the server; fixed groups list core
         // features, which are not modules and have no tier.
@@ -746,13 +759,13 @@ export default function ModuleLayout({ header, children }: Props) {
                   ]
                 : group.modules;
 
-        return MENU_GROUPS.map((group) => ({
+        return groupsToUse.map((group) => ({
             title: t(`menu_groups.${group.titleKey}`),
             items: moduleKeysIn(group)
                 .map((module) => navigation.find((item) => item.module === module))
                 .filter((item): item is MenuItem => Boolean(item)),
         })).filter((group) => group.items.length > 0);
-    }, [navigation, moduleTiers, t, locale]);
+    }, [navigation, moduleTiers, isCentral, t, locale]);
 
     // Collapsible group state, persisted so it survives page navigations.
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {

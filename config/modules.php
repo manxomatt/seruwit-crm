@@ -86,4 +86,34 @@ return [
 
     'purge_after_days' => 30,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Central Admin Allowed Modules
+    |--------------------------------------------------------------------------
+    |
+    | Modules accessible when operating on the Central Admin domain.
+    | Grouped into: Dashboard, Finance, Contents, Platform.
+    |
+    */
+    'central_modules' => [
+        // Dashboard
+        'bi',
+
+        // Finance
+        'accounting',
+        'payment-orders',
+
+        // Contents
+        'pages',
+        'posts',
+        'carousels',
+        'document',
+
+        // Platform
+        'tenants',
+        'plans',
+        'registry',
+        'settings',
+    ],
+
 ];

@@ -74,6 +74,19 @@ class ModuleRegistry
     }
 
     /**
+     * @return list<string>
+     */
+    public function centralModules(): array
+    {
+        return config('modules.central_modules', []);
+    }
+
+    public function isCentralModule(string $key): bool
+    {
+        return in_array($key, $this->centralModules(), true);
+    }
+
+    /**
      * Whether $key names a registered, optional module. Core features such as
      * users or settings are deliberately absent from the registry.
      */
