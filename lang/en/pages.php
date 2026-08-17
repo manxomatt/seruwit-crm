@@ -2,6 +2,29 @@
 
 return [
     'title' => 'Pages',
+    'create_page' => 'Create Page',
+    'empty_title' => 'No pages yet',
+    'empty_hint' => 'Get started by creating your first page.',
+    'homepage_badge' => 'Homepage',
+    'published' => 'Published',
+    'draft' => 'Draft',
+    'visual_builder' => 'Open visual editor',
+    'preview' => 'Preview',
+    'rename' => 'Rename',
+    'duplicate' => 'Copy Page',
+    'set_homepage' => 'Set as Homepage',
+    'rename_title' => 'Rename Page',
+    'rename_subtitle' => 'Change page title and URL slug for :name',
+    'delete_title' => 'Delete Page',
+    'delete_message' => 'Are you sure you want to delete the page ":title"? This cannot be undone.',
+    'delete_generic' => 'Are you sure you want to delete this page?',
+
+    'columns' => [
+        'title' => 'Title',
+        'slug' => 'Slug',
+        'status' => 'Status',
+        'updated' => 'Updated',
+    ],
 
     'status' => [
         'published' => 'Published',

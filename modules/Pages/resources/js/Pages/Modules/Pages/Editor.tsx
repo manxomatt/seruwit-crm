@@ -1372,52 +1372,54 @@ export default function Editor({ page }: Props): JSX.Element {
 
             <div className="h-screen flex flex-col">
                 {/* Top Toolbar */}
-                <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white px-4 py-2 flex items-center justify-between shadow-lg">
-                    <div className="flex items-center gap-4">
+                <div className="bg-slate-900 border-b border-slate-800 text-white px-4 py-2.5 flex items-center justify-between z-20 shadow-md">
+                    <div className="flex items-center gap-3">
                         <Link
                             href={prefixedRoute('pages.index')}
-                            className="text-indigo-200 hover:text-white transition flex items-center gap-2"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            {t('pages.editor.back')}
+                            ← {t('pages.editor.back')}
                         </Link>
-                        <span className="text-indigo-400">|</span>
-                        <span className="font-medium">{page.title}</span>
+                        <span className="text-slate-700">|</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-extrabold text-white">{page.title}</span>
+                            <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-400">
+                                /p/{page.slug}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="panel__devices flex items-center gap-2"></div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         {lastSaved && (
-                            <span className="text-indigo-200 text-sm">
+                            <span className="text-slate-400 font-mono text-[11px]">
                                 {t('pages.editor.last_saved', { time: lastSaved.toLocaleTimeString(localeTag) })}
                             </span>
                         )}
                         <button
                             onClick={saveContent}
                             disabled={isSaving}
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50 border border-white/20"
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition disabled:opacity-50 shadow-sm"
                         >
-                            {isSaving ? t('pages.editor.saving') : t('pages.editor.save')}
+                            💾 {isSaving ? t('pages.editor.saving') : t('pages.editor.save')}
                         </button>
                         <button
                             onClick={handlePublishToggle}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
                                 page.is_published
-                                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                                    : 'bg-green-500 hover:bg-green-600 text-white'
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30'
+                                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
                             }`}
                         >
-                            {page.is_published ? t('pages.editor.unpublish') : t('pages.editor.publish')}
+                            {page.is_published ? '⏸️ ' + t('pages.editor.unpublish') : '🚀 ' + t('pages.editor.publish')}
                         </button>
                         <Link
                             href={prefixedRoute('pages.show', page.id)}
                             target="_blank"
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-lg text-sm font-medium transition border border-white/20"
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-700"
                         >
-                            {t('pages.editor.preview')}
+                            👁️ {t('pages.editor.preview')}
                         </Link>
                     </div>
                 </div>

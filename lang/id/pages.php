@@ -2,6 +2,29 @@
 
 return [
     'title' => 'Halaman',
+    'create_page' => 'Buat Halaman',
+    'empty_title' => 'Belum ada halaman',
+    'empty_hint' => 'Mulai dengan membuat halaman pertama Anda.',
+    'homepage_badge' => 'Homepage',
+    'published' => 'Published',
+    'draft' => 'Draft',
+    'visual_builder' => 'Buka editor visual',
+    'preview' => 'Pratinjau',
+    'rename' => 'Ubah Nama',
+    'duplicate' => 'Salin Halaman',
+    'set_homepage' => 'Jadikan Homepage',
+    'rename_title' => 'Ubah Nama Halaman',
+    'rename_subtitle' => 'Ubah judul halaman dan URL slug untuk :name',
+    'delete_title' => 'Hapus Halaman',
+    'delete_message' => 'Yakin ingin menghapus halaman ":title"? Tindakan ini tidak dapat dibatalkan.',
+    'delete_generic' => 'Yakin ingin menghapus halaman ini?',
+
+    'columns' => [
+        'title' => 'Judul',
+        'slug' => 'Slug',
+        'status' => 'Status',
+        'updated' => 'Diperbarui',
+    ],
 
     'status' => [
         'published' => 'Published',

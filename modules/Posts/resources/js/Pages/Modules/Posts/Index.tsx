@@ -2,9 +2,12 @@ import DynamicLayout from '@/Layouts/DynamicLayout';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import PrimaryButton from '@/Components/PrimaryButton';
+import TextInput from '@/Components/TextInput';
+import PageHeader from '@/Components/PageHeader';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface Post {
     id: number;
@@ -21,60 +24,49 @@ interface Props {
     posts: Post[];
 }
 
-const PlusIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-);
-
-const PencilIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-    </svg>
-);
-
-const EyeIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
-);
-
-const TrashIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-);
-
-const DocumentIcon = () => (
-    <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
-    </svg>
-);
-
-const EllipsisVerticalIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-        />
-    </svg>
-);
-
-const menuItemClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
-
-const menuItemDangerClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
-
 export default function Index({ posts }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
+
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
     const [processing, setProcessing] = useState(false);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+
+    // Stats calculations
+    const stats = useMemo(() => {
+        const total = posts.length;
+        const published = posts.filter((p) => p.is_published).length;
+        const draft = total - published;
+        return { total, published, draft };
+    }, [posts]);
+
+    // Filtered posts
+    const filteredPosts = useMemo(() => {
+        return posts.filter((post) => {
+            const matchesSearch =
+                post.title.toLowerCase().includes(search.toLowerCase()) ||
+                post.slug.toLowerCase().includes(search.toLowerCase()) ||
+                (post.excerpt && post.excerpt.toLowerCase().includes(search.toLowerCase()));
+
+            const matchesStatus =
+                statusFilter === 'all'
+                    ? true
+                    : statusFilter === 'published'
+                    ? post.is_published
+                    : !post.is_published;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [posts, search, statusFilter]);
+
+    const menuItemClassName =
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+
+    const menuItemDangerClassName =
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition';
 
     const openDeleteDialog = (post: Post) => {
         setPostToDelete(post);
@@ -88,7 +80,6 @@ export default function Index({ posts }: Props): JSX.Element {
 
     const confirmDelete = () => {
         if (!postToDelete) return;
-
         setProcessing(true);
         router.delete(prefixedRoute('posts.destroy', postToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
@@ -101,7 +92,7 @@ export default function Index({ posts }: Props): JSX.Element {
     };
 
     const formatDate = (dateString: string | null) => {
-        if (!dateString) return '-';
+        if (!dateString) return '—';
         return new Date(dateString).toLocaleDateString(localeTag, {
             year: 'numeric',
             month: 'short',
@@ -112,157 +103,224 @@ export default function Index({ posts }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        {t('posts.index.head')}
-                    </h1>
-                    <Link
-                        href={prefixedRoute('posts.create')}
-                        className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        <PlusIcon />
-                        <span className="ml-2">{t('posts.index.create')}</span>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={t('posts.index.head')}
+                    actions={
+                        <Link href={prefixedRoute('posts.create')}>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                ➕ {t('posts.index.create')}
+                            </PrimaryButton>
+                        </Link>
+                    }
+                />
             }
         >
             <Head title={t('posts.index.head')} />
 
-            {posts.length === 0 ? (
-                <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
-                    <div className="text-center py-16">
-                        <DocumentIcon />
-                        <h3 className="mt-4 text-lg font-semibold text-gray-900">{t('posts.index.empty_title')}</h3>
-                        <p className="mt-2 text-sm text-gray-500">
-                            {t('posts.index.empty_hint')}
-                        </p>
-                        <div className="mt-6">
-                            <Link
-                                href={prefixedRoute('posts.create')}
-                                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                <PlusIcon />
-                                <span className="ml-2">{t('posts.index.create')}</span>
-                            </Link>
+            <div className="space-y-6">
+                {/* Stat Overview Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-lg font-bold">
+                                📝
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Posts</p>
+                                <p className="text-xl font-extrabold text-slate-900 dark:text-white">{stats.total}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-lg font-bold">
+                                🚀
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Published</p>
+                                <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{stats.published}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm col-span-2 sm:col-span-1">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 text-lg font-bold">
+                                ✏️
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Drafts</p>
+                                <p className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{stats.draft}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            ) : (
-                <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('posts.index.columns.title')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('posts.index.columns.slug')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('posts.index.columns.status')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('posts.index.columns.published')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('common.actions')}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {posts.map((post) => (
-                                <tr key={post.id} className="group hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-gray-900">
-                                                {post.title}
-                                            </span>
-                                            {post.excerpt && (
-                                                <span className="text-sm text-gray-500 truncate max-w-xs">
-                                                    {post.excerpt}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <code className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                            {t('posts.hints.slug_prefix')}{post.slug}
-                                        </code>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <button
-                                            onClick={() => togglePublish(post)}
-                                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${post.is_published
-                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                                }`}
-                                        >
-                                            {post.is_published ? t('posts.status.published') : t('posts.status.draft')}
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {formatDate(post.published_at)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                        <Menu as="div" className="relative inline-block text-right">
-                                            <MenuButton
-                                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                title={t('common.actions')}
-                                                aria-label={t('common.actions')}
-                                            >
-                                                <EllipsisVerticalIcon />
-                                            </MenuButton>
 
-                                            <MenuItems
-                                                transition
-                                                anchor="bottom end"
-                                                className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
-                                            >
-                                                <MenuItem>
-                                                    <Link
-                                                        href={prefixedRoute('posts.show', post.id)}
-                                                        className={menuItemClassName}
-                                                        title={t('posts.index.preview')}
-                                                    >
-                                                        <span className="text-gray-500">
-                                                            <EyeIcon />
-                                                        </span>
-                                                        {t('posts.index.preview')}
-                                                    </Link>
-                                                </MenuItem>
-                                                <MenuItem>
-                                                    <Link
-                                                        href={prefixedRoute('posts.edit', post.id)}
-                                                        className={menuItemClassName}
-                                                        title={t('common.edit')}
-                                                    >
-                                                        <span className="text-indigo-600">
-                                                            <PencilIcon />
-                                                        </span>
-                                                        {t('common.edit')}
-                                                    </Link>
-                                                </MenuItem>
-                                                <div className="my-1 border-t border-gray-100" />
-                                                <MenuItem>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openDeleteDialog(post)}
-                                                        className={menuItemDangerClassName}
-                                                        title={t('common.delete')}
-                                                    >
-                                                        <TrashIcon />
-                                                        {t('common.delete')}
-                                                    </button>
-                                                </MenuItem>
-                                            </MenuItems>
-                                        </Menu>
-                                    </td>
-                                </tr>
+                {/* Filter and Search Bar */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        {/* Search Input */}
+                        <div className="relative flex-1 max-w-md">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                🔍
+                            </span>
+                            <TextInput
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search post title, slug, or excerpt..."
+                                className="w-full pl-9 text-xs !rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40"
+                            />
+                        </div>
+
+                        {/* Status Filter Pills */}
+                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-2xl">
+                            {(['all', 'published', 'draft'] as const).map((mode) => (
+                                <button
+                                    key={mode}
+                                    onClick={() => setStatusFilter(mode)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition ${
+                                        statusFilter === mode
+                                            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {mode}
+                                </button>
                             ))}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
                 </div>
-            )}
+
+                {/* Main Table Container */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                    {filteredPosts.length === 0 ? (
+                        <div className="text-center py-16 px-4">
+                            <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 dark:bg-slate-800 text-3xl mb-3">
+                                📝
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('posts.index.empty_title')}</h3>
+                            <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
+                                {t('posts.index.empty_hint')}
+                            </p>
+                            <div className="mt-5">
+                                <Link href={prefixedRoute('posts.create')}>
+                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                        ➕ {t('posts.index.create')}
+                                    </PrimaryButton>
+                                </Link>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                                <thead className="bg-slate-50/50 dark:bg-slate-800/30">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('posts.index.columns.title')}
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('posts.index.columns.slug')}
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('posts.index.columns.status')}
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('posts.index.columns.published')}
+                                        </th>
+                                        <th scope="col" className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
+                                            {t('common.actions')}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
+                                    {filteredPosts.map((post) => (
+                                        <tr key={post.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-900 dark:text-white">
+                                                        {post.title}
+                                                    </span>
+                                                    {post.excerpt && (
+                                                        <span className="text-[11px] text-slate-400 truncate max-w-xs">
+                                                            {post.excerpt}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                    {t('posts.hints.slug_prefix')}{post.slug}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => togglePublish(post)}
+                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition ${
+                                                        post.is_published
+                                                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100'
+                                                            : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/50 hover:bg-amber-100'
+                                                    }`}
+                                                >
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${post.is_published ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                                    {post.is_published ? t('posts.status.published') : t('posts.status.draft')}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                                                {formatDate(post.published_at)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <Menu as="div" className="relative inline-block text-right">
+                                                    <MenuButton
+                                                        className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition"
+                                                        title={t('common.actions')}
+                                                    >
+                                                        ⚙️
+                                                    </MenuButton>
+
+                                                    <MenuItems
+                                                        transition
+                                                        anchor="bottom end"
+                                                        className="z-50 w-48 origin-top-right rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0"
+                                                    >
+                                                        <MenuItem>
+                                                            <Link
+                                                                href={prefixedRoute('posts.show', post.id)}
+                                                                className={menuItemClassName}
+                                                            >
+                                                                👁️ {t('posts.index.preview')}
+                                                            </Link>
+                                                        </MenuItem>
+                                                        <MenuItem>
+                                                            <Link
+                                                                href={prefixedRoute('posts.edit', post.id)}
+                                                                className={menuItemClassName}
+                                                            >
+                                                                ✏️ {t('common.edit')}
+                                                            </Link>
+                                                        </MenuItem>
+                                                        <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                        <MenuItem>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openDeleteDialog(post)}
+                                                                className={menuItemDangerClassName}
+                                                            >
+                                                                🗑️ {t('common.delete')}
+                                                            </button>
+                                                        </MenuItem>
+                                                    </MenuItems>
+                                                </Menu>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             <ConfirmDeleteDialog
                 show={showDeleteDialog}
@@ -272,8 +330,8 @@ export default function Index({ posts }: Props): JSX.Element {
                 title={t('posts.index.delete_title')}
                 message={
                     postToDelete
-                        ? t('posts.index.delete_confirm', { title: postToDelete.title })
-                        : t('posts.index.delete_confirm_generic')
+                        ? t('posts.index.delete_message', { title: postToDelete.title })
+                        : t('posts.index.delete_generic')
                 }
             />
         </DynamicLayout>

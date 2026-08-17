@@ -8,9 +8,10 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import PageHeader from '@/Components/PageHeader';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useState, useMemo } from 'react';
 
 interface Page {
     id: number;
@@ -26,89 +27,46 @@ interface Props {
     pages: Page[];
 }
 
-const PlusIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-);
-
-const EditorIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-        />
-    </svg>
-);
-
-const EyeIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
-);
-
-const HomeIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-    </svg>
-);
-
-const TrashIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-);
-
-const CopyIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v9.25c0 .621-.504 1.125-1.125 1.125z" />
-    </svg>
-);
-
-const RenameIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-        />
-    </svg>
-);
-
-const DocumentIcon = () => (
-    <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-    </svg>
-);
-
-const EllipsisVerticalIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-        />
-    </svg>
-);
-
-const menuItemClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
-
-const menuItemDangerClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
-
 export default function Index({ pages }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
+
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<Page | null>(null);
     const [processing, setProcessing] = useState(false);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
 
     const [showRenameModal, setShowRenameModal] = useState(false);
     const [pageToRename, setPageToRename] = useState<Page | null>(null);
+
+    // Stats calculations
+    const stats = useMemo(() => {
+        const total = pages.length;
+        const published = pages.filter((p) => p.is_published).length;
+        const homepage = pages.filter((p) => p.is_homepage).length;
+        const draft = total - published;
+        return { total, published, homepage, draft };
+    }, [pages]);
+
+    // Filtered pages
+    const filteredPages = useMemo(() => {
+        return pages.filter((page) => {
+            const matchesSearch =
+                page.title.toLowerCase().includes(search.toLowerCase()) ||
+                page.slug.toLowerCase().includes(search.toLowerCase());
+
+            const matchesStatus =
+                statusFilter === 'all'
+                    ? true
+                    : statusFilter === 'published'
+                    ? page.is_published
+                    : !page.is_published;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [pages, search, statusFilter]);
 
     const renameForm = useForm({
         title: '',
@@ -148,7 +106,7 @@ export default function Index({ pages }: Props): JSX.Element {
         e.preventDefault();
         if (!pageToRename) return;
 
-        renameForm.patch(prefixedRoute('pages.update', pageToRename.id), {
+        renameForm.patch(prefixedRoute('pages.rename', pageToRename.id), {
             onSuccess: () => closeRenameModal(),
         });
     };
@@ -165,7 +123,6 @@ export default function Index({ pages }: Props): JSX.Element {
 
     const confirmDelete = () => {
         if (!pageToDelete) return;
-
         setProcessing(true);
         router.delete(prefixedRoute('pages.destroy', pageToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
@@ -174,315 +131,333 @@ export default function Index({ pages }: Props): JSX.Element {
     };
 
     const togglePublish = (page: Page) => {
-        router.patch(prefixedRoute('pages.update', page.id), {
-            is_published: !page.is_published,
-        });
+        router.patch(prefixedRoute('pages.toggle-publish', page.id));
     };
 
-    const [showHomepageModal, setShowHomepageModal] = useState(false);
-    const [pageToSetHomepage, setPageToSetHomepage] = useState<Page | null>(null);
-    const [settingHomepage, setSettingHomepage] = useState(false);
-
-    const openHomepageModal = (page: Page) => {
-        setPageToSetHomepage(page);
-        setShowHomepageModal(true);
-    };
-
-    const closeHomepageModal = () => {
-        setShowHomepageModal(false);
-        setPageToSetHomepage(null);
-    };
-
-    const confirmSetHomepage = () => {
-        if (!pageToSetHomepage) return;
-
-        setSettingHomepage(true);
-        router.patch(prefixedRoute('pages.set-homepage', pageToSetHomepage.id), {}, {
-            onSuccess: () => closeHomepageModal(),
-            onFinish: () => setSettingHomepage(false),
-        });
+    const setHomepage = (page: Page) => {
+        router.patch(prefixedRoute('pages.set-homepage', page.id));
     };
 
     const duplicatePage = (page: Page) => {
-        router.post(prefixedRoute('pages.copy', page.id));
+        router.post(prefixedRoute('pages.duplicate', page.id));
     };
+
+    const menuItemClassName =
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+
+    const menuItemDangerClassName =
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition';
 
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        {t('pages.index.head')}
-                    </h1>
-                    <Link
-                        href={prefixedRoute('pages.create')}
-                        className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        <PlusIcon />
-                        <span className="ml-2">{t('pages.index.create')}</span>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={t('pages.title')}
+                    actions={
+                        <Link href={prefixedRoute('pages.create')}>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                ➕ {t('pages.create_page')}
+                            </PrimaryButton>
+                        </Link>
+                    }
+                />
             }
         >
-            <Head title={t('pages.index.head')} />
+            <Head title={t('pages.title')} />
 
-            {pages.length === 0 ? (
-                <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
-                    <div className="text-center py-16">
-                        <DocumentIcon />
-                        <h3 className="mt-4 text-lg font-semibold text-gray-900">{t('pages.index.empty_title')}</h3>
-                        <p className="mt-2 text-sm text-gray-500">
-                            {t('pages.index.empty_hint')}
-                        </p>
-                        <div className="mt-6">
-                            <Link
-                                href={prefixedRoute('pages.create')}
-                                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                <PlusIcon />
-                                <span className="ml-2">{t('pages.index.create')}</span>
-                            </Link>
+            <div className="space-y-6">
+                {/* Stat Overview Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-lg font-bold">
+                                📄
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Pages</p>
+                                <p className="text-xl font-extrabold text-slate-900 dark:text-white">{stats.total}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-lg font-bold">
+                                🌐
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Published</p>
+                                <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{stats.published}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 text-lg font-bold">
+                                ⭐
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Homepage</p>
+                                <p className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{stats.homepage}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-lg font-bold">
+                                📝
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Drafts</p>
+                                <p className="text-xl font-extrabold text-slate-900 dark:text-white">{stats.draft}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            ) : (
-                <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('pages.index.columns.title')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('pages.index.columns.slug')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('pages.index.columns.status')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('pages.index.columns.updated')}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {t('common.actions')}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {pages.map((page) => (
-                                <tr key={page.id} className="group hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-900">
-                                                {page.title}
-                                            </span>
-                                            {page.is_homepage && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                                    <HomeIcon />
-                                                    {t('pages.index.homepage')}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <code className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                            /p/{page.slug}
-                                        </code>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <button
-                                            onClick={() => togglePublish(page)}
-                                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${page.is_published
-                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                                }`}
-                                        >
-                                            {page.is_published ? t('pages.status.published') : t('pages.status.draft')}
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(page.updated_at).toLocaleDateString(localeTag)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                        <Menu as="div" className="relative inline-block text-left">
-                                            <MenuButton
-                                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                title={t('common.actions')}
-                                                aria-label={t('common.actions')}
-                                            >
-                                                <EllipsisVerticalIcon />
-                                            </MenuButton>
 
-                                            <MenuItems
-                                                transition
-                                                anchor="bottom end"
-                                                className="z-50 w-56 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
-                                            >
-                                                <MenuItem>
-                                                    <Link
-                                                        href={prefixedRoute('pages.show', page.id)}
-                                                        className={menuItemClassName}
-                                                    >
-                                                        <span className="text-gray-500">
-                                                            <EyeIcon />
-                                                        </span>
-                                                        {t('pages.index.preview')}
-                                                    </Link>
-                                                </MenuItem>
-                                                <MenuItem>
-                                                    <Link
-                                                        href={prefixedRoute('pages.edit', page.id)}
-                                                        className={menuItemClassName}
-                                                    >
-                                                        <span className="text-indigo-600">
-                                                            <EditorIcon />
-                                                        </span>
-                                                        {t('pages.index.open_editor')}
-                                                    </Link>
-                                                </MenuItem>
-                                                <MenuItem>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openRenameModal(page)}
-                                                        className={menuItemClassName}
-                                                    >
-                                                        <span className="text-amber-600">
-                                                            <RenameIcon />
-                                                        </span>
-                                                        {t('pages.index.rename')}
-                                                    </button>
-                                                </MenuItem>
-                                                <MenuItem>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => duplicatePage(page)}
-                                                        className={menuItemClassName}
-                                                    >
-                                                        <span className="text-emerald-600">
-                                                            <CopyIcon />
-                                                        </span>
-                                                        {t('pages.index.copy')}
-                                                    </button>
-                                                </MenuItem>
-                                                {!page.is_homepage && (
-                                                    <MenuItem>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => openHomepageModal(page)}
-                                                            className={menuItemClassName}
-                                                        >
-                                                            <span className="text-blue-600">
-                                                                <HomeIcon />
-                                                            </span>
-                                                            {t('pages.index.set_homepage')}
-                                                        </button>
-                                                    </MenuItem>
-                                                )}
-                                                <div className="my-1 border-t border-gray-100" />
-                                                <MenuItem>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openDeleteDialog(page)}
-                                                        className={menuItemDangerClassName}
-                                                    >
-                                                        <TrashIcon />
-                                                        {t('common.delete')}
-                                                    </button>
-                                                </MenuItem>
-                                            </MenuItems>
-                                        </Menu>
-                                    </td>
-                                </tr>
+                {/* Filter and Search Bar */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        {/* Search Input */}
+                        <div className="relative flex-1 max-w-md">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                🔍
+                            </span>
+                            <TextInput
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search page title or slug..."
+                                className="w-full pl-9 text-xs !rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40"
+                            />
+                        </div>
+
+                        {/* Status Filter Pills */}
+                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-2xl">
+                            {(['all', 'published', 'draft'] as const).map((mode) => (
+                                <button
+                                    key={mode}
+                                    onClick={() => setStatusFilter(mode)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition ${
+                                        statusFilter === mode
+                                            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {mode}
+                                </button>
                             ))}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
                 </div>
-            )}
 
+                {/* Main Table Container */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                    {filteredPages.length === 0 ? (
+                        <div className="text-center py-16 px-4">
+                            <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 dark:bg-slate-800 text-3xl mb-3">
+                                📄
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('pages.index.empty_title')}</h3>
+                            <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
+                                {t('pages.index.empty_hint')}
+                            </p>
+                            <div className="mt-5">
+                                <Link href={prefixedRoute('pages.create')}>
+                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                        ➕ {t('pages.index.create')}
+                                    </PrimaryButton>
+                                </Link>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                                <thead className="bg-slate-50/50 dark:bg-slate-800/30">
+                                    <tr>
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('pages.index.columns.title')}
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('pages.index.columns.slug')}
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('pages.index.columns.status')}
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                            {t('pages.index.columns.updated')}
+                                        </th>
+                                        <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
+                                            {t('common.actions')}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
+                                    {filteredPages.map((page) => (
+                                        <tr key={page.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-slate-900 dark:text-white">
+                                                        {page.title}
+                                                    </span>
+                                                    {page.is_homepage && (
+                                                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                                                            ⭐ {t('pages.index.homepage')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                    /p/{page.slug}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => togglePublish(page)}
+                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition ${
+                                                        page.is_published
+                                                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100'
+                                                            : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/50 hover:bg-amber-100'
+                                                    }`}
+                                                >
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${page.is_published ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                                    {page.is_published ? t('pages.status.published') : t('pages.status.draft')}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                                                {new Date(page.updated_at).toLocaleDateString(localeTag)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <Menu as="div" className="relative inline-block text-right">
+                                                    <MenuButton
+                                                        className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition"
+                                                        title={t('common.actions')}
+                                                    >
+                                                        ⚙️
+                                                    </MenuButton>
+
+                                                    <MenuItems
+                                                        transition
+                                                        anchor="bottom end"
+                                                        className="z-50 w-52 origin-top-right rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0"
+                                                    >
+                                                        <MenuItem>
+                                                            <Link
+                                                                href={prefixedRoute('pages.editor', page.id)}
+                                                                className={menuItemClassName}
+                                                            >
+                                                                🎨 {t('pages.index.open_editor')}
+                                                            </Link>
+                                                        </MenuItem>
+                                                        <MenuItem>
+                                                            <Link
+                                                                href={prefixedRoute('pages.show', page.id)}
+                                                                className={menuItemClassName}
+                                                            >
+                                                                👁️ {t('pages.index.preview')}
+                                                            </Link>
+                                                        </MenuItem>
+                                                        <MenuItem>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openRenameModal(page)}
+                                                                className={menuItemClassName}
+                                                            >
+                                                                ✏️ {t('pages.index.rename')}
+                                                            </button>
+                                                        </MenuItem>
+                                                        <MenuItem>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => duplicatePage(page)}
+                                                                className={menuItemClassName}
+                                                            >
+                                                                📋 {t('pages.index.copy')}
+                                                            </button>
+                                                        </MenuItem>
+                                                        {!page.is_homepage && (
+                                                            <MenuItem>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setHomepage(page)}
+                                                                    className={menuItemClassName}
+                                                                >
+                                                                    ⭐ {t('pages.index.set_homepage')}
+                                                                </button>
+                                                            </MenuItem>
+                                                        )}
+                                                        <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                        <MenuItem>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openDeleteDialog(page)}
+                                                                className={menuItemDangerClassName}
+                                                            >
+                                                                🗑️ {t('common.delete')}
+                                                            </button>
+                                                        </MenuItem>
+                                                    </MenuItems>
+                                                </Menu>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Rename Modal */}
             <Modal show={showRenameModal} onClose={closeRenameModal} maxWidth="md">
                 <form onSubmit={submitRename} className="p-6">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">
-                        {t('pages.rename.title')}
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                        ✏️ {t('pages.rename.title')}
                     </h2>
+                    <p className="mt-1 text-xs text-slate-400">
+                        {t('pages.rename.slug_hint')}
+                    </p>
 
-                    <div className="space-y-4">
+                    <div className="mt-4 space-y-4">
                         <div>
-                            <InputLabel htmlFor="rename-title" value={t('pages.rename.page_title')} />
+                            <InputLabel htmlFor="rename_title" value={t('pages.rename.page_title')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <TextInput
-                                id="rename-title"
+                                id="rename_title"
                                 type="text"
                                 value={renameForm.data.title}
-                                className="mt-1 block w-full"
-                                autoFocus
                                 onChange={(e) => handleRenameTitleChange(e.target.value)}
+                                className="mt-1 block w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                required
                             />
-                            <InputError message={renameForm.errors.title} className="mt-2" />
+                            <InputError message={renameForm.errors.title} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="rename-slug" value={t('pages.rename.slug')} />
-                            <div className="mt-1 flex rounded-md shadow-sm">
-                                <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                                    /p/
-                                </span>
-                                <TextInput
-                                    id="rename-slug"
-                                    type="text"
-                                    value={renameForm.data.slug}
-                                    className="block w-full rounded-l-none"
-                                    onChange={(e) => renameForm.setData('slug', e.target.value)}
-                                />
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500">{t('pages.rename.slug_hint')}</p>
-                            <InputError message={renameForm.errors.slug} className="mt-2" />
+                            <InputLabel htmlFor="rename_slug" value={t('pages.rename.slug')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                            <TextInput
+                                id="rename_slug"
+                                type="text"
+                                value={renameForm.data.slug}
+                                onChange={(e) => renameForm.setData('slug', e.target.value)}
+                                className="mt-1 block w-full !rounded-xl font-mono text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                required
+                            />
+                            <InputError message={renameForm.errors.slug} className="mt-1" />
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton onClick={closeRenameModal} type="button">
+                    <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <SecondaryButton type="button" onClick={closeRenameModal} className="!rounded-xl text-xs">
                             {t('common.cancel')}
                         </SecondaryButton>
-                        <PrimaryButton disabled={renameForm.processing} type="submit">
-                            {t('pages.rename.submit')}
+                        <PrimaryButton disabled={renameForm.processing} className="!rounded-xl text-xs shadow-sm">
+                            💾 {t('pages.rename.submit')}
                         </PrimaryButton>
                     </div>
                 </form>
-            </Modal>
-
-            <Modal show={showHomepageModal} onClose={closeHomepageModal} maxWidth="md">
-                <div className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                            <HomeIcon />
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-bold text-gray-900">
-                                {t('pages.index.set_homepage_title')}
-                            </h2>
-                            <p className="text-sm text-gray-500">
-                                {t('pages.index.set_homepage')}
-                            </p>
-                        </div>
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                        {pageToSetHomepage
-                            ? t('pages.index.set_homepage_confirm', { title: pageToSetHomepage.title })
-                            : t('pages.index.set_homepage_confirm_generic')}
-                    </p>
-
-                    <div className="flex justify-end gap-3">
-                        <SecondaryButton onClick={closeHomepageModal} type="button">
-                            {t('common.cancel')}
-                        </SecondaryButton>
-                        <PrimaryButton
-                            onClick={confirmSetHomepage}
-                            disabled={settingHomepage}
-                            className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
-                        >
-                            {settingHomepage ? t('common.processing') : t('pages.index.set_homepage')}
-                        </PrimaryButton>
-                    </div>
-                </div>
             </Modal>
 
             <ConfirmDeleteDialog
@@ -500,3 +475,6 @@ export default function Index({ pages }: Props): JSX.Element {
         </DynamicLayout>
     );
 }
+
+
+

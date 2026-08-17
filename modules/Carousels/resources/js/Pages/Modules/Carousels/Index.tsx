@@ -3,10 +3,12 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
+import PageHeader from '@/Components/PageHeader';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import PageHeader from '@/Components/PageHeader';
+import { useState, useMemo } from 'react';
 
 interface Carousel {
     id: number;
@@ -35,44 +37,46 @@ export default function Index({ carousels, can }: Props): JSX.Element {
     const canCreate = can?.create ?? true;
     const canUpdate = can?.update ?? true;
     const canDelete = can?.delete ?? true;
+
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [carouselToDelete, setCarouselToDelete] = useState<Carousel | null>(null);
     const [processing, setProcessing] = useState(false);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
-    const EyeIcon = () => (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-    );
+    // Stats calculations
+    const stats = useMemo(() => {
+        const total = carousels.length;
+        const active = carousels.filter((c) => c.is_active).length;
+        const inactive = total - active;
+        const totalImages = carousels.reduce((acc, curr) => acc + (curr.images_count || 0), 0);
+        return { total, active, inactive, totalImages };
+    }, [carousels]);
 
-    const PencilIcon = () => (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-    );
+    // Filtered carousels
+    const filteredCarousels = useMemo(() => {
+        return carousels.filter((carousel) => {
+            const matchesSearch =
+                carousel.name.toLowerCase().includes(search.toLowerCase()) ||
+                carousel.slug.toLowerCase().includes(search.toLowerCase()) ||
+                (carousel.description && carousel.description.toLowerCase().includes(search.toLowerCase()));
 
-    const TrashIcon = () => (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-    );
+            const matchesStatus =
+                statusFilter === 'all'
+                    ? true
+                    : statusFilter === 'active'
+                    ? carousel.is_active
+                    : !carousel.is_active;
 
-    const EllipsisVerticalIcon = () => (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-            />
-        </svg>
-    );
+            return matchesSearch && matchesStatus;
+        });
+    }, [carousels, search, statusFilter]);
 
     const menuItemClassName =
-        'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
 
     const menuItemDangerClassName =
-        'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition';
 
     const openDeleteDialog = (carousel: Carousel) => {
         setCarouselToDelete(carousel);
@@ -86,7 +90,6 @@ export default function Index({ carousels, can }: Props): JSX.Element {
 
     const confirmDelete = () => {
         if (!carouselToDelete) return;
-
         setProcessing(true);
         router.delete(prefixedRoute('carousels.destroy', carouselToDelete.id), {
             onSuccess: () => closeDeleteDialog(),
@@ -107,7 +110,9 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                     title={t('carousels.title')}
                     actions={canCreate && (
                         <Link href={prefixedRoute('carousels.create')}>
-                            <PrimaryButton>{t('carousels.create')}</PrimaryButton>
+                            <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                ➕ {t('carousels.create')}
+                            </PrimaryButton>
                         </Link>
                     )}
                 />
@@ -115,117 +120,201 @@ export default function Index({ carousels, can }: Props): JSX.Element {
         >
             <Head title={t('carousels.title')} />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-6">
-                    {carousels.length === 0 ? (
-                        <div className="text-center py-12">
-                            <svg
-                                className="mx-auto h-12 w-12 text-gray-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('carousels.empty_title')}</h3>
-                            <p className="mt-1 text-sm text-gray-500">
+            <div className="space-y-6">
+                {/* Stat Overview Cards */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-lg font-bold">
+                                🎠
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Carousels</p>
+                                <p className="text-xl font-extrabold text-slate-900 dark:text-white">{stats.total}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-lg font-bold">
+                                ✅
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active</p>
+                                <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{stats.active}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 text-lg font-bold">
+                                ⏸️
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Inactive</p>
+                                <p className="text-xl font-extrabold text-amber-600 dark:text-amber-400">{stats.inactive}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-lg font-bold">
+                                🖼️
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Images</p>
+                                <p className="text-xl font-extrabold text-slate-900 dark:text-white">{stats.totalImages}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        {/* Search Input */}
+                        <div className="relative flex-1 max-w-md">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                🔍
+                            </span>
+                            <TextInput
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search carousel name or slug..."
+                                className="w-full pl-9 text-xs !rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40"
+                            />
+                        </div>
+
+                        {/* Status Filter Pills */}
+                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-2xl">
+                            {(['all', 'active', 'inactive'] as const).map((mode) => (
+                                <button
+                                    key={mode}
+                                    onClick={() => setStatusFilter(mode)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition ${
+                                        statusFilter === mode
+                                            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {mode}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Table Container */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                    {filteredCarousels.length === 0 ? (
+                        <div className="text-center py-16 px-4">
+                            <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 dark:bg-slate-800 text-3xl mb-3">
+                                🎠
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('carousels.empty_title')}</h3>
+                            <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
                                 {t('carousels.empty_hint')}
                             </p>
                             {canCreate && (
-                                <div className="mt-6">
+                                <div className="mt-5">
                                     <Link href={prefixedRoute('carousels.create')}>
-                                        <PrimaryButton>{t('carousels.create')}</PrimaryButton>
+                                        <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                            ➕ {t('carousels.create')}
+                                        </PrimaryButton>
                                     </Link>
                                 </div>
                             )}
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                                <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                             {t('carousels.columns.name')}
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                             {t('carousels.columns.slug')}
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                             {t('carousels.columns.images')}
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                             {t('carousels.columns.status')}
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                             {t('carousels.columns.updated')}
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
                                             {t('common.actions')}
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {carousels.map((carousel) => (
-                                        <tr key={carousel.id} className="group hover:bg-gray-50 transition-colors">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
+                                    {filteredCarousels.map((carousel) => (
+                                        <tr key={carousel.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm font-medium text-gray-900">
-                                                    {carousel.name}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-500">
-                                                    {carousel.slug}
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-900 dark:text-white">
+                                                        {carousel.name}
+                                                    </span>
+                                                    {carousel.description && (
+                                                        <span className="text-[11px] text-slate-400 truncate max-w-xs">
+                                                            {carousel.description}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                    {t('carousels.images_count', { count: carousel.images_count })}
+                                                <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                    {carousel.slug}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 uppercase tracking-wider border border-indigo-200/50 dark:border-indigo-800/50">
+                                                    🖼️ {t('carousels.images_count', { count: carousel.images_count })}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <button
                                                     onClick={() => toggleActive(carousel)}
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${carousel.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                        }`}
+                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition ${
+                                                        carousel.is_active
+                                                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100'
+                                                            : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/50 hover:bg-rose-100'
+                                                    }`}
                                                 >
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${carousel.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                                                     {carousel.is_active ? t('carousels.active') : t('carousels.inactive')}
                                                 </button>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                                                 {new Date(carousel.updated_at).toLocaleDateString(localeTag)}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <Menu as="div" className="relative inline-block text-right">
                                                     <MenuButton
-                                                        className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                        className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition"
                                                         title={t('common.actions')}
-                                                        aria-label={t('common.actions')}
                                                     >
-                                                        <EllipsisVerticalIcon />
+                                                        ⚙️
                                                     </MenuButton>
 
                                                     <MenuItems
                                                         transition
                                                         anchor="bottom end"
-                                                        className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                                        className="z-50 w-48 origin-top-right rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0"
                                                     >
                                                         <MenuItem>
                                                             <Link
                                                                 href={prefixedRoute('carousels.show', carousel.id)}
                                                                 className={menuItemClassName}
-                                                                title={t('carousels.preview')}
                                                             >
-                                                                <span className="text-gray-500">
-                                                                    <EyeIcon />
-                                                                </span>
-                                                                {t('carousels.preview')}
+                                                                👁️ {t('carousels.preview')}
                                                             </Link>
                                                         </MenuItem>
                                                         {canUpdate && (
@@ -233,17 +322,13 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                                                                 <Link
                                                                     href={prefixedRoute('carousels.edit', carousel.id)}
                                                                     className={menuItemClassName}
-                                                                    title={t('common.edit')}
                                                                 >
-                                                                    <span className="text-indigo-600">
-                                                                        <PencilIcon />
-                                                                    </span>
-                                                                    {t('common.edit')}
+                                                                    ✏️ {t('common.edit')}
                                                                 </Link>
                                                             </MenuItem>
                                                         )}
                                                         {(canUpdate || canDelete) && (
-                                                            <div className="my-1 border-t border-gray-100" />
+                                                            <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                                                         )}
                                                         {canDelete && (
                                                             <MenuItem>
@@ -251,10 +336,8 @@ export default function Index({ carousels, can }: Props): JSX.Element {
                                                                     type="button"
                                                                     onClick={() => openDeleteDialog(carousel)}
                                                                     className={menuItemDangerClassName}
-                                                                    title={t('common.delete')}
                                                                 >
-                                                                    <TrashIcon />
-                                                                    {t('common.delete')}
+                                                                    🗑️ {t('common.delete')}
                                                                 </button>
                                                             </MenuItem>
                                                         )}
@@ -285,3 +368,4 @@ export default function Index({ carousels, can }: Props): JSX.Element {
         </DynamicLayout>
     );
 }
+

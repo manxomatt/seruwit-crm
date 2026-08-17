@@ -1,6 +1,9 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import PageHeader from '@/Components/PageHeader';
 import { Head, Link } from '@inertiajs/react';
 
 interface Post {
@@ -20,25 +23,13 @@ interface Props {
     post: Post;
 }
 
-const ArrowLeftIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-    </svg>
-);
-
-const PencilIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-    </svg>
-);
-
 export default function Show({ post }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
 
     const formatDate = (dateString: string | null) => {
-        if (!dateString) return '-';
+        if (!dateString) return '—';
         return new Date(dateString).toLocaleString(localeTag, {
             year: 'numeric',
             month: 'long',
@@ -51,73 +42,63 @@ export default function Show({ post }: Props): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href={prefixedRoute('posts.index')}
-                            className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
-                        >
-                            <ArrowLeftIcon />
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                                {t('posts.show.head')}
-                            </h1>
-                            <p className="text-sm text-gray-500">
-                                {post.is_published ? t('posts.status.published') : t('posts.status.draft')} • {t('posts.show.last_updated', { time: formatDate(post.updated_at) })}
-                            </p>
+                <PageHeader
+                    title={post.title}
+                    actions={
+                        <div className="flex gap-2">
+                            <Link href={prefixedRoute('posts.edit', post.id)}>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                    ✏️ {t('posts.show.edit_post')}
+                                </PrimaryButton>
+                            </Link>
+                            <Link href={prefixedRoute('posts.index')}>
+                                <SecondaryButton className="!rounded-xl text-xs">
+                                    ← {t('posts.show.back')}
+                                </SecondaryButton>
+                            </Link>
                         </div>
-                    </div>
-                    <Link
-                        href={prefixedRoute('posts.edit', post.id)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        <PencilIcon />
-                        {t('posts.show.edit_post')}
-                    </Link>
-                </div>
+                    }
+                />
             }
         >
             <Head title={t('posts.show.title', { title: post.title })} />
 
-            <div className="max-w-4xl">
-                {/* Post Meta */}
-                <div className="mb-6 rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 p-6">
-                    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">{t('posts.index.columns.status')}</dt>
+            <div className="mx-auto max-w-4xl space-y-6">
+                {/* Post Meta Info Card */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-xs">
+                        <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                            <dt className="font-bold text-[10px] uppercase tracking-wider text-slate-400">{t('posts.index.columns.status')}</dt>
                             <dd className="mt-1">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                                     post.is_published
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-yellow-100 text-yellow-800'
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50'
+                                        : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/50'
                                 }`}>
+                                    <span className={`h-1.5 w-1.5 rounded-full ${post.is_published ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                                     {post.is_published ? t('posts.status.published') : t('posts.status.draft')}
                                 </span>
                             </dd>
                         </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">{t('posts.fields.published_date')}</dt>
-                            <dd className="mt-1 text-sm text-gray-900">
+                        <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                            <dt className="font-bold text-[10px] uppercase tracking-wider text-slate-400">{t('posts.fields.published_date')}</dt>
+                            <dd className="mt-1 font-mono font-bold text-slate-900 dark:text-white">
                                 {formatDate(post.published_at)}
                             </dd>
                         </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">{t('posts.fields.slug')}</dt>
-                            <dd className="mt-1">
-                                <code className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                    {t('posts.hints.slug_prefix')}{post.slug}
-                                </code>
+                        <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                            <dt className="font-bold text-[10px] uppercase tracking-wider text-slate-400">{t('posts.fields.slug')}</dt>
+                            <dd className="mt-1 font-mono font-bold text-slate-900 dark:text-white">
+                                {t('posts.hints.slug_prefix')}{post.slug}
                             </dd>
                         </div>
                     </dl>
                 </div>
 
-                {/* Post Content Preview */}
-                <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
-                    {/* Featured Image */}
+                {/* Main Post Container */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
                     {post.featured_image && (
-                        <div className="aspect-video bg-gray-100">
+                        <div className="aspect-video bg-slate-950 max-h-96">
                             <img
                                 src={post.featured_image}
                                 alt={post.title}
@@ -127,56 +108,35 @@ export default function Show({ post }: Props): JSX.Element {
                     )}
 
                     <div className="p-8">
-                        {/* Title */}
-                        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-4">
                             {post.title}
                         </h1>
 
-                        {/* Excerpt */}
                         {post.excerpt && (
-                            <p className="text-lg text-gray-600 mb-6 pb-6 border-b border-gray-200">
-                                {post.excerpt}
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 italic">
+                                "{post.excerpt}"
                             </p>
                         )}
 
-                        {/* Content */}
                         {post.content ? (
-                            <div className="prose prose-indigo max-w-none">
-                                <div className="whitespace-pre-wrap text-gray-700">
-                                    {post.content}
-                                </div>
+                            <div className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                                {post.content}
                             </div>
                         ) : (
-                            <div className="text-center py-12 text-gray-500">
-                                <p>{t('posts.show.empty_content')}</p>
+                            <div className="text-center py-12 text-slate-400">
+                                <p className="text-xs font-bold">{t('posts.show.empty_content')}</p>
                                 <Link
                                     href={prefixedRoute('posts.edit', post.id)}
-                                    className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500"
+                                    className="mt-3 inline-flex items-center text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                 >
-                                    {t('posts.show.add_content')}
+                                    ✏️ {t('posts.show.add_content')}
                                 </Link>
                             </div>
                         )}
                     </div>
                 </div>
-
-                {/* Actions */}
-                <div className="mt-6 flex items-center justify-end gap-4">
-                    <Link
-                        href={prefixedRoute('posts.index')}
-                        className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        {t('posts.show.back')}
-                    </Link>
-                    <Link
-                        href={prefixedRoute('posts.edit', post.id)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        <PencilIcon />
-                        {t('posts.show.edit_post')}
-                    </Link>
-                </div>
             </div>
         </DynamicLayout>
     );
 }
+

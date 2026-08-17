@@ -1,6 +1,8 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
+import PrimaryButton from '@/Components/PrimaryButton';
+import PageHeader from '@/Components/PageHeader';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import { Head, Link, router } from '@inertiajs/react';
@@ -50,48 +52,42 @@ interface Props {
     paymentOrder: PaymentOrder;
 }
 
-const STATUS_STYLES: Record<string, { label_key: string; dot: string; badge: string; border: string; bg: string }> = {
+const STATUS_STYLES: Record<string, { label_key: string; dot: string; badge: string; border: string }> = {
     pending: {
         label_key: 'pending',
         dot: 'bg-slate-400',
-        badge: 'bg-slate-100 text-slate-700 ring-slate-200',
-        border: 'border-slate-200',
-        bg: 'bg-slate-50',
+        badge: 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700',
+        border: 'border-slate-200/80 dark:border-slate-800',
     },
     awaiting_confirmation: {
         label_key: 'awaiting_confirmation',
         dot: 'bg-amber-500 animate-pulse',
-        badge: 'bg-amber-100 text-amber-800 ring-amber-200',
-        border: 'border-amber-200',
-        bg: 'bg-amber-50',
+        badge: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/50',
+        border: 'border-amber-200/60 dark:border-amber-800/50',
     },
     confirmed: {
         label_key: 'confirmed',
         dot: 'bg-emerald-500',
-        badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
-        border: 'border-emerald-200',
-        bg: 'bg-emerald-50',
+        badge: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50',
+        border: 'border-emerald-200/60 dark:border-emerald-800/50',
     },
     rejected: {
         label_key: 'rejected',
-        dot: 'bg-red-500',
-        badge: 'bg-red-100 text-red-800 ring-red-200',
-        border: 'border-red-200',
-        bg: 'bg-red-50',
+        dot: 'bg-rose-500',
+        badge: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/50',
+        border: 'border-rose-200/60 dark:border-rose-800/50',
     },
     expired: {
         label_key: 'expired',
         dot: 'bg-slate-400',
-        badge: 'bg-slate-100 text-slate-600 ring-slate-200',
-        border: 'border-slate-200',
-        bg: 'bg-slate-50',
+        badge: 'bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800',
+        border: 'border-slate-200/80 dark:border-slate-800',
     },
     cancelled: {
         label_key: 'cancelled',
         dot: 'bg-slate-400',
-        badge: 'bg-slate-100 text-slate-600 ring-slate-200',
-        border: 'border-slate-200',
-        bg: 'bg-slate-50',
+        badge: 'bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800',
+        border: 'border-slate-200/80 dark:border-slate-800',
     },
 };
 
@@ -108,12 +104,10 @@ function CopyButton({ value, copyLabel }: { value: string; copyLabel: string }) 
             type="button"
             onClick={copy}
             title={copyLabel}
-            className="ml-1.5 inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            className="ml-1.5 inline-flex items-center rounded-lg p-1 text-xs text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition"
         >
             {copied ? (
-                <svg className="h-3.5 w-3.5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                </svg>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase">Copied!</span>
             ) : (
                 <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
@@ -126,9 +120,9 @@ function CopyButton({ value, copyLabel }: { value: string; copyLabel: string }) 
 
 function Row({ label, value, copyValue, copyLabel }: { label: string; value: React.ReactNode; copyValue?: string; copyLabel?: string }) {
     return (
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0">
-            <span className="shrink-0 pt-0.5 text-xs font-medium uppercase tracking-wide text-slate-400">{label}</span>
-            <span className="flex items-center gap-0.5 text-right text-sm font-medium text-slate-800">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800/60 py-2.5 last:border-0">
+            <span className="shrink-0 pt-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</span>
+            <span className="flex items-center gap-0.5 text-right text-xs font-bold text-slate-900 dark:text-white">
                 {value}
                 {copyValue && copyLabel && <CopyButton value={copyValue} copyLabel={copyLabel} />}
             </span>
@@ -180,98 +174,84 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
     const pageTitle = t('payment_orders.show.page_title').replace(':id', String(paymentOrder.id));
 
     return (
-        <DynamicLayout>
+        <DynamicLayout
+            header={
+                <PageHeader
+                    title={pageTitle}
+                    actions={
+                        <Link href={prefixedRoute('payment-orders.index')}>
+                            <SecondaryButton className="!rounded-xl text-xs">
+                                ← {t('payment_orders.show.back')}
+                            </SecondaryButton>
+                        </Link>
+                    }
+                />
+            }
+        >
             <Head title={pageTitle} />
 
-            <div className="mx-auto max-w-5xl space-y-5">
+            <div className="mx-auto max-w-5xl space-y-6">
 
-                {/* Back */}
-                <div>
-                    <Link
-                        href={prefixedRoute('payment-orders.index')}
-                        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-800"
-                    >
-                        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-                        </svg>
-                        {t('payment_orders.show.back')}
-                    </Link>
-                </div>
-
-                {/* ── Hero card ── */}
-                <div className={`relative overflow-hidden rounded-2xl border ${cfg.border} bg-white shadow-sm`}>
-                    <div className={`absolute inset-y-0 left-0 w-1 ${cfg.dot.replace('animate-pulse', '')}`} />
-
-                    <div className="flex flex-col gap-5 px-7 py-6 sm:flex-row sm:items-start sm:justify-between">
-                        {/* Left: identity */}
-                        <div className="space-y-2">
+                {/* Hero Card */}
+                <div className={`relative overflow-hidden rounded-3xl border ${cfg.border} bg-white dark:bg-slate-900 shadow-sm p-6 sm:p-8`}>
+                    <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                        {/* Left Info */}
+                        <div className="space-y-3">
                             <div className="flex flex-wrap items-center gap-2.5">
-                                <h1 className="text-xl font-bold text-slate-900">{pageTitle}</h1>
-                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${cfg.badge}`}>
+                                <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{pageTitle}</h1>
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${cfg.badge}`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
                                     {t(`payment_orders.statuses.${paymentOrder.status}`, {}, paymentOrder.status)}
                                 </span>
-                                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                                <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                                     {t(`payment_orders.types.${paymentOrder.type}`, {}, paymentOrder.type)}
                                 </span>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                                 <span className="flex items-center gap-1.5">
-                                    <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 010-1.5h12.5a.75.75 0 010 1.5H16v13h.25a.75.75 0 010 1.5h-3.5a.75.75 0 01-.75-.75v-2.5a.75.75 0 00-.75-.75h-2.5a.75.75 0 00-.75.75v2.5a.75.75 0 01-.75.75h-3.5a.75.75 0 010-1.5H4zm3-11a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5v-1zm.5 2.5a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1zm2.5-.5a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5v-1zm.5 2.5a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z" clipRule="evenodd" />
-                                    </svg>
-                                    <Link
+                                    🏢 <Link
                                         href={prefixedRoute('tenants.show', paymentOrder.tenant.id)}
-                                        className="font-medium text-teal-700 hover:text-teal-900 hover:underline"
+                                        className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                     >
                                         {paymentOrder.tenant.name}
                                     </Link>
                                 </span>
-                                <span className="flex items-center gap-1.5">
-                                    <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M6 3.75A2.75 2.75 0 018.75 1h2.5A2.75 2.75 0 0114 3.75v.443c.572.055 1.14.122 1.706.2C17.053 4.582 18 5.75 18 7.07v3.469c0 1.126-.694 2.191-1.83 2.54-1.952.599-4.024.921-6.17.921s-4.219-.322-6.17-.921C2.694 12.73 2 11.665 2 10.539V7.07c0-1.321.947-2.489 2.294-2.676A41.047 41.047 0 016 4.193V3.75zm6.5 0v.325a41.622 41.622 0 00-5 0V3.75c0-.69.56-1.25 1.25-1.25h2.5c.69 0 1.25.56 1.25 1.25zM10 10a1 1 0 00-1 1v.01a1 1 0 001 1h.01a1 1 0 001-1V11a1 1 0 00-1-1H10z" clipRule="evenodd" />
-                                        <path d="M3 15.055v-.684c.126.053.255.1.39.142 2.1.644 4.313.987 6.61.987 2.297 0 4.51-.343 6.61-.987.135-.041.264-.09.39-.142v.684c0 1.347-.985 2.53-2.363 2.686a41.454 41.454 0 01-9.274 0C3.985 17.585 3 16.402 3 15.055z" />
-                                    </svg>
-                                    {paymentOrder.plan.name} / {paymentOrder.plan.interval}
+                                <span className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                                    📦 {paymentOrder.plan.name} / {paymentOrder.plan.interval}
                                 </span>
                             </div>
 
-                            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-400">
-                                <span>{t('payment_orders.show.created_at').replace(':date', fmtDate(paymentOrder.created_at))}</span>
+                            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] font-mono text-slate-400">
+                                <span>📅 {t('payment_orders.show.created_at').replace(':date', fmtDate(paymentOrder.created_at))}</span>
                                 {paymentOrder.expires_at && (
-                                    <span>{t('payment_orders.show.expires_at').replace(':date', fmtDate(paymentOrder.expires_at))}</span>
+                                    <span>⏳ {t('payment_orders.show.expires_at').replace(':date', fmtDate(paymentOrder.expires_at))}</span>
                                 )}
                             </div>
                         </div>
 
-                        {/* Right: amount + actions */}
-                        <div className="flex shrink-0 flex-col items-end gap-3">
-                            <div className="text-right">
-                                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{t('payment_orders.show.total_transfer_label')}</p>
-                                <p className="mt-0.5 text-3xl font-extrabold tabular-nums tracking-tight text-slate-900">
+                        {/* Right Total + Actions */}
+                        <div className="flex shrink-0 flex-col items-start sm:items-end gap-4">
+                            <div className="text-left sm:text-right">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('payment_orders.show.total_transfer_label')}</p>
+                                <p className="mt-1 text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
                                     {fmt(paymentOrder.total_amount)}
                                 </p>
                             </div>
+
                             {isActionable && (
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setShowRejectModal(true)}
-                                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/50 text-xs font-bold shadow-sm hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
                                     >
-                                        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                                        </svg>
-                                        {t('payment_orders.show.actions.reject')}
+                                        ❌ {t('payment_orders.show.actions.reject')}
                                     </button>
                                     <button
                                         onClick={() => setShowConfirmModal(true)}
-                                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-700"
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm shadow-emerald-600/20 transition"
                                     >
-                                        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                                        </svg>
-                                        {t('payment_orders.show.actions.confirm')}
+                                        ✅ {t('payment_orders.show.actions.confirm')}
                                     </button>
                                 </div>
                             )}
@@ -279,42 +259,48 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                     </div>
                 </div>
 
-                {/* ── Main content ── */}
-                <div className="grid gap-5 lg:grid-cols-5">
+                {/* Main Content Grid */}
+                <div className="grid gap-6 lg:grid-cols-5">
 
-                    {/* Left column (3/5) */}
-                    <div className="space-y-5 lg:col-span-3">
+                    {/* Left Column (3/5) */}
+                    <div className="space-y-6 lg:col-span-3">
 
-                        {/* Amount breakdown */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.breakdown.title')}</p>
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-500">{t('payment_orders.show.breakdown.plan_price')}</span>
-                                    <span className="font-mono text-sm font-medium text-slate-700">{fmt(paymentOrder.amount)}</span>
+                        {/* Amount Breakdown */}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                                📊 {t('payment_orders.show.breakdown.title')}
+                            </h3>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-500 dark:text-slate-400">{t('payment_orders.show.breakdown.plan_price')}</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-white">{fmt(paymentOrder.amount)}</span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-500">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                                         {t('payment_orders.show.breakdown.unique_code')}
-                                        <span className="ml-1.5 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">+{paymentOrder.unique_code}</span>
+                                        <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                            +{paymentOrder.unique_code}
+                                        </span>
                                     </span>
-                                    <span className="font-mono text-sm font-medium text-slate-700">Rp {paymentOrder.unique_code.toLocaleString('id-ID')}</span>
+                                    <span className="font-mono font-bold text-slate-900 dark:text-white">Rp {paymentOrder.unique_code.toLocaleString('id-ID')}</span>
                                 </div>
-                                <div className="my-2 border-t border-dashed border-slate-200" />
-                                <div className="flex items-center justify-between">
-                                    <span className="font-semibold text-slate-800">{t('payment_orders.show.breakdown.total')}</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-mono text-base font-bold text-slate-900">{fmt(paymentOrder.total_amount)}</span>
+                                <div className="my-2 border-t border-dashed border-slate-100 dark:border-slate-800" />
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold text-slate-900 dark:text-white">{t('payment_orders.show.breakdown.total')}</span>
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-mono text-base font-extrabold text-slate-900 dark:text-white">{fmt(paymentOrder.total_amount)}</span>
                                         <CopyButton value={String(Number(paymentOrder.total_amount))} copyLabel={t('payment_orders.show.copy')} />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Bank transfer instructions */}
+                        {/* Bank Transfer Instructions */}
                         {(paymentOrder.bank_name || paymentOrder.bank_account_number) && (
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.bank.title')}</p>
+                            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                                    🏛️ {t('payment_orders.show.bank.title')}
+                                </h3>
                                 <div>
                                     {paymentOrder.bank_name && (
                                         <Row label={t('payment_orders.show.bank.name')} value={paymentOrder.bank_name} />
@@ -334,16 +320,18 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                             </div>
                         )}
 
-                        {/* Workspace detail */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.workspace.title')}</p>
+                        {/* Workspace Details */}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                                🏢 {t('payment_orders.show.workspace.title')}
+                            </h3>
                             <div>
                                 <Row
                                     label={t('payment_orders.show.workspace.tenant')}
                                     value={
                                         <Link
                                             href={prefixedRoute('tenants.show', paymentOrder.tenant.id)}
-                                            className="text-teal-700 hover:text-teal-900 hover:underline"
+                                            className="text-indigo-600 dark:text-indigo-400 hover:underline"
                                         >
                                             {paymentOrder.tenant.name}
                                         </Link>
@@ -364,17 +352,15 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                             </div>
                         </div>
 
-                        {/* Confirmed block */}
+                        {/* Confirmed Block */}
                         {paymentOrder.confirmed_at && (
-                            <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                                    </svg>
+                            <div className="flex items-start gap-3 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/50 bg-emerald-50/70 dark:bg-emerald-950/40 p-5">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 text-sm">
+                                    ✅
                                 </span>
                                 <div>
-                                    <p className="text-sm font-semibold text-emerald-900">{t('payment_orders.show.confirmed_block.title')}</p>
-                                    <p className="mt-0.5 text-sm text-emerald-700">
+                                    <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200">{t('payment_orders.show.confirmed_block.title')}</p>
+                                    <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
                                         {t('payment_orders.show.confirmed_block.by')
                                             .replace(':name', paymentOrder.confirmedBy?.name ?? '')
                                             .replace(':date', fmtDate(paymentOrder.confirmed_at))}
@@ -383,23 +369,21 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                             </div>
                         )}
 
-                        {/* Rejected block */}
+                        {/* Rejected Block */}
                         {paymentOrder.rejected_at && (
-                            <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
-                                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                                    </svg>
+                            <div className="flex items-start gap-3 rounded-2xl border border-rose-200/60 dark:border-rose-800/50 bg-rose-50/70 dark:bg-rose-950/40 p-5">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-300 text-sm">
+                                    ❌
                                 </span>
                                 <div>
-                                    <p className="text-sm font-semibold text-red-900">{t('payment_orders.show.rejected_block.title')}</p>
-                                    <p className="mt-0.5 text-sm text-red-700">
+                                    <p className="text-xs font-bold text-rose-900 dark:text-rose-200">{t('payment_orders.show.rejected_block.title')}</p>
+                                    <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-400">
                                         {t('payment_orders.show.rejected_block.by')
                                             .replace(':name', paymentOrder.rejectedBy?.name ?? '')
                                             .replace(':date', fmtDate(paymentOrder.rejected_at))}
                                     </p>
                                     {paymentOrder.rejection_reason && (
-                                        <p className="mt-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-800">
+                                        <p className="mt-2 rounded-xl bg-rose-100/80 dark:bg-rose-900/60 p-3 text-xs italic text-rose-900 dark:text-rose-200">
                                             "{paymentOrder.rejection_reason}"
                                         </p>
                                     )}
@@ -408,73 +392,65 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                         )}
                     </div>
 
-                    {/* Right column (2/5) */}
-                    <div className="space-y-5 lg:col-span-2">
+                    {/* Right Column (2/5) */}
+                    <div className="space-y-6 lg:col-span-2">
 
-                        {/* Proof of transfer */}
-                        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                            <div className="px-5 pt-5">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.proof.title')}</p>
-                            </div>
+                        {/* Transfer Proof Card */}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden p-6">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                                🖼️ {t('payment_orders.show.proof.title')}
+                            </h3>
+
                             {paymentOrder.proof_url ? (
-                                <>
+                                <div className="space-y-4">
                                     {isImage(paymentOrder.proof_url) ? (
-                                        <div className="relative mt-3 cursor-zoom-in" onClick={() => setProofExpanded(true)}>
+                                        <div className="relative group cursor-zoom-in rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800" onClick={() => setProofExpanded(true)}>
                                             <img
                                                 src={paymentOrder.proof_url}
                                                 alt={t('payment_orders.show.proof.title')}
-                                                className="w-full object-cover"
-                                                style={{ maxHeight: '300px', objectFit: 'cover', objectPosition: 'top' }}
+                                                className="w-full object-cover max-h-72"
                                             />
-                                            <div className="absolute inset-0 flex items-end justify-end bg-gradient-to-t from-black/30 to-transparent opacity-0 transition hover:opacity-100">
-                                                <span className="m-3 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
-                                                    {t('payment_orders.show.proof.expand')}
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition backdrop-blur-xs">
+                                                <span className="px-3 py-1.5 rounded-xl bg-white/90 text-slate-900 text-xs font-bold shadow-md">
+                                                    🔍 {t('payment_orders.show.proof.expand')}
                                                 </span>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="mt-3 px-5">
-                                            <a
-                                                href={paymentOrder.proof_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-700 transition hover:bg-teal-100"
-                                            >
-                                                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
-                                                    <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
-                                                </svg>
-                                                {t('payment_orders.show.proof.download')}
-                                            </a>
-                                        </div>
+                                        <a
+                                            href={paymentOrder.proof_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 px-4 py-3 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                        >
+                                            📥 {t('payment_orders.show.proof.download')}
+                                        </a>
                                     )}
+
                                     {paymentOrder.transfer_note && (
-                                        <div className="px-5 pb-5 pt-3">
-                                            <p className="text-xs font-medium text-slate-400">{t('payment_orders.show.proof.tenant_note')}</p>
-                                            <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-sm italic text-slate-700">
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('payment_orders.show.proof.tenant_note')}</p>
+                                            <p className="mt-1 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3 text-xs italic text-slate-700 dark:text-slate-300">
                                                 "{paymentOrder.transfer_note}"
                                             </p>
                                         </div>
                                     )}
-                                    {!paymentOrder.transfer_note && <div className="pb-5" />}
-                                </>
+                                </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center px-5 py-10 text-center">
-                                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                                        </svg>
-                                    </span>
-                                    <p className="mt-3 text-sm font-medium text-slate-500">{t('payment_orders.show.proof.empty_title')}</p>
-                                    <p className="mt-1 text-xs text-slate-400">{t('payment_orders.show.proof.empty_hint')}</p>
+                                <div className="text-center py-12 px-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                                    <span className="text-3xl mb-2 inline-block">📄</span>
+                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('payment_orders.show.proof.empty_title')}</p>
+                                    <p className="mt-1 text-[11px] text-slate-400">{t('payment_orders.show.proof.empty_hint')}</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Subscription info */}
+                        {/* Subscription Info */}
                         {paymentOrder.subscription && (
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('payment_orders.show.subscription.title')}</p>
+                            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                                    🔄 {t('payment_orders.show.subscription.title')}
+                                </h3>
                                 <div>
                                     <Row label={t('payment_orders.show.subscription.id')} value={`#${paymentOrder.subscription.id}`} />
                                     <Row label={t('payment_orders.show.subscription.status')} value={<span className="capitalize">{paymentOrder.subscription.status}</span>} />
@@ -488,106 +464,87 @@ export default function PaymentOrdersShow({ paymentOrder }: Props): JSX.Element 
                 </div>
             </div>
 
-            {/* Proof lightbox */}
+            {/* Proof Lightbox Modal */}
             {proofExpanded && paymentOrder.proof_url && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
                     onClick={() => setProofExpanded(false)}
                 >
                     <img
                         src={paymentOrder.proof_url}
                         alt={t('payment_orders.show.proof.title')}
-                        className="max-h-full max-w-full rounded-xl object-contain shadow-2xl"
+                        className="max-h-[90vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     />
                     <button
                         onClick={() => setProofExpanded(false)}
-                        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                        className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
                     >
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                        </svg>
+                        ✕
                     </button>
-                    <a
-                        href={paymentOrder.proof_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
-                    >
-                        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clipRule="evenodd" />
-                            <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clipRule="evenodd" />
-                        </svg>
-                        {t('payment_orders.show.proof.open_tab')}
-                    </a>
                 </div>
             )}
 
             {/* Confirm Modal */}
-            <Modal show={showConfirmModal} onClose={() => setShowConfirmModal(false)}>
+            <Modal show={showConfirmModal} onClose={() => setShowConfirmModal(false)} maxWidth="md">
                 <div className="p-6">
-                    <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                            </svg>
+                    <div className="flex items-center gap-3 mb-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-lg">
+                            ✅
                         </span>
                         <div>
-                            <h3 className="text-base font-semibold text-gray-900">{t('payment_orders.show.confirm_modal.title')}</h3>
-                            <p className="text-sm text-gray-500">{t('payment_orders.show.confirm_modal.subtitle')}</p>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">{t('payment_orders.show.confirm_modal.title')}</h3>
+                            <p className="text-xs text-slate-400">{t('payment_orders.show.confirm_modal.subtitle')}</p>
                         </div>
                     </div>
-                    <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 p-4 text-xs text-emerald-900 dark:text-emerald-200">
                         {t('payment_orders.show.confirm_modal.body')
                             .replace(':amount', fmt(paymentOrder.total_amount))
                             .replace(':tenant', paymentOrder.tenant.name)
                             .replace(':plan', paymentOrder.plan.name)}
                     </div>
-                    <div className="mt-5 flex justify-end gap-3">
-                        <SecondaryButton onClick={() => setShowConfirmModal(false)} disabled={processing}>
+                    <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <SecondaryButton onClick={() => setShowConfirmModal(false)} disabled={processing} className="!rounded-xl text-xs">
                             {t('payment_orders.show.confirm_modal.cancel')}
                         </SecondaryButton>
-                        <button
+                        <PrimaryButton
                             onClick={handleConfirm}
                             disabled={processing}
-                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+                            className="!rounded-xl text-xs shadow-sm bg-emerald-600 hover:bg-emerald-700"
                         >
                             {processing ? t('payment_orders.show.confirm_modal.saving') : t('payment_orders.show.confirm_modal.submit')}
-                        </button>
+                        </PrimaryButton>
                     </div>
                 </div>
             </Modal>
 
             {/* Reject Modal */}
-            <Modal show={showRejectModal} onClose={() => setShowRejectModal(false)}>
+            <Modal show={showRejectModal} onClose={() => setShowRejectModal(false)} maxWidth="md">
                 <div className="p-6">
-                    <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
-                            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                            </svg>
+                    <div className="flex items-center gap-3 mb-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-lg">
+                            ❌
                         </span>
                         <div>
-                            <h3 className="text-base font-semibold text-gray-900">{t('payment_orders.show.reject_modal.title')}</h3>
-                            <p className="text-sm text-gray-500">{t('payment_orders.show.reject_modal.subtitle')}</p>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">{t('payment_orders.show.reject_modal.title')}</h3>
+                            <p className="text-xs text-slate-400">{t('payment_orders.show.reject_modal.subtitle')}</p>
                         </div>
                     </div>
                     <textarea
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
                         rows={4}
-                        className="mt-4 block w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-red-400 focus:ring-red-400"
+                        className="mt-2 block w-full rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white shadow-sm focus:border-rose-400 focus:ring-rose-400"
                         placeholder={t('payment_orders.show.reject_modal.placeholder')}
                     />
-                    <div className="mt-5 flex justify-end gap-3">
-                        <SecondaryButton onClick={() => setShowRejectModal(false)} disabled={processing}>
+                    <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <SecondaryButton onClick={() => setShowRejectModal(false)} disabled={processing} className="!rounded-xl text-xs">
                             {t('payment_orders.show.reject_modal.cancel')}
                         </SecondaryButton>
                         <button
                             onClick={handleReject}
                             disabled={processing || !rejectionReason.trim()}
-                            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
                         >
                             {processing ? t('payment_orders.show.reject_modal.saving') : t('payment_orders.show.reject_modal.submit')}
                         </button>

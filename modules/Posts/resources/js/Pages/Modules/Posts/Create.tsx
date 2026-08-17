@@ -4,14 +4,11 @@ import { useTrans } from '@/hooks/useTrans';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import PageHeader from '@/Components/PageHeader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect } from 'react';
-
-const ArrowLeftIcon = () => (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-    </svg>
-);
 
 export default function Create(): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -41,139 +38,134 @@ export default function Create(): JSX.Element {
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center gap-4">
-                    <Link
-                        href={prefixedRoute('posts.index')}
-                        className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
-                    >
-                        <ArrowLeftIcon />
-                    </Link>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        {t('posts.create.title')}
-                    </h1>
-                </div>
+                <PageHeader
+                    title={t('posts.create.title')}
+                    actions={
+                        <Link href={prefixedRoute('posts.index')}>
+                            <SecondaryButton className="!rounded-xl text-xs">
+                                ← {t('common.cancel')}
+                            </SecondaryButton>
+                        </Link>
+                    }
+                />
             }
         >
             <Head title={t('posts.create.head')} />
 
-            <div className="max-w-4xl">
-                <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
-                    <form onSubmit={submit} className="p-6 space-y-6">
+            <div className="mx-auto max-w-4xl">
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <form onSubmit={submit} className="space-y-6">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="title" value={t('posts.fields.title')} />
+                                <InputLabel htmlFor="title" value={t('posts.fields.title')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                 <TextInput
                                     id="title"
                                     type="text"
                                     name="title"
                                     value={data.title}
-                                    className="mt-1 block w-full"
+                                    className="mt-1 block w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                     autoComplete="off"
                                     isFocused={true}
                                     placeholder={t('posts.placeholders.title')}
                                     onChange={(e) => setData('title', e.target.value)}
                                 />
-                                <InputError message={errors.title} className="mt-2" />
+                                <InputError message={errors.title} className="mt-1" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="slug" value={t('posts.fields.slug')} />
-                                <div className="mt-1 flex rounded-md shadow-sm">
-                                    <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
+                                <InputLabel htmlFor="slug" value={t('posts.fields.slug')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                <div className="mt-1 flex rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+                                    <span className="inline-flex items-center bg-slate-50 dark:bg-slate-800/60 px-3 text-slate-400 font-mono text-xs border-r border-slate-200 dark:border-slate-800">
                                         {t('posts.hints.slug_prefix')}
                                     </span>
-                                    <TextInput
+                                    <input
                                         id="slug"
                                         type="text"
                                         name="slug"
                                         value={data.slug}
-                                        className="block w-full rounded-l-none"
+                                        className="block w-full border-0 focus:ring-0 text-xs font-mono bg-transparent text-slate-900 dark:text-white"
                                         autoComplete="off"
                                         placeholder={t('posts.placeholders.slug')}
                                         onChange={(e) => setData('slug', e.target.value)}
                                     />
                                 </div>
-                                <InputError message={errors.slug} className="mt-2" />
+                                <InputError message={errors.slug} className="mt-1" />
                             </div>
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="excerpt" value={t('posts.fields.excerpt')} />
+                            <InputLabel htmlFor="excerpt" value={t('posts.fields.excerpt')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <textarea
                                 id="excerpt"
                                 name="excerpt"
                                 value={data.excerpt}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs"
                                 rows={3}
                                 placeholder={t('posts.placeholders.excerpt')}
                                 onChange={(e) => setData('excerpt', e.target.value)}
                             />
-                            <p className="mt-2 text-sm text-gray-500">
+                            <p className="mt-1 text-[11px] text-slate-400">
                                 {t('posts.hints.excerpt')}
                             </p>
-                            <InputError message={errors.excerpt} className="mt-2" />
+                            <InputError message={errors.excerpt} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="content" value={t('posts.fields.content')} />
+                            <InputLabel htmlFor="content" value={t('posts.fields.content')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <textarea
                                 id="content"
                                 name="content"
                                 value={data.content}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                rows={12}
+                                className="mt-1 block w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs"
+                                rows={10}
                                 placeholder={t('posts.placeholders.content')}
                                 onChange={(e) => setData('content', e.target.value)}
                             />
-                            <InputError message={errors.content} className="mt-2" />
+                            <InputError message={errors.content} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="featured_image" value={t('posts.fields.featured_image')} />
+                            <InputLabel htmlFor="featured_image" value={t('posts.fields.featured_image')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <TextInput
                                 id="featured_image"
                                 type="text"
                                 name="featured_image"
                                 value={data.featured_image}
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                 autoComplete="off"
                                 placeholder={t('posts.placeholders.featured_image')}
                                 onChange={(e) => setData('featured_image', e.target.value)}
                             />
-                            <p className="mt-2 text-sm text-gray-500">
+                            <p className="mt-1 text-[11px] text-slate-400">
                                 {t('posts.hints.featured_image')}
                             </p>
-                            <InputError message={errors.featured_image} className="mt-2" />
+                            <InputError message={errors.featured_image} className="mt-1" />
                         </div>
 
-                        <div className="flex items-center">
-                            <input
-                                id="is_published"
-                                name="is_published"
-                                type="checkbox"
-                                checked={data.is_published}
-                                onChange={(e) => setData('is_published', e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <label htmlFor="is_published" className="ml-2 block text-sm text-gray-900">
-                                {t('posts.create.publish_immediately')}
+                        <div className="pt-2">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <input
+                                    id="is_published"
+                                    type="checkbox"
+                                    className="h-4 w-4 rounded-lg border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
+                                    checked={data.is_published}
+                                    onChange={(e) => setData('is_published', e.target.checked)}
+                                />
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                    🚀 {t('posts.fields.publish_immediately')}
+                                </span>
                             </label>
                         </div>
 
-                        <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
-                            <Link
-                                href={prefixedRoute('posts.index')}
-                                className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                {t('common.cancel')}
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <Link href={prefixedRoute('posts.index')}>
+                                <SecondaryButton type="button" className="!rounded-xl text-xs">
+                                    {t('common.cancel')}
+                                </SecondaryButton>
                             </Link>
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-                            >
-                                {processing ? t('posts.create.creating') : t('posts.create.submit')}
-                            </button>
+                            <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
+                                ➕ {t('posts.create.submit')}
+                            </PrimaryButton>
                         </div>
                     </form>
                 </div>
@@ -181,3 +173,4 @@ export default function Create(): JSX.Element {
         </DynamicLayout>
     );
 }
+
