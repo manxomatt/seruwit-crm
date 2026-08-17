@@ -6,88 +6,96 @@ export default function ApplicationLogo({
 }: SVGProps<SVGSVGElement> & { showText?: boolean }) {
     return (
         <svg
-            viewBox={showText ? "0 0 260 60" : "0 0 60 60"}
+            viewBox={showText ? "0 0 540 160" : "0 0 160 160"}
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             {...props}
         >
             <defs>
-                <linearGradient id="seruwit-grad-primary" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#2563EB" />
-                    <stop offset="50%" stopColor="#06B6D4" />
+                <linearGradient id="seruwit-c1-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#1E3A8A" />
+                    <stop offset="40%" stopColor="#2563EB" />
+                    <stop offset="75%" stopColor="#06B6D4" />
                     <stop offset="100%" stopColor="#10B981" />
                 </linearGradient>
-                <linearGradient id="seruwit-grad-accent" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#1E40AF" />
-                    <stop offset="100%" stopColor="#3B82F6" />
+                <linearGradient id="seruwit-c1-biz" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#06B6D4" />
+                    <stop offset="100%" stopColor="#10B981" />
+                </linearGradient>
+                <linearGradient id="seruwit-c1-arrow" x1="100%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#06B6D4" />
+                    <stop offset="100%" stopColor="#1E40AF" />
                 </linearGradient>
             </defs>
 
-            {/* Logo Icon Mark: Stylized Infinity & S/B Integration */}
-            <g transform="translate(5, 5)">
-                {/* Background Shadow Glow / Base */}
-                <rect x="0" y="0" width="50" height="50" rx="14" fill="url(#seruwit-grad-primary)" opacity="0.12" />
-                
-                {/* Main Dynamic Ribbon 'S' Loop (Finance + Logistics Flow) */}
+            {/* Concept 1 Emblem: Geometric S+B Integration */}
+            <g transform="translate(10, 10) scale(0.28)">
+                {/* S-curve Ribbon */}
                 <path
-                    d="M 15 36 C 12 28 16 18 25 15 C 34 12 40 18 36 26 C 32 34 18 28 14 36 C 11 42 18 48 27 45 C 36 42 41 32 38 24"
-                    stroke="url(#seruwit-grad-primary)"
-                    strokeWidth="5.5"
+                    d="M 315 140 C 315 95, 275 65, 215 65 C 155 65, 125 105, 125 145 C 125 200, 260 210, 260 260 C 260 295, 230 320, 185 320 C 140 320, 115 295, 110 270"
+                    stroke="url(#seruwit-c1-grad)"
+                    strokeWidth="36"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     fill="none"
                 />
 
-                {/* Connection Nodes / Tech Dots representing ERP & CRM integration */}
-                <circle cx="15" cy="36" r="3" fill="#2563EB" />
-                <circle cx="38" cy="24" r="3" fill="#10B981" />
+                {/* B Loop & Forward Arrow */}
                 <path
-                    d="M 22 25 L 30 19 L 34 27"
-                    stroke="url(#seruwit-grad-accent)"
-                    strokeWidth="3.5"
+                    d="M 220 145 L 340 210 C 375 230, 375 285, 340 305 L 210 380 C 170 405, 125 370, 125 325 L 125 145"
+                    stroke="url(#seruwit-c1-grad)"
+                    strokeWidth="36"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     fill="none"
                 />
+
+                {/* Center Forward Arrow motif */}
+                <path d="M 225 210 L 285 245 L 225 280 Z" fill="url(#seruwit-c1-arrow)" />
+
+                {/* Tech Node Dots */}
+                <circle cx="315" cy="140" r="18" fill="#06B6D4" />
+                <circle cx="110" cy="270" r="18" fill="#1E3A8A" />
             </g>
 
-            {/* Logo Text: Seruwit Biz */}
+            {/* Logo Text: SERUWIT BIZ */}
             {showText && (
-                <g transform="translate(68, 38)">
+                <g transform="translate(145, 92)">
                     <text
                         fontFamily="System-UI, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                        fontSize="25"
-                        fontWeight="800"
-                        letterSpacing="-0.5"
+                        fontSize="48"
+                        fontWeight="900"
+                        letterSpacing="-1"
                         fill="currentColor"
                     >
-                        Seruwit
+                        SERUWIT
                     </text>
                     <text
-                        x="94"
+                        x="215"
                         fontFamily="System-UI, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                        fontSize="25"
-                        fontWeight="700"
+                        fontSize="48"
+                        fontWeight="800"
                         letterSpacing="-0.5"
-                        fill="url(#seruwit-grad-primary)"
+                        fill="url(#seruwit-c1-biz)"
                     >
-                        Biz
+                        BIZ
                     </text>
                     <text
                         x="0"
-                        y="14"
+                        y="30"
                         fontFamily="System-UI, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                        fontSize="8"
-                        fontWeight="600"
-                        letterSpacing="1.5"
+                        fontSize="13"
+                        fontWeight="700"
+                        letterSpacing="4"
                         fill="currentColor"
-                        opacity="0.55"
+                        opacity="0.65"
                     >
-                        INTEGRATED SAAS PLATFORM
+                        INTEGRATED BUSINESS SYSTEMS
                     </text>
                 </g>
             )}
         </svg>
     );
 }
+
 

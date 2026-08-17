@@ -331,7 +331,7 @@ const MENU_GROUPS: MenuGroup[] = [
     { titleKey: 'distribution_logistics', modules: ['transportation', 'orders', 'outbound', 'routing'] },
     { titleKey: 'sales_commercial', modules: ['pos', 'canvassing', 'shuttle', 'promotions'] },
     { titleKey: 'content', tier: 'content', also: ['media'] },
-    { titleKey: 'insights', modules: ['analytics', 'live-updates'] },
+    // { titleKey: 'insights', modules: ['analytics', 'live-updates'] },
     { titleKey: 'administration', modules: ['roles', 'users', 'modules', 'settings', 'subscription'] },
     { titleKey: 'platform', modules: ['tenants', 'plans', 'payment-orders', 'module-registry'] },
 ];
