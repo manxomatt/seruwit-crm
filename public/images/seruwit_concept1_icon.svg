@@ -17,7 +17,6 @@
   </defs>
 
   <g filter="url(#glow)">
-    <!-- Main S+B Integrated Geometric Line -->
     <!-- Top Curve of S -->
     <path d="M 315 140 C 315 95, 275 65, 215 65 C 155 65, 125 105, 125 145 C 125 200, 260 210, 260 260 C 260 295, 230 320, 185 320 C 140 320, 115 295, 110 270" 
           stroke="url(#grad1)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none" />
@@ -26,10 +25,10 @@
     <path d="M 220 145 L 340 210 C 375 230, 375 285, 340 305 L 210 380 C 170 405, 125 370, 125 325 L 125 145" 
           stroke="url(#grad1)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none" />
 
-    <!-- Center Forward Play/Arrow motif for Logistics & Speed -->
+    <!-- Center Forward Arrow motif -->
     <path d="M 225 210 L 285 245 L 225 280 Z" fill="url(#grad2)" />
     
-    <!-- Connection Tech Dots -->
+    <!-- Connection Dots -->
     <circle cx="315" cy="140" r="18" fill="#06B6D4" />
     <circle cx="110" cy="270" r="18" fill="#1E3A8A" />
   </g>
