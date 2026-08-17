@@ -8,6 +8,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import DocumentNav from '../../../../DocumentNav';
 import { DocumentItem, DocumentType, formatDate, formatDaysUntil, getStatusBadge } from '../../../../documentUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface Vehicle {
     id: number;
@@ -64,24 +65,25 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                            {vehicle.name}
-                        </h2>
-                        <p className="text-sm text-gray-500">{vehicle.plate_number}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        {can.create && (
-                            <Link href={prefixedRoute('fleet.vehicles.documents.create', vehicle.id)}>
-                                <PrimaryButton>{t('document.entity_docs.upload')}</PrimaryButton>
+                <PageHeader
+                    title={`${vehicle.name} (${vehicle.plate_number})`}
+                    actions={
+                        <div className="flex gap-2">
+                            {can.create && (
+                                <Link href={prefixedRoute('fleet.vehicles.documents.create', vehicle.id)}>
+                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                        📤 {t('document.entity_docs.upload')}
+                                    </PrimaryButton>
+                                </Link>
+                            )}
+                            <Link href={prefixedRoute('fleet.vehicles.show', vehicle.id)}>
+                                <SecondaryButton className="!rounded-xl text-xs">
+                                    ← {t('document.entity_docs.back')}
+                                </SecondaryButton>
                             </Link>
-                        )}
-                        <Link href={prefixedRoute('fleet.vehicles.show', vehicle.id)}>
-                            <SecondaryButton>{t('document.entity_docs.back')}</SecondaryButton>
-                        </Link>
-                    </div>
-                </div>
+                        </div>
+                    }
+                />
             }
         >
             <Head title={t('document.entity_docs.docs_head', { name: vehicle.name })} />
@@ -95,22 +97,22 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                     const badge = active ? getStatusBadge(active.status, t) : null;
 
                     return (
-                        <div key={type.id} className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                        <div key={type.id} className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30">
                                 <div className="flex items-center gap-3">
-                                    <span className="font-medium text-gray-900">{type.name}</span>
+                                    <span className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">{type.name}</span>
                                     {type.is_required && (
-                                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                                        <span className="rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
                                             {t('document.entity_docs.required_badge')}
                                         </span>
                                     )}
                                     {badge && (
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.classes}`}>
+                                        <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${badge.classes}`}>
                                             {badge.label}
                                         </span>
                                     )}
                                     {!active && (
-                                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-500">
+                                        <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                             {t('document.entity_docs.none')}
                                         </span>
                                     )}
@@ -118,84 +120,82 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                                 {can.create && (
                                     <Link
                                         href={`${prefixedRoute('fleet.vehicles.documents.create', vehicle.id)}?type=${type.id}`}
-                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                     >
-                                        {active ? t('document.entity_docs.renew') : t('document.entity_docs.upload_action')}
+                                        {active ? `🔄 ${t('document.entity_docs.renew')}` : `📤 ${t('document.entity_docs.upload_action')}`}
                                     </Link>
                                 )}
                             </div>
 
                             {active && (
-                                <div className="px-6 py-4">
-                                    <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                                        <div>
-                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.number')}</dt>
-                                            <dd className="mt-1 text-sm text-gray-900">{active.document_number ?? '—'}</dd>
+                                <div className="px-6 py-5">
+                                    <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4 text-xs">
+                                        <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                            <dt className="font-bold text-[10px] uppercase tracking-wider text-slate-400">{t('document.entity_docs.number')}</dt>
+                                            <dd className="mt-1 font-mono font-bold text-slate-900 dark:text-white">{active.document_number ?? '—'}</dd>
                                         </div>
-                                        <div>
-                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.issued')}</dt>
-                                            <dd className="mt-1 text-sm text-gray-900">{formatDate(active.issued_at, localeTag)}</dd>
+                                        <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                            <dt className="font-bold text-[10px] uppercase tracking-wider text-slate-400">{t('document.entity_docs.issued')}</dt>
+                                            <dd className="mt-1 font-mono text-slate-700 dark:text-slate-300">{formatDate(active.issued_at, localeTag)}</dd>
                                         </div>
-                                        <div>
-                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.expires')}</dt>
-                                            <dd className={`mt-1 text-sm ${active.status === 'expired' ? 'font-medium text-red-600' : active.status === 'expiring_soon' ? 'font-medium text-yellow-700' : 'text-gray-900'}`}>
+                                        <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                            <dt className="font-bold text-[10px] uppercase tracking-wider text-slate-400">{t('document.entity_docs.expires')}</dt>
+                                            <dd className={`mt-1 font-mono ${active.status === 'expired' ? 'font-bold text-rose-600 dark:text-rose-400' : active.status === 'expiring_soon' ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
                                                 {formatDate(active.expires_at, localeTag)}
                                                 {active.expires_at && (
-                                                    <span className="ml-1 text-xs font-normal text-gray-400">
+                                                    <span className="ml-1 text-[11px] font-normal text-slate-400">
                                                         ({formatDaysUntil(active.expires_at, t)})
                                                     </span>
                                                 )}
                                             </dd>
                                         </div>
-                                        <div>
-                                            <dt className="text-xs font-medium text-gray-500">{t('document.entity_docs.verified')}</dt>
-                                            <dd className="mt-1 text-sm text-gray-900">
+                                        <div className="p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                            <dt className="font-bold text-[10px] uppercase tracking-wider text-slate-400">{t('document.entity_docs.verified')}</dt>
+                                            <dd className="mt-1 text-slate-900 dark:text-white font-bold">
                                                 {active.verified_at ? (
-                                                    <span className="text-green-700">✓ {active.verifier?.name}</span>
+                                                    <span className="text-emerald-600 dark:text-emerald-400">✓ {active.verifier?.name}</span>
                                                 ) : (
-                                                    <span className="text-gray-400">{t('document.entity_docs.not_verified')}</span>
+                                                    <span className="text-slate-400 font-normal">{t('document.entity_docs.not_verified')}</span>
                                                 )}
                                             </dd>
                                         </div>
                                     </dl>
 
                                     {active.media && (
-                                        <div className="mt-3">
+                                        <div className="mt-4">
                                             <a
                                                 href={active.media.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800"
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                             >
-                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                </svg>
+                                                <span>📎</span>
                                                 {active.media.original_name}
                                             </a>
                                         </div>
                                     )}
 
-                                    <div className="mt-4 flex gap-3">
+                                    <div className="mt-4 flex gap-4 pt-3 border-t border-slate-100 dark:border-slate-800/60">
                                         <Link
                                             href={prefixedRoute('fleet.vehicles.documents.show', [vehicle.id, active.id])}
-                                            className="text-xs text-gray-500 hover:text-gray-700"
+                                            className="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                         >
-                                            {t('document.entity_docs.detail_history')}
+                                            👁️ {t('document.entity_docs.detail_history')}
                                         </Link>
                                         {can.verify && !active.verified_at && (
                                             <button
                                                 onClick={() => handleVerify(active)}
-                                                className="text-xs text-green-600 hover:text-green-800"
+                                                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
                                             >
-                                                {t('document.entity_docs.mark_verified')}
+                                                ✓ {t('document.entity_docs.mark_verified')}
                                             </button>
                                         )}
                                         {can.delete && (
                                             <button
                                                 onClick={() => setToDelete(active)}
-                                                className="text-xs text-red-500 hover:text-red-700"
+                                                className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline"
                                             >
-                                                {t('common.delete')}
+                                                🗑️ {t('common.delete')}
                                             </button>
                                         )}
                                     </div>
@@ -203,8 +203,8 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
                             )}
 
                             {history.length > 0 && (
-                                <div className="border-t border-gray-100 bg-gray-50 px-6 py-3">
-                                    <p className="text-xs text-gray-400">
+                                <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 px-6 py-3">
+                                    <p className="text-xs font-medium text-slate-400">
                                         {t('document.entity_docs.history_count', { count: history.length })}
                                     </p>
                                 </div>
@@ -227,3 +227,4 @@ export default function Index({ vehicle, types, documents, can }: Props): JSX.El
         </DynamicLayout>
     );
 }
+

@@ -8,6 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Permission {
     id: number;
@@ -75,76 +76,78 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('roles.pages.create.head')}
-                    </h2>
-                    <Link href={prefixedRoute('roles.index')}>
-                        <SecondaryButton>{t('roles.actions.back_to_roles')}</SecondaryButton>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={t('roles.pages.create.head')}
+                    actions={
+                        <Link href={prefixedRoute('roles.index')}>
+                            <SecondaryButton className="!rounded-xl text-xs">
+                                ← {t('roles.actions.back_to_roles')}
+                            </SecondaryButton>
+                        </Link>
+                    }
+                />
             }
         >
             <Head title={t('roles.pages.create.title')} />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <form onSubmit={submit} className="p-6">
+            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <form onSubmit={submit} className="space-y-6">
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         {/* Left Column - Role Details */}
-                        <div className="space-y-6">
+                        <div className="space-y-5">
                             <div>
-                                <InputLabel htmlFor="name" value={t('roles.fields.name')} />
+                                <InputLabel htmlFor="name" value={t('roles.fields.name')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                 <TextInput
                                     id="name"
                                     type="text"
-                                    className="mt-1 block w-full"
+                                    className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
                                     autoFocus
                                     placeholder={t('roles.placeholders.name')}
                                 />
-                                <InputError message={errors.name} className="mt-2" />
+                                <InputError message={errors.name} className="mt-1.5" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="description" value={t('roles.fields.description')} />
+                                <InputLabel htmlFor="description" value={t('roles.fields.description')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                 <textarea
                                     id="description"
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="mt-1 block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
-                                    rows={3}
+                                    rows={4}
                                     placeholder={t('roles.placeholders.description')}
                                 />
-                                <InputError message={errors.description} className="mt-2" />
+                                <InputError message={errors.description} className="mt-1.5" />
                             </div>
                         </div>
 
                         {/* Right Column - Permissions */}
                         <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <InputLabel value={t('roles.fields.permissions')} />
-                                <div className="flex gap-2">
+                            <div className="flex items-center justify-between mb-3">
+                                <InputLabel value={t('roles.fields.permissions')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                <div className="flex items-center gap-2">
                                     <button
                                         type="button"
                                         onClick={selectAllPermissions}
-                                        className="text-sm text-indigo-600 hover:text-indigo-800"
+                                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                     >
                                         {t('roles.actions.select_all')}
                                     </button>
-                                    <span className="text-gray-300">|</span>
+                                    <span className="text-slate-300 dark:text-slate-700">|</span>
                                     <button
                                         type="button"
                                         onClick={clearAllPermissions}
-                                        className="text-sm text-gray-600 hover:text-gray-800"
+                                        className="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                     >
                                         {t('roles.actions.clear_all')}
                                     </button>
                                 </div>
                             </div>
                             
-                            <div className="border rounded-lg divide-y max-h-[500px] overflow-y-auto">
+                            <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 max-h-[420px] overflow-y-auto bg-slate-50/50 dark:bg-slate-800/30">
                                 {Object.entries(permissions).map(([module, modulePermissions]) => {
                                     const modulePermissionIds = modulePermissions.map(p => p.id);
                                     const allSelected = modulePermissionIds.every(id => data.permissions.includes(id));
@@ -152,8 +155,8 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                     
                                     return (
                                         <div key={module} className="p-4">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <label className="flex items-center cursor-pointer">
+                                            <div className="flex items-center justify-between mb-2.5">
+                                                <label className="flex items-center gap-2 cursor-pointer">
                                                     <input
                                                         type="checkbox"
                                                         checked={allSelected}
@@ -163,10 +166,10 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                                             }
                                                         }}
                                                         onChange={() => toggleModulePermissions(modulePermissions)}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                        className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                     />
-                                                    <span className="ml-2 font-medium text-gray-900">
-                                                        {modules[module] || module}
+                                                    <span className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                                                        🧩 {modules[module] || module}
                                                     </span>
                                                 </label>
                                             </div>
@@ -174,15 +177,15 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                                 {modulePermissions.map((permission) => (
                                                     <label
                                                         key={permission.id}
-                                                        className="flex items-center cursor-pointer"
+                                                        className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 dark:text-slate-300"
                                                     >
                                                         <input
                                                             type="checkbox"
                                                             checked={data.permissions.includes(permission.id)}
                                                             onChange={() => togglePermission(permission.id)}
-                                                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                            className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                         />
-                                                        <span className="ml-2 text-sm text-gray-700">
+                                                        <span>
                                                             {actions[permission.action] || permission.action}
                                                         </span>
                                                     </label>
@@ -192,19 +195,19 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
                                     );
                                 })}
                             </div>
-                            <InputError message={errors.permissions} className="mt-2" />
+                            <InputError message={errors.permissions} className="mt-1.5" />
                             
-                            <p className="mt-2 text-sm text-gray-500">
+                            <p className="mt-2 text-xs font-bold text-slate-500">
                                 {t('roles.permissions_selected', { count: data.permissions.length })}
                             </p>
                         </div>
                     </div>
 
-                    <div className="mt-6 flex items-center justify-end gap-4">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                         <Link href={prefixedRoute('roles.index')}>
-                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
                         </Link>
-                        <PrimaryButton disabled={processing}>
+                        <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
                             {processing ? t('roles.pages.create.submitting') : t('roles.pages.create.submit')}
                         </PrimaryButton>
                     </div>
@@ -213,3 +216,4 @@ export default function Create({ permissions, modules, actions }: Props): JSX.El
         </DynamicLayout>
     );
 }
+

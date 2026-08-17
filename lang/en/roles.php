@@ -40,6 +40,21 @@ return [
             ],
             'users_count' => ':count users',
             'permissions_count' => ':count permissions',
+            'stats' => [
+                'total_roles' => 'Total Roles',
+                'system_roles' => 'System Roles',
+                'custom_roles' => 'Custom Roles',
+                'assigned_users' => 'Assigned Users',
+            ],
+            'filters' => [
+                'all' => 'All Roles',
+                'system' => 'System',
+                'custom' => 'Custom',
+            ],
+            'view_modes' => [
+                'grid' => 'Grid View',
+                'table' => 'Table View',
+            ],
         ],
         'create' => [
             'title' => 'Create Role',

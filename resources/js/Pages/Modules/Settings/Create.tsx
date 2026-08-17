@@ -57,43 +57,43 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
         >
             <Head title={t('settings.pages.create.title')} />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-6">
-                    <form onSubmit={submit} className="max-w-xl">
-                        <div className="mb-4">
-                            <InputLabel htmlFor="key" value={t('settings.fields.key')} />
+            <div className="mx-auto max-w-3xl">
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <form onSubmit={submit} className="space-y-5">
+                        <div>
+                            <InputLabel htmlFor="key" value={t('settings.fields.key')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <TextInput
                                 id="key"
                                 type="text"
                                 name="key"
                                 value={data.key}
-                                className="mt-1 block w-full font-mono"
+                                className="mt-1 block w-full font-mono !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                 placeholder={t('settings.placeholders.key')}
                                 isFocused={true}
                                 onChange={(e) => setData('key', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
                             />
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-[11px] text-slate-500">
                                 {t('settings.placeholders.key_hint')}
                             </p>
-                            <InputError message={errors.key} className="mt-2" />
+                            <InputError message={errors.key} className="mt-1.5" />
                         </div>
 
-                        <div className="mb-4">
-                            <InputLabel htmlFor="label" value={t('settings.fields.label')} />
+                        <div>
+                            <InputLabel htmlFor="label" value={t('settings.fields.label')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <TextInput
                                 id="label"
                                 type="text"
                                 name="label"
                                 value={data.label}
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                 placeholder={t('settings.placeholders.label')}
                                 onChange={(e) => setData('label', e.target.value)}
                             />
-                            <InputError message={errors.label} className="mt-2" />
+                            <InputError message={errors.label} className="mt-1.5" />
                         </div>
 
-                        <div className="mb-4">
-                            <InputLabel htmlFor="group" value={t('settings.fields.group')} />
+                        <div>
+                            <InputLabel htmlFor="group" value={t('settings.fields.group')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <div className="mt-1">
                                 {newGroupMode ? (
                                     <>
@@ -101,17 +101,18 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                             id="group"
                                             name="group"
                                             value={data.group}
-                                            className="block w-full font-mono"
+                                            className="block w-full font-mono !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                             placeholder={t('settings.placeholders.group')}
                                             onChange={(e) => setData('group', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                                         />
-                                        <p className="mt-1 text-sm text-gray-500">
+                                        <p className="mt-1 text-[11px] text-slate-500">
                                             {t('settings.placeholders.group_hint')}
                                         </p>
                                     </>
                                 ) : (
                                     <Select
                                         id="group"
+                                        className="w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                         value={data.group}
                                         onChange={(value) => setData('group', value)}
                                         options={groups.map((g) => ({ value: g, label: g.charAt(0).toUpperCase() + g.slice(1) }))}
@@ -125,41 +126,41 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                         setNewGroupMode(!newGroupMode);
                                         setData('group', newGroupMode ? groups[0] || 'general' : '');
                                     }}
-                                    className="mt-1 text-sm text-indigo-600 hover:text-indigo-900"
+                                    className="mt-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                 >
                                     {newGroupMode ? t('settings.pages.create.choose_existing_group') : t('settings.pages.create.create_new_group')}
                                 </button>
                             )}
-                            <InputError message={errors.group} className="mt-2" />
+                            <InputError message={errors.group} className="mt-1.5" />
                         </div>
 
-                        <div className="mb-4">
-                            <InputLabel htmlFor="type" value={t('settings.fields.type')} />
+                        <div>
+                            <InputLabel htmlFor="type" value={t('settings.fields.type')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <Select
                                 id="type"
-                                className="mt-1"
+                                className="mt-1 w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                 value={data.type}
                                 onChange={(value) => setData('type', value)}
                                 options={settingTypes}
                             />
-                            <InputError message={errors.type} className="mt-2" />
+                            <InputError message={errors.type} className="mt-1.5" />
                         </div>
 
-                        <div className="mb-4">
-                            <InputLabel htmlFor="value" value={t('settings.fields.value')} />
+                        <div>
+                            <InputLabel htmlFor="value" value={t('settings.fields.value')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             {data.type === 'textarea' || data.type === 'json' ? (
                                 <textarea
                                     id="value"
                                     name="value"
                                     value={data.value}
                                     rows={4}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="mt-1 block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                     onChange={(e) => setData('value', e.target.value)}
                                 />
                             ) : data.type === 'boolean' ? (
                                 <Select
                                     id="value"
-                                    className="mt-1"
+                                    className="mt-1 w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                     value={data.value}
                                     onChange={(value) => setData('value', value)}
                                     placeholder={t('settings.boolean_options.select_placeholder')}
@@ -173,12 +174,12 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                     <input
                                         id="value"
                                         type="color"
-                                        className="h-10 w-14 cursor-pointer rounded-md border border-gray-300 bg-white p-1 shadow-sm"
+                                        className="h-10 w-14 cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1 shadow-sm"
                                         value={data.value || '#000000'}
                                         onChange={(e) => setData('value', e.target.value)}
                                     />
                                     <TextInput
-                                        className="w-32 font-mono uppercase"
+                                        className="w-32 font-mono uppercase !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                         value={data.value}
                                         placeholder="#000000"
                                         onChange={(e) => setData('value', e.target.value)}
@@ -196,64 +197,65 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
                                     type={data.type === 'number' ? 'number' : data.type === 'email' ? 'email' : data.type === 'url' ? 'url' : 'text'}
                                     name="value"
                                     value={data.value}
-                                    className="mt-1 block w-full"
+                                    className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                     onChange={(e) => setData('value', e.target.value)}
                                 />
                             )}
-                            <InputError message={errors.value} className="mt-2" />
+                            <InputError message={errors.value} className="mt-1.5" />
                         </div>
 
-                        <div className="mb-4">
-                            <InputLabel htmlFor="description" value={t('settings.fields.description')} />
+                        <div>
+                            <InputLabel htmlFor="description" value={t('settings.fields.description')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <textarea
                                 id="description"
                                 name="description"
                                 value={data.description}
                                 rows={2}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                 placeholder={t('settings.placeholders.description')}
                                 onChange={(e) => setData('description', e.target.value)}
                             />
-                            <InputError message={errors.description} className="mt-2" />
+                            <InputError message={errors.description} className="mt-1.5" />
                         </div>
 
-                        <div className="mb-4">
-                            <InputLabel htmlFor="sort_order" value={t('settings.fields.sort_order')} />
-                            <TextInput
-                                id="sort_order"
-                                type="number"
-                                name="sort_order"
-                                value={data.sort_order}
-                                className="mt-1 block w-32"
-                                min={0}
-                                onChange={(e) => setData('sort_order', parseInt(e.target.value) || 0)}
-                            />
-                            <InputError message={errors.sort_order} className="mt-2" />
-                        </div>
-
-                        <div className="mb-6">
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    name="is_public"
-                                    checked={data.is_public}
-                                    onChange={(e) => setData('is_public', e.target.checked)}
-                                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel htmlFor="sort_order" value={t('settings.fields.sort_order')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                <TextInput
+                                    id="sort_order"
+                                    type="number"
+                                    name="sort_order"
+                                    value={data.sort_order}
+                                    className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                    min={0}
+                                    onChange={(e) => setData('sort_order', parseInt(e.target.value) || 0)}
                                 />
-                                <span className="ml-2 text-sm text-gray-600">
-                                    {t('settings.fields.is_public')}
-                                </span>
-                            </label>
-                            <InputError message={errors.is_public} className="mt-2" />
+                                <InputError message={errors.sort_order} className="mt-1.5" />
+                            </div>
+
+                            <div className="flex items-end pb-1">
+                                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-2.5 cursor-pointer w-full">
+                                    <input
+                                        type="checkbox"
+                                        name="is_public"
+                                        checked={data.is_public}
+                                        onChange={(e) => setData('is_public', e.target.checked)}
+                                        className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                        {t('settings.fields.is_public')}
+                                    </span>
+                                </label>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <PrimaryButton disabled={processing}>
+                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <Link href={prefixedRoute('settings.group', selectedGroup || groups[0] || 'general')}>
+                                <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
+                            </Link>
+                            <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
                                 {t('settings.pages.create.submit')}
                             </PrimaryButton>
-                            <Link href={prefixedRoute('settings.group', selectedGroup || groups[0] || 'general')}>
-                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
-                            </Link>
                         </div>
                     </form>
                 </div>
@@ -261,3 +263,4 @@ export default function Create({ groups, selectedGroup, isNewGroup }: Props): JS
         </DynamicLayout>
     );
 }
+

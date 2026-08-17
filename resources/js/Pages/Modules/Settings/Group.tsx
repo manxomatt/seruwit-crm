@@ -9,7 +9,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import ImageUploader from '@/Components/ImageUploader';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import PageHeader from '@/Components/PageHeader';
 
@@ -46,6 +46,17 @@ interface Props {
     mailConfigUpdateUrl?: string | null;
 }
 
+const GROUP_ICONS: Record<string, string> = {
+    general: '⚙️',
+    site: '🌐',
+    seo: '🔍',
+    appearance: '🎨',
+    email: '✉️',
+    social: '💬',
+    units: '📏',
+    maintenance: '🛠️',
+};
+
 const SELECT_OPTIONS: Record<string, { value: string; label: string }[]> = {
     'general.system_mode': [
         { value: 'development', label: 'Development' },
@@ -60,13 +71,13 @@ const formatGroupLabel = (group: string, t: (key: string) => string): string => 
 };
 
 const PencilIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
 );
 
 const TrashIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
 );
@@ -99,52 +110,61 @@ function MailSmtpForm({
     };
 
     return (
-        <div className="mt-8 border-t border-gray-200 pt-8">
-            <div className="mb-4">
-                <h4 className="text-base font-medium text-gray-900">{t('settings.mail.title')}</h4>
-                <p className="mt-1 text-sm text-gray-500">{t('settings.mail.subtitle')}</p>
-                {mailConfig.is_configured ? (
-                    <p className="mt-2 text-xs font-medium text-green-700">{t('settings.mail.status_active')}</p>
-                ) : (
-                    <p className="mt-2 text-xs text-amber-700">{t('settings.mail.status_inactive')}</p>
-                )}
+        <div className="mt-8 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-6">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center justify-between">
+                    <h4 className="text-base font-bold text-slate-900 dark:text-white">✉️ {t('settings.mail.title')}</h4>
+                    {mailConfig.is_configured ? (
+                        <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                            {t('settings.mail.status_active')}
+                        </span>
+                    ) : (
+                        <span className="rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">
+                            {t('settings.mail.status_inactive')}
+                        </span>
+                    )}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">{t('settings.mail.subtitle')}</p>
             </div>
 
             {!canEdit || !updateUrl ? (
-                <div className="space-y-3 text-sm text-gray-700">
-                    <p>
-                        <span className="font-medium">{t('settings.mail.enabled')}:</span>{' '}
-                        {mailConfig.is_enabled ? t('settings.value_display.yes') : t('settings.value_display.no')}
-                    </p>
-                    <p>
-                        <span className="font-medium">{t('settings.mail.host')}:</span> {mailConfig.host || '—'}
-                    </p>
-                    <p>
-                        <span className="font-medium">{t('settings.mail.port')}:</span> {mailConfig.port ?? '—'}
-                    </p>
-                    <p>
-                        <span className="font-medium">{t('settings.mail.username')}:</span> {mailConfig.username || '—'}
-                    </p>
+                <div className="grid gap-4 sm:grid-cols-2 text-xs text-slate-700 dark:text-slate-300">
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                        <span className="font-bold text-slate-400 uppercase text-[10px] block">{t('settings.mail.enabled')}</span>
+                        <span className="text-sm font-semibold">{mailConfig.is_enabled ? t('settings.value_display.yes') : t('settings.value_display.no')}</span>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                        <span className="font-bold text-slate-400 uppercase text-[10px] block">{t('settings.mail.host')}</span>
+                        <span className="text-sm font-semibold font-mono">{mailConfig.host || '—'}</span>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                        <span className="font-bold text-slate-400 uppercase text-[10px] block">{t('settings.mail.port')}</span>
+                        <span className="text-sm font-semibold">{mailConfig.port ?? '—'}</span>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                        <span className="font-bold text-slate-400 uppercase text-[10px] block">{t('settings.mail.username')}</span>
+                        <span className="text-sm font-semibold font-mono">{mailConfig.username || '—'}</span>
+                    </div>
                 </div>
             ) : (
-                <form onSubmit={submit} className="max-w-xl space-y-4">
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                <form onSubmit={submit} className="space-y-4 max-w-2xl">
+                    <label className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3.5 cursor-pointer">
                         <input
                             type="checkbox"
                             checked={data.is_enabled}
                             onChange={(e) => setData('is_enabled', e.target.checked)}
-                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                            className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                        {t('settings.mail.enabled')}
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">{t('settings.mail.enabled')}</span>
                     </label>
 
                     <div>
-                        <InputLabel htmlFor="smtp_host" value={t('settings.mail.host')} />
+                        <InputLabel htmlFor="smtp_host" value={t('settings.mail.host')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                         <TextInput
                             id="smtp_host"
                             value={data.host}
                             onChange={(e) => setData('host', e.target.value)}
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                             placeholder="smtp.gmail.com"
                             autoComplete="off"
                         />
@@ -153,23 +173,23 @@ function MailSmtpForm({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <InputLabel htmlFor="smtp_port" value={t('settings.mail.port')} />
+                            <InputLabel htmlFor="smtp_port" value={t('settings.mail.port')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <TextInput
                                 id="smtp_port"
                                 type="number"
                                 value={String(data.port)}
                                 onChange={(e) => setData('port', Number(e.target.value) || 0)}
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                             />
                             <InputError message={errors.port} className="mt-1" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="smtp_encryption" value={t('settings.mail.encryption')} />
+                            <InputLabel htmlFor="smtp_encryption" value={t('settings.mail.encryption')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <select
                                 id="smtp_encryption"
                                 value={data.encryption}
                                 onChange={(e) => setData('encryption', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                className="mt-1 block w-full rounded-xl border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             >
                                 <option value="tls">{t('settings.mail.encryption_tls')}</option>
                                 <option value="ssl">{t('settings.mail.encryption_ssl')}</option>
@@ -180,34 +200,36 @@ function MailSmtpForm({
                     </div>
 
                     <div>
-                        <InputLabel htmlFor="smtp_username" value={t('settings.mail.username')} />
+                        <InputLabel htmlFor="smtp_username" value={t('settings.mail.username')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                         <TextInput
                             id="smtp_username"
                             value={data.username}
                             onChange={(e) => setData('username', e.target.value)}
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                             autoComplete="off"
                         />
                         <InputError message={errors.username} className="mt-1" />
                     </div>
 
                     <div>
-                        <InputLabel htmlFor="smtp_password" value={t('settings.mail.password')} />
+                        <InputLabel htmlFor="smtp_password" value={t('settings.mail.password')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                         <TextInput
                             id="smtp_password"
                             type="password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                             placeholder={mailConfig.has_password ? '••••••••' : ''}
                             autoComplete="new-password"
                         />
-                        <p className="mt-1 text-xs text-gray-400">{t('settings.mail.password_hint')}</p>
+                        <p className="mt-1 text-[11px] text-slate-400">{t('settings.mail.password_hint')}</p>
                         <InputError message={errors.password} className="mt-1" />
                     </div>
 
                     <div className="pt-2">
-                        <PrimaryButton disabled={processing}>{t('settings.mail.save')}</PrimaryButton>
+                        <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
+                            {t('settings.mail.save')}
+                        </PrimaryButton>
                     </div>
                 </form>
             )}
@@ -227,6 +249,8 @@ export default function Group({
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
+
     const [settingToDelete, setSettingToDelete] = useState<Setting | null>(null);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
     const [showResetAppearance, setShowResetAppearance] = useState(false);
@@ -287,62 +311,122 @@ export default function Group({
         );
     };
 
+    const groupIcon = GROUP_ICONS[currentGroup] ?? '⚙️';
+
     return (
         <DynamicLayout
-            header={<PageHeader title={t('settings.pages.index.head')} />}
+            header={
+                <PageHeader
+                    title={t('settings.pages.index.head')}
+                    actions={
+                        canManageStructure ? (
+                            <Link href={`${prefixedRoute('settings.create')}?group=${currentGroup}`}>
+                                <PrimaryButton type="button" className="!rounded-xl text-xs shadow-sm">
+                                    + {t('settings.pages.group.add_setting')}
+                                </PrimaryButton>
+                            </Link>
+                        ) : undefined
+                    }
+                />
+            }
         >
             <Head title={t('settings.pages.group.title', { group: formatGroupLabel(currentGroup, t) })} />
 
-            <div className="mb-6 flex items-center justify-between border-b border-gray-200">
-                <nav className="-mb-px flex flex-wrap gap-6">
-                    {groups.map((g) => (
-                        <Link
-                            key={g}
-                            href={prefixedRoute('settings.group', g)}
-                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${g === currentGroup
-                                ? 'border-indigo-500 text-indigo-600'
-                                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                                }`}
-                        >
-                            {formatGroupLabel(g, t)}
-                        </Link>
-                    ))}
-                </nav>
-                {canManageStructure && (
-                    <Link href={`${prefixedRoute('settings.create')}?new_group=1`} className="whitespace-nowrap pb-3 text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                        {t('settings.pages.group.new_group')}
-                    </Link>
+            <div className="space-y-6">
+                {/* Alert Notifications */}
+                {flash?.success && (
+                    <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-sm text-emerald-700 dark:text-emerald-300 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+                            <span>{flash.success}</span>
+                        </div>
+                    </div>
                 )}
-            </div>
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-6">
-                    <div className="mb-6 flex items-center justify-between">
-                        <h3 className="text-lg font-medium text-gray-900">{formatGroupLabel(currentGroup, t)}</h3>
-                        {canManageStructure && (
-                            <Link href={`${prefixedRoute('settings.create')}?group=${currentGroup}`}>
-                                <PrimaryButton type="button">{t('settings.pages.group.add_setting')}</PrimaryButton>
-                            </Link>
+                {/* Group Pill Navigation Bar */}
+                <div className="flex items-center justify-between gap-4 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+                    <nav className="flex items-center gap-1.5 overflow-x-auto">
+                        {groups.map((g) => {
+                            const active = g === currentGroup;
+                            const icon = GROUP_ICONS[g] ?? '⚙️';
+                            return (
+                                <Link
+                                    key={g}
+                                    href={prefixedRoute('settings.group', g)}
+                                    className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 ${
+                                        active
+                                            ? 'bg-indigo-600 text-white shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <span>{icon}</span>
+                                    <span>{formatGroupLabel(g, t)}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+
+                    {canManageStructure && (
+                        <Link
+                            href={`${prefixedRoute('settings.create')}?new_group=1`}
+                            className="shrink-0 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline pr-2"
+                        >
+                            {t('settings.pages.group.new_group')}
+                        </Link>
+                    )}
+                </div>
+
+                {/* Settings Form Card */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">{groupIcon}</span>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    {formatGroupLabel(currentGroup, t)}
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    {groupSettings.length} pengaturan dalam grup ini
+                                </p>
+                            </div>
+                        </div>
+
+                        {isAppearanceGroup && appearanceResetUrl && (
+                            <SecondaryButton
+                                type="button"
+                                disabled={processing || resetProcessing}
+                                onClick={() => setShowResetAppearance(true)}
+                                className="!rounded-xl text-xs"
+                            >
+                                🔄 {t('settings.pages.group.reset_appearance')}
+                            </SecondaryButton>
                         )}
                     </div>
 
                     {groupSettings.length === 0 ? (
                         <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">{t('settings.pages.group.empty_title')}</h3>
-                            {canManageStructure && <p className="mt-1 text-sm text-gray-500">{t('settings.pages.group.empty_hint')}</p>}
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 text-xl font-bold">
+                                ⚙️
+                            </div>
+                            <h3 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+                                {t('settings.pages.group.empty_title')}
+                            </h3>
+                            {canManageStructure && (
+                                <p className="mt-1 text-xs text-slate-500">{t('settings.pages.group.empty_hint')}</p>
+                            )}
                         </div>
                     ) : !canEditValues ? (
                         <div className="space-y-6">
                             {groupSettings.map((setting) => (
-                                <div key={setting.id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
-                                    <InputLabel value={setting.label} />
+                                <div key={setting.id} className="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-b-0 last:pb-0">
+                                    <InputLabel value={setting.label} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                     {setting.description && (
-                                        <p className="mt-0.5 text-sm text-gray-500">{setting.description}</p>
+                                        <p className="mt-0.5 text-xs text-slate-500">{setting.description}</p>
                                     )}
                                     {setting.type === 'color' && setting.value ? (
-                                        <p className="mt-2 flex items-center gap-2 text-sm text-gray-900">
+                                        <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
                                             <span
-                                                className="inline-block h-5 w-5 rounded border border-gray-300"
+                                                className="inline-block h-5 w-5 rounded-lg border border-slate-300 shadow-sm"
                                                 style={{ backgroundColor: setting.value }}
                                             />
                                             <span className="font-mono uppercase">{setting.value}</span>
@@ -352,14 +436,14 @@ export default function Group({
                                             <img
                                                 src={setting.value}
                                                 alt={setting.label}
-                                                className="max-h-24 rounded-lg border border-gray-200 object-contain"
+                                                className="max-h-24 rounded-xl border border-slate-200 dark:border-slate-800 object-contain p-2 bg-slate-50 dark:bg-slate-800"
                                                 onError={(e) => {
                                                     (e.target as HTMLImageElement).style.display = 'none';
                                                 }}
                                             />
                                         </div>
                                     ) : (
-                                        <p className="mt-2 text-sm text-gray-900">{formatDisplayValue(setting)}</p>
+                                        <p className="mt-2 text-xs font-semibold text-slate-900 dark:text-white">{formatDisplayValue(setting)}</p>
                                     )}
                                 </div>
                             ))}
@@ -367,37 +451,45 @@ export default function Group({
                     ) : (
                         <form onSubmit={submit} className="space-y-6">
                             {groupSettings.map((setting, index) => (
-                                <div key={setting.id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
+                                <div key={setting.id} className="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-b-0 last:pb-0">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
-                                            <InputLabel htmlFor={`value-${setting.id}`} value={setting.label} />
+                                            <div className="flex items-center gap-2">
+                                                <InputLabel htmlFor={`value-${setting.id}`} value={setting.label} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                                <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                                    {setting.key}
+                                                </span>
+                                            </div>
+
                                             {setting.description && (
-                                                <p className="mt-0.5 text-sm text-gray-500">{setting.description}</p>
+                                                <p className="mt-0.5 text-xs text-slate-500">{setting.description}</p>
                                             )}
 
-                                            <div className="mt-2 max-w-xl">
+                                            <div className="mt-2.5 max-w-xl">
                                                 {setting.type === 'textarea' || setting.type === 'json' ? (
                                                     <textarea
                                                         id={`value-${setting.id}`}
                                                         rows={4}
-                                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        className="block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                                                         value={data.settings[index].value}
                                                         onChange={(e) => updateValue(index, e.target.value)}
                                                     />
                                                 ) : setting.type === 'boolean' ? (
-                                                    <label className="flex items-center">
+                                                    <label className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3 cursor-pointer">
                                                         <input
                                                             type="checkbox"
-                                                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                            className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                             checked={data.settings[index].value === '1'}
                                                             onChange={(e) => updateValue(index, e.target.checked ? '1' : '0')}
                                                         />
-                                                        <span className="ml-2 text-sm text-gray-600">{t('settings.pages.group.enabled_label')}</span>
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                            {t('settings.pages.group.enabled_label')}
+                                                        </span>
                                                     </label>
                                                 ) : setting.type === 'select' && setting.key in SELECT_OPTIONS ? (
                                                     <Select
                                                         id={`value-${setting.id}`}
-                                                        className="w-full"
+                                                        className="w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                                         value={data.settings[index].value}
                                                         onChange={(value) => updateValue(index, value)}
                                                         options={SELECT_OPTIONS[setting.key]}
@@ -407,12 +499,12 @@ export default function Group({
                                                         <input
                                                             id={`value-${setting.id}`}
                                                             type="color"
-                                                            className="h-10 w-14 cursor-pointer rounded-md border border-gray-300 bg-white p-1 shadow-sm"
+                                                            className="h-10 w-14 cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1 shadow-sm"
                                                             value={data.settings[index].value || '#000000'}
                                                             onChange={(e) => updateValue(index, e.target.value)}
                                                         />
                                                         <TextInput
-                                                            className="w-32 font-mono uppercase"
+                                                            className="w-32 font-mono uppercase !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                                             value={data.settings[index].value}
                                                             placeholder="#000000"
                                                             onChange={(e) => updateValue(index, e.target.value)}
@@ -427,22 +519,22 @@ export default function Group({
                                                     <TextInput
                                                         id={`value-${setting.id}`}
                                                         type={setting.type === 'number' ? 'number' : setting.type === 'email' ? 'email' : setting.type === 'url' ? 'url' : 'text'}
-                                                        className="block w-full"
+                                                        className="block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                                         value={data.settings[index].value}
                                                         onChange={(e) => updateValue(index, e.target.value)}
                                                     />
                                                 )}
                                             </div>
                                             {fieldErrors[`settings.${index}.value`] && (
-                                                <p className="mt-1 text-sm text-red-600">{fieldErrors[`settings.${index}.value`]}</p>
+                                                <p className="mt-1.5 text-xs font-semibold text-rose-500">{fieldErrors[`settings.${index}.value`]}</p>
                                             )}
                                         </div>
 
                                         {canManageStructure && (
-                                            <div className="flex shrink-0 items-center gap-2 pt-6">
+                                            <div className="flex shrink-0 items-center gap-2 pt-1">
                                                 <Link
                                                     href={prefixedRoute('settings.edit', setting.id)}
-                                                    className="text-indigo-600 hover:text-indigo-900"
+                                                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400 transition-all"
                                                     title={t('common.edit')}
                                                 >
                                                     <PencilIcon />
@@ -450,7 +542,7 @@ export default function Group({
                                                 <button
                                                     type="button"
                                                     onClick={() => setSettingToDelete(setting)}
-                                                    className="text-red-600 hover:text-red-900"
+                                                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-rose-600 dark:hover:bg-slate-800 dark:hover:text-rose-400 transition-all"
                                                     title={t('common.delete')}
                                                 >
                                                     <TrashIcon />
@@ -461,29 +553,22 @@ export default function Group({
                                 </div>
                             ))}
 
-                            <div className="flex flex-wrap items-center gap-3 pt-2">
-                                <PrimaryButton disabled={processing}>{t('settings.pages.group.save')}</PrimaryButton>
-                                {isAppearanceGroup && appearanceResetUrl && (
-                                    <SecondaryButton
-                                        type="button"
-                                        disabled={processing || resetProcessing}
-                                        onClick={() => setShowResetAppearance(true)}
-                                    >
-                                        {t('settings.pages.group.reset_appearance')}
-                                    </SecondaryButton>
-                                )}
+                            <div className="flex items-center justify-end pt-2">
+                                <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
+                                    {t('settings.pages.group.save')}
+                                </PrimaryButton>
                             </div>
                         </form>
                     )}
-
-                    {mailConfig && (
-                        <MailSmtpForm
-                            mailConfig={mailConfig}
-                            updateUrl={mailConfigUpdateUrl}
-                            canEdit={canEditValues}
-                        />
-                    )}
                 </div>
+
+                {mailConfig && (
+                    <MailSmtpForm
+                        mailConfig={mailConfig}
+                        updateUrl={mailConfigUpdateUrl}
+                        canEdit={canEditValues}
+                    />
+                )}
             </div>
 
             <ConfirmDeleteDialog
@@ -511,3 +596,4 @@ export default function Group({
         </DynamicLayout>
     );
 }
+

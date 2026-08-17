@@ -59,8 +59,16 @@ class MediaController extends Controller
             'updated_at' => $item->updated_at,
         ]);
 
+        $stats = [
+            'total_files' => Auth::user()->media()->count(),
+            'total_images' => Auth::user()->media()->where('type', 'image')->count(),
+            'total_videos' => Auth::user()->media()->where('type', 'video')->count(),
+            'total_documents' => Auth::user()->media()->where('type', 'document')->count(),
+        ];
+
         return Inertia::render('Modules/Media/Index', [
             'media' => $media,
+            'stats' => $stats,
             'filters' => [
                 'type' => $request->input('type'),
                 'search' => $request->input('search'),

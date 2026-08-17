@@ -3,8 +3,8 @@ import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
 const TABS = [
-    { labelKey: 'document.nav.all', route: 'documents.index', pattern: 'documents.index' },
-    { labelKey: 'document.nav.types', route: 'documents.types.index', pattern: 'documents.types.*' },
+    { labelKey: 'document.nav.all', route: 'documents.index', pattern: 'documents.index', icon: '📄' },
+    { labelKey: 'document.nav.types', route: 'documents.types.index', pattern: 'documents.types.*', icon: '⚙️' },
 ] as const;
 
 export default function DocumentNav(): JSX.Element {
@@ -12,8 +12,8 @@ export default function DocumentNav(): JSX.Element {
     const { t } = useTrans();
 
     return (
-        <div className="mb-6 border-b border-gray-200">
-            <nav className="-mb-px flex gap-6">
+        <div className="mb-6 flex items-center gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
+            <nav className="flex items-center gap-2">
                 {TABS.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
 
@@ -21,13 +21,14 @@ export default function DocumentNav(): JSX.Element {
                         <Link
                             key={tab.route}
                             href={prefixedRoute(tab.route)}
-                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${
+                            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
                                 active
-                                    ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                             }`}
                         >
-                            {t(tab.labelKey)}
+                            <span>{tab.icon}</span>
+                            <span>{t(tab.labelKey)}</span>
                         </Link>
                     );
                 })}
@@ -35,3 +36,4 @@ export default function DocumentNav(): JSX.Element {
         </div>
     );
 }
+

@@ -1,6 +1,7 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
@@ -38,44 +39,35 @@ interface Props {
 }
 
 const PLAN_COLORS: Record<string, string> = {
-    trial: 'bg-slate-100 text-slate-600',
-    free: 'bg-sky-100 text-sky-700',
-    basic: 'bg-violet-100 text-violet-700',
-    pro: 'bg-amber-100 text-amber-700',
+    trial: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800',
+    free: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+    basic: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+    pro: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
 };
 
 const planBadgeClass = (planName: string, status: string | null): string => {
     if (status !== 'active') {
-        return 'bg-gray-100 text-gray-400 line-through';
+        return 'bg-slate-100 text-slate-400 line-through border-slate-200';
     }
-    return PLAN_COLORS[planName.toLowerCase()] ?? 'bg-teal-100 text-teal-700';
+    return PLAN_COLORS[planName.toLowerCase()] ?? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
 };
 
-const SearchIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-    </svg>
-);
+const AVATAR_BG = [
+    'from-indigo-500 to-purple-600',
+    'from-sky-500 to-blue-600',
+    'from-emerald-500 to-teal-600',
+    'from-amber-500 to-orange-600',
+    'from-rose-500 to-pink-600',
+];
 
-const EyeIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
-);
-
-
-const CloseIcon = () => (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-);
-
-const BuildingIcon = () => (
-    <svg className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-    </svg>
-);
+const getAvatarBg = (name: string): string => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % AVATAR_BG.length;
+    return AVATAR_BG[index];
+};
 
 const STATUSES = ['active', 'suspended'] as const;
 
@@ -89,12 +81,28 @@ export default function Index({ tenants, filters }: Props): JSX.Element {
     const [selected, setSelected] = useState<string[]>([]);
     const [batchStatus, setBatchStatus] = useState('');
     const [batchProcessing, setBatchProcessing] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
     const pageIds = useMemo(() => tenants.data.map((t) => t.id), [tenants.data]);
     const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
     const somePageSelected = pageIds.some((id) => selected.includes(id));
     const selectionMode = selected.length > 0;
     const hasActiveFilters = Boolean(filters.search || filters.status);
+
+    const activeCount = useMemo(
+        () => tenants.data.filter((t) => t.status === 'active').length,
+        [tenants.data],
+    );
+
+    const suspendedCount = useMemo(
+        () => tenants.data.filter((t) => t.status === 'suspended').length,
+        [tenants.data],
+    );
+
+    const totalMembers = useMemo(
+        () => tenants.data.reduce((acc, t) => acc + (t.members || 0), 0),
+        [tenants.data],
+    );
 
     useEffect(() => {
         setSearch(filters.search ?? '');
@@ -175,8 +183,8 @@ export default function Index({ tenants, filters }: Props): JSX.Element {
                     title={t('tenants.title')}
                     actions={
                         <Link href={route('module.tenants.create')}>
-                            <PrimaryButton>
-                                {t('tenants.pages.index.new')}
+                            <PrimaryButton className="!rounded-xl shadow-sm">
+                                + {t('tenants.pages.index.new')}
                             </PrimaryButton>
                         </Link>
                     }
@@ -185,91 +193,116 @@ export default function Index({ tenants, filters }: Props): JSX.Element {
         >
             <Head title={t('tenants.title')} />
 
-            {flash?.success && (
-                <div className="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-600/20">
-                    {flash.success}
-                </div>
-            )}
-            {flash?.error && (
-                <div className="mb-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-800 ring-1 ring-inset ring-rose-600/20">
-                    {flash.error}
-                </div>
-            )}
+            <div className="space-y-6">
+                {/* Alert Notifications */}
+                {flash?.success && (
+                    <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-sm text-emerald-700 dark:text-emerald-300 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+                            <span>{flash.success}</span>
+                        </div>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="flex items-center justify-between rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-700 dark:text-rose-300 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold">!</span>
+                            <span>{flash.error}</span>
+                        </div>
+                    </div>
+                )}
 
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                {/* ── Toolbar ── */}
-                <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-700 sm:px-5">
+                {/* Hero Stat Overview */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent p-5 border border-indigo-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                            {t('tenants.stats.total_tenants')}
+                        </div>
+                        <div className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            {tenants.total}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {t('tenants.stats.total_tenants_hint')}
+                        </p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-5 border border-emerald-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                            {t('tenants.stats.active_tenants')}
+                        </div>
+                        <div className="mt-2 text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+                            {activeCount}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {t('tenants.stats.active_tenants_hint')}
+                        </p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-transparent p-5 border border-rose-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                            {t('tenants.stats.suspended_tenants')}
+                        </div>
+                        <div className="mt-2 text-3xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
+                            {suspendedCount}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {t('tenants.stats.suspended_tenants_hint')}
+                        </p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500/10 via-blue-500/5 to-transparent p-5 border border-sky-500/15 shadow-sm">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                            {t('tenants.stats.total_members')}
+                        </div>
+                        <div className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            {totalMembers}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {t('tenants.stats.total_members_hint')}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Toolbar Card */}
+                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-4">
                     {selectionMode ? (
                         /* Batch bar */
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <span className="inline-flex items-center rounded-xl bg-indigo-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
                                 {selected.length} {t('tenants.pages.index.batch_selected')}
                             </span>
 
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2">
                                 <Select
-                                    className="!py-1.5 text-sm"
+                                    className="!rounded-xl !py-1.5 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                     value={batchStatus}
                                     onChange={setBatchStatus}
                                     placeholder={t('tenants.pages.index.batch_status_placeholder')}
                                     options={STATUSES.map((s) => ({ value: s, label: t(`tenants.status.${s}`) }))}
                                 />
-                                <button
+                                <PrimaryButton
                                     type="button"
                                     onClick={applyBatchStatus}
                                     disabled={!batchStatus || batchProcessing}
-                                    className="inline-flex h-9 items-center rounded-md bg-gray-900 px-3 text-xs font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+                                    className="!rounded-xl text-xs"
                                 >
                                     {t('tenants.pages.index.batch_apply')}
-                                </button>
+                                </PrimaryButton>
                             </div>
 
-                            <div className="ml-auto">
-                                <button
-                                    type="button"
-                                    onClick={clearSelection}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-                                    title={t('tenants.pages.index.batch_clear')}
-                                >
-                                    <CloseIcon />
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={clearSelection}
+                                className="ml-auto text-xs font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                            >
+                                {t('tenants.pages.index.batch_clear')} ✕
+                            </button>
                         </div>
                     ) : (
-                        /* Search + filter bar */
-                        <div className="flex flex-col gap-3">
-                            <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
-                                <div className="relative min-w-[200px] flex-1">
-                                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-                                        <SearchIcon />
-                                    </span>
-                                    <TextInput
-                                        type="search"
-                                        placeholder={t('tenants.pages.index.search_placeholder')}
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="w-full !py-2 pl-9 text-sm"
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                                >
-                                    {t('common.search')}
-                                </button>
-                                {hasActiveFilters && (
-                                    <button
-                                        type="button"
-                                        onClick={clearFilters}
-                                        className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-                                    >
-                                        <CloseIcon />
-                                        {t('common.clear_filters')}
-                                    </button>
-                                )}
-                            </form>
-
-                            <div className="flex flex-wrap items-center gap-1.5">
+                        /* Search + Status filters + View Switcher */
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            {/* Filter Status Tabs */}
+                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                                 {statusPills.map((pill) => {
                                     const active = (filters.status ?? '') === pill.value;
                                     return (
@@ -277,58 +310,203 @@ export default function Index({ tenants, filters }: Props): JSX.Element {
                                             key={`status-${pill.value || 'all'}`}
                                             type="button"
                                             onClick={() => applyFilters({ status: pill.value || null })}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                                                 active
-                                                    ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-300'
+                                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                                             }`}
                                         >
                                             {pill.label}
                                         </button>
                                     );
                                 })}
-                                <span className="ml-auto text-xs tabular-nums text-gray-400">
-                                    {t('common.showing_results', {
-                                        from: tenants.total === 0 ? 0 : (tenants.current_page - 1) * tenants.per_page + 1,
-                                        to: Math.min(tenants.current_page * tenants.per_page, tenants.total),
-                                        total: tenants.total,
-                                    })}
-                                </span>
+                            </div>
+
+                            {/* Search & View Switcher */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <form onSubmit={handleSearch} className="flex items-center gap-2">
+                                    <div className="relative min-w-[340px]">
+                                        <svg
+                                            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth={2}
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                                        </svg>
+                                        <TextInput
+                                            type="search"
+                                            placeholder={t('tenants.pages.index.search_placeholder')}
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            className="w-full !rounded-xl !py-2 pl-9 pr-3 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-indigo-500"
+                                        />
+                                    </div>
+                                    {hasActiveFilters && (
+                                        <SecondaryButton
+                                            type="button"
+                                            onClick={clearFilters}
+                                            className="!rounded-xl text-xs"
+                                        >
+                                            {t('common.clear_filters')}
+                                        </SecondaryButton>
+                                    )}
+                                </form>
+
+                                {/* Grid / Table Switcher */}
+                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewMode('grid')}
+                                        className={`rounded-lg px-2.5 py-1.5 transition-all ${
+                                            viewMode === 'grid'
+                                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        田 {t('tenants.view_modes.grid')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewMode('table')}
+                                        className={`rounded-lg px-2.5 py-1.5 transition-all ${
+                                            viewMode === 'table'
+                                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        ☰ {t('tenants.view_modes.table')}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* ── Table or empty ── */}
+                {/* Content View: Grid vs Table */}
                 {tenants.data.length === 0 ? (
-                    <div className="px-6 py-16 text-center">
-                        <div className="flex justify-center">
-                            <BuildingIcon />
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-16 text-center shadow-sm">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+                            🏢
                         </div>
-                        <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
                             {t('tenants.pages.index.empty_title')}
                         </h3>
-                        <p className="mt-1 text-sm text-gray-500">{t('tenants.pages.index.empty_hint')}</p>
+                        <p className="mt-1 text-xs text-slate-500">{t('tenants.pages.index.empty_hint')}</p>
                         {hasActiveFilters && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                className="mt-4 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
                             >
                                 {t('common.clear_filters')}
                             </button>
                         )}
                     </div>
+                ) : viewMode === 'grid' ? (
+                    /* Grid Cards View */
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {tenants.data.map((tenant) => {
+                            const isSelected = selected.includes(tenant.id);
+                            return (
+                                <div
+                                    key={tenant.id}
+                                    className={`relative flex flex-col justify-between rounded-3xl border p-5 transition-all duration-200 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md ${
+                                        isSelected
+                                            ? 'border-indigo-500 ring-2 ring-indigo-500/20'
+                                            : 'border-slate-200/80 dark:border-slate-800'
+                                    }`}
+                                >
+                                    <div>
+                                        {/* Avatar & Header */}
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${getAvatarBg(
+                                                        tenant.name,
+                                                    )} text-white font-bold text-lg shadow-sm`}
+                                                >
+                                                    {tenant.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <Link
+                                                        href={route('module.tenants.show', tenant.id)}
+                                                        className="text-base font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 truncate block"
+                                                    >
+                                                        {tenant.name}
+                                                    </Link>
+                                                    {tenant.domain ? (
+                                                        <a
+                                                            href={`https://${tenant.domain}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-1 font-mono text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline"
+                                                        >
+                                                            🌐 {tenant.domain} ↗
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-[11px] text-slate-400">No domain configured</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <span
+                                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${
+                                                    tenant.status === 'active'
+                                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                                                }`}
+                                            >
+                                                {t(`tenants.status.${tenant.status}`)}
+                                            </span>
+                                        </div>
+
+                                        {/* Plan & Stats Pill */}
+                                        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                                            {tenant.subscription_plan ? (
+                                                <span
+                                                    className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold border ${planBadgeClass(
+                                                        tenant.subscription_plan,
+                                                        tenant.subscription_status,
+                                                    )}`}
+                                                >
+                                                    📦 {tenant.subscription_plan}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-400">Default Plan</span>
+                                            )}
+
+                                            <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                                👥 {tenant.members} Anggota
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Card Footer */}
+                                    <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                                        <span>Dibuat: {formatDate(tenant.created_at)}</span>
+                                        <Link href={route('module.tenants.show', tenant.id)}>
+                                            <SecondaryButton className="!rounded-xl text-xs">
+                                                {t('tenants.actions.view_detail')} →
+                                            </SecondaryButton>
+                                        </Link>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 ) : (
-                    <>
+                    /* Table View */
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
                                 <thead>
-                                    <tr className="bg-gray-50/80 dark:bg-gray-700/50">
-                                        <th className="w-10 px-3 py-2.5">
+                                    <tr className="bg-slate-50/60 dark:bg-slate-800/40 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        <th className="w-10 px-4 py-3">
                                             <input
                                                 type="checkbox"
-                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                 checked={allPageSelected}
                                                 ref={(input) => {
                                                     if (input) input.indeterminate = somePageSelected && !allPageSelected;
@@ -336,94 +514,77 @@ export default function Index({ tenants, filters }: Props): JSX.Element {
                                                 onChange={toggleAllOnPage}
                                             />
                                         </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                            {t('tenants.pages.index.columns.name')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                            {t('tenants.pages.index.columns.domain')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                            {t('tenants.pages.index.columns.members')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                            Langganan
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                            {t('tenants.pages.index.columns.status')}
-                                        </th>
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                            {t('tenants.pages.index.columns.created_at')}
-                                        </th>
-                                        <th className="w-16 px-3 py-2.5">
-                                            <span className="sr-only">{t('common.actions')}</span>
-                                        </th>
+                                        <th className="px-4 py-3">{t('tenants.pages.index.columns.name')}</th>
+                                        <th className="px-4 py-3">{t('tenants.pages.index.columns.domain')}</th>
+                                        <th className="px-4 py-3">{t('tenants.pages.index.columns.members')}</th>
+                                        <th className="px-4 py-3">Langganan</th>
+                                        <th className="px-4 py-3">{t('tenants.pages.index.columns.status')}</th>
+                                        <th className="px-4 py-3">{t('tenants.pages.index.columns.created_at')}</th>
+                                        <th className="w-16 px-4 py-3 text-right">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     {tenants.data.map((tenant) => {
                                         const isSelected = selected.includes(tenant.id);
                                         return (
                                             <tr
                                                 key={tenant.id}
-                                                className={`group transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-700/40 ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/20' : ''}`}
+                                                className={`transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50 ${
+                                                    isSelected ? 'bg-indigo-500/5 dark:bg-indigo-500/10' : ''
+                                                }`}
                                             >
-                                                <td className="px-3 py-2.5">
+                                                <td className="px-4 py-3">
                                                     <input
                                                         type="checkbox"
-                                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                        className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                         checked={isSelected}
                                                         onChange={() => toggleRow(tenant.id)}
-                                                        aria-label={tenant.name}
                                                     />
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2.5">
-                                                    <Link
-                                                        href={route('module.tenants.show', tenant.id)}
-                                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
-                                                    >
+                                                <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">
+                                                    <Link href={route('module.tenants.show', tenant.id)} className="hover:text-indigo-600">
                                                         {tenant.name}
                                                     </Link>
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2.5">
-                                                    <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                                                        {tenant.domain ?? '—'}
-                                                    </code>
+                                                <td className="px-4 py-3 font-mono text-slate-500">
+                                                    {tenant.domain ?? '—'}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2.5 text-sm tabular-nums text-gray-500 dark:text-gray-400">
+                                                <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">
                                                     {tenant.members}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2.5">
+                                                <td className="px-4 py-3">
                                                     {tenant.subscription_plan ? (
                                                         <span
-                                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${planBadgeClass(tenant.subscription_plan, tenant.subscription_status)}`}
+                                                            className={`inline-flex items-center rounded-lg px-2.5 py-0.5 font-semibold border ${planBadgeClass(
+                                                                tenant.subscription_plan,
+                                                                tenant.subscription_status,
+                                                            )}`}
                                                         >
                                                             {tenant.subscription_plan}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-sm text-gray-400">—</span>
+                                                        <span className="text-slate-400">—</span>
                                                     )}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2.5">
+                                                <td className="px-4 py-3">
                                                     <span
-                                                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                                                        className={`inline-flex items-center rounded-full px-2 py-0.5 font-bold uppercase tracking-wider text-[10px] border ${
                                                             tenant.status === 'active'
-                                                                ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-                                                                : 'bg-slate-50 text-slate-600 ring-slate-500/20'
+                                                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                                                : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
                                                         }`}
                                                     >
                                                         {t(`tenants.status.${tenant.status}`)}
                                                     </span>
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400">
+                                                <td className="px-4 py-3 text-slate-500">
                                                     {formatDate(tenant.created_at)}
                                                 </td>
-                                                <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                                                    <Link
-                                                        href={route('module.tenants.show', tenant.id)}
-                                                        className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-400 opacity-100 transition hover:bg-gray-100 hover:text-gray-700 md:opacity-0 md:group-hover:opacity-100 dark:hover:bg-gray-700"
-                                                        title={t('tenants.actions.view_detail')}
-                                                    >
-                                                        <EyeIcon />
+                                                <td className="px-4 py-3 text-right">
+                                                    <Link href={route('module.tenants.show', tenant.id)}>
+                                                        <SecondaryButton className="!rounded-xl text-xs">
+                                                            {t('tenants.actions.view_detail')}
+                                                        </SecondaryButton>
                                                     </Link>
                                                 </td>
                                             </tr>
@@ -432,39 +593,42 @@ export default function Index({ tenants, filters }: Props): JSX.Element {
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                )}
 
-                        {tenants.last_page > 1 && (
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 dark:border-gray-700 sm:px-5">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {t('common.showing_results', {
-                                        from: (tenants.current_page - 1) * tenants.per_page + 1,
-                                        to: Math.min(tenants.current_page * tenants.per_page, tenants.total),
-                                        total: tenants.total,
-                                    })}
-                                </p>
-                                <div className="flex gap-1">
-                                    {tenants.links.map((link, index) => (
-                                        <button
-                                            key={index}
-                                            type="button"
-                                            onClick={() => link.url && router.get(link.url)}
-                                            disabled={!link.url}
-                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                                                link.active
-                                                    ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                                                    : link.url
-                                                      ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                                                      : 'cursor-not-allowed text-gray-300 dark:text-gray-600'
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </>
+                {/* Pagination */}
+                {tenants.last_page > 1 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm text-xs">
+                        <span className="text-slate-500">
+                            {t('common.showing_results', {
+                                from: (tenants.current_page - 1) * tenants.per_page + 1,
+                                to: Math.min(tenants.current_page * tenants.per_page, tenants.total),
+                                total: tenants.total,
+                            })}
+                        </span>
+
+                        <div className="flex items-center gap-1">
+                            {tenants.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => link.url && router.get(link.url)}
+                                    disabled={!link.url}
+                                    className={`rounded-xl px-3 py-1.5 font-semibold transition-all ${
+                                        link.active
+                                            ? 'bg-indigo-600 text-white shadow-sm'
+                                            : link.url
+                                              ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                                              : 'opacity-40 cursor-not-allowed text-slate-400'
+                                    }`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 )}
             </div>
         </DynamicLayout>
     );
 }
+

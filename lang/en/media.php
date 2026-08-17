@@ -28,6 +28,13 @@ return [
         'documents' => 'Documents',
     ],
 
+    'stats' => [
+        'total_files' => 'Total Files',
+        'images' => 'Images',
+        'videos' => 'Videos',
+        'documents' => 'Documents',
+    ],
+
     'pages' => [
         'index' => [
             'head' => 'Media Library',

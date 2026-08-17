@@ -33,6 +33,8 @@ class UserController extends Controller
      */
     public function index(): Response
     {
+        $statusFilter = request('status');
+
         $users = User::query()
             ->with(['roles', 'profile'])
             ->when(request('search'), function ($query, $search) {
@@ -46,14 +48,29 @@ class UserController extends Controller
                         });
                 });
             })
+            ->when($statusFilter === 'verified', function ($query) {
+                $query->whereNotNull('email_verified_at');
+            })
+            ->when($statusFilter === 'unverified', function ($query) {
+                $query->whereNull('email_verified_at');
+            })
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
+        $stats = [
+            'total_users' => User::count(),
+            'verified_users' => User::whereNotNull('email_verified_at')->count(),
+            'unverified_users' => User::whereNull('email_verified_at')->count(),
+            'admin_users' => User::whereHas('roles', fn ($q) => $q->where('slug', 'admin'))->count(),
+        ];
+
         return Inertia::render('Modules/Users/Index', [
             'users' => $users,
+            'stats' => $stats,
             'filters' => [
                 'search' => request('search'),
+                'status' => $statusFilter,
             ],
         ]);
     }

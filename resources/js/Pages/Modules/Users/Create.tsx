@@ -106,276 +106,297 @@ export default function Create({
 
     return (
         <DynamicLayout
-            header={<PageHeader title={t('users.pages.create.head')} />}
+            header={
+                <PageHeader
+                    title={t('users.pages.create.head')}
+                    actions={
+                        <Link href={prefixedRoute('users.index')}>
+                            <SecondaryButton className="!rounded-xl text-xs">
+                                ← {t('users.pages.show.back')}
+                            </SecondaryButton>
+                        </Link>
+                    }
+                />
+            }
         >
             <Head title={t('users.pages.create.title')} />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-6">
-                    <form onSubmit={submit} className="max-w-2xl">
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                            {/* Left Column - User Details */}
-                            <div className="space-y-4">
-                                <div>
-                                    <InputLabel htmlFor="name" value={t('users.fields.name')} />
-                                    <TextInput
-                                        id="name"
-                                        type="text"
-                                        name="name"
-                                        value={data.name}
-                                        className="mt-1 block w-full"
-                                        autoComplete="name"
-                                        isFocused={true}
-                                        onChange={(e) => setData('name', e.target.value)}
-                                    />
-                                    <InputError message={errors.name} className="mt-2" />
-                                </div>
+            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <form onSubmit={submit} className="space-y-6">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        {/* Left Column - User Account & Profile */}
+                        <div className="space-y-5">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                🔑 {t('users.sections.account_details')}
+                            </h4>
 
-                                <div>
-                                    <InputLabel htmlFor="email" value={t('users.fields.email')} />
-                                    <TextInput
-                                        id="email"
-                                        type="email"
-                                        name="email"
-                                        value={data.email}
-                                        className="mt-1 block w-full"
-                                        autoComplete="email"
-                                        onChange={(e) => setData('email', e.target.value)}
-                                    />
-                                    <InputError message={errors.email} className="mt-2" />
-                                </div>
+                            <div>
+                                <InputLabel htmlFor="name" value={t('users.fields.name')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                <TextInput
+                                    id="name"
+                                    type="text"
+                                    name="name"
+                                    value={data.name}
+                                    className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                    autoComplete="name"
+                                    isFocused={true}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                />
+                                <InputError message={errors.name} className="mt-1.5" />
+                            </div>
 
+                            <div>
+                                <InputLabel htmlFor="email" value={t('users.fields.email')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                <TextInput
+                                    id="email"
+                                    type="email"
+                                    name="email"
+                                    value={data.email}
+                                    className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 font-mono"
+                                    autoComplete="email"
+                                    onChange={(e) => setData('email', e.target.value)}
+                                />
+                                <InputError message={errors.email} className="mt-1.5" />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <InputLabel htmlFor="password" value={t('users.fields.password')} />
+                                    <InputLabel htmlFor="password" value={t('users.fields.password')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                     <TextInput
                                         id="password"
                                         type="password"
                                         name="password"
                                         value={data.password}
-                                        className="mt-1 block w-full"
+                                        className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                         autoComplete="new-password"
                                         onChange={(e) => setData('password', e.target.value)}
                                     />
-                                    <InputError message={errors.password} className="mt-2" />
+                                    <InputError message={errors.password} className="mt-1.5" />
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="password_confirmation" value={t('users.fields.password_confirmation')} />
+                                    <InputLabel htmlFor="password_confirmation" value={t('users.fields.password_confirmation')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                     <TextInput
                                         id="password_confirmation"
                                         type="password"
                                         name="password_confirmation"
                                         value={data.password_confirmation}
-                                        className="mt-1 block w-full"
+                                        className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                         autoComplete="new-password"
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
                                     />
-                                    <InputError message={errors.password_confirmation} className="mt-2" />
-                                </div>
-
-                                {/* Profile Fields */}
-                                <div className="border-t pt-4 mt-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-3">{t('users.sections.profile_information')}</h4>
-                                    
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <InputLabel htmlFor="first_name" value={t('users.fields.first_name')} />
-                                            <TextInput
-                                                id="first_name"
-                                                type="text"
-                                                name="first_name"
-                                                value={data.first_name}
-                                                className="mt-1 block w-full"
-                                                onChange={(e) => setData('first_name', e.target.value)}
-                                            />
-                                            <InputError message={errors.first_name} className="mt-2" />
-                                        </div>
-
-                                        <div>
-                                            <InputLabel htmlFor="last_name" value={t('users.fields.last_name')} />
-                                            <TextInput
-                                                id="last_name"
-                                                type="text"
-                                                name="last_name"
-                                                value={data.last_name}
-                                                className="mt-1 block w-full"
-                                                onChange={(e) => setData('last_name', e.target.value)}
-                                            />
-                                            <InputError message={errors.last_name} className="mt-2" />
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4">
-                                        <InputLabel htmlFor="phone_number" value={t('users.fields.phone_number')} />
-                                        <TextInput
-                                            id="phone_number"
-                                            type="text"
-                                            name="phone_number"
-                                            value={data.phone_number}
-                                            className="mt-1 block w-full"
-                                            onChange={(e) => setData('phone_number', e.target.value)}
-                                        />
-                                        <InputError message={errors.phone_number} className="mt-2" />
-                                    </div>
-
-                                    <div className="mt-4">
-                                        <InputLabel htmlFor="avatar_url" value={t('users.fields.avatar_url')} />
-                                        <TextInput
-                                            id="avatar_url"
-                                            type="text"
-                                            name="avatar_url"
-                                            value={data.avatar_url}
-                                            className="mt-1 block w-full"
-                                            placeholder={t('users.placeholders.avatar_url')}
-                                            onChange={(e) => setData('avatar_url', e.target.value)}
-                                        />
-                                        <InputError message={errors.avatar_url} className="mt-2" />
-                                    </div>
+                                    <InputError message={errors.password_confirmation} className="mt-1.5" />
                                 </div>
                             </div>
 
-                            {/* Right Column - Roles */}
-                            <div>
-                                <InputLabel value={t('users.fields.roles')} />
-                                <div className="mt-2 border rounded-lg divide-y max-h-[300px] overflow-y-auto">
-                                    {roles.map((role) => (
-                                        <label
-                                            key={role.id}
-                                            className="flex items-start p-3 cursor-pointer hover:bg-gray-50"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={data.roles.includes(role.id)}
-                                                onChange={() => toggleRole(role.id)}
-                                                className="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                            />
-                                            <div className="ml-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium text-gray-900">
-                                                        {role.name}
+                            {/* Profile Fields */}
+                            <div className="border-t border-slate-100 dark:border-slate-800 pt-5 space-y-4">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                    👤 {t('users.sections.profile_information')}
+                                </h4>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <InputLabel htmlFor="first_name" value={t('users.fields.first_name')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                        <TextInput
+                                            id="first_name"
+                                            type="text"
+                                            name="first_name"
+                                            value={data.first_name}
+                                            className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                            onChange={(e) => setData('first_name', e.target.value)}
+                                        />
+                                        <InputError message={errors.first_name} className="mt-1.5" />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="last_name" value={t('users.fields.last_name')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                        <TextInput
+                                            id="last_name"
+                                            type="text"
+                                            name="last_name"
+                                            value={data.last_name}
+                                            className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                            onChange={(e) => setData('last_name', e.target.value)}
+                                        />
+                                        <InputError message={errors.last_name} className="mt-1.5" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="phone_number" value={t('users.fields.phone_number')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                    <TextInput
+                                        id="phone_number"
+                                        type="text"
+                                        name="phone_number"
+                                        value={data.phone_number}
+                                        className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 font-mono"
+                                        onChange={(e) => setData('phone_number', e.target.value)}
+                                    />
+                                    <InputError message={errors.phone_number} className="mt-1.5" />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="avatar_url" value={t('users.fields.avatar_url')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                    <TextInput
+                                        id="avatar_url"
+                                        type="text"
+                                        name="avatar_url"
+                                        value={data.avatar_url}
+                                        className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 font-mono"
+                                        placeholder={t('users.placeholders.avatar_url')}
+                                        onChange={(e) => setData('avatar_url', e.target.value)}
+                                    />
+                                    <InputError message={errors.avatar_url} className="mt-1.5" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Column - Roles & Permissions Scope */}
+                        <div className="space-y-5">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                🛡️ {t('users.fields.roles')}
+                            </h4>
+
+                            <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 max-h-[280px] overflow-y-auto bg-slate-50/50 dark:bg-slate-800/30">
+                                {roles.map((role) => (
+                                    <label
+                                        key={role.id}
+                                        className="flex items-start p-3 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={data.roles.includes(role.id)}
+                                            onChange={() => toggleRole(role.id)}
+                                            className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <div className="ml-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                    {role.name}
+                                                </span>
+                                                {role.is_system && (
+                                                    <span className="rounded bg-slate-200 dark:bg-slate-800 px-1.5 py-0.2 text-[9px] font-bold text-slate-600 dark:text-slate-300">
+                                                        {t('users.system_badge')}
                                                     </span>
-                                                    {role.is_system && (
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                                                            {t('users.system_badge')}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {role.description && (
-                                                    <p className="text-xs text-gray-500 mt-0.5">
-                                                        {role.description}
-                                                    </p>
                                                 )}
                                             </div>
-                                        </label>
-                                    ))}
-                                </div>
-                                <InputError message={errors.roles} className="mt-2" />
-                                <p className="mt-2 text-sm text-gray-500">
-                                    {t('users.roles_selected', { count: data.roles.length })}
-                                </p>
-
-                                {needsWarehouses && warehouses.length > 0 && (
-                                    <div className="mt-6">
-                                        <InputLabel value={t('users.fields.warehouses')} />
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            {isHeadOnly
-                                                ? t('users.warehouses_hint_head')
-                                                : t('users.warehouses_hint_manager')}
-                                        </p>
-                                        <div className="mt-2 max-h-[240px] divide-y overflow-y-auto rounded-lg border">
-                                            {warehouses.map((warehouse) => (
-                                                <label
-                                                    key={warehouse.id}
-                                                    className="flex cursor-pointer items-start p-3 hover:bg-gray-50"
-                                                >
-                                                    <input
-                                                        type={isHeadOnly ? 'radio' : 'checkbox'}
-                                                        name="warehouse_ids"
-                                                        checked={data.warehouse_ids.includes(warehouse.id)}
-                                                        onChange={() => {
-                                                            if (isHeadOnly) {
-                                                                setData('warehouse_ids', [warehouse.id]);
-                                                            } else {
-                                                                toggleWarehouse(warehouse.id);
-                                                            }
-                                                        }}
-                                                        className="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                    />
-                                                    <div className="ml-3">
-                                                        <span className="text-sm font-medium text-gray-900">
-                                                            {warehouse.name}
-                                                        </span>
-                                                        {warehouse.kind && (
-                                                            <p className="text-xs text-gray-500">
-                                                                {t(`inventory.warehouse_kinds.${warehouse.kind}`, undefined, warehouse.kind)}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </label>
-                                            ))}
+                                            {role.description && (
+                                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                                    {role.description}
+                                                </p>
+                                            )}
                                         </div>
-                                        <InputError message={errors.warehouse_ids} className="mt-2" />
-                                        <p className="mt-2 text-sm text-gray-500">
-                                            {t('users.warehouses_selected', { count: data.warehouse_ids.length })}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {needsFleetBases && fleetBases.length > 0 && (
-                                    <div className="mt-6">
-                                        <InputLabel value={t('users.fields.fleet_bases')} />
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            {isFleetHeadOnly
-                                                ? t('users.fleet_bases_hint_head')
-                                                : t('users.fleet_bases_hint_manager')}
-                                        </p>
-                                        <div className="mt-2 max-h-[240px] divide-y overflow-y-auto rounded-lg border">
-                                            {fleetBases.map((base) => (
-                                                <label
-                                                    key={base.id}
-                                                    className="flex cursor-pointer items-start p-3 hover:bg-gray-50"
-                                                >
-                                                    <input
-                                                        type={isFleetHeadOnly ? 'radio' : 'checkbox'}
-                                                        name="fleet_base_ids"
-                                                        checked={data.fleet_base_ids.includes(base.id)}
-                                                        onChange={() => {
-                                                            if (isFleetHeadOnly) {
-                                                                setData('fleet_base_ids', [base.id]);
-                                                            } else {
-                                                                toggleFleetBase(base.id);
-                                                            }
-                                                        }}
-                                                        className="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                    />
-                                                    <div className="ml-3">
-                                                        <span className="text-sm font-medium text-gray-900">
-                                                            {base.code} — {base.name}
-                                                        </span>
-                                                    </div>
-                                                </label>
-                                            ))}
-                                        </div>
-                                        <InputError message={errors.fleet_base_ids} className="mt-2" />
-                                        <p className="mt-2 text-sm text-gray-500">
-                                            {t('users.fleet_bases_selected', { count: data.fleet_base_ids.length })}
-                                        </p>
-                                    </div>
-                                )}
+                                    </label>
+                                ))}
                             </div>
-                        </div>
+                            <InputError message={errors.roles} className="mt-1.5" />
+                            <p className="text-xs font-bold text-slate-500">
+                                {t('users.roles_selected', { count: data.roles.length })}
+                            </p>
 
-                        <div className="mt-6 flex items-center gap-4">
-                            <PrimaryButton disabled={processing}>
-                                {t('users.pages.create.submit')}
-                            </PrimaryButton>
-                            <Link href={prefixedRoute('users.index')}>
-                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
-                            </Link>
+                            {needsWarehouses && warehouses.length > 0 && (
+                                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <InputLabel value={t('users.fields.warehouses')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                    <p className="text-xs text-slate-500">
+                                        {isHeadOnly
+                                            ? t('users.warehouses_hint_head')
+                                            : t('users.warehouses_hint_manager')}
+                                    </p>
+                                    <div className="max-h-[200px] divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                        {warehouses.map((warehouse) => (
+                                            <label
+                                                key={warehouse.id}
+                                                className="flex cursor-pointer items-start p-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
+                                            >
+                                                <input
+                                                    type={isHeadOnly ? 'radio' : 'checkbox'}
+                                                    name="warehouse_ids"
+                                                    checked={data.warehouse_ids.includes(warehouse.id)}
+                                                    onChange={() => {
+                                                        if (isHeadOnly) {
+                                                            setData('warehouse_ids', [warehouse.id]);
+                                                        } else {
+                                                            toggleWarehouse(warehouse.id);
+                                                        }
+                                                    }}
+                                                    className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <div className="ml-3">
+                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                        {warehouse.name}
+                                                    </span>
+                                                    {warehouse.kind && (
+                                                        <p className="text-[10px] text-slate-500">
+                                                            {t(`inventory.warehouse_kinds.${warehouse.kind}`, undefined, warehouse.kind)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.warehouse_ids} className="mt-1.5" />
+                                    <p className="text-xs font-bold text-slate-500">
+                                        {t('users.warehouses_selected', { count: data.warehouse_ids.length })}
+                                    </p>
+                                </div>
+                            )}
+
+                            {needsFleetBases && fleetBases.length > 0 && (
+                                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <InputLabel value={t('users.fields.fleet_bases')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                    <p className="text-xs text-slate-500">
+                                        {isFleetHeadOnly
+                                            ? t('users.fleet_bases_hint_head')
+                                            : t('users.fleet_bases_hint_manager')}
+                                    </p>
+                                    <div className="max-h-[200px] divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                        {fleetBases.map((base) => (
+                                            <label
+                                                key={base.id}
+                                                className="flex cursor-pointer items-start p-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
+                                            >
+                                                <input
+                                                    type={isFleetHeadOnly ? 'radio' : 'checkbox'}
+                                                    name="fleet_base_ids"
+                                                    checked={data.fleet_base_ids.includes(base.id)}
+                                                    onChange={() => {
+                                                        if (isFleetHeadOnly) {
+                                                            setData('fleet_base_ids', [base.id]);
+                                                        } else {
+                                                            toggleFleetBase(base.id);
+                                                        }
+                                                    }}
+                                                    className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <div className="ml-3">
+                                                    <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                                                        {base.code} — {base.name}
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.fleet_base_ids} className="mt-1.5" />
+                                    <p className="text-xs font-bold text-slate-500">
+                                        {t('users.fleet_bases_selected', { count: data.fleet_base_ids.length })}
+                                    </p>
+                                </div>
+                            )}
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <Link href={prefixedRoute('users.index')}>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
+                        </Link>
+                        <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
+                            {t('users.pages.create.submit')}
+                        </PrimaryButton>
+                    </div>
+                </form>
             </div>
         </DynamicLayout>
     );
 }
+

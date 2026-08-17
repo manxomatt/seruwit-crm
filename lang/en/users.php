@@ -28,6 +28,24 @@ return [
         'account_details' => 'Account Details',
     ],
 
+    'stats' => [
+        'total_users' => 'Total Users',
+        'verified_users' => 'Verified Users',
+        'unverified_users' => 'Unverified Users',
+        'admin_users' => 'Admin Users',
+    ],
+
+    'filters' => [
+        'all_status' => 'All Status',
+        'verified' => 'Verified',
+        'unverified' => 'Unverified',
+    ],
+
+    'view_modes' => [
+        'grid' => 'Grid View',
+        'table' => 'Table View',
+    ],
+
     'roles_selected' => 'Selected: :count role(s)',
     'warehouses_selected' => 'Selected: :count site(s)',
     'warehouses_hint_head' => 'Warehouse Head must be assigned to exactly one site.',

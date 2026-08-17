@@ -28,22 +28,40 @@ class RoleController extends Controller
      */
     public function index(): Response
     {
-        $roles = Role::query()
+        $query = Role::query()
             ->withCount(['users', 'permissions'])
-            ->when(request('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
+            ->when(request('search'), function ($q, $search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('name', 'like', "%{$search}%")
                         ->orWhere('description', 'like', "%{$search}%");
                 });
             })
+            ->when(request('type'), function ($q, $type) {
+                if ($type === 'system') {
+                    $q->where('is_system', true);
+                } elseif ($type === 'custom') {
+                    $q->where('is_system', false);
+                }
+            });
+
+        $roles = (clone $query)
             ->latest()
-            ->paginate(15)
+            ->paginate(12)
             ->withQueryString();
+
+        $stats = [
+            'total_roles' => Role::count(),
+            'system_roles' => Role::where('is_system', true)->count(),
+            'custom_roles' => Role::where('is_system', false)->count(),
+            'assigned_users' => \App\Models\User::whereHas('roles')->count(),
+        ];
 
         return Inertia::render('Modules/Roles/Index', [
             'roles' => $roles,
+            'stats' => $stats,
             'filters' => [
                 'search' => request('search'),
+                'type' => request('type'),
             ],
         ]);
     }

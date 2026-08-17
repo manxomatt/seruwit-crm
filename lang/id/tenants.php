@@ -3,6 +3,22 @@
 return [
     'title' => 'Tenant',
 
+    'stats' => [
+        'total_tenants' => 'Total Tenant',
+        'total_tenants_hint' => 'Workspace tenant terdaftar',
+        'active_tenants' => 'Workspace Aktif',
+        'active_tenants_hint' => 'Berjalan aktif & dapat diakses',
+        'suspended_tenants' => 'Workspace Ditangguhkan',
+        'suspended_tenants_hint' => 'Akses sementara diblokir',
+        'total_members' => 'Total Anggota',
+        'total_members_hint' => 'Pengguna terdaftar di seluruh workspace',
+    ],
+
+    'view_modes' => [
+        'grid' => 'Tampilan Kartu',
+        'table' => 'Tampilan Tabel',
+    ],
+
     'fields' => [
         'company_name' => 'Nama Perusahaan',
         'subdomain' => 'Subdomain',
@@ -67,10 +83,23 @@ return [
             'owner_hint' => 'Akun ini akan menjadi admin pertama di workspace.',
             'submit' => 'Buat Tenant',
             'async_note' => 'Workspace akan dipersiapkan secara otomatis di latar belakang.',
+            'preview_title' => 'Pratinjau Live Workspace',
+            'preview_hint' => 'Begini tampilan tenant baru Anda di dashboard.',
+            'preview_placeholder_name' => 'Nama Perusahaan',
+            'preview_placeholder_domain' => 'subdomain.domain.com',
+            'preview_placeholder_owner' => 'Nama & Email Pemilik',
+            'preview_auto_provision' => 'Provisioning Otomatis',
         ],
 
         'show' => [
             'head_title' => 'Tenant: :name',
+            'tabs' => [
+                'overview' => 'Overview & Pengaturan',
+                'modules' => 'Modul',
+                'members' => 'Anggota',
+                'activity' => 'Riwayat Aktivitas',
+                'danger' => 'Zona Bahaya',
+            ],
             'members_heading' => 'Anggota',
             'member_columns' => [
                 'name' => 'Nama',

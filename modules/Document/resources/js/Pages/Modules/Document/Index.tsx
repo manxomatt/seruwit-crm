@@ -27,47 +27,6 @@ interface Props {
     };
 }
 
-type StatTone = 'rose' | 'amber' | 'orange' | 'emerald' | 'sky' | 'slate';
-
-const STAT_TONES: Record<StatTone, { card: string; icon: string; value: string; accent: string }> = {
-    rose: {
-        card: 'border-rose-200/80 bg-gradient-to-br from-rose-50 via-white to-red-50',
-        icon: 'bg-rose-500 text-white shadow-rose-500/30',
-        value: 'text-rose-900',
-        accent: 'bg-rose-500',
-    },
-    amber: {
-        card: 'border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-yellow-50',
-        icon: 'bg-amber-500 text-white shadow-amber-500/30',
-        value: 'text-amber-900',
-        accent: 'bg-amber-500',
-    },
-    orange: {
-        card: 'border-orange-200/80 bg-gradient-to-br from-orange-50 via-white to-amber-50',
-        icon: 'bg-orange-500 text-white shadow-orange-500/30',
-        value: 'text-orange-900',
-        accent: 'bg-orange-500',
-    },
-    emerald: {
-        card: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-teal-50',
-        icon: 'bg-emerald-500 text-white shadow-emerald-500/30',
-        value: 'text-emerald-900',
-        accent: 'bg-emerald-500',
-    },
-    sky: {
-        card: 'border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-cyan-50',
-        icon: 'bg-sky-500 text-white shadow-sky-500/30',
-        value: 'text-sky-900',
-        accent: 'bg-sky-500',
-    },
-    slate: {
-        card: 'border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-gray-100',
-        icon: 'bg-slate-500 text-white shadow-slate-500/30',
-        value: 'text-slate-900',
-        accent: 'bg-slate-500',
-    },
-};
-
 function IconAlert(): JSX.Element {
     return (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
@@ -114,7 +73,7 @@ function IconShield(): JSX.Element {
 
 function IconUpload(): JSX.Element {
     return (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
             <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -136,27 +95,26 @@ function StatCard({
     label,
     value,
     hint,
-    tone,
     icon,
+    bgColor,
+    textColor,
 }: {
     label: string;
     value: number;
     hint: string;
-    tone: StatTone;
     icon: JSX.Element;
+    bgColor: string;
+    textColor: string;
 }): JSX.Element {
-    const styles = STAT_TONES[tone];
-
     return (
-        <div className={`relative overflow-hidden rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md ${styles.card}`}>
-            <span className={`absolute inset-y-0 left-0 w-1 ${styles.accent}`} aria-hidden />
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
-                    <p className={`mt-2 text-3xl font-bold tabular-nums ${styles.value}`}>{value}</p>
-                    <p className="mt-1 text-xs text-gray-600">{hint}</p>
+        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">{label}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{hint}</p>
                 </div>
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-lg ${styles.icon}`}>
+                <div className={`w-11 h-11 rounded-2xl ${bgColor} ${textColor} flex items-center justify-center shadow-inner shrink-0`}>
                     {icon}
                 </div>
             </div>
@@ -168,13 +126,15 @@ function QuickLink({ href, title, description }: { href: string; title: string; 
     return (
         <Link
             href={href}
-            className="group flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40 hover:shadow-md"
+            className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm transition hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md"
         >
             <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-700">{title}</p>
-                <p className="mt-1 text-xs text-gray-500">{description}</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {title}
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{description}</p>
             </div>
-            <span className="mt-0.5 text-gray-300 transition group-hover:text-indigo-500">
+            <span className="text-slate-300 dark:text-slate-600 transition group-hover:text-indigo-500 group-hover:translate-x-0.5 transform">
                 <IconArrow />
             </span>
         </Link>
@@ -194,42 +154,46 @@ export default function Index({ summary, documents }: Props): JSX.Element {
 
             <DocumentNav />
 
-            <p className="mb-6 text-sm text-gray-600">{t('document.dashboard.subtitle')}</p>
-
+            {/* Banner Status */}
             <div
-                className={`mb-6 rounded-xl border px-4 py-3 ${
+                className={`mb-6 rounded-3xl border p-5 shadow-sm ${
                     allClear
-                        ? 'border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-900'
+                        ? 'border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-300'
                         : summary.expired > 0
-                          ? 'border-rose-200 bg-gradient-to-r from-rose-50 to-red-50 text-rose-950'
-                          : 'border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-950'
+                        ? 'border-rose-200/80 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-950/30 text-rose-950 dark:text-rose-300'
+                        : 'border-amber-200/80 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/30 text-amber-950 dark:text-amber-300'
                 }`}
             >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <p className="text-sm font-semibold">
-                            {allClear
-                                ? t('document.dashboard.banner_clear')
-                                : summary.expired > 0
-                                  ? t('document.dashboard.banner_critical')
-                                  : t('document.dashboard.banner_watch')}
-                        </p>
-                        <p className="mt-0.5 text-sm opacity-90">
-                            {allClear
-                                ? t('document.dashboard.all_valid')
-                                : t('document.dashboard.banner_hint', { count: attention })}
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <span className="text-2xl">
+                            {allClear ? '✅' : summary.expired > 0 ? '🚨' : '⏳'}
+                        </span>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider">
+                                {allClear
+                                    ? t('document.dashboard.banner_clear')
+                                    : summary.expired > 0
+                                    ? t('document.dashboard.banner_critical')
+                                    : t('document.dashboard.banner_watch')}
+                            </p>
+                            <p className="mt-0.5 text-xs opacity-90 font-medium">
+                                {allClear
+                                    ? t('document.dashboard.all_valid')
+                                    : t('document.dashboard.banner_hint', { count: attention })}
+                            </p>
+                        </div>
                     </div>
                     {(summary.total !== undefined || summary.unverified !== undefined) && (
-                        <div className="flex flex-wrap gap-2 text-[11px] font-medium">
+                        <div className="flex flex-wrap gap-2 text-[11px] font-bold">
                             {summary.total !== undefined && (
-                                <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
-                                    <span className="tabular-nums">{summary.total}</span> {t('document.dashboard.total_short')}
+                                <span className="rounded-xl bg-white/80 dark:bg-slate-900/80 px-3 py-1 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+                                    <span className="tabular-nums font-mono">{summary.total}</span> {t('document.dashboard.total_short')}
                                 </span>
                             )}
                             {summary.unverified !== undefined && summary.unverified > 0 && (
-                                <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
-                                    <span className="tabular-nums">{summary.unverified}</span> {t('document.dashboard.unverified_short')}
+                                <span className="rounded-xl bg-white/80 dark:bg-slate-900/80 px-3 py-1 border border-slate-200/60 dark:border-slate-800 shadow-sm">
+                                    <span className="tabular-nums font-mono">{summary.unverified}</span> {t('document.dashboard.unverified_short')}
                                 </span>
                             )}
                         </div>
@@ -237,83 +201,81 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                 </div>
             </div>
 
+            {/* Stat Overview Grid */}
             <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                     label={t('document.dashboard.expired')}
                     value={summary.expired}
                     hint={t('document.dashboard.expired_hint')}
-                    tone={summary.expired > 0 ? 'rose' : 'slate'}
                     icon={<IconAlert />}
+                    bgColor={summary.expired > 0 ? 'bg-rose-50 dark:bg-rose-950/50' : 'bg-slate-50 dark:bg-slate-800'}
+                    textColor={summary.expired > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}
                 />
                 <StatCard
                     label={t('document.dashboard.expiring_week')}
                     value={summary.expiring_week}
                     hint={t('document.dashboard.expiring_week_hint')}
-                    tone={summary.expiring_week > 0 ? 'amber' : 'slate'}
                     icon={<IconClock />}
+                    bgColor={summary.expiring_week > 0 ? 'bg-amber-50 dark:bg-amber-950/50' : 'bg-slate-50 dark:bg-slate-800'}
+                    textColor={summary.expiring_week > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}
                 />
                 <StatCard
                     label={t('document.dashboard.expiring_month')}
                     value={summary.expiring_month}
                     hint={t('document.dashboard.expiring_month_hint')}
-                    tone={summary.expiring_month > 0 ? 'orange' : 'slate'}
                     icon={<IconCalendar />}
+                    bgColor={summary.expiring_month > 0 ? 'bg-orange-50 dark:bg-orange-950/50' : 'bg-slate-50 dark:bg-slate-800'}
+                    textColor={summary.expiring_month > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400'}
                 />
                 <StatCard
                     label={t('document.dashboard.compliance')}
                     value={Math.max(0, (summary.total ?? 0) - summary.expired - summary.expiring_month)}
                     hint={t('document.dashboard.compliance_hint')}
-                    tone={allClear ? 'emerald' : 'sky'}
                     icon={<IconShield />}
+                    bgColor="bg-emerald-50 dark:bg-emerald-950/50"
+                    textColor="text-emerald-600 dark:text-emerald-400"
                 />
             </div>
 
-            <div className="mb-6 grid gap-4 lg:grid-cols-3">
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+            {/* Table & Quick Actions Section */}
+            <div className="mb-6 grid gap-6 lg:grid-cols-3">
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden lg:col-span-2">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">{t('document.dashboard.problem_title')}</h3>
-                            <p className="mt-0.5 text-xs text-gray-500">{t('document.dashboard.problem_help')}</p>
+                            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                ⚠️ {t('document.dashboard.problem_title')}
+                            </h3>
+                            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{t('document.dashboard.problem_help')}</p>
                         </div>
-                        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold tabular-nums text-gray-700">
+                        <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-bold font-mono text-slate-700 dark:text-slate-300">
                             {t('document.dashboard.total', { count: documents.total })}
                         </span>
                     </div>
 
                     {documents.data.length === 0 ? (
                         <div className="px-6 py-14 text-center">
-                            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl shadow-inner">
                                 <IconShield />
                             </div>
-                            <p className="text-sm font-medium text-gray-800">{t('document.dashboard.all_valid')}</p>
-                            <p className="mt-1 text-xs text-gray-500">{t('document.dashboard.all_valid_hint')}</p>
+                            <p className="text-xs font-bold text-slate-900 dark:text-white">{t('document.dashboard.all_valid')}</p>
+                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t('document.dashboard.all_valid_hint')}</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            {t('document.dashboard.columns.entity')}
-                                        </th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            {t('document.dashboard.columns.type')}
-                                        </th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            {t('document.dashboard.columns.number')}
-                                        </th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            {t('document.dashboard.columns.expires')}
-                                        </th>
-                                        <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            {t('document.dashboard.columns.status')}
-                                        </th>
-                                        <th className="relative px-5 py-3">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <th className="px-5 py-3">{t('document.dashboard.columns.entity')}</th>
+                                        <th className="px-5 py-3">{t('document.dashboard.columns.type')}</th>
+                                        <th className="px-5 py-3">{t('document.dashboard.columns.number')}</th>
+                                        <th className="px-5 py-3">{t('document.dashboard.columns.expires')}</th>
+                                        <th className="px-5 py-3">{t('document.dashboard.columns.status')}</th>
+                                        <th className="px-5 py-3 text-right">
                                             <span className="sr-only">{t('common.actions')}</span>
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 bg-white">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                                     {documents.data.map((doc) => {
                                         const badge = getStatusBadge(doc.status, t);
                                         const entityRoute =
@@ -326,20 +288,20 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                                                 : doc.documentable.name;
 
                                         return (
-                                            <tr key={doc.id} className="hover:bg-gray-50/80">
-                                                <td className="px-5 py-3">
+                                            <tr key={doc.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td className="px-5 py-3.5">
                                                     <Link
                                                         href={entityRoute}
-                                                        className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                        className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                                     >
                                                         {entityLabel}
                                                     </Link>
-                                                    <div className="mt-0.5">
+                                                    <div className="mt-1">
                                                         <span
-                                                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                                            className={`inline-flex rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${
                                                                 doc.documentable_type === 'vehicle'
-                                                                    ? 'bg-sky-100 text-sky-800'
-                                                                    : 'bg-violet-100 text-violet-800'
+                                                                    ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200/60 dark:border-sky-800/50'
+                                                                    : 'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300 border-violet-200/60 dark:border-violet-800/50'
                                                             }`}
                                                         >
                                                             {t(
@@ -350,35 +312,37 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                                                         </span>
                                                     </div>
                                                 </td>
-                                                <td className="px-5 py-3 text-gray-900">{doc.document_type.name}</td>
-                                                <td className="px-5 py-3 font-mono text-xs text-gray-500">
+                                                <td className="px-5 py-3.5 font-semibold text-slate-900 dark:text-white">
+                                                    {doc.document_type.name}
+                                                </td>
+                                                <td className="px-5 py-3.5 font-mono text-slate-600 dark:text-slate-400">
                                                     {doc.document_number ?? '—'}
                                                 </td>
-                                                <td className="px-5 py-3">
+                                                <td className="px-5 py-3.5 font-mono">
                                                     <span
                                                         className={
                                                             doc.status === 'expired'
-                                                                ? 'font-semibold text-rose-700'
-                                                                : 'text-gray-900'
+                                                                ? 'font-bold text-rose-600 dark:text-rose-400'
+                                                                : 'text-slate-900 dark:text-white'
                                                         }
                                                     >
                                                         {formatDate(doc.expires_at, localeTag)}
                                                     </span>
-                                                    <div className="text-xs text-gray-400">
+                                                    <div className="text-[11px] text-slate-400">
                                                         {formatDaysUntil(doc.expires_at, t)}
                                                     </div>
                                                 </td>
-                                                <td className="px-5 py-3">
+                                                <td className="px-5 py-3.5">
                                                     <span
-                                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.classes}`}
+                                                        className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${badge.classes}`}
                                                     >
                                                         {badge.label}
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-3 text-right">
+                                                <td className="px-5 py-3.5 text-right">
                                                     <Link
                                                         href={entityRoute}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100"
+                                                        className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/50 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 transition hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
                                                         title={t('document.dashboard.upload_new')}
                                                     >
                                                         <IconUpload />
@@ -394,8 +358,8 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                     )}
 
                     {documents.last_page > 1 && (
-                        <div className="flex flex-col gap-3 border-t border-gray-200 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="text-sm text-gray-700">
+                        <div className="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-xs text-slate-500 font-medium">
                                 {t('document.dashboard.total', { count: documents.total })}
                             </p>
                             <div className="flex flex-wrap gap-1">
@@ -404,12 +368,12 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                                         key={i}
                                         href={link.url ?? '#'}
                                         preserveScroll
-                                        className={`rounded-md px-3 py-1 text-sm ${
+                                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
                                             link.active
-                                                ? 'bg-indigo-600 text-white'
+                                                ? 'bg-indigo-600 text-white shadow-sm'
                                                 : link.url
-                                                  ? 'border border-gray-200 text-gray-700 hover:bg-gray-50'
-                                                  : 'cursor-default text-gray-300'
+                                                ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                : 'bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-700 cursor-not-allowed'
                                         }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
@@ -419,9 +383,12 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                     )}
                 </div>
 
-                <div className="space-y-4">
-                    <div>
-                        <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('document.dashboard.quick_actions')}</h3>
+                {/* Quick Actions & Coverage Card */}
+                <div className="space-y-6">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <h3 className="mb-4 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                            ⚡ {t('document.dashboard.quick_actions')}
+                        </h3>
                         <div className="space-y-3">
                             <QuickLink
                                 href={prefixedRoute('fleet.vehicles.index')}
@@ -442,18 +409,18 @@ export default function Index({ summary, documents }: Props): JSX.Element {
                     </div>
 
                     {(summary.vehicles !== undefined || summary.drivers !== undefined) && (
-                        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                {t('document.dashboard.coverage')}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                📊 {t('document.dashboard.coverage')}
                             </p>
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                                <div className="rounded-lg bg-sky-50 px-3 py-2">
-                                    <p className="text-[11px] font-medium text-sky-700">{t('document.entity.vehicle')}</p>
-                                    <p className="mt-1 text-xl font-bold tabular-nums text-sky-900">{summary.vehicles ?? 0}</p>
+                            <div className="mt-4 grid grid-cols-2 gap-3">
+                                <div className="rounded-2xl bg-sky-50/80 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/50 p-4">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t('document.entity.vehicle')}</p>
+                                    <p className="mt-1 text-2xl font-black tabular-nums text-sky-900 dark:text-sky-200">{summary.vehicles ?? 0}</p>
                                 </div>
-                                <div className="rounded-lg bg-violet-50 px-3 py-2">
-                                    <p className="text-[11px] font-medium text-violet-700">{t('document.entity.driver')}</p>
-                                    <p className="mt-1 text-xl font-bold tabular-nums text-violet-900">{summary.drivers ?? 0}</p>
+                                <div className="rounded-2xl bg-violet-50/80 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-900/50 p-4">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">{t('document.entity.driver')}</p>
+                                    <p className="mt-1 text-2xl font-black tabular-nums text-violet-900 dark:text-violet-200">{summary.drivers ?? 0}</p>
                                 </div>
                             </div>
                         </div>
@@ -463,3 +430,4 @@ export default function Index({ summary, documents }: Props): JSX.Element {
         </DynamicLayout>
     );
 }
+

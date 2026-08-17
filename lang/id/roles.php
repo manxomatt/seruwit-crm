@@ -40,6 +40,21 @@ return [
             ],
             'users_count' => ':count pengguna',
             'permissions_count' => ':count hak akses',
+            'stats' => [
+                'total_roles' => 'Total Peran',
+                'system_roles' => 'Peran Sistem',
+                'custom_roles' => 'Peran Kustom',
+                'assigned_users' => 'Total Pengguna Terkait',
+            ],
+            'filters' => [
+                'all' => 'Semua Peran',
+                'system' => 'Sistem',
+                'custom' => 'Kustom',
+            ],
+            'view_modes' => [
+                'grid' => 'Tampilan Kartu',
+                'table' => 'Tampilan Tabel',
+            ],
         ],
         'create' => [
             'title' => 'Buat Peran',

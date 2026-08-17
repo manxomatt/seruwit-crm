@@ -8,6 +8,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface Permission {
     id: number;
@@ -116,105 +117,103 @@ export default function Edit({
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('roles.pages.edit.head', { name: role.name })}
-                    </h2>
-                    <Link href={prefixedRoute('roles.index')}>
-                        <SecondaryButton>{t('roles.actions.back_to_roles')}</SecondaryButton>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={t('roles.pages.edit.head', { name: role.name })}
+                    actions={
+                        <Link href={prefixedRoute('roles.index')}>
+                            <SecondaryButton className="!rounded-xl text-xs">
+                                ← {t('roles.actions.back_to_roles')}
+                            </SecondaryButton>
+                        </Link>
+                    }
+                />
             }
         >
             <Head title={t('roles.pages.edit.title', { name: role.name })} />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <form onSubmit={submit} className="p-6">
+            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <form onSubmit={submit} className="space-y-6">
                     {role.is_system && (
-                        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <div className="flex">
-                                <svg className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                                <div className="ml-3">
-                                    <h3 className="text-sm font-medium text-yellow-800">{t('roles.pages.edit.system_notice_title')}</h3>
-                                    <p className="mt-1 text-sm text-yellow-700">
-                                        {t('roles.pages.edit.system_notice_body')}
-                                    </p>
+                        <div className="flex items-center justify-between rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-xs text-amber-700 dark:text-amber-300">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/20 font-bold">🔒</span>
+                                <div>
+                                    <h4 className="font-bold text-slate-900 dark:text-white">{t('roles.pages.edit.system_notice_title')}</h4>
+                                    <p className="mt-0.5 text-slate-500">{t('roles.pages.edit.system_notice_body')}</p>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <div className="space-y-6">
+                        <div className="space-y-5">
                             <div>
-                                <InputLabel htmlFor="name" value={t('roles.fields.name')} />
+                                <InputLabel htmlFor="name" value={t('roles.fields.name')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                 <TextInput
                                     id="name"
                                     type="text"
-                                    className="mt-1 block w-full"
+                                    className="mt-1 block w-full !rounded-xl !py-2 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 disabled:opacity-60"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
                                     disabled={role.is_system}
                                     placeholder={t('roles.placeholders.name')}
                                 />
-                                <InputError message={errors.name} className="mt-2" />
+                                <InputError message={errors.name} className="mt-1.5" />
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="description" value={t('roles.fields.description')} />
+                                <InputLabel htmlFor="description" value={t('roles.fields.description')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                 <textarea
                                     id="description"
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100"
+                                    className="mt-1 block w-full rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white disabled:opacity-60"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
-                                    rows={3}
+                                    rows={4}
                                     disabled={role.is_system}
                                     placeholder={t('roles.placeholders.description')}
                                 />
-                                <InputError message={errors.description} className="mt-2" />
+                                <InputError message={errors.description} className="mt-1.5" />
                             </div>
 
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">{t('roles.pages.show.information')}</h4>
-                                <dl className="space-y-1 text-sm">
+                            <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-4 space-y-2 border border-slate-200/60 dark:border-slate-800">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">{t('roles.pages.show.information')}</h4>
+                                <div className="space-y-1 text-xs">
                                     <div className="flex justify-between">
-                                        <dt className="text-gray-500">{t('roles.pages.show.slug')}:</dt>
-                                        <dd className="text-gray-900 font-mono">{role.slug}</dd>
+                                        <span className="text-slate-400">{t('roles.pages.show.slug')}:</span>
+                                        <span className="text-slate-900 dark:text-white font-mono font-bold">{role.slug}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <dt className="text-gray-500">{t('roles.fields.type')}:</dt>
-                                        <dd className="text-gray-900">{role.is_system ? t('roles.type.system') : t('roles.type.custom')}</dd>
+                                        <span className="text-slate-400">{t('roles.fields.type')}:</span>
+                                        <span className="text-slate-900 dark:text-white font-bold">{role.is_system ? t('roles.type.system') : t('roles.type.custom')}</span>
                                     </div>
-                                </dl>
+                                </div>
                             </div>
                         </div>
 
                         <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <InputLabel value={t('roles.fields.permissions')} />
-                                <div className="flex gap-2">
+                            <div className="flex items-center justify-between mb-3">
+                                <InputLabel value={t('roles.fields.permissions')} className="!text-xs !font-bold !uppercase !tracking-wider" />
+                                <div className="flex items-center gap-2">
                                     <button
                                         type="button"
                                         onClick={selectAllPermissions}
-                                        className="text-sm text-indigo-600 hover:text-indigo-800"
+                                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                                     >
                                         {t('roles.actions.select_all')}
                                     </button>
-                                    <span className="text-gray-300">|</span>
+                                    <span className="text-slate-300 dark:text-slate-700">|</span>
                                     <button
                                         type="button"
                                         onClick={clearAllPermissions}
-                                        className="text-sm text-gray-600 hover:text-gray-800"
+                                        className="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                     >
                                         {t('roles.actions.clear_extras')}
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="border rounded-lg divide-y max-h-[500px] overflow-y-auto">
+                            <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 max-h-[420px] overflow-y-auto bg-slate-50/50 dark:bg-slate-800/30">
                                 {Object.entries(permissions).map(([module, modulePermissions]) => {
                                     const modulePermissionIds = modulePermissions.map((p) => p.id);
                                     const unlockedIds = modulePermissionIds.filter((id) => !isLocked(id));
@@ -224,8 +223,8 @@ export default function Edit({
 
                                     return (
                                         <div key={module} className="p-4">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <label className={`flex items-center ${moduleToggleDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                            <div className="flex items-center justify-between mb-2.5">
+                                                <label className={`flex items-center gap-2 ${moduleToggleDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                                                     <input
                                                         type="checkbox"
                                                         checked={allSelected}
@@ -236,10 +235,10 @@ export default function Edit({
                                                         }}
                                                         onChange={() => toggleModulePermissions(modulePermissions)}
                                                         disabled={moduleToggleDisabled}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50"
+                                                        className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                                                     />
-                                                    <span className="ml-2 font-medium text-gray-900">
-                                                        {modules[module] || module}
+                                                    <span className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                                                        🧩 {modules[module] || module}
                                                     </span>
                                                 </label>
                                             </div>
@@ -250,7 +249,7 @@ export default function Edit({
                                                     return (
                                                         <label
                                                             key={permission.id}
-                                                            className={`flex items-center ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                                            className={`flex items-center gap-2 text-xs ${locked ? 'cursor-not-allowed opacity-60 text-slate-400' : 'cursor-pointer text-slate-700 dark:text-slate-300'}`}
                                                             title={locked ? t('roles.pages.edit.default_permission_locked') : undefined}
                                                         >
                                                             <input
@@ -258,12 +257,12 @@ export default function Edit({
                                                                 checked={data.permissions.includes(permission.id)}
                                                                 onChange={() => togglePermission(permission.id)}
                                                                 disabled={locked}
-                                                                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 disabled:opacity-50"
+                                                                className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                                                             />
-                                                            <span className={`ml-2 text-sm ${locked ? 'text-gray-500' : 'text-gray-700'}`}>
+                                                            <span>
                                                                 {actions[permission.action] || permission.action}
                                                                 {locked && (
-                                                                    <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-700">
+                                                                    <span className="ml-1 rounded bg-amber-500/10 px-1 py-0.2 text-[9px] font-bold uppercase text-amber-600">
                                                                         {t('roles.pages.edit.default_badge')}
                                                                     </span>
                                                                 )}
@@ -276,19 +275,19 @@ export default function Edit({
                                     );
                                 })}
                             </div>
-                            <InputError message={errors.permissions} className="mt-2" />
+                            <InputError message={errors.permissions} className="mt-1.5" />
 
-                            <p className="mt-2 text-sm text-gray-500">
+                            <p className="mt-2 text-xs font-bold text-slate-500">
                                 {t('roles.permissions_selected', { count: data.permissions.length })}
                             </p>
                         </div>
                     </div>
 
-                    <div className="mt-6 flex items-center justify-end gap-4">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                         <Link href={prefixedRoute('roles.index')}>
-                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
                         </Link>
-                        <PrimaryButton disabled={processing}>
+                        <PrimaryButton disabled={processing} className="!rounded-xl text-xs shadow-sm">
                             {processing ? t('roles.pages.edit.submitting') : t('roles.pages.edit.submit')}
                         </PrimaryButton>
                     </div>
@@ -297,3 +296,4 @@ export default function Edit({
         </DynamicLayout>
     );
 }
+

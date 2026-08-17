@@ -1,12 +1,13 @@
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
-import { useTrans } from '@/hooks/useTrans';
+import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import PageHeader from '@/Components/PageHeader';
 
 interface MediaItem {
     id: number;
@@ -30,6 +31,7 @@ interface Props {
 export default function Show({ media }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
+    const localeTag = useLocaleTag();
     const [copied, setCopied] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -56,180 +58,199 @@ export default function Show({ media }: Props): JSX.Element {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString();
+        return new Date(dateString).toLocaleString(localeTag);
     };
 
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('media.pages.show.head')}
-                    </h2>
-                    <div className="flex gap-2">
-                        <Link href={prefixedRoute('media.edit', media.id)}>
-                            <PrimaryButton>{t('common.edit')}</PrimaryButton>
-                        </Link>
-                        <DangerButton onClick={openDeleteDialog}>{t('common.delete')}</DangerButton>
-                    </div>
-                </div>
+                <PageHeader
+                    title={t('media.pages.show.head')}
+                    actions={
+                        <div className="flex gap-2">
+                            <Link href={prefixedRoute('media.edit', media.id)}>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">
+                                    ✏️ {t('common.edit')}
+                                </PrimaryButton>
+                            </Link>
+                            <DangerButton onClick={openDeleteDialog} className="!rounded-xl text-xs shadow-sm">
+                                🗑️ {t('common.delete')}
+                            </DangerButton>
+                        </div>
+                    }
+                />
             }
         >
             <Head title={t('media.pages.show.title', { name: media.original_name })} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Preview */}
-                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('media.pages.show.preview')}</h3>
-                        <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center min-h-[300px]">
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Preview Container */}
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm flex flex-col">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+                            👁️ {t('media.pages.show.preview')}
+                        </h3>
+                        <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center p-4 min-h-[340px]">
                             {media.type === 'image' ? (
                                 <img
                                     src={media.url}
                                     alt={media.alt_text || media.original_name}
-                                    className="max-w-full max-h-[500px] object-contain"
+                                    className="max-w-full max-h-[460px] object-contain rounded-lg shadow-sm"
                                 />
                             ) : media.type === 'video' ? (
                                 <video
                                     src={media.url}
                                     controls
-                                    className="max-w-full max-h-[500px]"
+                                    className="max-w-full max-h-[460px] rounded-lg shadow-sm"
                                 >
                                     {t('media.video_not_supported')}
                                 </video>
                             ) : (
                                 <div className="text-center p-8">
-                                    <svg
-                                        className="mx-auto h-16 w-16 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                        />
-                                    </svg>
-                                    <p className="mt-2 text-sm text-gray-500">
+                                    <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-3xl mb-3 shadow-inner">
+                                        📄
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
                                         {t('media.pages.show.preview_unavailable')}
                                     </p>
                                     <a
                                         href={media.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500"
+                                        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 transition-colors"
                                     >
-                                        <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                        </svg>
-                                        {t('media.pages.show.download')}
+                                        📥 {t('media.pages.show.download')}
                                     </a>
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
 
-                {/* Details */}
-                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('media.pages.show.information')}</h3>
-                        <dl className="space-y-4">
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.original_name')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{media.original_name}</dd>
+                    {/* Details Container */}
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-5">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                            ℹ️ {t('media.pages.show.information')}
+                        </h3>
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                    {t('media.pages.show.original_name')}
+                                </dt>
+                                <dd className="mt-1 font-bold text-slate-900 dark:text-white truncate" title={media.original_name}>
+                                    {media.original_name}
+                                </dd>
                             </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.file_name')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{media.name}</dd>
+
+                            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                    {t('media.pages.show.file_name')}
+                                </dt>
+                                <dd className="mt-1 font-mono text-slate-700 dark:text-slate-300 truncate" title={media.name}>
+                                    {media.name}
+                                </dd>
                             </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.type')}</dt>
+
+                            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                    {t('media.pages.show.type')}
+                                </dt>
                                 <dd className="mt-1">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                        media.type === 'image'
-                                            ? 'bg-blue-100 text-blue-800'
-                                            : media.type === 'video'
-                                            ? 'bg-purple-100 text-purple-800'
-                                            : 'bg-gray-100 text-gray-800'
-                                    }`}>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/50">
                                         {t(`media.type.${media.type}`, undefined, media.type)}
                                     </span>
                                 </dd>
                             </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.mime_type')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{media.mime_type}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.size')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{media.human_size}</dd>
-                            </div>
-                            {media.alt_text && (
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.alt_text')}</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{media.alt_text}</dd>
-                                </div>
-                            )}
-                            {media.description && (
-                                <div>
-                                    <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.description')}</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{media.description}</dd>
-                                </div>
-                            )}
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.uploaded')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{formatDate(media.created_at)}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.last_modified')}</dt>
-                                <dd className="mt-1 text-sm text-gray-900">{formatDate(media.updated_at)}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">{t('media.pages.show.url')}</dt>
-                                <dd className="mt-1">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            readOnly
-                                            value={media.url}
-                                            className="flex-1 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-md px-3 py-2"
-                                        />
-                                        <button
-                                            onClick={copyUrl}
-                                            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                                        >
-                                            {copied ? (
-                                                <>
-                                                    <svg className="w-4 h-4 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    {t('media.pages.show.copied')}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                    </svg>
-                                                    {t('media.pages.show.copy')}
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
+
+                            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                    {t('media.pages.show.mime_type')}
+                                </dt>
+                                <dd className="mt-1 font-mono text-slate-700 dark:text-slate-300">
+                                    {media.mime_type}
                                 </dd>
                             </div>
+
+                            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                    {t('media.pages.show.size')}
+                                </dt>
+                                <dd className="mt-1 font-mono text-slate-900 dark:text-white font-bold">
+                                    {media.human_size}
+                                </dd>
+                            </div>
+
+                            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                    {t('media.pages.show.uploaded')}
+                                </dt>
+                                <dd className="mt-1 font-mono text-slate-700 dark:text-slate-300">
+                                    {formatDate(media.created_at)}
+                                </dd>
+                            </div>
+
+                            {media.alt_text && (
+                                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2">
+                                    <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                        {t('media.pages.show.alt_text')}
+                                    </dt>
+                                    <dd className="mt-1 text-slate-800 dark:text-slate-200">
+                                        {media.alt_text}
+                                    </dd>
+                                </div>
+                            )}
+
+                            {media.description && (
+                                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 sm:col-span-2">
+                                    <dt className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                        {t('media.pages.show.description')}
+                                    </dt>
+                                    <dd className="mt-1 text-slate-800 dark:text-slate-200">
+                                        {media.description}
+                                    </dd>
+                                </div>
+                            )}
                         </dl>
+
+                        {/* Copyable Public URL */}
+                        <div className="pt-2">
+                            <label className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
+                                🔗 {t('media.pages.show.url')}
+                            </label>
+                            <div className="mt-1 flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={media.url}
+                                    className="flex-1 text-xs font-mono text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 select-all"
+                                />
+                                <button
+                                    onClick={copyUrl}
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                                >
+                                    {copied ? (
+                                        <>
+                                            <span className="text-emerald-600">✓</span>
+                                            {t('media.pages.show.copied')}
+                                        </>
+                                    ) : (
+                                        <>
+                                            📋 {t('media.pages.show.copy')}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Actions */}
-            <div className="mt-6">
-                <Link href={prefixedRoute('media.index')}>
-                    <SecondaryButton>{t('media.pages.show.back')}</SecondaryButton>
-                </Link>
+                {/* Back Actions */}
+                <div className="flex justify-start">
+                    <Link href={prefixedRoute('media.index')}>
+                        <SecondaryButton className="!rounded-xl text-xs">
+                            ← {t('media.pages.show.back')}
+                        </SecondaryButton>
+                    </Link>
+                </div>
             </div>
 
             <ConfirmDeleteDialog
@@ -243,3 +264,4 @@ export default function Show({ media }: Props): JSX.Element {
         </DynamicLayout>
     );
 }
+

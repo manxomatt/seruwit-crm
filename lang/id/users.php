@@ -28,6 +28,24 @@ return [
         'account_details' => 'Detail Akun',
     ],
 
+    'stats' => [
+        'total_users' => 'Total Pengguna',
+        'verified_users' => 'Terverifikasi',
+        'unverified_users' => 'Belum Terverifikasi',
+        'admin_users' => 'Pengguna Admin',
+    ],
+
+    'filters' => [
+        'all_status' => 'Semua Status',
+        'verified' => 'Terverifikasi',
+        'unverified' => 'Belum Terverifikasi',
+    ],
+
+    'view_modes' => [
+        'grid' => 'Tampilan Kartu',
+        'table' => 'Tampilan Tabel',
+    ],
+
     'roles_selected' => 'Dipilih: :count peran',
     'warehouses_selected' => 'Dipilih: :count situs',
     'warehouses_hint_head' => 'Warehouse Head harus di-assign ke tepat satu situs.',

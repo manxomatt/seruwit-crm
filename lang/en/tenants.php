@@ -3,6 +3,22 @@
 return [
     'title' => 'Tenants',
 
+    'stats' => [
+        'total_tenants' => 'Total Tenants',
+        'total_tenants_hint' => 'Registered tenant workspaces',
+        'active_tenants' => 'Active Workspaces',
+        'active_tenants_hint' => 'Currently running & accessible',
+        'suspended_tenants' => 'Suspended Workspaces',
+        'suspended_tenants_hint' => 'Access temporarily blocked',
+        'total_members' => 'Total Members',
+        'total_members_hint' => 'Users enrolled across workspaces',
+    ],
+
+    'view_modes' => [
+        'grid' => 'Grid View',
+        'table' => 'Table View',
+    ],
+
     'fields' => [
         'company_name' => 'Company Name',
         'subdomain' => 'Subdomain',
@@ -67,10 +83,23 @@ return [
             'owner_hint' => 'This account will be the first admin in the workspace.',
             'submit' => 'Create Tenant',
             'async_note' => 'The workspace will be provisioned automatically in the background.',
+            'preview_title' => 'Live Workspace Preview',
+            'preview_hint' => 'This is how your new tenant will appear in the dashboard.',
+            'preview_placeholder_name' => 'Company Name',
+            'preview_placeholder_domain' => 'subdomain.domain.com',
+            'preview_placeholder_owner' => 'Owner Name & Email',
+            'preview_auto_provision' => 'Automatic Provisioning',
         ],
 
         'show' => [
             'head_title' => 'Tenant: :name',
+            'tabs' => [
+                'overview' => 'Overview & Settings',
+                'modules' => 'Modules',
+                'members' => 'Members',
+                'activity' => 'Activity Log',
+                'danger' => 'Danger Zone',
+            ],
             'members_heading' => 'Members',
             'member_columns' => [
                 'name' => 'Name',

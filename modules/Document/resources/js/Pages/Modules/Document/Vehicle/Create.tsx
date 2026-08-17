@@ -12,6 +12,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import DocumentNav from '../../../../DocumentNav';
 import { DocumentType } from '../../../../documentUtils';
+import PageHeader from '@/Components/PageHeader';
 
 interface Vehicle {
     id: number;
@@ -67,14 +68,16 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
     return (
         <DynamicLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        {t('document.entity_docs.upload_title', { name: vehicle.name })}
-                    </h2>
-                    <Link href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}>
-                        <SecondaryButton>{t('document.entity_docs.back')}</SecondaryButton>
-                    </Link>
-                </div>
+                <PageHeader
+                    title={t('document.entity_docs.upload_title', { name: vehicle.name })}
+                    actions={
+                        <Link href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}>
+                            <SecondaryButton className="!rounded-xl text-xs">
+                                ← {t('document.entity_docs.back')}
+                            </SecondaryButton>
+                        </Link>
+                    }
+                />
             }
         >
             <Head title={t('document.entity_docs.upload_head', { name: vehicle.name })} />
@@ -82,10 +85,10 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
             <DocumentNav />
 
             <div className="mx-auto max-w-2xl">
-                <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <form onSubmit={submit} className="space-y-6 p-6">
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                    <form onSubmit={submit} className="space-y-6">
                         <div>
-                            <InputLabel htmlFor="document_type_id" value={t('document.entity_docs.type')} />
+                            <InputLabel htmlFor="document_type_id" value={t('document.entity_docs.type')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <Select
                                 id="document_type_id"
                                 value={form.data.document_type_id}
@@ -94,18 +97,18 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
                                     { value: '', label: t('document.entity_docs.select_type'), disabled: true },
                                     ...types.map((type) => ({ value: String(type.id), label: type.name })),
                                 ]}
-                                className="mt-1 w-full"
+                                className="mt-1 w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                             />
                             <InputError message={form.errors.document_type_id} className="mt-1" />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="document_number" value={t('document.entity_docs.number_label')} />
+                            <InputLabel htmlFor="document_number" value={t('document.entity_docs.number_label')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <TextInput
                                 id="document_number"
                                 value={form.data.document_number}
                                 onChange={(e) => form.setData('document_number', e.target.value)}
-                                className="mt-1 w-full"
+                                className="mt-1 w-full !rounded-xl font-mono text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                 placeholder={t('document.entity_docs.optional')}
                             />
                             <InputError message={form.errors.document_number} className="mt-1" />
@@ -113,13 +116,13 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
 
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="issued_at" value={t('document.entity_docs.issued_at')} />
+                                <InputLabel htmlFor="issued_at" value={t('document.entity_docs.issued_at')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                                 <TextInput
                                     id="issued_at"
                                     type="date"
                                     value={form.data.issued_at}
                                     onChange={(e) => handleIssuedAtChange(e.target.value)}
-                                    className="mt-1 w-full"
+                                    className="mt-1 w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                 />
                                 <InputError message={form.errors.issued_at} className="mt-1" />
                             </div>
@@ -127,6 +130,7 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
                             <div>
                                 <InputLabel
                                     htmlFor="expires_at"
+                                    className="!text-xs !font-bold !uppercase !tracking-wider"
                                     value={
                                         selectedType && !selectedType.has_expiry
                                             ? t('document.entity_docs.expires_na')
@@ -138,11 +142,11 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
                                     type="date"
                                     value={form.data.expires_at}
                                     onChange={(e) => form.setData('expires_at', e.target.value)}
-                                    className="mt-1 w-full"
+                                    className="mt-1 w-full !rounded-xl text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                     disabled={selectedType !== undefined && !selectedType.has_expiry}
                                 />
                                 {selectedType?.typical_validity_days && (
-                                    <p className="mt-1 text-xs text-gray-400">
+                                    <p className="mt-1 text-[11px] text-slate-400">
                                         {t('document.entity_docs.typical_validity', {
                                             count: selectedType.typical_validity_days,
                                         })}
@@ -153,7 +157,7 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
                         </div>
 
                         <div>
-                            <InputLabel value={t('document.entity_docs.file')} />
+                            <InputLabel value={t('document.entity_docs.file')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <div className="mt-1">
                                 <ImageUploader
                                     value={form.data.media_id ? Number(form.data.media_id) : null}
@@ -164,26 +168,26 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="notes" value={t('document.entity_docs.notes')} />
+                            <InputLabel htmlFor="notes" value={t('document.entity_docs.notes')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <textarea
                                 id="notes"
                                 value={form.data.notes}
                                 onChange={(e) => form.setData('notes', e.target.value)}
                                 rows={3}
-                                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                className="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs"
                                 placeholder={t('document.entity_docs.optional')}
                             />
                             <InputError message={form.errors.notes} className="mt-1" />
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-2">
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                             <Link href={prefixedRoute('fleet.vehicles.documents.index', vehicle.id)}>
-                                <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                                <SecondaryButton type="button" className="!rounded-xl text-xs">{t('common.cancel')}</SecondaryButton>
                             </Link>
-                            <PrimaryButton disabled={form.processing}>
+                            <PrimaryButton disabled={form.processing} className="!rounded-xl text-xs shadow-sm">
                                 {form.processing
                                     ? t('document.entity_docs.saving')
-                                    : t('document.entity_docs.upload')}
+                                    : `📤 ${t('document.entity_docs.upload')}`}
                             </PrimaryButton>
                         </div>
                     </form>
@@ -192,3 +196,4 @@ export default function Create({ vehicle, types, preselectedTypeId }: Props): JS
         </DynamicLayout>
     );
 }
+

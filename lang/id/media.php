@@ -28,6 +28,13 @@ return [
         'documents' => 'Dokumen',
     ],
 
+    'stats' => [
+        'total_files' => 'Total File',
+        'images' => 'Gambar',
+        'videos' => 'Video',
+        'documents' => 'Dokumen',
+    ],
+
     'pages' => [
         'index' => [
             'head' => 'Pustaka Media',
