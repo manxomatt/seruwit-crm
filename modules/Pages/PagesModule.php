@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\ModuleContract;
 use App\Modules\ModuleTier;
 use Illuminate\Support\Facades\Route;
+use Modules\Pages\Http\Controllers\PageComponentController;
 use Modules\Pages\Http\Controllers\PageController;
 use Modules\Pages\Models\Page;
 
@@ -91,6 +92,16 @@ class PagesModule implements ModuleContract
 
     public function routes(): void
     {
+        // Page Components Management Routes
+        Route::get('/pages/components', [PageComponentController::class, 'index'])->middleware('permission:pages,view')->name('pages.components.index');
+        Route::get('/pages/components/create', [PageComponentController::class, 'create'])->middleware('permission:pages,create')->name('pages.components.create');
+        Route::post('/pages/components', [PageComponentController::class, 'store'])->middleware('permission:pages,create')->name('pages.components.store');
+        Route::get('/pages/components/{component}/edit', [PageComponentController::class, 'edit'])->middleware('permission:pages,update')->name('pages.components.edit');
+        Route::put('/pages/components/{component}', [PageComponentController::class, 'update'])->middleware('permission:pages,update')->name('pages.components.update');
+        Route::delete('/pages/components/{component}', [PageComponentController::class, 'destroy'])->middleware('permission:pages,delete')->name('pages.components.destroy');
+        Route::patch('/pages/components/{component}/toggle-active', [PageComponentController::class, 'toggleActive'])->middleware('permission:pages,update')->name('pages.components.toggle-active');
+
+        // Page Routes
         Route::get('/pages', [PageController::class, 'index'])->middleware('permission:pages,view')->name('pages.index');
         Route::get('/pages/create', [PageController::class, 'create'])->middleware('permission:pages,create')->name('pages.create');
         Route::post('/pages', [PageController::class, 'store'])->middleware('permission:pages,create')->name('pages.store');

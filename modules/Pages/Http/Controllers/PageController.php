@@ -12,6 +12,7 @@ use Inertia\Response;
 use Modules\Pages\Http\Requests\StorePageRequest;
 use Modules\Pages\Http\Requests\UpdatePageRequest;
 use Modules\Pages\Models\Page;
+use Modules\Pages\Models\PageComponent;
 
 class PageController extends Controller
 {
@@ -83,8 +84,14 @@ class PageController extends Controller
             abort(403);
         }
 
+        $customBlocks = PageComponent::query()
+            ->active()
+            ->ordered()
+            ->get(['key', 'label', 'category', 'content', 'media', 'attributes']);
+
         return Inertia::render('Modules/Pages/Editor', [
             'page' => $page,
+            'customBlocks' => $customBlocks,
         ]);
     }
 

@@ -23,6 +23,7 @@ class TenantDatabaseSeeder extends Seeder
             MenuSeeder::class,
             SettingSeeder::class,
             TenantDefaultPageSeeder::class,
+            PageComponentSeeder::class,
         ]);
     }
 }
