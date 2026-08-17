@@ -30,36 +30,6 @@ interface Props {
     can: { create: boolean; update: boolean; delete: boolean; approve: boolean };
 }
 
-const WrenchIcon = () => (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
-    </svg>
-);
-
-const ClockIcon = () => (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
-
-const CheckIcon = () => (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
-
-const ExclamationIcon = () => (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-    </svg>
-);
-
-const CurrencyIcon = () => (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-    </svg>
-);
-
 export default function Index({ summary, recentWorkOrders, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -67,53 +37,39 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
 
     const summaryCards = [
         {
-            label: t('maintenance.dashboard.in_progress'),
+            label: t('maintenance.dashboard.in_progress', undefined, 'In Progress'),
             value: summary.in_progress,
-            icon: <WrenchIcon />,
-            bg: 'bg-indigo-50',
-            iconBg: 'bg-indigo-500',
-            textColor: 'text-indigo-700',
+            icon: '🛠️',
+            bg: 'border-indigo-200/80 bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/50 dark:from-indigo-950/40 dark:to-slate-900',
+            textColor: 'text-indigo-600 dark:text-indigo-400',
         },
         {
-            label: t('maintenance.dashboard.awaiting_approval'),
+            label: t('maintenance.dashboard.awaiting_approval', undefined, 'Awaiting Approval'),
             value: summary.pending + summary.approved,
-            icon: <ClockIcon />,
-            bg: 'bg-yellow-50',
-            iconBg: 'bg-yellow-500',
-            textColor: 'text-yellow-700',
+            icon: '⏳',
+            bg: 'border-amber-200/80 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 dark:from-amber-950/40 dark:to-slate-900',
+            textColor: 'text-amber-600 dark:text-amber-400',
         },
         {
-            label: t('maintenance.dashboard.overdue'),
+            label: t('maintenance.dashboard.overdue', undefined, 'Overdue WOs'),
             value: summary.overdue,
-            icon: <ExclamationIcon />,
-            bg: 'bg-red-50',
-            iconBg: 'bg-red-500',
-            textColor: 'text-red-700',
+            icon: '⚠️',
+            bg: 'border-rose-200/80 bg-gradient-to-br from-rose-50/80 via-white to-red-50/50 dark:from-rose-950/40 dark:to-slate-900',
+            textColor: 'text-rose-600 dark:text-rose-400',
         },
         {
-            label: t('maintenance.dashboard.schedules_due'),
+            label: t('maintenance.dashboard.schedules_due', undefined, 'PM Schedules Due'),
             value: summary.schedules_due,
-            icon: <ClockIcon />,
-            bg: 'bg-orange-50',
-            iconBg: 'bg-orange-500',
-            textColor: 'text-orange-700',
+            icon: '⏱️',
+            bg: 'border-orange-200/80 bg-gradient-to-br from-orange-50/80 via-white to-amber-50/50 dark:from-orange-950/40 dark:to-slate-900',
+            textColor: 'text-orange-600 dark:text-orange-400',
         },
         {
-            label: t('maintenance.dashboard.completed_month'),
+            label: t('maintenance.dashboard.completed_month', undefined, 'Completed (Month)'),
             value: summary.completed_this_month,
-            icon: <CheckIcon />,
-            bg: 'bg-green-50',
-            iconBg: 'bg-green-500',
-            textColor: 'text-green-700',
-        },
-        {
-            label: t('maintenance.dashboard.cost_month'),
-            value: formatCurrency(summary.total_cost_this_month, localeTag),
-            icon: <CurrencyIcon />,
-            bg: 'bg-blue-50',
-            iconBg: 'bg-blue-500',
-            textColor: 'text-blue-700',
-            wide: true,
+            icon: '✓',
+            bg: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/50 dark:from-emerald-950/40 dark:to-slate-900',
+            textColor: 'text-emerald-600 dark:text-emerald-400',
         },
     ];
 
@@ -121,97 +77,140 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
         <DynamicLayout
             header={
                 <PageHeader
-                    title={t('maintenance.dashboard.head')}
+                    title={t('maintenance.dashboard.head', undefined, 'Maintenance Overview')}
+                    subtitle="Workshop shop floor operations, active work orders, and preventive service tracking"
                     actions={can.create && (
                         <Link href={prefixedRoute('maintenance.work-orders.create')}>
-                            <PrimaryButton>{t('maintenance.dashboard.new_wo')}</PrimaryButton>
+                            <PrimaryButton className="!rounded-2xl shadow-sm text-xs">
+                                ➕ {t('maintenance.dashboard.new_wo', undefined, 'Create Work Order')}
+                            </PrimaryButton>
                         </Link>
                     )}
                 />
             }
         >
-            <Head title={t('maintenance.title')} />
+            <Head title={t('maintenance.title', undefined, 'Maintenance Dashboard')} />
 
             <MaintenanceNav />
 
-            {/* Summary Cards */}
-            <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                {summaryCards.map((card) => (
-                    <div key={card.label} className={`rounded-xl ${card.bg} p-4 ${card.wide ? 'col-span-2 sm:col-span-1' : ''}`}>
-                        <div className="flex items-center gap-3">
-                            <div className={`rounded-lg ${card.iconBg} p-2 text-white`}>
-                                {card.icon}
+            <div className="space-y-6">
+                {/* Top KPI Grid */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                    {summaryCards.map((card) => (
+                        <div
+                            key={card.label}
+                            className={`flex flex-col justify-between rounded-3xl border p-5 shadow-sm transition hover:shadow-md ${card.bg} border-slate-200/80 dark:border-slate-800`}
+                        >
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                                    {card.label}
+                                </span>
+                                <span className="text-base">{card.icon}</span>
                             </div>
-                            <div>
-                                <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
-                                <p className="text-xs text-gray-500">{card.label}</p>
-                            </div>
+                            <p className={`text-3xl font-black tracking-tight tabular-nums ${card.textColor}`}>
+                                {card.value}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Financial Spend Banner */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-indigo-200/60 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/90 via-white to-blue-50/80 dark:from-indigo-950/60 dark:to-slate-900 p-5 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-sm">
+                            💳
+                        </div>
+                        <div>
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
+                                {t('maintenance.dashboard.cost_month', undefined, 'Maintenance Spend (This Month)')}
+                            </span>
+                            <p className="text-2xl font-black tracking-tight text-slate-900 dark:text-white tabular-nums">
+                                {formatCurrency(summary.total_cost_this_month, localeTag)}
+                            </p>
                         </div>
                     </div>
-                ))}
-            </div>
-
-            {/* Active Work Orders */}
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                    <h3 className="font-semibold text-gray-900">{t('maintenance.dashboard.active_orders')}</h3>
                     <Link
-                        href={prefixedRoute('maintenance.work-orders.index')}
-                        className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                        href={prefixedRoute('maintenance.analytics.index')}
+                        className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 text-white px-4 py-2.5 text-xs font-bold hover:bg-indigo-700 transition shadow-sm"
                     >
-                        {t('maintenance.dashboard.view_all')}
+                        📈 {t('maintenance.dashboard.view_all', undefined, 'View Cost Analytics')} ➔
                     </Link>
                 </div>
 
-                {recentWorkOrders.length === 0 ? (
-                    <div className="py-12 text-center text-gray-500">
-                        <WrenchIcon />
-                        <p className="mt-2 text-sm">{t('maintenance.dashboard.empty_active')}</p>
+                {/* Active Work Orders Feed */}
+                <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-5">
+                        <div>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                {t('maintenance.dashboard.active_orders', undefined, 'Active Work Orders')}
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Real-time status of work orders currently on the shop floor</p>
+                        </div>
+                        <Link
+                            href={prefixedRoute('maintenance.work-orders.index')}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                        >
+                            {t('maintenance.dashboard.view_all', undefined, 'View All Work Orders')} ➔
+                        </Link>
                     </div>
-                ) : (
-                    <div className="divide-y divide-gray-100">
-                        {recentWorkOrders.map((wo) => {
-                            const statusBadge = getStatusBadge(wo.status, t);
-                            const priorityBadge = getPriorityBadge(wo.priority, t);
-                            return (
-                                <Link
-                                    key={wo.id}
-                                    href={prefixedRoute('maintenance.work-orders.show', wo.id)}
-                                    className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-gray-50"
-                                >
-                                    {/* Category color dot */}
-                                    <div
-                                        className="h-3 w-3 flex-shrink-0 rounded-full"
-                                        style={{ backgroundColor: wo.category?.color ?? '#6B7280' }}
-                                    />
 
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-mono text-gray-400">{wo.reference_number}</span>
-                                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.classes}`}>
-                                                {statusBadge.label}
-                                            </span>
-                                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityBadge.classes}`}>
-                                                {priorityBadge.label}
-                                            </span>
+                    {recentWorkOrders.length === 0 ? (
+                        <div className="py-14 text-center text-slate-400">
+                            <span className="text-3xl">🛠️</span>
+                            <p className="mt-2 text-xs font-semibold">
+                                {t('maintenance.dashboard.empty_active', undefined, 'No active work orders at the moment.')}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                            {recentWorkOrders.map((wo) => {
+                                const statusBadge = getStatusBadge(wo.status, t);
+                                const priorityBadge = getPriorityBadge(wo.priority, t);
+                                return (
+                                    <Link
+                                        key={wo.id}
+                                        href={prefixedRoute('maintenance.work-orders.show', wo.id)}
+                                        className="flex items-center gap-4 p-5 transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+                                    >
+                                        <div
+                                            className="h-3.5 w-3.5 flex-shrink-0 rounded-full shadow-sm"
+                                            style={{ backgroundColor: wo.category?.color ?? '#6B7280' }}
+                                        />
+
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                <span className="font-mono text-[11px] font-extrabold text-slate-500 dark:text-slate-400">
+                                                    {wo.reference_number}
+                                                </span>
+                                                <span className={`rounded-xl px-2.5 py-0.5 text-[10px] font-extrabold border ${statusBadge.classes}`}>
+                                                    {statusBadge.label}
+                                                </span>
+                                                <span className={`rounded-xl px-2.5 py-0.5 text-[10px] font-extrabold border ${priorityBadge.classes}`}>
+                                                    {priorityBadge.label}
+                                                </span>
+                                            </div>
+                                            <p className="truncate text-sm font-bold text-slate-900 dark:text-white">{wo.title}</p>
+                                            <p className="text-xs font-medium text-slate-400 mt-0.5">
+                                                🚗 {wo.vehicle?.name} · <span className="font-mono">{wo.vehicle?.plate_number}</span>
+                                            </p>
                                         </div>
-                                        <p className="mt-0.5 truncate font-medium text-gray-900">{wo.title}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {wo.vehicle?.name} · {wo.vehicle?.plate_number}
-                                        </p>
-                                    </div>
 
-                                    <div className="flex-shrink-0 text-right">
-                                        <p className="text-sm text-gray-500">{formatDate(wo.scheduled_date, localeTag)}</p>
-                                        {wo.estimated_cost && (
-                                            <p className="text-sm font-medium text-gray-700">{formatCurrency(wo.estimated_cost, localeTag)}</p>
-                                        )}
-                                    </div>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                )}
+                                        <div className="flex-shrink-0 text-right">
+                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                📅 {formatDate(wo.scheduled_date, localeTag)}
+                                            </p>
+                                            {wo.estimated_cost && (
+                                                <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                                    {formatCurrency(wo.estimated_cost, localeTag)}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
         </DynamicLayout>
     );

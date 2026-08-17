@@ -139,8 +139,8 @@ export default function Index({ bays, can }: Props): JSX.Element {
             <Head title={t('maintenance.bays.head')} />
             <MaintenanceNav />
 
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-200 px-6 py-4">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                <div className="border-b border-slate-100 dark:border-slate-800 px-6 py-4">
                     <h3 className="font-semibold text-gray-900">{t('maintenance.bays.head')}</h3>
                     <p className="mt-1 text-sm text-gray-500">{t('maintenance.bays.section_hint')}</p>
                 </div>

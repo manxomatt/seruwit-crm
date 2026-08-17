@@ -208,8 +208,8 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
             </div>
 
             {/* Table */}
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-200 px-6 py-3 text-sm text-gray-500">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                <div className="border-b border-slate-100 dark:border-slate-800 px-6 py-3 text-xs font-semibold text-slate-400">
                     {t('maintenance.schedules.found', { count: schedules.total })}
                 </div>
 

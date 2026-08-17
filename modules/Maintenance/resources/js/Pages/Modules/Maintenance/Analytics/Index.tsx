@@ -199,7 +199,7 @@ export default function Index({ filters, analytics }: Props): JSX.Element {
                 </p>
             )}
 
-            <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="mt-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.by_vehicle')}</h3>
                 {analytics.by_vehicle.length === 0 ? (
                     <p className="text-sm text-gray-500">{t('maintenance.analytics.empty')}</p>
@@ -274,7 +274,7 @@ export default function Index({ filters, analytics }: Props): JSX.Element {
                 </section>
             </div>
 
-            <section className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="mt-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <h3 className="mb-4 font-semibold text-gray-900">{t('maintenance.analytics.monthly')}</h3>
                 <div className="space-y-3">
                     {analytics.monthly_costs.map((row) => (
