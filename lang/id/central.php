@@ -112,4 +112,79 @@ return [
     ],
 
     'must_login_first' => 'Masuk terlebih dahulu dengan akun :email untuk menerima undangan.',
+
+    'dashboard' => [
+        'title' => 'Dashboard Central SaaS',
+        'badge' => 'Pusat Kontrol Platform SaaS',
+        'subtitle' => 'Pemantauan dan tata kelola real-time untuk tenant ruang kerja, pendapatan langganan, paket platform, dan kesehatan modul.',
+        'provision_tenant' => 'Tambah Tenant',
+        'manage_plans' => 'Kelola Paket',
+
+        'kpi' => [
+            'mrr' => 'Estimasi MRR (30 Hari)',
+            'total' => 'Total',
+            'active_billing' => 'Penagihan Aktif',
+            'workspaces' => 'Ruang Kerja / Tenant',
+            'active' => 'Aktif',
+            'trial' => 'Uji Coba',
+            'suspended' => 'Ditangguhkan',
+            'pending_approvals' => 'Persetujuan Tertunda',
+            'orders_awaiting' => 'Pesanan menunggu verifikasi bukti',
+            'review_orders' => 'Tinjau Semua Pesanan Pembayaran →',
+            'platform_modules' => 'Modul Platform',
+            'active_platform' => 'Aktif di Platform',
+            'open_registry' => 'Buka Registri Modul →',
+        ],
+
+        'growth' => [
+            'title' => 'Tren Pertumbuhan Tenant',
+            'subtitle' => 'Pendaftaran tenant baru per bulan (6 bulan terakhir)',
+            'rate' => 'Tingkat Pendaftaran',
+        ],
+
+        'plans' => [
+            'title' => 'Paket Berlangganan',
+            'edit' => 'Edit Paket',
+            'tenants_count' => ':count tenant (:percentage%)',
+        ],
+
+        'payments' => [
+            'title' => 'Konfirmasi Pembayaran Tertunda',
+            'subtitle' => 'Bukti transfer manual butuh verifikasi',
+            'view_all' => 'Lihat Semua →',
+            'empty' => 'Semua bersih! Tidak ada konfirmasi pembayaran tertunda.',
+            'proof' => 'Bukti',
+            'process' => 'Proses',
+        ],
+
+        'tenants' => [
+            'title' => 'Ruang Kerja Terbaru',
+            'subtitle' => 'Lingkungan tenant yang baru dibuat',
+            'view_all' => 'Lihat Semua Tenant →',
+            'no_domain' => 'Tanpa Domain',
+            'created' => 'Dibuat :date',
+            'details' => 'Detail',
+        ],
+
+        'top_modules' => [
+            'title' => 'Modul Paling Banyak Diinstal Tenant',
+            'registry' => 'Registri Modul →',
+            'installs' => ':count instalasi',
+            'key' => 'Kunci: :key',
+        ],
+
+        'shortcuts' => [
+            'title' => 'Pintasan Kontrol Platform',
+            'tenants_title' => 'Ruang Kerja Tenant',
+            'tenants_desc' => 'Buat & suspen tenant',
+            'plans_title' => 'Paket Berlangganan',
+            'plans_desc' => 'Konfigurasi tingkatan & akses',
+            'registry_title' => 'Saklar Modul',
+            'registry_desc' => 'Kontrol registri modul global',
+        ],
+
+        'modal' => [
+            'proof_title' => 'Lampiran Bukti Pembayaran',
+        ],
+    ],
 ];

@@ -48,6 +48,13 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+
+        if (! function_exists('tenancy') || ! tenancy()->initialized) {
+            if ($user->can('manage-tenants') || $user->isAdmin()) {
+                return app(\App\Http\Controllers\Central\CentralDashboardController::class)->index($request);
+            }
+        }
+
         $primaryRole = $user->getPrimaryRole();
 
         $period = $request->query('period', 'month');
@@ -188,7 +195,7 @@ class DashboardController extends Controller
             $kpis['revenue'] = [
                 'value' => round($paidAmount),
                 'delta' => $revenueDelta,
-                'delta_label' => $revenueDelta !== null ? ($revenueDelta >= 0 ? '+' : '') . $revenueDelta . '% ' . __('dashboard.kpi.vs_previous') : null,
+                'delta_label' => $revenueDelta !== null ? ($revenueDelta >= 0 ? '+' : '').$revenueDelta.'% '.__('dashboard.kpi.vs_previous') : null,
                 'direction' => $revenueDelta >= 0 ? 'up' : 'down',
             ];
 
@@ -466,7 +473,7 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get()
                 ->map(function (ShuttleDeparture $dep) {
-                    $route = $dep->corridor ? ($dep->corridor->origin_city . ' - ' . $dep->corridor->destination_city) : ($dep->corridor?->name ?? '—');
+                    $route = $dep->corridor ? ($dep->corridor->origin_city.' - '.$dep->corridor->destination_city) : ($dep->corridor?->name ?? '—');
                     $seatsTotal = $dep->seat_capacity ?? 0;
                     $seatsBooked = $dep->seats_booked ?? 0;
 
@@ -480,7 +487,7 @@ class DashboardController extends Controller
 
                     return [
                         'id' => $dep->id,
-                        'time' => Carbon::parse($dep->depart_date->format('Y-m-d') . ' ' . $dep->depart_time)->format('H:i T'),
+                        'time' => Carbon::parse($dep->depart_date->format('Y-m-d').' '.$dep->depart_time)->format('H:i T'),
                         'route' => $route,
                         'seats_booked' => $seatsBooked,
                         'seats_total' => $seatsTotal,
@@ -627,8 +634,8 @@ class DashboardController extends Controller
                 ->get();
 
             foreach ($tripsNoDriver as $dep) {
-                $route = $dep->corridor ? ($dep->corridor->origin_city . ' - ' . $dep->corridor->destination_city) : ($dep->corridor?->name ?? '—');
-                $time = Carbon::parse($dep->depart_date->format('Y-m-d') . ' ' . $dep->depart_time)->format('H:i');
+                $route = $dep->corridor ? ($dep->corridor->origin_city.' - '.$dep->corridor->destination_city) : ($dep->corridor?->name ?? '—');
+                $time = Carbon::parse($dep->depart_date->format('Y-m-d').' '.$dep->depart_time)->format('H:i');
                 $alerts[] = [
                     'module' => 'shuttle',
                     'severity' => 'warning',
@@ -679,7 +686,7 @@ class DashboardController extends Controller
                     'severity' => 'info',
                     'icon' => 'wrench',
                     'title' => __('dashboard.alerts.maintenance_overdue_title'),
-                    'message' => $wo->reference_number . ': ' . $wo->title . ($wo->vehicle?->plate_number ? ' — ' . $wo->vehicle->plate_number : ''),
+                    'message' => $wo->reference_number.': '.$wo->title.($wo->vehicle?->plate_number ? ' — '.$wo->vehicle->plate_number : ''),
                 ];
             }
         }
@@ -698,7 +705,7 @@ class DashboardController extends Controller
                     'severity' => 'danger',
                     'icon' => 'file-invoice-dollar',
                     'title' => __('dashboard.alerts.invoice_overdue_title'),
-                    'message' => $inv->code . ' — ' . ($inv->partner?->name ?? '—') . ' : Rp ' . number_format((float) $inv->total, 0, ',', '.'),
+                    'message' => $inv->code.' — '.($inv->partner?->name ?? '—').' : Rp '.number_format((float) $inv->total, 0, ',', '.'),
                 ];
             }
         }
@@ -772,7 +779,7 @@ class DashboardController extends Controller
             ->groupBy('month')
             ->orderBy('month')
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'month' => Carbon::createFromFormat('Y-m', $row->month)->translatedFormat('M'),
                 'amount' => round((float) $row->amount),
             ])
@@ -860,9 +867,9 @@ class DashboardController extends Controller
             foreach ($recentTrips as $trip) {
                 $plate = $trip->vehicle?->plate_number;
                 $desc = match ($trip->status) {
-                    Trip::STATUS_COMPLETED => __('dashboard.activity.trip_completed', ['code' => $trip->code]) . ($plate ? " — {$plate}" : ''),
-                    Trip::STATUS_IN_PROGRESS => __('dashboard.activity.trip_started', ['code' => $trip->code]) . ($plate ? " — {$plate}" : ''),
-                    default => __('dashboard.activity.trip_scheduled', ['code' => $trip->code]) . ($plate ? " — {$plate}" : ''),
+                    Trip::STATUS_COMPLETED => __('dashboard.activity.trip_completed', ['code' => $trip->code]).($plate ? " — {$plate}" : ''),
+                    Trip::STATUS_IN_PROGRESS => __('dashboard.activity.trip_started', ['code' => $trip->code]).($plate ? " — {$plate}" : ''),
+                    default => __('dashboard.activity.trip_scheduled', ['code' => $trip->code]).($plate ? " — {$plate}" : ''),
                 };
                 $timestamp = $trip->completed_at ?? $trip->started_at ?? $trip->created_at;
 
@@ -885,9 +892,9 @@ class DashboardController extends Controller
             foreach ($recentRentals as $rental) {
                 $plate = $rental->vehicle?->plate_number;
                 $desc = match ($rental->status) {
-                    Rental::STATUS_COMPLETED => __('dashboard.activity.rental_completed', ['code' => $rental->code]) . ($plate ? " — {$plate}" : ''),
-                    Rental::STATUS_ACTIVE => __('dashboard.activity.rental_active', ['code' => $rental->code]) . ($plate ? " — {$plate}" : ''),
-                    Rental::STATUS_CONFIRMED => __('dashboard.activity.rental_confirmed', ['code' => $rental->code]) . ($plate ? " — {$plate}" : ''),
+                    Rental::STATUS_COMPLETED => __('dashboard.activity.rental_completed', ['code' => $rental->code]).($plate ? " — {$plate}" : ''),
+                    Rental::STATUS_ACTIVE => __('dashboard.activity.rental_active', ['code' => $rental->code]).($plate ? " — {$plate}" : ''),
+                    Rental::STATUS_CONFIRMED => __('dashboard.activity.rental_confirmed', ['code' => $rental->code]).($plate ? " — {$plate}" : ''),
                     default => __('dashboard.activity.rental_created', ['code' => $rental->code]),
                 };
                 $timestamp = $rental->completed_at ?? $rental->returned_at ?? $rental->checked_out_at ?? $rental->created_at;
@@ -910,11 +917,11 @@ class DashboardController extends Controller
 
             foreach ($recentDepartures as $dep) {
                 $plate = $dep->vehicle?->plate_number;
-                $code = $dep->departure_number ?? 'SH-' . $dep->id;
+                $code = $dep->departure_number ?? 'SH-'.$dep->id;
                 $desc = match ($dep->status) {
-                    ShuttleDeparture::STATUS_COMPLETED => __('dashboard.activity.shuttle_completed', ['code' => $code]) . ($plate ? " — {$plate}" : ''),
-                    ShuttleDeparture::STATUS_IN_TRANSIT => __('dashboard.activity.shuttle_in_transit', ['code' => $code]) . ($plate ? " — {$plate}" : ''),
-                    ShuttleDeparture::STATUS_DISPATCHED => __('dashboard.activity.shuttle_dispatched', ['code' => $code]) . ($plate ? " — {$plate}" : ''),
+                    ShuttleDeparture::STATUS_COMPLETED => __('dashboard.activity.shuttle_completed', ['code' => $code]).($plate ? " — {$plate}" : ''),
+                    ShuttleDeparture::STATUS_IN_TRANSIT => __('dashboard.activity.shuttle_in_transit', ['code' => $code]).($plate ? " — {$plate}" : ''),
+                    ShuttleDeparture::STATUS_DISPATCHED => __('dashboard.activity.shuttle_dispatched', ['code' => $code]).($plate ? " — {$plate}" : ''),
                     default => __('dashboard.activity.shuttle_created', ['code' => $code]),
                 };
                 $timestamp = $dep->completed_at ?? $dep->dispatched_at ?? $dep->created_at;
@@ -961,7 +968,7 @@ class DashboardController extends Controller
             foreach ($recentWorkOrders as $wo) {
                 $plate = $wo->vehicle?->plate_number;
                 $desc = match ($wo->status) {
-                    WorkOrder::STATUS_COMPLETED => __('dashboard.activity.wo_completed') . ($plate ? " — {$plate}" : ''),
+                    WorkOrder::STATUS_COMPLETED => __('dashboard.activity.wo_completed').($plate ? " — {$plate}" : ''),
                     default => __('dashboard.activity.wo_created', ['ref' => $wo->reference_number, 'title' => $wo->title]),
                 };
                 $timestamp = $wo->completed_at ?? $wo->created_at;

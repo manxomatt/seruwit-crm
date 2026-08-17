@@ -112,4 +112,79 @@ return [
     ],
 
     'must_login_first' => 'Please sign in first with the account :email to accept the invitation.',
+
+    'dashboard' => [
+        'title' => 'Central SaaS Dashboard',
+        'badge' => 'SaaS Platform Command Center',
+        'subtitle' => 'Real-time monitoring and governance for workspace tenants, subscription revenue, platform plans, and module health.',
+        'provision_tenant' => 'Provision Tenant',
+        'manage_plans' => 'Manage Plans',
+
+        'kpi' => [
+            'mrr' => 'Estimated MRR (30d)',
+            'total' => 'Total',
+            'active_billing' => 'Active Billing',
+            'workspaces' => 'Workspaces / Tenants',
+            'active' => 'Active',
+            'trial' => 'Trial',
+            'suspended' => 'Suspended',
+            'pending_approvals' => 'Pending Approvals',
+            'orders_awaiting' => 'Orders awaiting proof review',
+            'review_orders' => 'Review All Payment Orders →',
+            'platform_modules' => 'Platform Modules',
+            'active_platform' => 'Active Platform',
+            'open_registry' => 'Open Module Registry →',
+        ],
+
+        'growth' => [
+            'title' => 'Tenant Growth Trend',
+            'subtitle' => 'New tenant registrations per month (last 6 months)',
+            'rate' => 'Registration Rate',
+        ],
+
+        'plans' => [
+            'title' => 'Subscription Plans',
+            'edit' => 'Edit Plans',
+            'tenants_count' => ':count tenants (:percentage%)',
+        ],
+
+        'payments' => [
+            'title' => 'Pending Payment Confirmation',
+            'subtitle' => 'Manual transfer proofs needing verification',
+            'view_all' => 'View All →',
+            'empty' => 'All clear! No pending payment confirmations.',
+            'proof' => 'Proof',
+            'process' => 'Process',
+        ],
+
+        'tenants' => [
+            'title' => 'Recent Workspaces',
+            'subtitle' => 'Newly provisioned tenant environments',
+            'view_all' => 'View All Tenants →',
+            'no_domain' => 'No Domain',
+            'created' => 'Created :date',
+            'details' => 'Details',
+        ],
+
+        'top_modules' => [
+            'title' => 'Most Installed Modules Across Tenants',
+            'registry' => 'Module Registry →',
+            'installs' => ':count installs',
+            'key' => 'Key: :key',
+        ],
+
+        'shortcuts' => [
+            'title' => 'Control Plane Shortcuts',
+            'tenants_title' => 'Tenant Workspaces',
+            'tenants_desc' => 'Provision & suspend tenants',
+            'plans_title' => 'Subscription Plans',
+            'plans_desc' => 'Configure tiers & entitlement',
+            'registry_title' => 'Module Kill-Switch',
+            'registry_desc' => 'Global module registry control',
+        ],
+
+        'modal' => [
+            'proof_title' => 'Payment Proof Attachment',
+        ],
+    ],
 ];

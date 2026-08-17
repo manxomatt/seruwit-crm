@@ -31,7 +31,7 @@ class DashboardTest extends TestCase
 
     public function test_authenticated_user_can_view_dashboard(): void
     {
-        $user = $this->createAdminUser();
+        $user = $this->createUserWithRole();
 
         $this->actingAs($user)->get(route('module.dashboard'))
             ->assertOk()
