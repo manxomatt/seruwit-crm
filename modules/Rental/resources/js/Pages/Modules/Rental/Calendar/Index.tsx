@@ -169,7 +169,7 @@ export default function Index({ board, calendarClickToBook = true }: Props): JSX
                             </p>
                         )}
                     </div>
-                    <div className="flex flex-wrap gap-1 rounded-lg border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800">
+                    <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-1 shadow-xs">
                         {VIEW_TABS.map((tab) => (
                             <button
                                 key={tab.key}

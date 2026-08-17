@@ -480,7 +480,7 @@ export default function RatesIndex({ rates, vehicles, rentalClasses }: Props): J
                 </div>
             )}
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-50">
                         <tr>

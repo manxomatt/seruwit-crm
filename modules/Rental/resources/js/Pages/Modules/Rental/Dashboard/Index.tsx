@@ -258,15 +258,15 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                 )}
 
             <div className="mb-6 grid gap-6 lg:grid-cols-2">
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-gray-800">{t('rental.dashboard.overdue_list')}</h3>
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4">
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{t('rental.dashboard.overdue_list')}</h3>
                     </div>
                     <RentalTable rows={overdue} empty={t('rental.dashboard.overdue_empty')} />
                 </div>
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-gray-800">{t('rental.dashboard.ending_soon_list')}</h3>
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4">
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{t('rental.dashboard.ending_soon_list')}</h3>
                     </div>
                     <RentalTable rows={ending_soon} empty={t('rental.dashboard.ending_soon_empty')} />
                 </div>

@@ -365,16 +365,16 @@ function SectionCard({
     children: React.ReactNode;
 }): JSX.Element {
     return (
-        <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-900/5">
-            <header className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-4">
+        <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <header className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
                 <div>
-                    <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-                    {subtitle && <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>}
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{title}</h3>
+                    {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
                 </div>
                 {action && (
                     <Link
                         href={action.href}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-800"
+                        className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-800"
                     >
                         {action.label}
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -404,10 +404,10 @@ function KpiCard({
     footer?: React.ReactNode;
 }): JSX.Element {
     const accentClasses = {
-        emerald: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
-        red: 'bg-red-50 text-red-600 ring-red-100',
-        indigo: 'bg-indigo-50 text-indigo-600 ring-indigo-100',
-        amber: 'bg-amber-50 text-amber-600 ring-amber-100',
+        emerald: 'bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-400 dark:ring-emerald-800',
+        red: 'bg-red-50 text-red-600 ring-red-100 dark:bg-red-950/50 dark:text-red-400 dark:ring-red-800',
+        indigo: 'bg-indigo-50 text-indigo-600 ring-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-400 dark:ring-indigo-800',
+        amber: 'bg-amber-50 text-amber-600 ring-amber-100 dark:bg-amber-950/50 dark:text-amber-400 dark:ring-amber-800',
     } as const;
     const dotClasses = {
         emerald: 'bg-emerald-500',
@@ -416,35 +416,35 @@ function KpiCard({
         amber: 'bg-amber-500',
     } as const;
     const deltaUpClasses = {
-        emerald: 'text-emerald-600',
-        red: 'text-red-600',
-        indigo: 'text-indigo-600',
-        amber: 'text-amber-600',
+        emerald: 'text-emerald-600 dark:text-emerald-400',
+        red: 'text-red-600 dark:text-red-400',
+        indigo: 'text-indigo-600 dark:text-indigo-400',
+        amber: 'text-amber-600 dark:text-amber-400',
     } as const;
 
     return (
-        <div className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-gray-500">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <span className={`h-1.5 w-1.5 rounded-full ${dotClasses[accent]}`} />
                         <span>{label}</span>
                     </div>
-                    <div className="mt-2 text-3xl font-bold tracking-tight tabular-nums text-gray-900">
+                    <div className="mt-2 text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-white">
                         {value}
                     </div>
                     {subValue && (
-                        <div className="mt-1 flex items-baseline gap-1.5 text-sm text-gray-500">
+                        <div className="mt-1 flex items-baseline gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                             {subValue}
                         </div>
                     )}
                     {footer && (
-                        <div className={`mt-3 inline-flex items-center gap-1 text-xs font-medium ${deltaUpClasses[accent]}`}>
+                        <div className={`mt-3 inline-flex items-center gap-1 text-xs font-bold ${deltaUpClasses[accent]}`}>
                             {footer}
                         </div>
                     )}
                 </div>
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${accentClasses[accent]}`}>
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1 ${accentClasses[accent]}`}>
                     {icon}
                 </div>
             </div>

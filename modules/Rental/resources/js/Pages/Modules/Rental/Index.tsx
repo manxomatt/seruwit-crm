@@ -197,8 +197,8 @@ export default function Index({ rentals, filters }: Props): JSX.Element {
                 </div>
             )}
 
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3 sm:px-5">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 px-4 py-3 sm:px-5">
                     <p className="text-sm text-gray-600">{t('rental.pages.index.total', { count: rentals.total })}</p>
 
                     <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">

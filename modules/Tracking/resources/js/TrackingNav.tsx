@@ -2,13 +2,13 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
 import { Link } from '@inertiajs/react';
 
-const TABS: Array<{ labelKey: string; route: string; pattern: string }> = [
-    { labelKey: 'tracking.nav.dashboard', route: 'tracking.dashboard', pattern: 'tracking.dashboard' },
-    { labelKey: 'tracking.nav.map', route: 'tracking.map', pattern: 'tracking.map' },
-    { labelKey: 'tracking.nav.history', route: 'tracking.history', pattern: 'tracking.history' },
-    { labelKey: 'tracking.nav.geofences', route: 'tracking.geofences.index', pattern: 'tracking.geofences.*' },
-    { labelKey: 'tracking.nav.devices', route: 'tracking.devices.index', pattern: 'tracking.devices.*' },
-    { labelKey: 'tracking.nav.settings', route: 'tracking.settings.edit', pattern: 'tracking.settings.*' },
+const TABS: Array<{ icon: string; labelKey: string; fallbackLabel: string; route: string; pattern: string }> = [
+    { icon: '📊', labelKey: 'tracking.nav.dashboard', fallbackLabel: 'Dashboard', route: 'tracking.dashboard', pattern: 'tracking.dashboard' },
+    { icon: '🗺️', labelKey: 'tracking.nav.map', fallbackLabel: 'Live Map', route: 'tracking.map', pattern: 'tracking.map' },
+    { icon: '📜', labelKey: 'tracking.nav.history', fallbackLabel: 'Route History', route: 'tracking.history', pattern: 'tracking.history' },
+    { icon: '⭕', labelKey: 'tracking.nav.geofences', fallbackLabel: 'Geofences', route: 'tracking.geofences.index', pattern: 'tracking.geofences.*' },
+    { icon: '📱', labelKey: 'tracking.nav.devices', fallbackLabel: 'GPS Devices', route: 'tracking.devices.index', pattern: 'tracking.devices.*' },
+    { icon: '⚙️', labelKey: 'tracking.nav.settings', fallbackLabel: 'Settings', route: 'tracking.settings.edit', pattern: 'tracking.settings.*' },
 ];
 
 export default function TrackingNav(): JSX.Element {
@@ -22,21 +22,24 @@ export default function TrackingNav(): JSX.Element {
     });
 
     return (
-        <div className="mb-6 border-b border-gray-200">
-            <nav className="-mb-px flex gap-6">
+        <div className="mb-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-1.5 shadow-sm overflow-x-auto">
+            <nav className="flex items-center gap-1.5 min-w-max">
                 {tabs.map((tab) => {
                     const active = isCurrentRoute(tab.pattern);
+                    const label = t(tab.labelKey, undefined, tab.fallbackLabel);
+
                     return (
                         <Link
                             key={tab.route}
                             href={prefixedRoute(tab.route)}
-                            className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${
+                            className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
                                 active
-                                    ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'bg-slate-900 text-white dark:bg-indigo-600 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100'
                             }`}
                         >
-                            {t(tab.labelKey)}
+                            <span className="text-sm">{tab.icon}</span>
+                            <span>{label}</span>
                         </Link>
                     );
                 })}

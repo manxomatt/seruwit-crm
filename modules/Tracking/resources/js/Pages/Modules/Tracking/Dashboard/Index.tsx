@@ -400,8 +400,8 @@ export default function Index({ board, can }: Props): JSX.Element {
             </div>
 
             <div className="mb-6 grid gap-4 lg:grid-cols-3">
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm lg:col-span-2">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-5 py-4">
                         <div>
                             <h3 className="text-sm font-semibold text-gray-900">{t('tracking.dashboard.recent')}</h3>
                             <p className="mt-0.5 text-xs text-gray-500">{t('tracking.dashboard.recent_help')}</p>

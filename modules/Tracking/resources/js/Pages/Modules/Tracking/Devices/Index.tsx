@@ -143,7 +143,7 @@ export default function Index({ devices, pairableVehicles, sources, filters, can
 
             <TrackingNav />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                 <div className="p-6">
                     <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
                         <div className="min-w-[220px] flex-1">

@@ -164,6 +164,7 @@ return [
     'nav' => [
         'dashboard' => 'Dashboard',
         'list' => 'Rental',
+        'bookings' => 'Bookings',
         'reservation' => 'Reservasi',
         'availability' => 'Ketersediaan',
         'calendar' => 'Kalender',

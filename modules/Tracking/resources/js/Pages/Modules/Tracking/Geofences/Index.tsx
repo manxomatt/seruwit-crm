@@ -179,7 +179,7 @@ export default function Index({ geofences }: Props): JSX.Element {
                 </div>
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                 {geofences.length === 0 ? (
                     <p className="p-6 text-sm text-gray-500">{t('tracking.pages.geofences.empty')}</p>
                 ) : (

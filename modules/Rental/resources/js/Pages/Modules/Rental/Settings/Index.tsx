@@ -97,7 +97,7 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
 
     return (
         <form onSubmit={submit} className="max-w-2xl space-y-6">
-            <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                     {t('rental.settings.pricing_section')}
                 </h2>
@@ -121,7 +121,7 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                 </div>
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                     {t('rental.settings.booking_section')}
                 </h2>
@@ -204,7 +204,7 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                 </div>
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                     {t('rental.settings.fees_section')}
                 </h2>
@@ -367,9 +367,9 @@ export default function Index({
     const { prefixedRoute } = useRoutePrefix();
 
     const tabs = [
-        { key: 'general' as const, label: t('rental.settings.tab_general') },
-        { key: 'rates' as const, label: t('rental.settings.tab_rates') },
-        { key: 'documents' as const, label: t('rental.settings.tab_documents') },
+        { key: 'general' as const, label: t('rental.settings.tab_general', undefined, 'General') },
+        { key: 'rates' as const, label: t('rental.settings.tab_rates', undefined, 'Rates') },
+        { key: 'documents' as const, label: t('rental.settings.tab_documents', undefined, 'Document Templates') },
     ];
 
     return (
