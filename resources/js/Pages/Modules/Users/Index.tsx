@@ -71,7 +71,7 @@ export default function Index({ users, stats, filters }: Props): JSX.Element {
     const { t } = useTrans();
     const localeTag = useLocaleTag();
     const [search, setSearch] = useState(filters.search || '');
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
     const [activeStatus, setActiveStatus] = useState<string>(filters.status || 'all');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);

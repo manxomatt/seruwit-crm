@@ -55,6 +55,11 @@ class ResellerProfile extends Model
         'tax_id',
         'minimum_payout',
         'notes',
+        'landing_is_enabled',
+        'landing_headline',
+        'landing_subheadline',
+        'landing_cta_text',
+        'landing_highlights',
     ];
 
     /**
@@ -66,6 +71,8 @@ class ResellerProfile extends Model
             'default_commission_value' => 'decimal:2',
             'renewal_commission_value' => 'decimal:2',
             'minimum_payout' => 'decimal:2',
+            'landing_is_enabled' => 'boolean',
+            'landing_highlights' => 'array',
         ];
     }
 
@@ -147,6 +154,21 @@ class ResellerProfile extends Model
         }
 
         return str_repeat('•', 4).' '.substr($this->payout_account_number, -4);
+    }
+
+    /**
+     * Whether this reseller has both switched their landing page on and given
+     * it enough content to be worth showing. A page with the toggle on but no
+     * headline would render as an empty shell, which is worse than a 404.
+     */
+    public function hasLandingPage(): bool
+    {
+        return $this->landing_is_enabled && filled($this->landing_headline);
+    }
+
+    public function landingUrl(): string
+    {
+        return rtrim((string) config('app.url'), '/').'/r/'.$this->referral_code;
     }
 
     /**

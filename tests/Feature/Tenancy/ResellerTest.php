@@ -270,4 +270,57 @@ class ResellerTest extends TestCase
 
         $response->assertOk();
     }
+
+    // -----------------------------------------------------------------------
+    // Commission attribution window
+    // -----------------------------------------------------------------------
+
+    /**
+     * CreateTenantAction runs real DDL (CREATE SCHEMA) via the tenancy pipeline,
+     * so this belongs in a WithTenant-based suite rather than one wrapped in
+     * RefreshDatabase's transaction — see WithTenant's own docblock for why
+     * that combination deadlocks.
+     */
+    public function test_provisioning_a_tenant_for_a_reseller_stamps_the_attribution_window(): void
+    {
+        config()->set('reseller.attribution_months', 12);
+
+        $reseller = $this->makeReseller();
+        $tenant = $this->provisionTenantForReseller($reseller, 'Attributed Co', 'attributedco');
+
+        $this->assertSame($reseller->global_id, $tenant->reseller_global_id);
+        $this->assertNotNull($tenant->reseller_attributed_at);
+        $this->assertEqualsWithDelta(
+            now()->addMonths(12)->timestamp,
+            $tenant->reseller_attribution_ends_at->timestamp,
+            120,
+        );
+        $this->assertTrue($tenant->hasActiveResellerAttribution());
+    }
+
+    public function test_provisioning_a_tenant_with_no_attribution_month_limit_never_expires(): void
+    {
+        config()->set('reseller.attribution_months', null);
+
+        $reseller = $this->makeReseller();
+        $tenant = $this->provisionTenantForReseller($reseller, 'Lifetime Co', 'lifetimeco');
+
+        $this->assertNull($tenant->reseller_attribution_ends_at);
+        $this->assertTrue($tenant->hasActiveResellerAttribution());
+    }
+
+    public function test_a_tenant_created_without_a_reseller_has_no_attribution_window(): void
+    {
+        $owner = User::factory()->create();
+
+        $tenant = app(\App\Actions\Tenancy\CreateTenantAction::class)->execute(
+            companyName: 'Direct Co',
+            subdomain: 'directco',
+            owner: CentralUser::query()->firstWhere('global_id', $owner->global_id),
+        );
+
+        $this->assertNull($tenant->reseller_global_id);
+        $this->assertNull($tenant->reseller_attributed_at);
+        $this->assertFalse($tenant->hasActiveResellerAttribution());
+    }
 }

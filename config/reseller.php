@@ -65,6 +65,38 @@ return [
 
     /*
      |--------------------------------------------------------------------------
+     | Volume Tiers
+     |--------------------------------------------------------------------------
+     | Reward for bringing in more paying customers: the first-payment rate
+     | climbs with how many tenants a reseller has already converted, instead
+     | of staying flat forever.
+     |
+     | Only stands in for `default_rate` — the very last fallback in the
+     | resolution chain (see ResellerCommissionResolver). A reseller- or
+     | plan-specific rule, or a reseller's own profile default, still wins
+     | over a tier the same way it wins over the flat rate today.
+     |
+     | Deliberately scoped to first-payment commissions only: it is a growth
+     | incentive for acquisition, not a blanket renewal multiplier. Levels
+     | must be sorted ascending by `min_tenants` with the first at 0, so there
+     | is always a match.
+     |
+     | "Tenants" here means paying tenants: distinct tenants with at least one
+     | live (pending/approved/paid) commission for this reseller, counted at
+     | the moment a new commission is resolved — so the sale that crosses a
+     | threshold is rewarded at the *next* sale, not retroactively at itself.
+     */
+    'tiers' => [
+        'enabled' => (bool) env('RESELLER_TIERS_ENABLED', false),
+        'levels' => [
+            ['min_tenants' => 0, 'rate' => 10],
+            ['min_tenants' => 10, 'rate' => 15],
+            ['min_tenants' => 25, 'rate' => 20],
+        ],
+    ],
+
+    /*
+     |--------------------------------------------------------------------------
      | Attribution Lifetime
      |--------------------------------------------------------------------------
      | Months a tenant stays attributed to the reseller that brought it in.

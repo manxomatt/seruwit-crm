@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Module;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateResellerLandingPageRequest;
 use App\Models\ResellerCommission;
 use App\Models\ResellerPayout;
 use App\Models\ResellerProfile;
 use App\Services\ResellerEarningsService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -54,7 +56,29 @@ class ResellerPortalController extends Controller
                 'account_name' => $profile->payout_account_name,
                 'minimum_payout' => (float) $profile->minimum_payout,
             ],
+            'landing' => [
+                'is_enabled' => $profile->landing_is_enabled,
+                'headline' => $profile->landing_headline,
+                'subheadline' => $profile->landing_subheadline,
+                'cta_text' => $profile->landing_cta_text,
+                'highlights' => $profile->landing_highlights ?? [],
+                'is_live' => $profile->hasLandingPage(),
+                'url' => $profile->landingUrl(),
+            ],
         ]);
+    }
+
+    /**
+     * Save a reseller's own landing page copy. Scoped to the signed-in
+     * identity like everything else here — there is no reseller id in this
+     * route to tamper with.
+     */
+    public function updateLandingPage(UpdateResellerLandingPageRequest $request): RedirectResponse
+    {
+        $profile = ResellerProfile::ensureFor((string) $request->user()->global_id);
+        $profile->update($request->validated());
+
+        return back()->with('success', __('reseller.flash.landing_page_updated'));
     }
 
     /**

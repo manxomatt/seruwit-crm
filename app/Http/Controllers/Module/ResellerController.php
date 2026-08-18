@@ -124,6 +124,12 @@ class ResellerController extends Controller
                 'minimum_payout' => (float) $profile->minimum_payout,
                 'notes' => $profile->notes,
             ],
+            // Landing copy is the reseller's own, edited from their portal —
+            // admin only sees whether it is live, for support purposes.
+            'landing' => [
+                'is_live' => $profile->hasLandingPage(),
+                'url' => $profile->landingUrl(),
+            ],
             'summary' => $this->earnings->summary($reseller),
             'series' => $this->earnings->monthlySeries($reseller),
             'commissions' => $commissions->through(fn (ResellerCommission $c) => $this->earnings->presentCommission($c)),

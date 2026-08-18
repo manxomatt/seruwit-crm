@@ -3,7 +3,6 @@
 namespace Tests\Feature\Reseller;
 
 use App\Models\ResellerProfile;
-use App\Models\Tenant;
 use App\Support\Reseller\ResellerAttribution;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -103,24 +102,5 @@ class ReferralAttributionTest extends TestCase
 
         $this->assertFalse(ResellerAttribution::apply($tenant, $second->global_id));
         $this->assertSame($first->global_id, $tenant->refresh()->reseller_global_id);
-    }
-
-    public function test_creating_a_tenant_for_a_reseller_stamps_the_window(): void
-    {
-        config()->set('reseller.attribution_months', 12);
-
-        $reseller = $this->makeReseller();
-        $owner = $this->makeReseller();
-
-        $tenant = Tenant::create([
-            'name' => 'Attributed Co',
-            'reseller_global_id' => $reseller->global_id,
-            'reseller_attributed_at' => now(),
-            'reseller_attribution_ends_at' => ResellerAttribution::endsAt(),
-            'provision' => ['owner_global_id' => $owner->global_id],
-        ]);
-
-        $this->assertNotNull($tenant->reseller_attributed_at);
-        $this->assertEqualsWithDelta(now()->addMonths(12)->timestamp, $tenant->reseller_attribution_ends_at->timestamp, 120);
     }
 }

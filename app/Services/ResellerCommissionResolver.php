@@ -14,12 +14,13 @@ use Illuminate\Support\Collection;
 /**
  * Decides what a confirmed payment owes the reseller behind the tenant.
  *
- * Resolution walks four tiers, stopping at the first that produces a rate:
+ * Resolution walks five tiers, stopping at the first that produces a rate:
  *
  *   1. Rules scoped to this reseller  (most specific match wins — see rank())
  *   2. The reseller's own profile defaults
  *   3. Platform-wide rules            (reseller_global_id IS NULL)
- *   4. config('reseller.*') fallback
+ *   4. Volume tier                    (first-payment events only, see fromTier())
+ *   5. config('reseller.*') fallback
  *
  * Returns null whenever no commission is owed — no reseller, expired
  * attribution, terminated partner, occurrence cap reached, or a zero rate.
@@ -123,7 +124,11 @@ class ResellerCommissionResolver
             return $this->fromRule($platform, $occurrence);
         }
 
-        return $this->fromConfig($event);
+        $tiered = $event === ResellerCommission::EVENT_FIRST
+            ? $this->fromTier($resellerGlobalId)
+            : null;
+
+        return $tiered ?? $this->fromConfig($event);
     }
 
     /**
@@ -206,6 +211,56 @@ class ResellerCommissionResolver
             : $profile->default_commission_value;
 
         return $value === null ? null : [$type, (float) $value, null];
+    }
+
+    /**
+     * The volume-tier rate for a reseller's current standing, or null when
+     * tiers are switched off. Always a percentage — a flat volume bonus would
+     * not scale the way a tier is meant to.
+     *
+     * @return array{0: string, 1: float, 2: null}|null
+     */
+    private function fromTier(string $resellerGlobalId): ?array
+    {
+        $config = config('reseller.tiers', []);
+
+        if (! ($config['enabled'] ?? false)) {
+            return null;
+        }
+
+        $levels = collect($config['levels'] ?? [])
+            ->filter(fn ($level) => isset($level['min_tenants'], $level['rate']))
+            ->sortBy('min_tenants');
+
+        if ($levels->isEmpty()) {
+            return null;
+        }
+
+        $count = $this->payingTenantCount($resellerGlobalId);
+
+        $level = $levels->filter(fn ($level) => (int) $level['min_tenants'] <= $count)->last();
+
+        if ($level === null) {
+            return null;
+        }
+
+        return [ResellerCommissionRule::TYPE_PERCENT, (float) $level['rate'], null];
+    }
+
+    /**
+     * Distinct tenants that have earned this reseller at least one live
+     * commission — the same "paying tenants" measure the dashboard shows.
+     * Read before the current commission is written, so the sale that
+     * crosses a threshold is rewarded starting with the next sale, not
+     * retroactively with itself.
+     */
+    private function payingTenantCount(string $resellerGlobalId): int
+    {
+        return ResellerCommission::query()
+            ->where('reseller_global_id', $resellerGlobalId)
+            ->live()
+            ->distinct()
+            ->count('tenant_id');
     }
 
     /**

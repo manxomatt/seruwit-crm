@@ -75,3 +75,13 @@ export interface PayoutCandidate {
     entries: number;
     earliest: string | null;
 }
+
+export interface ResellerLandingPage {
+    is_enabled: boolean;
+    headline: string | null;
+    subheadline: string | null;
+    cta_text: string | null;
+    highlights: string[];
+    is_live: boolean;
+    url: string;
+}

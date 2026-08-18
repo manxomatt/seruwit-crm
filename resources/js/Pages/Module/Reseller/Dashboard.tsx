@@ -1,6 +1,7 @@
 import CommissionTable from '@/Components/Reseller/CommissionTable';
+import ResellerLandingPageForm from '@/Components/Reseller/ResellerLandingPageForm';
 import StatCard from '@/Components/Reseller/StatCard';
-import { CommissionRow, EarningsSummary, MonthlyPoint } from '@/Components/Reseller/types';
+import { CommissionRow, EarningsSummary, MonthlyPoint, ResellerLandingPage } from '@/Components/Reseller/types';
 import PageHeader from '@/Components/PageHeader';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useTrans } from '@/hooks/useTrans';
@@ -20,9 +21,10 @@ interface Props {
         account_name: string | null;
         minimum_payout: number;
     };
+    landing: ResellerLandingPage;
 }
 
-export default function Dashboard({ summary, series, recent, referral, profile }: Props): JSX.Element {
+export default function Dashboard({ summary, series, recent, referral, profile, landing }: Props): JSX.Element {
     const { t } = useTrans();
     const [copied, setCopied] = useState(false);
 
@@ -144,6 +146,8 @@ export default function Dashboard({ summary, series, recent, referral, profile }
                         </div>
                     </div>
                 </div>
+
+                <ResellerLandingPageForm landing={landing} />
 
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">

@@ -491,7 +491,16 @@ Semua feature test, di `tests/Feature/Reseller/`, mengikuti pola `tests/Feature/
 | **2 — Visibilitas** | ✅ Selesai | Portal reseller (dashboard, daftar komisi), admin: daftar reseller, detail + CRUD aturan, antrean komisi + void, `ResellerProfile` + kode referral | Reseller bisa melihat pendapatannya; admin bisa mengatur tarif |
 | **3 — Payout** | ✅ Selesai | `ResellerPayoutService`, meja pembayaran admin (kandidat → draf → setujui → bayar + bukti transfer), riwayat payout reseller, notifikasi | Fee benar-benar terbayar dan terlacak |
 | **4 — Integrasi** | Belum | `PostResellerCommissionJob` ke Accounting, potong pajak, ekspor CSV, atribusi `?ref=` self-serve | Pembukuan rapi & akuisisi mandiri |
-| **5 — Opsional** | Belum | Tier volume, multi-level, kupon diskon milik reseller, halaman landing per reseller | Skala program |
+| **5 — Opsional** | ⚙️ Sebagian | Tier volume ✅ dan halaman landing per reseller ✅ selesai; multi-level & kupon diskon milik reseller belum dikerjakan (di luar cakupan yang diminta) | Skala program |
+
+### Catatan implementasi fase 5 (tier volume & landing page)
+
+- **Tier volume** hanya menggantikan `config('reseller.default_rate')` — fallback paling akhir di rantai resolusi. Rule reseller/plan spesifik, default profil, dan rule platform tetap menang atas tier, persis seperti mereka menang atas tarif flat sebelumnya.
+- Tier **sengaja tidak berlaku untuk perpanjangan** — ini insentif akuisisi (membawa pelanggan baru), bukan pengganda buku pelanggan yang sudah ada. Perpanjangan tetap memakai `renewal_rate` seperti biasa.
+- "Jumlah tenant" dihitung dari tenant unik yang punya komisi *live* (pending/approved/paid) milik reseller tsb., dibaca **sebelum** baris komisi transaksi berjalan ditulis — sehingga tenant yang membuat hitungan menyentuh ambang batas tidak mendapat tarif barunya sendiri; tenant *berikutnya* yang mendapatkannya.
+- **Halaman landing per reseller** (`/r/{kode_referral}`) sengaja hanya teks (headline, subheadline, teks CTA, hingga 4 poin unggulan) — tanpa unggah logo/gambar dan tanpa editor GrapesJS. Kontennya dikelola reseller sendiri lewat dashboard portalnya (`UpdateResellerLandingPageRequest`, gate `view-reseller-earnings`, discope ke identitas yang login), terpisah dari field sensitif (tarif/rekening) yang tetap admin-only.
+- Halaman nonaktif, kosong headline, atau kode tidak dikenal semuanya me-render 404 yang sama — supaya tidak ada cara membedakan "kode tidak ada" dari "kode ada tapi dimatikan".
+- CTA di halaman landing cukup tautan biasa ke `/register?ref={kode}` — atribusi referral (middleware `CaptureResellerReferral` dari fase 4) sudah menangkapnya tanpa perlu pengait tambahan.
 
 ### Catatan implementasi fase 1–2
 

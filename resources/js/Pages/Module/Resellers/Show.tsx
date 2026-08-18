@@ -57,6 +57,7 @@ interface Props {
         minimum_payout: number;
         notes: string | null;
     };
+    landing: { is_live: boolean; url: string };
     summary: EarningsSummary;
     series: MonthlyPoint[];
     commissions: Paginated<CommissionRow>;
@@ -65,7 +66,7 @@ interface Props {
     plans: Array<{ id: number; name: string }>;
 }
 
-export default function Show({ reseller, profile, summary, commissions, rules, tenants, plans }: Props): JSX.Element {
+export default function Show({ reseller, profile, landing, summary, commissions, rules, tenants, plans }: Props): JSX.Element {
     const { t } = useTrans();
     const [addingRule, setAddingRule] = useState(false);
 
@@ -314,10 +315,27 @@ export default function Show({ reseller, profile, summary, commissions, rules, t
                             </div>
                         </div>
 
-                        <div className="mt-4 flex items-center justify-between gap-3">
-                            <span className="truncate font-mono text-xs text-slate-400" title={profile.referral_url}>
-                                {profile.referral_url}
-                            </span>
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <span className="block truncate font-mono text-xs text-slate-400" title={profile.referral_url}>
+                                    {profile.referral_url}
+                                </span>
+                                <span className="text-xs text-slate-400">
+                                    {t('reseller.landing.title')}:{' '}
+                                    {landing.is_live ? (
+                                        <a
+                                            href={landing.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                        >
+                                            {t('reseller.landing.preview')}
+                                        </a>
+                                    ) : (
+                                        <span className="text-slate-400">{t('reseller.landing.disabled_hint')}</span>
+                                    )}
+                                </span>
+                            </div>
                             <PrimaryButton disabled={profileForm.processing}>{t('reseller.profile.save')}</PrimaryButton>
                         </div>
                     </form>

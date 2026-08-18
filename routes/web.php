@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Central\InvitationController;
 use App\Http\Controllers\Central\OnboardingController;
+use App\Http\Controllers\Central\ResellerLandingPageController;
 use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PaymentOrderController;
@@ -93,6 +94,9 @@ Route::domain($centralDomain)
         Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
         Route::post('/invitations/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
 
+        // A reseller's own public pitch page, shared under their referral code.
+        Route::get('/r/{code}', [ResellerLandingPageController::class, 'show'])->name('reseller.landing');
+
         if (config('app.central_serves_app')) {
             require __DIR__.'/app.php';
         } else {
@@ -172,6 +176,7 @@ Route::domain($centralDomain)
         Route::get('/reseller/commissions', [ResellerPortalController::class, 'commissions'])->name('reseller.commissions');
         Route::get('/reseller/payouts', [ResellerPortalController::class, 'payouts'])->name('reseller.payouts');
         Route::get('/reseller/commissions/export', [ResellerPortalController::class, 'exportCommissions'])->name('reseller.commissions.export');
+        Route::patch('/reseller/landing-page', [ResellerPortalController::class, 'updateLandingPage'])->name('reseller.landing-page.update');
     });
 
 Route::domain($centralDomain)
