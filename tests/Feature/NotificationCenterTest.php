@@ -19,6 +19,7 @@ class NotificationCenterTest extends TestCase
     {
         parent::setUp();
 
+        $this->loadMigrationsFrom(database_path('migrations/tenant'));
         $this->withoutVite();
         $this->setUpRoles();
     }

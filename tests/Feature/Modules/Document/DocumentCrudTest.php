@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Modules\Document;
 
+use App\Models\Media;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Document\Models\Document;
 use Modules\Document\Models\DocumentType;
@@ -318,6 +319,73 @@ class DocumentCrudTest extends TestCase
         $document->refresh();
         $this->assertTrue($document->isVerified());
         $this->assertEquals($user->id, $document->verified_by);
+    }
+
+    // ── Media attachment ───────────────────────────────────────────────────
+
+    public function test_admin_can_attach_media_to_a_driver_document(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $type = DocumentType::factory()->forDriver()->create();
+        $media = Media::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user)->post(route('module.fleet.drivers.documents.store', $driver), [
+            'document_type_id' => $type->id,
+            'document_number' => 'KTP-001',
+            'media_id' => $media->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('documents', [
+            'documentable_type' => 'driver',
+            'documentable_id' => $driver->id,
+            'document_number' => 'KTP-001',
+            'media_id' => $media->id,
+        ]);
+    }
+
+    public function test_media_id_must_be_an_integer_when_storing_a_driver_document(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $type = DocumentType::factory()->forDriver()->create();
+
+        $this->actingAs($user)->post(route('module.fleet.drivers.documents.store', $driver), [
+            'document_type_id' => $type->id,
+            'media_id' => '/tenancy/assets/media/example.png',
+        ])->assertSessionHasErrors('media_id');
+
+        $this->assertDatabaseCount('documents', 0);
+    }
+
+    public function test_media_id_must_be_an_integer_when_storing_a_vehicle_document(): void
+    {
+        $user = $this->createAdminUser();
+        $vehicle = Vehicle::factory()->create();
+        $type = DocumentType::factory()->forVehicle()->create();
+
+        $this->actingAs($user)->post(route('module.fleet.vehicles.documents.store', $vehicle), [
+            'document_type_id' => $type->id,
+            'media_id' => '/tenancy/assets/media/example.png',
+        ])->assertSessionHasErrors('media_id');
+
+        $this->assertDatabaseCount('documents', 0);
+    }
+
+    public function test_media_id_must_be_an_integer_when_updating_a_driver_document(): void
+    {
+        $user = $this->createAdminUser();
+        $driver = Driver::factory()->create();
+        $type = DocumentType::factory()->forDriver()->create();
+        $document = Document::factory()->create([
+            'document_type_id' => $type->id,
+            'documentable_type' => 'driver',
+            'documentable_id' => $driver->id,
+        ]);
+
+        $this->actingAs($user)->patch(route('module.fleet.drivers.documents.update', [$driver, $document]), [
+            'media_id' => '/tenancy/assets/media/example.png',
+        ])->assertSessionHasErrors('media_id');
     }
 
     // ── Read-only user permission checks ───────────────────────────────────

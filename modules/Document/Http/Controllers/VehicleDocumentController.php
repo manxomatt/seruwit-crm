@@ -70,7 +70,7 @@ class VehicleDocumentController extends Controller
             'issued_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:issued_at'],
             'notes' => ['nullable', 'string'],
-            'media_id' => ['nullable', 'exists:media,id'],
+            'media_id' => ['nullable', 'integer', 'exists:media,id'],
         ]);
 
         // Soft-delete any existing active document of the same type for this
@@ -126,7 +126,7 @@ class VehicleDocumentController extends Controller
             'issued_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:issued_at'],
             'notes' => ['nullable', 'string'],
-            'media_id' => ['nullable', 'exists:media,id'],
+            'media_id' => ['nullable', 'integer', 'exists:media,id'],
         ]);
 
         $document->update($validated);

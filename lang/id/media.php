@@ -18,6 +18,14 @@ return [
         'description_hint' => 'Deskripsi opsional untuk referensi internal.',
     ],
 
+    'uploader' => [
+        'choose' => 'Klik atau lepas file untuk diunggah',
+        'hint' => 'Gambar atau PDF, maksimal 50MB',
+        'uploading' => 'Mengunggah… :percent%',
+        'remove' => 'Hapus',
+        'error_upload' => 'Gagal mengunggah file. Silakan coba lagi.',
+    ],
+
     'type' => [
         'image' => 'Gambar',
         'video' => 'Video',

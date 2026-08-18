@@ -7,7 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import Select from '@/Components/Select';
 import TextInput from '@/Components/TextInput';
-import ImageUploader from '@/Components/ImageUploader';
+import MediaFileUploader from '@/Components/MediaFileUploader';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import DocumentNav from '../../../../DocumentNav';
@@ -36,7 +36,7 @@ export default function Create({ driver, types, preselectedTypeId }: Props): JSX
         issued_at: '',
         expires_at: '',
         notes: '',
-        media_id: '' as string | number,
+        media_id: null as number | null,
     });
 
     const selectedType = types.find((type) => String(type.id) === form.data.document_type_id);
@@ -159,9 +159,9 @@ export default function Create({ driver, types, preselectedTypeId }: Props): JSX
                         <div>
                             <InputLabel value={t('document.entity_docs.file')} className="!text-xs !font-bold !uppercase !tracking-wider" />
                             <div className="mt-1">
-                                <ImageUploader
-                                    value={form.data.media_id ? Number(form.data.media_id) : null}
-                                    onChange={(mediaId) => form.setData('media_id', mediaId ?? '')}
+                                <MediaFileUploader
+                                    value={form.data.media_id}
+                                    onChange={(mediaId) => form.setData('media_id', mediaId)}
                                 />
                             </div>
                             <InputError message={form.errors.media_id} className="mt-1" />

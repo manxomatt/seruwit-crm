@@ -18,6 +18,14 @@ return [
         'description_hint' => 'Optional description for internal reference.',
     ],
 
+    'uploader' => [
+        'choose' => 'Click or drop a file to upload',
+        'hint' => 'Images or PDF, max 50MB',
+        'uploading' => 'Uploading… :percent%',
+        'remove' => 'Remove',
+        'error_upload' => 'Failed to upload the file. Please try again.',
+    ],
+
     'type' => [
         'image' => 'Image',
         'video' => 'Video',
