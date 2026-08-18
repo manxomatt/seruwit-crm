@@ -115,9 +115,17 @@ class ResellerProfile extends Model
      */
     public static function ensureFor(string $resellerGlobalId): self
     {
+        // Status and threshold are set explicitly rather than left to the column
+        // defaults: firstOrCreate returns the in-memory model, which would carry
+        // a null status until something refreshed it — and a null status reads
+        // as "not active" everywhere it is checked.
         return static::query()->firstOrCreate(
             ['reseller_global_id' => $resellerGlobalId],
-            ['referral_code' => static::generateReferralCode()],
+            [
+                'referral_code' => static::generateReferralCode(),
+                'status' => self::STATUS_ACTIVE,
+                'minimum_payout' => 0,
+            ],
         );
     }
 

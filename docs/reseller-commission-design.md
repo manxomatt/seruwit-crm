@@ -489,7 +489,7 @@ Semua feature test, di `tests/Feature/Reseller/`, mengikuti pola `tests/Feature/
 |------|--------|---------|-------|
 | **1 — Ledger** | ✅ Selesai | Migrasi 4 tabel + 2 kolom, model, `config/reseller.php`, event `PaymentOrderConfirmed`, resolver + `AccrueResellerCommissionJob`, command `reseller:approve-commissions` | Komisi tercatat otomatis dari setiap pembayaran terkonfirmasi |
 | **2 — Visibilitas** | ✅ Selesai | Portal reseller (dashboard, daftar komisi), admin: daftar reseller, detail + CRUD aturan, antrean komisi + void, `ResellerProfile` + kode referral | Reseller bisa melihat pendapatannya; admin bisa mengatur tarif |
-| **3 — Payout** | Belum | `ResellerPayoutService`, batch payout + persetujuan + bukti transfer, notifikasi | Fee benar-benar terbayar dan terlacak |
+| **3 — Payout** | ✅ Selesai | `ResellerPayoutService`, meja pembayaran admin (kandidat → draf → setujui → bayar + bukti transfer), riwayat payout reseller, notifikasi | Fee benar-benar terbayar dan terlacak |
 | **4 — Integrasi** | Belum | `PostResellerCommissionJob` ke Accounting, potong pajak, ekspor CSV, atribusi `?ref=` self-serve | Pembukuan rapi & akuisisi mandiri |
 | **5 — Opsional** | Belum | Tier volume, multi-level, kupon diskon milik reseller, halaman landing per reseller | Skala program |
 
@@ -498,6 +498,15 @@ Semua feature test, di `tests/Feature/Reseller/`, mengikuti pola `tests/Feature/
 - Tarif default platform hidup di `config/reseller.php`, bukan sebagai baris rule di database — presedensi #7 sudah menjadi fallback yang cukup, dan menyeed rule global hanya akan menduplikasi angka yang sama di dua tempat.
 - Aplikasi ini tidak mengaktifkan event discovery di `bootstrap/app.php`, jadi listener `PostSaasRevenue` dan `AccrueResellerCommission` didaftarkan eksplisit di `AppServiceProvider`.
 - Scope aturan komisi (reseller & paket) tidak bisa diubah lewat edit; controller membuangnya. Memindahkan aturan ke reseller lain diam-diam akan menulis ulang perjanjian yang sedang berjalan.
-- Profil reseller dibuat saat pertama dibutuhkan (`ResellerProfile::ensureFor`) — memegang role sudah cukup untuk menjadi reseller, tanpa langkah pendaftaran terpisah.
+- Profil reseller dibuat saat pertama dibutuhkan (`ResellerProfile::ensureFor`) — memegang role sudah cukup untuk menjadi reseller, tanpa langkah pendaftaran terpisah. Nilai `status` dan `minimum_payout` diisi eksplisit, tidak mengandalkan default kolom: `firstOrCreate` mengembalikan model in-memory yang belum membawa default DB, dan status null terbaca sebagai "tidak aktif" di setiap pengecekan.
+
+### Catatan implementasi fase 3
+
+- Periode batch diukur pada `created_at` komisi (kapan fee **diperoleh**), bukan kapan hold-nya cair — sehingga satu batch adalah laporan atas bulan penjualan yang sebenarnya.
+- Komisi dikunci `lockForUpdate()` saat batch dibentuk, supaya dua admin yang membuat batch bersamaan tidak bisa mengklaim baris yang sama.
+- Total di bawah minimum tidak menghasilkan batch dan tidak menyentuh komisi apa pun — nilainya bergulir ke periode berikutnya. Minimum milik reseller menang atas default platform; nilai 0 berarti "ikut platform", bukan "tanpa minimum".
+- Rekening tujuan disnapshot ke baris payout. Reseller mengganti rekening setelahnya tidak mengubah catatan ke mana uang benar-benar dikirim.
+- Membatalkan batch melepas `payout_id` komisinya kembali ke antrean siap bayar; batch yang sudah dibayar tidak bisa dibatalkan sama sekali.
+- Bukti transfer keluar disimpan di disk `payout_proofs` sendiri, terpisah dari `payment_proofs` milik tenant, agar jejak audit uang masuk dan uang keluar tidak bercampur.
 
 Fase 1 sudah menghasilkan sistem yang benar secara finansial meski pembayarannya masih manual di luar aplikasi — ini urutan yang paling aman: catat dulu dengan akurat, otomatiskan pembayarannya belakangan.
