@@ -49,10 +49,10 @@ const EllipsisVerticalIcon = () => (
 );
 
 const menuItemClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition data-[focus]:bg-slate-100 dark:data-[focus]:bg-slate-800';
 
 const menuItemDangerClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition data-[focus]:bg-rose-50 dark:data-[focus]:bg-rose-900/30';
 
 interface Location {
     id: number;
@@ -179,8 +179,7 @@ export default function Index({ locations, filters, can }: Props): JSX.Element {
             header={
                 <PageHeader
                     title={t('partners.locations.head')}
-                    description={t('partners.locations.hint')}
-                    actions={can.create ? <PrimaryButton onClick={openCreate}>{t('partners.locations.new')}</PrimaryButton> : undefined}
+                    actions={can.create ? <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">+ {t('partners.locations.new')}</PrimaryButton> : undefined}
                 />
             }
         >
@@ -188,98 +187,101 @@ export default function Index({ locations, filters, can }: Props): JSX.Element {
 
             <PartnersNav />
 
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-6">
-                    <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
-                        <div className="min-w-[220px] flex-1">
-                            <TextInput
-                                type="text"
-                                placeholder={t('partners.locations.search_placeholder')}
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="w-full"
+            <div className="space-y-6">
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="p-6">
+                        <form onSubmit={handleSearch} className="mb-6 flex flex-wrap items-center gap-3">
+                            <div className="min-w-[220px] flex-1">
+                                <TextInput
+                                    type="text"
+                                    placeholder={t('partners.locations.search_placeholder')}
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full !rounded-xl border-slate-200 dark:border-slate-800 !py-2 text-xs bg-white dark:bg-slate-900"
+                                />
+                            </div>
+                            <Select
+                                className="w-44 !py-1.5 text-xs !rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                                value={filters.active || ''}
+                                onChange={(value) =>
+                                    router.get(
+                                        prefixedRoute('partners.locations.index'),
+                                        {
+                                            search: search || undefined,
+                                            active: value || undefined,
+                                        },
+                                        { preserveState: true, replace: true },
+                                    )
+                                }
+                                placeholder={t('partners.locations.all_status')}
+                                options={[
+                                    { value: '', label: t('partners.locations.all_status') },
+                                    { value: '1', label: t('partners.status.active') },
+                                    { value: '0', label: t('partners.status.inactive') },
+                                ]}
                             />
-                        </div>
-                        <Select
-                            className="w-44"
-                            value={filters.active || ''}
-                            onChange={(value) =>
-                                router.get(
-                                    prefixedRoute('partners.locations.index'),
-                                    {
-                                        search: search || undefined,
-                                        active: value || undefined,
-                                    },
-                                    { preserveState: true, replace: true },
-                                )
-                            }
-                            placeholder={t('partners.locations.all_status')}
-                            options={[
-                                { value: '', label: t('partners.locations.all_status') },
-                                { value: '1', label: t('partners.status.active') },
-                                { value: '0', label: t('partners.status.inactive') },
-                            ]}
-                        />
-                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
-                    </form>
+                            <PrimaryButton type="submit" className="!rounded-xl text-xs shadow-sm">{t('common.search')}</PrimaryButton>
+                        </form>
 
-                    {locations.data.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">{t('partners.locations.empty_title')}</h3>
-                            <p className="mt-1 text-sm text-gray-500">{t('partners.locations.empty_hint')}</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.fields.code')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.locations.name')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.fields.address')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.locations.coords')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('partners.fields.status')}</th>
-                                        <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            <span className="sr-only">{t('common.actions')}</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 bg-white">
-                                    {locations.data.map((location) => (
-                                        <tr key={location.id} className="group hover:bg-gray-50">
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{location.code}</td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{location.name}</td>
-                                            <td className="max-w-sm truncate px-6 py-4 text-sm text-gray-500">
-                                                {[location.address, location.city, location.province].filter(Boolean).join(', ') || '—'}
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                                {location.latitude && location.longitude
-                                                    ? `${location.latitude}, ${location.longitude}`
-                                                    : '—'}
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4">
-                                                <span
-                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${location.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                                        }`}
-                                                >
-                                                    {location.is_active ? t('partners.status.active') : t('partners.status.inactive')}
-                                                </span>
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                <Menu as="div" className="relative inline-block text-right">
-                                                    <MenuButton
-                                                        className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                        title={t('common.actions')}
-                                                        aria-label={t('common.actions')}
+                        {locations.data.length === 0 ? (
+                            <div className="py-12 text-center">
+                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 text-xl font-bold">
+                                    📍
+                                </div>
+                                <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">{t('partners.locations.empty_title')}</h3>
+                                <p className="mt-1 text-xs text-slate-500">{t('partners.locations.empty_hint')}</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                    <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                                        <tr>
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.fields.code')}</th>
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.locations.name')}</th>
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.fields.address')}</th>
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.locations.coords')}</th>
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.fields.status')}</th>
+                                            <th className="w-28 px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
+                                                {t('common.actions')}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-900 dark:text-white">
+                                        {locations.data.map((location) => (
+                                            <tr key={location.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td className="whitespace-nowrap px-6 py-4 font-mono font-bold text-slate-500">{location.code}</td>
+                                                <td className="whitespace-nowrap px-6 py-4 font-bold text-slate-900 dark:text-white">{location.name}</td>
+                                                <td className="max-w-sm truncate px-6 py-4 text-slate-500 font-medium">
+                                                    {[location.address, location.city, location.province].filter(Boolean).join(', ') || '—'}
+                                                </td>
+                                                <td className="whitespace-nowrap px-6 py-4 font-mono text-[10px] text-slate-400">
+                                                    {location.latitude && location.longitude
+                                                        ? `${location.latitude}, ${location.longitude}`
+                                                        : '—'}
+                                                </td>
+                                                <td className="whitespace-nowrap px-6 py-4">
+                                                    <span
+                                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${location.is_active ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                                            }`}
                                                     >
-                                                        <EllipsisVerticalIcon />
-                                                    </MenuButton>
+                                                        {location.is_active ? t('partners.status.active') : t('partners.status.inactive')}
+                                                    </span>
+                                                </td>
+                                                <td className="whitespace-nowrap px-6 py-4 text-right">
+                                                    <Menu as="div" className="relative inline-block text-right">
+                                                        <MenuButton
+                                                            className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-all"
+                                                            title={t('common.actions')}
+                                                            aria-label={t('common.actions')}
+                                                        >
+                                                            <EllipsisVerticalIcon />
+                                                        </MenuButton>
 
-                                                    <MenuItems
-                                                        transition
-                                                        anchor="bottom end"
-                                                        className="z-50 w-48 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
-                                                    >
-                                                        {can.update && (
+                                                        <MenuItems
+                                                            anchor="bottom end"
+                                                            className="z-50 w-48 origin-top-right rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl outline-none"
+                                                        >
+                                                            {can.update && (
                                                             <MenuItem>
                                                                 <button
                                                                     type="button"
@@ -319,6 +321,7 @@ export default function Index({ locations, filters, can }: Props): JSX.Element {
                     )}
                 </div>
             </div>
+        </div>
 
             <Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="2xl">
                 <form onSubmit={submit} className="p-6">

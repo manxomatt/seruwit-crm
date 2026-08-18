@@ -31,7 +31,7 @@ class PageController extends Controller
     {
         $user = Auth::user();
 
-        $pages = $user->pages()->latest()->get();
+        $pages = Page::query()->latest()->get();
 
         return Inertia::render('Modules/Pages/Index', [
             'pages' => $pages,
@@ -64,9 +64,19 @@ class PageController extends Controller
     /**
      * Display the specified page.
      */
+    protected function authorizePageAccess(Page $page): void
+    {
+        if ($page->user_id !== Auth::id() && ! Auth::user()?->isAdmin()) {
+            abort(403);
+        }
+    }
+
+    /**
+     * Display the specified page.
+     */
     public function show(Page $page): Response
     {
-        if ($page->user_id !== Auth::id() && ! $page->is_published) {
+        if ($page->user_id !== Auth::id() && ! $page->is_published && ! Auth::user()?->isAdmin()) {
             abort(403);
         }
 
@@ -80,9 +90,7 @@ class PageController extends Controller
      */
     public function edit(Page $page): Response
     {
-        if ($page->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizePageAccess($page);
 
         $customBlocks = PageComponent::query()
             ->active()
@@ -100,9 +108,7 @@ class PageController extends Controller
      */
     public function update(UpdatePageRequest $request, Page $page): RedirectResponse
     {
-        if ($page->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizePageAccess($page);
 
         $page->update($request->validated());
 
@@ -114,9 +120,7 @@ class PageController extends Controller
      */
     public function destroy(Page $page): RedirectResponse
     {
-        if ($page->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizePageAccess($page);
 
         $page->delete();
 
@@ -128,9 +132,7 @@ class PageController extends Controller
      */
     public function saveContent(Request $request, Page $page): JsonResponse
     {
-        if ($page->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizePageAccess($page);
 
         $validated = $request->validate([
             'html' => 'nullable|string',
@@ -148,9 +150,7 @@ class PageController extends Controller
      */
     public function setHomepage(Page $page): RedirectResponse
     {
-        if ($page->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizePageAccess($page);
 
         Page::query()->where('is_homepage', true)->update(['is_homepage' => false]);
         $page->update(['is_homepage' => true, 'is_published' => true]);
@@ -163,9 +163,7 @@ class PageController extends Controller
      */
     public function copy(Page $page): RedirectResponse
     {
-        if ($page->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizePageAccess($page);
 
         $baseTitle = $page->title;
         $title = $baseTitle.' (Copy)';

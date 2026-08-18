@@ -414,4 +414,24 @@ class PageTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_central_landing_page_seeder_creates_homepage_and_renders_on_root(): void
+    {
+        $user = User::factory()->create();
+
+        $this->seed(\Database\Seeders\CreateCentralLandingPageSeeder::class);
+
+        $this->assertDatabaseHas('pages', [
+            'slug' => 'home',
+            'is_homepage' => true,
+            'is_published' => true,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Seruwit CRM');
+        $response->assertSee('Ekosistem Lengkap');
+        $response->assertSee('Supply Chain &amp; Logistik', false);
+    }
 }

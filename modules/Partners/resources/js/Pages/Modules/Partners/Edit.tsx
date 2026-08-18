@@ -123,12 +123,12 @@ function FormSection({
     children: ReactNode;
 }): JSX.Element {
     return (
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="border-b border-gray-100 px-6 py-4">
-                <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-                {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
+        <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div className="border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
+                {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
             </div>
-            <div className="space-y-5 px-6 py-5">{children}</div>
+            <div className="space-y-5 p-6">{children}</div>
         </section>
     );
 }
@@ -146,9 +146,9 @@ function ChoiceChip({
         <button
             type="button"
             onClick={onClick}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${active
+            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${active
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:text-white'
                 }`}
         >
             {children}
@@ -230,21 +230,21 @@ export default function Edit({
     };
 
     const textareaClass =
-        'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500';
+        'mt-1 block w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs';
 
     return (
         <DynamicLayout
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{t('partners.title')}</p>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{t('partners.edit.head')}</h2>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('partners.title')}</p>
+                        <h2 className="text-xl font-black leading-tight text-slate-900 dark:text-white">{t('partners.edit.head')}</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Link href={prefixedRoute('partners.show', partner.id)}>
-                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs shadow-sm">{t('common.cancel')}</SecondaryButton>
                         </Link>
-                        <PrimaryButton type="submit" form="partner-edit-form" disabled={processing}>
+                        <PrimaryButton type="submit" form="partner-edit-form" disabled={processing} className="!rounded-xl text-xs shadow-sm">
                             {t('partners.edit.submit')}
                         </PrimaryButton>
                     </div>
@@ -256,14 +256,14 @@ export default function Edit({
             <PartnersNav />
 
             <form id="partner-edit-form" onSubmit={submit} className="space-y-6">
-                <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                    <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
+                <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center">
                         <div className="relative shrink-0">
                             {data.picture_url ? (
                                 <img
                                     src={data.picture_url}
                                     alt={data.name || partner.name}
-                                    className={`h-20 w-20 rounded-2xl object-cover border-2 ${avatarTone}`}
+                                    className={`h-20 w-20 rounded-3xl object-cover border-2 ${avatarTone}`}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
                                         const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null;

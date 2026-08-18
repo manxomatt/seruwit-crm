@@ -172,25 +172,25 @@ function StatCard({
 }): JSX.Element {
     const valueTone =
         tone === 'success'
-            ? 'text-emerald-700'
+            ? 'text-emerald-600 dark:text-emerald-400'
             : tone === 'warning'
-                ? 'text-amber-700'
-                : 'text-gray-900';
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-slate-900 dark:text-white';
 
     return (
-        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-            <p className={`mt-1 text-lg font-semibold tabular-nums ${valueTone}`}>{value}</p>
-            {hint && <p className="mt-0.5 text-xs text-gray-500">{hint}</p>}
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-800/50 p-4 shadow-sm backdrop-blur-sm">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+            <p className={`mt-1 text-xl font-black tabular-nums ${valueTone}`}>{value}</p>
+            {hint && <p className="mt-0.5 text-[11px] font-medium text-slate-500">{hint}</p>}
         </div>
     );
 }
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }): JSX.Element {
     return (
-        <div className="flex flex-col gap-0.5 border-b border-gray-100 py-3 last:border-0 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <dt className="shrink-0 text-sm text-gray-500">{label}</dt>
-            <dd className="text-sm font-medium text-gray-900 sm:text-right">{children}</dd>
+        <div className="flex flex-col gap-1 border-b border-slate-100 dark:border-slate-800/80 py-3.5 last:border-0 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <dt className="shrink-0 text-xs font-bold text-slate-400">{label}</dt>
+            <dd className="text-xs font-bold text-slate-900 dark:text-white sm:text-right">{children}</dd>
         </div>
     );
 }
@@ -207,24 +207,24 @@ function SectionCard({
     children: ReactNode;
 }): JSX.Element {
     return (
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 px-6 py-4">
+        <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-                    {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
+                    {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
                 </div>
                 {action}
             </div>
-            <div className="px-6 py-4">{children}</div>
+            <div className="p-6">{children}</div>
         </section>
     );
 }
 
 function EmptyState({ message, hint }: { message: string; hint?: string }): JSX.Element {
     return (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center">
-            <p className="text-sm text-gray-600">{message}</p>
-            {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-8 text-center">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">{message}</p>
+            {hint && <p className="mt-1 text-[11px] text-slate-400">{hint}</p>}
         </div>
     );
 }
@@ -515,16 +515,16 @@ export default function Show({ partner, can }: Props): JSX.Element {
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{t('partners.title')}</p>
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800">{partner.name}</h2>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('partners.title')}</p>
+                        <h2 className="text-xl font-black leading-tight text-slate-900 dark:text-white">{partner.name}</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Link href={prefixedRoute('partners.index')}>
-                            <SecondaryButton type="button">{t('common.back')}</SecondaryButton>
+                            <SecondaryButton type="button" className="!rounded-xl text-xs shadow-sm">{t('common.back')}</SecondaryButton>
                         </Link>
                         {can.update && (
                             <Link href={prefixedRoute('partners.edit', partner.id)}>
-                                <PrimaryButton type="button">{t('common.edit')}</PrimaryButton>
+                                <PrimaryButton type="button" className="!rounded-xl text-xs shadow-sm">{t('common.edit')}</PrimaryButton>
                             </Link>
                         )}
                     </div>
@@ -536,14 +536,14 @@ export default function Show({ partner, can }: Props): JSX.Element {
             <PartnersNav />
 
             <div className="space-y-6">
-                <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                    <div className="flex flex-col gap-5 border-b border-gray-100 p-6 sm:flex-row sm:items-start">
+                <section className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="flex flex-col gap-6 border-b border-slate-100 dark:border-slate-800 p-6 sm:flex-row sm:items-start">
                         <div className="relative shrink-0">
                             {partner.picture_url ? (
                                 <img
                                     src={partner.picture_url}
                                     alt={partner.name}
-                                    className={`h-28 w-28 rounded-2xl object-cover border-2 ${avatarTone}`}
+                                    className={`h-28 w-28 rounded-3xl object-cover border-2 ${avatarTone}`}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
                                         const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null;
@@ -554,12 +554,12 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                 />
                             ) : null}
                             <div
-                                className={`h-28 w-28 flex-col items-center justify-center rounded-2xl border-2 px-2 text-center ${avatarTone} ${partner.picture_url ? 'absolute inset-0 hidden' : 'flex'
+                                className={`h-28 w-28 flex-col items-center justify-center rounded-3xl border-2 px-2 text-center ${avatarTone} ${partner.picture_url ? 'absolute inset-0 hidden' : 'flex'
                                     }`}
                                 style={partner.picture_url ? { display: 'none' } : {}}
                             >
-                                <span className="text-2xl font-semibold">{initials(partner.name) || '—'}</span>
-                                <p className="mt-1 text-[10px] font-medium uppercase leading-tight tracking-wide opacity-80">
+                                <span className="text-3xl font-black">{initials(partner.name) || '—'}</span>
+                                <p className="mt-1 text-[10px] font-bold uppercase leading-tight tracking-wider opacity-80">
                                     {t(`partners.account_type.${partner.account_type}`)}
                                 </p>
                             </div>
@@ -569,26 +569,26 @@ export default function Show({ partner, can }: Props): JSX.Element {
                             <div className="space-y-2">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span
-                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeColor(partner.status)}`}
+                                        className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold ${getStatusBadgeColor(partner.status)}`}
                                     >
                                         {t(`partners.status.${partner.status}`, undefined, partner.status)}
                                     </span>
-                                    <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-500/20">
+                                    <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                                         {t(`partners.account_type.${partner.account_type}`)}
                                     </span>
                                     {roleBadges.map((badge) => (
                                         <span
                                             key={badge.key}
-                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}
+                                            className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold ${badge.className}`}
                                         >
                                             {badge.label}
                                         </span>
                                     ))}
                                 </div>
-                                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">{partner.name}</h1>
-                                <p className="font-mono text-sm text-gray-600">{partner.code}</p>
+                                <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">{partner.name}</h1>
+                                <p className="font-mono text-xs text-slate-400">{partner.code}</p>
                                 {(partner.job_title || partner.title) && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-xs font-semibold text-slate-500">
                                         {partner.title ? `${partner.title.short_name} ` : ''}
                                         {partner.job_title ?? ''}
                                     </p>
@@ -600,40 +600,40 @@ export default function Show({ partner, can }: Props): JSX.Element {
                                     {partner.tags.map((tag) => (
                                         <span
                                             key={tag.id}
-                                            className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+                                            className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-0.5 text-xs font-bold text-slate-600 dark:text-slate-300"
                                         >
-                                            {tag.name}
+                                            🏷️ {tag.name}
                                         </span>
                                     ))}
                                 </div>
                             )}
 
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 pt-1">
                                 {primaryPhone && (
                                     <a href={`tel:${primaryPhone}`}>
-                                        <SecondaryButton type="button">{t('partners.show.call')}</SecondaryButton>
+                                        <SecondaryButton type="button" className="!rounded-xl text-xs shadow-sm">📞 {t('partners.show.call')}</SecondaryButton>
                                     </a>
                                 )}
                                 {partner.mobile && (
                                     <a href={whatsappHref(partner.mobile)} target="_blank" rel="noopener noreferrer">
-                                        <SecondaryButton type="button">{t('partners.show.whatsapp')}</SecondaryButton>
+                                        <SecondaryButton type="button" className="!rounded-xl text-xs shadow-sm">💬 {t('partners.show.whatsapp')}</SecondaryButton>
                                     </a>
                                 )}
                                 {partner.email && (
                                     <a href={`mailto:${partner.email}`}>
-                                        <SecondaryButton type="button">{t('partners.show.email_action')}</SecondaryButton>
+                                        <SecondaryButton type="button" className="!rounded-xl text-xs shadow-sm">✉️ {t('partners.show.email_action')}</SecondaryButton>
                                     </a>
                                 )}
                                 {partner.website && (
                                     <a href={formatWebsiteUrl(partner.website)} target="_blank" rel="noopener noreferrer">
-                                        <SecondaryButton type="button">{t('partners.show.visit_website')}</SecondaryButton>
+                                        <SecondaryButton type="button" className="!rounded-xl text-xs shadow-sm">🌐 {t('partners.show.visit_website')}</SecondaryButton>
                                     </a>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 px-6 py-4 lg:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 p-6 lg:grid-cols-4">
                         <StatCard
                             label={t('partners.show.stats.credit_limit')}
                             value={creditLimitFormatted ?? '—'}

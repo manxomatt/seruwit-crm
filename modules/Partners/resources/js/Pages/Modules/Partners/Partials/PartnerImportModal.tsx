@@ -35,40 +35,40 @@ export default function PartnerImportModal({ show, onClose }: Props): JSX.Elemen
 
     return (
         <Modal show={show} onClose={close} maxWidth="lg">
-            <form onSubmit={submit} className="p-6">
-                <h2 className="text-lg font-medium text-gray-900">{t('partners.import.title')}</h2>
-                <p className="mt-1 text-sm text-gray-600">{t('partners.import.subtitle')}</p>
+            <form onSubmit={submit} className="p-6 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl">
+                <h2 className="text-lg font-black text-slate-900 dark:text-white">{t('partners.import.title')}</h2>
+                <p className="mt-1 text-xs text-slate-500">{t('partners.import.subtitle')}</p>
 
-                <div className="mt-4 rounded-md border border-indigo-100 bg-indigo-50/60 px-3 py-3 text-sm text-indigo-900">
-                    <p>{t('partners.import.help')}</p>
+                <div className="mt-5 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-4 text-xs text-indigo-900 dark:text-indigo-200 backdrop-blur-sm">
+                    <p className="font-medium">{t('partners.import.help')}</p>
                     <a
                         href={prefixedRoute('partners.import.template')}
-                        className="mt-2 inline-flex font-medium text-indigo-700 hover:underline"
+                        className="mt-2 inline-flex font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
-                        {t('partners.import.download_template')}
+                        📥 {t('partners.import.download_template')}
                     </a>
                 </div>
 
                 <div className="mt-5">
-                    <label htmlFor="partners-import-csv" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="partners-import-csv" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                         {t('partners.import.file_label')}
                     </label>
                     <input
                         id="partners-import-csv"
                         type="file"
                         accept=".csv,text/csv"
-                        className="mt-1 block w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100"
+                        className="mt-2 block w-full text-xs text-slate-700 dark:text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-indigo-500/10 file:px-4 file:py-2 file:text-xs file:font-bold file:text-indigo-600 dark:file:text-indigo-400 hover:file:bg-indigo-500/20"
                         onChange={(event) => setData('csv', event.target.files?.[0] ?? null)}
                     />
                     <InputError message={errors.csv} className="mt-2" />
-                    <p className="mt-2 text-xs text-gray-500">{t('partners.import.file_hint')}</p>
+                    <p className="mt-2 text-[11px] text-slate-500">{t('partners.import.file_hint')}</p>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <SecondaryButton type="button" onClick={close}>
+                    <SecondaryButton type="button" onClick={close} className="!rounded-xl text-xs shadow-sm">
                         {t('common.cancel')}
                     </SecondaryButton>
-                    <PrimaryButton type="submit" disabled={processing || !data.csv}>
+                    <PrimaryButton type="submit" disabled={processing || !data.csv} className="!rounded-xl text-xs shadow-sm">
                         {processing ? t('partners.import.importing') : t('partners.import.submit')}
                     </PrimaryButton>
                 </div>

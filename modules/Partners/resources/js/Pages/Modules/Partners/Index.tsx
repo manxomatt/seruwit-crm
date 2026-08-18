@@ -384,6 +384,12 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
         { value: 'supplier', label: t('partners.role.supplier') },
     ];
 
+    const menuItemClassName =
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition data-[focus]:bg-slate-100 dark:data-[focus]:bg-slate-800';
+
+    const menuItemDangerClassName =
+        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition data-[focus]:bg-rose-50 dark:data-[focus]:bg-rose-900/30';
+
     return (
         <DynamicLayout
             header={
@@ -392,18 +398,18 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             {can.export && (
-                                <SecondaryButton onClick={() => setShowExportModal(true)}>
-                                    {t('partners.export.action')}
+                                <SecondaryButton onClick={() => setShowExportModal(true)} className="!rounded-xl text-xs shadow-sm">
+                                    📥 {t('partners.export.action')}
                                 </SecondaryButton>
                             )}
                             {can.import && (
-                                <SecondaryButton onClick={() => setShowImportModal(true)}>
-                                    {t('partners.import.action')}
+                                <SecondaryButton onClick={() => setShowImportModal(true)} className="!rounded-xl text-xs shadow-sm">
+                                    📤 {t('partners.import.action')}
                                 </SecondaryButton>
                             )}
                             {can.create && (
                                 <Link href={prefixedRoute('partners.create')}>
-                                    <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
+                                    <PrimaryButton className="!rounded-xl text-xs shadow-sm">+ {t('partners.index.new')}</PrimaryButton>
                                 </Link>
                             )}
                         </div>
@@ -416,28 +422,34 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
             <PartnersNav />
 
             {flash?.success && (
-                <div className="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-600/20">
-                    {flash.success}
+                <div className="mb-6 flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-sm text-emerald-700 dark:text-emerald-300 backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+                        <span>{flash.success}</span>
+                    </div>
                 </div>
             )}
             {flash?.error && (
-                <div className="mb-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-800 ring-1 ring-inset ring-rose-600/20">
-                    {flash.error}
+                <div className="mb-6 flex items-center justify-between rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-700 dark:text-rose-300 backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold">✕</span>
+                        <span>{flash.error}</span>
+                    </div>
                 </div>
             )}
 
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <div className="border-b border-gray-100 px-4 py-3 sm:px-5">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                <div className="border-b border-slate-100 dark:border-slate-800 p-4 sm:p-5">
                     {selectionMode ? (
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white">
+                            <span className="inline-flex items-center rounded-full bg-indigo-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
                                 {t('partners.index.batch_selected', { count: selected.length })}
                             </span>
 
                             {can.update && (
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-2">
                                     <Select
-                                        className="!py-1.5 text-sm"
+                                        className="!py-1.5 text-xs !rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                                         value={batchStatus}
                                         onChange={setBatchStatus}
                                         placeholder={t('partners.index.batch_status_placeholder')}
@@ -446,24 +458,24 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             label: t(`partners.status.${status}`),
                                         }))}
                                     />
-                                    <button
+                                    <PrimaryButton
                                         type="button"
                                         onClick={applyBatchStatus}
                                         disabled={!batchStatus || processing}
-                                        className="inline-flex h-9 items-center rounded-md bg-gray-900 px-3 text-xs font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="!rounded-xl text-xs shadow-sm"
                                     >
                                         {t('partners.index.batch_apply_status')}
-                                    </button>
+                                    </PrimaryButton>
                                 </div>
                             )}
 
-                            <div className="ml-auto flex items-center gap-1.5">
+                            <div className="ml-auto flex items-center gap-2">
                                 {can.delete && (
                                     <button
                                         type="button"
                                         onClick={() => setShowBatchDeleteDialog(true)}
                                         disabled={processing}
-                                        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-40"
+                                        className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 px-3 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition disabled:opacity-40"
                                     >
                                         <TrashIcon />
                                         {t('partners.index.batch_delete')}
@@ -472,7 +484,7 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                 <button
                                     type="button"
                                     onClick={clearSelection}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-white transition"
                                     title={t('partners.index.batch_clear')}
                                 >
                                     <CloseIcon />
@@ -480,10 +492,10 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                             </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-4">
                             <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
                                 <div className="relative min-w-[200px] flex-1">
-                                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+                                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                                         <SearchIcon />
                                     </span>
                                     <TextInput
@@ -491,12 +503,12 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                         placeholder={t('partners.placeholders.search')}
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="w-full !py-2 pl-9 text-sm"
+                                        className="w-full !rounded-xl border-slate-200 dark:border-slate-800 !py-2 pl-9 text-xs bg-white dark:bg-slate-900"
                                     />
                                 </div>
                                 <div className="w-56 shrink-0 sm:w-64">
                                     <Select
-                                        className="!py-1.5 text-sm"
+                                        className="!py-1.5 text-xs !rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                                         value={filters.type_id || ''}
                                         onChange={(value) => applyFilters({ type_id: value || null })}
                                         placeholder={t('partners.types.all')}
@@ -509,12 +521,12 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                         ]}
                                     />
                                 </div>
-                                <button
+                                <PrimaryButton
                                     type="submit"
-                                    className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                    className="!rounded-xl text-xs shadow-sm"
                                 >
                                     {t('common.search')}
-                                </button>
+                                </PrimaryButton>
                                 <ColumnVisibilityMenu
                                     columns={columnDefs}
                                     visible={visibleColumns}
@@ -527,7 +539,7 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                     <button
                                         type="button"
                                         onClick={clearFilters}
-                                        className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                                        className="inline-flex h-9 items-center gap-1 rounded-xl px-3 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-white transition"
                                     >
                                         <CloseIcon />
                                         {t('partners.index.clear_filters')}
@@ -544,16 +556,16 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             key={`status-${pill.value || 'all'}`}
                                             type="button"
                                             onClick={() => applyFilters({ status: pill.value || null })}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
-                                                ? 'bg-gray-900 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${active
+                                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                                 }`}
                                         >
                                             {pill.label}
                                         </button>
                                     );
                                 })}
-                                <span className="mx-1 hidden h-4 w-px bg-gray-200 sm:inline-block" aria-hidden />
+                                <span className="mx-1 hidden h-4 w-px bg-slate-200 dark:bg-slate-800 sm:inline-block" aria-hidden />
                                 {accountTypePills.map((pill) => {
                                     const active = (filters.account_type || '') === pill.value;
 
@@ -562,16 +574,16 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             key={`account-${pill.value || 'all'}`}
                                             type="button"
                                             onClick={() => applyFilters({ account_type: pill.value || null })}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${active
+                                                ? 'bg-indigo-600 text-white shadow-sm'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                                 }`}
                                         >
                                             {pill.label}
                                         </button>
                                     );
                                 })}
-                                <span className="mx-1 hidden h-4 w-px bg-gray-200 sm:inline-block" aria-hidden />
+                                <span className="mx-1 hidden h-4 w-px bg-slate-200 dark:bg-slate-800 sm:inline-block" aria-hidden />
                                 {rolePills.map((pill) => {
                                     const active = (filters.role || '') === pill.value;
 
@@ -580,16 +592,16 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             key={`role-${pill.value || 'all'}`}
                                             type="button"
                                             onClick={() => applyFilters({ role: pill.value || null })}
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${active
-                                                ? 'bg-sky-700 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${active
+                                                ? 'bg-sky-600 text-white shadow-sm'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                                 }`}
                                         >
                                             {pill.label}
                                         </button>
                                     );
                                 })}
-                                <span className="ml-auto text-xs tabular-nums text-gray-400">
+                                <span className="ml-auto text-xs font-bold tabular-nums text-slate-400">
                                     {t('common.showing_results', {
                                         from: partners.total === 0 ? 0 : (partners.current_page - 1) * partners.per_page + 1,
                                         to: Math.min(partners.current_page * partners.per_page, partners.total),
@@ -603,13 +615,16 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
 
                 {partners.data.length === 0 ? (
                     <div className="px-6 py-16 text-center">
-                        <h3 className="text-sm font-medium text-gray-900">{t('partners.index.empty_title')}</h3>
-                        <p className="mt-1 text-sm text-gray-500">{t('partners.index.empty_hint')}</p>
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 text-xl font-bold">
+                            👥
+                        </div>
+                        <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">{t('partners.index.empty_title')}</h3>
+                        <p className="mt-1 text-xs text-slate-500">{t('partners.index.empty_hint')}</p>
                         {hasActiveFilters && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                className="mt-4 text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 transition"
                             >
                                 {t('partners.index.clear_filters')}
                             </button>
@@ -618,14 +633,14 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                 ) : (
                     <>
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-100">
-                                <thead>
-                                    <tr className="bg-gray-50/80">
+                            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                                    <tr>
                                         {canBatch && (
-                                            <th className="w-10 px-3 py-2.5">
+                                            <th className="w-10 px-6 py-3.5">
                                                 <input
                                                     type="checkbox"
-                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    className="rounded-lg border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-800"
                                                     checked={allPageSelected}
                                                     ref={(input) => {
                                                         if (input) {
@@ -638,59 +653,59 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             </th>
                                         )}
                                         {visibleColumns.code && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                                 {t('partners.index.columns.code')}
                                             </th>
                                         )}
                                         {visibleColumns.name && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                                 {t('partners.index.columns.name')}
                                             </th>
                                         )}
                                         {visibleColumns.role && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                                 {t('partners.index.columns.role')}
                                             </th>
                                         )}
                                         {visibleColumns.phone && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                                 {t('partners.index.columns.phone')}
                                             </th>
                                         )}
                                         {visibleColumns.email && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                                 {t('partners.index.columns.email')}
                                             </th>
                                         )}
                                         {visibleColumns.industry && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                                 {t('partners.index.columns.industry')}
                                             </th>
                                         )}
                                         {visibleColumns.status && (
-                                            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
                                                 {t('partners.index.columns.status')}
                                             </th>
                                         )}
-                                        <th className="w-24 px-3 py-2.5">
-                                            <span className="sr-only">{t('common.actions')}</span>
+                                        <th className="w-24 px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
+                                            {t('common.actions')}
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-900 dark:text-white">
                                     {partners.data.map((partner) => {
                                         const isSelected = selected.includes(partner.id);
 
                                         return (
                                             <tr
                                                 key={partner.id}
-                                                className={`group transition-colors hover:bg-gray-50/80 ${isSelected ? 'bg-indigo-50/50' : ''}`}
+                                                className={`group transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-950/20' : ''}`}
                                             >
                                                 {canBatch && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="whitespace-nowrap px-6 py-4">
                                                         <input
                                                             type="checkbox"
-                                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                            className="rounded-lg border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-800"
                                                             checked={isSelected}
                                                             onChange={() => toggleRow(partner.id)}
                                                             aria-label={partner.name}
@@ -698,19 +713,19 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                     </td>
                                                 )}
                                                 {visibleColumns.code && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 font-mono text-sm text-gray-800">
+                                                    <td className="whitespace-nowrap px-6 py-4 font-mono text-[11px] text-slate-400">
                                                         {partner.code}
                                                     </td>
                                                 )}
                                                 {visibleColumns.name && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="whitespace-nowrap px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="relative shrink-0">
                                                                 {partner.picture_url ? (
                                                                     <img
                                                                         src={partner.picture_url}
                                                                         alt={partner.name}
-                                                                        className="h-10 w-10 rounded-full object-cover ring-1 ring-gray-200"
+                                                                        className="h-10 w-10 rounded-2xl object-cover ring-2 ring-slate-200 dark:ring-slate-800"
                                                                         onError={(e) => {
                                                                             (e.target as HTMLImageElement).style.display = 'none';
                                                                             const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement | null;
@@ -721,7 +736,7 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                                     />
                                                                 ) : null}
                                                                 <div
-                                                                    className={`h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ring-1 ring-gray-200 ${partner.picture_url ? 'absolute inset-0 hidden' : `inline-flex ${getAvatarColor(partner.id, partner.name)}`
+                                                                    className={`h-10 w-10 items-center justify-center rounded-2xl text-xs font-bold ring-2 ring-slate-200 dark:ring-slate-800 ${partner.picture_url ? 'absolute inset-0 hidden' : `inline-flex ${getAvatarColor(partner.id, partner.name)}`
                                                                         }`}
                                                                     style={partner.picture_url ? { display: 'none' } : {}}
                                                                 >
@@ -731,11 +746,11 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                             <div className="min-w-0">
                                                                 <Link
                                                                     href={prefixedRoute('partners.show', partner.id)}
-                                                                    className="block truncate text-sm font-medium text-gray-900 hover:text-indigo-700"
+                                                                    className="block truncate font-bold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400 transition"
                                                                 >
                                                                     {partner.name}
                                                                 </Link>
-                                                                <div className="text-xs text-gray-500">
+                                                                <div className="text-[10px] font-semibold text-slate-400">
                                                                     {t(`partners.account_type.${partner.account_type}`)}
                                                                 </div>
                                                             </div>
@@ -743,12 +758,12 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                     </td>
                                                 )}
                                                 {visibleColumns.role && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
-                                                        <div className="flex flex-wrap gap-1">
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        <div className="flex flex-wrap gap-1.5">
                                                             {getRoleBadges(partner).map((badge) => (
                                                                 <span
                                                                     key={badge.key}
-                                                                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
+                                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${badge.className}`}
                                                                 >
                                                                     {badge.label}
                                                                 </span>
@@ -757,17 +772,17 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                     </td>
                                                 )}
                                                 {visibleColumns.phone && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
+                                                    <td className="whitespace-nowrap px-6 py-4 text-slate-500 font-medium">
                                                         {partner.phone || partner.mobile || '—'}
                                                     </td>
                                                 )}
                                                 {visibleColumns.email && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
+                                                    <td className="whitespace-nowrap px-6 py-4 text-slate-500 font-medium">
                                                         {partner.email || '—'}
                                                     </td>
                                                 )}
                                                 {visibleColumns.industry && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-500">
+                                                    <td className="whitespace-nowrap px-6 py-4 text-slate-500 font-medium">
                                                         {partner.industry?.label ||
                                                             (typeof partner.industry?.name === 'string'
                                                                 ? partner.industry.name
@@ -775,18 +790,18 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                     </td>
                                                 )}
                                                 {visibleColumns.status && (
-                                                    <td className="whitespace-nowrap px-3 py-2.5">
+                                                    <td className="whitespace-nowrap px-6 py-4">
                                                         <span
-                                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeColor(partner.status)}`}
+                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${getStatusBadgeColor(partner.status)}`}
                                                         >
                                                             {t(`partners.status.${partner.status}`, undefined, partner.status)}
                                                         </span>
                                                     </td>
                                                 )}
-                                                <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                                                <td className="whitespace-nowrap px-6 py-4 text-right">
                                                     <Menu as="div" className="relative inline-block text-right">
                                                         <MenuButton
-                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                                                            className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-all"
                                                             title={t('common.actions')}
                                                             aria-label={t('common.actions')}
                                                         >
@@ -794,18 +809,15 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                         </MenuButton>
 
                                                         <MenuItems
-                                                            transition
                                                             anchor="bottom end"
-                                                            className="z-50 w-52 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
+                                                            className="z-50 w-48 origin-top-right rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl outline-none"
                                                         >
                                                             <MenuItem>
                                                                 <Link
                                                                     href={prefixedRoute('partners.show', partner.id)}
                                                                     className={menuItemClassName}
                                                                 >
-                                                                    <span className="text-gray-500">
-                                                                        <EyeIcon />
-                                                                    </span>
+                                                                    <EyeIcon />
                                                                     {t('common.view', undefined, 'View')}
                                                                 </Link>
                                                             </MenuItem>
@@ -815,15 +827,13 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                                                         href={prefixedRoute('partners.edit', partner.id)}
                                                                         className={menuItemClassName}
                                                                     >
-                                                                        <span className="text-indigo-600">
-                                                                            <PencilIcon />
-                                                                        </span>
+                                                                        <PencilIcon />
                                                                         {t('common.edit')}
                                                                     </Link>
                                                                 </MenuItem>
                                                             )}
                                                             {(can.update || can.delete) && (
-                                                                <div className="my-1 border-t border-gray-100" />
+                                                                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                                                             )}
                                                             {can.delete && (
                                                                 <MenuItem>
@@ -848,8 +858,8 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                         </div>
 
                         {partners.last_page > 1 && (
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 sm:px-5">
-                                <p className="text-xs text-gray-500">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 p-4 sm:p-5 text-xs">
+                                <p className="text-slate-500">
                                     {t('common.showing_results', {
                                         from: (partners.current_page - 1) * partners.per_page + 1,
                                         to: Math.min(partners.current_page * partners.per_page, partners.total),
@@ -863,11 +873,11 @@ export default function Index({ partners, filters, partnerTypes, exportColumns, 
                                             type="button"
                                             onClick={() => link.url && router.get(link.url)}
                                             disabled={!link.url}
-                                            className={`rounded-md px-2.5 py-1 text-xs font-medium ${link.active
-                                                ? 'bg-gray-900 text-white'
+                                            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${link.active
+                                                ? 'bg-indigo-600 text-white shadow-sm'
                                                 : link.url
-                                                    ? 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                                                    : 'cursor-not-allowed text-gray-300'
+                                                    ? 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                                                 }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />

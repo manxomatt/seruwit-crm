@@ -89,10 +89,10 @@ const EllipsisVerticalIcon = () => (
 );
 
 const menuItemClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-gray-700 transition data-[focus]:bg-gray-50 data-[focus]:text-gray-900';
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition data-[focus]:bg-slate-100 dark:data-[focus]:bg-slate-800';
 
 const menuItemDangerClassName =
-    'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
+    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition data-[focus]:bg-rose-50 dark:data-[focus]:bg-rose-900/30';
 
 export default function Index({ industries, filters, can }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -153,11 +153,8 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
     };
 
     const confirmDelete = (): void => {
-        if (!deleting) {
-            return;
-        }
-
-        router.delete(prefixedRoute('partners.industries.destroy', deleting.id), {
+        if (!deleting) return;
+        form.delete(prefixedRoute('partners.industries.destroy', deleting.id), {
             preserveScroll: true,
             onSuccess: () => setDeleting(null),
         });
@@ -180,10 +177,9 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
             header={
                 <PageHeader
                     title={t('partners.industries.head')}
-                    description={t('partners.industries.hint')}
                     actions={
                         can.create ? (
-                            <PrimaryButton onClick={openCreate}>{t('partners.industries.new')}</PrimaryButton>
+                            <PrimaryButton onClick={openCreate} className="!rounded-xl text-xs shadow-sm">+ {t('partners.industries.new')}</PrimaryButton>
                         ) : undefined
                     }
                 />
@@ -193,194 +189,206 @@ export default function Index({ industries, filters, can }: Props): JSX.Element 
 
             <PartnersNav />
 
-            {flash?.success && (
-                <div className="mb-4 rounded-md bg-green-100 px-4 py-3 text-sm text-green-800">{flash.success}</div>
-            )}
-            {flash?.error && (
-                <div className="mb-4 rounded-md bg-red-100 px-4 py-3 text-sm text-red-800">{flash.error}</div>
-            )}
-
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="p-6">
-                    <form onSubmit={handleSearch} className="mb-6 flex flex-wrap gap-4">
-                        <div className="min-w-[220px] flex-1">
-                            <TextInput
-                                type="text"
-                                placeholder={t('partners.industries.search_placeholder')}
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="w-full"
-                            />
+            <div className="space-y-6">
+                {flash?.success && (
+                    <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-sm text-emerald-700 dark:text-emerald-300 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+                            <span>{flash.success}</span>
                         </div>
-                        <Select
-                            className="w-44"
-                            value={filters.active || ''}
-                            onChange={(value) =>
-                                router.get(
-                                    prefixedRoute('partners.industries.index'),
-                                    {
-                                        search: search || undefined,
-                                        active: value || undefined,
-                                    },
-                                    { preserveState: true, replace: true },
-                                )
-                            }
-                            placeholder={t('partners.industries.all_status')}
-                            options={[
-                                { value: '', label: t('partners.industries.all_status') },
-                                { value: '1', label: t('partners.status.active') },
-                                { value: '0', label: t('partners.status.inactive') },
-                            ]}
-                        />
-                        <PrimaryButton type="submit">{t('common.search')}</PrimaryButton>
-                    </form>
-
-                    {industries.data.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <h3 className="text-sm font-medium text-gray-900">{t('partners.industries.empty_title')}</h3>
-                            <p className="mt-1 text-sm text-gray-500">{t('partners.industries.empty_hint')}</p>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="flex items-center justify-between rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-700 dark:text-rose-300 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold">✕</span>
+                            <span>{flash.error}</span>
                         </div>
-                    ) : (
-                        <>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                {t('partners.fields.industry')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                {t('partners.industries.description')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                {t('partners.industries.partners_count')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                {t('partners.fields.status')}
-                                            </th>
-                                            <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                <span className="sr-only">{t('common.actions')}</span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 bg-white">
-                                        {industries.data.map((industry) => (
-                                            <tr key={industry.id} className="group hover:bg-gray-50">
-                                                <td className="px-6 py-4">
-                                                    <div className="text-sm font-medium text-gray-900">
-                                                        {industry.label || localeValue(industry.name, 'id')}
-                                                    </div>
-                                                    <div className="mt-0.5 text-xs text-gray-500">
-                                                        ID: {localeValue(industry.name, 'id') || '—'} · EN:{' '}
-                                                        {localeValue(industry.name, 'en') || '—'}
-                                                    </div>
-                                                </td>
-                                                <td className="max-w-md truncate px-6 py-4 text-sm text-gray-500">
-                                                    {industry.description_label ||
-                                                        localeValue(industry.description, 'id') ||
-                                                        '—'}
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-700">
-                                                    {industry.partners_count}
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4">
-                                                    <span
-                                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${industry.is_active
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-gray-100 text-gray-800'
-                                                            }`}
-                                                    >
-                                                        {industry.is_active
-                                                            ? t('partners.status.active')
-                                                            : t('partners.status.inactive')}
-                                                    </span>
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                                    <Menu as="div" className="relative inline-block text-right">
-                                                        <MenuButton
-                                                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-                                                            title={t('common.actions')}
-                                                            aria-label={t('common.actions')}
-                                                        >
-                                                            <EllipsisVerticalIcon />
-                                                        </MenuButton>
+                    </div>
+                )}
 
-                                                        <MenuItems
-                                                            transition
-                                                            anchor="bottom end"
-                                                            className="z-50 w-48 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg outline-none transition data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75"
-                                                        >
-                                                            {can.update && (
-                                                                <MenuItem>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => openEdit(industry)}
-                                                                        className={menuItemClassName}
-                                                                    >
-                                                                        <span className="text-indigo-600">
-                                                                            <PencilIcon />
-                                                                        </span>
-                                                                        {t('common.edit')}
-                                                                    </button>
-                                                                </MenuItem>
-                                                            )}
-                                                            {(can.update && can.delete) && (
-                                                                <div className="my-1 border-t border-gray-100" />
-                                                            )}
-                                                            {can.delete && (
-                                                                <MenuItem>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setDeleting(industry)}
-                                                                        className={menuItemDangerClassName}
-                                                                    >
-                                                                        <TrashIcon />
-                                                                        {t('common.delete')}
-                                                                    </button>
-                                                                </MenuItem>
-                                                            )}
-                                                        </MenuItems>
-                                                    </Menu>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="p-6">
+                        <form onSubmit={handleSearch} className="mb-6 flex flex-wrap items-center gap-3">
+                            <div className="min-w-[220px] flex-1">
+                                <TextInput
+                                    type="text"
+                                    placeholder={t('partners.industries.search_placeholder')}
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full !rounded-xl border-slate-200 dark:border-slate-800 !py-2 text-xs bg-white dark:bg-slate-900"
+                                />
                             </div>
+                            <Select
+                                className="w-44 !py-1.5 text-xs !rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                                value={filters.active || ''}
+                                onChange={(value) =>
+                                    router.get(
+                                        prefixedRoute('partners.industries.index'),
+                                        {
+                                            search: search || undefined,
+                                            active: value || undefined,
+                                        },
+                                        { preserveState: true, replace: true },
+                                    )
+                                }
+                                placeholder={t('partners.industries.all_status')}
+                                options={[
+                                    { value: '', label: t('partners.industries.all_status') },
+                                    { value: '1', label: t('partners.status.active') },
+                                    { value: '0', label: t('partners.status.inactive') },
+                                ]}
+                            />
+                            <PrimaryButton type="submit" className="!rounded-xl text-xs shadow-sm">{t('common.search')}</PrimaryButton>
+                        </form>
 
-                            {industries.last_page > 1 && (
-                                <div className="mt-6 flex items-center justify-between">
-                                    <p className="text-sm text-gray-700">
-                                        {t('common.showing_results', {
-                                            from: (industries.current_page - 1) * industries.per_page + 1,
-                                            to: Math.min(
-                                                industries.current_page * industries.per_page,
-                                                industries.total,
-                                            ),
-                                            total: industries.total,
-                                        })}
-                                    </p>
-                                    <div className="flex gap-1">
-                                        {industries.links.map((link, index) => (
-                                            <button
-                                                key={index}
-                                                type="button"
-                                                onClick={() => link.url && router.get(link.url)}
-                                                disabled={!link.url}
-                                                className={`rounded px-3 py-1 text-sm ${link.active
-                                                    ? 'bg-indigo-600 text-white'
-                                                    : link.url
-                                                        ? 'border bg-white text-gray-700 hover:bg-gray-50'
-                                                        : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                                    }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ))}
-                                    </div>
+                        {industries.data.length === 0 ? (
+                            <div className="py-12 text-center">
+                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 text-xl font-bold">
+                                    🏢
                                 </div>
-                            )}
-                        </>
-                    )}
+                                <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">{t('partners.industries.empty_title')}</h3>
+                                <p className="mt-1 text-xs text-slate-500">{t('partners.industries.empty_hint')}</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                        <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                                            <tr>
+                                                <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                                    {t('partners.fields.industry')}
+                                                </th>
+                                                <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                                    {t('partners.industries.description')}
+                                                </th>
+                                                <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                                    {t('partners.industries.partners_count')}
+                                                </th>
+                                                <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">
+                                                    {t('partners.fields.status')}
+                                                </th>
+                                                <th className="w-28 px-6 py-3.5 text-right font-bold uppercase tracking-wider text-slate-400">
+                                                    {t('common.actions')}
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-900 dark:text-white">
+                                            {industries.data.map((industry) => (
+                                                <tr key={industry.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-bold text-slate-900 dark:text-white">
+                                                            {industry.label || localeValue(industry.name, 'id')}
+                                                        </div>
+                                                        <div className="mt-0.5 font-mono text-[10px] text-slate-400">
+                                                            ID: {localeValue(industry.name, 'id') || '—'} · EN:{' '}
+                                                            {localeValue(industry.name, 'en') || '—'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="max-w-md truncate px-6 py-4 text-slate-500 font-medium">
+                                                        {industry.description_label ||
+                                                            localeValue(industry.description, 'id') ||
+                                                            '—'}
+                                                    </td>
+                                                    <td className="whitespace-nowrap px-6 py-4 tabular-nums font-bold text-slate-700 dark:text-slate-300">
+                                                        {industry.partners_count}
+                                                    </td>
+                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                        <span
+                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${industry.is_active
+                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                                                }`}
+                                                        >
+                                                            {industry.is_active
+                                                                ? t('partners.status.active')
+                                                                : t('partners.status.inactive')}
+                                                        </span>
+                                                    </td>
+                                                    <td className="whitespace-nowrap px-6 py-4 text-right">
+                                                        <Menu as="div" className="relative inline-block text-right">
+                                                            <MenuButton
+                                                                className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-all"
+                                                                title={t('common.actions')}
+                                                                aria-label={t('common.actions')}
+                                                            >
+                                                                <EllipsisVerticalIcon />
+                                                            </MenuButton>
+
+                                                            <MenuItems
+                                                                anchor="bottom end"
+                                                                className="z-50 w-48 origin-top-right rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl outline-none"
+                                                            >
+                                                                {can.update && (
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => openEdit(industry)}
+                                                                            className={menuItemClassName}
+                                                                        >
+                                                                            <PencilIcon />
+                                                                            {t('common.edit')}
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                )}
+                                                                {(can.update && can.delete) && (
+                                                                    <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                                )}
+                                                                {can.delete && (
+                                                                    <MenuItem>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setDeleting(industry)}
+                                                                            className={menuItemDangerClassName}
+                                                                        >
+                                                                            <TrashIcon />
+                                                                            {t('common.delete')}
+                                                                        </button>
+                                                                    </MenuItem>
+                                                                )}
+                                                            </MenuItems>
+                                                        </Menu>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {industries.last_page > 1 && (
+                                    <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 text-xs">
+                                        <p className="text-slate-500">
+                                            {t('common.showing_results', {
+                                                from: (industries.current_page - 1) * industries.per_page + 1,
+                                                to: Math.min(
+                                                    industries.current_page * industries.per_page,
+                                                    industries.total,
+                                                ),
+                                                total: industries.total,
+                                            })}
+                                        </p>
+                                        <div className="flex gap-1">
+                                            {industries.links.map((link, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    onClick={() => link.url && router.get(link.url)}
+                                                    disabled={!link.url}
+                                                    className={`px-3 py-1.5 rounded-xl font-bold transition-all ${link.active
+                                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                                        : link.url
+                                                            ? 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+                                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                                        }`}
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

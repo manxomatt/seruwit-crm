@@ -81,80 +81,80 @@ export default function PartnerExportModal({ show, onClose, columns, filters }: 
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="2xl">
-            <form onSubmit={download} className="p-6">
-                <h2 className="text-lg font-medium text-gray-900">{t('partners.export.title')}</h2>
-                <p className="mt-1 text-sm text-gray-600">{t('partners.export.subtitle')}</p>
+            <form onSubmit={download} className="p-6 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl">
+                <h2 className="text-lg font-black text-slate-900 dark:text-white">{t('partners.export.title')}</h2>
+                <p className="mt-1 text-xs text-slate-500">{t('partners.export.subtitle')}</p>
 
-                <div className="mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <div className="mt-5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         {t('partners.export.format')}
                     </p>
-                    <div className="mt-2 flex gap-4">
-                        <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <div className="mt-2.5 flex gap-4">
+                        <label className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                             <input
                                 type="radio"
                                 name="format"
                                 value="csv"
                                 checked={format === 'csv'}
                                 onChange={() => setFormat('csv')}
-                                className="border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                className="border-slate-300 text-indigo-600 focus:ring-indigo-500"
                             />
-                            CSV
+                            📄 CSV
                         </label>
-                        <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                        <label className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                             <input
                                 type="radio"
                                 name="format"
                                 value="xlsx"
                                 checked={format === 'xlsx'}
                                 onChange={() => setFormat('xlsx')}
-                                className="border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                className="border-slate-300 text-indigo-600 focus:ring-indigo-500"
                             />
-                            Excel (.xlsx)
+                            📊 Excel (.xlsx)
                         </label>
                     </div>
                 </div>
 
                 <div className="mt-5">
                     <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             {t('partners.export.columns_heading')}
                         </p>
                         <div className="flex gap-3 text-xs">
-                            <button type="button" onClick={selectDefaults} className="font-medium text-indigo-600 hover:underline">
+                            <button type="button" onClick={selectDefaults} className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 {t('partners.export.select_defaults')}
                             </button>
-                            <button type="button" onClick={selectAll} className="font-medium text-indigo-600 hover:underline">
+                            <button type="button" onClick={selectAll} className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 {t('partners.export.select_all')}
                             </button>
                         </div>
                     </div>
-                    <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 sm:grid-cols-2">
+                    <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-4 sm:grid-cols-2">
                         {columns.map((column) => (
-                            <label key={column.key} className="inline-flex items-start gap-2 text-sm text-gray-700">
+                            <label key={column.key} className="inline-flex items-start gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
                                 <input
                                     type="checkbox"
                                     checked={Boolean(selected[column.key])}
                                     onChange={() => toggle(column.key)}
-                                    className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                                 <span>
                                     {column.label}
-                                    <span className="ml-1 font-mono text-[11px] text-gray-400">{column.key}</span>
+                                    <span className="ml-1 font-mono text-[10px] text-slate-400">{column.key}</span>
                                 </span>
                             </label>
                         ))}
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-[11px] font-medium text-slate-500">
                         {t('partners.export.selected_count', { count: selectedKeys.length })}
                     </p>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <SecondaryButton type="button" onClick={onClose}>
+                    <SecondaryButton type="button" onClick={onClose} className="!rounded-xl text-xs shadow-sm">
                         {t('common.cancel')}
                     </SecondaryButton>
-                    <PrimaryButton type="submit" disabled={selectedKeys.length === 0}>
+                    <PrimaryButton type="submit" disabled={selectedKeys.length === 0} className="!rounded-xl text-xs shadow-sm">
                         {t('partners.export.download')}
                     </PrimaryButton>
                 </div>

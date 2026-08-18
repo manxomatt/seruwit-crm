@@ -54,51 +54,51 @@ const STAT_TONES: Record<
     { card: string; icon: string; value: string; bar: string; track: string; accent: string }
 > = {
     emerald: {
-        card: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-teal-50',
+        card: 'border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/50 dark:from-emerald-950/20 dark:via-slate-900 dark:to-teal-950/20',
         icon: 'bg-emerald-500 text-white shadow-emerald-500/30',
-        value: 'text-emerald-900',
+        value: 'text-emerald-950 dark:text-emerald-200',
         bar: 'bg-emerald-500',
-        track: 'bg-emerald-100',
+        track: 'bg-emerald-100 dark:bg-emerald-950/50',
         accent: 'bg-emerald-500',
     },
     sky: {
-        card: 'border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-cyan-50',
+        card: 'border-sky-200/80 dark:border-sky-900/50 bg-gradient-to-br from-sky-50/80 via-white to-cyan-50/50 dark:from-sky-950/20 dark:via-slate-900 dark:to-cyan-950/20',
         icon: 'bg-sky-500 text-white shadow-sky-500/30',
-        value: 'text-sky-900',
+        value: 'text-sky-950 dark:text-sky-200',
         bar: 'bg-sky-500',
-        track: 'bg-sky-100',
+        track: 'bg-sky-100 dark:bg-sky-950/50',
         accent: 'bg-sky-500',
     },
     violet: {
-        card: 'border-violet-200/80 bg-gradient-to-br from-violet-50 via-white to-indigo-50',
+        card: 'border-violet-200/80 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/80 via-white to-indigo-50/50 dark:from-violet-950/20 dark:via-slate-900 dark:to-indigo-950/20',
         icon: 'bg-violet-500 text-white shadow-violet-500/30',
-        value: 'text-violet-900',
+        value: 'text-violet-950 dark:text-violet-200',
         bar: 'bg-violet-500',
-        track: 'bg-violet-100',
+        track: 'bg-violet-100 dark:bg-violet-950/50',
         accent: 'bg-violet-500',
     },
     amber: {
-        card: 'border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-orange-50',
+        card: 'border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 dark:from-amber-950/20 dark:via-slate-900 dark:to-orange-950/20',
         icon: 'bg-amber-500 text-white shadow-amber-500/30',
-        value: 'text-amber-900',
+        value: 'text-amber-950 dark:text-amber-200',
         bar: 'bg-amber-500',
-        track: 'bg-amber-100',
+        track: 'bg-amber-100 dark:bg-amber-950/50',
         accent: 'bg-amber-500',
     },
     slate: {
-        card: 'border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-gray-100',
-        icon: 'bg-slate-500 text-white shadow-slate-500/30',
-        value: 'text-slate-900',
+        card: 'border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-slate-50/80 via-white to-gray-100/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900',
+        icon: 'bg-slate-600 text-white shadow-slate-600/30',
+        value: 'text-slate-900 dark:text-white',
         bar: 'bg-slate-500',
-        track: 'bg-slate-200',
+        track: 'bg-slate-200 dark:bg-slate-800',
         accent: 'bg-slate-500',
     },
     rose: {
-        card: 'border-rose-200/80 bg-gradient-to-br from-rose-50 via-white to-red-50',
+        card: 'border-rose-200/80 dark:border-rose-900/50 bg-gradient-to-br from-rose-50/80 via-white to-red-50/50 dark:from-rose-950/20 dark:via-slate-900 dark:to-red-950/20',
         icon: 'bg-rose-500 text-white shadow-rose-500/30',
-        value: 'text-rose-900',
+        value: 'text-rose-950 dark:text-rose-200',
         bar: 'bg-rose-500',
-        track: 'bg-rose-100',
+        track: 'bg-rose-100 dark:bg-rose-950/50',
         accent: 'bg-rose-500',
     },
 };
@@ -191,21 +191,21 @@ function StatCard({
     const clampedProgress = progress === undefined ? undefined : Math.max(0, Math.min(100, progress));
 
     return (
-        <div className={`relative overflow-hidden rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md ${styles.card}`}>
+        <div className={`relative overflow-hidden rounded-3xl border p-5 shadow-sm transition-all hover:shadow-md ${styles.card}`}>
             <span className={`absolute inset-y-0 left-0 w-1 ${styles.accent}`} aria-hidden />
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
-                    <p className={`mt-2 text-3xl font-bold tabular-nums ${styles.value}`}>{value}</p>
-                    {hint && <p className="mt-1 text-xs text-gray-600">{hint}</p>}
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p>
+                    <p className={`mt-2 text-3xl font-black tabular-nums ${styles.value}`}>{value}</p>
+                    {hint && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
                 </div>
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-lg ${styles.icon}`}>
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-md ${styles.icon}`}>
                     {icon}
                 </div>
             </div>
             {clampedProgress !== undefined && (
                 <div className="mt-4">
-                    <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-medium text-gray-500">
+                    <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-bold text-slate-400">
                         <span className="truncate">{progressLabel}</span>
                         <span className="tabular-nums">{clampedProgress}%</span>
                     </div>
@@ -215,13 +215,13 @@ function StatCard({
                 </div>
             )}
             {meta && meta.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                     {meta.map((item) => (
                         <span
                             key={item.label}
-                            className="inline-flex items-center gap-1 rounded-md bg-white/70 px-2 py-1 text-[11px] font-medium text-gray-600 ring-1 ring-black/5"
+                            className="inline-flex items-center gap-1 rounded-xl bg-white/80 dark:bg-slate-800/80 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 ring-1 ring-slate-900/5 dark:ring-white/10 backdrop-blur-sm"
                         >
-                            <span className="tabular-nums text-gray-900">{item.value}</span>
+                            <span className="tabular-nums text-slate-900 dark:text-white">{item.value}</span>
                             <span>{item.label}</span>
                         </span>
                     ))}
@@ -245,7 +245,7 @@ export default function Index({ board, can }: Props): JSX.Element {
                     actions={
                         can.create ? (
                             <Link href={prefixedRoute('partners.create')}>
-                                <PrimaryButton>{t('partners.index.new')}</PrimaryButton>
+                                <PrimaryButton className="!rounded-xl text-xs shadow-sm">+ {t('partners.index.new')}</PrimaryButton>
                             </Link>
                         ) : undefined
                     }
@@ -256,178 +256,180 @@ export default function Index({ board, can }: Props): JSX.Element {
 
             <PartnersNav />
 
-            <p className="mb-6 text-sm text-gray-600">{t('partners.dashboard.subtitle')}</p>
+            <div className="space-y-6">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('partners.dashboard.subtitle')}</p>
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                <StatCard
-                    label={t('partners.dashboard.active')}
-                    value={counts.active}
-                    hint={t('partners.dashboard.of_partners', { total: counts.total })}
-                    tone="emerald"
-                    icon={<IconUsers />}
-                    progress={sharePercent(counts.active, counts.total)}
-                    progressLabel={t('partners.dashboard.share_label')}
-                />
-                <StatCard
-                    label={t('partners.dashboard.customers')}
-                    value={counts.customers}
-                    hint={t('partners.dashboard.both_hint', { count: counts.both })}
-                    tone="sky"
-                    icon={<IconCustomer />}
-                    progress={sharePercent(counts.customers, counts.total)}
-                    progressLabel={t('partners.dashboard.share_label')}
-                />
-                <StatCard
-                    label={t('partners.dashboard.suppliers')}
-                    value={counts.suppliers}
-                    hint={t('partners.dashboard.suppliers_hint')}
-                    tone="violet"
-                    icon={<IconSupplier />}
-                    progress={sharePercent(counts.suppliers, counts.total)}
-                    progressLabel={t('partners.dashboard.share_label')}
-                />
-                <StatCard
-                    label={t('partners.dashboard.locations')}
-                    value={locations.active}
-                    hint={t('partners.dashboard.of_locations', { total: locations.total })}
-                    tone="amber"
-                    icon={<IconPin />}
-                    progress={sharePercent(locations.active, locations.total)}
-                    progressLabel={t('partners.dashboard.locations_ready')}
-                    meta={[{ label: t('partners.dashboard.inactive_short'), value: locations.inactive }]}
-                />
-                <StatCard
-                    label={t('partners.dashboard.needs_attention')}
-                    value={counts.blacklisted + counts.missing_contact + counts.inactive}
-                    hint={t('partners.dashboard.needs_attention_hint')}
-                    tone={counts.blacklisted > 0 ? 'rose' : counts.missing_contact > 0 ? 'amber' : 'slate'}
-                    icon={<IconAlert />}
-                    meta={[
-                        { label: t('partners.dashboard.blacklisted'), value: counts.blacklisted },
-                        { label: t('partners.dashboard.missing_contact'), value: counts.missing_contact },
-                        { label: t('partners.status.inactive'), value: counts.inactive },
-                    ]}
-                />
-            </div>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                    <StatCard
+                        label={t('partners.dashboard.active')}
+                        value={counts.active}
+                        hint={t('partners.dashboard.of_partners', { total: counts.total })}
+                        tone="emerald"
+                        icon={<IconUsers />}
+                        progress={sharePercent(counts.active, counts.total)}
+                        progressLabel={t('partners.dashboard.share_label')}
+                    />
+                    <StatCard
+                        label={t('partners.dashboard.customers')}
+                        value={counts.customers}
+                        hint={t('partners.dashboard.both_hint', { count: counts.both })}
+                        tone="sky"
+                        icon={<IconCustomer />}
+                        progress={sharePercent(counts.customers, counts.total)}
+                        progressLabel={t('partners.dashboard.share_label')}
+                    />
+                    <StatCard
+                        label={t('partners.dashboard.suppliers')}
+                        value={counts.suppliers}
+                        hint={t('partners.dashboard.suppliers_hint')}
+                        tone="violet"
+                        icon={<IconSupplier />}
+                        progress={sharePercent(counts.suppliers, counts.total)}
+                        progressLabel={t('partners.dashboard.share_label')}
+                    />
+                    <StatCard
+                        label={t('partners.dashboard.locations')}
+                        value={locations.active}
+                        hint={t('partners.dashboard.of_locations', { total: locations.total })}
+                        tone="amber"
+                        icon={<IconPin />}
+                        progress={sharePercent(locations.active, locations.total)}
+                        progressLabel={t('partners.dashboard.locations_ready')}
+                        meta={[{ label: t('partners.dashboard.inactive_short'), value: locations.inactive }]}
+                    />
+                    <StatCard
+                        label={t('partners.dashboard.needs_attention')}
+                        value={counts.blacklisted + counts.missing_contact + counts.inactive}
+                        hint={t('partners.dashboard.needs_attention_hint')}
+                        tone={counts.blacklisted > 0 ? 'rose' : counts.missing_contact > 0 ? 'amber' : 'slate'}
+                        icon={<IconAlert />}
+                        meta={[
+                            { label: t('partners.dashboard.blacklisted'), value: counts.blacklisted },
+                            { label: t('partners.dashboard.missing_contact'), value: counts.missing_contact },
+                            { label: t('partners.status.inactive'), value: counts.inactive },
+                        ]}
+                    />
+                </div>
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('partners.dashboard.companies')}</p>
-                    <p className="mt-2 text-2xl font-bold tabular-nums text-gray-900">{counts.companies}</p>
-                    <p className="mt-1 text-xs text-gray-500">{t('partners.dashboard.account_mix')}</p>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('partners.dashboard.companies')}</p>
+                        <p className="mt-3 text-3xl font-black tabular-nums text-slate-900 dark:text-white">{counts.companies}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('partners.dashboard.account_mix')}</p>
+                    </div>
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('partners.dashboard.individuals')}</p>
+                        <p className="mt-3 text-3xl font-black tabular-nums text-slate-900 dark:text-white">{counts.individuals}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('partners.dashboard.account_mix')}</p>
+                    </div>
+                    <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm sm:col-span-2">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('partners.dashboard.top_industries')}</p>
+                            <Link href={prefixedRoute('partners.index')} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 transition">
+                                {t('partners.dashboard.view_all')} →
+                            </Link>
+                        </div>
+                        {by_industry.length === 0 ? (
+                            <p className="text-xs text-slate-500">{t('partners.dashboard.no_industries')}</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {by_industry.map((row) => (
+                                    <div key={row.id}>
+                                        <div className="mb-1 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-semibold">
+                                            <span className="truncate">{row.name}</span>
+                                            <span className="tabular-nums font-bold text-slate-900 dark:text-white">{row.total}</span>
+                                        </div>
+                                        <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                            <div
+                                                className="h-full rounded-full bg-indigo-500"
+                                                style={{ width: `${Math.max(8, (row.total / industryMax) * 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('partners.dashboard.individuals')}</p>
-                    <p className="mt-2 text-2xl font-bold tabular-nums text-gray-900">{counts.individuals}</p>
-                    <p className="mt-1 text-xs text-gray-500">{t('partners.dashboard.account_mix')}</p>
-                </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:col-span-2">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t('partners.dashboard.top_industries')}</p>
-                        <Link href={prefixedRoute('partners.index')} className="text-xs font-medium text-indigo-600 hover:underline">
-                            {t('partners.dashboard.view_all')}
+
+                <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('partners.dashboard.recent')}</h3>
+                        <Link href={prefixedRoute('partners.index')} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 transition">
+                            {t('partners.dashboard.view_all')} →
                         </Link>
                     </div>
-                    {by_industry.length === 0 ? (
-                        <p className="text-sm text-gray-500">{t('partners.dashboard.no_industries')}</p>
-                    ) : (
-                        <div className="space-y-2">
-                            {by_industry.map((row) => (
-                                <div key={row.id}>
-                                    <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
-                                        <span className="truncate font-medium text-gray-800">{row.name}</span>
-                                        <span className="tabular-nums">{row.total}</span>
-                                    </div>
-                                    <div className="h-1.5 overflow-hidden rounded-full bg-indigo-100">
-                                        <div
-                                            className="h-full rounded-full bg-indigo-500"
-                                            style={{ width: `${Math.max(8, (row.total / industryMax) * 100)}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                    <h3 className="text-sm font-semibold text-gray-800">{t('partners.dashboard.recent')}</h3>
-                    <Link href={prefixedRoute('partners.index')} className="text-sm font-medium text-indigo-600 hover:underline">
-                        {t('partners.dashboard.view_all')}
-                    </Link>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('partners.index.columns.code')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('partners.index.columns.name')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('partners.index.columns.role')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('partners.index.columns.industry')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('partners.index.columns.status')}</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('partners.dashboard.added')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
-                            {recent.length === 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                                        {t('partners.index.empty_title')}
-                                    </td>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.index.columns.code')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.index.columns.name')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.index.columns.role')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.index.columns.industry')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.index.columns.status')}</th>
+                                    <th className="px-6 py-3.5 text-left font-bold uppercase tracking-wider text-slate-400">{t('partners.dashboard.added')}</th>
                                 </tr>
-                            ) : (
-                                recent.map((partner) => (
-                                    <tr key={partner.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3 font-mono text-xs text-gray-500">{partner.code}</td>
-                                        <td className="px-4 py-3">
-                                            <Link
-                                                href={prefixedRoute('partners.show', partner.id)}
-                                                className="font-medium text-indigo-600 hover:underline"
-                                            >
-                                                {partner.name}
-                                            </Link>
-                                            <div className="text-xs text-gray-500">
-                                                {t(`partners.account_type.${partner.account_type}`, undefined, partner.account_type)}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-wrap gap-1">
-                                                {partner.customer_rank > 0 && (
-                                                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                                                        {t('partners.role.customer')}
-                                                    </span>
-                                                )}
-                                                {partner.supplier_rank > 0 && (
-                                                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
-                                                        {t('partners.role.supplier')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600">{partner.industry ?? '—'}</td>
-                                        <td className="px-4 py-3">
-                                            <span
-                                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                    partner.status === 'active'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                }`}
-                                            >
-                                                {t(`partners.status.${partner.status}`, undefined, partner.status)}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 tabular-nums text-gray-600">
-                                            {partner.created_at
-                                                ? new Date(partner.created_at).toLocaleDateString('id-ID')
-                                                : '—'}
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-900 dark:text-white">
+                                {recent.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-10 text-center text-xs text-slate-500">
+                                            {t('partners.index.empty_title')}
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    recent.map((partner) => (
+                                        <tr key={partner.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                            <td className="px-6 py-4 font-mono text-[11px] text-slate-400">{partner.code}</td>
+                                            <td className="px-6 py-4">
+                                                <Link
+                                                    href={prefixedRoute('partners.show', partner.id)}
+                                                    className="font-bold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400 transition"
+                                                >
+                                                    {partner.name}
+                                                </Link>
+                                                <div className="text-[10px] font-semibold text-slate-400">
+                                                    {t(`partners.account_type.${partner.account_type}`, undefined, partner.account_type)}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {partner.customer_rank > 0 && (
+                                                        <span className="rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2.5 py-0.5 text-[10px] font-bold">
+                                                            {t('partners.role.customer')}
+                                                        </span>
+                                                    )}
+                                                    {partner.supplier_rank > 0 && (
+                                                        <span className="rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 px-2.5 py-0.5 text-[10px] font-bold">
+                                                            {t('partners.role.supplier')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500">{partner.industry ?? '—'}</td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                                        partner.status === 'active'
+                                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                                    }`}
+                                                >
+                                                    {t(`partners.status.${partner.status}`, undefined, partner.status)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 tabular-nums text-slate-500">
+                                                {partner.created_at
+                                                    ? new Date(partner.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+                                                    : '—'}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </DynamicLayout>
