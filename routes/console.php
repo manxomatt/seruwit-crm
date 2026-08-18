@@ -103,3 +103,11 @@ Schedule::call(function () {
             }
         });
 })->name('trial:notify-1day')->dailyAt('08:00')->onOneServer();
+
+// Release reseller commissions once their refund hold window has closed, making
+// them eligible for a payout batch. Runs after the payment-order sweep so a
+// same-day expiry is settled before commissions mature.
+Schedule::command('reseller:approve-commissions')
+    ->dailyAt('01:30')
+    ->withoutOverlapping()
+    ->onOneServer();

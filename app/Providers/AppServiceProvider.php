@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Actions\Auth\ResolvePostAuthDestination;
+use App\Events\PaymentOrderConfirmed;
+use App\Listeners\AccrueResellerCommission;
+use App\Listeners\PostSaasRevenue;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\UserRepository;
@@ -41,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureGuestRedirect();
         $this->configureEmailVerificationUrls();
         $this->configureDevelopmentMailGate();
+        $this->registerDomainEventListeners();
 
         Gate::define('manage-tenants', fn (User $user): bool => $user->isAdmin() || $user->hasRole('reseller'));
 
@@ -59,6 +63,19 @@ class AppServiceProvider extends ServiceProvider
         // Settings are a platform-wide definition, edited by platform staff only —
         // a tenant may still view them, but not add or change them.
         Gate::define('manage-settings', fn (User $user): bool => $user->isAdmin());
+    }
+
+    /**
+     * Wire application events to their listeners.
+     *
+     * Registered by hand because this application does not opt into Laravel's
+     * event discovery in bootstrap/app.php — a listener dropped into
+     * app/Listeners is otherwise never called.
+     */
+    private function registerDomainEventListeners(): void
+    {
+        Event::listen(PaymentOrderConfirmed::class, PostSaasRevenue::class);
+        Event::listen(PaymentOrderConfirmed::class, AccrueResellerCommission::class);
     }
 
     /**

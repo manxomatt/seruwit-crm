@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Jobs\PostSaasRevenueJob;
+use App\Events\PaymentOrderConfirmed;
 use App\Models\PaymentOrder;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -139,7 +139,11 @@ class PaymentOrderService
             return $subscription;
         });
 
-        PostSaasRevenueJob::dispatch($order->id);
+        // Fired after the transaction commits so listeners (revenue journal,
+        // reseller commission) only ever see a payment that is genuinely
+        // confirmed — and so a failure in either can never roll back the
+        // activation the tenant already paid for.
+        PaymentOrderConfirmed::dispatch($order);
 
         return $subscription;
     }

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -82,6 +84,26 @@ class CentralUser extends Authenticatable implements SyncMaster
         return $this->belongsToMany(Tenant::class, 'tenant_users', 'global_user_id', 'tenant_id', 'global_id')
             ->using(TenantPivot::class)
             ->withTimestamps();
+    }
+
+    /**
+     * Reseller programme profile, if this identity is enrolled as a reseller.
+     *
+     * @return HasOne<ResellerProfile, $this>
+     */
+    public function resellerProfile(): HasOne
+    {
+        return $this->hasOne(ResellerProfile::class, 'reseller_global_id', 'global_id');
+    }
+
+    /**
+     * Tenants this identity brought in as a reseller.
+     *
+     * @return HasMany<Tenant, $this>
+     */
+    public function resoldTenants(): HasMany
+    {
+        return $this->hasMany(Tenant::class, 'reseller_global_id', 'global_id');
     }
 
     public function getTenantModelName(): string

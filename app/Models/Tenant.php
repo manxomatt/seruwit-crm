@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Modules\PlanRepository;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
@@ -25,6 +26,8 @@ use Stancl\Tenancy\Database\Models\TenantPivot;
  * @property string|null $plan
  * @property bool|null $can_install_demo_data
  * @property string|null $reseller_global_id
+ * @property \Illuminate\Support\Carbon|null $reseller_attributed_at
+ * @property \Illuminate\Support\Carbon|null $reseller_attribution_ends_at
  */
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
@@ -36,6 +39,8 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'trial_ends_at' => 'datetime',
             'is_trial_expired' => 'boolean',
             'can_install_demo_data' => 'boolean',
+            'reseller_attributed_at' => 'datetime',
+            'reseller_attribution_ends_at' => 'datetime',
         ];
     }
 
@@ -94,6 +99,31 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     }
 
     /**
+     * Whether this tenant's payments still earn its reseller a commission.
+     *
+     * The end date is stamped on the tenant when it is attributed, so shortening
+     * or lifting the platform-wide attribution window never changes what an
+     * already-attributed tenant is worth.
+     */
+    public function hasActiveResellerAttribution(): bool
+    {
+        if ($this->reseller_global_id === null) {
+            return false;
+        }
+
+        return $this->reseller_attribution_ends_at === null
+            || $this->reseller_attribution_ends_at->isFuture();
+    }
+
+    /**
+     * @return HasMany<ResellerCommission, $this>
+     */
+    public function resellerCommissions(): HasMany
+    {
+        return $this->hasMany(ResellerCommission::class);
+    }
+
+    /**
      * The central user identities that are members of this tenant.
      *
      * @return BelongsToMany<CentralUser, $this>
@@ -138,6 +168,8 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'name',
             'status',
             'reseller_global_id',
+            'reseller_attributed_at',
+            'reseller_attribution_ends_at',
             'trial_ends_at',
             'is_trial_expired',
         ];
