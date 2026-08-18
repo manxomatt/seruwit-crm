@@ -60,6 +60,13 @@ class AppServiceProvider extends ServiceProvider
         // manage-modules (a workspace admin's own install/uninstall).
         Gate::define('manage-module-registry', fn (User $user): bool => $user->isAdmin());
 
+        // The reseller programme itself — rates, partner status, payouts — is
+        // platform staff's to run. A reseller may read their own earnings but
+        // never the rules that produce them.
+        Gate::define('manage-resellers', fn (User $user): bool => $user->isAdmin());
+
+        Gate::define('view-reseller-earnings', fn (User $user): bool => $user->isAdmin() || $user->hasRole('reseller'));
+
         // Settings are a platform-wide definition, edited by platform staff only —
         // a tenant may still view them, but not add or change them.
         Gate::define('manage-settings', fn (User $user): bool => $user->isAdmin());

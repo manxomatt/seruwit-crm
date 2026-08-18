@@ -78,6 +78,7 @@ return [
         'purchasing',
         'sales',
         'receivables',
+        'reseller',
         'payables',
         'accounting',
         'rental',

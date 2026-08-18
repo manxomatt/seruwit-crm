@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * A batch payment of approved commissions to one reseller.
@@ -81,5 +82,19 @@ class ResellerPayout extends Model
     public function reseller(): BelongsTo
     {
         return $this->belongsTo(CentralUser::class, 'reseller_global_id', 'global_id');
+    }
+
+    public function getProofUrlAttribute(): ?string
+    {
+        if (! $this->transfer_proof_path) {
+            return null;
+        }
+
+        return Storage::disk('payout_proofs')->url($this->transfer_proof_path);
+    }
+
+    public function isSettled(): bool
+    {
+        return in_array($this->status, [self::STATUS_PAID, self::STATUS_CANCELLED], true);
     }
 }

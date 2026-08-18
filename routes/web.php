@@ -6,6 +6,11 @@ use App\Http\Controllers\Central\WorkspaceController;
 use App\Http\Controllers\Module\ModuleRegistryController;
 use App\Http\Controllers\Module\PaymentOrderController;
 use App\Http\Controllers\Module\PlanController;
+use App\Http\Controllers\Module\ResellerCommissionController;
+use App\Http\Controllers\Module\ResellerCommissionRuleController;
+use App\Http\Controllers\Module\ResellerController;
+use App\Http\Controllers\Module\ResellerPayoutController;
+use App\Http\Controllers\Module\ResellerPortalController;
 use App\Http\Controllers\Module\SettingController as ModuleSettingController;
 use App\Http\Controllers\Module\TenantController;
 use App\Http\Controllers\PageController;
@@ -148,6 +153,50 @@ Route::domain($centralDomain)
         Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
         Route::patch('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
         Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
+    });
+
+/*
+| Reseller programme.
+|
+| Split in two on purpose. The portal is what a reseller sees of their own
+| earnings and is scoped to the authenticated identity, never to a route
+| parameter. Everything that sets the terms — rates, partner status, voiding a
+| commission — sits behind manage-resellers and is platform staff only.
+*/
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:view-reseller-earnings'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/reseller/dashboard', [ResellerPortalController::class, 'dashboard'])->name('reseller.dashboard');
+        Route::get('/reseller/commissions', [ResellerPortalController::class, 'commissions'])->name('reseller.commissions');
+        Route::get('/reseller/payouts', [ResellerPortalController::class, 'payouts'])->name('reseller.payouts');
+    });
+
+Route::domain($centralDomain)
+    ->middleware(['auth', 'can:manage-resellers'])
+    ->prefix('module')
+    ->name('module.')
+    ->group(function () {
+        Route::get('/resellers', [ResellerController::class, 'index'])->name('resellers.index');
+        Route::get('/reseller-commissions', [ResellerCommissionController::class, 'index'])->name('reseller-commissions.index');
+        Route::post('/reseller-commissions/{commission}/void', [ResellerCommissionController::class, 'void'])->name('reseller-commissions.void');
+
+        Route::get('/reseller-payouts', [ResellerPayoutController::class, 'index'])->name('reseller-payouts.index');
+        Route::post('/reseller-payouts', [ResellerPayoutController::class, 'store'])->name('reseller-payouts.store');
+        Route::get('/reseller-payouts/{payout}', [ResellerPayoutController::class, 'show'])->name('reseller-payouts.show');
+        Route::post('/reseller-payouts/{payout}/approve', [ResellerPayoutController::class, 'approve'])->name('reseller-payouts.approve');
+        Route::post('/reseller-payouts/{payout}/pay', [ResellerPayoutController::class, 'pay'])->name('reseller-payouts.pay');
+        Route::post('/reseller-payouts/{payout}/cancel', [ResellerPayoutController::class, 'cancel'])->name('reseller-payouts.cancel');
+
+        Route::post('/reseller-rules', [ResellerCommissionRuleController::class, 'store'])->name('reseller-rules.store');
+        Route::patch('/reseller-rules/{rule}', [ResellerCommissionRuleController::class, 'update'])->name('reseller-rules.update');
+        Route::delete('/reseller-rules/{rule}', [ResellerCommissionRuleController::class, 'destroy'])->name('reseller-rules.destroy');
+
+        // Registered last: {reseller} is a bare segment and would otherwise
+        // swallow /resellers/... siblings added later.
+        Route::get('/resellers/{reseller}', [ResellerController::class, 'show'])->name('resellers.show');
+        Route::patch('/resellers/{reseller}', [ResellerController::class, 'update'])->name('resellers.update');
     });
 
 /*

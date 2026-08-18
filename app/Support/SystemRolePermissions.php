@@ -49,7 +49,7 @@ class SystemRolePermissions
                 'name' => 'Reseller',
                 'description' => 'Can manage tenants they own on the central control plane',
                 'is_system' => true,
-                'dashboard_path' => '/module/tenants',
+                'dashboard_path' => '/module/reseller/dashboard',
             ],
             'warehouse_head' => [
                 'slug' => 'warehouse_head',

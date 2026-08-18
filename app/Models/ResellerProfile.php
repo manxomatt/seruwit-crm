@@ -107,6 +107,41 @@ class ResellerProfile extends Model
     }
 
     /**
+     * The profile for a reseller, created on first use.
+     *
+     * Enrolment has no ceremony: holding the role is what makes someone a
+     * reseller, and the profile is just where their settings live once anyone
+     * asks for them.
+     */
+    public static function ensureFor(string $resellerGlobalId): self
+    {
+        return static::query()->firstOrCreate(
+            ['reseller_global_id' => $resellerGlobalId],
+            ['referral_code' => static::generateReferralCode()],
+        );
+    }
+
+    /**
+     * The public sign-up link that attributes a new tenant to this reseller.
+     */
+    public function referralUrl(): string
+    {
+        return rtrim((string) config('app.url'), '/').'/register?ref='.$this->referral_code;
+    }
+
+    /**
+     * Payout account shown to anyone but its owner or platform staff.
+     */
+    public function maskedAccountNumber(): ?string
+    {
+        if (blank($this->payout_account_number)) {
+            return null;
+        }
+
+        return str_repeat('•', 4).' '.substr($this->payout_account_number, -4);
+    }
+
+    /**
      * A short, human-quotable referral code. Collisions are resolved by
      * retrying rather than by widening the code, so links stay short.
      */

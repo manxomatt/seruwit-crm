@@ -485,12 +485,19 @@ Semua feature test, di `tests/Feature/Reseller/`, mengikuti pola `tests/Feature/
 
 ## 16. Roadmap Implementasi
 
-| Fase | Lingkup | Hasil |
-|------|---------|-------|
-| **1 — Ledger** | Migrasi 4 tabel + 2 kolom, model, `config/reseller.php`, event `PaymentOrderConfirmed`, resolver + `AccrueResellerCommissionJob`, seeder rule global | Komisi tercatat otomatis dari setiap pembayaran terkonfirmasi |
-| **2 — Visibilitas** | Portal reseller (dashboard, daftar komisi), admin: daftar reseller + antrean komisi, `ResellerProfile` + kode referral | Reseller bisa melihat pendapatannya; admin bisa mengatur tarif |
-| **3 — Payout** | `ResellerPayoutService`, batch payout + persetujuan + bukti transfer, cron pematangan hold, notifikasi | Fee benar-benar terbayar dan terlacak |
-| **4 — Integrasi** | `PostResellerCommissionJob` ke Accounting, potong pajak, ekspor CSV, atribusi `?ref=` self-serve | Pembukuan rapi & akuisisi mandiri |
-| **5 — Opsional** | Tier volume, multi-level, kupon diskon milik reseller, halaman landing per reseller | Skala program |
+| Fase | Status | Lingkup | Hasil |
+|------|--------|---------|-------|
+| **1 — Ledger** | ✅ Selesai | Migrasi 4 tabel + 2 kolom, model, `config/reseller.php`, event `PaymentOrderConfirmed`, resolver + `AccrueResellerCommissionJob`, command `reseller:approve-commissions` | Komisi tercatat otomatis dari setiap pembayaran terkonfirmasi |
+| **2 — Visibilitas** | ✅ Selesai | Portal reseller (dashboard, daftar komisi), admin: daftar reseller, detail + CRUD aturan, antrean komisi + void, `ResellerProfile` + kode referral | Reseller bisa melihat pendapatannya; admin bisa mengatur tarif |
+| **3 — Payout** | Belum | `ResellerPayoutService`, batch payout + persetujuan + bukti transfer, notifikasi | Fee benar-benar terbayar dan terlacak |
+| **4 — Integrasi** | Belum | `PostResellerCommissionJob` ke Accounting, potong pajak, ekspor CSV, atribusi `?ref=` self-serve | Pembukuan rapi & akuisisi mandiri |
+| **5 — Opsional** | Belum | Tier volume, multi-level, kupon diskon milik reseller, halaman landing per reseller | Skala program |
+
+### Catatan implementasi fase 1–2
+
+- Tarif default platform hidup di `config/reseller.php`, bukan sebagai baris rule di database — presedensi #7 sudah menjadi fallback yang cukup, dan menyeed rule global hanya akan menduplikasi angka yang sama di dua tempat.
+- Aplikasi ini tidak mengaktifkan event discovery di `bootstrap/app.php`, jadi listener `PostSaasRevenue` dan `AccrueResellerCommission` didaftarkan eksplisit di `AppServiceProvider`.
+- Scope aturan komisi (reseller & paket) tidak bisa diubah lewat edit; controller membuangnya. Memindahkan aturan ke reseller lain diam-diam akan menulis ulang perjanjian yang sedang berjalan.
+- Profil reseller dibuat saat pertama dibutuhkan (`ResellerProfile::ensureFor`) — memegang role sudah cukup untuk menjadi reseller, tanpa langkah pendaftaran terpisah.
 
 Fase 1 sudah menghasilkan sistem yang benar secara finansial meski pembayarannya masih manual di luar aplikasi — ini urutan yang paling aman: catat dulu dengan akurat, otomatiskan pembayarannya belakangan.

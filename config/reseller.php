@@ -39,6 +39,17 @@ return [
 
     /*
      |--------------------------------------------------------------------------
+     | Minimum Payout
+     |--------------------------------------------------------------------------
+     | Platform-wide floor for a payout batch. A reseller whose approved
+     | commissions do not reach it simply rolls over into the next period —
+     | nothing is lost, it is just not worth a transfer fee yet. A per-reseller
+     | value on the profile overrides this.
+     */
+    'minimum_payout' => (float) env('RESELLER_MINIMUM_PAYOUT', 100000),
+
+    /*
+     |--------------------------------------------------------------------------
      | Attribution Lifetime
      |--------------------------------------------------------------------------
      | Months a tenant stays attributed to the reseller that brought it in.

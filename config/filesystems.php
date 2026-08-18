@@ -47,6 +47,19 @@ return [
             'report' => false,
         ],
 
+        // Evidence of money going out to resellers. Deliberately its own disk:
+        // payout proofs are our records of what we paid, and mixing them with
+        // tenants' incoming transfer proofs makes an audit harder than it needs
+        // to be.
+        'payout_proofs' => [
+            'driver' => 'local',
+            'root' => storage_path('app/payout-proofs'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/payout-proofs',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         'payment_proofs' => [
             'driver' => 'local',
             'root' => storage_path('app/payment-proofs'),
