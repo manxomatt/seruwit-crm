@@ -54,6 +54,7 @@ return [
         'actions' => 'Actions',
         'empty' => 'No commissions recorded yet.',
         'recent' => 'Recent Commissions',
+        'export' => 'Export CSV',
         'view_all' => 'View all',
     ],
 

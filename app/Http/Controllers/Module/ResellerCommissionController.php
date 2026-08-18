@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The platform-wide commission queue: what is accruing, what is ready to pay,
@@ -64,6 +65,20 @@ class ResellerCommissionController extends Controller
             ]])->all(),
             'filters' => ['status' => $status ?: null],
         ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        Gate::authorize('manage-resellers');
+
+        $query = ResellerCommission::query();
+        $status = $request->input('status');
+
+        if (in_array($status, [...ResellerCommission::liveStatuses(), ResellerCommission::STATUS_VOID], true)) {
+            $query->where('status', $status);
+        }
+
+        return $this->earnings->csvResponse($query, 'komisi-reseller-'.now()->format('Y-m-d').'.csv');
     }
 
     public function void(Request $request, ResellerCommission $commission): RedirectResponse

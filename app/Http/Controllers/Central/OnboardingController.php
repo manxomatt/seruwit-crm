@@ -10,6 +10,7 @@ use App\Jobs\ProvisionSelfServeTenantJob;
 use App\Models\OnboardingSession;
 use App\Models\Setting;
 use App\Support\Onboarding\SelfServeProvisioningPlan;
+use App\Support\Reseller\ResellerAttribution;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -101,6 +102,10 @@ class OnboardingController extends Controller
                 'verticals' => $verticals,
                 'status' => OnboardingSession::STATUS_PENDING,
                 'tenant_id' => $reuseTenantId,
+                // Resolved here, while the request still has the referral
+                // cookie; the provisioning job runs without one.
+                'reseller_global_id' => $existing?->reseller_global_id
+                    ?? ResellerAttribution::resolveFromRequest($request),
                 'error_message' => null,
             ],
         );

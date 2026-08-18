@@ -54,6 +54,7 @@ return [
         'actions' => 'Aksi',
         'empty' => 'Belum ada komisi tercatat.',
         'recent' => 'Komisi Terbaru',
+        'export' => 'Ekspor CSV',
         'view_all' => 'Lihat semua',
     ],
 

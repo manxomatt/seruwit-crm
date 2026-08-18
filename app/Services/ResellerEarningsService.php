@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Read-side aggregates over the commission ledger.
@@ -102,6 +103,56 @@ class ResellerEarningsService
                 ];
             })
             ->all();
+    }
+
+    /**
+     * Stream a commission query out as CSV.
+     *
+     * Streamed and chunked rather than collected: a reseller with a few years
+     * of history should not have to fit their whole ledger in memory to
+     * download it.
+     *
+     * @param  Builder<ResellerCommission>  $query
+     */
+    public function csvResponse(Builder $query, string $filename): StreamedResponse
+    {
+        $columns = [
+            'date', 'reseller', 'tenant', 'plan', 'event', 'occurrence',
+            'base_amount', 'rate_type', 'rate_value', 'commission_amount',
+            'tax_withheld', 'net_amount', 'currency', 'status', 'hold_until', 'paid_at',
+        ];
+
+        return response()->streamDownload(function () use ($query, $columns): void {
+            $handle = fopen('php://output', 'wb');
+            fputcsv($handle, $columns);
+
+            $query->with(['tenant', 'plan:id,name', 'reseller:global_id,name'])
+                ->orderBy('id')
+                ->chunk(500, function ($commissions) use ($handle): void {
+                    foreach ($commissions as $commission) {
+                        fputcsv($handle, [
+                            $commission->created_at?->toDateString(),
+                            $commission->reseller?->name,
+                            $commission->tenant?->name ?? $commission->tenant_id,
+                            $commission->plan?->name,
+                            $commission->event,
+                            $commission->occurrence,
+                            $commission->base_amount,
+                            $commission->rate_type,
+                            $commission->rate_value,
+                            $commission->commission_amount,
+                            $commission->tax_withheld_amount,
+                            $commission->net_amount,
+                            $commission->currency,
+                            $commission->status,
+                            $commission->hold_until?->toDateString(),
+                            $commission->paid_at?->toDateString(),
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
     /**

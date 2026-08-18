@@ -79,7 +79,17 @@ export default function Commissions({ commissions, summary, filters }: Props): J
                         ))}
                     </div>
 
-                    <form onSubmit={handleSearch} className="ml-auto">
+                    <a
+                        href={route('module.reseller.commissions.export', {
+                            status: filters.status ?? undefined,
+                            search: filters.search ?? undefined,
+                        })}
+                        className="ml-auto rounded-xl border border-slate-200 px-4 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                    >
+                        {t('reseller.table.export')}
+                    </a>
+
+                    <form onSubmit={handleSearch}>
                         <TextInput
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}

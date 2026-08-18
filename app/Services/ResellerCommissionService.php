@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Jobs\PostResellerCommissionJob;
 use App\Models\PaymentOrder;
 use App\Models\ResellerCommission;
+use App\Models\ResellerProfile;
 use App\Models\Tenant;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Config;
@@ -57,9 +59,10 @@ class ResellerCommissionService
 
         $confirmedAt = $order->confirmed_at ?? now();
         $holdDays = (int) Config::get('reseller.hold_days', 7);
+        $tax = $this->withholdingFor($quote->resellerGlobalId, $quote->commissionAmount);
 
         try {
-            return DB::connection($central)->transaction(fn () => ResellerCommission::on($central)->create([
+            $commission = DB::connection($central)->transaction(fn () => ResellerCommission::on($central)->create([
                 'reseller_global_id' => $quote->resellerGlobalId,
                 'tenant_id' => $order->tenant_id,
                 'payment_order_id' => $order->id,
@@ -71,8 +74,8 @@ class ResellerCommissionService
                 'rate_type' => $quote->rateType,
                 'rate_value' => $quote->rateValue,
                 'commission_amount' => $quote->commissionAmount,
-                'tax_withheld_amount' => 0,
-                'net_amount' => $quote->commissionAmount,
+                'tax_withheld_amount' => $tax,
+                'net_amount' => round($quote->commissionAmount - $tax, 2),
                 'currency' => $order->currency ?? 'IDR',
                 'occurrence' => $quote->occurrence,
                 'status' => ResellerCommission::STATUS_PENDING,
@@ -83,6 +86,34 @@ class ResellerCommissionService
                 ->where('payment_order_id', $order->id)
                 ->first();
         }
+
+        PostResellerCommissionJob::dispatch($commission->id);
+
+        return $commission;
+    }
+
+    /**
+     * Tax withheld from this commission at source.
+     *
+     * A partner without an NPWP on file is withheld at the higher statutory
+     * rate — that is the rule the number encodes, so it is read from the
+     * profile rather than passed in by a caller who might guess.
+     */
+    private function withholdingFor(string $resellerGlobalId, float $commissionAmount): float
+    {
+        $config = Config::get('reseller.withholding', []);
+
+        if (! ($config['enabled'] ?? false)) {
+            return 0.0;
+        }
+
+        $hasNpwp = filled(
+            ResellerProfile::query()->where('reseller_global_id', $resellerGlobalId)->value('tax_id')
+        );
+
+        $rate = (float) ($hasNpwp ? ($config['with_npwp'] ?? 0) : ($config['without_npwp'] ?? 0));
+
+        return round($commissionAmount * $rate / 100, 2);
     }
 
     /**
@@ -104,6 +135,9 @@ class ResellerCommissionService
             'voided_at' => now(),
             'void_reason' => $reason,
         ]);
+
+        // Reverse the accrual rather than leaving the expense on the books.
+        PostResellerCommissionJob::dispatch($commission->id, reversal: true);
 
         return true;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\PostResellerPayoutJob;
 use App\Models\ResellerCommission;
 use App\Models\ResellerPayout;
 use App\Models\ResellerProfile;
@@ -152,6 +153,8 @@ class ResellerPayoutService
                     'paid_at' => now(),
                 ]);
         });
+
+        PostResellerPayoutJob::dispatch($payout->id);
 
         $reseller = User::on($central)->where('global_id', $payout->reseller_global_id)->first();
         $reseller?->notify(new ResellerPayoutPaidNotification($payout->fresh()));

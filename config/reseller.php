@@ -50,6 +50,21 @@ return [
 
     /*
      |--------------------------------------------------------------------------
+     | Withholding Tax
+     |--------------------------------------------------------------------------
+     | Indonesian PPh on reseller fees. The rate depends on whether the partner
+     | has an NPWP on file; without one the statutory rate is higher. Computed
+     | and frozen at accrual, so a later NPWP change never re-prices fees that
+     | were already earned.
+     */
+    'withholding' => [
+        'enabled' => (bool) env('RESELLER_WITHHOLDING_ENABLED', false),
+        'with_npwp' => (float) env('RESELLER_WITHHOLDING_WITH_NPWP', 2),
+        'without_npwp' => (float) env('RESELLER_WITHHOLDING_WITHOUT_NPWP', 4),
+    ],
+
+    /*
+     |--------------------------------------------------------------------------
      | Attribution Lifetime
      |--------------------------------------------------------------------------
      | Months a tenant stays attributed to the reseller that brought it in.

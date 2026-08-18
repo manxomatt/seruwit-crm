@@ -91,7 +91,13 @@ export default function Commissions({ commissions, totals, filters }: Props): JS
                     />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <a
+                        href={route('module.reseller-commissions.export', { status: filters.status ?? undefined })}
+                        className="order-last ml-auto rounded-xl border border-slate-200 px-4 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                    >
+                        {t('reseller.table.export')}
+                    </a>
                     <button
                         type="button"
                         onClick={() => filterBy(null)}

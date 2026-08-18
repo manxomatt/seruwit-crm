@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * A reseller's own view of the programme.
@@ -54,6 +55,22 @@ class ResellerPortalController extends Controller
                 'minimum_payout' => (float) $profile->minimum_payout,
             ],
         ]);
+    }
+
+    /**
+     * The same rows the commission screen shows, as a CSV. Scoped identically,
+     * so an export can never widen what a reseller can see.
+     */
+    public function exportCommissions(Request $request): StreamedResponse
+    {
+        Gate::authorize('view-reseller-earnings');
+
+        $globalId = (string) $request->user()->global_id;
+
+        return $this->earnings->csvResponse(
+            $this->earnings->ledgerQuery($globalId),
+            'komisi-'.now()->format('Y-m-d').'.csv',
+        );
     }
 
     /**

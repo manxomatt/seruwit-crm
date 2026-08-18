@@ -108,6 +108,7 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             companyName: $session->company_name,
             subdomain: $session->subdomain,
             owner: $owner,
+            resellerGlobalId: $session->reseller_global_id,
             setup: [
                 'session_id' => $session->id,
                 'vertical' => $vertical,

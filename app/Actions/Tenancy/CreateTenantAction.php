@@ -4,6 +4,7 @@ namespace App\Actions\Tenancy;
 
 use App\Models\CentralUser;
 use App\Models\Tenant;
+use App\Support\Reseller\ResellerAttribution;
 use App\Support\SystemMode;
 
 class CreateTenantAction
@@ -32,6 +33,13 @@ class CreateTenantAction
         $attributes = [
             'name' => $companyName,
             'reseller_global_id' => $resellerGlobalId,
+            // Stamped at creation so the earning window is measured from the
+            // same point however the tenant arrived — reseller panel or
+            // referral link.
+            'reseller_attributed_at' => $resellerGlobalId !== null ? now() : null,
+            'reseller_attribution_ends_at' => $resellerGlobalId !== null
+                ? ResellerAttribution::endsAt()
+                : null,
             'can_install_demo_data' => SystemMode::isDevelopment(),
             'provision' => array_merge(['owner_global_id' => $owner->global_id], $setup),
         ];

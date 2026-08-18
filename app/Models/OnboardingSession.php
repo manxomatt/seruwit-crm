@@ -33,6 +33,7 @@ class OnboardingSession extends Model
         'verticals',
         'status',
         'tenant_id',
+        'reseller_global_id',
         'error_message',
     ];
 

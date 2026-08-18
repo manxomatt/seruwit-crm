@@ -171,6 +171,7 @@ Route::domain($centralDomain)
         Route::get('/reseller/dashboard', [ResellerPortalController::class, 'dashboard'])->name('reseller.dashboard');
         Route::get('/reseller/commissions', [ResellerPortalController::class, 'commissions'])->name('reseller.commissions');
         Route::get('/reseller/payouts', [ResellerPortalController::class, 'payouts'])->name('reseller.payouts');
+        Route::get('/reseller/commissions/export', [ResellerPortalController::class, 'exportCommissions'])->name('reseller.commissions.export');
     });
 
 Route::domain($centralDomain)
@@ -180,6 +181,7 @@ Route::domain($centralDomain)
     ->group(function () {
         Route::get('/resellers', [ResellerController::class, 'index'])->name('resellers.index');
         Route::get('/reseller-commissions', [ResellerCommissionController::class, 'index'])->name('reseller-commissions.index');
+        Route::get('/reseller-commissions/export', [ResellerCommissionController::class, 'export'])->name('reseller-commissions.export');
         Route::post('/reseller-commissions/{commission}/void', [ResellerCommissionController::class, 'void'])->name('reseller-commissions.void');
 
         Route::get('/reseller-payouts', [ResellerPayoutController::class, 'index'])->name('reseller-payouts.index');
