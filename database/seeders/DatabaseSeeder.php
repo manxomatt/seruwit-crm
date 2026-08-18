@@ -29,6 +29,10 @@ class DatabaseSeeder extends Seeder
             // carry nothing but the plan key.
             PlanSeeder::class,
             CreateCentralLandingPageSeeder::class,
+            CreateCentralLandingPageBrightSeeder::class,
+            CreateRentalManagementLandingSeeder::class,
+            CreateSeruwitBizLandingSeeder::class,
+            CreateSeruwitBizAltLandingSeeder::class,
         ]);
 
         // Create admin user

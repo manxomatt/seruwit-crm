@@ -286,7 +286,7 @@ export default function Settings({ config, sources, defaultBaseUrl, maxSources, 
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <p className="text-sm font-medium text-gray-900">{source.name}</p>
                                                 <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                                                    {t(`tracking.providers.${source.provider}`, undefined, source.provider)}
+                                                    {source.provider ? t(`tracking.providers.${source.provider}`, undefined, source.provider) : '-'}
                                                 </span>
                                                 <span
                                                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${

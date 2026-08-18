@@ -86,4 +86,57 @@ class TrackingGeofenceTest extends TestCase
 
         $this->assertDatabaseMissing('tracking_geofences', ['id' => $geofence->id]);
     }
+
+    public function test_can_create_and_update_polygon_geofence(): void
+    {
+        $user = $this->createAdminUser();
+        TrackingConfig::factory()->create();
+
+        $coords = [
+            [-6.2000000, 106.8160000],
+            [-6.2100000, 106.8200000],
+            [-6.2150000, 106.8100000],
+        ];
+
+        $this->actingAs($user)
+            ->post(route('module.tracking.geofences.store'), [
+                'name' => 'Zona Khusus SCBD',
+                'type' => 'polygon',
+                'coordinates' => $coords,
+                'alert_on' => 'exit',
+                'active_rentals_only' => true,
+                'is_active' => true,
+            ])
+            ->assertRedirect();
+
+        $geofence = TrackingGeofence::query()->first();
+        $this->assertNotNull($geofence);
+        $this->assertSame('Zona Khusus SCBD', $geofence->name);
+        $this->assertSame('polygon', $geofence->type);
+        $this->assertCount(3, $geofence->coordinates);
+        $this->assertNotNull($geofence->latitude);
+        $this->assertNotNull($geofence->longitude);
+        $this->assertNull($geofence->radius_m);
+        $this->assertTrue($geofence->isPolygon());
+    }
+
+    public function test_polygon_geofence_requires_at_least_three_coordinates(): void
+    {
+        $user = $this->createAdminUser();
+        TrackingConfig::factory()->create();
+
+        $coords = [
+            [-6.2000000, 106.8160000],
+            [-6.2100000, 106.8200000],
+        ];
+
+        $this->actingAs($user)
+            ->post(route('module.tracking.geofences.store'), [
+                'name' => 'Invalid Zone',
+                'type' => 'polygon',
+                'coordinates' => $coords,
+                'alert_on' => 'exit',
+            ])
+            ->assertSessionHasErrors('coordinates');
+    }
 }

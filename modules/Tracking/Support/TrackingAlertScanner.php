@@ -168,13 +168,19 @@ class TrackingAlertScanner
                 }
             }
 
-            $inside = Geo::isWithin(
-                $position->latitude,
-                $position->longitude,
-                (float) $geofence->latitude,
-                (float) $geofence->longitude,
-                (float) $geofence->radius_m,
-            );
+            $inside = ($geofence->type === TrackingGeofence::TYPE_POLYGON && ! empty($geofence->coordinates))
+                ? Geo::isInsidePolygon(
+                    $position->latitude,
+                    $position->longitude,
+                    (array) $geofence->coordinates,
+                )
+                : Geo::isWithin(
+                    $position->latitude,
+                    $position->longitude,
+                    (float) $geofence->latitude,
+                    (float) $geofence->longitude,
+                    (float) ($geofence->radius_m ?? 500),
+                );
 
             $key = 'geofence:'.$geofence->id.':vehicle:'.$vehicleId;
             $state = TrackingAlertState::query()->firstOrNew(['alert_key' => $key], [

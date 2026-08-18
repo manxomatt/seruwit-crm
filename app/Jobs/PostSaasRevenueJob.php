@@ -59,9 +59,11 @@ class PostSaasRevenueJob implements ShouldQueue
         $operatorTenant = Tenant::query()->find($operatorTenantId);
 
         if (! $operatorTenant) {
-            Log::warning('PostSaasRevenueJob: operator tenant not found.', [
+            Log::warning('PostSaasRevenueJob: operator tenant not found. Falling back to Central.', [
                 'operator_tenant_id' => $operatorTenantId,
             ]);
+
+            $this->postEntry($order);
 
             return;
         }
@@ -100,7 +102,11 @@ class PostSaasRevenueJob implements ShouldQueue
         $revenueAccount = Account::query()
             ->where('system_role', 'saas_revenue')
             ->where('is_active', true)
-            ->first();
+            ->first()
+            ?? Account::query()
+                ->where('system_role', 'sales_revenue')
+                ->where('is_active', true)
+                ->first();
 
         if (! $bankAccount || ! $revenueAccount) {
             Log::warning('PostSaasRevenueJob: Required accounts not found in operator tenant.', [
@@ -112,7 +118,7 @@ class PostSaasRevenueJob implements ShouldQueue
             return;
         }
 
-        $period = $this->resolvePeriod();
+        $period = $this->resolvePeriod($order);
 
         if ($period === null || ! $period->allowsPosting()) {
             Log::warning('PostSaasRevenueJob: Current fiscal period does not allow posting.', [
@@ -126,6 +132,7 @@ class PostSaasRevenueJob implements ShouldQueue
         $amount = round((float) $order->amount, 2);
         $uniqueCode = (int) $order->unique_code;
         $totalAmount = round((float) $order->total_amount, 2);
+        $entryDate = $order->confirmed_at ? $order->confirmed_at->toDateString() : now()->toDateString();
 
         $memo = sprintf(
             'Subscription %s — %s (%s)',
@@ -134,11 +141,11 @@ class PostSaasRevenueJob implements ShouldQueue
             $order->type === 'renew' ? 'perpanjang' : 'aktivasi',
         );
 
-        DB::transaction(function () use ($order, $period, $bankAccount, $revenueAccount, $amount, $uniqueCode, $totalAmount, $memo): void {
+        DB::transaction(function () use ($order, $period, $bankAccount, $revenueAccount, $amount, $uniqueCode, $totalAmount, $entryDate, $memo): void {
             $entry = JournalEntry::query()->create([
                 'number' => JournalEntry::nextNumber(),
                 'fiscal_period_id' => $period->id,
-                'entry_date' => now()->toDateString(),
+                'entry_date' => $entryDate,
                 'type' => JournalEntry::TYPE_AUTO,
                 'status' => JournalEntry::STATUS_POSTED,
                 'source_type' => PaymentOrder::class,
@@ -197,10 +204,12 @@ class PostSaasRevenueJob implements ShouldQueue
         });
     }
 
-    private function resolvePeriod(): ?FiscalPeriod
+    private function resolvePeriod(?PaymentOrder $order = null): ?FiscalPeriod
     {
         try {
-            return app(FiscalCalendarService::class)->periodForDate(now());
+            $date = $order?->confirmed_at ? \Carbon\Carbon::parse($order->confirmed_at) : now();
+
+            return app(FiscalCalendarService::class)->periodForDate($date);
         } catch (\Throwable $e) {
             Log::warning('PostSaasRevenueJob: Could not resolve fiscal period.', [
                 'error' => $e->getMessage(),

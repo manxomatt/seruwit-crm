@@ -73,6 +73,8 @@ return [
         'traccar' => 'Traccar (generic)',
         'sky_track' => 'Sky Track (custom)',
         'gps_server' => 'GPS-Server',
+        'none' => 'Not configured',
+        'null' => 'Not configured',
     ],
 
     'auth_types' => [
@@ -107,6 +109,9 @@ return [
         'from' => 'From',
         'to' => 'To',
         'geofence_name' => 'Zone name',
+        'geofence_type' => 'Zone type',
+        'type_circle' => 'Circle (Radial)',
+        'type_polygon' => 'Polygon (Custom shape)',
         'radius_m' => 'Radius (m)',
         'alert_on' => 'Alert when',
         'active_rentals_only' => 'Active rentals only',
@@ -198,7 +203,8 @@ return [
             'edit' => 'Edit geofence',
             'delete_title' => 'Delete geofence',
             'delete_confirm' => 'Delete zone ":name"? Alerts for this zone will stop.',
-            'summary' => ':radius m · alert on :alert · :scope',
+            'summary' => 'Circle :radius m · alert on :alert · :scope',
+            'polygon_summary' => 'Polygon (:points points) · alert on :alert · :scope',
             'active_rentals_only' => 'active rentals only',
             'all_vehicles' => 'all vehicles',
         ],

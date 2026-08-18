@@ -167,4 +167,37 @@ class PaymentOrderTest extends TestCase
         $subscription->refresh();
         $this->assertTrue($subscription->ends_at->gt(now()->addDays(30)));
     }
+
+    public function test_confirm_creates_journal_entry(): void
+    {
+        $tenant = $this->createTenantRecord(['id' => 'journal-post-test']);
+        $plan = Plan::query()->where('key', 'basic')->firstOrFail();
+        $admin = User::factory()->create();
+
+        $service = new PaymentOrderService;
+        $order = $service->createOrder($tenant, $plan, 'activate');
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('proof.jpg', 100);
+        $service->submitProof($order, $file);
+
+        $service->confirm($order, $admin);
+
+        // Run the dispatched job
+        (new \App\Jobs\PostSaasRevenueJob($order->id))->handle();
+
+        $entry = \Modules\Accounting\Models\JournalEntry::query()
+            ->where('source_type', \App\Models\PaymentOrder::class)
+            ->where('source_id', $order->id)
+            ->with('lines.account')
+            ->first();
+
+        $this->assertNotNull($entry);
+        $this->assertSame(\Modules\Accounting\Models\JournalEntry::STATUS_POSTED, $entry->status);
+        $this->assertSame('saas.subscription.confirmed', $entry->event);
+
+        $totalDebit = (float) $entry->lines->sum('debit');
+        $totalCredit = (float) $entry->lines->sum('credit');
+        $this->assertEqualsWithDelta($totalDebit, $totalCredit, 0.001);
+        $this->assertEqualsWithDelta((float) $order->total_amount, $totalDebit, 0.001);
+    }
 }

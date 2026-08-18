@@ -99,4 +99,63 @@ class NotificationCenterTest extends TestCase
         $this->assertTrue($ids->contains($viewer->id));
         $this->assertFalse($ids->contains($outsider->id));
     }
+
+    public function test_a_notification_can_be_marked_unread(): void
+    {
+        $user = $this->createAdminUser();
+        $user->notify(new GenericNotification('Test Title', 'Test Body'));
+        $notification = $user->notifications()->first();
+        $notification->markAsRead();
+        $this->assertNotNull($notification->fresh()->read_at);
+
+        $this->actingAs($user)->post(route('module.notifications.unread', $notification->id));
+        $this->assertNull($notification->fresh()->read_at);
+    }
+
+    public function test_a_notification_can_be_deleted(): void
+    {
+        $user = $this->createAdminUser();
+        $user->notify(new GenericNotification('Title 1', 'Body 1'));
+        $user->notify(new GenericNotification('Title 2', 'Body 2'));
+        $notification = $user->notifications()->first();
+
+        $this->actingAs($user)->delete(route('module.notifications.destroy', $notification->id));
+        $this->assertSame(1, $user->notifications()->count());
+    }
+
+    public function test_all_notifications_can_be_deleted(): void
+    {
+        $user = $this->createAdminUser();
+        $user->notify(new GenericNotification('Title 1', 'Body 1'));
+        $user->notify(new GenericNotification('Title 2', 'Body 2'));
+
+        $this->actingAs($user)->delete(route('module.notifications.destroy-all'));
+        $this->assertSame(0, $user->notifications()->count());
+    }
+
+    public function test_notifications_can_be_filtered_by_tab_and_search(): void
+    {
+        $user = $this->createAdminUser();
+        $user->notify(new GenericNotification('Invoice Overdue', 'Invoice #101 is overdue'));
+        $user->notify(new GenericNotification('GPS Overspeed', 'Vehicle B overspeed'));
+        $user->notifications()->first()->markAsRead();
+
+        $this->actingAs($user)
+            ->get(route('module.notifications.index', ['tab' => 'unread']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Notifications/Index')
+                ->has('notifications.data', 1)
+                ->where('counts.unread', 1)
+                ->where('counts.total', 2)
+            );
+
+        $this->actingAs($user)
+            ->get(route('module.notifications.index', ['search' => 'Invoice']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Notifications/Index')
+                ->has('notifications.data', 1)
+            );
+    }
 }

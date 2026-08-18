@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class TrackingGeofence extends Model
 {
+    public const TYPE_CIRCLE = 'circle';
+
+    public const TYPE_POLYGON = 'polygon';
+
     public const ALERT_EXIT = 'exit';
 
     public const ALERT_ENTER = 'enter';
@@ -15,6 +19,8 @@ class TrackingGeofence extends Model
     /** @var list<string> */
     protected $fillable = [
         'name',
+        'type',
+        'coordinates',
         'latitude',
         'longitude',
         'radius_m',
@@ -27,6 +33,8 @@ class TrackingGeofence extends Model
     protected function casts(): array
     {
         return [
+            'type' => 'string',
+            'coordinates' => 'array',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'radius_m' => 'integer',
@@ -38,8 +46,26 @@ class TrackingGeofence extends Model
     /**
      * @return list<string>
      */
+    public static function types(): array
+    {
+        return [self::TYPE_CIRCLE, self::TYPE_POLYGON];
+    }
+
+    /**
+     * @return list<string>
+     */
     public static function alertModes(): array
     {
         return [self::ALERT_EXIT, self::ALERT_ENTER, self::ALERT_BOTH];
+    }
+
+    public function isPolygon(): bool
+    {
+        return $this->type === self::TYPE_POLYGON;
+    }
+
+    public function isCircle(): bool
+    {
+        return $this->type === self::TYPE_CIRCLE || empty($this->type);
     }
 }

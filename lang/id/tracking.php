@@ -73,6 +73,8 @@ return [
         'traccar' => 'Traccar (generic)',
         'sky_track' => 'Sky Track (custom)',
         'gps_server' => 'GPS-Server',
+        'none' => 'Belum dikonfigurasi',
+        'null' => 'Belum dikonfigurasi',
     ],
 
     'auth_types' => [
@@ -107,6 +109,9 @@ return [
         'from' => 'Dari',
         'to' => 'Sampai',
         'geofence_name' => 'Nama zona',
+        'geofence_type' => 'Tipe zona',
+        'type_circle' => 'Lingkaran (Radial)',
+        'type_polygon' => 'Poligon (Bentuk Bebas)',
         'radius_m' => 'Radius (m)',
         'alert_on' => 'Alert saat',
         'active_rentals_only' => 'Hanya sewa aktif',
@@ -198,7 +203,8 @@ return [
             'edit' => 'Edit geofence',
             'delete_title' => 'Hapus geofence',
             'delete_confirm' => 'Hapus zona ":name"? Alert untuk zona ini akan berhenti.',
-            'summary' => ':radius m · alert :alert · :scope',
+            'summary' => 'Lingkaran :radius m · alert :alert · :scope',
+            'polygon_summary' => 'Poligon (:points titik) · alert :alert · :scope',
             'active_rentals_only' => 'hanya sewa aktif',
             'all_vehicles' => 'semua kendaraan',
         ],

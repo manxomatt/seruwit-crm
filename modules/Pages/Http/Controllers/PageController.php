@@ -64,11 +64,19 @@ class PageController extends Controller
     /**
      * Display the specified page.
      */
-    protected function authorizePageAccess(Page $page): void
+    protected function authorizePageAccess(Page $page, string $permission = 'update'): void
     {
-        if ($page->user_id !== Auth::id() && ! Auth::user()?->isAdmin()) {
-            abort(403);
+        $user = Auth::user();
+
+        if (! $user) {
+            abort(401);
         }
+
+        if ($page->user_id === $user->id || $user->isAdmin() || $user->hasPermissionFor('pages', $permission)) {
+            return;
+        }
+
+        abort(403);
     }
 
     /**
@@ -76,7 +84,9 @@ class PageController extends Controller
      */
     public function show(Page $page): Response
     {
-        if ($page->user_id !== Auth::id() && ! $page->is_published && ! Auth::user()?->isAdmin()) {
+        $user = Auth::user();
+
+        if (! $page->is_published && $page->user_id !== $user?->id && ! $user?->isAdmin() && ! $user?->hasPermissionFor('pages', 'view')) {
             abort(403);
         }
 
@@ -120,7 +130,7 @@ class PageController extends Controller
      */
     public function destroy(Page $page): RedirectResponse
     {
-        $this->authorizePageAccess($page);
+        $this->authorizePageAccess($page, 'delete');
 
         $page->delete();
 

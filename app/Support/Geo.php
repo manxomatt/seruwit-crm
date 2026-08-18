@@ -40,4 +40,65 @@ class Geo
     {
         return self::distanceMetres($lat, $lng, $centreLat, $centreLng) <= $radiusMetres;
     }
+
+    /**
+     * Whether a point ($lat, $lng) is inside an arbitrary closed polygon using
+     * Ray-Casting algorithm (Jordan Curve Theorem).
+     *
+     * @param  array<int, array<int|string, float|int|string>>  $polygon  Array of [lat, lng] points
+     */
+    public static function isInsidePolygon(float $lat, float $lng, array $polygon): bool
+    {
+        $n = count($polygon);
+        if ($n < 3) {
+            return false;
+        }
+
+        $inside = false;
+        for ($i = 0, $j = $n - 1; $i < $n; $j = $i++) {
+            $p1 = $polygon[$i];
+            $p2 = $polygon[$j];
+
+            $lat1 = (float) (is_array($p1) ? ($p1[0] ?? $p1['lat'] ?? 0) : 0);
+            $lng1 = (float) (is_array($p1) ? ($p1[1] ?? $p1['lng'] ?? 0) : 0);
+            $lat2 = (float) (is_array($p2) ? ($p2[0] ?? $p2['lat'] ?? 0) : 0);
+            $lng2 = (float) (is_array($p2) ? ($p2[1] ?? $p2['lng'] ?? 0) : 0);
+
+            $intersect = (($lng1 > $lng) !== ($lng2 > $lng))
+                && ($lat < ($lat2 - $lat1) * ($lng - $lng1) / (($lng2 - $lng1) ?: 1e-12) + $lat1);
+
+            if ($intersect) {
+                $inside = ! $inside;
+            }
+        }
+
+        return $inside;
+    }
+
+    /**
+     * Calculate centroid (geometric center) of a polygon for map centering.
+     *
+     * @param  array<int, array<int|string, float|int|string>>  $polygon
+     * @return array{lat: float, lng: float}
+     */
+    public static function polygonCentroid(array $polygon): array
+    {
+        $n = count($polygon);
+        if ($n === 0) {
+            return ['lat' => 0.0, 'lng' => 0.0];
+        }
+
+        $sumLat = 0.0;
+        $sumLng = 0.0;
+
+        foreach ($polygon as $pt) {
+            $sumLat += (float) (is_array($pt) ? ($pt[0] ?? $pt['lat'] ?? 0) : 0);
+            $sumLng += (float) (is_array($pt) ? ($pt[1] ?? $pt['lng'] ?? 0) : 0);
+        }
+
+        return [
+            'lat' => round($sumLat / $n, 7),
+            'lng' => round($sumLng / $n, 7),
+        ];
+    }
 }

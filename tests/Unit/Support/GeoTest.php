@@ -35,4 +35,36 @@ class GeoTest extends TestCase
         $this->assertTrue(Geo::isWithin(-6.199000, 106.8, -6.2, 106.8, 200));
         $this->assertFalse(Geo::isWithin(-6.199000, 106.8, -6.2, 106.8, 50));
     }
+
+    public function test_it_answers_whether_a_point_is_inside_a_polygon(): void
+    {
+        // Square polygon around (-6.2, 106.8)
+        $polygon = [
+            [-6.19, 106.79],
+            [-6.19, 106.81],
+            [-6.21, 106.81],
+            [-6.21, 106.79],
+        ];
+
+        // Center is inside
+        $this->assertTrue(Geo::isInsidePolygon(-6.20, 106.80, $polygon));
+
+        // Outside point
+        $this->assertFalse(Geo::isInsidePolygon(-6.25, 106.80, $polygon));
+        $this->assertFalse(Geo::isInsidePolygon(-6.20, 106.85, $polygon));
+    }
+
+    public function test_it_calculates_polygon_centroid(): void
+    {
+        $polygon = [
+            [0.0, 0.0],
+            [0.0, 10.0],
+            [10.0, 10.0],
+            [10.0, 0.0],
+        ];
+
+        $centroid = Geo::polygonCentroid($polygon);
+        $this->assertSame(5.0, $centroid['lat']);
+        $this->assertSame(5.0, $centroid['lng']);
+    }
 }

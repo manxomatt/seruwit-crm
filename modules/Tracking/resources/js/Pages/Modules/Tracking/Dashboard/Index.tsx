@@ -32,7 +32,7 @@ interface Board {
     activity: { positions_today: number };
     config: {
         configured: boolean;
-        provider: string;
+        provider: string | null;
         poll_enabled: boolean;
         alerts_enabled: boolean;
         last_polled_at: string | null;
@@ -326,9 +326,16 @@ export default function Index({ board, can }: Props): JSX.Element {
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-[11px] font-medium">
-                        <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
-                            {t(`tracking.providers.${config.provider}`, undefined, config.provider)}
-                        </span>
+                        {config.provider && config.provider !== 'null' && (
+                            <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
+                                {config.provider
+                                    .split(',')
+                                    .map((p) => p.trim())
+                                    .filter(Boolean)
+                                    .map((p) => t(`tracking.providers.${p}`, undefined, p))
+                                    .join(', ')}
+                            </span>
+                        )}
                         <span className="rounded-md bg-white/70 px-2 py-1 ring-1 ring-black/5">
                             {config.poll_enabled
                                 ? t('tracking.dashboard.poll_on')

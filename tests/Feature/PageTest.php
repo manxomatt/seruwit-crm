@@ -124,7 +124,7 @@ class PageTest extends TestCase
 
     public function test_user_cannot_view_other_users_page_editor(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->withUserRole()->create();
         $otherUser = User::factory()->admin()->create();
         $page = Page::factory()->create(['user_id' => $otherUser->id]);
 
@@ -160,7 +160,7 @@ class PageTest extends TestCase
 
     public function test_user_cannot_update_other_users_page(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->withUserRole()->create();
         $otherUser = User::factory()->admin()->create();
         $page = Page::factory()->create(['user_id' => $otherUser->id]);
 
@@ -191,7 +191,7 @@ class PageTest extends TestCase
 
     public function test_user_cannot_delete_other_users_page(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->withUserRole()->create();
         $otherUser = User::factory()->admin()->create();
         $page = Page::factory()->create(['user_id' => $otherUser->id]);
 
@@ -290,7 +290,7 @@ class PageTest extends TestCase
 
     public function test_user_cannot_preview_other_users_draft_page(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->withUserRole()->create();
         $otherUser = User::factory()->admin()->create();
         $page = Page::factory()->draft()->create(['user_id' => $otherUser->id]);
 
@@ -404,7 +404,7 @@ class PageTest extends TestCase
 
     public function test_user_cannot_copy_other_users_page(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->withUserRole()->create();
         $otherUser = User::factory()->admin()->create();
         $page = Page::factory()->create(['user_id' => $otherUser->id]);
 
