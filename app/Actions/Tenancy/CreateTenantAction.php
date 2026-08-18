@@ -19,18 +19,28 @@ class CreateTenantAction
      * Note: intentionally not wrapped in a transaction — the pipeline runs
      * DDL on a separate connection that cannot see uncommitted changes.
      *
+     * A $planKey is applied immediately as well as through $setup, so the tenant
+     * lists under the chosen plan before the pipeline reaches FinalizeTenantSetupJob.
+     * Omitting it leaves the tenant on the default plan.
+     *
      * @param  array<string, mixed>  $setup
      */
-    public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null, array $setup = []): Tenant
+    public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null, array $setup = [], ?string $planKey = null): Tenant
     {
         $fullDomain = self::fullDomain($subdomain);
 
-        $tenant = Tenant::create([
+        $attributes = [
             'name' => $companyName,
             'reseller_global_id' => $resellerGlobalId,
             'can_install_demo_data' => SystemMode::isDevelopment(),
             'provision' => array_merge(['owner_global_id' => $owner->global_id], $setup),
-        ]);
+        ];
+
+        if ($planKey !== null) {
+            $attributes['plan'] = $planKey;
+        }
+
+        $tenant = Tenant::create($attributes);
 
         // Domain first: Tenant::create can leave an orphan row if a later step
         // fails, and admin update previously could not create a missing domain.

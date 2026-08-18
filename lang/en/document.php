@@ -106,7 +106,7 @@ return [
         'upload_title' => 'Upload Document — :name',
         'upload_head' => 'Upload Document – :name',
         'docs_head' => 'Documents – :name',
-        'back' => '← Back',
+        'back' => 'Back',
         'required_badge' => 'Required',
         'none' => 'None yet',
         'renew' => 'Renew',

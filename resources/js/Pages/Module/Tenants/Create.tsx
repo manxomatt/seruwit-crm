@@ -6,8 +6,17 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
+interface PlanOption {
+    key: string;
+    label: string;
+    description: string;
+    modules: string[];
+}
+
 interface Props {
     tenantBaseDomain: string;
+    plans: PlanOption[];
+    defaultPlan: string | null;
 }
 
 const BuildingOfficeIcon = () => (
@@ -19,6 +28,12 @@ const BuildingOfficeIcon = () => (
 const UserCircleIcon = () => (
     <svg className="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+const SparklesIcon = () => (
+    <svg className="h-5 w-5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
     </svg>
 );
 
@@ -68,7 +83,7 @@ const slugify = (text: string): string => {
         .replace(/\s+/g, '-');
 };
 
-export default function Create({ tenantBaseDomain }: Props): JSX.Element {
+export default function Create({ tenantBaseDomain, plans, defaultPlan }: Props): JSX.Element {
     const { t } = useTrans();
     const [subdomainTouched, setSubdomainTouched] = useState(false);
 
@@ -78,6 +93,7 @@ export default function Create({ tenantBaseDomain }: Props): JSX.Element {
         owner_name: '',
         owner_email: '',
         owner_password: '',
+        plan: defaultPlan ?? plans[0]?.key ?? '',
     });
 
     const handleCompanyNameChange = (val: string) => {
@@ -96,6 +112,8 @@ export default function Create({ tenantBaseDomain }: Props): JSX.Element {
     const fullDomainPreview = data.subdomain
         ? `${data.subdomain}.${tenantBaseDomain}`
         : `subdomain.${tenantBaseDomain}`;
+
+    const selectedPlan = plans.find((plan) => plan.key === data.plan);
 
     const companyInitial = data.company_name
         ? data.company_name.charAt(0).toUpperCase()
@@ -246,6 +264,73 @@ export default function Create({ tenantBaseDomain }: Props): JSX.Element {
                                 </FieldGroup>
                             </div>
                         </div>
+
+                        {/* Subscription Plan Card */}
+                        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 dark:bg-amber-500/20">
+                                    <SparklesIcon />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                                        {t('tenants.pages.create.plan_section')}
+                                    </h2>
+                                    <p className="text-xs text-slate-500">
+                                        {t('tenants.pages.create.plan_hint')}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-5 space-y-3">
+                                {plans.map((plan) => {
+                                    const isSelected = data.plan === plan.key;
+
+                                    return (
+                                        <label
+                                            key={plan.key}
+                                            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all ${
+                                                isSelected
+                                                    ? 'border-indigo-500 bg-indigo-500/5 ring-2 ring-indigo-500/20'
+                                                    : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-300'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="plan"
+                                                className="mt-0.5 border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                value={plan.key}
+                                                checked={isSelected}
+                                                onChange={() => setData('plan', plan.key)}
+                                            />
+                                            <span className="min-w-0 flex-1">
+                                                <span className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                        {plan.label}
+                                                    </span>
+                                                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                                                        {t('tenants.pages.create.plan_modules_count', { count: plan.modules.length })}
+                                                    </span>
+                                                    {plan.key === defaultPlan && (
+                                                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                                            {t('tenants.pages.create.plan_default_badge')}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                {plan.description && (
+                                                    <span className="mt-0.5 block text-xs text-slate-500">
+                                                        {plan.description}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+
+                            {errors.plan && (
+                                <p className="mt-3 text-xs font-semibold text-rose-500">{errors.plan}</p>
+                            )}
+                        </div>
                     </div>
 
                     {/* ── Right Column: Live Workspace Preview Card (5 cols) ── */}
@@ -283,6 +368,15 @@ export default function Create({ tenantBaseDomain }: Props): JSX.Element {
                                     </div>
                                     <span className="shrink-0 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
                                         {t('tenants.status.active')}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-100 dark:border-slate-800">
+                                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                                        {t('tenants.fields.plan')}
+                                    </div>
+                                    <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                                        {selectedPlan?.label ?? t('tenants.pages.create.plan_none')}
                                     </span>
                                 </div>
 

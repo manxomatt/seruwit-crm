@@ -106,7 +106,7 @@ return [
         'upload_title' => 'Upload Dokumen — :name',
         'upload_head' => 'Upload Dokumen – :name',
         'docs_head' => 'Dokumen – :name',
-        'back' => '← Kembali',
+        'back' => 'Kembali',
         'required_badge' => 'Wajib',
         'none' => 'Belum ada',
         'renew' => 'Perbarui',

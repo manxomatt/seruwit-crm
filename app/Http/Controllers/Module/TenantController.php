@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Modules\Facades\Modules;
 use App\Modules\ModuleCatalog;
 use App\Modules\ModuleInstaller;
+use App\Modules\PlanRepository;
 use App\Rules\ValidSubdomain;
 use App\Services\TenantActivityLogger;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,6 +31,7 @@ class TenantController extends Controller
     public function __construct(
         private readonly CreateTenantAction $createTenant,
         private readonly ModuleCatalog $catalog,
+        private readonly PlanRepository $plans,
     ) {}
 
     /**
@@ -86,6 +88,8 @@ class TenantController extends Controller
 
         return Inertia::render('Module/Tenants/Create', [
             'tenantBaseDomain' => config('tenancy.tenant_base_domain') ?: 'localhost',
+            'plans' => $this->catalog->allPlans(),
+            'defaultPlan' => $this->plans->defaultKey(),
         ]);
     }
 
@@ -102,6 +106,7 @@ class TenantController extends Controller
             'owner_name' => 'required|string|max:255',
             'owner_email' => 'required|string|lowercase|email|max:255',
             'owner_password' => ['nullable', Rules\Password::defaults()],
+            'plan' => ['nullable', 'string', Rule::exists('plans', 'key')],
         ]);
 
         $owner = CentralUser::query()->firstWhere('email', $request->string('owner_email')->value());
@@ -134,11 +139,17 @@ class TenantController extends Controller
             ? $user->global_id
             : null;
 
+        $planKey = $request->filled('plan')
+            ? $request->string('plan')->value()
+            : $this->plans->defaultKey();
+
         $tenant = $this->createTenant->execute(
             companyName: $request->string('company_name')->value(),
             subdomain: $request->string('subdomain')->value(),
             owner: $owner,
             resellerGlobalId: $resellerGlobalId,
+            setup: $planKey !== null ? ['plan_key' => $planKey] : [],
+            planKey: $planKey,
         );
 
         TenantActivityLogger::log(
@@ -146,7 +157,7 @@ class TenantController extends Controller
             'created',
             'Tenant dibuat oleh admin.',
             $request->user(),
-            ['owner_email' => $owner->email],
+            ['owner_email' => $owner->email, 'plan' => $planKey],
         );
 
         return redirect()

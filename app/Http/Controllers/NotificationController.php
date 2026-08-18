@@ -34,10 +34,7 @@ class NotificationController extends Controller
         }
 
         if (filled($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('data->title', 'like', "%{$search}%")
-                    ->orWhere('data->body', 'like', "%{$search}%");
-            });
+            $query->where('data', 'like', "%{$search}%");
         }
 
         $notifications = $query->paginate(15)
