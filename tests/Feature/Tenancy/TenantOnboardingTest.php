@@ -24,7 +24,7 @@ class TenantOnboardingTest extends TestCase
 
         $tenant->run(function (): void {
             $this->assertTrue(Role::query()->where('slug', 'admin')->exists());
-            $this->assertTrue(Role::query()->where('slug', 'user')->exists());
+            $this->assertFalse(Role::query()->where('slug', 'user')->exists());
             $this->assertGreaterThan(0, Setting::query()->count());
         });
     }

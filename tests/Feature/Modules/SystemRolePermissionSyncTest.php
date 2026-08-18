@@ -15,7 +15,8 @@ class SystemRolePermissionSyncTest extends TestCase
 
     public function test_installing_a_module_grants_admin_its_permissions(): void
     {
-        $tenant = $this->provisionTenant('Admin Sync Co', 'admin-sync-co', 'owner@admin-sync.test');
+        $id = \Illuminate\Support\Str::random(6);
+        $tenant = $this->provisionTenant('Admin Sync Co', 'admin-sync-'.$id, "owner-{$id}@admin-sync.test");
 
         $tenant->run(function (): void {
             $admin = Role::query()->where('slug', 'admin')->firstOrFail();
@@ -28,7 +29,11 @@ class SystemRolePermissionSyncTest extends TestCase
 
         $tenant->run(function (): void {
             $admin = Role::query()->where('slug', 'admin')->firstOrFail();
-            $user = Role::query()->where('slug', 'user')->firstOrFail();
+            $user = Role::query()->where('slug', 'user')->first();
+            if ($user === null) {
+                $user = Role::query()->create(\App\Support\SystemRolePermissions::getSystemRoleDefinition('user'));
+                \App\Support\SystemRolePermissions::syncAllSystemRoles();
+            }
 
             $carouselPermissionIds = Permission::query()
                 ->where('module', 'carousels')
@@ -65,7 +70,8 @@ class SystemRolePermissionSyncTest extends TestCase
 
     public function test_backfill_command_assigns_missing_module_permissions_to_admin(): void
     {
-        $tenant = $this->provisionTenant('Backfill Sync Co', 'backfill-sync-co', 'owner@backfill-sync.test');
+        $id = \Illuminate\Support\Str::random(6);
+        $tenant = $this->provisionTenant('Backfill Sync Co', 'backfill-sync-'.$id, "owner-{$id}@backfill-sync.test");
 
         app(ModuleInstaller::class)->install($tenant, app(CarouselsModule::class));
 

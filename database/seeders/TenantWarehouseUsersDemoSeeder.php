@@ -36,6 +36,8 @@ class TenantWarehouseUsersDemoSeeder extends Seeder
         }
 
         $this->call(RoleSeeder::class);
+        \App\Support\SystemRolePermissions::seedRolesForModule('inventory');
+        \App\Support\SystemRolePermissions::syncAllSystemRoles();
 
         $sites = Warehouse::query()->orderBy('id')->get();
 

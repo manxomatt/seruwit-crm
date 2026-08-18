@@ -39,11 +39,26 @@ trait WithTenant
 
     protected function tearDown(): void
     {
-        // End tenancy first so the default connection points back at the
-        // central database, then delete tenants to trigger the DeleteDatabase
-        // pipeline that drops the schemas created during the test.
-        tenancy()->end();
-        Tenant::query()->get()->each->delete();
+        // End tenancy first so the default connection points back at central DB
+        if (tenancy()->initialized) {
+            tenancy()->end();
+        }
+
+        try {
+            // Delete tenant records to trigger DeleteDatabase pipeline
+            Tenant::query()->get()->each->delete();
+        } catch (\Throwable) {
+            //
+        }
+
+        try {
+            // Drop any lingering tenant schemas in Postgres
+            \Illuminate\Support\Facades\DB::connection('pgsql')->statement(
+                "DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT nspname FROM pg_namespace WHERE nspname LIKE 'tenant%') LOOP EXECUTE 'DROP SCHEMA IF EXISTS \"' || r.nspname || '\" CASCADE'; END LOOP; END $$;"
+            );
+        } catch (\Throwable) {
+            //
+        }
 
         parent::tearDown();
     }

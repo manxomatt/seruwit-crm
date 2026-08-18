@@ -81,6 +81,7 @@ class ModuleInstaller
         $this->migrate($module);
 
         $this->seedPermissions($module);
+        SystemRolePermissions::seedRolesForModule($module->key());
         SystemRolePermissions::syncAllSystemRoles();
         $this->seedMenu($module);
 

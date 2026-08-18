@@ -60,7 +60,7 @@ export default function Index({ roles, stats, filters }: Props): JSX.Element {
 
     const [search, setSearch] = useState(filters.search || '');
     const [activeType, setActiveType] = useState<string>(filters.type || 'all');
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
     const [processing, setProcessing] = useState(false);
