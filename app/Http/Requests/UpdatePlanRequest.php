@@ -34,6 +34,7 @@ class UpdatePlanRequest extends FormRequest
             'annual_price' => ['nullable', 'numeric', 'min:0'],
             'annual_original_price' => ['nullable', 'numeric', 'min:0'],
             'currency' => ['nullable', 'string', 'size:3'],
+            'trial_days' => ['nullable', 'integer', 'min:0', 'max:365'],
         ];
     }
 

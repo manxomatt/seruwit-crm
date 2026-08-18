@@ -6,6 +6,7 @@ use App\Actions\Tenancy\CreateTenantAction;
 use App\Http\Controllers\Controller;
 use App\Jobs\Tenancy\FinalizeTenantSetupJob;
 use App\Models\CentralUser;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantActivityLog;
 use App\Models\User;
@@ -14,6 +15,7 @@ use App\Modules\ModuleCatalog;
 use App\Modules\ModuleInstaller;
 use App\Modules\PlanRepository;
 use App\Rules\ValidSubdomain;
+use App\Services\PaymentOrderService;
 use App\Services\TenantActivityLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -32,6 +34,7 @@ class TenantController extends Controller
         private readonly CreateTenantAction $createTenant,
         private readonly ModuleCatalog $catalog,
         private readonly PlanRepository $plans,
+        private readonly PaymentOrderService $paymentOrders,
     ) {}
 
     /**
@@ -82,14 +85,20 @@ class TenantController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         Gate::authorize('manage-tenants');
+
+        $user = $request->user();
 
         return Inertia::render('Module/Tenants/Create', [
             'tenantBaseDomain' => config('tenancy.tenant_base_domain') ?: 'localhost',
             'plans' => $this->catalog->allPlans(),
             'defaultPlan' => $this->plans->defaultKey(),
+            // A reseller doesn't collect payment themselves — the create page
+            // uses this to warn them that a paid plan won't activate until the
+            // tenant owner pays. See store()'s pending-payment branch.
+            'isReseller' => (bool) ($user && ! $user->isAdmin() && $user->hasRole('reseller')),
         ]);
     }
 
@@ -142,6 +151,46 @@ class TenantController extends Controller
         $planKey = $request->filled('plan')
             ? $request->string('plan')->value()
             : $this->plans->defaultKey();
+
+        $plan = $planKey !== null ? $this->plans->find($planKey) : null;
+
+        // A reseller never collects payment — only the tenant owner does, via
+        // the normal subscription flow. So a reseller picking a paid plan here
+        // doesn't get to hand it out for free: the tenant provisions on Trial
+        // instead, with a pending PaymentOrder for the plan they actually
+        // asked for. Confirming that order (existing machinery, unchanged)
+        // activates the real plan and accrues the reseller's commission the
+        // same way any other payment does. Admin keeps today's behavior:
+        // whatever plan they pick is granted immediately, no payment needed.
+        $requiresPayment = $resellerGlobalId !== null && $plan !== null && (float) $plan->price > 0;
+
+        if ($requiresPayment) {
+            $trialDays = $this->plans->find(Plan::KEY_TRIAL)?->trial_days ?: 7;
+
+            $tenant = $this->createTenant->execute(
+                companyName: $request->string('company_name')->value(),
+                subdomain: $request->string('subdomain')->value(),
+                owner: $owner,
+                resellerGlobalId: $resellerGlobalId,
+                setup: ['plan_key' => Plan::KEY_TRIAL],
+                planKey: Plan::KEY_TRIAL,
+                trialEndsAt: now()->addDays($trialDays),
+            );
+
+            $this->paymentOrders->createOrder($tenant, $plan, 'activate');
+
+            TenantActivityLogger::log(
+                $tenant,
+                'created',
+                "Tenant dibuat oleh reseller, menunggu pembayaran paket {$plan->name}.",
+                $request->user(),
+                ['owner_email' => $owner->email, 'plan' => Plan::KEY_TRIAL, 'requested_plan' => $plan->key],
+            );
+
+            return redirect()
+                ->route('module.tenants.index')
+                ->with('success', __('tenants.messages.created_pending_payment', ['plan' => $plan->name]));
+        }
 
         $tenant = $this->createTenant->execute(
             companyName: $request->string('company_name')->value(),

@@ -85,6 +85,7 @@ return [
             'plan_hint' => 'Determines which modules this workspace may install. It can be changed later from the tenant detail page.',
             'plan_modules_count' => ':count modules',
             'plan_default_badge' => 'Default',
+            'reseller_paid_plan_notice' => 'As a reseller, you don\'t process payment. The tenant will be created on a Trial period and a bill for the :plan plan is sent to the tenant owner — :plan activates automatically once payment is confirmed.',
             'plan_none' => 'No plan',
             'submit' => 'Create Tenant',
             'async_note' => 'The workspace will be provisioned automatically in the background.',
@@ -156,6 +157,7 @@ return [
 
     'messages' => [
         'created' => 'Tenant created successfully.',
+        'created_pending_payment' => 'Tenant created on a trial period. A bill for the :plan plan has been sent to the tenant owner — it activates automatically once payment is confirmed.',
         'batch_status_updated' => 'Tenant status updated successfully.',
         'updated' => 'Tenant details updated.',
         'status_updated' => 'Tenant status updated.',

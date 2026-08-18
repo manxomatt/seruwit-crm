@@ -46,6 +46,8 @@ return [
         'description' => 'Description',
         'description_placeholder' => 'Provide a short overview of this plan...',
         'sort_order' => 'Display Order',
+        'trial_days' => 'Trial Length (days)',
+        'trial_days_hint' => '0 = no trial; how long a tenant may use this plan before payment is required',
         'is_default' => 'Make this the default plan',
         'is_default_hint' => 'Used by tenants without a plan of their own. Only one plan can be default.',
     ],

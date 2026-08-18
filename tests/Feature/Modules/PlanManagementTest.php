@@ -89,6 +89,30 @@ class PlanManagementTest extends TestCase
         $this->assertFalse($plan->is_default);
     }
 
+    /**
+     * The self-serve trial length is a plan field an admin can edit, not a
+     * number baked into the provisioning code — see ProvisionSelfServeTenantJob
+     * and TenantController::store(), which both read it live.
+     */
+    public function test_super_admin_can_set_a_plans_trial_length(): void
+    {
+        $admin = $this->makeCentralAdmin();
+
+        $this->actingAs($admin)->post('/module/plans', [
+            'key' => 'enterprise',
+            'name' => 'Enterprise',
+            'description' => 'Semua modul plus dukungan khusus.',
+            'modules' => ['carousels'],
+            'sort_order' => 4,
+            'is_default' => false,
+            'trial_days' => 21,
+        ])->assertSessionHasNoErrors();
+
+        $plan = Plan::query()->firstWhere('key', 'enterprise');
+
+        $this->assertSame(21, $plan->trial_days);
+    }
+
     public function test_a_plan_key_must_be_unique_and_url_safe(): void
     {
         $admin = $this->makeCentralAdmin();

@@ -46,6 +46,8 @@ return [
         'description' => 'Deskripsi',
         'description_placeholder' => 'Berikan gambaran singkat mengenai paket ini...',
         'sort_order' => 'Urutan Tampil',
+        'trial_days' => 'Masa Trial (hari)',
+        'trial_days_hint' => '0 = tanpa trial; menentukan berapa lama tenant boleh memakai paket ini sebelum wajib bayar',
         'is_default' => 'Jadikan paket default',
         'is_default_hint' => 'Dipakai tenant yang belum punya paket sendiri. Hanya satu paket bisa jadi default.',
     ],

@@ -11,12 +11,14 @@ interface PlanOption {
     label: string;
     description: string;
     modules: string[];
+    price: number;
 }
 
 interface Props {
     tenantBaseDomain: string;
     plans: PlanOption[];
     defaultPlan: string | null;
+    isReseller: boolean;
 }
 
 const BuildingOfficeIcon = () => (
@@ -83,7 +85,7 @@ const slugify = (text: string): string => {
         .replace(/\s+/g, '-');
 };
 
-export default function Create({ tenantBaseDomain, plans, defaultPlan }: Props): JSX.Element {
+export default function Create({ tenantBaseDomain, plans, defaultPlan, isReseller }: Props): JSX.Element {
     const { t } = useTrans();
     const [subdomainTouched, setSubdomainTouched] = useState(false);
 
@@ -329,6 +331,12 @@ export default function Create({ tenantBaseDomain, plans, defaultPlan }: Props):
 
                             {errors.plan && (
                                 <p className="mt-3 text-xs font-semibold text-rose-500">{errors.plan}</p>
+                            )}
+
+                            {isReseller && (selectedPlan?.price ?? 0) > 0 && (
+                                <p className="mt-3 rounded-xl bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+                                    {t('tenants.pages.create.reseller_paid_plan_notice', { plan: selectedPlan?.label ?? '' })}
+                                </p>
                             )}
                         </div>
                     </div>

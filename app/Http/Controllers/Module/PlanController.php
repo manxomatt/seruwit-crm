@@ -45,6 +45,7 @@ class PlanController extends Controller
                     'annual_price' => $plan->annual_price,
                     'annual_original_price' => $plan->annual_original_price,
                     'currency' => $plan->currency ?? 'IDR',
+                    'trial_days' => $plan->trial_days,
                     'tenants' => $plan->tenantCount(),
                 ])
                 ->all(),
@@ -111,6 +112,7 @@ class PlanController extends Controller
                 'annual_price' => $plan->annual_price,
                 'annual_original_price' => $plan->annual_original_price,
                 'currency' => $plan->currency ?? 'IDR',
+                'trial_days' => $plan->trial_days,
                 'tenants' => $plan->tenantCount(),
             ],
             'availableModules' => collect(Modules::all())

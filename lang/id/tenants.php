@@ -85,6 +85,7 @@ return [
             'plan_hint' => 'Menentukan modul apa saja yang boleh dipasang workspace ini. Bisa diubah nanti dari halaman detail tenant.',
             'plan_modules_count' => ':count modul',
             'plan_default_badge' => 'Default',
+            'reseller_paid_plan_notice' => 'Sebagai reseller, Anda tidak memproses pembayaran. Tenant akan dibuat pada masa Trial dan tagihan paket :plan dikirim ke pemilik tenant — paket :plan aktif otomatis setelah pembayaran dikonfirmasi.',
             'plan_none' => 'Belum ada paket',
             'submit' => 'Buat Tenant',
             'async_note' => 'Workspace akan dipersiapkan secara otomatis di latar belakang.',
@@ -156,6 +157,7 @@ return [
 
     'messages' => [
         'created' => 'Tenant berhasil dibuat.',
+        'created_pending_payment' => 'Tenant berhasil dibuat pada masa trial. Tagihan paket :plan telah dikirim ke pemilik tenant — paket aktif otomatis setelah pembayaran dikonfirmasi.',
         'batch_status_updated' => 'Status tenant berhasil diperbarui.',
         'updated' => 'Detail tenant diperbarui.',
         'status_updated' => 'Status tenant diperbarui.',

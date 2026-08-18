@@ -34,6 +34,11 @@ class StorePlanRequest extends FormRequest
             'annual_price' => ['nullable', 'numeric', 'min:0'],
             'annual_original_price' => ['nullable', 'numeric', 'min:0'],
             'currency' => ['nullable', 'string', 'size:3'],
+            // How long a tenant gets on this plan before it must convert to a
+            // paid one. Read live wherever a trial period is granted — see
+            // ProvisionSelfServeTenantJob and TenantController::store() —
+            // rather than assuming a fixed number of days anywhere in code.
+            'trial_days' => ['nullable', 'integer', 'min:0', 'max:365'],
         ];
     }
 

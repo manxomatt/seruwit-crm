@@ -104,6 +104,7 @@ class ModuleCatalog
                 'label' => $plan->name,
                 'description' => $plan->description ?? '',
                 'modules' => $plan->modules ?? [],
+                'price' => (float) ($plan->price ?? 0),
             ])
             ->all();
     }

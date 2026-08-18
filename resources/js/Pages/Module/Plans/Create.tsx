@@ -34,6 +34,7 @@ export default function Create({ nextSortOrder, availableModules }: Props): JSX.
         annual_price: '',
         annual_original_price: '',
         currency: 'IDR',
+        trial_days: 0,
     };
 
     return (

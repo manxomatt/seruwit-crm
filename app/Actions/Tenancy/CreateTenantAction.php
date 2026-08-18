@@ -6,6 +6,7 @@ use App\Models\CentralUser;
 use App\Models\Tenant;
 use App\Support\Reseller\ResellerAttribution;
 use App\Support\SystemMode;
+use Illuminate\Support\Carbon;
 
 class CreateTenantAction
 {
@@ -24,9 +25,14 @@ class CreateTenantAction
      * lists under the chosen plan before the pipeline reaches FinalizeTenantSetupJob.
      * Omitting it leaves the tenant on the default plan.
      *
+     * $trialEndsAt stamps a deadline on that plan — e.g. a reseller granting a
+     * paid plan they haven't collected payment for yet gets provisioned on
+     * Trial with a real countdown instead. Omitting it leaves the tenant
+     * without one, same as every other admin-created tenant today.
+     *
      * @param  array<string, mixed>  $setup
      */
-    public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null, array $setup = [], ?string $planKey = null): Tenant
+    public function execute(string $companyName, string $subdomain, CentralUser $owner, ?string $resellerGlobalId = null, array $setup = [], ?string $planKey = null, ?Carbon $trialEndsAt = null): Tenant
     {
         $fullDomain = self::fullDomain($subdomain);
 
@@ -46,6 +52,10 @@ class CreateTenantAction
 
         if ($planKey !== null) {
             $attributes['plan'] = $planKey;
+        }
+
+        if ($trialEndsAt !== null) {
+            $attributes['trial_ends_at'] = $trialEndsAt;
         }
 
         $tenant = Tenant::create($attributes);

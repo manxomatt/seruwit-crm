@@ -27,6 +27,7 @@ export interface PlanFormData {
     annual_price: string | null;
     annual_original_price: string | null;
     currency: string;
+    trial_days: number | null;
     tenants?: number;
 }
 
@@ -111,6 +112,7 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
         annual_price: initialData.annual_price ? String(Number(initialData.annual_price)) : '',
         annual_original_price: initialData.annual_original_price ? String(Number(initialData.annual_original_price)) : '',
         currency: initialData.currency ?? 'IDR',
+        trial_days: initialData.trial_days ?? 0,
     });
 
     const toggleModule = (key: string): void => {
@@ -277,6 +279,24 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                                 value={form.data.sort_order}
                                                 onChange={(e) => form.setData('sort_order', Number(e.target.value))}
                                             />
+                                        </label>
+
+                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            {t('plans.fields.trial_days')}
+                                            <span className="ml-1 text-[11px] font-normal text-slate-400">
+                                                ({t('plans.fields.trial_days_hint')})
+                                            </span>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={365}
+                                                className={inputClass}
+                                                value={form.data.trial_days}
+                                                onChange={(e) => form.setData('trial_days', Number(e.target.value))}
+                                            />
+                                            {form.errors.trial_days && (
+                                                <p className="mt-1 text-xs text-rose-500">{form.errors.trial_days}</p>
+                                            )}
                                         </label>
 
                                         <label className="flex items-start gap-3 pt-6 text-xs text-slate-700 dark:text-slate-300">

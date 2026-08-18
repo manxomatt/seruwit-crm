@@ -30,7 +30,7 @@ class PlanSeeder extends Seeder
                 'price' => 0,
                 'currency' => 'IDR',
                 'interval' => 'month',
-                'trial_days' => 7,
+                'trial_days' => 30,
                 'is_trial' => true,
             ],
             [

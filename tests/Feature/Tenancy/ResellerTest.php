@@ -4,9 +4,11 @@ namespace Tests\Feature\Tenancy;
 
 use App\Actions\Tenancy\CreateTenantAction;
 use App\Models\CentralUser;
+use App\Models\Plan;
 use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\PlanSeeder;
 use Database\Seeders\RoleSeeder;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
@@ -17,6 +19,7 @@ class ResellerTest extends TestCase
 
     protected function setUpWithTenant(): void
     {
+        $this->seed(PlanSeeder::class);
         $this->seed(RoleSeeder::class);
     }
 
@@ -322,5 +325,139 @@ class ResellerTest extends TestCase
         $this->assertNull($tenant->reseller_global_id);
         $this->assertNull($tenant->reseller_attributed_at);
         $this->assertFalse($tenant->hasActiveResellerAttribution());
+    }
+
+    // -----------------------------------------------------------------------
+    // A reseller cannot hand out a paid plan for free — only the tenant owner
+    // pays, via the normal subscription flow, and the reseller's commission
+    // only exists because that payment happened.
+    // -----------------------------------------------------------------------
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function createTenantPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'company_name' => 'Paid Plan Co',
+            'subdomain' => 'paidplanco',
+            'owner_name' => 'Owner',
+            'owner_email' => 'owner@paidplanco.test',
+            'owner_password' => 'password123!',
+        ], $overrides);
+    }
+
+    public function test_reseller_selecting_a_paid_plan_creates_the_tenant_on_trial_instead(): void
+    {
+        // A distinctive value proves the trial length comes from the Trial
+        // plan's own column, not a number baked into the controller.
+        Plan::query()->where('key', Plan::KEY_TRIAL)->update(['trial_days' => 45]);
+
+        $reseller = $this->makeReseller();
+
+        $this->actingAs($reseller)
+            ->post(route('module.tenants.store'), $this->createTenantPayload(['plan' => 'pro']))
+            ->assertRedirect();
+
+        $tenant = Tenant::query()->where('name', 'Paid Plan Co')->firstOrFail();
+
+        $this->assertSame(Plan::KEY_TRIAL, $tenant->plan);
+        $this->assertNotNull($tenant->trial_ends_at);
+        $this->assertEqualsWithDelta(now()->addDays(45)->timestamp, $tenant->trial_ends_at->timestamp, 60);
+    }
+
+    public function test_reseller_selecting_a_paid_plan_creates_a_pending_payment_order_for_it(): void
+    {
+        $reseller = $this->makeReseller();
+        $proPlan = Plan::query()->where('key', 'pro')->firstOrFail();
+
+        $this->actingAs($reseller)
+            ->post(route('module.tenants.store'), $this->createTenantPayload(['plan' => 'pro']))
+            ->assertRedirect();
+
+        $tenant = Tenant::query()->where('name', 'Paid Plan Co')->firstOrFail();
+
+        $order = \App\Models\PaymentOrder::query()->where('tenant_id', $tenant->id)->firstOrFail();
+
+        $this->assertSame($proPlan->id, $order->plan_id);
+        $this->assertSame('activate', $order->type);
+        $this->assertSame(\App\Models\PaymentOrder::STATUS_PENDING, $order->status);
+        $this->assertEqualsWithDelta((float) $proPlan->price, (float) $order->amount, 0.01);
+    }
+
+    public function test_reseller_selecting_a_free_plan_is_still_granted_directly(): void
+    {
+        $reseller = $this->makeReseller();
+
+        $this->actingAs($reseller)
+            ->post(route('module.tenants.store'), $this->createTenantPayload(['plan' => 'free']))
+            ->assertRedirect();
+
+        $tenant = Tenant::query()->where('name', 'Paid Plan Co')->firstOrFail();
+
+        $this->assertSame('free', $tenant->plan);
+        $this->assertFalse(\App\Models\PaymentOrder::query()->where('tenant_id', $tenant->id)->exists());
+    }
+
+    /**
+     * The platform default ("basic") is itself a paid plan — leaving `plan`
+     * blank must not be a loophole around the payment requirement.
+     */
+    public function test_reseller_leaving_the_plan_blank_still_goes_through_the_paid_default(): void
+    {
+        $reseller = $this->makeReseller();
+
+        $this->actingAs($reseller)
+            ->post(route('module.tenants.store'), $this->createTenantPayload())
+            ->assertRedirect();
+
+        $tenant = Tenant::query()->where('name', 'Paid Plan Co')->firstOrFail();
+
+        $this->assertSame(Plan::KEY_TRIAL, $tenant->plan);
+        $this->assertTrue(\App\Models\PaymentOrder::query()->where('tenant_id', $tenant->id)->exists());
+    }
+
+    public function test_admin_selecting_a_paid_plan_is_still_granted_instantly(): void
+    {
+        $admin = $this->makeSuperAdmin();
+
+        $this->actingAs($admin)
+            ->post(route('module.tenants.store'), $this->createTenantPayload(['plan' => 'pro']))
+            ->assertRedirect();
+
+        $tenant = Tenant::query()->where('name', 'Paid Plan Co')->firstOrFail();
+
+        $this->assertSame('pro', $tenant->plan);
+        $this->assertNull($tenant->trial_ends_at);
+        $this->assertFalse(\App\Models\PaymentOrder::query()->where('tenant_id', $tenant->id)->exists());
+    }
+
+    /**
+     * Ties the whole loop together: the payment the reseller couldn't collect
+     * themselves is what actually activates the plan and pays their commission.
+     */
+    public function test_confirming_the_pending_order_activates_the_plan_and_pays_the_reseller(): void
+    {
+        config()->set('reseller.default_rate', ['type' => 'percent', 'value' => 10]);
+
+        $reseller = $this->makeReseller();
+        $admin = $this->makeSuperAdmin();
+
+        $this->actingAs($reseller)
+            ->post(route('module.tenants.store'), $this->createTenantPayload(['plan' => 'pro']))
+            ->assertRedirect();
+
+        $tenant = Tenant::query()->where('name', 'Paid Plan Co')->firstOrFail();
+        $order = \App\Models\PaymentOrder::query()->where('tenant_id', $tenant->id)->firstOrFail();
+
+        app(\App\Services\PaymentOrderService::class)->confirm($order, $admin);
+
+        $this->assertSame('pro', $tenant->fresh()->plan);
+
+        $commission = \App\Models\ResellerCommission::query()->where('payment_order_id', $order->id)->first();
+
+        $this->assertNotNull($commission);
+        $this->assertSame($reseller->global_id, $commission->reseller_global_id);
     }
 }

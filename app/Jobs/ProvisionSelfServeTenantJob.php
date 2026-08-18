@@ -89,7 +89,7 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             } elseif ($tenant->database()->manager()->databaseExists($tenant->database()->getName())) {
                 $tenant->update([
                     'plan' => Plan::KEY_TRIAL,
-                    'trial_ends_at' => now()->addDays(7),
+                    'trial_ends_at' => $this->trialEndsAt(),
                     'is_trial_expired' => false,
                     'status' => 'active',
                 ]);
@@ -120,7 +120,7 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
 
         $tenant->update([
             'plan' => Plan::KEY_TRIAL,
-            'trial_ends_at' => now()->addDays(7),
+            'trial_ends_at' => $this->trialEndsAt(),
             'is_trial_expired' => false,
             'status' => 'active',
         ]);
@@ -160,5 +160,18 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
         foreach (SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []) as $packKey) {
             $installer->installPack($tenant, $packKey, withDemoSeeders: false);
         }
+    }
+
+    /**
+     * The Trial plan's own `trial_days` column, not a number embedded in code —
+     * whoever edits the Trial plan changes how long every self-serve signup
+     * gets, without a deploy. The fallback only covers a plan row that somehow
+     * has no value at all.
+     */
+    private function trialEndsAt(): \Illuminate\Support\Carbon
+    {
+        $days = Plan::query()->where('key', Plan::KEY_TRIAL)->value('trial_days');
+
+        return now()->addDays($days ?: 7);
     }
 }
