@@ -5,6 +5,28 @@ import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent, useMemo } from 'react';
 
+interface PlanOption {
+    id: number;
+    key: string;
+    name: string;
+    description: string | null;
+    badge?: string | null;
+    is_popular?: boolean;
+    is_default?: boolean;
+    is_trial?: boolean;
+    price: string | null;
+    original_price: string | null;
+    annual_price: string | null;
+    currency: string;
+    limits?: {
+        max_vehicles?: number | null;
+        max_users?: number | null;
+        max_branches?: number | null;
+    } | null;
+    features_list?: string[] | null;
+    modules: string[];
+}
+
 interface VerticalOption {
     key: string;
     label: string;
@@ -15,6 +37,7 @@ interface VerticalOption {
 interface FailedSession {
     company_name: string;
     subdomain: string;
+    plan_key?: string | null;
     verticals: string[];
     error_message: string | null;
 }
@@ -22,6 +45,8 @@ interface FailedSession {
 interface Props {
     user: { name: string; email: string };
     centralHost: string;
+    availablePlans?: PlanOption[];
+    initialPlanKey?: string;
     verticalOptions: VerticalOption[];
     failedSession: FailedSession | null;
     settings?: Record<string, string>;
@@ -30,6 +55,8 @@ interface Props {
 export default function Onboarding({
     user,
     centralHost,
+    availablePlans = [],
+    initialPlanKey = 'free',
     verticalOptions,
     failedSession,
     settings,
@@ -39,7 +66,8 @@ export default function Onboarding({
     const { data, setData, post, processing, errors } = useForm({
         company_name: failedSession?.company_name ?? '',
         subdomain: failedSession?.subdomain ?? '',
-        verticals: failedSession?.verticals ?? ([] as string[]),
+        plan_key: failedSession?.plan_key ?? initialPlanKey,
+        verticals: failedSession?.verticals ?? (['rental'] as string[]),
     });
 
     const toggleVertical = (key: string): void => {
@@ -269,6 +297,90 @@ export default function Onboarding({
                                     <p className="mt-1 text-[11px] text-slate-400">{t('central.onboarding.subdomain_hint')}</p>
                                     <InputError message={errors.subdomain} className="mt-2" />
                                 </div>
+
+                                {/* Plan Selection */}
+                                {availablePlans.length > 0 && (
+                                    <div>
+                                        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-600">
+                                            {t('central.onboarding.plans_title')}
+                                        </p>
+                                        <p className="mb-3 text-[11px] text-slate-400">
+                                            {t('central.onboarding.plans_hint')}
+                                        </p>
+                                        <div className="space-y-2.5">
+                                            {availablePlans.map((p) => {
+                                                const selected = data.plan_key === p.key;
+                                                const hasMonthly = p.price && Number(p.price) > 0;
+
+                                                return (
+                                                    <div
+                                                        key={p.key}
+                                                        onClick={() => setData('plan_key', p.key)}
+                                                        className={`relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border p-3.5 cursor-pointer transition-all ${
+                                                            selected
+                                                                ? 'border-indigo-600 bg-gradient-to-r from-indigo-50/90 via-white to-sky-50/80 shadow-md ring-2 ring-indigo-500/20'
+                                                                : p.is_popular
+                                                                  ? 'border-indigo-200 bg-white/90 hover:border-indigo-300'
+                                                                  : 'border-slate-200/80 bg-white/80 hover:border-slate-300'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-start gap-3">
+                                                            <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
+                                                                selected
+                                                                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                                                                    : 'border-slate-300 bg-white'
+                                                            }`}>
+                                                                {selected && (
+                                                                    <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="text-xs font-black text-slate-900">{p.name}</span>
+                                                                    {p.badge && (
+                                                                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700">
+                                                                            {p.badge}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-1">{p.description}</p>
+                                                                {p.limits && (
+                                                                    <div className="mt-1 flex items-center gap-2 text-[10px] font-medium text-slate-600">
+                                                                        <span>🚗 {p.limits.max_vehicles ? `Maks. ${p.limits.max_vehicles} Armada` : 'Unlimited Armada'}</span>
+                                                                        <span>•</span>
+                                                                        <span>👥 {p.limits.max_users ? `Maks. ${p.limits.max_users} Pengguna` : 'Unlimited Pengguna'}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="sm:text-right shrink-0 pl-8 sm:pl-0">
+                                                            <div className="text-xs font-black text-slate-900">
+                                                                {!hasMonthly ? (
+                                                                    <span className="text-emerald-700">Gratis</span>
+                                                                ) : (
+                                                                    <span>
+                                                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: p.currency || 'IDR', maximumFractionDigits: 0 }).format(Number(p.price))}
+                                                                        <span className="text-[10px] font-normal text-slate-400">/bln</span>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {p.key === 'free' && (
+                                                                <span className="text-[10px] font-semibold text-emerald-600">Selamanya</span>
+                                                            )}
+                                                            {p.key === 'trial' && (
+                                                                <span className="text-[10px] font-semibold text-indigo-600">Trial 30 Hari</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <InputError message={errors.plan_key} className="mt-2" />
+                                    </div>
+                                )}
 
                                 {/* Verticals */}
                                 <div>

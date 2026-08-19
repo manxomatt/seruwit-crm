@@ -24,10 +24,26 @@ class PlanSeeder extends Seeder
                 'description' => 'Self-serve onboarding trial: content CMS plus rental/travel packs (accounting & partners are core).',
                 // Union of onboarding defaults (pages + accounting) and both
                 // vertical packs — entitlement only; install still chooses packs.
+                'badge' => 'Trial 30 Hari',
+                'is_popular' => false,
                 'modules' => Plan::trialModuleKeys(),
+                'limits' => [
+                    'max_vehicles' => 50,
+                    'max_users' => 10,
+                    'max_branches' => 3,
+                ],
+                'features_list' => [
+                    'Akses Penuh Seluruh Modul Rental & CMS',
+                    'Kapasitas Hingga 50 Armada Mobil',
+                    'Hingga 10 Akun Staf / Operator',
+                    'Gratis Masa Percobaan 30 Hari',
+                ],
                 'sort_order' => 0,
                 'is_default' => false,
                 'price' => 0,
+                'original_price' => null,
+                'annual_price' => 0,
+                'annual_original_price' => null,
                 'currency' => 'IDR',
                 'interval' => 'month',
                 'trial_days' => 30,
@@ -35,12 +51,28 @@ class PlanSeeder extends Seeder
             ],
             [
                 'key' => 'free',
-                'name' => 'Free',
-                'description' => 'CMS inti saja, tanpa modul tambahan.',
-                'modules' => [],
+                'name' => 'Free Lifetime',
+                'description' => 'Gratis selamanya untuk rental mobil pemula dengan armada hingga 2 unit.',
+                'badge' => 'Gratis Selamanya',
+                'is_popular' => false,
+                'modules' => ['fleet', 'rental', 'invoicing', 'receivables', 'document'],
+                'limits' => [
+                    'max_vehicles' => 2,
+                    'max_users' => 1,
+                    'max_branches' => 1,
+                ],
+                'features_list' => [
+                    'Gratis Selamanya (Maks. 2 Armada Kendaraan)',
+                    '1 Akun Pengguna (Owner)',
+                    'Manajemen Sewa & Kalender Booking',
+                    'Cetak Kwitansi & Invoicing Otomatis',
+                ],
                 'sort_order' => 1,
                 'is_default' => false,
                 'price' => 0,
+                'original_price' => null,
+                'annual_price' => 0,
+                'annual_original_price' => null,
                 'currency' => 'IDR',
                 'interval' => 'month',
                 'trial_days' => 0,
@@ -48,14 +80,29 @@ class PlanSeeder extends Seeder
             ],
             [
                 'key' => 'basic',
-                'name' => 'Basic',
-                'description' => 'CMS inti plus page builder, blog, dan carousel untuk halaman publik.',
-                // Pages and Posts were core before their extraction into
-                // modules, so the default plan must keep covering them.
-                'modules' => ['carousels', 'pages', 'posts'],
+                'name' => 'Starter Rental',
+                'description' => 'Solusi ideal untuk bisnis rental mobil rintisan dengan armada hingga 5 unit.',
+                'badge' => 'Paling Hemat',
+                'is_popular' => false,
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'rental', 'invoicing', 'receivables', 'document'],
+                'limits' => [
+                    'max_vehicles' => 5,
+                    'max_users' => 2,
+                    'max_branches' => 1,
+                ],
+                'features_list' => [
+                    'Maksimal 5 Unit Kendaraan',
+                    '2 Akun Pengguna (Admin & Operator)',
+                    'Manajemen Sewa & Kalender Booking Lengkap',
+                    'Cetak Kontrak PDF & Invoicing Bebas Watermark',
+                    'Landing Page & Katalog Mobil Publik',
+                ],
                 'sort_order' => 2,
                 'is_default' => true,
-                'price' => 500000,
+                'price' => 99000,
+                'original_price' => 150000,
+                'annual_price' => 990000,
+                'annual_original_price' => 1500000,
                 'currency' => 'IDR',
                 'interval' => 'month',
                 'trial_days' => 0,
@@ -63,11 +110,10 @@ class PlanSeeder extends Seeder
             ],
             [
                 'key' => 'pro',
-                'name' => 'Pro',
-                'description' => 'Seluruh modul yang tersedia, termasuk rental, canvassing, dan travel shuttle.',
-                // Invoicing is not optional alongside Billing: Billing requires it,
-                // and the auto-install chain enforces entitlement at every level,
-                // so a plan selling Billing without it could never install either.
+                'name' => 'Pro Rental',
+                'description' => 'Paket terlengkap untuk rental berkembang: servis armada, reminder pajak, dan pelacakan GPS.',
+                'badge' => 'Paling Populer',
+                'is_popular' => true,
                 'modules' => [
                     'approvals',
                     'billing',
@@ -97,9 +143,25 @@ class PlanSeeder extends Seeder
                     'tracking',
                     'transportation',
                 ],
+                'limits' => [
+                    'max_vehicles' => 20,
+                    'max_users' => 5,
+                    'max_branches' => 3,
+                ],
+                'features_list' => [
+                    'Maksimal 20 Unit Kendaraan',
+                    '5 Akun Pengguna',
+                    'Manajemen Servis & Perawatan Armada',
+                    'Pelacakan GPS & Reminder Pajak STNK/KIR',
+                    'Manajemen Piutang & Keuangan Lengkap',
+                    'Executive Dashboard & Analitik',
+                ],
                 'sort_order' => 3,
                 'is_default' => false,
-                'price' => 1500000,
+                'price' => 299000,
+                'original_price' => 450000,
+                'annual_price' => 2990000,
+                'annual_original_price' => 4500000,
                 'currency' => 'IDR',
                 'interval' => 'month',
                 'trial_days' => 0,
@@ -108,17 +170,7 @@ class PlanSeeder extends Seeder
         ];
 
         foreach ($plans as $plan) {
-            // Trial is a code contract for self-serve pack installs — always
-            // refresh its modules so stale firstOrCreate rows cannot block
-            // ProvisionSelfServeTenantJob after packs gain new dependencies.
-            if ($plan['key'] === Plan::KEY_TRIAL) {
-                Plan::query()->updateOrCreate(['key' => Plan::KEY_TRIAL], $plan);
-
-                continue;
-            }
-
-            // Other plans are edited from the super admin UI; never overwrite.
-            Plan::query()->firstOrCreate(['key' => $plan['key']], $plan);
+            Plan::query()->updateOrCreate(['key' => $plan['key']], $plan);
         }
     }
 }

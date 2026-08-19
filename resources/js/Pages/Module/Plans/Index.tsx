@@ -14,7 +14,15 @@ interface PlanRow {
     key: string;
     name: string;
     description: string | null;
+    badge?: string | null;
+    is_popular?: boolean;
     modules: string[];
+    limits?: {
+        max_vehicles?: number | null;
+        max_users?: number | null;
+        max_branches?: number | null;
+    } | null;
+    features_list?: string[] | null;
     sort_order: number;
     is_default: boolean;
     price: string | null;
@@ -22,6 +30,7 @@ interface PlanRow {
     annual_price: string | null;
     annual_original_price: string | null;
     currency: string;
+    trial_days?: number | null;
     tenants: number;
 }
 
@@ -168,22 +177,29 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                             <div
                                 key={plan.id}
                                 className={`relative flex flex-col justify-between rounded-3xl border p-6 transition-all duration-200 ${
-                                    plan.is_default
-                                        ? 'bg-gradient-to-b from-indigo-500/5 via-white to-white dark:from-indigo-500/10 dark:via-slate-900 dark:to-slate-900 border-indigo-500/40 dark:border-indigo-500/30 shadow-md ring-1 ring-indigo-500/20'
-                                        : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md'
+                                    plan.is_popular
+                                        ? 'border-teal-500/50 bg-white dark:bg-slate-900 shadow-lg ring-2 ring-teal-500/20'
+                                        : plan.is_default
+                                          ? 'bg-gradient-to-b from-indigo-500/5 via-white to-white dark:from-indigo-500/10 dark:via-slate-900 dark:to-slate-900 border-indigo-500/40 dark:border-indigo-500/30 shadow-md ring-1 ring-indigo-500/20'
+                                          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md'
                                 }`}
                             >
                                 <div>
                                     {/* Header & Badges */}
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                                                     {plan.name}
                                                 </h3>
                                                 <span className="font-mono text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                                                     {plan.key}
                                                 </span>
+                                                {plan.badge && (
+                                                    <span className="rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-400 px-2 py-0.5 text-[10px] font-bold">
+                                                        {plan.badge}
+                                                    </span>
+                                                )}
                                             </div>
                                             {plan.description && (
                                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
@@ -192,12 +208,32 @@ export default function Index({ plans, availableModules }: Props): JSX.Element {
                                             )}
                                         </div>
 
-                                        {plan.is_default && (
-                                            <span className="shrink-0 rounded-full bg-indigo-500 text-white px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase shadow-sm">
-                                                {t('plans.pages.index.default_badge')}
-                                            </span>
-                                        )}
+                                        <div className="flex flex-col items-end gap-1 shrink-0">
+                                            {plan.is_default && (
+                                                <span className="rounded-full bg-indigo-500 text-white px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase shadow-sm">
+                                                    {t('plans.pages.index.default_badge')}
+                                                </span>
+                                            )}
+                                            {plan.is_popular && (
+                                                <span className="rounded-full bg-teal-600 text-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider shadow-sm">
+                                                    Populer
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* Limits Bar */}
+                                    {(plan.limits?.max_vehicles !== undefined || plan.limits?.max_users !== undefined) && (
+                                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                                            <span>
+                                                🚗 {plan.limits?.max_vehicles ? `${plan.limits.max_vehicles} Armada` : 'Unlimited Armada'}
+                                            </span>
+                                            <span>•</span>
+                                            <span>
+                                                👥 {plan.limits?.max_users ? `${plan.limits.max_users} Staf` : 'Unlimited Staf'}
+                                            </span>
+                                        </div>
+                                    )}
 
                                     {/* Pricing Banner */}
                                     <div className="mt-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-100 dark:border-slate-800">

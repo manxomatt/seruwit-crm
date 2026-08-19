@@ -81,6 +81,10 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
         CentralUser $owner,
         CreateTenantAction $createTenant,
     ): array {
+        $planKey = $session->plan_key ?? Plan::KEY_TRIAL;
+        $plan = Plan::query()->firstWhere('key', $planKey);
+        $trialEndsAt = $planKey === 'free' ? null : $this->trialEndsAt();
+
         if ($session->tenant_id) {
             $tenant = $session->tenant;
 
@@ -88,8 +92,8 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                 $session->update(['tenant_id' => null]);
             } elseif ($tenant->database()->manager()->databaseExists($tenant->database()->getName())) {
                 $tenant->update([
-                    'plan' => Plan::KEY_TRIAL,
-                    'trial_ends_at' => $this->trialEndsAt(),
+                    'plan' => $planKey,
+                    'trial_ends_at' => $trialEndsAt,
                     'is_trial_expired' => false,
                     'status' => 'active',
                 ]);
@@ -112,15 +116,15 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
             setup: [
                 'session_id' => $session->id,
                 'vertical' => $vertical,
-                'plan_key' => Plan::KEY_TRIAL,
+                'plan_key' => $planKey,
                 'module_keys' => SelfServeProvisioningPlan::defaultContentModules(),
                 'pack_keys' => SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []),
             ],
         );
 
         $tenant->update([
-            'plan' => Plan::KEY_TRIAL,
-            'trial_ends_at' => $this->trialEndsAt(),
+            'plan' => $planKey,
+            'trial_ends_at' => $trialEndsAt,
             'is_trial_expired' => false,
             'status' => 'active',
         ]);

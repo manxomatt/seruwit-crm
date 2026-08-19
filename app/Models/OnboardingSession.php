@@ -31,6 +31,7 @@ class OnboardingSession extends Model
         'company_name',
         'subdomain',
         'verticals',
+        'plan_key',
         'status',
         'tenant_id',
         'reseller_global_id',

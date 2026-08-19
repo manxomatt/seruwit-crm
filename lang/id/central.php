@@ -67,6 +67,10 @@ return [
         'subdomain_hint' => 'Hanya huruf, angka, dan tanda hubung.',
         'verticals_title' => 'Bisnis apa yang akan dijalankan?',
         'verticals_hint' => 'Pilih minimal satu. Accounting selalu aktif untuk setiap workspace.',
+        'plans_title' => 'Pilih Skema Paket Workspace',
+        'plans_hint' => 'Pilih paket yang sesuai dengan kapasitas armada dan skala bisnis Anda.',
+        'plan_free_note' => 'Gratis selamanya tanpa kartu kredit',
+        'plan_selected' => 'Paket Terpilih',
         'verticals' => [
             'rental' => 'Rental kendaraan',
             'rental_hint' => 'Armada, booking, deposit, dan invoice rental.',

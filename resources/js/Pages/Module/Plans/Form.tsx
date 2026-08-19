@@ -14,12 +14,23 @@ interface AvailableModule {
     is_enabled: boolean;
 }
 
+export interface PlanLimits {
+    max_vehicles?: number | null;
+    max_users?: number | null;
+    max_branches?: number | null;
+    [key: string]: any;
+}
+
 export interface PlanFormData {
     id?: number;
     key: string;
     name: string;
     description: string | null;
+    badge?: string | null;
+    is_popular?: boolean;
     modules: string[];
+    limits?: PlanLimits | null;
+    features_list?: string[] | null;
     sort_order: number;
     is_default: boolean;
     price: string | null;
@@ -97,14 +108,23 @@ function PriceInput({
 
 export default function PlanForm({ initialData, availableModules, isEdit = false }: PlanFormProps): JSX.Element {
     const { t } = useTrans();
-    const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'modules'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'limits' | 'modules'>('info');
     const [moduleSearch, setModuleSearch] = useState('');
+    const [newFeatureText, setNewFeatureText] = useState('');
 
     const form = useForm({
-        key: initialData.key,
-        name: initialData.name,
+        key: initialData.key || '',
+        name: initialData.name || '',
         description: initialData.description ?? '',
+        badge: initialData.badge ?? '',
+        is_popular: initialData.is_popular ?? false,
         modules: initialData.modules ?? [],
+        limits: {
+            max_vehicles: initialData.limits?.max_vehicles ?? null,
+            max_users: initialData.limits?.max_users ?? null,
+            max_branches: initialData.limits?.max_branches ?? null,
+        },
+        features_list: initialData.features_list ?? [],
         sort_order: initialData.sort_order ?? 0,
         is_default: initialData.is_default ?? false,
         price: initialData.price ? String(Number(initialData.price)) : '',
@@ -139,6 +159,22 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
         form.setData(
             'modules',
             form.data.modules.filter((key) => locked.includes(key)),
+        );
+    };
+
+    const addFeatureItem = (): void => {
+        const trimmed = newFeatureText.trim();
+        if (!trimmed) return;
+        if (!form.data.features_list.includes(trimmed)) {
+            form.setData('features_list', [...form.data.features_list, trimmed]);
+        }
+        setNewFeatureText('');
+    };
+
+    const removeFeatureItem = (index: number): void => {
+        form.setData(
+            'features_list',
+            form.data.features_list.filter((_, i) => i !== index),
         );
     };
 
@@ -182,11 +218,11 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                 <div className="lg:col-span-8 space-y-6">
                     <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
                         {/* Tab Switcher Header */}
-                        <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-2 gap-2">
+                        <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-2 gap-2 overflow-x-auto">
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('info')}
-                                className={`flex-1 rounded-2xl py-2.5 text-xs font-bold transition-all ${
+                                className={`flex-1 min-w-[120px] rounded-2xl py-2.5 text-xs font-bold transition-all ${
                                     activeTab === 'info'
                                         ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -197,7 +233,7 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('pricing')}
-                                className={`flex-1 rounded-2xl py-2.5 text-xs font-bold transition-all ${
+                                className={`flex-1 min-w-[120px] rounded-2xl py-2.5 text-xs font-bold transition-all ${
                                     activeTab === 'pricing'
                                         ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -207,8 +243,19 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                             </button>
                             <button
                                 type="button"
+                                onClick={() => setActiveTab('limits')}
+                                className={`flex-1 min-w-[120px] rounded-2xl py-2.5 text-xs font-bold transition-all ${
+                                    activeTab === 'limits'
+                                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                {t('plans.tabs.limits')}
+                            </button>
+                            <button
+                                type="button"
                                 onClick={() => setActiveTab('modules')}
-                                className={`flex-1 rounded-2xl py-2.5 text-xs font-bold transition-all ${
+                                className={`flex-1 min-w-[120px] rounded-2xl py-2.5 text-xs font-bold transition-all ${
                                     activeTab === 'modules'
                                         ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -247,13 +294,35 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                                 value={form.data.key}
                                                 onChange={(e) => form.setData('key', e.target.value.toLowerCase())}
                                                 disabled={isEdit}
-                                                placeholder="enterprise"
+                                                placeholder="rental-starter"
                                                 required
                                             />
                                             {form.errors.key && <p className="mt-1 text-xs text-rose-500">{form.errors.key}</p>}
                                             <p className="mt-1 text-[11px] text-slate-400">
                                                 {isEdit ? t('plans.fields.key_hint_locked') : t('plans.fields.key_hint_new')}
                                             </p>
+                                        </label>
+
+                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            {t('plans.fields.badge')}
+                                            <input
+                                                className={inputClass}
+                                                value={form.data.badge}
+                                                onChange={(e) => form.setData('badge', e.target.value)}
+                                                placeholder={t('plans.fields.badge_placeholder')}
+                                            />
+                                            {form.errors.badge && <p className="mt-1 text-xs text-rose-500">{form.errors.badge}</p>}
+                                        </label>
+
+                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            {t('plans.fields.sort_order')}
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                className={inputClass}
+                                                value={form.data.sort_order}
+                                                onChange={(e) => form.setData('sort_order', Number(e.target.value))}
+                                            />
                                         </label>
 
                                         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 sm:col-span-2">
@@ -268,17 +337,6 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                             {form.errors.description && (
                                                 <p className="mt-1 text-xs text-rose-500">{form.errors.description}</p>
                                             )}
-                                        </label>
-
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                            {t('plans.fields.sort_order')}
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                className={inputClass}
-                                                value={form.data.sort_order}
-                                                onChange={(e) => form.setData('sort_order', Number(e.target.value))}
-                                            />
                                         </label>
 
                                         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -299,18 +357,33 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                             )}
                                         </label>
 
-                                        <label className="flex items-start gap-3 pt-6 text-xs text-slate-700 dark:text-slate-300">
-                                            <input
-                                                type="checkbox"
-                                                className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                                checked={form.data.is_default}
-                                                onChange={(e) => form.setData('is_default', e.target.checked)}
-                                            />
-                                            <span>
-                                                <span className="font-semibold block">{t('plans.fields.is_default')}</span>
-                                                <span className="text-[11px] text-slate-400">{t('plans.fields.is_default_hint')}</span>
-                                            </span>
-                                        </label>
+                                        <div className="space-y-3 pt-2">
+                                            <label className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300">
+                                                <input
+                                                    type="checkbox"
+                                                    className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                    checked={form.data.is_popular}
+                                                    onChange={(e) => form.setData('is_popular', e.target.checked)}
+                                                />
+                                                <span>
+                                                    <span className="font-semibold block">{t('plans.fields.is_popular')}</span>
+                                                    <span className="text-[11px] text-slate-400">{t('plans.fields.is_popular_hint')}</span>
+                                                </span>
+                                            </label>
+
+                                            <label className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300">
+                                                <input
+                                                    type="checkbox"
+                                                    className="mt-0.5 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                    checked={form.data.is_default}
+                                                    onChange={(e) => form.setData('is_default', e.target.checked)}
+                                                />
+                                                <span>
+                                                    <span className="font-semibold block">{t('plans.fields.is_default')}</span>
+                                                    <span className="text-[11px] text-slate-400">{t('plans.fields.is_default_hint')}</span>
+                                                </span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -392,7 +465,149 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                 </div>
                             )}
 
-                            {/* Tab 3: Modul */}
+                            {/* Tab 3: Limits & Kuota */}
+                            {activeTab === 'limits' && (
+                                <div className="space-y-5">
+                                    <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('plans.tabs.limits')}</h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">Konfigurasikan batasan kuota kapasitas armada, pengguna, serta poin fitur marketing.</p>
+                                    </div>
+
+                                    {/* Resource Limits */}
+                                    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-5 space-y-4">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                                            Batasan Kapasitas Sumber Daya (Resource Quotas)
+                                        </p>
+
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                🚗 {t('plans.fields.max_vehicles')}
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    className={inputClass}
+                                                    value={form.data.limits.max_vehicles ?? ''}
+                                                    onChange={(e) =>
+                                                        form.setData('limits', {
+                                                            ...form.data.limits,
+                                                            max_vehicles: e.target.value === '' ? null : Number(e.target.value),
+                                                        })
+                                                    }
+                                                    placeholder="0 (Unlimited)"
+                                                />
+                                                <span className="mt-1 block text-[11px] font-normal text-slate-400">
+                                                    {t('plans.fields.max_vehicles_hint')}
+                                                </span>
+                                            </label>
+
+                                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                👥 {t('plans.fields.max_users')}
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    className={inputClass}
+                                                    value={form.data.limits.max_users ?? ''}
+                                                    onChange={(e) =>
+                                                        form.setData('limits', {
+                                                            ...form.data.limits,
+                                                            max_users: e.target.value === '' ? null : Number(e.target.value),
+                                                        })
+                                                    }
+                                                    placeholder="0 (Unlimited)"
+                                                />
+                                                <span className="mt-1 block text-[11px] font-normal text-slate-400">
+                                                    {t('plans.fields.max_users_hint')}
+                                                </span>
+                                            </label>
+
+                                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                🏢 {t('plans.fields.max_branches')}
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    className={inputClass}
+                                                    value={form.data.limits.max_branches ?? ''}
+                                                    onChange={(e) =>
+                                                        form.setData('limits', {
+                                                            ...form.data.limits,
+                                                            max_branches: e.target.value === '' ? null : Number(e.target.value),
+                                                        })
+                                                    }
+                                                    placeholder="0 (Unlimited)"
+                                                />
+                                                <span className="mt-1 block text-[11px] font-normal text-slate-400">
+                                                    {t('plans.fields.max_branches_hint')}
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Feature Highlights Checklist Builder */}
+                                    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-5 space-y-4">
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                                                {t('plans.fields.features_list')}
+                                            </p>
+                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                {t('plans.fields.features_list_hint')}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={newFeatureText}
+                                                onChange={(e) => setNewFeatureText(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        addFeatureItem();
+                                                    }
+                                                }}
+                                                placeholder={t('plans.fields.feature_placeholder')}
+                                                className="block w-full rounded-xl border-slate-200 dark:border-slate-800 py-2 px-3.5 text-xs bg-white dark:bg-slate-900 focus:border-indigo-500 text-slate-900 dark:text-white"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={addFeatureItem}
+                                                className="shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-xs font-bold text-white transition-colors"
+                                            >
+                                                {t('plans.fields.add_feature')}
+                                            </button>
+                                        </div>
+
+                                        {form.data.features_list.length === 0 ? (
+                                            <p className="text-xs text-slate-400 italic">Belum ada poin fitur ditambahkan. Masukkan poin fitur di atas dan klik Tambah.</p>
+                                        ) : (
+                                            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                                {form.data.features_list.map((item, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 text-xs text-slate-800 dark:text-slate-200 shadow-sm"
+                                                    >
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+                                                                ✓
+                                                            </span>
+                                                            <span className="truncate">{item}</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeFeatureItem(idx)}
+                                                            className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                                                            title="Hapus"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tab 4: Modul */}
                             {activeTab === 'modules' && (
                                 <div className="space-y-4">
                                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -513,12 +728,28 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                         <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30">
                             <div className="flex items-center gap-2">
                                 {activeTab !== 'info' && (
-                                    <SecondaryButton type="button" onClick={() => setActiveTab(activeTab === 'modules' ? 'pricing' : 'info')} className="!rounded-xl text-xs">
+                                    <SecondaryButton
+                                        type="button"
+                                        onClick={() => {
+                                            if (activeTab === 'modules') setActiveTab('limits');
+                                            else if (activeTab === 'limits') setActiveTab('pricing');
+                                            else setActiveTab('info');
+                                        }}
+                                        className="!rounded-xl text-xs"
+                                    >
                                         {t('plans.actions.back')}
                                     </SecondaryButton>
                                 )}
                                 {activeTab !== 'modules' && (
-                                    <SecondaryButton type="button" onClick={() => setActiveTab(activeTab === 'info' ? 'pricing' : 'modules')} className="!rounded-xl text-xs">
+                                    <SecondaryButton
+                                        type="button"
+                                        onClick={() => {
+                                            if (activeTab === 'info') setActiveTab('pricing');
+                                            else if (activeTab === 'pricing') setActiveTab('limits');
+                                            else setActiveTab('modules');
+                                        }}
+                                        className="!rounded-xl text-xs"
+                                    >
                                         {t('plans.actions.next')}
                                     </SecondaryButton>
                                 )}
@@ -545,7 +776,19 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                             {t('plans.preview.live_preview')}
                         </div>
 
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+                        <div className={`relative rounded-2xl border p-5 backdrop-blur-sm transition-all ${
+                            form.data.is_popular
+                                ? 'border-teal-500/50 bg-teal-950/20 ring-2 ring-teal-500/30'
+                                : 'border-white/10 bg-white/5'
+                        }`}>
+                            {form.data.badge && (
+                                <div className="mb-2">
+                                    <span className="inline-flex items-center rounded-full bg-teal-500/20 px-2.5 py-0.5 text-[10px] font-bold text-teal-300 border border-teal-500/30">
+                                        {form.data.badge}
+                                    </span>
+                                </div>
+                            )}
+
                             <div className="flex items-center justify-between">
                                 <h4 className="text-lg font-bold">
                                     {form.data.name || t('plans.preview.name_placeholder')}
@@ -572,11 +815,47 @@ export default function PlanForm({ initialData, availableModules, isEdit = false
                                 )}
                             </div>
 
+                            {/* Limits Summary in Preview */}
+                            {(form.data.limits.max_vehicles || form.data.limits.max_users) && (
+                                <div className="mt-4 pt-3 border-t border-white/10 text-xs text-white/80 space-y-1">
+                                    <div className="text-[10px] uppercase font-semibold text-white/50">Kapasitas Kuota</div>
+                                    <div className="flex flex-wrap gap-2 text-[11px]">
+                                        {form.data.limits.max_vehicles ? (
+                                            <span className="rounded-md bg-white/10 px-2 py-0.5">🚗 {form.data.limits.max_vehicles} Armada</span>
+                                        ) : (
+                                            <span className="rounded-md bg-white/10 px-2 py-0.5">🚗 Unlimited Armada</span>
+                                        )}
+                                        {form.data.limits.max_users ? (
+                                            <span className="rounded-md bg-white/10 px-2 py-0.5">👥 {form.data.limits.max_users} User</span>
+                                        ) : (
+                                            <span className="rounded-md bg-white/10 px-2 py-0.5">👥 Unlimited User</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Feature Highlights Checklist */}
+                            {form.data.features_list.length > 0 && (
+                                <div className="mt-4 pt-3 border-t border-white/10">
+                                    <div className="text-[10px] uppercase font-semibold text-white/50 mb-1.5">Poin Fitur Unggulan</div>
+                                    <ul className="space-y-1 text-xs text-white/80">
+                                        {form.data.features_list.slice(0, 4).map((f, i) => (
+                                            <li key={i} className="flex items-center gap-1.5 text-[11px]">
+                                                <span className="text-teal-400">✓</span> {f}
+                                            </li>
+                                        ))}
+                                        {form.data.features_list.length > 4 && (
+                                            <li className="text-[10px] text-white/40 italic">+{form.data.features_list.length - 4} fitur lainnya</li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
+
                             <div className="mt-4 pt-3 border-t border-white/10">
                                 <div className="text-[11px] font-semibold text-white/70 mb-1.5">
                                     {t('plans.billing.modules_covered', { count: form.data.modules.length })}
                                 </div>
-                                <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto pr-1">
+                                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
                                     {form.data.modules.length === 0 ? (
                                         <span className="text-xs text-white/40 italic">{t('plans.preview.no_modules')}</span>
                                     ) : (

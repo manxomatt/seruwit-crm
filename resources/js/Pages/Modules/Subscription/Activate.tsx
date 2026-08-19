@@ -8,6 +8,8 @@ interface PlanOption {
     key: string;
     name: string;
     description: string | null;
+    badge?: string | null;
+    is_popular?: boolean;
     price: string | null;
     original_price: string | null;
     annual_price: string | null;
@@ -15,6 +17,12 @@ interface PlanOption {
     currency: string;
     interval: string;
     modules: string[];
+    limits?: {
+        max_vehicles?: number | null;
+        max_users?: number | null;
+        max_branches?: number | null;
+    } | null;
+    features_list?: string[] | null;
 }
 
 interface ActivePaymentOrder {
@@ -127,7 +135,7 @@ function PlanCard({
     interval,
     selected,
     onSelect,
-    isPopular,
+    isPopular = false,
 }: {
     plan: PlanOption;
     interval: BillingInterval;
@@ -136,6 +144,7 @@ function PlanCard({
     isPopular?: boolean;
 }) {
     const [showAllModules, setShowAllModules] = useState(false);
+    const popularCard = plan.is_popular ?? isPopular;
 
     const isAnnual = interval === 'annual';
     const hasAnnual = !!(plan.annual_price && Number(plan.annual_price) > 0);
@@ -157,6 +166,7 @@ function PlanCard({
 
     const perMonth = isAnnual && hasAnnual ? Number(plan.annual_price) / 12 : null;
 
+    const hasFeaturesList = Array.isArray(plan.features_list) && plan.features_list.length > 0;
     const displayedModules = showAllModules ? plan.modules : plan.modules.slice(0, 7);
     const remainingCount = plan.modules.length - 7;
 
@@ -166,17 +176,17 @@ function PlanCard({
             className={`group relative flex flex-col justify-between rounded-3xl p-7 sm:p-8 cursor-pointer transition-all duration-300 ${
                 selected
                     ? 'border-2 border-teal-600 bg-gradient-to-b from-teal-50/70 via-white to-teal-50/30 shadow-xl shadow-teal-900/10 ring-4 ring-teal-500/20'
-                    : isPopular
-                      ? 'border-2 border-teal-200 bg-white hover:border-teal-400 hover:shadow-xl'
+                    : popularCard
+                      ? 'border-2 border-teal-300 bg-white hover:border-teal-400 hover:shadow-xl'
                       : 'border border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg'
             }`}
         >
             {/* Ribbon Badge */}
-            {isPopular && (
+            {(popularCard || plan.badge) && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-md">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-md whitespace-nowrap">
                         <SparklesIcon className="h-3.5 w-3.5" />
-                        Paling Lengkap & Populer
+                        {plan.badge || 'Paling Lengkap & Populer'}
                     </span>
                 </div>
             )}
@@ -186,9 +196,9 @@ function PlanCard({
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
-                            isPopular ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-700'
+                            popularCard ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-700'
                         }`}>
-                            {plan.key === 'free' ? 'Starter' : plan.key === 'basic' ? 'Standard' : 'Enterprise'}
+                            {plan.badge || (plan.key === 'free' ? 'Starter' : plan.key === 'basic' ? 'Standard' : 'Enterprise')}
                         </span>
                         <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{plan.name}</h3>
                         {plan.description && (
@@ -206,6 +216,19 @@ function PlanCard({
                         {selected && <CheckIcon className="h-3.5 w-3.5" />}
                     </div>
                 </div>
+
+                {/* Quota / Limits Bar */}
+                {(plan.limits?.max_vehicles !== undefined || plan.limits?.max_users !== undefined) && (
+                    <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-700 bg-slate-100/80 p-2.5 rounded-xl border border-slate-200/60">
+                        <span>
+                            🚗 {plan.limits?.max_vehicles ? `Maks. ${plan.limits.max_vehicles} Armada` : 'Unlimited Armada'}
+                        </span>
+                        <span>•</span>
+                        <span>
+                            👥 {plan.limits?.max_users ? `Maks. ${plan.limits.max_users} Pengguna` : 'Unlimited Pengguna'}
+                        </span>
+                    </div>
+                )}
 
                 {/* Price Section */}
                 <div className="my-6 rounded-2xl bg-slate-50/80 p-5 border border-slate-100">
@@ -259,47 +282,97 @@ function PlanCard({
                     )}
                 </div>
 
-                {/* Modules Included */}
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                            Fitur & Modul ({plan.modules.length})
-                        </span>
-                        {plan.modules.length > 7 && (
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowAllModules(!showAllModules);
-                                }}
-                                className="text-xs font-bold text-teal-600 hover:text-teal-800"
-                            >
-                                {showAllModules ? 'Tutup Ringkas' : `+${remainingCount} Lainnya`}
-                            </button>
-                        )}
-                    </div>
-
-                    {plan.modules.length === 0 ? (
-                        <p className="text-xs italic text-slate-400">Fitur dasar workspace</p>
-                    ) : (
-                        <ul className="space-y-2.5">
-                            {displayedModules.map((m) => {
-                                const def = MODULE_DEFINITIONS[m] || { label: m.replace(/-/g, ' '), icon: '✨', category: 'Fitur' };
-                                return (
-                                    <li key={m} className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700">
-                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100/70 text-teal-700">
+                {/* Feature Highlights or Modules Included */}
+                {hasFeaturesList ? (
+                    <div className="space-y-4">
+                        <div>
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">
+                                Fitur Utama Paket
+                            </span>
+                            <ul className="space-y-2.5">
+                                {plan.features_list?.map((feature, fIdx) => (
+                                    <li key={fIdx} className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700">
+                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                                             <CheckIcon className="h-3 w-3" />
                                         </span>
-                                        <span className="truncate font-medium text-slate-800">
-                                            <span className="mr-1.5 opacity-90">{def.icon}</span>
-                                            {def.label}
-                                        </span>
+                                        <span className="font-medium text-slate-800">{feature}</span>
                                     </li>
-                                );
-                            })}
-                        </ul>
-                    )}
-                </div>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Collapsible Technical Modules */}
+                        {plan.modules.length > 0 && (
+                            <div className="pt-2 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowAllModules(!showAllModules);
+                                    }}
+                                    className="flex items-center justify-between w-full text-xs font-bold text-teal-600 hover:text-teal-800 py-1"
+                                >
+                                    <span>Modul Teknis ({plan.modules.length})</span>
+                                    <span>{showAllModules ? '▲ Sembunyikan' : '▼ Lihat Detail'}</span>
+                                </button>
+                                {showAllModules && (
+                                    <ul className="mt-2 space-y-1.5 pl-1">
+                                        {plan.modules.map((m) => {
+                                            const def = MODULE_DEFINITIONS[m] || { label: m.replace(/-/g, ' '), icon: '✨' };
+                                            return (
+                                                <li key={m} className="flex items-center gap-2 text-xs text-slate-600">
+                                                    <span>{def.icon}</span>
+                                                    <span>{def.label}</span>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                Fitur & Modul ({plan.modules.length})
+                            </span>
+                            {plan.modules.length > 7 && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowAllModules(!showAllModules);
+                                    }}
+                                    className="text-xs font-bold text-teal-600 hover:text-teal-800"
+                                >
+                                    {showAllModules ? 'Tutup Ringkas' : `+${remainingCount} Lainnya`}
+                                </button>
+                            )}
+                        </div>
+
+                        {plan.modules.length === 0 ? (
+                            <p className="text-xs italic text-slate-400">Fitur dasar workspace</p>
+                        ) : (
+                            <ul className="space-y-2.5">
+                                {displayedModules.map((m) => {
+                                    const def = MODULE_DEFINITIONS[m] || { label: m.replace(/-/g, ' '), icon: '✨', category: 'Fitur' };
+                                    return (
+                                        <li key={m} className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700">
+                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100/70 text-teal-700">
+                                                <CheckIcon className="h-3 w-3" />
+                                            </span>
+                                            <span className="truncate font-medium text-slate-800">
+                                                <span className="mr-1.5 opacity-90">{def.icon}</span>
+                                                {def.label}
+                                            </span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Bottom Select Action */}

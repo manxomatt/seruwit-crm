@@ -67,6 +67,10 @@ return [
         'subdomain_hint' => 'Letters, numbers, and hyphens only.',
         'verticals_title' => 'What will you run?',
         'verticals_hint' => 'Choose at least one. Accounting is included for every workspace.',
+        'plans_title' => 'Choose Workspace Plan',
+        'plans_hint' => 'Select a plan tailored to your fleet size and business needs.',
+        'plan_free_note' => 'Free forever without credit card',
+        'plan_selected' => 'Selected Plan',
         'verticals' => [
             'rental' => 'Vehicle rental',
             'rental_hint' => 'Fleet, bookings, deposits, and rental invoices.',

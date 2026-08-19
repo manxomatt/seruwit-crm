@@ -41,6 +41,31 @@ class OnboardingController extends Controller
             return redirect()->to($this->postAuthDestination->url($request->user()));
         }
 
+        $plans = \App\Models\Plan::query()
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn (\App\Models\Plan $plan) => [
+                'id' => $plan->id,
+                'key' => $plan->key,
+                'name' => $plan->name,
+                'description' => $plan->description,
+                'badge' => $plan->badge,
+                'is_popular' => (bool) $plan->is_popular,
+                'is_default' => (bool) $plan->is_default,
+                'is_trial' => (bool) $plan->is_trial,
+                'price' => $plan->price,
+                'original_price' => $plan->original_price,
+                'annual_price' => $plan->annual_price,
+                'currency' => $plan->currency,
+                'limits' => $plan->limits,
+                'features_list' => $plan->features_list,
+                'modules' => $plan->modules ?? [],
+            ])
+            ->all();
+
+        $selectedPlanKey = $request->query('plan')
+            ?: ($session?->plan_key ?: (collect($plans)->firstWhere('key', 'free')['key'] ?? 'free'));
+
         return Inertia::render('Central/Onboarding', [
             'user' => [
                 'name' => $request->user()->name,
@@ -50,6 +75,8 @@ class OnboardingController extends Controller
             'settings' => Setting::getPublic()
                 ->mapWithKeys(fn (Setting $setting) => [$setting->key => $setting->value])
                 ->toArray(),
+            'availablePlans' => $plans,
+            'initialPlanKey' => $selectedPlanKey,
             'verticalOptions' => collect(SelfServeProvisioningPlan::verticals())
                 ->map(fn (string $vertical): array => [
                     'key' => $vertical,
@@ -62,6 +89,7 @@ class OnboardingController extends Controller
                 ? [
                     'company_name' => $session->company_name,
                     'subdomain' => $session->subdomain,
+                    'plan_key' => $session->plan_key,
                     'verticals' => array_values(array_filter(
                         $session->verticals ?? [],
                         SelfServeProvisioningPlan::isSelectableVertical(...),
@@ -85,6 +113,7 @@ class OnboardingController extends Controller
 
         $verticals = array_values(array_unique($request->validated('verticals')));
         $subdomain = $request->validated('subdomain');
+        $planKey = $request->validated('plan_key') ?? 'free';
 
         // Reuse a half-provisioned tenant when retrying the same subdomain so
         // pack installs can finish without orphaning the previous attempt.
@@ -100,6 +129,7 @@ class OnboardingController extends Controller
                 'company_name' => $request->validated('company_name'),
                 'subdomain' => $subdomain,
                 'verticals' => $verticals,
+                'plan_key' => $planKey,
                 'status' => OnboardingSession::STATUS_PENDING,
                 'tenant_id' => $reuseTenantId,
                 // Resolved here, while the request still has the referral

@@ -59,6 +59,8 @@ class SubscriptionController extends Controller
                 'key' => $plan->key,
                 'name' => $plan->name,
                 'description' => $plan->description,
+                'badge' => $plan->badge,
+                'is_popular' => (bool) $plan->is_popular,
                 'price' => $plan->price,
                 'original_price' => $plan->original_price,
                 'annual_price' => $plan->annual_price,
@@ -66,6 +68,8 @@ class SubscriptionController extends Controller
                 'currency' => $plan->currency ?? 'IDR',
                 'interval' => $plan->interval,
                 'modules' => $plan->modules ?? [],
+                'limits' => $plan->limits ?? [],
+                'features_list' => $plan->features_list ?? [],
             ])->values()->all(),
             'subscription' => $subscription ? [
                 'id' => $subscription->id,

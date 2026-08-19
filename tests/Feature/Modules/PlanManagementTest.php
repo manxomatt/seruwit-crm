@@ -77,7 +77,17 @@ class PlanManagementTest extends TestCase
             'key' => 'enterprise',
             'name' => 'Enterprise',
             'description' => 'Semua modul plus dukungan khusus.',
+            'badge' => 'Paling Populer',
+            'is_popular' => true,
             'modules' => ['carousels'],
+            'limits' => [
+                'max_vehicles' => 50,
+                'max_users' => 10,
+            ],
+            'features_list' => [
+                'Maksimal 50 Armada',
+                '10 Akun Staf',
+            ],
             'sort_order' => 4,
             'is_default' => false,
         ])->assertSessionHasNoErrors();
@@ -86,6 +96,15 @@ class PlanManagementTest extends TestCase
 
         $this->assertNotNull($plan);
         $this->assertSame(['carousels'], $plan->modules);
+        $this->assertSame('Paling Populer', $plan->badge);
+        $this->assertTrue($plan->is_popular);
+        $this->assertSame(50, $plan->getLimit('max_vehicles'));
+        $this->assertSame(10, $plan->getLimit('max_users'));
+        $this->assertNull($plan->getLimit('non_existent_key'));
+        $this->assertSame(99, $plan->getLimit('non_existent_key', 99));
+        $this->assertTrue($plan->hasLimit('max_vehicles'));
+        $this->assertFalse($plan->hasLimit('non_existent_key'));
+        $this->assertSame(['Maksimal 50 Armada', '10 Akun Staf'], $plan->features_list);
         $this->assertFalse($plan->is_default);
     }
 

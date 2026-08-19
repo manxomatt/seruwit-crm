@@ -66,7 +66,11 @@ class Plan extends Model
         'key',
         'name',
         'description',
+        'badge',
+        'is_popular',
         'modules',
+        'limits',
+        'features_list',
         'sort_order',
         'is_default',
         'price',
@@ -85,7 +89,10 @@ class Plan extends Model
     protected function casts(): array
     {
         return [
+            'is_popular' => 'boolean',
             'modules' => 'array',
+            'limits' => 'array',
+            'features_list' => 'array',
             'sort_order' => 'integer',
             'is_default' => 'boolean',
             'price' => 'decimal:2',
@@ -95,6 +102,22 @@ class Plan extends Model
             'trial_days' => 'integer',
             'is_trial' => 'boolean',
         ];
+    }
+
+    /**
+     * Get a specific limit value from the limits JSON array.
+     */
+    public function getLimit(string $key, mixed $default = null): mixed
+    {
+        return $this->limits[$key] ?? $default;
+    }
+
+    /**
+     * Check if a specific limit key is defined in the limits JSON array.
+     */
+    public function hasLimit(string $key): bool
+    {
+        return array_key_exists($key, $this->limits ?? []);
     }
 
     /**

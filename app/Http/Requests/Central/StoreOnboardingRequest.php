@@ -25,6 +25,7 @@ class StoreOnboardingRequest extends FormRequest
         return [
             'company_name' => ['required', 'string', 'max:255'],
             'subdomain' => ['required', 'string', 'lowercase', new ValidSubdomain($this->ignoreDomainForRetry())],
+            'plan_key' => ['nullable', 'string', 'max:50', Rule::exists('plans', 'key')],
             'verticals' => ['required', 'array', 'min:1'],
             'verticals.*' => [
                 'required',

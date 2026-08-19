@@ -1,12 +1,13 @@
 <?php
+
 // ─────────────────────────────────────────────────────────────
 // 🎯 SKRIP UJI OTOMATIS TARIF RENTAL — TENANT BINTANGSELATAN
 // ─────────────────────────────────────────────────────────────
 
 use App\Models\Tenant;
+use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\RentalRateResolver;
-use Modules\Fleet\Support\VehicleRentalClass;
 
 // 1. Pilih tenant bintangselatan
 $tenant = Tenant::query()->where('id', '5ae0f5ff-aa3c-474a-93a5-eed3e07d0167')->firstOrFail();
@@ -17,9 +18,9 @@ $tenant->run(function () {
     RentalRate::query()->where('name', 'like', '[R0%')->delete();
 
     // ── 3. Buat 5 rate sesuai skema uji ─────────────────────
-    $vAvanza  = 1;  // ⚠️ Ganti dengan Avanza id tenantmu!
-    $vInnova  = 2;  // ⚠️ Ganti dengan Innova id tenantmu!
-    $vPajero  = 3;  // ⚠️ Ganti dengan Pajero id tenantmu!
+    $vAvanza = 1;  // ⚠️ Ganti dengan Avanza id tenantmu!
+    $vInnova = 2;  // ⚠️ Ganti dengan Innova id tenantmu!
+    $vPajero = 3;  // ⚠️ Ganti dengan Pajero id tenantmu!
     $vAlphard = 4;  // ⚠️ Ganti dengan Alphard id tenantmu!
 
     // T1 — DEFAULT / UMUM (score 10)
@@ -98,7 +99,7 @@ $tenant->run(function () {
         'priority' => 10,  // ⭐ tie-breaker!
         'is_active' => true,
         'valid_from' => '2026-12-15',  // musim liburan
-        'valid_to'   => '2027-01-15',
+        'valid_to' => '2027-01-15',
         'notes' => 'Class Economy LEBERAN (score 200 SAMA dg T3, tapi priority=10. MENANG jika tanggal dalam musim!)',
     ]);
 
@@ -123,7 +124,7 @@ $tenant->run(function () {
     ]);
 
     echo "✅ 5 RATE BERHASIL DIBUAT:\n";
-    RentalRate::query()->orderBy('id')->get(['id', 'name'])->each(fn($r) => print("  {$r->id}) {$r->name}\n"));
+    RentalRate::query()->orderBy('id')->get(['id', 'name'])->each(fn ($r) => print ("  {$r->id}) {$r->name}\n"));
 
     // ── 4. 🧪 EKSEKUSI 6 SKENARIO UJI DENGAN RESOLVER ────────────
     echo "\n\n🧪 ============== HASIL UJI RentalRateResolver ==============\n";
@@ -132,7 +133,7 @@ $tenant->run(function () {
 
     $candidates = [
         'A1. Avanza, Tgl Normal (2026-08-15)' => [$vAvanza,  '2026-08-15', '[R05] SPESIFIK UNIT: Avanza'],    // Exp: T5 (300 menang)
-        'A2. Avanza, Tgl Libur (2027-01-01)'  => [$vAvanza,  '2027-01-01', '[R05] SPESIFIK UNIT: Avanza'],    // Exp: T5 (300>200)
+        'A2. Avanza, Tgl Libur (2027-01-01)' => [$vAvanza,  '2027-01-01', '[R05] SPESIFIK UNIT: Avanza'],    // Exp: T5 (300>200)
         'B3. Innova, Tgl Normal (2026-08-15)' => [$vInnova,  '2026-08-15', '[R02] LEGACY Type=MPV'],         // Exp: T2 (100 karena MPV match)
         'C4. Pajero, Tgl Normal (2026-08-15)' => [$vPajero,  '2026-08-15', '[R01] DEFAULT All Vehicle'],     // Exp: T1 (10 fallback)
         'E5. Economy X, Tgl Normal (2026-08)' => [$vAvanza === 0 ? 0 : $vAvanza,  '2026-08-20', '[R03] CLASS Economy - Daily Reguler'], // ⚠️ lihat note!
@@ -154,7 +155,7 @@ $tenant->run(function () {
 
     if ($nonAvanzaEco) {
         $candidates['E5. Economy NON-Avanza (tgl normal)'] = [$nonAvanzaEco, '2026-08-20', '[R03] CLASS Economy - Daily Reguler'];
-        $candidates['F6. Economy NON-Avanza (LEBARAN)']     = [$nonAvanzaEco, '2026-12-25', '[R04] CLASS Economy HIGH Season Lebaran'];
+        $candidates['F6. Economy NON-Avanza (LEBARAN)'] = [$nonAvanzaEco, '2026-12-25', '[R04] CLASS Economy HIGH Season Lebaran'];
     }
 
     // Jalankan resolver:
@@ -162,25 +163,29 @@ $tenant->run(function () {
     $fail = 0;
     foreach ($candidates as $label => [$vid, $tgl, $expected]) {
         $v = \Modules\Fleet\Models\Vehicle::query()->find($vid);
-        if (!$v) {
+        if (! $v) {
             echo "⚠️ $label: Vehicle ID=$vid tidak ditemukan\n";
             $fail++;
+
             continue;
         }
         $start = \Illuminate\Support\Carbon::parse($tgl)->startOfDay();
-        $end   = $start->copy()->addDay();
+        $end = $start->copy()->addDay();
         $periods = 1;
 
         $rate = $resolver->suggest($v, $period, $periods, $start, $end);
         $actual = $rate ? $rate->name : 'NULL (NO RATE!)';
-        $pass = $rate && str_starts_with($actual, explode('] ', $expected)[0] . ']');
+        $pass = $rate && str_starts_with($actual, explode('] ', $expected)[0].']');
         $icon = $pass ? '✅' : '❌';
-        echo "$icon $label\n" .
-            "     => Ekspektasi: $expected\n" .
+        echo "$icon $label\n".
+            "     => Ekspektasi: $expected\n".
             "     => Aktual   : $actual\n";
-        if ($pass) $ok++;
-        else $fail++;
+        if ($pass) {
+            $ok++;
+        } else {
+            $fail++;
+        }
     }
 
-    echo "\n🏁 RINGKASAN: $ok LULUS, $fail GAGAL dari " . count($candidates) . " skenario uji.\n";
+    echo "\n🏁 RINGKASAN: $ok LULUS, $fail GAGAL dari ".count($candidates)." skenario uji.\n";
 });
