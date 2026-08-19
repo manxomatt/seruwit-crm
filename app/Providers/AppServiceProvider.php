@@ -42,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
             \Modules\Rental\AI\Contracts\DynamicPricingServiceInterface::class,
             \Modules\Rental\AI\Services\GeminiDynamicPricingService::class
         );
+        $this->app->bind(
+            \Modules\Maintenance\AI\Contracts\PredictiveMaintenanceServiceInterface::class,
+            \Modules\Maintenance\AI\Services\GeminiPredictiveMaintenanceService::class
+        );
     }
 
     /**

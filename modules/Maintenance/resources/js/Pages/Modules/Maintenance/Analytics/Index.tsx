@@ -9,6 +9,7 @@ import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
 import MaintenanceNav from '../../../../MaintenanceNav';
 import { formatCurrency } from '../../../../maintenanceUtils';
+import AiPredictiveMaintenanceCard from '../../../../Components/AiPredictiveMaintenanceCard';
 
 interface Summary {
     work_order_count: number;
@@ -66,6 +67,13 @@ interface Analytics {
 interface Props {
     filters: { from: string; to: string };
     analytics: Analytics;
+    aiPredictiveEnabled?: boolean;
+    aiPredictiveAnalyzeUrl?: string;
+    aiPredictiveCreateWoUrl?: string;
+    can?: {
+        view?: boolean;
+        create_wo?: boolean;
+    };
 }
 
 function Bar({ value, max }: { value: number; max: number }): JSX.Element {
@@ -77,7 +85,14 @@ function Bar({ value, max }: { value: number; max: number }): JSX.Element {
     );
 }
 
-export default function Index({ filters, analytics }: Props): JSX.Element {
+export default function Index({
+    filters,
+    analytics,
+    aiPredictiveEnabled = true,
+    aiPredictiveAnalyzeUrl,
+    aiPredictiveCreateWoUrl,
+    can,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
@@ -152,6 +167,14 @@ export default function Index({ filters, analytics }: Props): JSX.Element {
         >
             <Head title={t('maintenance.analytics.head')} />
             <MaintenanceNav />
+
+            {aiPredictiveEnabled && aiPredictiveAnalyzeUrl && aiPredictiveCreateWoUrl && (
+                <AiPredictiveMaintenanceCard
+                    analyzeUrl={aiPredictiveAnalyzeUrl}
+                    createWoUrl={aiPredictiveCreateWoUrl}
+                    canCreateWo={can?.create_wo ?? true}
+                />
+            )}
 
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                 <div>

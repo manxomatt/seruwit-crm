@@ -366,5 +366,20 @@ return [
         'single_active_wo_per_vehicle_hint' => 'Cegah memulai work order in-progress kedua pada kendaraan yang sama.',
         'single_active_wo_per_bay' => 'Satu WO in-progress per bay',
         'single_active_wo_per_bay_hint' => 'Cegah memulai work order in-progress kedua pada bay yang sama.',
+        'ai_features_title' => 'Kecerdasan Buatan (AI Features)',
+        'ai_features_subtitle' => 'Kelola aktivasi fitur AI Predictive Maintenance & Anomaly Detection.',
+        'ai_predictive_enabled' => 'AI Predictive Maintenance & Anomaly Detection',
+        'ai_predictive_enabled_hint' => 'Prediksi waktu servis otomatis berbasis laju KM harian, deteksi anomali pemakaian, dan skor kesehatan armada.',
+    ],
+
+    'ai' => [
+        'predictive_title' => 'AI Predictive Fleet Maintenance & Anomaly Detection',
+        'predictive_subtitle' => 'Prediksi waktu servis berbasis laju KM harian, deteksi anomali pemakaian, dan pencegahan risiko mogok.',
+        'btn_analyze' => 'Jalankan Analisis Prediktif AI',
+        'btn_reanalyze' => 'Perbarui Prediksi AI',
+        'analyzing_fleet' => 'Menganalisis Telemetri Armada…',
+        'analysis_success' => 'Analisis kesehatan armada dan prediksi servis berhasil dihasilkan.',
+        'vehicle_health_title' => '✨ AI Health Diagnosis',
+        'vehicle_health_subtitle' => 'Evaluasi skor kesehatan & laju KM',
     ],
 ];

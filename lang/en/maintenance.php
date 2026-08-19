@@ -366,5 +366,20 @@ return [
         'single_active_wo_per_vehicle_hint' => 'Block starting a second in-progress work order on the same vehicle.',
         'single_active_wo_per_bay' => 'One in-progress WO per bay',
         'single_active_wo_per_bay_hint' => 'Block starting a second in-progress work order on the same workshop bay.',
+        'ai_features_title' => 'Artificial Intelligence (AI Features)',
+        'ai_features_subtitle' => 'Configure activation for AI Predictive Maintenance & Anomaly Detection.',
+        'ai_predictive_enabled' => 'AI Predictive Maintenance & Anomaly Detection',
+        'ai_predictive_enabled_hint' => 'Automatic service forecasting based on daily KM run-rates, usage anomaly detection, and fleet health scoring.',
+    ],
+
+    'ai' => [
+        'predictive_title' => 'AI Predictive Fleet Maintenance & Anomaly Detection',
+        'predictive_subtitle' => 'Forecast service dates based on daily KM velocity, detect usage anomalies, and prevent roadside breakdown risks.',
+        'btn_analyze' => 'Run AI Predictive Analysis',
+        'btn_reanalyze' => 'Re-analyze AI Predictions',
+        'analyzing_fleet' => 'Analyzing Fleet Telemetry…',
+        'analysis_success' => 'Fleet health analysis and predictive service schedules generated successfully.',
+        'vehicle_health_title' => '✨ AI Health Diagnosis',
+        'vehicle_health_subtitle' => 'Health score & KM run-rate evaluation',
     ],
 ];

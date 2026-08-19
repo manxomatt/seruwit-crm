@@ -40,6 +40,7 @@ class MaintenanceSettingsTest extends TestCase
                 'auto_create_wo' => true,
                 'single_active_wo_per_vehicle' => false,
                 'single_active_wo_per_bay' => true,
+                'ai_predictive_maintenance_enabled' => false,
             ])
             ->assertRedirect(route('module.maintenance.settings.edit'));
 
@@ -49,6 +50,7 @@ class MaintenanceSettingsTest extends TestCase
         $this->assertTrue($settings['auto_create_wo']);
         $this->assertFalse($settings['single_active_wo_per_vehicle']);
         $this->assertTrue($settings['single_active_wo_per_bay']);
+        $this->assertFalse($settings['ai_predictive_maintenance_enabled']);
     }
 
     public function test_maintenance_settings_are_hidden_from_general_settings_ui(): void

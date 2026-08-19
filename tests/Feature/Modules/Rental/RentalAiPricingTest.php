@@ -116,7 +116,7 @@ class RentalAiPricingTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('result.fleet_utilization_percent', 78.5)
-            ->assertJsonPath('result.estimated_revenue_uplift_percent', 16.0)
+            ->assertJsonPath('result.estimated_revenue_uplift_percent', 16)
             ->assertJsonPath('result.recommendations.0.id', 'rec_surge_mpv')
             ->assertJsonPath('result.recommendations.0.suggested_rate', 400000);
     }

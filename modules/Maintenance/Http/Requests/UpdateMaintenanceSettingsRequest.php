@@ -22,6 +22,7 @@ class UpdateMaintenanceSettingsRequest extends FormRequest
             'auto_create_wo' => ['required', 'boolean'],
             'single_active_wo_per_vehicle' => ['required', 'boolean'],
             'single_active_wo_per_bay' => ['required', 'boolean'],
+            'ai_predictive_maintenance_enabled' => ['sometimes', 'boolean'],
         ];
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Facades\Route;
 use Modules\Maintenance\Console\Commands\MaintenanceScanDue;
 use Modules\Maintenance\Http\Controllers\BayCalendarController;
+use Modules\Maintenance\Http\Controllers\MaintenanceAiPredictiveController;
 use Modules\Maintenance\Http\Controllers\MaintenanceAnalyticsController;
 use Modules\Maintenance\Http\Controllers\MaintenanceBayController;
 use Modules\Maintenance\Http\Controllers\MaintenanceCategoryController;
@@ -106,6 +107,17 @@ class MaintenanceModule implements ModuleContract
         Route::get('/maintenance/analytics', [MaintenanceAnalyticsController::class, 'index'])
             ->middleware('permission:maintenance,view')
             ->name('maintenance.analytics.index');
+
+        // AI Predictive Maintenance & Anomaly Detection
+        Route::post('/maintenance/ai-predictive/analyze', [MaintenanceAiPredictiveController::class, 'analyze'])
+            ->middleware('permission:maintenance,view')
+            ->name('maintenance.ai_predictive_analyze');
+        Route::post('/maintenance/ai-predictive/vehicle/{vehicle}', [MaintenanceAiPredictiveController::class, 'diagnoseVehicle'])
+            ->middleware('permission:maintenance,view')
+            ->name('maintenance.ai_predictive_vehicle');
+        Route::post('/maintenance/ai-predictive/create-work-order', [MaintenanceAiPredictiveController::class, 'createWorkOrder'])
+            ->middleware('permission:maintenance,create')
+            ->name('maintenance.ai_predictive_create_wo');
 
         Route::get('/maintenance/settings', [MaintenanceSettingsController::class, 'edit'])
             ->middleware('permission:maintenance,update')

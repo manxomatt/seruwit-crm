@@ -27,8 +27,12 @@ class MaintenanceAnalyticsController extends Controller
                 'to' => $to->toDateString(),
             ],
             'analytics' => $analytics->build($from, $to),
+            'aiPredictiveEnabled' => \Modules\Maintenance\Support\MaintenanceSettings::aiPredictiveMaintenanceEnabled(),
+            'aiPredictiveAnalyzeUrl' => route('module.maintenance.ai_predictive_analyze'),
+            'aiPredictiveCreateWoUrl' => route('module.maintenance.ai_predictive_create_wo'),
             'can' => [
                 'view' => $user->hasPermissionFor('maintenance', 'view'),
+                'create_wo' => $user->hasPermissionFor('maintenance', 'create'),
             ],
         ]);
     }

@@ -103,6 +103,9 @@ interface Props {
     fuelSummary: FuelSummary;
     drivers: { id: number; name: string }[];
     can: { create: boolean; update: boolean; delete: boolean };
+    aiPredictiveEnabled?: boolean;
+    aiDiagnoseUrl?: string | null;
+    aiCreateWoUrl?: string | null;
 }
 
 type ExpiryTone = 'ok' | 'soon' | 'expired' | 'empty';
@@ -242,12 +245,23 @@ export default function Show({
     fuelSummary,
     drivers,
     can,
+    aiPredictiveEnabled = false,
+    aiDiagnoseUrl = null,
+    aiCreateWoUrl = null,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const localeTag = useLocaleTag();
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [showFuelModal, setShowFuelModal] = useState(false);
+    const [aiDiagnosis, setAiDiagnosis] = useState<{
+        health_score: number;
+        status: string;
+        km_per_day_run_rate: number;
+        schedule_insights: Array<{ name: string; km_remaining: number; days_to_due: number; is_overdue: boolean }>;
+        damages_last_60_days: number;
+    } | null>(null);
+    const [loadingDiagnosis, setLoadingDiagnosis] = useState(false);
     const [pendingDelete, setPendingDelete] = useState<
         | { type: 'vehicle' }
         | { type: 'maintenance'; id: number; label: string }
@@ -255,6 +269,30 @@ export default function Show({
         | null
     >(null);
     const [processing, setProcessing] = useState(false);
+
+    const handleFetchDiagnosis = async () => {
+        if (!aiDiagnoseUrl || loadingDiagnosis) return;
+        setLoadingDiagnosis(true);
+        try {
+            const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+            const res = await fetch(aiDiagnoseUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': meta?.content || '',
+                    Accept: 'application/json',
+                },
+            });
+            const data = await res.json();
+            if (res.ok && data.success && data.result) {
+                setAiDiagnosis(data.result);
+            }
+        } catch {
+            // ignore
+        } finally {
+            setLoadingDiagnosis(false);
+        }
+    };
 
     const maintenanceForm = useForm({
         type: 'scheduled_service',
@@ -612,6 +650,77 @@ export default function Show({
                                             <p className="text-xs uppercase text-gray-500">{t('fleet.vehicles.docs_expiring')}</p>
                                             <p className="mt-1 text-xl font-semibold tabular-nums text-amber-700">{documentSummary.expiring_soon}</p>
                                         </div>
+                                    </div>
+                                )}
+                            </SectionCard>
+                        )}
+                        {aiPredictiveEnabled && aiDiagnoseUrl && (
+                            <SectionCard
+                                title={t('maintenance.ai.vehicle_health_title', undefined, '✨ AI Health Diagnosis')}
+                                subtitle={t('maintenance.ai.vehicle_health_subtitle', undefined, 'Evaluasi skor kesehatan & laju KM')}
+                            >
+                                {!aiDiagnosis ? (
+                                    <div className="text-center py-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleFetchDiagnosis}
+                                            disabled={loadingDiagnosis}
+                                            className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/80 px-3.5 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-900 dark:bg-slate-800 dark:text-indigo-300"
+                                        >
+                                            {loadingDiagnosis ? (
+                                                <>
+                                                    <svg className="h-3.5 w-3.5 animate-spin text-indigo-600 dark:text-indigo-300" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                    </svg>
+                                                    <span>Mendiagnosis Unit…</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>🛡️</span>
+                                                    <span>Jalankan Diagnostik AI</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3 text-xs">
+                                        <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+                                            <div>
+                                                <span className="text-[10px] text-slate-400 uppercase font-semibold">Skor Kesehatan</span>
+                                                <p className="text-xl font-black text-slate-900 dark:text-white">{aiDiagnosis.health_score} / 100</p>
+                                            </div>
+                                            <span
+                                                className={`rounded-lg px-2.5 py-1 text-xs font-bold ${
+                                                    aiDiagnosis.status === 'good'
+                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
+                                                        : aiDiagnosis.status === 'warning'
+                                                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
+                                                          : 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300'
+                                                }`}
+                                            >
+                                                {aiDiagnosis.status === 'good' ? 'Kondisi Prima' : aiDiagnosis.status === 'warning' ? 'Perlu Cek' : 'Kritis'}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                                            <span>Laju Penambahan KM:</span>
+                                            <span className="font-bold font-mono text-slate-900 dark:text-white">{aiDiagnosis.km_per_day_run_rate} KM/hari</span>
+                                        </div>
+
+                                        {aiDiagnosis.schedule_insights && aiDiagnosis.schedule_insights.length > 0 && (
+                                            <div className="mt-2 space-y-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
+                                                <span className="text-[10px] uppercase font-bold text-slate-400">Jadwal Servis Terdekat:</span>
+                                                {aiDiagnosis.schedule_insights.map((si, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between text-[11px]">
+                                                        <span className="font-medium text-slate-700 dark:text-slate-300">{si.name}</span>
+                                                        <span className={`font-bold ${si.is_overdue ? 'text-rose-600' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                                                            {si.is_overdue ? '🚨 Terlewat' : `~${si.days_to_due} hari lagi`}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </SectionCard>

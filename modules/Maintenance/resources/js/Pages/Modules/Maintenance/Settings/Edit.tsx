@@ -17,6 +17,7 @@ interface Settings {
     auto_create_wo: boolean;
     single_active_wo_per_vehicle: boolean;
     single_active_wo_per_bay: boolean;
+    ai_predictive_maintenance_enabled: boolean;
 }
 
 interface Props {
@@ -32,6 +33,7 @@ export default function Edit({ settings }: Props): JSX.Element {
         auto_create_wo: settings.auto_create_wo,
         single_active_wo_per_vehicle: settings.single_active_wo_per_vehicle,
         single_active_wo_per_bay: settings.single_active_wo_per_bay,
+        ai_predictive_maintenance_enabled: settings.ai_predictive_maintenance_enabled ?? true,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -110,6 +112,40 @@ export default function Edit({ settings }: Props): JSX.Element {
                             <span>
                                 <span className="block text-sm font-medium text-gray-900">{t('maintenance.settings.single_active_wo_per_bay')}</span>
                                 <span className="mt-0.5 block text-xs text-gray-500">{t('maintenance.settings.single_active_wo_per_bay_hint')}</span>
+                            </span>
+                        </label>
+                    </div>
+                </section>
+
+                <section className="rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/30 p-5 shadow-sm dark:border-indigo-900/50 dark:bg-slate-900">
+                    <div className="flex items-center gap-2.5">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white shadow-sm">
+                            ✨
+                        </span>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+                                {t('maintenance.settings.ai_features_title', undefined, 'Kecerdasan Buatan (AI Features)')}
+                            </h2>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {t('maintenance.settings.ai_features_subtitle', undefined, 'Kelola aktivasi fitur AI Predictive Maintenance & Anomaly Detection.')}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-4 transition hover:bg-white dark:border-slate-800 dark:bg-slate-900/80">
+                            <Checkbox
+                                checked={data.ai_predictive_maintenance_enabled}
+                                onChange={(e) => setData('ai_predictive_maintenance_enabled', e.target.checked)}
+                                className="mt-0.5"
+                            />
+                            <span>
+                                <span className="block text-sm font-bold text-gray-900 dark:text-white">
+                                    {t('maintenance.settings.ai_predictive_enabled', undefined, 'AI Predictive Maintenance & Anomaly Detection')}
+                                </span>
+                                <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                                    {t('maintenance.settings.ai_predictive_enabled_hint', undefined, 'Prediksi waktu servis otomatis berbasis laju KM harian, deteksi anomali pemakaian, dan skor kesehatan armada.')}
+                                </span>
                             </span>
                         </label>
                     </div>

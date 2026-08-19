@@ -20,6 +20,8 @@ class MaintenanceSettings
 
     public const KEY_SINGLE_ACTIVE_WO_PER_BAY = 'maintenance.single_active_wo_per_bay';
 
+    public const KEY_AI_PREDICTIVE_MAINTENANCE_ENABLED = 'maintenance.ai_predictive_maintenance_enabled';
+
     /**
      * @return list<string>
      */
@@ -31,6 +33,7 @@ class MaintenanceSettings
             self::KEY_AUTO_CREATE_WO,
             self::KEY_SINGLE_ACTIVE_WO_PER_VEHICLE,
             self::KEY_SINGLE_ACTIVE_WO_PER_BAY,
+            self::KEY_AI_PREDICTIVE_MAINTENANCE_ENABLED,
         ];
     }
 
@@ -59,13 +62,19 @@ class MaintenanceSettings
         return self::truthy(Setting::getValue(self::KEY_SINGLE_ACTIVE_WO_PER_BAY, '1'));
     }
 
+    public static function aiPredictiveMaintenanceEnabled(): bool
+    {
+        return self::truthy(Setting::getValue(self::KEY_AI_PREDICTIVE_MAINTENANCE_ENABLED, '1'));
+    }
+
     /**
      * @return array{
      *     alert_km_before: string,
      *     alert_days_before: string,
      *     auto_create_wo: bool,
      *     single_active_wo_per_vehicle: bool,
-     *     single_active_wo_per_bay: bool
+     *     single_active_wo_per_bay: bool,
+     *     ai_predictive_maintenance_enabled: bool
      * }
      */
     public static function all(): array
@@ -76,6 +85,7 @@ class MaintenanceSettings
             'auto_create_wo' => self::autoCreateWo(),
             'single_active_wo_per_vehicle' => self::singleActiveWoPerVehicle(),
             'single_active_wo_per_bay' => self::singleActiveWoPerBay(),
+            'ai_predictive_maintenance_enabled' => self::aiPredictiveMaintenanceEnabled(),
         ];
     }
 
@@ -85,7 +95,8 @@ class MaintenanceSettings
      *     alert_days_before: int|string,
      *     auto_create_wo: bool,
      *     single_active_wo_per_vehicle: bool,
-     *     single_active_wo_per_bay: bool
+     *     single_active_wo_per_bay: bool,
+     *     ai_predictive_maintenance_enabled?: bool
      * }  $data
      */
     public static function update(array $data): void
@@ -95,6 +106,7 @@ class MaintenanceSettings
         self::put(self::KEY_AUTO_CREATE_WO, $data['auto_create_wo'] ? '1' : '0', 'boolean', 'Auto-create draft work order', 3);
         self::put(self::KEY_SINGLE_ACTIVE_WO_PER_VEHICLE, $data['single_active_wo_per_vehicle'] ? '1' : '0', 'boolean', 'One in-progress WO per vehicle', 4);
         self::put(self::KEY_SINGLE_ACTIVE_WO_PER_BAY, $data['single_active_wo_per_bay'] ? '1' : '0', 'boolean', 'One in-progress WO per bay', 5);
+        self::put(self::KEY_AI_PREDICTIVE_MAINTENANCE_ENABLED, ! empty($data['ai_predictive_maintenance_enabled']) ? '1' : '0', 'boolean', 'AI Predictive Maintenance & Anomaly Detection', 10);
     }
 
     private static function put(string $key, string $value, string $type, string $label, int $sortOrder): void
