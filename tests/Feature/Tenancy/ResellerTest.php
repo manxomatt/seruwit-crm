@@ -19,8 +19,19 @@ class ResellerTest extends TestCase
 
     protected function setUpWithTenant(): void
     {
-        $this->seed(PlanSeeder::class);
         $this->seed(RoleSeeder::class);
+    }
+
+    /**
+     * Only the pending-payment tests below need real Plan rows (for the
+     * `plan` field's existence check and for looking up 'pro'/'free' by
+     * key). Seeded on demand rather than for every test in this file:
+     * seeding it unconditionally in setUpWithTenant() previously destabilized
+     * unrelated tests that provision tenants with no plan_key at all.
+     */
+    private function seedPlans(): void
+    {
+        $this->seed(PlanSeeder::class);
     }
 
     // -----------------------------------------------------------------------
@@ -350,6 +361,8 @@ class ResellerTest extends TestCase
 
     public function test_reseller_selecting_a_paid_plan_creates_the_tenant_on_trial_instead(): void
     {
+        $this->seedPlans();
+
         // A distinctive value proves the trial length comes from the Trial
         // plan's own column, not a number baked into the controller.
         Plan::query()->where('key', Plan::KEY_TRIAL)->update(['trial_days' => 45]);
@@ -369,6 +382,8 @@ class ResellerTest extends TestCase
 
     public function test_reseller_selecting_a_paid_plan_creates_a_pending_payment_order_for_it(): void
     {
+        $this->seedPlans();
+
         $reseller = $this->makeReseller();
         $proPlan = Plan::query()->where('key', 'pro')->firstOrFail();
 
@@ -388,6 +403,8 @@ class ResellerTest extends TestCase
 
     public function test_reseller_selecting_a_free_plan_is_still_granted_directly(): void
     {
+        $this->seedPlans();
+
         $reseller = $this->makeReseller();
 
         $this->actingAs($reseller)
@@ -406,6 +423,8 @@ class ResellerTest extends TestCase
      */
     public function test_reseller_leaving_the_plan_blank_still_goes_through_the_paid_default(): void
     {
+        $this->seedPlans();
+
         $reseller = $this->makeReseller();
 
         $this->actingAs($reseller)
@@ -420,6 +439,8 @@ class ResellerTest extends TestCase
 
     public function test_admin_selecting_a_paid_plan_is_still_granted_instantly(): void
     {
+        $this->seedPlans();
+
         $admin = $this->makeSuperAdmin();
 
         $this->actingAs($admin)
@@ -439,6 +460,8 @@ class ResellerTest extends TestCase
      */
     public function test_confirming_the_pending_order_activates_the_plan_and_pays_the_reseller(): void
     {
+        $this->seedPlans();
+
         config()->set('reseller.default_rate', ['type' => 'percent', 'value' => 10]);
 
         $reseller = $this->makeReseller();
