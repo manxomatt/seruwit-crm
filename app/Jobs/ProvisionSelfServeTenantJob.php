@@ -83,7 +83,10 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
     ): array {
         $planKey = $session->plan_key ?? Plan::KEY_TRIAL;
         $plan = Plan::query()->firstWhere('key', $planKey);
-        $trialEndsAt = $planKey === 'free' ? null : $this->trialEndsAt();
+        $trialDays = $plan?->trial_days;
+        $trialEndsAt = ($planKey === 'free' && ! $trialDays)
+            ? null
+            : ($trialDays ? now()->addDays($trialDays) : $this->trialEndsAt());
 
         if ($session->tenant_id) {
             $tenant = $session->tenant;

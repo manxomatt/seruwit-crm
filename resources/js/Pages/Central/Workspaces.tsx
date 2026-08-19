@@ -7,8 +7,12 @@ interface Workspace {
     id: string;
     name: string;
     status: string;
+    plan_key?: string | null;
+    plan_name?: string | null;
+    plan_badge?: string | null;
     domain: string | null;
     trial_ends_at?: string | null;
+    trial_days_left?: number;
     is_on_trial?: boolean;
 }
 
@@ -103,9 +107,14 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                                                             {workspace.name.charAt(0).toUpperCase()}
                                                         </span>
                                                         <div className="min-w-0">
-                                                            <p className="truncate font-semibold text-slate-900">
-                                                                {workspace.name}
-                                                            </p>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <p className="truncate font-semibold text-slate-900">
+                                                                    {workspace.name}
+                                                                </p>
+                                                                <span className="rounded-md bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800">
+                                                                    {workspace.plan_name || 'Trial'}
+                                                                </span>
+                                                            </div>
                                                             {workspace.domain && (
                                                                 <p className="truncate text-sm text-slate-500">
                                                                     {workspace.domain}
@@ -115,7 +124,7 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 ring-1 ring-cyan-200">
-                                                            {t('central.trial.days_left', { days: '7' })}
+                                                            {t('central.trial.days_left', { days: String(workspace.trial_days_left ?? 0) })}
                                                         </span>
                                                         <a
                                                             href={route('central.workspaces.enter', workspace.id)}
@@ -126,7 +135,7 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                                                     </div>
                                                 </div>
                                                 <p className="mt-3 text-xs text-slate-500">
-                                                    {t('central.trial.trial_info')}
+                                                    {t('central.trial.trial_info', { plan: workspace.plan_name || 'Trial' })}
                                                 </p>
                                             </div>
                                         ) : active ? (
@@ -139,9 +148,21 @@ export default function Workspaces({ workspaces, settings }: Props): JSX.Element
                                                         {workspace.name.charAt(0).toUpperCase()}
                                                     </span>
                                                     <div className="min-w-0">
-                                                        <p className="truncate font-semibold text-slate-900">
-                                                            {workspace.name}
-                                                        </p>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <p className="truncate font-semibold text-slate-900">
+                                                                {workspace.name}
+                                                            </p>
+                                                            {workspace.plan_name && (
+                                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                                                                    {workspace.plan_name}
+                                                                </span>
+                                                            )}
+                                                            {workspace.plan_key === 'free' && (
+                                                                <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                                                    Free Lifetime
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {workspace.domain && (
                                                             <p className="truncate text-sm text-slate-500">
                                                                 {workspace.domain}

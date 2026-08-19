@@ -213,11 +213,13 @@ export default function OnboardingStatus({
                                                 <span className="material-symbols-outlined text-sky-600 text-xl">new_releases</span>
                                                 <div>
                                                     <p className="text-xs font-bold text-sky-900">
-                                                        {t('central.trial.trial_info')}
+                                                        {t('central.trial.trial_info', { plan: session.verticals?.includes('rental') ? 'Rental' : 'Workspace' })}
                                                     </p>
                                                     <p className="mt-1 text-xs text-sky-700">
-                                                        {t('central.trial.days_left', { days: '7' })} —{' '}
-                                                        {new Date(trialEndsAt).toLocaleDateString()}
+                                                        {t('central.trial.days_left', {
+                                                            days: String(Math.max(1, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))),
+                                                        })}{' '}
+                                                        — {new Date(trialEndsAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                     </p>
                                                 </div>
                                             </div>

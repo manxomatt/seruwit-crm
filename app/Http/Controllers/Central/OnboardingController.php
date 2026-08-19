@@ -53,6 +53,7 @@ class OnboardingController extends Controller
                 'is_popular' => (bool) $plan->is_popular,
                 'is_default' => (bool) $plan->is_default,
                 'is_trial' => (bool) $plan->is_trial,
+                'trial_days' => (int) $plan->trial_days,
                 'price' => $plan->price,
                 'original_price' => $plan->original_price,
                 'annual_price' => $plan->annual_price,

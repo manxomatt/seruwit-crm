@@ -64,7 +64,7 @@ export default function Register({ settings }: Props) {
                         <div className="flex items-center gap-2">
                             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-sm backdrop-blur-md">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                14-Day Free Trial • No Credit Card
+                                Instant Provisioning • No Credit Card
                             </span>
                         </div>
 

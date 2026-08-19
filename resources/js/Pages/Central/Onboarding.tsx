@@ -14,6 +14,7 @@ interface PlanOption {
     is_popular?: boolean;
     is_default?: boolean;
     is_trial?: boolean;
+    trial_days?: number | null;
     price: string | null;
     original_price: string | null;
     annual_price: string | null;
@@ -139,7 +140,7 @@ export default function Onboarding({
                         <div className="flex items-center gap-2">
                             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-sm backdrop-blur-md">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                Instant Provisioning • 14-Day Free Trial
+                                Instant Provisioning
                             </span>
                         </div>
 
@@ -344,6 +345,12 @@ export default function Onboarding({
                                                                             {p.badge}
                                                                         </span>
                                                                     )}
+                                                                    {p.trial_days !== undefined && p.trial_days !== null && Number(p.trial_days) > 0 && (
+                                                                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-black text-emerald-800">
+                                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                                            Trial {p.trial_days} Hari
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-1">{p.description}</p>
                                                                 {p.limits && (
@@ -367,12 +374,13 @@ export default function Onboarding({
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            {p.key === 'free' && (
-                                                                <span className="text-[10px] font-semibold text-emerald-600">Selamanya</span>
-                                                            )}
-                                                            {p.key === 'trial' && (
-                                                                <span className="text-[10px] font-semibold text-indigo-600">Trial 30 Hari</span>
-                                                            )}
+                                                            {p.trial_days !== undefined && p.trial_days !== null && Number(p.trial_days) > 0 ? (
+                                                                <span className="block text-[10px] font-bold text-emerald-600">
+                                                                    Gratis {p.trial_days} Hari Pertama
+                                                                </span>
+                                                            ) : p.key === 'free' ? (
+                                                                <span className="block text-[10px] font-semibold text-emerald-600">Selamanya</span>
+                                                            ) : null}
                                                         </div>
                                                     </div>
                                                 );

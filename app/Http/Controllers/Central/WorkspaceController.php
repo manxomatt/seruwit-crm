@@ -25,14 +25,25 @@ class WorkspaceController extends Controller
             ->tenants()
             ->with('domains')
             ->get()
-            ->map(fn (Tenant $tenant): array => [
-                'id' => $tenant->id,
-                'name' => $tenant->name,
-                'status' => $tenant->status,
-                'domain' => $tenant->domains->first()?->domain,
-                'trial_ends_at' => $tenant->trial_ends_at?->toIso8601String(),
-                'is_on_trial' => $tenant->isOnTrial ?? false,
-            ]);
+            ->map(function (Tenant $tenant): array {
+                $planModel = $tenant->planModel();
+                $trialDaysLeft = $tenant->trial_ends_at && $tenant->trial_ends_at->isFuture()
+                    ? max(1, (int) ceil(now()->diffInSeconds($tenant->trial_ends_at, false) / 86400))
+                    : 0;
+
+                return [
+                    'id' => $tenant->id,
+                    'name' => $tenant->name,
+                    'status' => $tenant->status,
+                    'plan_key' => $tenant->planKey(),
+                    'plan_name' => $planModel?->name ?? ($tenant->planKey() ?: 'Starter'),
+                    'plan_badge' => $planModel?->badge,
+                    'domain' => $tenant->domains->first()?->domain,
+                    'trial_ends_at' => $tenant->trial_ends_at?->toIso8601String(),
+                    'trial_days_left' => $trialDaysLeft,
+                    'is_on_trial' => $tenant->isOnTrial ?? false,
+                ];
+            });
 
         return Inertia::render('Central/Workspaces', [
             'workspaces' => $workspaces,
