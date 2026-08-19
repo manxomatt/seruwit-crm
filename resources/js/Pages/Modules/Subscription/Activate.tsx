@@ -137,12 +137,14 @@ function PlanCard({
     selected,
     onSelect,
     isPopular = false,
+    isCurrentPlan = false,
 }: {
     plan: PlanOption;
     interval: BillingInterval;
     selected: boolean;
     onSelect: () => void;
     isPopular?: boolean;
+    isCurrentPlan?: boolean;
 }) {
     const [showAllModules, setShowAllModules] = useState(false);
     const popularCard = plan.is_popular ?? isPopular;
@@ -196,11 +198,18 @@ function PlanCard({
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                     <div>
-                        <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
-                            popularCard ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-700'
-                        }`}>
-                            {plan.badge || (plan.key === 'free' ? 'Starter' : plan.key === 'basic' ? 'Standard' : 'Enterprise')}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                                popularCard ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-700'
+                            }`}>
+                                {plan.badge || (plan.key === 'free' ? 'Starter' : plan.key === 'basic' ? 'Standard' : 'Enterprise')}
+                            </span>
+                            {isCurrentPlan && (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-xs font-bold text-emerald-800">
+                                    ✓ Paket Aktif
+                                </span>
+                            )}
+                        </div>
                         <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{plan.name}</h3>
                         {plan.description && (
                             <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500 line-clamp-2">
