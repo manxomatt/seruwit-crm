@@ -475,16 +475,31 @@ export default function Group({
                                                         onChange={(e) => updateValue(index, e.target.value)}
                                                     />
                                                 ) : setting.type === 'boolean' ? (
-                                                    <label className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                                            checked={data.settings[index].value === '1'}
-                                                            onChange={(e) => updateValue(index, e.target.checked ? '1' : '0')}
-                                                        />
-                                                        <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                                            {t('settings.pages.group.enabled_label')}
-                                                        </span>
+                                                    <label className={`flex items-center justify-between gap-3 rounded-2xl border p-3.5 cursor-pointer transition ${
+                                                        data.settings[index].value === '1'
+                                                            ? 'border-indigo-200 bg-indigo-50/40 dark:border-indigo-900/60 dark:bg-indigo-950/20'
+                                                            : 'border-slate-200/80 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
+                                                    }`}>
+                                                        <div className="flex items-center gap-2">
+                                                            {setting.key === 'general.ai_features_enabled' && (
+                                                                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-600 text-xs text-white shadow-xs">✨</span>
+                                                            )}
+                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                                {data.settings[index].value === '1'
+                                                                    ? (setting.key === 'general.ai_features_enabled' ? 'Aktif (AI Features Enabled)' : t('settings.pages.group.enabled_label'))
+                                                                    : (setting.key === 'general.ai_features_enabled' ? 'Nonaktif (AI Features Disabled)' : 'Nonaktif')}
+                                                            </span>
+                                                        </div>
+                                                        <div className="relative shrink-0">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only peer"
+                                                                checked={data.settings[index].value === '1'}
+                                                                onChange={(e) => updateValue(index, e.target.checked ? '1' : '0')}
+                                                            />
+                                                            <div className="h-6 w-11 rounded-full bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2 peer-checked:bg-indigo-600 transition-colors dark:bg-slate-700" />
+                                                            <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5 shadow-sm" />
+                                                        </div>
                                                     </label>
                                                 ) : setting.type === 'select' && setting.key in SELECT_OPTIONS ? (
                                                     <Select
