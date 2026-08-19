@@ -55,7 +55,7 @@ class PlanSeeder extends Seeder
                 'description' => 'Gratis selamanya untuk rental mobil pemula dengan armada hingga 2 unit.',
                 'badge' => 'Gratis Selamanya',
                 'is_popular' => false,
-                'modules' => ['fleet', 'rental', 'invoicing', 'receivables', 'document'],
+                'modules' => ['carousels', 'pages', 'posts', 'fleet', 'rental', 'invoicing', 'receivables', 'document'],
                 'limits' => [
                     'max_vehicles' => 2,
                     'max_users' => 1,

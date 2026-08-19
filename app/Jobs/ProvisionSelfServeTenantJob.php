@@ -123,6 +123,8 @@ class ProvisionSelfServeTenantJob implements ShouldQueue
                 'module_keys' => SelfServeProvisioningPlan::defaultContentModules(),
                 'pack_keys' => SelfServeProvisioningPlan::packKeysForVerticals($session->verticals ?? []),
             ],
+            planKey: $planKey,
+            trialEndsAt: $trialEndsAt,
         );
 
         $tenant->update([

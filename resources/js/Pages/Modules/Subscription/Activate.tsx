@@ -39,11 +39,12 @@ interface Props {
         id: string;
         name: string;
         status: string;
+        plan?: string | null;
         trial_ends_at: string | null;
         is_on_trial: boolean;
     };
     plans: PlanOption[];
-    subscription: { id: number; status: string; plan?: string; ends_at?: string } | null;
+    subscription: { id: number; status: string; plan?: string; plan_id?: number; ends_at?: string } | null;
     isOnTrial: boolean;
     trialEndsAt: string | null;
     activePaymentOrder: ActivePaymentOrder | null;
