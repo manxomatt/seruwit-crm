@@ -38,9 +38,10 @@ interface DocumentTemplate {
 }
 
 interface Props {
-    tab: 'general' | 'documents';
+    tab: 'general' | 'rates' | 'documents';
     general?: GeneralSettings;
     documents?: Record<string, DocumentTemplate>;
+    centralAiEnabled?: boolean;
 }
 
 const DEFAULT_GENERAL: GeneralSettings = {
@@ -123,7 +124,13 @@ function ToggleSwitch({
     );
 }
 
-function GeneralPanel({ general = DEFAULT_GENERAL }: { general?: GeneralSettings }): JSX.Element {
+function GeneralPanel({
+    general = DEFAULT_GENERAL,
+    centralAiEnabled = true,
+}: {
+    general?: GeneralSettings;
+    centralAiEnabled?: boolean;
+}): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors, recentlySuccessful, isDirty } = useForm({
