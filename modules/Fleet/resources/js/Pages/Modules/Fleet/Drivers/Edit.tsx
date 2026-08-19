@@ -80,7 +80,7 @@ export default function Edit({ driver }: Props): JSX.Element {
             <Head title={`Edit Pengemudi · ${driver.name}`} />
             <FleetNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-28">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
                 {/* Breadcrumbs */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">Fleet</Link>
@@ -284,31 +284,28 @@ export default function Edit({ driver }: Props): JSX.Element {
                             <InputError message={errors.notes} className="mt-1" />
                         </div>
                     </div>
+                    {/* Form Action Panel */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center gap-2 text-xs">
+                            <span className="font-black text-slate-900 dark:text-white">{data.name || driver.name}</span>
+                            <span className="text-slate-300">·</span>
+                            <span className="text-slate-500">{DRIVER_STATUSES.find((s) => s.key === data.status)?.label ?? data.status}</span>
+                        </div>
 
-                    {/* Sticky Footer */}
-                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900/95">
-                        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-                            <div className="flex items-center gap-2 text-xs">
-                                <span className="font-black text-slate-900 dark:text-white">{data.name || driver.name}</span>
-                                <span className="text-slate-300">·</span>
-                                <span className="text-slate-500">{DRIVER_STATUSES.find((s) => s.key === data.status)?.label ?? data.status}</span>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <Link
-                                    href={prefixedRoute('fleet.drivers.show', driver.id)}
-                                    className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                >
-                                    ← Batal
-                                </Link>
-                                <PrimaryButton
-                                    type="submit"
-                                    disabled={processing}
-                                    className="rounded-2xl px-6 py-3 text-sm font-black shadow-md"
-                                >
-                                    {processing ? 'Menyimpan Perubahan...' : '💾 Simpan Perubahan'}
-                                </PrimaryButton>
-                            </div>
+                        <div className="flex gap-2">
+                            <Link
+                                href={prefixedRoute('fleet.drivers.show', driver.id)}
+                                className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                            >
+                                ← Batal
+                            </Link>
+                            <PrimaryButton
+                                type="submit"
+                                disabled={processing}
+                                className="rounded-2xl px-6 py-2.5 text-xs font-black shadow-md"
+                            >
+                                {processing ? 'Menyimpan Perubahan...' : '💾 Simpan Perubahan Pengemudi'}
+                            </PrimaryButton>
                         </div>
                     </div>
                 </form>

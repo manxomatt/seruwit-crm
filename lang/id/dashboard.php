@@ -165,10 +165,10 @@ return [
     ],
 
     'quick_actions' => [
-        'new_rental_reservation' => '+ Reservasi Rental Baru',
-        'issue_travel_ticket' => '+ Issue Tiket Travel',
-        'create_logistics_resi' => '+ Buat Resi Logistik',
-        'create_manual_invoice' => '+ Buat Invoice Manual',
+        'new_rental_reservation' => 'Reservasi Rental Baru',
+        'issue_travel_ticket' => 'Issue Tiket Travel',
+        'create_logistics_resi' => 'Buat Resi Logistik',
+        'create_manual_invoice' => 'Buat Invoice Manual',
     ],
 
     'fleet' => [

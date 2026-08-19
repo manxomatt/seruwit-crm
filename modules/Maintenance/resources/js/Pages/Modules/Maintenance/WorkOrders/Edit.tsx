@@ -167,7 +167,7 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts, 
             <Head title={`Edit SPK ${wo.reference_number} — ${wo.title}`} />
             <MaintenanceNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-28">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
                 {/* Breadcrumb Navigation */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">Fleet</Link>
@@ -730,31 +730,29 @@ export default function Edit({ workOrder: wo, vehicles, categories, spareParts, 
                         </div>
                     </div>
 
-                    {/* Sticky Action Footer */}
-                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900/95">
-                        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-                            <div className="flex items-center gap-2 text-xs">
-                                <span className="rounded-xl bg-slate-900 px-2.5 py-0.5 font-mono text-[11px] font-black text-white dark:bg-slate-200 dark:text-slate-900">
-                                    {wo.reference_number}
-                                </span>
-                                <span className="font-black text-slate-900 dark:text-white truncate max-w-xs">{data.title || wo.title}</span>
-                            </div>
+                    {/* Form Action Footer Panel */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-center gap-2 text-xs">
+                            <span className="rounded-xl bg-slate-900 px-2.5 py-0.5 font-mono text-[11px] font-black text-white dark:bg-slate-200 dark:text-slate-900">
+                                {wo.reference_number}
+                            </span>
+                            <span className="font-black text-slate-900 dark:text-white truncate max-w-xs">{data.title || wo.title}</span>
+                        </div>
 
-                            <div className="flex gap-2">
-                                <Link
-                                    href={prefixedRoute('maintenance.work-orders.show', wo.id)}
-                                    className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                >
-                                    ← Batal
-                                </Link>
-                                <PrimaryButton
-                                    type="submit"
-                                    disabled={processing}
-                                    className="rounded-2xl px-6 py-3 text-sm font-black shadow-md"
-                                >
-                                    {processing ? 'Menyimpan Perubahan...' : '💾 Simpan Perubahan SPK'}
-                                </PrimaryButton>
-                            </div>
+                        <div className="flex gap-2">
+                            <Link
+                                href={prefixedRoute('maintenance.work-orders.show', wo.id)}
+                                className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                            >
+                                ← Batal
+                            </Link>
+                            <PrimaryButton
+                                type="submit"
+                                disabled={processing}
+                                className="rounded-2xl px-6 py-2.5 text-xs font-black shadow-md"
+                            >
+                                {processing ? 'Menyimpan Perubahan...' : '💾 Simpan Perubahan SPK'}
+                            </PrimaryButton>
                         </div>
                     </div>
                 </form>

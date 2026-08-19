@@ -432,7 +432,7 @@ export default function Show({
                                                         disabled={accountForm.processing}
                                                         className="rounded-2xl"
                                                     >
-                                                        {accountForm.processing ? 'Membuat Akun...' : '＋ Buat Akun Login Portal'}
+                                                        {accountForm.processing ? 'Membuat Akun...' : 'Buat Akun Login Portal'}
                                                     </PrimaryButton>
                                                 </div>
                                             </form>

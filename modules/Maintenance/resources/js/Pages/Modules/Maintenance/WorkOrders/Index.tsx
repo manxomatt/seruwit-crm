@@ -137,7 +137,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                         can.create && (
                             <Link href={prefixedRoute('maintenance.work-orders.create')}>
                                 <PrimaryButton className="rounded-2xl text-xs font-black shadow-md">
-                                    ＋ Buat SPK Baru
+                                    Buat SPK Baru
                                 </PrimaryButton>
                             </Link>
                         )
@@ -249,7 +249,7 @@ export default function Index({ workOrders, vehicles, filters, can }: Props): JS
                                     href={prefixedRoute('maintenance.work-orders.create')}
                                     className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md hover:bg-indigo-700"
                                 >
-                                    ＋ Buat SPK Baru
+                                    Buat SPK Baru
                                 </Link>
                             )}
                         </div>

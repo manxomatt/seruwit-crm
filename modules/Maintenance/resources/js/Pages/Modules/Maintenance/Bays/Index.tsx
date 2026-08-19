@@ -140,7 +140,7 @@ export default function Index({ bays, can }: Props): JSX.Element {
                     actions={
                         can.manage ? (
                             <PrimaryButton onClick={openCreate} className="rounded-2xl text-xs font-black shadow-md">
-                                ＋ Tambah Bay Baru
+                                Tambah Bay Baru
                             </PrimaryButton>
                         ) : undefined
                     }
@@ -208,7 +208,7 @@ export default function Index({ bays, can }: Props): JSX.Element {
                                     onClick={openCreate}
                                     className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md hover:bg-indigo-700"
                                 >
-                                    ＋ Tambah Bay Pertama
+                                    Tambah Bay Pertama
                                 </button>
                             )}
                         </div>
@@ -422,7 +422,7 @@ export default function Index({ bays, can }: Props): JSX.Element {
                             Batal
                         </SecondaryButton>
                         <PrimaryButton disabled={processing} className="rounded-2xl">
-                            {processing ? 'Menyimpan...' : editing ? '💾 Simpan Perubahan' : '＋ Tambah Bay'}
+                            {processing ? 'Menyimpan...' : editing ? '💾 Simpan Perubahan' : 'Tambah Bay'}
                         </PrimaryButton>
                     </div>
                 </form>

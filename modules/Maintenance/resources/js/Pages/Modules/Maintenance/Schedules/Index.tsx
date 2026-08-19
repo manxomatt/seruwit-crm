@@ -200,7 +200,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                     actions={
                         can.create && (
                             <PrimaryButton onClick={openCreate} className="rounded-2xl text-xs font-black shadow-md">
-                                ＋ Buat Jadwal Baru
+                                Buat Jadwal Baru
                             </PrimaryButton>
                         )
                     }
@@ -311,7 +311,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                                     onClick={openCreate}
                                     className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md hover:bg-indigo-700"
                                 >
-                                    ＋ Buat Jadwal Baru
+                                    Buat Jadwal Baru
                                 </button>
                             )}
                         </div>
@@ -685,7 +685,7 @@ export default function Index({ schedules, vehicles, categories, filters, can }:
                             Batal
                         </SecondaryButton>
                         <PrimaryButton disabled={processing} className="rounded-2xl">
-                            {processing ? 'Menyimpan...' : editingSchedule ? '💾 Simpan Perubahan' : '＋ Simpan Jadwal'}
+                            {processing ? 'Menyimpan...' : editingSchedule ? '💾 Simpan Perubahan' : 'Simpan Jadwal'}
                         </PrimaryButton>
                     </div>
                 </form>

@@ -66,15 +66,15 @@ export default function ColumnVisibilityMenu<T extends string>({
                 onClick={() => setOpen((current) => !current)}
                 className={
                     iconOnly
-                        ? 'inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500'
-                        : 'inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500'
+                        ? 'inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-300 dark:hover:bg-slate-800'
+                        : 'inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-300 dark:hover:bg-slate-800'
                 }
                 aria-expanded={open}
                 aria-haspopup="true"
                 aria-label={label}
                 title={label}
             >
-                <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
+                <svg className="h-4 w-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -84,7 +84,7 @@ export default function ColumnVisibilityMenu<T extends string>({
                 {!iconOnly && (
                     <>
                         {label}
-                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
+                        <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                         </svg>
                     </>
@@ -92,9 +92,9 @@ export default function ColumnVisibilityMenu<T extends string>({
             </button>
 
             {open && (
-                <div className="absolute right-0 z-20 mt-2 w-56 rounded-md bg-white py-2 shadow-lg ring-1 ring-black/5">
-                    {requiredHint && <p className="px-3 pb-2 text-xs text-gray-500">{requiredHint}</p>}
-                    <ul className="max-h-64 overflow-y-auto">
+                <div className="absolute right-0 z-50 mt-2 w-60 rounded-2xl border border-slate-200/80 bg-white py-2 shadow-xl ring-1 ring-black/5 dark:border-slate-800 dark:bg-slate-900">
+                    {requiredHint && <p className="px-3.5 pb-2 text-xs text-slate-500 dark:text-slate-400">{requiredHint}</p>}
+                    <ul className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                         {columns.map((column) => {
                             const checked = Boolean(visible[column.key]);
                             const locked = Boolean(column.required);
@@ -102,21 +102,21 @@ export default function ColumnVisibilityMenu<T extends string>({
                             return (
                                 <li key={column.key}>
                                     <label
-                                        className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm ${
-                                            locked ? 'cursor-not-allowed text-gray-500' : 'text-gray-700 hover:bg-gray-50'
+                                        className={`flex cursor-pointer items-center gap-2.5 px-3.5 py-2 text-xs font-semibold ${
+                                            locked ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-850'
                                         }`}
                                     >
                                         <input
                                             type="checkbox"
-                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-60"
+                                            className="rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800"
                                             checked={checked}
                                             disabled={locked}
                                             onChange={() => toggle(column.key)}
                                         />
                                         <span className="flex-1">{column.label}</span>
                                         {locked && (
-                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                                *
+                                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                                                (Wajib)
                                             </span>
                                         )}
                                     </label>

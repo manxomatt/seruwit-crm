@@ -512,7 +512,7 @@ export default function Show({ workOrder: wo, can }: Props): JSX.Element {
                                             disabled={checklistForm.processing || !checklistForm.data.label.trim()}
                                             className="rounded-2xl text-xs whitespace-nowrap"
                                         >
-                                            ＋ Tambah
+                                            Tambah
                                         </PrimaryButton>
                                     </form>
                                 )}

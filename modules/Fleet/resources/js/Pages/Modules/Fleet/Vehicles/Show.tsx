@@ -625,7 +625,7 @@ export default function Show({
                                         href={`${prefixedRoute('maintenance.work-orders.create')}?vehicle_id=${vehicle.id}`}
                                         className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-slate-800"
                                     >
-                                        ＋ Buat Work Order
+                                        Buat Work Order
                                     </Link>
                                 ) : (
                                     can.create && (

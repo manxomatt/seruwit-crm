@@ -65,7 +65,7 @@ return [
 
     'dashboard' => [
         'head' => 'Maintenance',
-        'new_wo' => '+ Work Order Baru',
+        'new_wo' => 'Work Order Baru',
         'in_progress' => 'Sedang Dikerjakan',
         'awaiting_approval' => 'Menunggu Persetujuan',
         'overdue' => 'Terlambat',
@@ -73,13 +73,13 @@ return [
         'completed_month' => 'Selesai Bulan Ini',
         'cost_month' => 'Biaya Bulan Ini',
         'active_orders' => 'Work Order Aktif',
-        'view_all' => 'Lihat Semua →',
+        'view_all' => 'Lihat Semua',
         'empty_active' => 'Tidak ada work order aktif',
     ],
 
     'work_orders' => [
         'head' => 'Work Orders',
-        'new' => '+ Work Order Baru',
+        'new' => 'Work Order Baru',
         'search_placeholder' => 'Cari referensi, judul, kendaraan…',
         'all_vehicles' => 'Semua Kendaraan',
         'found' => ':count work order ditemukan',

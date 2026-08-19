@@ -180,7 +180,7 @@ return [
         'notes' => 'Catatan',
         'notes_checkout_placeholder' => 'Apa yang dibahas? Tindak lanjut yang dibutuhkan?',
         'photos_count' => 'Foto (:count)/5',
-        'add_photo' => '+ Tambah Foto',
+        'add_photo' => 'Tambah Foto',
         'take_photo' => 'Ambil atau pilih foto',
         'checkout' => 'Check Out & Selesai',
         'visit_done' => 'Kunjungan Selesai',

@@ -93,7 +93,7 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                 className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                             >
                                 <span>🚗</span>
-                                <span>+ Buat Sewa Baru</span>
+                                <span>Buat Sewa Baru</span>
                             </Link>
 
                             {/* Export CSV Dropdown */}
@@ -654,7 +654,6 @@ export default function Index({ board, exportUrl }: Props): JSX.Element {
                                                 href={prefixedRoute('rental.create', { vehicle_id: vehicle.id })}
                                                 className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-indigo-700"
                                             >
-                                                <span>＋</span>
                                                 <span>Sewa Sekarang</span>
                                             </Link>
                                         </div>

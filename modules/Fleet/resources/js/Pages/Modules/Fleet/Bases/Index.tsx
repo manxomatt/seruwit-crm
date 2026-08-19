@@ -307,7 +307,6 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
                                 href={prefixedRoute('fleet.bases.create')}
                                 className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                             >
-                                <span>＋</span>
                                 <span>{t('fleet.bases.add', undefined, 'Tambah Base Baru')}</span>
                             </Link>
                         )
@@ -353,7 +352,7 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
                 </div>
 
                 {/* Filter Toolbar & Actions */}
-                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+                <div className="relative z-20 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         {/* Search & Filters */}
                         <div className="flex flex-1 flex-wrap items-center gap-3">
@@ -562,7 +561,7 @@ export default function Index({ bases, filters, kinds, can }: Props): JSX.Elemen
                                 href={prefixedRoute('fleet.bases.create')}
                                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
                             >
-                                ＋ Tambah Base Pertama
+                                Tambah Base Pertama
                             </Link>
                         )}
                     </div>

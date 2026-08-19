@@ -4,6 +4,7 @@ import ColumnVisibilityMenu, {
 } from '@/Components/ColumnVisibilityMenu';
 import ConfirmDeleteDialog from '@/Components/ConfirmDeleteDialog';
 import PageHeader from '@/Components/PageHeader';
+import Select from '@/Components/Select';
 import DynamicLayout from '@/Layouts/DynamicLayout';
 import { useRoutePrefix } from '@/hooks/useRoutePrefix';
 import { useTrans } from '@/hooks/useTrans';
@@ -358,7 +359,6 @@ export default function Index({ vehicles, filters, bases = [], can }: Props): JS
                                 href={prefixedRoute('fleet.vehicles.create')}
                                 className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
                             >
-                                <span>＋</span>
                                 <span>Tambah Kendaraan Baru</span>
                             </Link>
                         )
@@ -404,7 +404,7 @@ export default function Index({ vehicles, filters, bases = [], can }: Props): JS
                 </div>
 
                 {/* Filter Toolbar & Actions */}
-                <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+                <div className="relative z-20 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         {/* Search & Filters */}
                         <div className="flex flex-1 flex-wrap items-center gap-3">
@@ -489,18 +489,21 @@ export default function Index({ vehicles, filters, bases = [], can }: Props): JS
 
                             {/* Base Filter if available */}
                             {bases.length > 0 && (
-                                <select
-                                    value={filters.home_base_id || ''}
-                                    onChange={(e) => handleBaseFilter(e.target.value)}
-                                    className="rounded-2xl border-slate-200 bg-slate-50/80 py-1 px-3 text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-300"
-                                >
-                                    <option value="">Semua Pool / Base</option>
-                                    {bases.map((base) => (
-                                        <option key={base.id} value={String(base.id)}>
-                                            🏢 {base.name} ({base.code})
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="w-72 min-w-[260px] sm:w-80">
+                                    <Select
+                                        value={filters.home_base_id || ''}
+                                        onChange={(val) => handleBaseFilter(val)}
+                                        placeholder="Semua Pool / Base"
+                                        searchable
+                                        options={[
+                                            { value: '', label: 'Semua Pool / Base' },
+                                            ...bases.map((base) => ({
+                                                value: String(base.id),
+                                                label: `🏢 ${base.name} (${base.code})`,
+                                            })),
+                                        ]}
+                                    />
+                                </div>
                             )}
 
                             {hasActiveFilters && (
@@ -634,7 +637,7 @@ export default function Index({ vehicles, filters, bases = [], can }: Props): JS
                                 href={prefixedRoute('fleet.vehicles.create')}
                                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
                             >
-                                ＋ Tambah Kendaraan Pertama
+                                Tambah Kendaraan Pertama
                             </Link>
                         )}
                     </div>

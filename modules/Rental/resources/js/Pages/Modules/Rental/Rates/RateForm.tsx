@@ -752,7 +752,6 @@ export default function RateForm(props: RateFormProps): JSX.Element {
                                     onClick={() => onAddTier(tierTab)}
                                     className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 px-4 py-3 text-xs font-black text-indigo-700 shadow-2xs transition hover:border-indigo-400 hover:bg-indigo-50 dark:border-indigo-900/50 dark:bg-indigo-950/30 dark:text-indigo-300"
                                 >
-                                    <span>＋</span>
                                     <span>Tambah Tier {tierTab === 'period_volume' ? 'Durasi Sewa' : 'Loyalty'} Lainnya</span>
                                 </button>
                             </div>

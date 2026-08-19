@@ -132,7 +132,7 @@ export default function Edit({ vehicle, bases = [] }: Props): JSX.Element {
             <Head title={`Edit Kendaraan · ${vehicle.name}`} />
             <FleetNav />
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-28">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
                 {/* Breadcrumbs */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Link href={prefixedRoute('fleet.dashboard')} className="hover:text-slate-700 dark:hover:text-slate-200">
@@ -563,24 +563,22 @@ export default function Edit({ vehicle, bases = [] }: Props): JSX.Element {
                         </div>
                     </div>
 
-                    {/* Sticky Action Footer */}
-                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900/95">
-                        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-                            <Link
-                                href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
-                                className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                            >
-                                ← Batal & Kembali
-                            </Link>
+                    {/* Form Action Panel */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <Link
+                            href={prefixedRoute('fleet.vehicles.show', vehicle.id)}
+                            className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        >
+                            ← Batal & Kembali
+                        </Link>
 
-                            <PrimaryButton
-                                type="submit"
-                                disabled={processing}
-                                className="rounded-2xl px-6 py-3 text-sm font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
-                            >
-                                {processing ? 'Menyimpan Perubahan...' : '💾 Simpan Perubahan Kendaraan'}
-                            </PrimaryButton>
-                        </div>
+                        <PrimaryButton
+                            type="submit"
+                            disabled={processing}
+                            className="rounded-2xl px-6 py-2.5 text-xs font-black shadow-md bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+                        >
+                            {processing ? 'Menyimpan Perubahan...' : '💾 Simpan Perubahan Unit'}
+                        </PrimaryButton>
                     </div>
                 </form>
             </div>

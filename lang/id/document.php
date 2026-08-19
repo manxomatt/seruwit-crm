@@ -68,7 +68,7 @@ return [
     'types' => [
         'title' => 'Jenis Dokumen',
         'head' => 'Jenis Dokumen',
-        'add' => '+ Tambah Jenis',
+        'add' => 'Tambah Jenis',
         'vehicle_section' => 'Dokumen Kendaraan',
         'driver_section' => 'Dokumen Pengemudi',
         'empty' => 'Tidak ada jenis dokumen',

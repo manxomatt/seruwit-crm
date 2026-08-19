@@ -331,7 +331,6 @@ export default function RatesIndex({
                             href={prefixedRoute('rental.rates.create')}
                             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
-                            <span>＋</span>
                             <span>{t('rental.actions.new_rate', undefined, 'Buat Tarif Baru')}</span>
                         </Link>
                     </div>
@@ -404,7 +403,7 @@ export default function RatesIndex({
                                 href={prefixedRoute('rental.rates.create')}
                                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-indigo-700"
                             >
-                                ＋ Buat Tarif Pertama
+                                Buat Tarif Pertama
                             </Link>
                         )}
                     </div>

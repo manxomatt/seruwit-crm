@@ -277,7 +277,6 @@ export default function StepCustomer({
                                 onClick={() => setShowWalkIn(true)}
                                 className="inline-flex items-center gap-1.5 self-start rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 shadow-2xs hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 transition"
                             >
-                                <span>+</span>
                                 <span>{t('rental.actions.walk_in_customer', undefined, 'Pelanggan Baru (Walk-in)')}</span>
                             </button>
                         </div>

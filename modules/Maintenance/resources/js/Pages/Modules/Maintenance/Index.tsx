@@ -82,7 +82,7 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
                     actions={can.create && (
                         <Link href={prefixedRoute('maintenance.work-orders.create')}>
                             <PrimaryButton className="!rounded-2xl shadow-sm text-xs">
-                                ➕ {t('maintenance.dashboard.new_wo', undefined, 'Create Work Order')}
+                                {t('maintenance.dashboard.new_wo', undefined, 'Work Order Baru')}
                             </PrimaryButton>
                         </Link>
                     )}
@@ -133,7 +133,7 @@ export default function Index({ summary, recentWorkOrders, can }: Props): JSX.El
                         href={prefixedRoute('maintenance.analytics.index')}
                         className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 text-white px-4 py-2.5 text-xs font-bold hover:bg-indigo-700 transition shadow-sm"
                     >
-                        📈 {t('maintenance.dashboard.view_all', undefined, 'View Cost Analytics')} ➔
+                        📈 {t('maintenance.dashboard.view_all', undefined, 'Lihat Semua')} →
                     </Link>
                 </div>
 

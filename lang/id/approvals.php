@@ -67,7 +67,7 @@ return [
         'trigger' => 'Pemicu *',
         'active' => 'Aktif',
         'levels' => 'Level *',
-        'add_level' => '+ Level',
+        'add_level' => 'Tambah Level',
         'level_n' => 'Level :n',
         'level_number' => 'Level #',
         'level_name' => 'Nama',

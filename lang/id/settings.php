@@ -60,7 +60,7 @@ return [
         ],
         'group' => [
             'title' => 'Pengaturan — :group',
-            'new_group' => '+ Grup Baru',
+            'new_group' => 'Grup Baru',
             'add_setting' => 'Tambah Pengaturan',
             'empty_title' => 'Belum ada pengaturan di grup ini',
             'empty_hint' => 'Tambahkan satu untuk memulai.',
@@ -73,7 +73,7 @@ return [
             'head' => 'Buat Pengaturan',
             'submit' => 'Buat Pengaturan',
             'choose_existing_group' => 'Pilih grup yang sudah ada',
-            'create_new_group' => '+ Buat grup baru',
+            'create_new_group' => 'Buat grup baru',
         ],
         'edit' => [
             'title' => 'Ubah Pengaturan - :label',

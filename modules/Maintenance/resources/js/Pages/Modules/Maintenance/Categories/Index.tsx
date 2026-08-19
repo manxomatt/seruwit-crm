@@ -151,7 +151,7 @@ export default function Index({ categories }: Props): JSX.Element {
                     subtitle="Kelola pengelompokan jenis perbaikan armada (Mesin, Rem, AC, Ban, Listrik, Dll) beserta warna penanda visual."
                     actions={
                         <PrimaryButton onClick={openCreate} className="rounded-2xl text-xs font-black shadow-md">
-                            ＋ Tambah Kategori Baru
+                            Tambah Kategori Baru
                         </PrimaryButton>
                     }
                 />
@@ -217,7 +217,7 @@ export default function Index({ categories }: Props): JSX.Element {
                                 onClick={openCreate}
                                 className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-black text-white shadow-md hover:bg-indigo-700"
                             >
-                                ＋ Tambah Kategori Pertama
+                                Tambah Kategori Pertama
                             </button>
                         </div>
                     ) : viewMode === 'grid' ? (
@@ -453,7 +453,7 @@ export default function Index({ categories }: Props): JSX.Element {
                             Batal
                         </SecondaryButton>
                         <PrimaryButton disabled={processing} className="rounded-2xl">
-                            {processing ? 'Menyimpan...' : editingCategory ? '💾 Simpan Perubahan' : '＋ Tambah Kategori'}
+                            {processing ? 'Menyimpan...' : editingCategory ? '💾 Simpan Perubahan' : 'Tambah Kategori'}
                         </PrimaryButton>
                     </div>
                 </form>
