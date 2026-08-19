@@ -132,7 +132,7 @@ export default function FormPage({ rate, vehicles, rentalClasses, mode }: Props)
     };
 
     const cancel = () => {
-        router.visit(prefixedRoute('rental.settings.index', { tab: 'rates' }));
+        router.visit(prefixedRoute('rental.rates.index'));
     };
 
     const pageTitle = mode === 'create' ? t('rental.pages.rates.create') : t('rental.pages.rates.edit');
@@ -145,7 +145,7 @@ export default function FormPage({ rate, vehicles, rentalClasses, mode }: Props)
                     title={pageTitle}
                     actions={
                         <Link
-                            href={prefixedRoute('rental.settings.index', { tab: 'rates' })}
+                            href={prefixedRoute('rental.rates.index')}
                             className="text-sm text-gray-600 hover:text-gray-900"
                         >
                             ← Kembali ke Daftar Tarif

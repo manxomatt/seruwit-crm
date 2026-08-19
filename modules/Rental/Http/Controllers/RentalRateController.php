@@ -15,7 +15,7 @@ use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Rental\Http\Requests\StoreRentalRateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalRateRequest;
 use Modules\Rental\Models\RentalRate;
-use Modules\Rental\Models\RentalRateTier;
+use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalRateResolver;
 
 class RentalRateController extends Controller
@@ -25,9 +25,31 @@ class RentalRateController extends Controller
         return 'module';
     }
 
-    public function index(): RedirectResponse
+    public function index(Request $request): Response
     {
-        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates']);
+        return Inertia::render('Modules/Rental/Rates/Index', [
+            'rates' => RentalRate::query()
+                ->with(['vehicle:id,name,plate_number,type', 'tiers'])
+                ->orderBy('period_type')
+                ->orderByDesc('priority')
+                ->orderBy('name')
+                ->paginate(15)
+                ->withQueryString(),
+            'vehicles' => Vehicle::query()
+                ->where('status', Vehicle::STATUS_ACTIVE)
+                ->orderBy('name')
+                ->get(['id', 'name', 'plate_number', 'type']),
+            'rentalClasses' => collect(VehicleRentalClass::values())
+                ->map(fn (string $value): array => [
+                    'value' => $value,
+                    'label' => VehicleRentalClass::label($value),
+                ])
+                ->values()
+                ->all(),
+            'aiPricingOptimizerEnabled' => (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
+            'aiPricingAnalyzeUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_analyze'),
+            'aiPricingApplyUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_apply'),
+        ]);
     }
 
     public function create(): Response
@@ -103,7 +125,7 @@ class RentalRateController extends Controller
             $this->syncTiers($rate, $data['tiers'] ?? [], $data['tiers_to_delete'] ?? []);
         });
 
-        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates'])
+        return redirect()->route($this->getRoutePrefix().'.rental.rates.index')
             ->with('success', __('rental.messages.rate_created'));
     }
 
@@ -190,7 +212,7 @@ class RentalRateController extends Controller
             $this->syncTiers($rate, $data['tiers'] ?? [], $data['tiers_to_delete'] ?? []);
         });
 
-        return redirect()->route($this->getRoutePrefix().'.rental.settings.index', ['tab' => 'rates'])
+        return redirect()->route($this->getRoutePrefix().'.rental.rates.index')
             ->with('success', __('rental.messages.rate_updated'));
     }
 

@@ -69,7 +69,7 @@ class RentalUsageCalendar
 
         $vehicles = Vehicle::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'plate_number', 'type', 'status', 'photo_url']);
+            ->get(['id', 'name', 'plate_number', 'type', 'rental_class', 'status', 'photo_url']);
 
         $rentals = Rental::query()
             ->with('partner:id,name')
@@ -160,6 +160,7 @@ class RentalUsageCalendar
                     'name' => $vehicle->name,
                     'plate_number' => $vehicle->plate_number,
                     'type' => $vehicle->type,
+                    'rental_class' => $vehicle->rental_class,
                     'status' => $vehicle->status,
                     'photo_url' => $vehicle->photo_url,
                     'availability' => $periodAvailability,

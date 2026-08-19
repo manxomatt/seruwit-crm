@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Rental\Support\RentalAvailabilityBoard;
 
 class RentalAvailabilityController extends Controller
@@ -26,6 +27,13 @@ class RentalAvailabilityController extends Controller
                 'from' => Carbon::parse($from)->toDateString(),
                 'to' => Carbon::parse($to)->toDateString(),
             ],
+            'rentalClasses' => collect(VehicleRentalClass::values())
+                ->map(fn (string $value): array => [
+                    'value' => $value,
+                    'label' => VehicleRentalClass::label($value),
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 }

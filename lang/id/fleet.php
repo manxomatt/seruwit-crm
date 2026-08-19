@@ -467,6 +467,7 @@ return [
         'economy' => 'Ekonomi',
         'mpv' => 'MPV',
         'suv' => 'SUV',
+        'van' => 'Van',
         'premium' => 'Premium',
         'other' => 'Lainnya',
     ],

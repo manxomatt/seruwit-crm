@@ -10,6 +10,8 @@ class VehicleRentalClass
 
     public const SUV = 'suv';
 
+    public const VAN = 'van';
+
     public const PREMIUM = 'premium';
 
     public const OTHER = 'other';
@@ -23,6 +25,7 @@ class VehicleRentalClass
             self::ECONOMY,
             self::MPV,
             self::SUV,
+            self::VAN,
             self::PREMIUM,
             self::OTHER,
         ];

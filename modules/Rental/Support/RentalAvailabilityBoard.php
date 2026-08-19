@@ -95,6 +95,7 @@ class RentalAvailabilityBoard
                 'name' => $vehicle->name,
                 'plate_number' => $vehicle->plate_number,
                 'type' => $vehicle->type,
+                'rental_class' => $vehicle->rental_class,
                 'status' => $vehicle->status,
                 'photo_url' => $vehicle->photo_url,
                 'availability' => $availability,

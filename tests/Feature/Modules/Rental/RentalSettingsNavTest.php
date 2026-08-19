@@ -43,18 +43,29 @@ class RentalSettingsNavTest extends TestCase
         ], $overrides);
     }
 
-    public function test_settings_rates_tab_renders(): void
+    public function test_settings_documents_tab_renders(): void
+    {
+        $this->actingAs($this->createUserWithRole())
+            ->get(route('module.rental.settings.index', ['tab' => 'documents']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Settings/Index')
+                ->where('tab', 'documents')
+                ->has('documents')
+                ->has('general.calendar_click_to_book')
+                ->has('general.default_one_way_fee')
+            );
+    }
+
+    public function test_settings_invalid_tab_defaults_to_general(): void
     {
         $this->actingAs($this->createUserWithRole())
             ->get(route('module.rental.settings.index', ['tab' => 'rates']))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Modules/Rental/Settings/Index')
-                ->where('tab', 'rates')
-                ->has('rates')
-                ->has('rentalClasses')
-                ->has('general.calendar_click_to_book')
-                ->has('general.default_one_way_fee')
+                ->where('tab', 'general')
+                ->has('general')
             );
     }
 
@@ -174,11 +185,17 @@ class RentalSettingsNavTest extends TestCase
             ->assertRedirect(route('module.rental.settings.index', ['tab' => 'general']));
     }
 
-    public function test_rates_index_redirects_to_settings_rates_tab(): void
+    public function test_rates_index_renders_standalone_page(): void
     {
         $this->actingAs($this->createUserWithRole())
             ->get(route('module.rental.rates.index'))
-            ->assertRedirect(route('module.rental.settings.index', ['tab' => 'rates']));
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Modules/Rental/Rates/Index')
+                ->has('rates')
+                ->has('rentalClasses')
+                ->has('vehicles')
+            );
     }
 
     public function test_availability_remains_standalone_page(): void

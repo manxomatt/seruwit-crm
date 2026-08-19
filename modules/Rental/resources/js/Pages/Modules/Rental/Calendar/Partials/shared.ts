@@ -21,6 +21,7 @@ export type CalendarVehicle = {
     name: string;
     plate_number: string;
     type: string | null;
+    rental_class?: string | null;
     status: string;
     photo_url: string | null;
     availability: CellStatus;

@@ -143,11 +143,10 @@ class RentalAssessmentP2Test extends TestCase
     public function test_rates_index_includes_rental_classes(): void
     {
         $this->actingAs($this->createAdminUser())
-            ->get(route('module.rental.settings.index', ['tab' => 'rates']))
+            ->get(route('module.rental.rates.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Modules/Rental/Settings/Index')
-                ->where('tab', 'rates')
+                ->component('Modules/Rental/Rates/Index')
                 ->has('rentalClasses')
                 ->where('rentalClasses.0.value', 'economy')
             );

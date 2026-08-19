@@ -337,7 +337,9 @@ export default function RatesIndex({
                                                             class: t(`fleet.rental_class.${rate.rental_class}`, undefined, rate.rental_class),
                                                         })
                                                         : rate.vehicle_type
-                                                            ? t('rental.rates.type_prefix', { type: rate.vehicle_type })
+                                                            ? t('rental.rates.type_prefix', {
+                                                                type: t(`fleet.vehicles.types.${rate.vehicle_type}`, undefined, rate.vehicle_type),
+                                                            })
                                                             : t('rental.rates.all_vehicles')}
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-2.5 text-sm text-gray-600">

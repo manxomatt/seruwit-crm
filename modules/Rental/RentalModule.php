@@ -110,7 +110,7 @@ class RentalModule implements ModuleContract
             ->middleware('permission:rental,view')
             ->name('rental.dashboard.export');
 
-        // Settings (rates tab)
+        // Settings (General & Document Templates)
         Route::get('/rental/settings', [RentalSettingsController::class, 'index'])
             ->middleware('permission:rental,view')
             ->name('rental.settings.index');
@@ -127,7 +127,7 @@ class RentalModule implements ModuleContract
             ->middleware('permission:rental,view')
             ->name('rental.settings.documents.preview');
 
-        // Tariff rates (CRUD; index redirects to settings?tab=rates)
+        // Tariff rates (CRUD)
         Route::get('/rental/rates', [RentalRateController::class, 'index'])->middleware('permission:rental,view')->name('rental.rates.index');
         Route::get('/rental/rates/create', [RentalRateController::class, 'create'])->middleware('permission:rental,create')->name('rental.rates.create');
         Route::get('/rental/rates/suggest', [RentalRateController::class, 'suggest'])->middleware('permission:rental,create')->name('rental.rates.suggest');

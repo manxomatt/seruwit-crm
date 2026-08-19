@@ -131,7 +131,6 @@ export default function ReservationForm({
         clearWizardDraft(storageKey);
     }, [storageKey]);
 
-
     const isOneWay =
         data.pickup_location_id !== '' &&
         data.return_location_id !== '' &&
@@ -238,7 +237,7 @@ export default function ReservationForm({
         } catch {
             setAvailable([]);
             setVehiclesMeta(null);
-            setVehiclesError(t('rental.wizard.vehicles_load_failed'));
+            setVehiclesError(t('rental.wizard.vehicles_load_failed', undefined, 'Gagal memuat kendaraan tersedia.'));
         } finally {
             setVehiclesLoading(false);
         }
@@ -330,7 +329,7 @@ export default function ReservationForm({
             setQuote(payload.quote);
         } catch {
             setQuote(null);
-            setQuoteError(t('rental.wizard.quote_failed'));
+            setQuoteError(t('rental.wizard.quote_failed', undefined, 'Gagal memuat penawaran harga.'));
         } finally {
             setQuoteLoading(false);
         }
@@ -454,110 +453,132 @@ export default function ReservationForm({
         }
     };
 
-    // When dates change after a vehicle was chosen, clear selection so Step 2 revalidates.
-    useEffect(() => {
-        if (step === 1 && data.vehicle_id) {
-            // keep selection until they leave step 1; cleared when loading vehicles if unavailable
-        }
-    }, [data.start_date, data.end_date, data.period_type, data.vehicle_id, step]);
-
     return (
         <form onSubmit={submit} className="space-y-6">
-            <div className="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+                {/* Stepper Progress */}
                 <WizardStepper step={step} onStepClick={setStep} />
 
-                 {step === 1 && (
-                     <StepDates
-                         data={data}
-                         setData={setData}
-                         errors={errors}
-                     />
-                 )}
-                 {step === 2 && (
-                     <StepVehicles
-                         data={data}
-                         errors={errors}
-                         vehicles={available}
-                         meta={vehiclesMeta}
-                         loading={vehiclesLoading}
-                         loadError={vehiclesError}
-                         onSelect={selectVehicle}
-                     />
-                 )}
-                 {step === 3 && (
-                     <StepDepot
-                         data={data}
-                         setData={setData}
-                         errors={errors}
-                         locations={locations}
-                         onApplyLocation={applyLocation}
-                     />
-                 )}
-                 {step === 4 && (
-                     <StepExtras
-                         data={data}
-                         setData={setData}
-                         errors={errors}
-                         drivers={drivers}
-                         insurancePackages={insurancePackages}
-                         isOneWay={isOneWay}
-                         selectedVehicle={selectedVehicle}
-                     />
-                 )}
-                 {step === 5 && (
-                     <StepCustomer
-                         data={data}
-                         setData={setData}
-                         errors={errors}
-                         partners={partners}
-                         setPartners={setPartners}
-                         walkInUrl={walkInUrl}
-                         aiKycEnabled={aiKycEnabled}
-                         aiScanDocUrl={aiScanDocUrl}
-                         selectedVehicle={selectedVehicle}
-                         drivers={drivers}
-                         insurancePackages={insurancePackages}
-                         isOneWay={isOneWay}
-                     />
-                 )}
-                 {step === 6 && (
-                     <StepConfirm
-                         data={data}
-                         quote={quote}
-                         quoteLoading={quoteLoading}
-                         quoteError={quoteError}
-                         selectedVehicle={selectedVehicle}
-                         partners={partners}
-                         drivers={drivers}
-                         insurancePackages={insurancePackages}
-                     />
-                 )}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    {step > 1 ? (
-                        <SecondaryButton type="button" onClick={goBack}>
-                            {t('rental.wizard.back')}
-                        </SecondaryButton>
-                    ) : (
-                        <Link href={cancelUrl || prefixedRoute('rental.index')} onClick={discardDraft}>
-                            <SecondaryButton type="button">{t('common.cancel')}</SecondaryButton>
-                        </Link>
+                {/* Steps Content */}
+                <div className="min-h-[350px]">
+                    {step === 1 && (
+                        <StepDates
+                            data={data}
+                            setData={setData}
+                            errors={errors}
+                        />
+                    )}
+                    {step === 2 && (
+                        <StepVehicles
+                            data={data}
+                            errors={errors}
+                            vehicles={available}
+                            meta={vehiclesMeta}
+                            loading={vehiclesLoading}
+                            loadError={vehiclesError}
+                            onSelect={selectVehicle}
+                        />
+                    )}
+                    {step === 3 && (
+                        <StepDepot
+                            data={data}
+                            setData={setData}
+                            errors={errors}
+                            locations={locations}
+                            onApplyLocation={applyLocation}
+                        />
+                    )}
+                    {step === 4 && (
+                        <StepExtras
+                            data={data}
+                            setData={setData}
+                            errors={errors}
+                            drivers={drivers}
+                            insurancePackages={insurancePackages}
+                            isOneWay={isOneWay}
+                            selectedVehicle={selectedVehicle}
+                        />
+                    )}
+                    {step === 5 && (
+                        <StepCustomer
+                            data={data}
+                            setData={setData}
+                            errors={errors}
+                            partners={partners}
+                            setPartners={setPartners}
+                            walkInUrl={walkInUrl}
+                            aiKycEnabled={aiKycEnabled}
+                            aiScanDocUrl={aiScanDocUrl}
+                            selectedVehicle={selectedVehicle}
+                            drivers={drivers}
+                            insurancePackages={insurancePackages}
+                            isOneWay={isOneWay}
+                        />
+                    )}
+                    {step === 6 && (
+                        <StepConfirm
+                            data={data}
+                            quote={quote}
+                            quoteLoading={quoteLoading}
+                            quoteError={quoteError}
+                            selectedVehicle={selectedVehicle}
+                            partners={partners}
+                            drivers={drivers}
+                            insurancePackages={insurancePackages}
+                        />
                     )}
                 </div>
-                <div className="flex gap-3">
-                    {step < 6 ? (
-                        <PrimaryButton type="button" onClick={goNext} disabled={!canNext}>
-                            {t('rental.wizard.next')}
-                        </PrimaryButton>
-                    ) : (
-                        <PrimaryButton type="submit" disabled={processing || !canNext || quoteLoading}>
-                            {mode === 'edit' ? t('rental.wizard.save_reservation') : t('rental.wizard.create_reservation')}
-                        </PrimaryButton>
-                    )}
+
+                {/* Bottom Navigation Toolbar */}
+                <div className="mt-8 flex flex-col-reverse gap-4 border-t border-slate-100 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        {step > 1 ? (
+                            <SecondaryButton type="button" onClick={goBack} className="gap-1.5 px-4 py-2.5 text-xs font-bold">
+                                <span>←</span>
+                                <span>{t('rental.wizard.back', undefined, 'Kembali')}</span>
+                            </SecondaryButton>
+                        ) : (
+                            <Link href={cancelUrl || prefixedRoute('rental.index')} onClick={discardDraft}>
+                                <SecondaryButton type="button" className="px-4 py-2.5 text-xs font-bold">
+                                    {t('common.cancel', undefined, 'Batal')}
+                                </SecondaryButton>
+                            </Link>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <span className="hidden text-xs font-bold text-slate-400 sm:inline">
+                            Langkah {step} dari 6
+                        </span>
+
+                        {step < 6 ? (
+                            <PrimaryButton
+                                type="button"
+                                onClick={goNext}
+                                disabled={!canNext}
+                                className="gap-1.5 px-6 py-2.5 text-xs font-bold shadow-xs"
+                            >
+                                <span>{t('rental.wizard.next', undefined, 'Lanjut')}</span>
+                                <span>→</span>
+                            </PrimaryButton>
+                        ) : (
+                            <PrimaryButton
+                                type="submit"
+                                disabled={processing || !canNext || quoteLoading}
+                                className="gap-2 px-8 py-2.5 text-xs font-bold shadow-xs bg-indigo-600 hover:bg-indigo-700"
+                            >
+                                <span>🚀</span>
+                                <span>
+                                    {mode === 'edit'
+                                        ? t('rental.wizard.save_reservation', undefined, 'Simpan Perubahan Reservasi')
+                                        : t('rental.wizard.create_reservation', undefined, 'Buat Reservasi Sekarang')}
+                                </span>
+                            </PrimaryButton>
+                        )}
+                    </div>
                 </div>
             </div>
         </form>
     );
 }
+

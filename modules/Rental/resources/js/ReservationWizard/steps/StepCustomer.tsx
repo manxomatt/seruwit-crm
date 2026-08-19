@@ -98,16 +98,16 @@ function licenseAlertFor(expiresAt: string | null | undefined): LicenseAlert | n
 function DetailItem({
     label,
     value,
-    valueClassName = 'text-gray-900',
+    valueClassName = 'text-slate-900 dark:text-white',
 }: {
     label: string;
     value: string | number | null | undefined;
     valueClassName?: string;
 }): JSX.Element {
     return (
-        <div>
-            <dt className="text-xs text-gray-500">{label}</dt>
-            <dd className={`mt-0.5 text-sm font-medium ${valueClassName}`}>{value || '-'}</dd>
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-2.5 dark:border-slate-800 dark:bg-slate-800/40">
+            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</dt>
+            <dd className={`mt-0.5 text-xs font-bold ${valueClassName}`}>{value || '-'}</dd>
         </div>
     );
 }
@@ -136,8 +136,11 @@ export default function StepCustomer({
     const [docScanError, setDocScanError] = useState<string | null>(null);
 
     const partnerOptions = useMemo(
-        () => partners.map((p) => ({ value: String(p.id), label: `${p.name} (${p.code})` })),
-        [partners],
+        () => [
+            { value: '', label: t('rental.fields.customer', undefined, '-- Pilih Data Pelanggan Terdaftar --') },
+            ...partners.map((p) => ({ value: String(p.id), label: `${p.name} (${p.code})` })),
+        ],
+        [partners, t],
     );
 
     const selectedPartner = useMemo(
@@ -179,7 +182,7 @@ export default function StepCustomer({
                             name: d.name || prev.name,
                             id_number: d.nik || d.license_number || prev.id_number,
                         }));
-                        setDocScanMsg(`✨ Berhasil mengekstrak ${json.result.doc_type?.toUpperCase() ?? 'Dokumen'}: ${d.name || d.nik || ''}`);
+                        setDocScanMsg(`✨ Berhasil membaca ${json.result.doc_type?.toUpperCase() ?? 'Dokumen'}: ${d.name || d.nik || ''}`);
                     } else {
                         setDocScanError(json.message || 'Gagal membaca dokumen');
                     }
@@ -218,7 +221,7 @@ export default function StepCustomer({
                     const data = await response.json();
                     setWalkInErrors(data.errors ?? {});
                 } else {
-                    setWalkInErrors({ name: t('rental.wizard.walk_in_failed') });
+                    setWalkInErrors({ name: t('rental.wizard.walk_in_failed', undefined, 'Gagal menyimpan pelanggan walk-in.') });
                 }
                 setProcessing(false);
 
@@ -240,7 +243,7 @@ export default function StepCustomer({
             setDocScanMsg(null);
             setDocScanError(null);
         } catch {
-            setWalkInErrors({ name: t('rental.wizard.walk_in_failed') });
+            setWalkInErrors({ name: t('rental.wizard.walk_in_failed', undefined, 'Gagal menyimpan pelanggan walk-in.') });
         } finally {
             setProcessing(false);
         }
@@ -248,100 +251,114 @@ export default function StepCustomer({
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    {t('rental.wizard.steps.5', undefined, 'Informasi & Data Pelanggan')}
+                </h3>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Pilih pelanggan yang sudah terdaftar di CRM atau daftarkan pelanggan baru secara instan.
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 <div className="space-y-6 lg:col-span-2">
-                    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                                {t('rental.wizard.customer_heading')}
-                            </h3>
+                    {/* Customer Selection & Profile Card */}
+                    <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <div>
+                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    {t('rental.fields.customer', undefined, 'Pilih Pelanggan')} *
+                                </h4>
+                                <p className="text-[11px] text-slate-400">Cari berdasarkan nama atau kode pelanggan</p>
+                            </div>
+
                             <button
                                 type="button"
                                 onClick={() => setShowWalkIn(true)}
-                                className="text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400"
+                                className="inline-flex items-center gap-1.5 self-start rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 shadow-2xs hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 transition"
                             >
-                                + {t('rental.actions.walk_in_customer')}
+                                <span>+</span>
+                                <span>{t('rental.actions.walk_in_customer', undefined, 'Pelanggan Baru (Walk-in)')}</span>
                             </button>
                         </div>
 
                         <div className="mt-4">
-                            <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
                             <Select
                                 id="partner_id"
                                 options={partnerOptions}
                                 value={data.partner_id}
                                 onChange={(value) => setData('partner_id', value)}
-                                placeholder={`-- ${t('rental.fields.customer')} --`}
-                                className="mt-1"
+                                placeholder={t('rental.fields.customer', undefined, '-- Pilih Data Pelanggan Terdaftar --')}
+                                className="w-full text-xs"
                             />
-                            <InputError message={errors.partner_id} className="mt-1" />
+                            <InputError message={errors.partner_id} className="mt-1.5" />
                         </div>
 
                         {selectedPartner && (
-                            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-4 dark:border-gray-700 dark:bg-gray-900/40">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-sm font-semibold text-white">
+                            <div className="mt-5 rounded-3xl border border-slate-200/80 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-850">
+                                <div className="flex items-start gap-4">
+                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-sm font-black text-white shadow-xs">
                                         {partnerInitials(selectedPartner.name)}
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                            <h4 className="text-sm font-black text-slate-900 dark:text-white">
                                                 {selectedPartner.name}
                                             </h4>
-                                            <span className="font-mono text-xs text-gray-500">
-                                                ({selectedPartner.code})
+                                            <span className="rounded-md bg-white px-2 py-0.5 font-mono text-[10px] font-bold text-slate-600 shadow-2xs dark:bg-slate-800 dark:text-slate-300">
+                                                {selectedPartner.code}
                                             </span>
                                             {selectedPartner.customer_rank && selectedPartner.customer_rank > 1 ? (
-                                                <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-medium text-teal-800 dark:bg-teal-900/50 dark:text-teal-300">
-                                                    Rank {selectedPartner.customer_rank}
+                                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                                    ⭐ Rank {selectedPartner.customer_rank}
                                                 </span>
                                             ) : null}
                                         </div>
 
-                                        <dl className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                            <DetailItem label={t('partners.fields.phone')} value={selectedPartner.phone} />
-                                            <DetailItem label={t('partners.fields.email')} value={selectedPartner.email} />
-                                            <DetailItem label={t('partners.fields.id_number')} value={selectedPartner.id_number} />
+                                        <dl className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                                            <DetailItem label={t('partners.fields.phone', undefined, 'No. Telepon')} value={selectedPartner.phone} />
+                                            <DetailItem label={t('partners.fields.email', undefined, 'Email')} value={selectedPartner.email} />
+                                            <DetailItem label={t('partners.fields.id_number', undefined, 'NIK / No. KTP')} value={selectedPartner.id_number} />
                                             <DetailItem
-                                                label={t('partners.fields.license_number')}
+                                                label={t('partners.fields.license_number', undefined, 'No. SIM')}
                                                 value={selectedPartner.license_number}
                                             />
                                             <DetailItem
-                                                label={t('partners.fields.license_expires_at')}
+                                                label={t('partners.fields.license_expires_at', undefined, 'Masa Berlaku SIM')}
                                                 value={selectedPartner.license_expires_at}
                                                 valueClassName={
                                                     licenseAlert?.tone === 'danger'
-                                                        ? 'text-rose-600 dark:text-rose-400 font-semibold'
+                                                        ? 'text-rose-600 dark:text-rose-400 font-bold'
                                                         : licenseAlert?.tone === 'warning'
-                                                          ? 'text-amber-600 dark:text-amber-400'
-                                                          : 'text-gray-900 dark:text-white'
+                                                          ? 'text-amber-600 dark:text-amber-400 font-bold'
+                                                          : 'text-slate-900 dark:text-white'
                                                 }
                                             />
                                             <DetailItem
-                                                label={t('partners.fields.status')}
-                                                value={selectedPartner.status ? t(`partners.status.${selectedPartner.status}`) : '-'}
+                                                label={t('partners.fields.status', undefined, 'Status')}
+                                                value={selectedPartner.status ? t(`partners.status.${selectedPartner.status}`, undefined, selectedPartner.status) : '-'}
                                             />
                                         </dl>
 
                                         {selectedPartner.address && (
-                                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                {selectedPartner.address}
+                                            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                                                📍 {selectedPartner.address}
                                             </p>
                                         )}
 
                                         {licenseAlert && (
                                             <div
-                                                className={`mt-3 rounded-lg border p-2.5 text-xs ${
+                                                className={`mt-4 rounded-2xl border p-3 text-xs ${
                                                     licenseAlert.tone === 'danger'
                                                         ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300'
                                                         : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300'
                                                 }`}
                                             >
-                                                {licenseAlert.tone === 'danger'
-                                                    ? t('rental.wizard.license_expired_warning', { date: licenseAlert.date })
-                                                    : t('rental.wizard.license_expiring_soon_warning', {
-                                                          date: licenseAlert.date,
-                                                      })}
+                                                <p className="font-bold">
+                                                    {licenseAlert.tone === 'danger'
+                                                        ? `⚠️ SIM Kedaluwarsa (${licenseAlert.date}). Harap perbarui SIM pelanggan sebelum serah terima.`
+                                                        : `⚠️ SIM Segera Berakhir (${licenseAlert.date}).`}
+                                                </p>
                                             </div>
                                         )}
                                     </div>
@@ -351,35 +368,52 @@ export default function StepCustomer({
                     </div>
                 </div>
 
+                {/* Right Summary Sidebar */}
                 <PreviousStepsSummary
                     data={data}
                     selectedVehicle={selectedVehicle}
+                    includeExtras={true}
                     drivers={drivers}
                     insurancePackages={insurancePackages}
                     isOneWay={isOneWay}
                 />
             </div>
 
+            {/* Walk-in Customer Modal */}
             <Modal show={showWalkIn} onClose={() => !processing && setShowWalkIn(false)} maxWidth="md">
                 <form onSubmit={submitWalkIn} className="space-y-4 p-6">
-                    <div>
-                        <h3 className="text-lg font-medium text-gray-900">{t('rental.pages.create.walk_in_title')}</h3>
-                        <p className="mt-1 text-sm text-gray-500">{t('rental.pages.create.walk_in_hint')}</p>
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+                        <div>
+                            <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                {t('rental.pages.create.walk_in_title', undefined, 'Registrasi Pelanggan Walk-In')}
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {t('rental.pages.create.walk_in_hint', undefined, 'Isi data pelanggan baru yang langsung bertransaksi di lokasi.')}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowWalkIn(false)}
+                            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                            ✕
+                        </button>
                     </div>
 
+                    {/* AI Scan Dropzone/Banner */}
                     {aiKycEnabled && aiScanDocUrl && (
-                        <div className="rounded-2xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/60 via-purple-50/40 to-sky-50/60 p-3.5 shadow-sm dark:border-indigo-800 dark:bg-slate-900/80">
+                        <div className="rounded-2xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/60 via-purple-50/40 to-sky-50/60 p-4 shadow-sm dark:border-indigo-800 dark:bg-slate-900/80">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
+                                    <span className="text-xs font-black text-indigo-950 dark:text-indigo-200">
                                         ✨ Fast-Scan Dokumen KTP / SIM
                                     </span>
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                        Pilih foto KTP atau SIM untuk mengisi form otomatis.
+                                        Pilih foto KTP atau SIM untuk mengisi data form otomatis.
                                     </p>
                                 </div>
 
-                                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300">
+                                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300">
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -411,12 +445,12 @@ export default function StepCustomer({
                             </div>
 
                             {docScanMsg && (
-                                <p className="mt-2 rounded-lg bg-emerald-100/70 p-2 text-xs font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                <p className="mt-2 rounded-xl bg-emerald-100/70 p-2 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
                                     {docScanMsg}
                                 </p>
                             )}
                             {docScanError && (
-                                <p className="mt-2 rounded-lg bg-rose-100/70 p-2 text-xs font-medium text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                <p className="mt-2 rounded-xl bg-rose-100/70 p-2 text-xs font-semibold text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
                                     {docScanError}
                                 </p>
                             )}
@@ -424,10 +458,10 @@ export default function StepCustomer({
                     )}
 
                     <div>
-                        <InputLabel htmlFor="walk_in_name" value={`${t('partners.fields.name')} *`} />
+                        <InputLabel htmlFor="walk_in_name" value={`${t('partners.fields.name', undefined, 'Nama Lengkap')} *`} />
                         <TextInput
                             id="walk_in_name"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full text-xs"
                             value={walkIn.name}
                             onChange={(e) => setWalkIn((c) => ({ ...c, name: e.target.value }))}
                             required
@@ -435,10 +469,10 @@ export default function StepCustomer({
                         <InputError message={walkInErrors.name} className="mt-1" />
                     </div>
                     <div>
-                        <InputLabel htmlFor="walk_in_phone" value={`${t('partners.fields.phone')} *`} />
+                        <InputLabel htmlFor="walk_in_phone" value={`${t('partners.fields.phone', undefined, 'No. Telepon / WhatsApp')} *`} />
                         <TextInput
                             id="walk_in_phone"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full text-xs"
                             value={walkIn.phone}
                             onChange={(e) => setWalkIn((c) => ({ ...c, phone: e.target.value }))}
                             required
@@ -446,33 +480,36 @@ export default function StepCustomer({
                         <InputError message={walkInErrors.phone} className="mt-1" />
                     </div>
                     <div>
-                        <InputLabel htmlFor="walk_in_email" value={t('partners.fields.email')} />
+                        <InputLabel htmlFor="walk_in_email" value={t('partners.fields.email', undefined, 'Email (Opsional)')} />
                         <TextInput
                             id="walk_in_email"
                             type="email"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full text-xs"
                             value={walkIn.email}
                             onChange={(e) => setWalkIn((c) => ({ ...c, email: e.target.value }))}
                         />
                         <InputError message={walkInErrors.email} className="mt-1" />
                     </div>
                     <div>
-                        <InputLabel htmlFor="walk_in_id_number" value={t('partners.fields.id_number')} />
+                        <InputLabel htmlFor="walk_in_id_number" value={t('partners.fields.id_number', undefined, 'NIK / No. KTP')} />
                         <TextInput
                             id="walk_in_id_number"
-                            className="mt-1 block w-full"
+                            className="mt-1 block w-full text-xs"
                             value={walkIn.id_number}
                             onChange={(e) => setWalkIn((c) => ({ ...c, id_number: e.target.value }))}
                         />
                     </div>
-                    <div className="flex justify-end gap-3 pt-2">
+                    <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
                         <SecondaryButton type="button" onClick={() => setShowWalkIn(false)} disabled={processing}>
-                            {t('common.cancel')}
+                            {t('common.cancel', undefined, 'Batal')}
                         </SecondaryButton>
-                        <PrimaryButton disabled={processing}>{t('rental.actions.save_walk_in')}</PrimaryButton>
+                        <PrimaryButton disabled={processing} className="text-xs font-bold">
+                            {t('rental.actions.save_walk_in', undefined, 'Simpan & Pilih')}
+                        </PrimaryButton>
                     </div>
                 </form>
             </Modal>
         </div>
     );
 }
+

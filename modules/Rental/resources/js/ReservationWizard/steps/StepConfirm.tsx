@@ -45,31 +45,35 @@ export default function StepConfirm({
     );
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-6">
             <div>
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                    {t('rental.wizard.steps.6')}
-                </h2>
-                <p className="mt-1 text-sm text-gray-500">{t('rental.wizard.confirm.subtitle')}</p>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    {t('rental.wizard.steps.6', undefined, 'Review & Konfirmasi Reservasi')}
+                </h3>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {t('rental.wizard.confirm.subtitle', undefined, 'Periksa detail pemesanan di bawah ini, lalu buat reservasi sebagai draft Quote.')}
+                </p>
             </div>
 
             {quoteLoading && <ConfirmSkeleton />}
 
             {quoteError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="rounded-3xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
                     {quoteError}
                 </div>
             )}
 
             {!quoteLoading && quote && (
                 <>
+                    {/* Status Readiness Banner */}
                     <StatusBanner available={quote.available} reasons={quote.reasons} />
 
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-                        <div className="space-y-4 lg:col-span-3">
-                            <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+                        <div className="space-y-6 lg:col-span-3">
+                            {/* Vehicle Header Card */}
+                            <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
                                 <div className="flex flex-col sm:flex-row">
-                                    <div className="h-44 shrink-0 bg-gray-100 sm:h-auto sm:w-48">
+                                    <div className="h-44 shrink-0 bg-slate-100 dark:bg-slate-800 sm:h-auto sm:w-48">
                                         {selectedVehicle?.photo_url ? (
                                             <img
                                                 src={selectedVehicle.photo_url}
@@ -77,25 +81,27 @@ export default function StepConfirm({
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (
-                                            <div className="flex h-full min-h-[11rem] w-full items-center justify-center text-xs text-gray-400">
-                                                {t('rental.availability.no_photo')}
+                                            <div className="flex h-full min-h-[11rem] w-full items-center justify-center text-xs text-slate-400">
+                                                🚗 {t('rental.availability.no_photo', undefined, 'Tanpa Foto')}
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex flex-1 flex-col justify-center gap-3 p-5">
                                         <div>
-                                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                                {t('rental.fields.vehicle')}
+                                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                                {t('rental.fields.vehicle', undefined, 'Unit Kendaraan')}
                                             </p>
-                                            <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                                            <h4 className="mt-0.5 text-base font-black text-slate-900 dark:text-white">
                                                 {selectedVehicle?.name ?? data.vehicle_id}
-                                            </h3>
-                                            <p className="mt-0.5 font-mono text-sm text-gray-500">
+                                            </h4>
+                                            <span className="mt-1 inline-block rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                 {selectedVehicle?.plate_number ?? '—'}
-                                            </p>
-                                            <p className="mt-1 text-xs text-gray-500">
+                                            </span>
+                                            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                                                 {[
-                                                    selectedVehicle?.rental_class,
+                                                    selectedVehicle?.rental_class
+                                                        ? t(`fleet.rental_class.${selectedVehicle.rental_class}`, undefined, selectedVehicle.rental_class)
+                                                        : null,
                                                     selectedVehicle?.type,
                                                     quote.rate?.name ?? selectedVehicle?.rate?.name,
                                                 ]
@@ -104,29 +110,24 @@ export default function StepConfirm({
                                             </p>
                                         </div>
 
-                                        <div className="flex items-stretch gap-3 rounded-lg bg-gray-50 p-3">
+                                        {/* Date Interval Bar */}
+                                        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-800/50">
                                             <DateBlock
-                                                label={t('rental.fields.start_date')}
+                                                label={t('rental.fields.start_date', undefined, 'Mulai')}
                                                 value={data.start_date}
                                             />
-                                            <div className="flex items-center text-gray-300" aria-hidden>
-                                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
+                                            <div className="text-slate-300 dark:text-slate-600">
+                                                ➔
                                             </div>
                                             <DateBlock
-                                                label={t('rental.fields.end_date')}
+                                                label={t('rental.fields.end_date', undefined, 'Selesai')}
                                                 value={data.end_date}
                                             />
-                                            <div className="ml-auto hidden border-l border-gray-200 pl-3 text-right sm:block">
-                                                <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                                                    {t('rental.fields.period')}
+                                            <div className="ml-auto border-l border-slate-200 pl-3 text-right dark:border-slate-700">
+                                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                    {t('rental.fields.period', undefined, 'Durasi')}
                                                 </p>
-                                                <p className="mt-1 text-sm font-semibold text-gray-900">
+                                                <p className="mt-0.5 text-xs font-black text-indigo-600 dark:text-indigo-400">
                                                     {quote.total_periods} {periodLabel}
                                                 </p>
                                             </div>
@@ -135,64 +136,66 @@ export default function StepConfirm({
                                 </div>
                             </section>
 
+                            {/* Details Grid */}
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <InfoTile
-                                    title={t('rental.fields.customer')}
+                                    icon="👤"
+                                    title={t('rental.fields.customer', undefined, 'Pelanggan')}
                                     primary={partner ? partner.name : '—'}
-                                    secondary={partner ? partner.code : undefined}
+                                    secondary={partner ? `${partner.code} · ${partner.phone || ''}` : undefined}
                                 />
                                 <InfoTile
-                                    title={t('rental.wizard.confirm.trip')}
-                                    primary={data.pickup_location || t('rental.wizard.confirm.no_pickup')}
+                                    icon="📍"
+                                    title={t('rental.wizard.confirm.trip', undefined, 'Rute & Cabang')}
+                                    primary={data.pickup_location || t('rental.wizard.confirm.no_pickup', undefined, 'Lokasi pickup')}
                                     secondary={
                                         data.return_location
-                                            ? `${t('rental.fields.return_location')}: ${data.return_location}`
+                                            ? `Kembali: ${data.return_location}`
                                             : undefined
                                     }
                                 />
                                 <InfoTile
-                                    title={t('rental.fields.driver')}
+                                    icon="👨‍✈️"
+                                    title={t('rental.fields.driver', undefined, 'Layanan Supir')}
                                     primary={
                                         selectedDriver
                                             ? selectedDriver.name
-                                            : t('rental.placeholders.no_driver')
+                                            : t('rental.placeholders.no_driver', undefined, 'Lepas Kunci (Tanpa Supir)')
                                     }
                                     secondary={selectedDriver?.phone ?? undefined}
                                 />
                                 <InfoTile
-                                    title={t('rental.fields.insurance_package')}
+                                    icon="🛡️"
+                                    title={t('rental.fields.insurance_package', undefined, 'Asuransi & Proteksi')}
                                     primary={
                                         selectedInsurance
                                             ? selectedInsurance.name
-                                            : t('rental.placeholders.no_insurance')
+                                            : t('rental.placeholders.no_insurance', undefined, 'Tanpa Asuransi Tambahan')
                                     }
                                     secondary={
                                         selectedInsurance
-                                            ? formatMoney(selectedInsurance.amount)
+                                            ? `${formatMoney(selectedInsurance.amount)}/hari`
                                             : undefined
                                     }
                                 />
                             </div>
 
+                            {/* Operational Notes */}
                             {(data.fuel_policy_notes.trim() || data.notes.trim()) && (
-                                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                                    <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                        {t('rental.wizard.confirm.notes_section')}
-                                    </h3>
-                                    <div className="mt-3 space-y-3 text-sm text-gray-700">
+                                <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        📝 {t('rental.wizard.confirm.notes_section', undefined, 'Catatan & Kebijakan')}
+                                    </h4>
+                                    <div className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">
                                         {data.fuel_policy_notes.trim() && (
                                             <p>
-                                                <span className="font-medium text-gray-500">
-                                                    {t('rental.fields.fuel_policy_notes')}:{' '}
-                                                </span>
+                                                <strong className="text-slate-900 dark:text-white">⛽ BBM: </strong>
                                                 {data.fuel_policy_notes}
                                             </p>
                                         )}
                                         {data.notes.trim() && (
                                             <p>
-                                                <span className="font-medium text-gray-500">
-                                                    {t('rental.fields.notes')}:{' '}
-                                                </span>
+                                                <strong className="text-slate-900 dark:text-white">📌 Catatan: </strong>
                                                 {data.notes}
                                             </p>
                                         )}
@@ -201,57 +204,58 @@ export default function StepConfirm({
                             )}
                         </div>
 
+                        {/* Right Summary Pricing Voucher */}
                         <aside className="lg:col-span-2">
-                            <div className="sticky top-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                                <div className="border-b border-gray-100 bg-gray-50 px-5 py-4">
-                                    <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                        {t('rental.wizard.summary.pricing')}
-                                    </h3>
-                                    <p className="mt-2 text-3xl font-semibold tracking-tight text-gray-900">
+                            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 lg:sticky lg:top-6">
+                                <div className="border-b border-slate-100 bg-gradient-to-br from-indigo-50/70 to-slate-50/50 p-6 dark:border-slate-800 dark:from-indigo-950/40 dark:to-slate-900">
+                                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        💳 {t('rental.wizard.summary.pricing', undefined, 'Kalkulasi Total Biaya')}
+                                    </h4>
+                                    <p className="mt-3 text-3xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
                                         {formatMoney(quote.total_amount)}
                                     </p>
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        {t('rental.wizard.confirm.total_hint')}
+                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                        {t('rental.wizard.confirm.total_hint', undefined, 'Estimasi total biaya sewa')}
                                     </p>
                                 </div>
 
-                                <dl className="space-y-3 px-5 py-4">
+                                <dl className="space-y-3 p-6">
                                     <PriceRow
-                                        label={`${t('rental.fields.rate_per_period')} / ${periodLabel}`}
+                                        label={`${t('rental.fields.rate_per_period', undefined, 'Tarif')} / ${periodLabel}`}
                                         value={formatMoney(quote.rate_per_period)}
                                     />
                                     <PriceRow
-                                        label={`${t('rental.fields.base_amount')} (${quote.total_periods}×)`}
+                                        label={`${t('rental.fields.base_amount', undefined, 'Total Pokok')} (${quote.total_periods}×)`}
                                         value={formatMoney(quote.base_amount)}
                                     />
                                     {Number(quote.one_way_fee_amount ?? 0) > 0 && (
                                         <PriceRow
-                                            label={t('rental.fields.one_way_fee')}
+                                            label={t('rental.fields.one_way_fee', undefined, 'Biaya One-Way')}
                                             value={formatMoney(quote.one_way_fee_amount)}
                                         />
                                     )}
                                     {Number(quote.insurance_amount ?? 0) > 0 && (
                                         <PriceRow
-                                            label={t('rental.fields.insurance_package')}
+                                            label={t('rental.fields.insurance_package', undefined, 'Proteksi Asuransi')}
                                             value={formatMoney(quote.insurance_amount)}
                                         />
                                     )}
-                                    <div className="border-t border-gray-100 pt-3">
+                                    <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
                                         <PriceRow
-                                            label={t('rental.fields.deposit')}
+                                            label={t('rental.fields.deposit', undefined, 'Deposit Jaminan')}
                                             value={formatMoney(quote.deposit_amount)}
-                                            hint={t('rental.wizard.confirm.deposit_hint')}
+                                            hint={t('rental.wizard.confirm.deposit_hint', undefined, 'Ditahan terpisah; dikembalikan setelah sewa selesai')}
                                         />
                                     </div>
                                 </dl>
 
                                 {quote.available ? (
-                                    <div className="border-t border-emerald-100 bg-emerald-50 px-5 py-3 text-sm text-emerald-800">
-                                        {t('rental.wizard.confirm.ready')}
+                                    <div className="border-t border-emerald-100 bg-emerald-50/70 p-4 text-xs font-bold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                        ✓ {t('rental.wizard.confirm.ready', undefined, 'Kendaraan tersedia untuk tanggal ini. Anda bisa membuat reservasi.')}
                                     </div>
                                 ) : (
-                                    <div className="border-t border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">
-                                        {quote.reasons[0] ?? t('rental.wizard.quote_unavailable')}
+                                    <div className="border-t border-rose-100 bg-rose-50/70 p-4 text-xs font-bold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+                                        ✕ {quote.reasons[0] ?? t('rental.wizard.quote_unavailable', undefined, 'Reservasi ini tidak lagi tersedia.')}
                                     </div>
                                 )}
                             </div>
@@ -268,33 +272,33 @@ function StatusBanner({ available, reasons }: { available: boolean; reasons: str
 
     if (available) {
         return (
-            <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                        <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 shadow-2xs dark:border-emerald-900/50 dark:bg-emerald-950/40">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-xs">
+                    ✓
                 </span>
                 <div>
-                    <p className="text-sm font-semibold text-emerald-900">{t('rental.wizard.confirm.ready_title')}</p>
-                    <p className="mt-0.5 text-sm text-emerald-800">{t('rental.wizard.confirm.ready')}</p>
+                    <p className="text-xs font-black text-emerald-950 dark:text-emerald-200">
+                        {t('rental.wizard.confirm.ready_title', undefined, 'Armada Siap Dipesan')}
+                    </p>
+                    <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                        {t('rental.wizard.confirm.ready', undefined, 'Kendaraan tersedia untuk tanggal ini. Anda bisa membuat reservasi.')}
+                    </p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+        <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/80 p-4 shadow-2xs dark:border-rose-900/50 dark:bg-rose-950/40">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-sm font-bold text-white shadow-xs">
                 !
             </span>
             <div>
-                <p className="text-sm font-semibold text-red-900">{t('rental.wizard.confirm.blocked_title')}</p>
-                <p className="mt-0.5 text-sm text-red-700">
-                    {reasons[0] ?? t('rental.wizard.quote_unavailable')}
+                <p className="text-xs font-black text-rose-950 dark:text-rose-200">
+                    {t('rental.wizard.confirm.blocked_title', undefined, 'Belum Bisa Dipesan')}
+                </p>
+                <p className="text-xs text-rose-800 dark:text-rose-300">
+                    {reasons[0] ?? t('rental.wizard.quote_unavailable', undefined, 'Reservasi ini tidak lagi tersedia.')}
                 </p>
             </div>
         </div>
@@ -304,26 +308,31 @@ function StatusBanner({ available, reasons }: { available: boolean; reasons: str
 function DateBlock({ label, value }: { label: string; value: string }): JSX.Element {
     return (
         <div className="min-w-0 flex-1">
-            <p className="text-[11px] uppercase tracking-wide text-gray-500">{label}</p>
-            <p className="mt-1 truncate text-sm font-semibold text-gray-900">{value || '—'}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
+            <p className="mt-0.5 truncate text-xs font-black text-slate-900 dark:text-white">{value || '—'}</p>
         </div>
     );
 }
 
 function InfoTile({
+    icon,
     title,
     primary,
     secondary,
 }: {
+    icon: string;
     title: string;
     primary: string;
     secondary?: string;
 }): JSX.Element {
     return (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{title}</p>
-            <p className="mt-2 text-sm font-semibold text-gray-900">{primary}</p>
-            {secondary && <p className="mt-1 text-xs text-gray-500">{secondary}</p>}
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-2">
+                <span>{icon}</span>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{title}</p>
+            </div>
+            <p className="mt-2 text-xs font-black text-slate-900 dark:text-white">{primary}</p>
+            {secondary && <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{secondary}</p>}
         </div>
     );
 }
@@ -339,26 +348,27 @@ function PriceRow({
 }): JSX.Element {
     return (
         <div>
-            <div className="flex items-start justify-between gap-3 text-sm">
-                <dt className="text-gray-500">{label}</dt>
-                <dd className="font-medium text-gray-900">{value}</dd>
+            <div className="flex items-start justify-between gap-3 text-xs">
+                <dt className="text-slate-500 dark:text-slate-400">{label}</dt>
+                <dd className="font-bold text-slate-900 dark:text-white">{value}</dd>
             </div>
-            {hint && <p className="mt-0.5 text-[11px] text-gray-400">{hint}</p>}
+            {hint && <p className="mt-0.5 text-[10px] text-slate-400">{hint}</p>}
         </div>
     );
 }
 
 function ConfirmSkeleton(): JSX.Element {
     return (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
             <div className="space-y-4 lg:col-span-3">
-                <div className="h-48 animate-pulse rounded-xl bg-gray-100" />
+                <div className="h-48 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800" />
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="h-24 animate-pulse rounded-xl bg-gray-100" />
-                    <div className="h-24 animate-pulse rounded-xl bg-gray-100" />
+                    <div className="h-24 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800" />
+                    <div className="h-24 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800" />
                 </div>
             </div>
-            <div className="h-72 animate-pulse rounded-xl bg-gray-100 lg:col-span-2" />
+            <div className="h-72 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800 lg:col-span-2" />
         </div>
     );
 }
+

@@ -15,7 +15,7 @@ import FleetNav from '../../../../FleetNav';
 const VEHICLE_STATUSES = ['active', 'maintenance', 'retired', 'out_of_service'] as const;
 const VEHICLE_TYPES = ['car', 'truck', 'van', 'motorcycle', 'bus'] as const;
 const FUEL_TYPES = ['petrol', 'diesel', 'electric', 'hybrid'] as const;
-const RENTAL_CLASSES = ['economy', 'mpv', 'suv', 'premium', 'other'] as const;
+const RENTAL_CLASSES = ['economy', 'mpv', 'suv', 'van', 'premium', 'other'] as const;
 
 interface HomeBaseOption {
     id: number;

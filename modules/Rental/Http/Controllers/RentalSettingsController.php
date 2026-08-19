@@ -10,13 +10,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Modules\Fleet\Models\Vehicle;
-use Modules\Fleet\Support\VehicleRentalClass;
 use Modules\Invoicing\Models\Invoice;
 use Modules\Rental\Http\Requests\UpdateDocumentTemplateRequest;
 use Modules\Rental\Http\Requests\UpdateRentalGeneralSettingsRequest;
 use Modules\Rental\Models\Rental;
-use Modules\Rental\Models\RentalRate;
 use Modules\Rental\Support\DocumentTemplateManager;
 use Modules\Rental\Support\RentalGeneralSettings;
 use Modules\Rental\Support\RentalHandoverChecklist;
@@ -24,7 +21,7 @@ use Modules\Rental\Support\RentalHandoverChecklist;
 class RentalSettingsController extends Controller
 {
     /** @var list<string> */
-    public const TABS = ['general', 'rates', 'documents'];
+    public const TABS = ['general', 'documents'];
 
     protected function getRoutePrefix(): string
     {
@@ -45,29 +42,7 @@ class RentalSettingsController extends Controller
         return Inertia::render('Modules/Rental/Settings/Index', [
             'tab' => $tab,
             'general' => RentalGeneralSettings::all(),
-            'rates' => RentalRate::query()
-                ->with(['vehicle:id,name,plate_number,type', 'tiers'])
-                ->orderBy('period_type')
-                ->orderByDesc('priority')
-                ->orderBy('name')
-                ->paginate(15)
-                ->withQueryString()
-                ->appends(['tab' => 'rates']),
-            'vehicles' => Vehicle::query()
-                ->where('status', Vehicle::STATUS_ACTIVE)
-                ->orderBy('name')
-                ->get(['id', 'name', 'plate_number', 'type']),
-            'rentalClasses' => collect(VehicleRentalClass::values())
-                ->map(fn (string $value): array => [
-                    'value' => $value,
-                    'label' => VehicleRentalClass::label($value),
-                ])
-                ->values()
-                ->all(),
             'documents' => DocumentTemplateManager::all(),
-            'aiPricingOptimizerEnabled' => (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
-            'aiPricingAnalyzeUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_analyze'),
-            'aiPricingApplyUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_apply'),
         ]);
     }
 

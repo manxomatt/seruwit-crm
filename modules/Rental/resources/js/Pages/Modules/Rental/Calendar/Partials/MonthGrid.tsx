@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { useLocaleTag, useTrans } from '@/hooks/useTrans';
-import { DayUtilisation, createReservationParams, isBookableDate, parseDateKey, toDateKey, utilTone } from './shared';
+import { DayUtilisation, createReservationParams, isBookableDate, parseDateKey, toDateKey } from './shared';
 
 interface Props {
     date: string;
@@ -42,43 +42,109 @@ export default function MonthGrid({
     }
 
     return (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            {clickToBook && <p className="mb-3 text-xs text-gray-500">{t('rental.calendar.click_day_hint')}</p>}
-            <div className="mb-3 grid grid-cols-7 gap-1">
+        <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            {clickToBook && (
+                <div className="mb-4 flex items-center justify-between">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {t('rental.calendar.click_day_hint', undefined, 'Klik hari ini atau tanggal mendatang untuk mulai reservasi.')}
+                    </p>
+                </div>
+            )}
+
+            {/* Weekday Labels */}
+            <div className="mb-2 grid grid-cols-7 gap-2">
                 {weekdayLabels.map((label) => (
-                    <div key={label} className="py-1 text-center text-[11px] font-medium uppercase text-gray-400">
+                    <div
+                        key={label}
+                        className="py-1.5 text-center text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+                    >
                         {label}
                     </div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+
+            {/* Month Day Cards */}
+            <div className="grid grid-cols-7 gap-2">
                 {cells.map((dateKey, index) => {
                     if (!dateKey) {
-                        return <div key={`pad-${index}`} className="min-h-[72px] rounded-md bg-transparent" />;
+                        return (
+                            <div
+                                key={`pad-${index}`}
+                                className="min-h-[90px] rounded-2xl bg-slate-50/40 dark:bg-slate-900/30 border border-dashed border-slate-100 dark:border-slate-800/60"
+                            />
+                        );
                     }
 
                     const util = utilisationByDate[dateKey];
                     const percent = util?.utilisation_percent ?? 0;
                     const dayNum = Number(dateKey.slice(-2));
                     const isToday = dateKey === today;
-                    const bookable = clickToBook && isBookableDate(dateKey, today);
-                    const cellClass = `min-h-[72px] rounded-md border p-2 text-left transition ${utilTone(percent)} ${
-                        isToday ? 'border-indigo-300' : 'border-transparent'
-                    }`;
-                    const body = (
+                    const isPast = !isBookableDate(dateKey, today);
+                    const bookable = clickToBook && !isPast;
+
+                    // Progress bar color
+                    const progressColor =
+                        percent >= 70
+                            ? 'bg-sky-500'
+                            : percent >= 40
+                              ? 'bg-amber-500'
+                              : percent > 0
+                                ? 'bg-emerald-500'
+                                : 'bg-slate-200 dark:bg-slate-700';
+
+                    const cardBase = `relative flex flex-col justify-between min-h-[96px] rounded-2xl border p-2.5 text-left transition-all duration-150 ${
+                        isToday
+                            ? 'border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-500/30 shadow-xs dark:bg-indigo-950/30 dark:border-indigo-500'
+                            : 'border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                    } ${isPast ? 'opacity-60 bg-slate-50/50 dark:bg-slate-950/40' : ''}`;
+
+                    const content = (
                         <>
-                            <div className="flex items-center justify-between gap-1">
-                                <span className="text-sm font-semibold tabular-nums">{dayNum}</span>
-                                <span className="text-[10px] font-medium tabular-nums">{Math.round(percent)}%</span>
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`text-sm font-black tabular-nums ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-white'}`}>
+                                            {dayNum}
+                                        </span>
+                                        {isToday && (
+                                            <span className="rounded-full bg-indigo-600 px-1.5 py-0.2 text-[8px] font-bold text-white uppercase">
+                                                Hari Ini
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                        {Math.round(percent)}%
+                                    </span>
+                                </div>
+
+                                {/* Mini Utilization Progress Bar */}
+                                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                    <div
+                                        className={`h-full rounded-full ${progressColor}`}
+                                        style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
+                                    />
+                                </div>
                             </div>
+
+                            {/* Breakdown Badges */}
                             {util && (
-                                <p className="mt-2 text-[10px] leading-tight opacity-80">
-                                    {t('rental.calendar.day_mix', {
-                                        in_use: util.in_use,
-                                        booked: util.booked,
-                                        free: util.free,
-                                    })}
-                                </p>
+                                <div className="mt-2 flex flex-wrap gap-1 text-[9px] font-semibold">
+                                    {util.in_use > 0 && (
+                                        <span className="rounded bg-sky-50 px-1 py-0.2 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
+                                            {util.in_use} jalan
+                                        </span>
+                                    )}
+                                    {util.booked > 0 && (
+                                        <span className="rounded bg-amber-50 px-1 py-0.2 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                                            {util.booked} booking
+                                        </span>
+                                    )}
+                                    {util.free > 0 && (
+                                        <span className="rounded bg-emerald-50 px-1 py-0.2 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                            {util.free} kosong
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </>
                     );
@@ -87,10 +153,10 @@ export default function MonthGrid({
                         return (
                             <div
                                 key={dateKey}
-                                className={`${cellClass} ${!isBookableDate(dateKey, today) ? 'opacity-60' : ''}`}
-                                title={!isBookableDate(dateKey, today) ? t('rental.calendar.past_date') : undefined}
+                                className={cardBase}
+                                title={isPast ? t('rental.calendar.past_date', undefined, 'Tanggal lampau') : undefined}
                             >
-                                {body}
+                                {content}
                             </div>
                         );
                     }
@@ -99,10 +165,10 @@ export default function MonthGrid({
                         <Link
                             key={dateKey}
                             href={prefixedRoute('rental.create', createReservationParams(dateKey))}
-                            title={t('rental.calendar.book_on_date')}
-                            className={`${cellClass} hover:border-indigo-400 hover:ring-2 hover:ring-indigo-500/30`}
+                            title={t('rental.calendar.book_on_date', undefined, 'Buat reservasi pada tanggal ini')}
+                            className={`${cardBase} hover:shadow-md hover:scale-[1.02] cursor-pointer`}
                         >
-                            {body}
+                            {content}
                         </Link>
                     );
                 })}
