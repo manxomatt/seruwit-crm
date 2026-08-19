@@ -31,6 +31,9 @@ class UpdateRentalGeneralSettingsRequest extends FormRequest
             'passenger_free_cancel_hours' => ['required', 'integer', 'min:0', 'max:8760'],
             'public_mask_plates' => ['required', 'boolean'],
             'calendar_click_to_book' => ['required', 'boolean'],
+            'ai_inspection_enabled' => ['sometimes', 'boolean'],
+            'ai_kyc_enabled' => ['sometimes', 'boolean'],
+            'ai_pricing_optimizer_enabled' => ['sometimes', 'boolean'],
         ];
     }
 

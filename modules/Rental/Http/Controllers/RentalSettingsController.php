@@ -65,6 +65,9 @@ class RentalSettingsController extends Controller
                 ->values()
                 ->all(),
             'documents' => DocumentTemplateManager::all(),
+            'aiPricingOptimizerEnabled' => (bool) (RentalGeneralSettings::all()['ai_pricing_optimizer_enabled'] ?? true),
+            'aiPricingAnalyzeUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_analyze'),
+            'aiPricingApplyUrl' => route($this->getRoutePrefix().'.rental.ai_pricing_apply'),
         ]);
     }
 

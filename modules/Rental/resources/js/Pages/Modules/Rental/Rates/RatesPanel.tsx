@@ -5,12 +5,16 @@ import { formatMoney } from '@/utils/money';
 import { Link, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import AiDynamicPricingPanel from '../../../../Components/AiDynamicPricingPanel';
 import type { Paginated, Rate, Vehicle } from './shared';
 
 interface Props {
     rates: Paginated<Rate>;
     vehicles: Vehicle[];
     rentalClasses: Array<{ value: string; label: string }>;
+    aiPricingOptimizerEnabled?: boolean;
+    aiPricingAnalyzeUrl?: string;
+    aiPricingApplyUrl?: string;
 }
 
 const PencilIcon = () => (
@@ -46,7 +50,14 @@ const menuItemClassName =
 const menuItemDangerClassName =
     'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-600 transition data-[focus]:bg-red-50 data-[focus]:text-red-700';
 
-export default function RatesIndex({ rates, vehicles: _vehicles, rentalClasses: _rentalClasses }: Props): JSX.Element {
+export default function RatesIndex({
+    rates,
+    vehicles: _vehicles,
+    rentalClasses: _rentalClasses,
+    aiPricingOptimizerEnabled = true,
+    aiPricingAnalyzeUrl,
+    aiPricingApplyUrl,
+}: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
     const [rateToDelete, setRateToDelete] = useState<Rate | null>(null);
@@ -156,6 +167,14 @@ export default function RatesIndex({ rates, vehicles: _vehicles, rentalClasses: 
 
     return (
         <div>
+            {aiPricingOptimizerEnabled && aiPricingAnalyzeUrl && aiPricingApplyUrl && (
+                <AiDynamicPricingPanel
+                    analyzeUrl={aiPricingAnalyzeUrl}
+                    applyUrl={aiPricingApplyUrl}
+                    canUpdate={true}
+                />
+            )}
+
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-sm font-semibold text-gray-800">{t('rental.pages.rates.head')}</h2>
                 <Link

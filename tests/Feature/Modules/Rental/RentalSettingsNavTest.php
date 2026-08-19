@@ -37,6 +37,9 @@ class RentalSettingsNavTest extends TestCase
             'passenger_free_cancel_hours' => 24,
             'public_mask_plates' => true,
             'calendar_click_to_book' => true,
+            'ai_inspection_enabled' => true,
+            'ai_kyc_enabled' => true,
+            'ai_pricing_optimizer_enabled' => true,
         ], $overrides);
     }
 
@@ -71,6 +74,9 @@ class RentalSettingsNavTest extends TestCase
                 ->has('general.pending_reserved_ttl_minutes')
                 ->has('general.cancellation_fee_type')
                 ->has('general.no_show_fee_amount')
+                ->where('general.ai_inspection_enabled', true)
+                ->where('general.ai_kyc_enabled', true)
+                ->where('general.ai_pricing_optimizer_enabled', true)
             );
 
         $this->actingAs($user)
@@ -84,6 +90,9 @@ class RentalSettingsNavTest extends TestCase
                 'no_show_fee_type' => 'fixed',
                 'no_show_fee_amount' => 50000,
                 'calendar_click_to_book' => false,
+                'ai_inspection_enabled' => false,
+                'ai_kyc_enabled' => false,
+                'ai_pricing_optimizer_enabled' => false,
             ]))
             ->assertRedirect(route('module.rental.settings.index', ['tab' => 'general']));
 
@@ -96,6 +105,9 @@ class RentalSettingsNavTest extends TestCase
         $this->assertSame('fixed', $settings['no_show_fee_type']);
         $this->assertSame('50000', $settings['no_show_fee_amount']);
         $this->assertFalse($settings['calendar_click_to_book']);
+        $this->assertFalse($settings['ai_inspection_enabled']);
+        $this->assertFalse($settings['ai_kyc_enabled']);
+        $this->assertFalse($settings['ai_pricing_optimizer_enabled']);
         $this->assertFalse(RentalCalendarOptions::clickToBookEnabled());
 
         foreach (RentalGeneralSettings::managedKeys() as $key) {

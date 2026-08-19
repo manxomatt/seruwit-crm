@@ -125,6 +125,7 @@ class Rental extends Model
         'notes',
         'passenger_ktp_path',
         'passenger_sim_path',
+        'ai_kyc_assessment',
         'pickup_location',
         'return_location',
         'pickup_location_id',
@@ -174,6 +175,7 @@ class Rental extends Model
             'excess_km' => 'integer',
             'overdue_days' => 'integer',
             'deposit_returned' => 'boolean',
+            'ai_kyc_assessment' => 'array',
             'checkout_checklist' => 'array',
             'return_checklist' => 'array',
             'checkout_photos' => 'array',
@@ -307,6 +309,18 @@ class Rental extends Model
     public function vehicleSwaps(): HasMany
     {
         return $this->hasMany(RentalVehicleSwap::class)->latest('swapped_at');
+    }
+
+    /** @return HasMany<RentalAiInspection, $this> */
+    public function aiInspections(): HasMany
+    {
+        return $this->hasMany(RentalAiInspection::class)->latest();
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Relations\HasOne<RentalAiInspection, $this> */
+    public function latestAiInspection(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RentalAiInspection::class)->latestOfMany();
     }
 
     public function isDepositSettled(): bool

@@ -36,6 +36,8 @@ interface Props {
     availableVehiclesUrl: string;
     quoteUrl: string;
     walkInUrl: string;
+    aiKycEnabled?: boolean;
+    aiScanDocUrl?: string;
     submitUrl: string;
     cancelUrl: string;
     excludeRentalId?: number | null;
@@ -56,6 +58,8 @@ export default function ReservationForm({
     availableVehiclesUrl,
     quoteUrl,
     walkInUrl,
+    aiKycEnabled = true,
+    aiScanDocUrl,
     submitUrl,
     cancelUrl,
     excludeRentalId = null,
@@ -508,6 +512,8 @@ export default function ReservationForm({
                          partners={partners}
                          setPartners={setPartners}
                          walkInUrl={walkInUrl}
+                         aiKycEnabled={aiKycEnabled}
+                         aiScanDocUrl={aiScanDocUrl}
                          selectedVehicle={selectedVehicle}
                          drivers={drivers}
                          insurancePackages={insurancePackages}

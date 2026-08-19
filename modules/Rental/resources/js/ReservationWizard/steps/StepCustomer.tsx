@@ -26,6 +26,8 @@ interface Props {
     partners: PartnerOption[];
     setPartners: (partners: PartnerOption[]) => void;
     walkInUrl: string;
+    aiKycEnabled?: boolean;
+    aiScanDocUrl?: string;
     selectedVehicle: AvailableVehicle | null;
     drivers: DriverOption[];
     insurancePackages: InsurancePackage[];
@@ -99,17 +101,13 @@ function DetailItem({
     valueClassName = 'text-gray-900',
 }: {
     label: string;
-    value: string | null | undefined;
+    value: string | number | null | undefined;
     valueClassName?: string;
-}): JSX.Element | null {
-    if (!value) {
-        return null;
-    }
-
+}): JSX.Element {
     return (
-        <div className="min-w-0">
-            <dt className="text-[11px] font-medium uppercase tracking-wide text-gray-400">{label}</dt>
-            <dd className={`mt-0.5 break-words text-sm ${valueClassName}`}>{value}</dd>
+        <div>
+            <dt className="text-xs text-gray-500">{label}</dt>
+            <dd className={`mt-0.5 text-sm font-medium ${valueClassName}`}>{value || '-'}</dd>
         </div>
     );
 }
@@ -121,6 +119,8 @@ export default function StepCustomer({
     partners,
     setPartners,
     walkInUrl,
+    aiKycEnabled = true,
+    aiScanDocUrl,
     selectedVehicle,
     drivers,
     insurancePackages,
@@ -131,6 +131,9 @@ export default function StepCustomer({
     const [walkIn, setWalkIn] = useState({ name: '', phone: '', email: '', id_number: '' });
     const [walkInErrors, setWalkInErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
+    const [scanningDoc, setScanningDoc] = useState(false);
+    const [docScanMsg, setDocScanMsg] = useState<string | null>(null);
+    const [docScanError, setDocScanError] = useState<string | null>(null);
 
     const partnerOptions = useMemo(
         () => partners.map((p) => ({ value: String(p.id), label: `${p.name} (${p.code})` })),
@@ -143,19 +146,55 @@ export default function StepCustomer({
     );
 
     const licenseAlert = licenseAlertFor(selectedPartner?.license_expires_at);
-    const accountTypeLabel = selectedPartner?.account_type
-        ? t(`partners.account_type.${selectedPartner.account_type}`)
-        : null;
 
-    const hasDetails = Boolean(
-        selectedPartner?.phone ||
-            selectedPartner?.mobile ||
-            selectedPartner?.email ||
-            selectedPartner?.id_number ||
-            selectedPartner?.license_number ||
-            selectedPartner?.license_expires_at ||
-            selectedPartner?.address,
-    );
+    const handleFileOcr = async (file: File) => {
+        if (!aiScanDocUrl || scanningDoc) return;
+        setScanningDoc(true);
+        setDocScanMsg(null);
+        setDocScanError(null);
+
+        try {
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const base64Data = reader.result as string;
+                try {
+                    const response = await fetch(aiScanDocUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken(),
+                            Accept: 'application/json',
+                        },
+                        body: JSON.stringify({
+                            image: base64Data,
+                            doc_type: 'auto',
+                        }),
+                    });
+
+                    const json = await response.json();
+                    if (response.ok && json.success && json.result?.data) {
+                        const d = json.result.data;
+                        setWalkIn((prev) => ({
+                            ...prev,
+                            name: d.name || prev.name,
+                            id_number: d.nik || d.license_number || prev.id_number,
+                        }));
+                        setDocScanMsg(`✨ Berhasil mengekstrak ${json.result.doc_type?.toUpperCase() ?? 'Dokumen'}: ${d.name || d.nik || ''}`);
+                    } else {
+                        setDocScanError(json.message || 'Gagal membaca dokumen');
+                    }
+                } catch {
+                    setDocScanError('Terjadi kesalahan jaringan saat memindai dokumen.');
+                } finally {
+                    setScanningDoc(false);
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch {
+            setScanningDoc(false);
+            setDocScanError('Gagal memproses file dokumen.');
+        }
+    };
 
     const submitWalkIn: FormEventHandler = async (e) => {
         e.preventDefault();
@@ -165,43 +204,41 @@ export default function StepCustomer({
         try {
             const response = await fetch(walkInUrl, {
                 method: 'POST',
-                credentials: 'same-origin',
                 headers: {
-                    Accept: 'application/json',
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': csrfToken(),
                     'X-Reservation-Wizard': '1',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify(walkIn),
             });
 
-            const payload = (await response.json()) as {
-                partner?: PartnerOption;
-                message?: string;
-                message_bag?: Record<string, string[]>;
-                errors?: Record<string, string[]>;
-            };
-
             if (!response.ok) {
-                const errs = payload.errors ?? {};
-                const flat: Record<string, string> = {};
-                Object.entries(errs).forEach(([key, messages]) => {
-                    flat[key] = messages[0] ?? '';
-                });
-                setWalkInErrors(flat);
+                if (response.status === 422) {
+                    const data = await response.json();
+                    setWalkInErrors(data.errors ?? {});
+                } else {
+                    setWalkInErrors({ name: t('rental.wizard.walk_in_failed') });
+                }
+                setProcessing(false);
+
                 return;
             }
 
-            if (payload.partner) {
-                const nextPartners = partners.some((p) => p.id === payload.partner!.id)
-                    ? partners.map((p) => (p.id === payload.partner!.id ? payload.partner! : p))
-                    : [payload.partner, ...partners];
-                setPartners(nextPartners);
-                setData('partner_id', String(payload.partner.id));
-                setShowWalkIn(false);
-                setWalkIn({ name: '', phone: '', email: '', id_number: '' });
-            }
+            const payload: { partner: PartnerOption; created: boolean; message: string } = await response.json();
+            const created = payload.partner;
+
+            setPartners(
+                partners.some((p) => p.id === created.id)
+                    ? partners.map((p) => (p.id === created.id ? created : p))
+                    : [...partners, created],
+            );
+
+            setData('partner_id', String(created.id));
+            setShowWalkIn(false);
+            setWalkIn({ name: '', phone: '', email: '', id_number: '' });
+            setDocScanMsg(null);
+            setDocScanError(null);
         } catch {
             setWalkInErrors({ name: t('rental.wizard.walk_in_failed') });
         } finally {
@@ -210,116 +247,113 @@ export default function StepCustomer({
     };
 
     return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-                <div className="space-y-4 lg:col-span-2">
-                    <div className="flex items-center justify-between gap-2">
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                            {t('rental.wizard.steps.5')}
-                        </h2>
-                        <button
-                            type="button"
-                            onClick={() => setShowWalkIn(true)}
-                            className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
-                        >
-                            + {t('rental.actions.walk_in_customer')}
-                        </button>
-                    </div>
-                    <div>
-                        <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
-                        <Select
-                            id="partner_id"
-                            className="mt-1"
-                            value={data.partner_id}
-                            onChange={(value) => setData('partner_id', value)}
-                            placeholder={t('rental.placeholders.select_partner')}
-                            options={partnerOptions}
-                        />
-                        <InputError message={errors.partner_id} className="mt-1" />
-                    </div>
+        <div className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="space-y-6 lg:col-span-2">
+                    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                                {t('rental.wizard.customer_heading')}
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowWalkIn(true)}
+                                className="text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400"
+                            >
+                                + {t('rental.actions.walk_in_customer')}
+                            </button>
+                        </div>
 
-                    {selectedPartner && (
-                        <section
-                            className="overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white via-white to-indigo-50/60 shadow-sm"
-                            aria-live="polite"
-                        >
-                            <div className="flex items-start gap-4 border-b border-gray-100 px-4 py-4 sm:px-5">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold tracking-wide text-white">
-                                    {partnerInitials(selectedPartner.name)}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="truncate text-base font-semibold text-gray-900">
-                                            {selectedPartner.name}
-                                        </h3>
-                                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-mono text-[11px] font-medium text-indigo-700 ring-1 ring-inset ring-indigo-100">
-                                            {selectedPartner.code}
-                                        </span>
-                                        {accountTypeLabel && (
-                                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700 ring-1 ring-inset ring-gray-200">
-                                                {accountTypeLabel}
+                        <div className="mt-4">
+                            <InputLabel htmlFor="partner_id" value={`${t('rental.fields.customer')} *`} />
+                            <Select
+                                id="partner_id"
+                                options={partnerOptions}
+                                value={data.partner_id}
+                                onChange={(value) => setData('partner_id', value)}
+                                placeholder={`-- ${t('rental.fields.customer')} --`}
+                                className="mt-1"
+                            />
+                            <InputError message={errors.partner_id} className="mt-1" />
+                        </div>
+
+                        {selectedPartner && (
+                            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-sm font-semibold text-white">
+                                        {partnerInitials(selectedPartner.name)}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                {selectedPartner.name}
+                                            </h4>
+                                            <span className="font-mono text-xs text-gray-500">
+                                                ({selectedPartner.code})
                                             </span>
+                                            {selectedPartner.customer_rank && selectedPartner.customer_rank > 1 ? (
+                                                <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-medium text-teal-800 dark:bg-teal-900/50 dark:text-teal-300">
+                                                    Rank {selectedPartner.customer_rank}
+                                                </span>
+                                            ) : null}
+                                        </div>
+
+                                        <dl className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                            <DetailItem label={t('partners.fields.phone')} value={selectedPartner.phone} />
+                                            <DetailItem label={t('partners.fields.email')} value={selectedPartner.email} />
+                                            <DetailItem label={t('partners.fields.id_number')} value={selectedPartner.id_number} />
+                                            <DetailItem
+                                                label={t('partners.fields.license_number')}
+                                                value={selectedPartner.license_number}
+                                            />
+                                            <DetailItem
+                                                label={t('partners.fields.license_expires_at')}
+                                                value={selectedPartner.license_expires_at}
+                                                valueClassName={
+                                                    licenseAlert?.tone === 'danger'
+                                                        ? 'text-rose-600 dark:text-rose-400 font-semibold'
+                                                        : licenseAlert?.tone === 'warning'
+                                                          ? 'text-amber-600 dark:text-amber-400'
+                                                          : 'text-gray-900 dark:text-white'
+                                                }
+                                            />
+                                            <DetailItem
+                                                label={t('partners.fields.status')}
+                                                value={selectedPartner.status ? t(`partners.status.${selectedPartner.status}`) : '-'}
+                                            />
+                                        </dl>
+
+                                        {selectedPartner.address && (
+                                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                {selectedPartner.address}
+                                            </p>
+                                        )}
+
+                                        {licenseAlert && (
+                                            <div
+                                                className={`mt-3 rounded-lg border p-2.5 text-xs ${
+                                                    licenseAlert.tone === 'danger'
+                                                        ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300'
+                                                        : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300'
+                                                }`}
+                                            >
+                                                {licenseAlert.tone === 'danger'
+                                                    ? t('rental.wizard.license_expired_warning', { date: licenseAlert.date })
+                                                    : t('rental.wizard.license_expiring_soon_warning', {
+                                                          date: licenseAlert.date,
+                                                      })}
+                                            </div>
                                         )}
                                     </div>
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        {t('rental.wizard.customer.selected_hint')}
-                                    </p>
                                 </div>
                             </div>
-
-                            {licenseAlert && (
-                                <div
-                                    className={
-                                        licenseAlert.tone === 'danger'
-                                            ? 'border-b border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800 sm:px-5'
-                                            : 'border-b border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:px-5'
-                                    }
-                                    role="alert"
-                                >
-                                    {licenseAlert.tone === 'danger'
-                                        ? t('rental.wizard.customer.license_expired', { date: licenseAlert.date })
-                                        : t('rental.wizard.customer.license_expiring', { date: licenseAlert.date })}
-                                </div>
-                            )}
-
-                            {hasDetails ? (
-                                <dl className="grid grid-cols-1 gap-4 px-4 py-4 sm:grid-cols-2 sm:px-5">
-                                    <DetailItem label={t('partners.fields.phone')} value={selectedPartner.phone} />
-                                    <DetailItem label={t('partners.fields.mobile')} value={selectedPartner.mobile} />
-                                    <DetailItem label={t('partners.fields.email')} value={selectedPartner.email} />
-                                    <DetailItem label={t('partners.fields.id_number')} value={selectedPartner.id_number} />
-                                    <DetailItem
-                                        label={t('partners.fields.license_number')}
-                                        value={selectedPartner.license_number}
-                                    />
-                                    <DetailItem
-                                        label={t('partners.fields.license_expires_at')}
-                                        value={selectedPartner.license_expires_at}
-                                        valueClassName={
-                                            licenseAlert?.tone === 'danger'
-                                                ? 'font-medium text-red-700'
-                                                : licenseAlert?.tone === 'warning'
-                                                  ? 'font-medium text-amber-700'
-                                                  : 'text-gray-900'
-                                        }
-                                    />
-                                    <div className="sm:col-span-2">
-                                        <DetailItem label={t('partners.fields.address')} value={selectedPartner.address} />
-                                    </div>
-                                </dl>
-                            ) : (
-                                <p className="px-4 py-3 text-sm text-gray-500 sm:px-5">
-                                    {t('rental.wizard.customer.no_details')}
-                                </p>
-                            )}
-                        </section>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 <PreviousStepsSummary
                     data={data}
                     selectedVehicle={selectedVehicle}
-                    includeExtras
                     drivers={drivers}
                     insurancePackages={insurancePackages}
                     isOneWay={isOneWay}
@@ -332,6 +366,63 @@ export default function StepCustomer({
                         <h3 className="text-lg font-medium text-gray-900">{t('rental.pages.create.walk_in_title')}</h3>
                         <p className="mt-1 text-sm text-gray-500">{t('rental.pages.create.walk_in_hint')}</p>
                     </div>
+
+                    {aiKycEnabled && aiScanDocUrl && (
+                        <div className="rounded-2xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/60 via-purple-50/40 to-sky-50/60 p-3.5 shadow-sm dark:border-indigo-800 dark:bg-slate-900/80">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
+                                        ✨ Fast-Scan Dokumen KTP / SIM
+                                    </span>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                        Pilih foto KTP atau SIM untuk mengisi form otomatis.
+                                    </p>
+                                </div>
+
+                                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={scanningDoc}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                handleFileOcr(file);
+                                                e.target.value = '';
+                                            }
+                                        }}
+                                    />
+                                    {scanningDoc ? (
+                                        <>
+                                            <svg className="h-3.5 w-3.5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            <span>Membaca...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>📸</span>
+                                            <span>Pindai Foto</span>
+                                        </>
+                                    )}
+                                </label>
+                            </div>
+
+                            {docScanMsg && (
+                                <p className="mt-2 rounded-lg bg-emerald-100/70 p-2 text-xs font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                    {docScanMsg}
+                                </p>
+                            )}
+                            {docScanError && (
+                                <p className="mt-2 rounded-lg bg-rose-100/70 p-2 text-xs font-medium text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                    {docScanError}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
                     <div>
                         <InputLabel htmlFor="walk_in_name" value={`${t('partners.fields.name')} *`} />
                         <TextInput

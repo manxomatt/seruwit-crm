@@ -28,6 +28,12 @@ class RentalGeneralSettings
 
     public const KEY_CALENDAR_CLICK_TO_BOOK = 'rental.calendar_click_to_book';
 
+    public const KEY_AI_INSPECTION_ENABLED = 'rental.ai_inspection_enabled';
+
+    public const KEY_AI_KYC_ENABLED = 'rental.ai_kyc_enabled';
+
+    public const KEY_AI_PRICING_OPTIMIZER_ENABLED = 'rental.ai_pricing_optimizer_enabled';
+
     /**
      * @return list<string>
      */
@@ -44,6 +50,9 @@ class RentalGeneralSettings
             self::KEY_PASSENGER_FREE_CANCEL_HOURS,
             self::KEY_PUBLIC_MASK_PLATES,
             self::KEY_CALENDAR_CLICK_TO_BOOK,
+            self::KEY_AI_INSPECTION_ENABLED,
+            self::KEY_AI_KYC_ENABLED,
+            self::KEY_AI_PRICING_OPTIMIZER_ENABLED,
         ];
     }
 
@@ -58,7 +67,10 @@ class RentalGeneralSettings
      *     no_show_fee_amount: string,
      *     passenger_free_cancel_hours: string,
      *     public_mask_plates: bool,
-     *     calendar_click_to_book: bool
+     *     calendar_click_to_book: bool,
+     *     ai_inspection_enabled: bool,
+     *     ai_kyc_enabled: bool,
+     *     ai_pricing_optimizer_enabled: bool
      * }
      */
     public static function all(): array
@@ -74,6 +86,9 @@ class RentalGeneralSettings
             'passenger_free_cancel_hours' => (string) Setting::getValue(self::KEY_PASSENGER_FREE_CANCEL_HOURS, '24'),
             'public_mask_plates' => Setting::getValue(self::KEY_PUBLIC_MASK_PLATES, '1') === '1',
             'calendar_click_to_book' => Setting::getValue(self::KEY_CALENDAR_CLICK_TO_BOOK, '1') === '1',
+            'ai_inspection_enabled' => Setting::getValue(self::KEY_AI_INSPECTION_ENABLED, '1') === '1',
+            'ai_kyc_enabled' => Setting::getValue(self::KEY_AI_KYC_ENABLED, '1') === '1',
+            'ai_pricing_optimizer_enabled' => Setting::getValue(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, '1') === '1',
         ];
     }
 
@@ -88,7 +103,10 @@ class RentalGeneralSettings
      *     no_show_fee_amount: int|float|string,
      *     passenger_free_cancel_hours: int|string,
      *     public_mask_plates: bool,
-     *     calendar_click_to_book: bool
+     *     calendar_click_to_book: bool,
+     *     ai_inspection_enabled?: bool,
+     *     ai_kyc_enabled?: bool,
+     *     ai_pricing_optimizer_enabled?: bool
      * }  $data
      */
     public static function update(array $data): void
@@ -103,6 +121,9 @@ class RentalGeneralSettings
         self::put(self::KEY_PASSENGER_FREE_CANCEL_HOURS, (string) $data['passenger_free_cancel_hours'], 'number', 'Passenger free-cancel window (hours)', 15);
         self::put(self::KEY_PUBLIC_MASK_PLATES, $data['public_mask_plates'] ? '1' : '0', 'boolean', 'Mask plates on public booking pages', 16);
         self::put(self::KEY_CALENDAR_CLICK_TO_BOOK, $data['calendar_click_to_book'] ? '1' : '0', 'boolean', 'Calendar click to book', 20);
+        self::put(self::KEY_AI_INSPECTION_ENABLED, ! empty($data['ai_inspection_enabled']) ? '1' : '0', 'boolean', 'AI Visual Inspection (Handover)', 30);
+        self::put(self::KEY_AI_KYC_ENABLED, ! empty($data['ai_kyc_enabled']) ? '1' : '0', 'boolean', 'AI Smart KYC & Document OCR', 31);
+        self::put(self::KEY_AI_PRICING_OPTIMIZER_ENABLED, ! empty($data['ai_pricing_optimizer_enabled']) ? '1' : '0', 'boolean', 'AI Dynamic Pricing & Fleet Optimizer', 32);
     }
 
     private static function put(string $key, string $value, string $type, string $label, int $sortOrder): void

@@ -27,6 +27,9 @@ interface GeneralSettings {
     passenger_free_cancel_hours: string;
     public_mask_plates: boolean;
     calendar_click_to_book: boolean;
+    ai_inspection_enabled: boolean;
+    ai_kyc_enabled: boolean;
+    ai_pricing_optimizer_enabled: boolean;
 }
 
 interface DocumentTemplate {
@@ -43,6 +46,9 @@ interface Props {
     vehicles?: Vehicle[];
     rentalClasses?: Array<{ value: string; label: string }>;
     documents?: Record<string, DocumentTemplate>;
+    aiPricingOptimizerEnabled?: boolean;
+    aiPricingAnalyzeUrl?: string;
+    aiPricingApplyUrl?: string;
 }
 
 const DEFAULT_GENERAL: GeneralSettings = {
@@ -56,6 +62,9 @@ const DEFAULT_GENERAL: GeneralSettings = {
     passenger_free_cancel_hours: '24',
     public_mask_plates: true,
     calendar_click_to_book: true,
+    ai_inspection_enabled: true,
+    ai_kyc_enabled: true,
+    ai_pricing_optimizer_enabled: true,
 };
 
 const DEFAULT_DOCUMENTS: Record<string, DocumentTemplate> = {};
@@ -69,7 +78,7 @@ const DEFAULT_RATES_PAGINATED: Paginated<Rate> = {
     links: [{ url: null, label: '&laquo; Previous', active: false }, { url: '#', label: '1', active: true }, { url: null, label: 'Next &raquo;', active: false }],
 };
 
-function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
+function GeneralPanel({ general = DEFAULT_GENERAL }: { general?: GeneralSettings }): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
@@ -83,6 +92,9 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
         passenger_free_cancel_hours: general.passenger_free_cancel_hours,
         public_mask_plates: general.public_mask_plates,
         calendar_click_to_book: general.calendar_click_to_book,
+        ai_inspection_enabled: general.ai_inspection_enabled ?? true,
+        ai_kyc_enabled: general.ai_kyc_enabled ?? true,
+        ai_pricing_optimizer_enabled: general.ai_pricing_optimizer_enabled ?? true,
     });
 
     const feeTypeOptions = [
@@ -132,6 +144,7 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                         id="passenger_booking_enabled"
                         checked={data.passenger_booking_enabled}
                         onChange={(e) => setData('passenger_booking_enabled', e.target.checked)}
+                        className="mt-0.5"
                     />
                     <div>
                         <InputLabel
@@ -139,18 +152,131 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                             value={t('rental.settings.passenger_booking_enabled')}
                             className="!mb-0"
                         />
-                        <p className="mt-1 text-sm text-gray-500">
-                            {t('rental.settings.passenger_booking_enabled_hint')}
-                        </p>
-                        <InputError message={errors.passenger_booking_enabled} className="mt-1" />
+                        <p className="mt-1 text-sm text-gray-500">{t('rental.settings.passenger_booking_enabled_hint')}</p>
                     </div>
                 </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="pending_reserved_ttl_minutes" value={t('rental.settings.pending_reserved_ttl')} />
+                    <TextInput
+                        id="pending_reserved_ttl_minutes"
+                        type="number"
+                        min="1"
+                        max="10080"
+                        value={data.pending_reserved_ttl_minutes}
+                        onChange={(e) => setData('pending_reserved_ttl_minutes', e.target.value)}
+                        className="mt-1 block w-full"
+                    />
+                    <p className="mt-1 text-sm text-gray-500">{t('rental.settings.pending_reserved_ttl_hint')}</p>
+                    <InputError message={errors.pending_reserved_ttl_minutes} className="mt-1" />
+                </div>
+            </section>
+
+            <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {t('rental.settings.cancellation_section')}
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">{t('rental.settings.cancellation_section_hint')}</p>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="cancellation_fee_type" value={t('rental.settings.cancellation_fee_type')} />
+                    <Select
+                        id="cancellation_fee_type"
+                        value={data.cancellation_fee_type}
+                        onChange={(value) => setData('cancellation_fee_type', value)}
+                        options={feeTypeOptions}
+                        className="mt-1"
+                    />
+                    <InputError message={errors.cancellation_fee_type} className="mt-1" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="cancellation_fee_amount" value={t('rental.settings.cancellation_fee_amount')} />
+                    <div className="relative mt-1">
+                        {data.cancellation_fee_type === 'fixed' && (
+                            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500">
+                                Rp
+                            </span>
+                        )}
+                        <TextInput
+                            id="cancellation_fee_amount"
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={data.cancellation_fee_amount}
+                            onChange={(e) => setData('cancellation_fee_amount', e.target.value)}
+                            className={`block w-full ${data.cancellation_fee_type === 'fixed' ? 'pl-10' : ''}`}
+                        />
+                    </div>
+                    <InputError message={errors.cancellation_fee_amount} className="mt-1" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="no_show_fee_type" value={t('rental.settings.no_show_fee_type')} />
+                    <Select
+                        id="no_show_fee_type"
+                        value={data.no_show_fee_type}
+                        onChange={(value) => setData('no_show_fee_type', value)}
+                        options={feeTypeOptions}
+                        className="mt-1"
+                    />
+                    <InputError message={errors.no_show_fee_type} className="mt-1" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="no_show_fee_amount" value={t('rental.settings.no_show_fee_amount')} />
+                    <div className="relative mt-1">
+                        {data.no_show_fee_type === 'fixed' && (
+                            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500">
+                                Rp
+                            </span>
+                        )}
+                        <TextInput
+                            id="no_show_fee_amount"
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={data.no_show_fee_amount}
+                            onChange={(e) => setData('no_show_fee_amount', e.target.value)}
+                            className={`block w-full ${data.no_show_fee_type === 'fixed' ? 'pl-10' : ''}`}
+                        />
+                    </div>
+                    <InputError message={errors.no_show_fee_amount} className="mt-1" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel
+                        htmlFor="passenger_free_cancel_hours"
+                        value={t('rental.settings.passenger_free_cancel_hours')}
+                    />
+                    <TextInput
+                        id="passenger_free_cancel_hours"
+                        type="number"
+                        min="0"
+                        max="8760"
+                        value={data.passenger_free_cancel_hours}
+                        onChange={(e) => setData('passenger_free_cancel_hours', e.target.value)}
+                        className="mt-1 block w-full"
+                    />
+                    <p className="mt-1 text-sm text-gray-500">
+                        {t('rental.settings.passenger_free_cancel_hours_hint')}
+                    </p>
+                    <InputError message={errors.passenger_free_cancel_hours} className="mt-1" />
+                </div>
+            </section>
+
+            <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {t('rental.settings.privacy_section')}
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">{t('rental.settings.privacy_section_hint')}</p>
 
                 <div className="mt-4 flex items-start gap-3">
                     <Checkbox
                         id="public_mask_plates"
                         checked={data.public_mask_plates}
                         onChange={(e) => setData('public_mask_plates', e.target.checked)}
+                        className="mt-0.5"
                     />
                     <div>
                         <InputLabel
@@ -158,168 +284,12 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                             value={t('rental.settings.public_mask_plates')}
                             className="!mb-0"
                         />
-                        <p className="mt-1 text-sm text-gray-500">
-                            {t('rental.settings.public_mask_plates_hint')}
-                        </p>
-                        <InputError message={errors.public_mask_plates} className="mt-1" />
+                        <p className="mt-1 text-sm text-gray-500">{t('rental.settings.public_mask_plates_hint')}</p>
                     </div>
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="pending_reserved_ttl_minutes"
-                        value={t('rental.settings.pending_reserved_ttl_minutes')}
-                    />
-                    <TextInput
-                        id="pending_reserved_ttl_minutes"
-                        type="number"
-                        min={1}
-                        className="mt-1 w-full"
-                        value={data.pending_reserved_ttl_minutes}
-                        onChange={(e) => setData('pending_reserved_ttl_minutes', e.target.value)}
-                    />
-                    <p className="mt-1 text-sm text-gray-500">
-                        {t('rental.settings.pending_reserved_ttl_minutes_hint')}
-                    </p>
-                    <InputError message={errors.pending_reserved_ttl_minutes} className="mt-1" />
-                </div>
-            </section>
-
-            <section className="rounded-xl border border-teal-200 bg-teal-50/60 p-5 shadow-sm dark:border-teal-800 dark:bg-teal-950/40">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h2 className="text-sm font-bold text-teal-900 dark:text-teal-200">
-                            Setup Rekening Bank Perusahaan (Transfer Manual)
-                        </h2>
-                        <p className="mt-1 text-xs text-teal-700 dark:text-teal-300">
-                            Kelola daftar rekening bank tujuan transfer manual untuk pembayaran deposit sewa kendaraan di PWA publik.
-                        </p>
-                    </div>
-                    <Link
-                        href={prefixedRoute('accounting.bank-accounts.index')}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-teal-800 shadow-sm"
-                    >
-                        Kelola Rekening Bank ↗
-                    </Link>
                 </div>
             </section>
 
             <section className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {t('rental.settings.fees_section')}
-                </h2>
-                <p className="mt-1 text-sm text-gray-500">{t('rental.settings.fees_section_hint')}</p>
-
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div>
-                        <InputLabel
-                            htmlFor="cancellation_fee_type"
-                            value={t('rental.settings.cancellation_fee_type')}
-                        />
-                        <Select
-                            options={feeTypeOptions}
-                            value={data.cancellation_fee_type}
-                            onChange={(value) => setData('cancellation_fee_type', value)}
-                            className="mt-1"
-                        />
-                        <InputError message={errors.cancellation_fee_type} className="mt-1" />
-                    </div>
-                    <div>
-                        <InputLabel
-                            htmlFor="cancellation_fee_amount"
-                            value={t('rental.settings.cancellation_fee_amount')}
-                        />
-                        {data.cancellation_fee_type === 'percent' ? (
-                            <TextInput
-                                id="cancellation_fee_amount"
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                className="mt-1 w-full"
-                                value={data.cancellation_fee_amount}
-                                onChange={(e) => setData('cancellation_fee_amount', e.target.value)}
-                            />
-                        ) : (
-                            <div className="relative mt-1">
-                                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500">
-                                    Rp
-                                </span>
-                                <MoneyInput
-                                    id="cancellation_fee_amount"
-                                    value={data.cancellation_fee_amount}
-                                    onChange={(value) => setData('cancellation_fee_amount', value)}
-                                    className="w-full pl-10"
-                                />
-                            </div>
-                        )}
-                        <p className="mt-1 text-sm text-gray-500">
-                            {t('rental.settings.cancellation_fee_amount_hint')}
-                        </p>
-                        <InputError message={errors.cancellation_fee_amount} className="mt-1" />
-                    </div>
-                    <div className="sm:col-span-2">
-                        <InputLabel
-                            htmlFor="passenger_free_cancel_hours"
-                            value={t('rental.settings.passenger_free_cancel_hours')}
-                        />
-                        <TextInput
-                            id="passenger_free_cancel_hours"
-                            type="number"
-                            min={0}
-                            className="mt-1 w-full"
-                            value={data.passenger_free_cancel_hours}
-                            onChange={(e) => setData('passenger_free_cancel_hours', e.target.value)}
-                        />
-                        <p className="mt-1 text-sm text-gray-500">
-                            {t('rental.settings.passenger_free_cancel_hours_hint')}
-                        </p>
-                        <InputError message={errors.passenger_free_cancel_hours} className="mt-1" />
-                    </div>
-                    <div>
-                        <InputLabel htmlFor="no_show_fee_type" value={t('rental.settings.no_show_fee_type')} />
-                        <Select
-                            options={feeTypeOptions}
-                            value={data.no_show_fee_type}
-                            onChange={(value) => setData('no_show_fee_type', value)}
-                            className="mt-1"
-                        />
-                        <InputError message={errors.no_show_fee_type} className="mt-1" />
-                    </div>
-                    <div>
-                        <InputLabel
-                            htmlFor="no_show_fee_amount"
-                            value={t('rental.settings.no_show_fee_amount')}
-                        />
-                        {data.no_show_fee_type === 'percent' ? (
-                            <TextInput
-                                id="no_show_fee_amount"
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                className="mt-1 w-full"
-                                value={data.no_show_fee_amount}
-                                onChange={(e) => setData('no_show_fee_amount', e.target.value)}
-                            />
-                        ) : (
-                            <div className="relative mt-1">
-                                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500">
-                                    Rp
-                                </span>
-                                <MoneyInput
-                                    id="no_show_fee_amount"
-                                    value={data.no_show_fee_amount}
-                                    onChange={(value) => setData('no_show_fee_amount', value)}
-                                    className="w-full pl-10"
-                                />
-                            </div>
-                        )}
-                        <p className="mt-1 text-sm text-gray-500">{t('rental.settings.no_show_fee_amount_hint')}</p>
-                        <InputError message={errors.no_show_fee_amount} className="mt-1" />
-                    </div>
-                </div>
-            </section>
-
-            <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                     {t('rental.settings.calendar_section')}
                 </h2>
@@ -330,6 +300,7 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                         id="calendar_click_to_book"
                         checked={data.calendar_click_to_book}
                         onChange={(e) => setData('calendar_click_to_book', e.target.checked)}
+                        className="mt-0.5"
                     />
                     <div>
                         <InputLabel
@@ -337,10 +308,85 @@ function GeneralPanel({ general }: { general: GeneralSettings }): JSX.Element {
                             value={t('rental.settings.calendar_click_to_book')}
                             className="!mb-0"
                         />
-                        <p className="mt-1 text-sm text-gray-500">
-                            {t('rental.settings.calendar_click_to_book_hint')}
+                        <p className="mt-1 text-sm text-gray-500">{t('rental.settings.calendar_click_to_book_hint')}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section className="rounded-3xl border border-indigo-200/70 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/30 p-6 shadow-sm dark:border-indigo-900/50 dark:bg-slate-900 dark:from-slate-900 dark:to-indigo-950/20">
+                <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white shadow-sm">
+                        ✨
+                    </span>
+                    <div>
+                        <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+                            {t('rental.settings.ai_features_title', undefined, 'Kecerdasan Buatan (AI Features)')}
+                        </h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {t('rental.settings.ai_features_subtitle', undefined, 'Kelola aktivasi fitur AI otomatis untuk operasional rental Anda.')}
                         </p>
-                        <InputError message={errors.calendar_click_to_book} className="mt-1" />
+                    </div>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                    <div className="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4 transition hover:bg-white dark:border-slate-800 dark:bg-slate-900/80">
+                        <Checkbox
+                            id="ai_inspection_enabled"
+                            checked={data.ai_inspection_enabled}
+                            onChange={(e) => setData('ai_inspection_enabled', e.target.checked)}
+                            className="mt-0.5"
+                        />
+                        <div>
+                            <InputLabel
+                                htmlFor="ai_inspection_enabled"
+                                value={t('rental.settings.ai_inspection_enabled', undefined, 'AI Visual Inspection Handover')}
+                                className="!mb-0 font-semibold"
+                            />
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {t('rental.settings.ai_inspection_enabled_hint', undefined, 'Otomatisasi pemindaian kerusakan bodi baru, pembacaan odometer & BBM saat pengembalian kendaraan.')}
+                            </p>
+                            <InputError message={errors.ai_inspection_enabled} className="mt-1" />
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4 transition hover:bg-white dark:border-slate-800 dark:bg-slate-900/80">
+                        <Checkbox
+                            id="ai_kyc_enabled"
+                            checked={data.ai_kyc_enabled}
+                            onChange={(e) => setData('ai_kyc_enabled', e.target.checked)}
+                            className="mt-0.5"
+                        />
+                        <div>
+                            <InputLabel
+                                htmlFor="ai_kyc_enabled"
+                                value={t('rental.settings.ai_kyc_enabled', undefined, 'AI Smart KYC & Document OCR (KTP/SIM)')}
+                                className="!mb-0 font-semibold"
+                            />
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {t('rental.settings.ai_kyc_enabled_hint', undefined, 'Ekstraksi identitas otomatis (NIK, No. SIM, Masa Berlaku) dan penilaian skor risiko (Customer Risk Assessment).')}
+                            </p>
+                            <InputError message={errors.ai_kyc_enabled} className="mt-1" />
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4 transition hover:bg-white dark:border-slate-800 dark:bg-slate-900/80">
+                        <Checkbox
+                            id="ai_pricing_optimizer_enabled"
+                            checked={data.ai_pricing_optimizer_enabled}
+                            onChange={(e) => setData('ai_pricing_optimizer_enabled', e.target.checked)}
+                            className="mt-0.5"
+                        />
+                        <div>
+                            <InputLabel
+                                htmlFor="ai_pricing_optimizer_enabled"
+                                value={t('rental.settings.ai_pricing_optimizer_enabled', undefined, 'AI Smart Dynamic Pricing & Fleet Optimizer')}
+                                className="!mb-0 font-semibold"
+                            />
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {t('rental.settings.ai_pricing_optimizer_enabled_hint', undefined, 'Analisis utilisasi armada, pola akhir pekan, deteksi unit menganggur, dan rekomendasi penyesuaian tarif otomatis.')}
+                            </p>
+                            <InputError message={errors.ai_pricing_optimizer_enabled} className="mt-1" />
+                        </div>
                     </div>
                 </div>
             </section>
@@ -362,6 +408,9 @@ export default function Index({
     vehicles = [],
     rentalClasses = [],
     documents = DEFAULT_DOCUMENTS,
+    aiPricingOptimizerEnabled = true,
+    aiPricingAnalyzeUrl,
+    aiPricingApplyUrl,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -397,7 +446,14 @@ export default function Index({
             {tab === 'general' && <GeneralPanel general={general} />}
 
             {tab === 'rates' && (
-                <RatesPanel rates={rates} vehicles={vehicles} rentalClasses={rentalClasses} />
+                <RatesPanel
+                    rates={rates}
+                    vehicles={vehicles}
+                    rentalClasses={rentalClasses}
+                    aiPricingOptimizerEnabled={aiPricingOptimizerEnabled}
+                    aiPricingAnalyzeUrl={aiPricingAnalyzeUrl}
+                    aiPricingApplyUrl={aiPricingApplyUrl}
+                />
             )}
 
             {tab === 'documents' && (

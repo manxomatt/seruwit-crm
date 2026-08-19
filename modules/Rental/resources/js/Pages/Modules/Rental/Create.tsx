@@ -23,6 +23,8 @@ interface Props {
     availableVehiclesUrl: string;
     quoteUrl: string;
     walkInUrl: string;
+    aiKycEnabled?: boolean;
+    aiScanDocUrl?: string;
     prefill?: {
         vehicle_id?: number | null;
         start_date?: string | null;
@@ -46,6 +48,8 @@ export default function Create({
     availableVehiclesUrl,
     quoteUrl,
     walkInUrl,
+    aiKycEnabled = true,
+    aiScanDocUrl,
     prefill = {},
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
@@ -92,6 +96,8 @@ export default function Create({
                 availableVehiclesUrl={availableVehiclesUrl}
                 quoteUrl={quoteUrl}
                 walkInUrl={walkInUrl}
+                aiKycEnabled={aiKycEnabled}
+                aiScanDocUrl={aiScanDocUrl}
                 submitUrl={prefixedRoute('rental.store')}
                 cancelUrl={prefixedRoute('rental.index')}
                 skipDraftRestore={hasPrefill}

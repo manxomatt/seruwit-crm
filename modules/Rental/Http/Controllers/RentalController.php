@@ -135,6 +135,8 @@ class RentalController extends Controller
             'availableVehiclesUrl' => route($this->getRoutePrefix().'.rental.reservations.available_vehicles'),
             'quoteUrl' => route($this->getRoutePrefix().'.rental.reservations.quote'),
             'walkInUrl' => route($this->getRoutePrefix().'.rental.walk_in_customers.store'),
+            'aiKycEnabled' => \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
+            'aiScanDocUrl' => route($this->getRoutePrefix().'.rental.ai_scan_document'),
         ]);
     }
 
@@ -200,6 +202,7 @@ class RentalController extends Controller
                 ->where('status', \Modules\Rental\Models\RentalExtensionRequest::STATUS_PENDING)
                 ->latest('id'),
             'damages',
+            'latestAiInspection.createdByUser:id,name',
             'insurancePackage',
             'depositCompanyBankAccount:id,name,bank_name,account_number,account_holder',
             // Do not eager-load pickupLocation/returnLocation here: Laravel serializes
@@ -331,6 +334,14 @@ class RentalController extends Controller
                 ? \Modules\Accounting\Support\PaymentAccountResolver::optionsForForms()
                 : [],
             'postConfirm' => app(RentalPostConfirmProgress::class)->for($rental),
+            'aiInspectionEnabled' => \Modules\Rental\Support\RentalGeneralSettings::all()['ai_inspection_enabled'],
+            'aiKycEnabled' => \Modules\Rental\Support\RentalGeneralSettings::all()['ai_kyc_enabled'],
+            'latestAiInspection' => $rental->latestAiInspection,
+            'aiInspectLiveUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_live', $rental),
+            'aiInspectExistingUrl' => route($this->getRoutePrefix().'.rental.ai_inspect_existing', $rental),
+            'aiApplyDamageUrl' => route($this->getRoutePrefix().'.rental.ai_apply_damage', $rental),
+            'aiScanKycUrl' => route($this->getRoutePrefix().'.rental.ai_scan_kyc', $rental),
+            'aiSyncKycPartnerUrl' => route($this->getRoutePrefix().'.rental.ai_sync_kyc_partner', $rental),
         ]);
     }
 

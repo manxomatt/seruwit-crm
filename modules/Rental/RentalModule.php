@@ -10,6 +10,9 @@ use Modules\Rental\Console\Commands\RentalExpirePendingReserved;
 use Modules\Rental\Console\Commands\RentalScanEnding;
 use Modules\Rental\Http\Controllers\PartnerPortalController;
 use Modules\Rental\Http\Controllers\RentalActionController;
+use Modules\Rental\Http\Controllers\RentalAiInspectionController;
+use Modules\Rental\Http\Controllers\RentalAiKycController;
+use Modules\Rental\Http\Controllers\RentalAiPricingController;
 use Modules\Rental\Http\Controllers\RentalAvailabilityController;
 use Modules\Rental\Http\Controllers\RentalCalendarController;
 use Modules\Rental\Http\Controllers\RentalController;
@@ -189,6 +192,36 @@ class RentalModule implements ModuleContract
         Route::delete('/rental/{rental}/damages/{damage}', [RentalActionController::class, 'destroyDamage'])->middleware('permission:rental,update')->name('rental.damages.destroy');
         Route::post('/rental/{rental}/addons', [RentalActionController::class, 'storeAddon'])->middleware('permission:rental,update')->name('rental.addons.store');
         Route::delete('/rental/{rental}/addons/{charge}', [RentalActionController::class, 'destroyAddon'])->middleware('permission:rental,update')->name('rental.addons.destroy');
+
+        // AI Handover Inspection
+        Route::post('/rental/{rental}/ai-inspect-live', [RentalAiInspectionController::class, 'inspectLive'])
+            ->middleware('permission:rental,update')
+            ->name('rental.ai_inspect_live');
+        Route::post('/rental/{rental}/ai-inspect-existing', [RentalAiInspectionController::class, 'inspectExisting'])
+            ->middleware('permission:rental,update')
+            ->name('rental.ai_inspect_existing');
+        Route::post('/rental/{rental}/ai-apply-damage', [RentalAiInspectionController::class, 'applyDamage'])
+            ->middleware('permission:rental,update')
+            ->name('rental.ai_apply_damage');
+
+        // AI Smart KYC & Document OCR
+        Route::post('/rental/{rental}/ai-scan-kyc', [RentalAiKycController::class, 'scanRentalDocuments'])
+            ->middleware('permission:rental,update')
+            ->name('rental.ai_scan_kyc');
+        Route::post('/rental/ai-scan-document', [RentalAiKycController::class, 'scanSingleDocument'])
+            ->middleware('permission:rental,create')
+            ->name('rental.ai_scan_document');
+        Route::post('/rental/{rental}/ai-sync-kyc-partner', [RentalAiKycController::class, 'syncToPartner'])
+            ->middleware('permission:rental,update')
+            ->name('rental.ai_sync_kyc_partner');
+
+        // AI Smart Dynamic Pricing & Fleet Optimizer
+        Route::post('/rental/ai-pricing/analyze', [RentalAiPricingController::class, 'analyze'])
+            ->middleware('permission:rental,view')
+            ->name('rental.ai_pricing_analyze');
+        Route::post('/rental/ai-pricing/apply', [RentalAiPricingController::class, 'apply'])
+            ->middleware('permission:rental,update')
+            ->name('rental.ai_pricing_apply');
 
         // B2B partner self-serve (linked via partners.portal_user_id)
         Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (): void {

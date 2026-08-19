@@ -24,6 +24,8 @@ import ConfirmPaymentPanel, {
     type DepositPaymentMethod,
 } from '../../../ConfirmPayment/ConfirmPaymentPanel';
 import HandoverPhotoPicker from '../../../HandoverPhotoPicker';
+import AiHandoverInspectionPanel, { type AiInspectionData } from '../../../Components/AiHandoverInspectionPanel';
+import AiKycVerificationCard, { type KycAssessmentData } from '../../../Components/AiKycVerificationCard';
 import PostConfirmPanel from '../../../PostConfirm/PostConfirmPanel';
 import PostConfirmStepper from '../../../PostConfirm/PostConfirmStepper';
 import PayInvoicesModal from '../../../PostConfirm/PayInvoicesModal';
@@ -165,6 +167,9 @@ interface Rental {
     extensions: Extension[];
     extension_requests?: ExtensionRequest[];
     damages: Damage[];
+    passenger_ktp_path?: string | null;
+    passenger_sim_path?: string | null;
+    ai_kyc_assessment?: KycAssessmentData | null;
 }
 
 interface VehicleSwapRow {
@@ -205,6 +210,14 @@ interface Props {
     canPayDepositOnline?: boolean;
     companyBankAccounts?: CompanyBankAccountOption[];
     postConfirm?: PostConfirmProgress;
+    aiInspectionEnabled?: boolean;
+    aiKycEnabled?: boolean;
+    latestAiInspection?: AiInspectionData | null;
+    aiInspectLiveUrl?: string;
+    aiInspectExistingUrl?: string;
+    aiApplyDamageUrl?: string;
+    aiScanKycUrl?: string;
+    aiSyncKycPartnerUrl?: string;
 }
 
 function emptyChecklist(items: string[]): Record<string, boolean> {
@@ -251,6 +264,14 @@ export default function Show({
     canPayDepositOnline = false,
     companyBankAccounts = [],
     postConfirm = { visible: false, current_step: null, steps: [] },
+    aiInspectionEnabled = true,
+    aiKycEnabled = true,
+    latestAiInspection = null,
+    aiInspectLiveUrl,
+    aiInspectExistingUrl,
+    aiApplyDamageUrl,
+    aiScanKycUrl,
+    aiSyncKycPartnerUrl,
 }: Props): JSX.Element {
     const { prefixedRoute } = useRoutePrefix();
     const { t } = useTrans();
@@ -268,6 +289,9 @@ export default function Show({
     const [payingInvoices, setPayingInvoices] = useState(false);
     const [confirmPaymentMethod, setConfirmPaymentMethod] = useState<DepositPaymentMethod>('cash');
     const [confirmBankAccountId, setConfirmBankAccountId] = useState('');
+    const [liveScanning, setLiveScanning] = useState(false);
+    const [liveAiResult, setLiveAiResult] = useState<AiInspectionData | null>(null);
+    const [liveScanError, setLiveScanError] = useState<string | null>(null);
     const [lifecycleStep, setLifecycleStep] = useState<PostConfirmStepId>(
         postConfirm.current_step && POST_CONFIRM_STEPS.includes(postConfirm.current_step)
             ? postConfirm.current_step
@@ -362,6 +386,43 @@ export default function Show({
     const submitNoShow: FormEventHandler = (e) => { e.preventDefault(); noShowForm.post(prefixedRoute('rental.no_show', rental.id), { onSuccess: () => setModal(null) }); };
     const submitCheckout: FormEventHandler = (e) => { e.preventDefault(); checkoutForm.post(prefixedRoute('rental.checkout', rental.id), { onSuccess: () => setModal(null) }); };
     const submitReturn: FormEventHandler = (e) => { e.preventDefault(); returnForm.post(prefixedRoute('rental.return', rental.id), { onSuccess: () => setModal(null) }); };
+
+    const handleLiveAiScan = async () => {
+        if (!aiInspectLiveUrl || returnForm.data.return_photos.length === 0 || liveScanning) return;
+        setLiveScanning(true);
+        setLiveScanError(null);
+        try {
+            const token = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+            const response = await fetch(aiInspectLiveUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    return_photos: returnForm.data.return_photos,
+                }),
+            });
+            const data = await response.json();
+            if (data.success && data.inspection) {
+                setLiveAiResult(data.inspection);
+                if (data.inspection.extracted_odometer !== null) {
+                    returnForm.setData('end_odometer', String(data.inspection.extracted_odometer));
+                }
+                if (data.inspection.extracted_fuel_level) {
+                    returnForm.setData('end_fuel_level', data.inspection.extracted_fuel_level);
+                }
+            } else {
+                setLiveScanError(data.message || 'Gagal menjalankan inspeksi AI.');
+            }
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat memanggil AI Vision.';
+            setLiveScanError(msg);
+        } finally {
+            setLiveScanning(false);
+        }
+    };
     const submitExtend: FormEventHandler = (e) => { e.preventDefault(); extendForm.post(prefixedRoute('rental.extend', rental.id), { onSuccess: () => setModal(null) }); };
     const submitSwap: FormEventHandler = (e) => {
         e.preventDefault();
@@ -1056,6 +1117,17 @@ export default function Show({
                             </dl>
                         </SectionCard>
 
+                        {aiKycEnabled && (
+                            <AiKycVerificationCard
+                                assessment={rental.ai_kyc_assessment ?? null}
+                                hasKtp={Boolean(rental.passenger_ktp_path)}
+                                hasSim={Boolean(rental.passenger_sim_path)}
+                                aiScanKycUrl={aiScanKycUrl || ''}
+                                aiSyncKycPartnerUrl={aiSyncKycPartnerUrl}
+                                canUpdate={can('rental', 'update')}
+                            />
+                        )}
+
                         <SectionCard title={t('rental.sections.pricing_snapshot')}>
                             <dl>
                                 <DetailRow label={t('rental.fields.rate')}>
@@ -1368,6 +1440,18 @@ export default function Show({
                                         {handoverEvidence.return_signature_url && (
                                             <img src={handoverEvidence.return_signature_url} alt="" className="mt-3 h-16 rounded-lg border border-gray-200 bg-white dark:border-gray-600" />
                                         )}
+                                    </div>
+                                )}
+
+                                {aiInspectionEnabled && (
+                                    <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                                        <AiHandoverInspectionPanel
+                                            inspection={latestAiInspection}
+                                            canInspect={is('active') || is('returned') || is('completed')}
+                                            inspectUrl={aiInspectExistingUrl || ''}
+                                            applyDamageUrl={aiApplyDamageUrl}
+                                            hasReturnPhotos={(handoverEvidence?.return_photos?.length ?? 0) > 0}
+                                        />
                                     </div>
                                 )}
                             </SectionCard>
@@ -1829,9 +1913,66 @@ export default function Show({
                                 id="return_photos"
                                 label={t('rental.fields.return_photos')}
                                 value={returnForm.data.return_photos}
-                                onChange={(photos) => returnForm.setData('return_photos', photos)}
+                                onChange={(photos) => {
+                                    returnForm.setData('return_photos', photos);
+                                    setLiveAiResult(null);
+                                }}
                                 error={returnForm.errors.return_photos}
                             />
+
+                            {aiInspectionEnabled && returnForm.data.return_photos.length > 0 && aiInspectLiveUrl && (
+                                <div className="mt-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={handleLiveAiScan}
+                                        disabled={liveScanning}
+                                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                                    >
+                                        {liveScanning ? (
+                                            <>
+                                                <svg className="h-4 w-4 animate-spin text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                </svg>
+                                                <span>{t('rental.ai.scanning')}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>✨</span>
+                                                <span>{t('rental.ai.btn_scan')}</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    {liveScanError && (
+                                        <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{liveScanError}</p>
+                                    )}
+
+                                    {liveAiResult && (
+                                        <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/70 p-2.5 text-xs dark:border-emerald-800 dark:bg-emerald-950/40">
+                                            <div className="flex items-center gap-1.5 font-medium text-emerald-800 dark:text-emerald-300">
+                                                <span>✅</span>
+                                                <span>{t('rental.ai.inspection_success')}</span>
+                                            </div>
+                                            <div className="mt-1 space-y-0.5 text-gray-700 dark:text-gray-300">
+                                                {liveAiResult.extracted_odometer !== null && (
+                                                    <p>• Odometer otomatis terisi: <b>{liveAiResult.extracted_odometer.toLocaleString()} km</b></p>
+                                                )}
+                                                {liveAiResult.extracted_fuel_level && (
+                                                    <p>• Level BBM otomatis terisi: <b>{liveAiResult.extracted_fuel_level}</b></p>
+                                                )}
+                                                {liveAiResult.detected_damages && liveAiResult.detected_damages.length > 0 ? (
+                                                    <p className="font-semibold text-rose-700 dark:text-rose-400">
+                                                        • ⚠️ Ditemukan {liveAiResult.detected_damages.length} kerusakan baru (klaim dapat dibuat setelah return).
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-emerald-700 dark:text-emerald-400">• Unit bersih / tidak ada kerusakan baru terdeteksi.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div>
                             <InputLabel value={`${t('rental.fields.signature')} *`} />

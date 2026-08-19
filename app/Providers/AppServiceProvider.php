@@ -30,6 +30,18 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(
+            \Modules\Rental\AI\Contracts\VisionInspectionServiceInterface::class,
+            \Modules\Rental\AI\Services\GeminiVisionInspectionService::class
+        );
+        $this->app->bind(
+            \Modules\Rental\AI\Contracts\DocumentKycServiceInterface::class,
+            \Modules\Rental\AI\Services\GeminiDocumentKycService::class
+        );
+        $this->app->bind(
+            \Modules\Rental\AI\Contracts\DynamicPricingServiceInterface::class,
+            \Modules\Rental\AI\Services\GeminiDynamicPricingService::class
+        );
     }
 
     /**

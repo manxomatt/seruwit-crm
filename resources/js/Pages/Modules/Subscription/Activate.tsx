@@ -401,7 +401,9 @@ function PlanCard({
                               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                 >
-                    {selected ? '✓ Paket Terpilih' : 'Pilih Paket Ini'}
+                    {selected
+                        ? (isCurrentPlan ? '✓ Paket Aktif Saat Ini' : '✓ Paket Terpilih')
+                        : (isCurrentPlan ? 'Paket Aktif Saat Ini' : 'Pilih Paket Ini')}
                 </button>
             </div>
         </div>
@@ -414,14 +416,35 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
 
     const [billingInterval, setBillingInterval] = useState<BillingInterval>('month');
     const [faqOpen, setFaqOpen] = useState<number | null>(null);
+    const [isRenewingCurrentPlan, setIsRenewingCurrentPlan] = useState(false);
+
+    const activePlan = useMemo(() => {
+        if (subscription?.plan_id) {
+            const match = plans.find((p) => p.id === subscription.plan_id);
+            if (match) return match;
+        }
+        if (subscription?.plan) {
+            const match = plans.find((p) => p.name === subscription.plan);
+            if (match) return match;
+        }
+        if (tenant?.plan) {
+            const match = plans.find((p) => p.key === tenant.plan);
+            if (match) return match;
+        }
+        return plans.find((p) => p.key === 'free') || plans[0];
+    }, [plans, subscription, tenant?.plan]);
 
     const { data, setData, post, processing, errors } = useForm({
-        plan_id: '',
+        plan_id: activePlan ? String(activePlan.id) : '',
         type: (subscription && subscription.status === 'active' ? 'renew' : 'activate') as 'activate' | 'renew',
         billing_interval: 'month' as BillingInterval,
     });
 
     const selectedPlan = useMemo(() => plans.find((p) => p.id === Number(data.plan_id)), [plans, data.plan_id]);
+    const isPlanDifferent = activePlan && selectedPlan ? selectedPlan.id !== activePlan.id : false;
+    const isSelectedPaid = selectedPlan ? Number(billingInterval === 'annual' && selectedPlan.annual_price ? selectedPlan.annual_price : selectedPlan.price) > 0 : false;
+    const showCheckoutBar = Boolean(selectedPlan && isSelectedPaid && (isPlanDifferent || isRenewingCurrentPlan));
+
     const trialDaysLeft = daysUntil(trialEndsAt);
     const paymentOrderDaysLeft = daysUntil(activePaymentOrder?.expires_at ?? null);
     const hasAnyAnnual = plans.some((p) => p.annual_price && Number(p.annual_price) > 0);
@@ -563,13 +586,35 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h4 className="font-bold text-teal-950">Masa Trial Gratis 7 Hari Aktif</h4>
+                                        <h4 className="font-bold text-teal-950">Masa Trial Aktif: {activePlan?.name || 'Trial'}</h4>
                                         <span className="rounded-full bg-teal-200/80 px-2.5 py-0.5 text-xs font-bold text-teal-900">
                                             {trialDaysLeft} Hari Tersisa
                                         </span>
                                     </div>
                                     <p className="mt-1 text-xs sm:text-sm text-teal-800">
-                                        Berakhir pada <strong>{trialEndsAt ? dateLocale(trialEndsAt) : ''}</strong>. Aktifkan paket pilihan sekarang agar bisnis berjalan lancar tanpa jeda.
+                                        Berakhir pada <strong>{trialEndsAt ? dateLocale(trialEndsAt) : ''}</strong>. Anda dapat mengaktifkan atau upgrade paket di bawah.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Active Free Lifetime State */}
+                    {!isOnTrial && (!subscription || subscription.status !== 'active') && tenant.plan === 'free' && (
+                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 sm:p-6">
+                            <div className="flex items-start gap-3.5">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                                    <CheckIcon className="h-6 w-6" />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <h4 className="font-bold text-emerald-950">Paket Aktif: Free Lifetime</h4>
+                                        <span className="rounded-full bg-emerald-200/80 px-2.5 py-0.5 text-xs font-bold text-emerald-900">
+                                            Status: Aktif Selamanya
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-xs sm:text-sm text-emerald-800">
+                                        Workspace Anda aktif pada paket gratis selamanya (kapasitas maks. 2 kendaraan). Anda dapat upgrade ke paket berbayar kapan saja di bawah.
                                     </p>
                                 </div>
                             </div>
@@ -608,8 +653,12 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                 plan={plan}
                                 interval={billingInterval}
                                 selected={data.plan_id === String(plan.id)}
-                                onSelect={() => setData('plan_id', String(plan.id))}
+                                onSelect={() => {
+                                    setData('plan_id', String(plan.id));
+                                    setIsRenewingCurrentPlan(false);
+                                }}
                                 isPopular={plan.key === 'pro' || (plans.length > 1 && idx === plans.length - 1)}
+                                isCurrentPlan={activePlan?.id === plan.id}
                             />
                         ))}
                     </div>
@@ -621,12 +670,12 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                     )}
 
                     {/* ── Floating / Sticky Bottom Checkout Bar ── */}
-                    {selectedPlan && (
+                    {showCheckoutBar && selectedPlan && (
                         <div className="sticky bottom-6 z-30 mt-10 rounded-3xl border border-teal-200 bg-white/95 p-5 sm:p-6 shadow-2xl backdrop-blur-md ring-1 ring-slate-900/5">
                             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
                                 <div>
                                     <span className="text-[11px] font-extrabold uppercase tracking-widest text-teal-600">
-                                        Ringkasan Pesanan
+                                        {isPlanDifferent ? 'Upgrade / Ganti Paket' : 'Perpanjangan Paket'}
                                     </span>
                                     <h4 className="mt-0.5 text-xl font-black text-slate-900">
                                         Paket {selectedPlan.name}{' '}
@@ -643,16 +692,6 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    {subscription && subscription.status === 'active' && (
-                                        <button
-                                            type="button"
-                                            onClick={(e) => submit(e, 'renew')}
-                                            disabled={processing}
-                                            className="flex-1 md:flex-none rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
-                                        >
-                                            Perpanjang Masa Aktif
-                                        </button>
-                                    )}
                                     <button
                                         type="submit"
                                         disabled={processing}
@@ -664,7 +703,9 @@ export default function SubscriptionActivate({ tenant, plans, subscription, isOn
                                                 Memproses...
                                             </>
                                         ) : (
-                                            'Lanjutkan ke Pembayaran →'
+                                            isPlanDifferent
+                                                ? `Upgrade ke ${selectedPlan.name} →`
+                                                : 'Lanjutkan ke Pembayaran →'
                                         )}
                                     </button>
                                 </div>
