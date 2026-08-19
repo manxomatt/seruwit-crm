@@ -472,50 +472,52 @@ function GeneralPanel({
                 {/* Right Column: AI Automation Suite & Action Bar (4 cols) */}
                 <div className="space-y-6 lg:col-span-4">
                     {/* AI Automation Suite Card */}
-                    <div className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40 p-6 shadow-sm dark:border-indigo-900/60 dark:bg-slate-900 dark:from-slate-900 dark:to-indigo-950/30">
-                        <div className="flex items-center gap-3 border-b border-indigo-100/80 pb-4 dark:border-indigo-900/40">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-lg font-bold text-white shadow-md shadow-indigo-500/20">
-                                ✨
+                    {centralAiEnabled && (
+                        <div className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40 p-6 shadow-sm dark:border-indigo-900/60 dark:bg-slate-900 dark:from-slate-900 dark:to-indigo-950/30">
+                            <div className="flex items-center gap-3 border-b border-indigo-100/80 pb-4 dark:border-indigo-900/40">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-lg font-bold text-white shadow-md shadow-indigo-500/20">
+                                    ✨
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                        {t('rental.settings.ai_features_title', undefined, 'AI Automation Suite')}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {t('rental.settings.ai_features_subtitle', undefined, 'Kecerdasan buatan terintegrasi untuk efisiensi operasional rental.')}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    {t('rental.settings.ai_features_title', undefined, 'AI Automation Suite')}
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('rental.settings.ai_features_subtitle', undefined, 'Kecerdasan buatan terintegrasi untuk efisiensi operasional rental.')}
-                                </p>
+
+                            <div className="mt-4 space-y-3">
+                                <ToggleSwitch
+                                    id="ai_inspection_enabled"
+                                    checked={data.ai_inspection_enabled}
+                                    onChange={(checked) => setData('ai_inspection_enabled', checked)}
+                                    label={t('rental.settings.ai_inspection_enabled', undefined, '📸 AI Visual Inspection')}
+                                    description={t('rental.settings.ai_inspection_enabled_hint', undefined, 'Deteksi goresan baru, pembacaan KM & BBM saat serah terima.')}
+                                    badge="Gemini Vision"
+                                />
+
+                                <ToggleSwitch
+                                    id="ai_kyc_enabled"
+                                    checked={data.ai_kyc_enabled}
+                                    onChange={(checked) => setData('ai_kyc_enabled', checked)}
+                                    label={t('rental.settings.ai_kyc_enabled', undefined, '🪪 AI Smart KYC & OCR')}
+                                    description={t('rental.settings.ai_kyc_enabled_hint', undefined, 'Ekstraksi data KTP/SIM instan & evaluasi skor risiko fraud.')}
+                                    badge="OCR & Risk"
+                                />
+
+                                <ToggleSwitch
+                                    id="ai_pricing_optimizer_enabled"
+                                    checked={data.ai_pricing_optimizer_enabled}
+                                    onChange={(checked) => setData('ai_pricing_optimizer_enabled', checked)}
+                                    label={t('rental.settings.ai_pricing_optimizer_enabled', undefined, '⚡ AI Dynamic Pricing')}
+                                    description={t('rental.settings.ai_pricing_optimizer_enabled_hint', undefined, 'Optimasi okupansi armada & saran tarif surge akhir pekan.')}
+                                    badge="Optimizer"
+                                />
                             </div>
                         </div>
-
-                        <div className="mt-4 space-y-3">
-                            <ToggleSwitch
-                                id="ai_inspection_enabled"
-                                checked={data.ai_inspection_enabled}
-                                onChange={(checked) => setData('ai_inspection_enabled', checked)}
-                                label={t('rental.settings.ai_inspection_enabled', undefined, '📸 AI Visual Inspection')}
-                                description={t('rental.settings.ai_inspection_enabled_hint', undefined, 'Deteksi goresan baru, pembacaan KM & BBM saat serah terima.')}
-                                badge="Gemini Vision"
-                            />
-
-                            <ToggleSwitch
-                                id="ai_kyc_enabled"
-                                checked={data.ai_kyc_enabled}
-                                onChange={(checked) => setData('ai_kyc_enabled', checked)}
-                                label={t('rental.settings.ai_kyc_enabled', undefined, '🪪 AI Smart KYC & OCR')}
-                                description={t('rental.settings.ai_kyc_enabled_hint', undefined, 'Ekstraksi data KTP/SIM instan & evaluasi skor risiko fraud.')}
-                                badge="OCR & Risk"
-                            />
-
-                            <ToggleSwitch
-                                id="ai_pricing_optimizer_enabled"
-                                checked={data.ai_pricing_optimizer_enabled}
-                                onChange={(checked) => setData('ai_pricing_optimizer_enabled', checked)}
-                                label={t('rental.settings.ai_pricing_optimizer_enabled', undefined, '⚡ AI Dynamic Pricing')}
-                                description={t('rental.settings.ai_pricing_optimizer_enabled_hint', undefined, 'Optimasi okupansi armada & saran tarif surge akhir pekan.')}
-                                badge="Optimizer"
-                            />
-                        </div>
-                    </div>
+                    )}
 
                     {/* Sticky Action Card */}
                     <div className="sticky top-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -573,6 +575,7 @@ export default function Index({
     tab,
     general = DEFAULT_GENERAL,
     documents = DEFAULT_DOCUMENTS,
+    centralAiEnabled = true,
 }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
@@ -605,7 +608,7 @@ export default function Index({
                 </nav>
             </div>
 
-            {tab === 'general' && <GeneralPanel general={general} />}
+            {tab === 'general' && <GeneralPanel general={general} centralAiEnabled={centralAiEnabled} />}
 
             {tab === 'documents' && (
                 <DocumentsPanel documents={documents} prefixedRoute={prefixedRoute} />

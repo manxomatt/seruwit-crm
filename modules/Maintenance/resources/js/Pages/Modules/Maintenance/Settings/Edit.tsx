@@ -22,9 +22,10 @@ interface Settings {
 
 interface Props {
     settings: Settings;
+    centralAiEnabled?: boolean;
 }
 
-export default function Edit({ settings }: Props): JSX.Element {
+export default function Edit({ settings, centralAiEnabled = true }: Props): JSX.Element {
     const { t } = useTrans();
     const { prefixedRoute } = useRoutePrefix();
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
@@ -168,38 +169,40 @@ export default function Edit({ settings }: Props): JSX.Element {
                     </section>
 
                     {/* Card 3: Fitur AI Predictive Maintenance */}
-                    <section className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/60 via-white to-purple-50/40 p-6 shadow-xs dark:border-indigo-900/50 dark:bg-slate-900 space-y-6">
-                        <div className="flex items-center gap-3 border-b border-indigo-100 pb-4 dark:border-slate-800">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-600 text-base font-black text-white shadow-md">
-                                ✨
-                            </span>
-                            <div>
-                                <h2 className="text-base font-black text-slate-900 dark:text-white">Fitur Kecerdasan Buatan (AI Predictive Maintenance)</h2>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Prediksi kerusakan berbasis analitik AI, skor kesehatan unit, dan deteksi anomali.</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="flex items-start gap-3.5 rounded-2xl border border-indigo-200/60 bg-white/90 p-4 transition hover:bg-white dark:border-slate-800 dark:bg-slate-850/80 cursor-pointer shadow-2xs">
-                                <Checkbox
-                                    checked={data.ai_predictive_maintenance_enabled}
-                                    onChange={(e) => setData('ai_predictive_maintenance_enabled', e.target.checked)}
-                                    className="mt-1 h-4 w-4 rounded-md border-indigo-300 text-indigo-600 focus:ring-indigo-500"
-                                />
+                    {centralAiEnabled && (
+                        <section className="overflow-hidden rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/60 via-white to-purple-50/40 p-6 shadow-xs dark:border-indigo-900/50 dark:bg-slate-900 space-y-6">
+                            <div className="flex items-center gap-3 border-b border-indigo-100 pb-4 dark:border-slate-800">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-600 text-base font-black text-white shadow-md">
+                                    ✨
+                                </span>
                                 <div>
-                                    <span className="block text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                        <span>Aktifkan AI Predictive Maintenance & Anomaly Detection</span>
-                                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                                            AI Powered
-                                        </span>
-                                    </span>
-                                    <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                        Mengaktifkan rekomendasi prediksi tanggal & odometer servis berbasis laju pemakaian harian, deteksi anomali BBM/perbaikan, serta skor kalkulasi risiko kesehatan armada secara otomatis.
-                                    </span>
+                                    <h2 className="text-base font-black text-slate-900 dark:text-white">Fitur Kecerdasan Buatan (AI Predictive Maintenance)</h2>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Prediksi kerusakan berbasis analitik AI, skor kesehatan unit, dan deteksi anomali.</p>
                                 </div>
-                            </label>
-                        </div>
-                    </section>
+                            </div>
+
+                            <div>
+                                <label className="flex items-start gap-3.5 rounded-2xl border border-indigo-200/60 bg-white/90 p-4 transition hover:bg-white dark:border-slate-800 dark:bg-slate-850/80 cursor-pointer shadow-2xs">
+                                    <Checkbox
+                                        checked={data.ai_predictive_maintenance_enabled}
+                                        onChange={(e) => setData('ai_predictive_maintenance_enabled', e.target.checked)}
+                                        className="mt-1 h-4 w-4 rounded-md border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <div>
+                                        <span className="block text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                            <span>Aktifkan AI Predictive Maintenance & Anomaly Detection</span>
+                                            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                                                AI Powered
+                                            </span>
+                                        </span>
+                                        <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                            Mengaktifkan rekomendasi prediksi tanggal & odometer servis berbasis laju pemakaian harian, deteksi anomali BBM/perbaikan, serta skor kalkulasi risiko kesehatan armada secara otomatis.
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                        </section>
+                    )}
 
                     {/* Inline Panel Footer Action Bar */}
                     <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
